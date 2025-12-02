@@ -1772,7 +1772,7 @@ class RayTracer extends Solver {
     // samples = filterSignals(samples);
 
 
-    const worker = new FilterWorker();
+    const worker = FilterWorker();
 
     return new Promise((resolve, reject)=>{
 
