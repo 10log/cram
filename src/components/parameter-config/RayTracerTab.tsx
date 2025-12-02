@@ -214,7 +214,9 @@ export const RayTracerTab = ({ uuid }: { uuid: string }) => {
     const cells = renderer.overlays.global.cells;
     const key = uuid + "-valid-ray-count";
     if(cells.has(key)) cells.get(key)!.show();
-    return () => void cells.has(key) && cells.get(key)!.hide();
+    return () => {
+      if (cells.has(key)) cells.get(key)!.hide();
+    };
   }, [uuid]);
   return (
     <div>

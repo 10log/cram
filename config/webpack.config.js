@@ -1,28 +1,23 @@
-"use strict";
-
 const fs = require("fs");
 const path = require("path");
 const webpack = require("webpack");
 const resolve = require("resolve");
-const PnpWebpackPlugin = require("pnp-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const CaseSensitivePathsPlugin = require("case-sensitive-paths-webpack-plugin");
 const InlineChunkHtmlPlugin = require("react-dev-utils/InlineChunkHtmlPlugin");
 const TerserPlugin = require("terser-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
-const OptimizeCSSAssetsPlugin = require("optimize-css-assets-webpack-plugin");
-const safePostCssParser = require("postcss-safe-parser");
-const ManifestPlugin = require("webpack-manifest-plugin");
+const { WebpackManifestPlugin } = require("webpack-manifest-plugin");
 const InterpolateHtmlPlugin = require("react-dev-utils/InterpolateHtmlPlugin");
-const WorkboxWebpackPlugin = require("workbox-webpack-plugin");
-const WatchMissingNodeModulesPlugin = require("react-dev-utils/WatchMissingNodeModulesPlugin");
+// const WorkboxWebpackPlugin = require("workbox-webpack-plugin");
+// WatchMissingNodeModulesPlugin was removed in react-dev-utils 12+ (Webpack 5 handles this internally)
 const ModuleScopePlugin = require("react-dev-utils/ModuleScopePlugin");
 const getCSSModuleLocalIdent = require("react-dev-utils/getCSSModuleLocalIdent");
 const paths = require("./paths");
 const getClientEnvironment = require("./env");
 const ModuleNotFoundPlugin = require("react-dev-utils/ModuleNotFoundPlugin");
-const ForkTsCheckerWebpackPlugin = require("fork-ts-checker-webpack-plugin-alt");
-const typescriptFormatter = require("react-dev-utils/typescriptFormatter");
+const ForkTsCheckerWebpackPlugin = require("fork-ts-checker-webpack-plugin");
+// typescriptFormatter was removed in react-dev-utils 12+ (no longer needed)
 
 // Source maps are resource heavy and can cause out of memory issue for large source files.
 const shouldUseSourceMap = false;
@@ -79,18 +74,17 @@ module.exports = function (webpackEnv) {
         // package.json
         loader: require.resolve("postcss-loader"),
         options: {
-          // Necessary for external CSS imports to work
-          // https://github.com/facebook/create-react-app/issues/2677
-          ident: "postcss",
-          plugins: () => [
-            require("postcss-flexbugs-fixes"),
-            require("postcss-preset-env")({
-              autoprefixer: {
-                flexbox: "no-2009"
-              },
-              stage: 3
-            })
-          ],
+          postcssOptions: {
+            plugins: [
+              require("postcss-flexbugs-fixes"),
+              require("postcss-preset-env")({
+                autoprefixer: {
+                  flexbox: "no-2009"
+                },
+                stage: 3
+              })
+            ]
+          },
           sourceMap: isEnvProduction && shouldUseSourceMap
         }
       }
@@ -196,27 +190,9 @@ module.exports = function (webpackEnv) {
           },
           // Use multi-process parallel running to improve the build speed
           // Default number of concurrent runs: os.cpus().length - 1
-          parallel: true,
-          // Enable file caching
-          cache: true,
-          sourceMap: shouldUseSourceMap
-        }),
-        // This is only used in production mode
-        new OptimizeCSSAssetsPlugin({
-          cssProcessorOptions: {
-            parser: safePostCssParser,
-            map: shouldUseSourceMap
-              ? {
-                  // `inline: false` forces the sourcemap to be output into a
-                  // separate file
-                  inline: false,
-                  // `annotation: true` appends the sourceMappingURL to the end of
-                  // the css file, helping the browser find the sourcemap
-                  annotation: true
-                }
-              : false
-          }
+          parallel: true
         })
+        // This is only used in production mode
       ],
       // Automatically split vendor and commons
       // https://twitter.com/wSokra/status/969633336732905474
@@ -227,7 +203,9 @@ module.exports = function (webpackEnv) {
       },
       // Keep the runtime chunk separated to enable long term caching
       // https://twitter.com/wSokra/status/969679223278505985
-      runtimeChunk: true
+      runtimeChunk: {
+        name: entrypoint => `runtime-${entrypoint.name}`
+      }
     },
     resolve: {
       // This allows you to set a fallback for where Webpack should look for modules.
@@ -252,10 +230,16 @@ module.exports = function (webpackEnv) {
         // https://www.smashingmagazine.com/2016/08/a-glimpse-into-the-future-with-react-native-for-web/
         "react-native": "react-native-web"
       },
+      // Webpack 5 doesn't include Node.js polyfills by default
+      fallback: {
+        dgram: false,
+        fs: false,
+        net: false,
+        tls: false,
+        child_process: false,
+        url: require.resolve("url/")
+      },
       plugins: [
-        // Adds support for installing with Plug'n'Play, leading to faster installs and adding
-        // guards against forgotten dependencies and such.
-        PnpWebpackPlugin,
         // Prevents users from importing files from outside of src/ (or node_modules/).
         // This often causes confusion because we only process files within src/ with babel.
         // To fix this, we prevent you from importing files out of src/ -- if you'd like to,
@@ -264,59 +248,43 @@ module.exports = function (webpackEnv) {
         new ModuleScopePlugin(paths.appSrc, [paths.appPackageJson])
       ]
     },
-    resolveLoader: {
-      plugins: [
-        // Also related to Plug'n'Play, but this time it tells Webpack to load its loaders
-        // from the current package.
-        PnpWebpackPlugin.moduleLoader(module)
-      ]
-    },
     module: {
       strictExportPresence: false,
-      defaultRules: [
-        {
-          type: "javascript/auto",
-          resolve: {}
-        },
-        {
-          test: /\.json$/i,
-          type: "json"
-        }
-      ],
       rules: [
+        // Webpack 5 fix: allow resolving .js files without full specification in ESM mode
         {
-          test: /\.(glsl|vs|fs|vert|frag)$/,
-          exclude: /node_modules/,
-          use: [
-            {
-              loader: require.resolve("raw-loader")
-            }
-          ],
-          include: paths.appSrc
-        },
-        // Disable require.ensure as it's not a standard language feature.
-        {
-          parser: {
-            requireEnsure: false
+          test: /\.m?js$/,
+          resolve: {
+            fullySpecified: false
           }
+        },
+        // Webpack 5 fix: allow resolving .json files without full specification
+        {
+          test: /\.json$/,
+          // resolve: {
+          //   fullySpecified: false
+          // },
+          type: 'json'
         },
 
         // First, run the linter.
         // It's important to do this before Babel processes the JS.
-        {
-          test: /\.(js|mjs|jsx)$/,
-          enforce: "pre",
-          use: [
-            {
-              options: {
-                formatter: require.resolve("react-dev-utils/eslintFormatter"),
-                eslintPath: require.resolve("eslint")
-              },
-              loader: require.resolve("eslint-loader")
-            }
-          ],
-          include: paths.appSrc
-        },
+        // NOTE: eslint-loader is incompatible with webpack 5, disabled for now
+        // Use `npm run lint` for type checking instead
+        // {
+        //   test: /\.(js|mjs|jsx)$/,
+        //   enforce: "pre",
+        //   use: [
+        //     {
+        //       options: {
+        //         formatter: require.resolve("react-dev-utils/eslintFormatter"),
+        //         eslintPath: require.resolve("eslint")
+        //       },
+        //       loader: require.resolve("eslint-loader")
+        //     }
+        //   ],
+        //   include: paths.appSrc
+        // },
         {
           // "oneOf" will traverse all following loaders until one will
           // match the requirements. When no loader matches it will fall
@@ -486,17 +454,18 @@ module.exports = function (webpackEnv) {
       // during a production build.
       // Otherwise React will be compiled in the very slow development mode.
       new webpack.DefinePlugin(env.stringified),
+      // Webpack 5: Provide process global for browser compatibility
+      new webpack.ProvidePlugin({
+        process: 'process/browser',
+      }),
       // This is necessary to emit hot updates (currently CSS only):
       isEnvDevelopment && new webpack.HotModuleReplacementPlugin(),
       // Watcher doesn't work well if you mistype casing in a path so we use
       // a plugin that prints an error when you attempt to do this.
       // See https://github.com/facebook/create-react-app/issues/240
       isEnvDevelopment && new CaseSensitivePathsPlugin(),
-      // If you require a missing module and then `npm install` it, you still have
-      // to restart the development server for Webpack to discover it. This plugin
-      // makes the discovery automatic so you don't have to restart.
-      // See https://github.com/facebook/create-react-app/issues/186
-      isEnvDevelopment && new WatchMissingNodeModulesPlugin(paths.appNodeModules),
+      // WatchMissingNodeModulesPlugin is no longer needed in Webpack 5
+      // Webpack 5 automatically watches node_modules
       isEnvProduction &&
         new MiniCssExtractPlugin({
           // Options similar to the same options in webpackOptions.output
@@ -507,7 +476,7 @@ module.exports = function (webpackEnv) {
       // Generate a manifest file which contains a mapping of all asset filenames
       // to their corresponding output file so that tools can pick it up without
       // having to parse `index.html`.
-      new ManifestPlugin({
+      new WebpackManifestPlugin({
         fileName: "asset-manifest.json",
         publicPath: publicPath
       }),
@@ -516,62 +485,31 @@ module.exports = function (webpackEnv) {
       // solution that requires the user to opt into importing specific locales.
       // https://github.com/jmblog/how-to-optimize-momentjs-with-webpack
       // You can remove this if you don't use Moment.js:
-      new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
-      // Generate a service worker script that will precache, and keep up to date,
-      // the HTML & assets that are part of the Webpack build.
-      isEnvProduction &&
-        new WorkboxWebpackPlugin.GenerateSW({
-          clientsClaim: true,
-          exclude: [/\.map$/, /asset-manifest\.json$/],
-          importWorkboxFrom: "cdn",
-          navigateFallback: publicUrl + "/index.html",
-          navigateFallbackBlacklist: [
-            // Exclude URLs starting with /_, as they're likely an API call
-            new RegExp("^/_"),
-            // Exclude URLs containing a dot, as they're likely a resource in
-            // public/ and not a SPA route
-            new RegExp("/[^/]+\\.[^/]+$")
-          ]
-        }),
-      // TypeScript type checking
+      new webpack.IgnorePlugin({
+        resourceRegExp: /^\.\/locale$/,
+        contextRegExp: /moment$/
+      }),
+     // TypeScript type checking
       useTypeScript &&
         new ForkTsCheckerWebpackPlugin({
-          typescript: resolve.sync("typescript", {
-            basedir: paths.appNodeModules
-          }),
-          async: false,
-          checkSyntacticErrors: true,
-          tsconfig: paths.appTsConfig,
-          compilerOptions: {
-            module: "esnext",
-            moduleResolution: "node",
-            resolveJsonModule: true,
-            isolatedModules: false,
-            noEmit: true,
-            jsx: "preserve"
+          typescript: {
+            typescriptPath: resolve.sync("typescript", {
+              basedir: paths.appNodeModules
+            }),
+            configFile: paths.appTsConfig,
+            mode: "write-references",
+            diagnosticOptions: {
+              syntactic: true,
+              semantic: true
+            }
           },
-          reportFiles: [
-            "**",
-            "!**/*.json",
-            "!**/__tests__/**",
-            "!**/?(*.)(spec|test).*",
-            "!**/src/setupProxy.*",
-            "!**/src/setupTests.*"
-          ],
-          watch: paths.appSrc,
-          silent: true,
-          formatter: typescriptFormatter
+          async: false,
+          logger: {
+            infrastructure: "silent",
+            issues: "console"
+          }
         })
     ].filter(Boolean),
-    // Some libraries import Node modules but don't use them in the browser.
-    // Tell Webpack to provide empty mocks for them so importing them works.
-    node: {
-      dgram: "empty",
-      fs: "empty",
-      net: "empty",
-      tls: "empty",
-      child_process: "empty"
-    },
     // Turn off performance processing because we utilize
     // our own hints via the FileSizeReporter
     performance: false
