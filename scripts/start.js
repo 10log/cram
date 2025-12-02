@@ -99,7 +99,7 @@ checkBrowsers(paths.appPath, isInteractive)
     // Webpack-dev-server v5 uses reversed parameter order
     const devServer = new WebpackDevServer(serverConfig, compiler);
     // Launch WebpackDevServer.
-    devServer.startCallback(err => {
+    devServer.startCallback(port, HOST, err => {
       if (err) {
         return console.log(err);
       }
