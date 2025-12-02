@@ -21,7 +21,7 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
-    "@babel/runtime": "^7.28.4",
+    "@babel/runtime": "^7.28.5",
     "@blueprintjs/core": "^3.23.0",
     "@blueprintjs/icons": "^3.13.0",
     "@blueprintjs/popover2": "^0.1.1",
