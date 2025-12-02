@@ -1,0 +1,19 @@
+# Test and experimental files
+**/*.worker.ts
+**/test.ts
+**/line3d.ts
+**/striped-lodash.ts
+
+# Legacy JavaScript files
+**/raytracer/ga/**/*.js
+**/raytracer/bvh/**/*.js
+**/OrbitControls.js
+**/TransformControls.js
+**/modified-grid-helper.js
+
+# Build output
+build/
+dist/
+
+# Dependencies
+node_modules/
