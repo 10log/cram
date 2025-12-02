@@ -300,20 +300,20 @@ export function* map<T, U>(data: Iterable<T>, fn: (curr: T) => U): Iterable<U> {
   }
 }
 
-export function mapObject<T, U>(obj: T, fn: (val: T[keyof T], key: keyof T, obj: T) => U): U[] {
+export function mapObject<T extends object, U>(obj: T, fn: (val: T[keyof T], key: keyof T, obj: T) => U): U[] {
   return (Object.keys(obj) as (keyof T)[]).map(key => fn(obj[key], key, obj)) as U[];
 }
 
 
 
-export function filteredMapObject<T, U>(obj: T, fn: (val: T[keyof T], key: keyof T, obj: T) => U): U[] {
+export function filteredMapObject<T extends object, U>(obj: T, fn: (val: T[keyof T], key: keyof T, obj: T) => U): U[] {
   return (Object.keys(obj) as (keyof T)[]).reduce((acc, key) => {
     const result = fn(obj[key], key, obj);
     return typeof result !== "undefined" && result !== null ? acc.concat(result) : acc;
   }, [] as U[]) as U[];
 }
 
-export function filterObjectToArray<T>(obj: T, fn: (val: T[keyof T], key: keyof T, obj: T) => boolean): T[keyof T][] {
+export function filterObjectToArray<T extends object>(obj: T, fn: (val: T[keyof T], key: keyof T, obj: T) => boolean): T[keyof T][] {
   return (Object.keys(obj) as (keyof T)[]).reduce((acc, key) => {
     const include = fn(obj[key], key, obj);
     return include ? acc.concat(obj[key]) : acc;

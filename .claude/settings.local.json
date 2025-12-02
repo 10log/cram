@@ -9,7 +9,13 @@
       "Bash(git -c core.autocrlf=false add CLAUDE.md .claude/)",
       "Bash(git config:*)",
       "Bash(GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=\"core.autocrlf\" GIT_CONFIG_VALUE_0=\"false\" git add .claude/ CLAUDE.md)",
-      "Bash(npm run lint:*)"
+      "Bash(npm run lint:*)",
+      "Bash(node:*)",
+      "Bash(npm --version)",
+      "Bash(npm view:*)",
+      "Bash(npm run test:*)",
+      "Bash(npm run build:*)",
+      "Bash(unix2dos:*)"
     ],
     "deny": [],
     "ask": []

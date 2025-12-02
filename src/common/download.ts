@@ -36,7 +36,9 @@ export function download(data: string|Blob|File|URL, strFileName: string, strMim
 
   //go ahead and download dataURLs right away
   if (String(x).match(/^data\:[\w+\-]+\/[\w+\-]+[,;]/)) {
+    //@ts-ignore - IE10 legacy API
     return navigator.msSaveBlob // IE10 can't do a[download], only Blobs:
+      //@ts-ignore - IE10 legacy API
       ? navigator.msSaveBlob(d2b(x), fn)
        //@ts-ignore
       : saver(x); // everyone else can save dataURLs un-processed
@@ -100,8 +102,10 @@ export function download(data: string|Blob|File|URL, strFileName: string, strMim
     }, 333);
   } //end saver
 
+  //@ts-ignore - IE10 legacy API
   if (navigator.msSaveBlob) {
     // IE10+ : (has Blob, but not a[download] or URL)
+    //@ts-ignore - IE10 legacy API
     return navigator.msSaveBlob(blob, fn);
   }
 

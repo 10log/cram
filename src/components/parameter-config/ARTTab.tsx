@@ -43,6 +43,7 @@ const Settings = ({ uuid }: { uuid: string }) => {
   const [open, toggle] = useToggle(true);
   return (
     <PropertyRowFolder label="Room Settings" open={open} onOpenClose={toggle}>
+      <></>
     </PropertyRowFolder>
   );
 };

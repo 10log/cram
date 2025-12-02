@@ -75,7 +75,7 @@ export const createPropertyInput = <T extends Containers>(
     return (
       <PropertyRow>
         <PropertyRowLabel label={label} hasToolTip tooltip={tooltip} />
-        <div>{ensureArray(property).map((prop, index) => <Element uuid={uuid} property={prop} key={`${uuid}-${prop}-${index}`} {...{options}}/>)}</div>
+        <div>{ensureArray(property).map((prop, index) => <Element uuid={uuid} property={prop} key={`${uuid}-${String(prop)}-${index}`} {...{options}}/>)}</div>
       </PropertyRow>
   );
 };

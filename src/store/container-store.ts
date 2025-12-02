@@ -118,7 +118,7 @@ declare global {
     uuid: string;
     method: K;
     isAsync?: boolean;
-    args?: Parameters<T[K]>
+    args?: T[K] extends (...args: any) => any ? Parameters<T[K]> : never
   }
   type CallContainerMethod<T extends Container> = CallMethodArgs<T, AllowedNames<T, Function>>;
   type CallSolverMethod<T extends Solver> = CallMethodArgs<T, AllowedNames<T, Function>>;
