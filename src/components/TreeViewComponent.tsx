@@ -87,47 +87,12 @@ type State = {
 };
 
 class TreeViewComponent extends Component<Props, State> {
-  static defaultProps = {
-    depth: 0,
-
-    deleteElement: <div>(X)</div>,
-
-    getStyleClassCb: (/* node, depth */) => {
-      return "";
-    },
-    isCheckable: (/* node, depth */) => {
-      return true;
-    },
-    isDeletable: (/* node, depth */) => {
-      return true;
-    },
-    isExpandable: (/* node, depth */) => {
-      return true;
-    },
-
-    keywordChildren: "children",
-    keywordChildrenLoading: "isChildrenLoading",
-    keywordLabel: "name",
-    keywordKey: "id",
-
-    loadingElement: <div>loading...</div>,
-
-    noChildrenAvailableMessage: "No data found",
-
-    onCheckToggleCb: (/* Array of nodes, depth */) => {},
-    onDeleteCb: (/* node, updatedData, depth */) => {
-      return true;
-    },
-    onExpandToggleCb: (/* node, depth */) => {},
-    onUpdateCb: (/* updatedData, depth */) => {},
-
-    transitionEnterTimeout: 0,
-    transitionExitTimeout: 0
-  };
   constructor(props) {
     super(props);
+    // Apply default props manually for React 18 compatibility
+    const propsWithDefaults = { ...defaultProps, ...props };
     this.state = {
-      data: cloneDeep(this.props.data, true),
+      data: cloneDeep(propsWithDefaults.data, true),
       lastCheckToggledNodeIndex: null
     };
 
@@ -146,9 +111,9 @@ class TreeViewComponent extends Component<Props, State> {
     this.handleExpandToggle = this.handleExpandToggle.bind(this);
   }
 
-  componentWillReceiveProps(nextProps) {
-    if (!isEqual(nextProps.data, this.props.data)) {
-      this.setState({ data: cloneDeep(nextProps.data, true) });
+  componentDidUpdate(prevProps) {
+    if (!isEqual(prevProps.data, this.props.data)) {
+      this.setState({ data: cloneDeep(this.props.data, true) });
     }
   }
 

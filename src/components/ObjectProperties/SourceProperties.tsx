@@ -14,7 +14,7 @@ import PropertyRowLabel from "../parameter-config/property-row/PropertyRowLabel"
 import PropertyRowButton from "../parameter-config/property-row/PropertyRowButton";
 import PropertyRowCheckbox from "../parameter-config/property-row/PropertyRowCheckbox";
 import { ObjectPropertyInputEvent } from ".";
-import { IToastProps } from "@blueprintjs/core/lib/esm/components/toast/toast";
+import { ToastProps } from "@blueprintjs/core";
 import decimalPrecision from "../../common/decimal-precision";
 import {CLFParser} from "../../import-handlers/CLFParser";
 
@@ -213,7 +213,7 @@ export default function SourceProperties(props: SourcePropertiesProps) {
                   intent: "warning",
                   timeout: 1750,
                   icon: "issue"
-                } as IToastProps);
+                } as ToastProps);
               }
             }}
             label="Download"

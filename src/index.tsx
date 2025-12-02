@@ -1,8 +1,8 @@
 // user interface
 import React, { createContext, useReducer } from "react";
-import ReactDOM from "react-dom";
+import { createRoot } from "react-dom/client";
 import App from "./components/App";
-import { IToastProps } from "@blueprintjs/core";
+import { ToastProps } from "@blueprintjs/core";
 
 // command handling
 import hotkeys, { HotkeysEvent, KeyHandler } from "hotkeys-js";
@@ -696,14 +696,14 @@ messenger.addMessageHandler("ASSIGN_MATERIAL", (acc, material) => {
       intent: "success",
       timeout: 1750,
       icon: "tick"
-    } as IToastProps);
+    } as ToastProps);
   } else {
     messenger.postMessage("SHOW_TOAST", {
       message: `No surfaces are selected.`,
       intent: "warning",
       timeout: 1750,
       icon: "issue"
-    } as IToastProps);
+    } as ToastProps);
   }
 });
 
@@ -970,10 +970,15 @@ async function finishedLoading() {
 }
 
 // the main app
-ReactDOM.render(
-  <App {...cram.state} />,
-  document.getElementById("root"),
-  finishedLoading
-);
+const container = document.getElementById("root");
+if (!container) throw new Error('Root container not found');
+const root = createRoot(container);
+root.render(<App {...cram.state} />);
+
+// Call finishedLoading after render (React 18 renders synchronously, so we can call this immediately)
+// Use setTimeout to ensure render completes
+setTimeout(() => {
+  finishedLoading();
+}, 0);
 
 history.clear();

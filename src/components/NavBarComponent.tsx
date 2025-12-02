@@ -1,7 +1,6 @@
 import React, { useState, useContext } from "react";
 import Messenger, { emit, postMessage } from "../messenger";
-import { Position, Button, Menu, MenuItem, MenuDivider, Colors, Navbar, ButtonGroup } from "@blueprintjs/core";
-import { Popover2 , Classes} from "@blueprintjs/popover2";
+import { Position, Button, Menu, MenuItem, MenuDivider, Colors, Navbar, ButtonGroup, Popover, Classes } from "@blueprintjs/core";
 import NavbarMenuItemLabel from "./NavbarMenuItemLabel";
 import MenuItemText from "./MenuItemText";
 import { Characters } from "../constants";
@@ -19,7 +18,7 @@ interface MenuItemWithMessengerProps {
 function MenuItemWithMessenger(props: MenuItemWithMessengerProps) {
   return (
     <MenuItem
-      className={Classes.POPOVER2_DISMISS}
+      className={Classes.POPOVER_DISMISS}
       text={<MenuItemText text={props.label} hotkey={props.hotkey || [""]} />}
       onClick={(e) => postMessage(props.message)}
       disabled={props.disabled}
@@ -38,7 +37,7 @@ type MenuItemWithEmitterProps = {
 const MenuItemWithEmitter = ({ label, hotkey, disabled, event, args }: MenuItemWithEmitterProps) => {
   return (
     <MenuItem
-      className={Classes.POPOVER2_DISMISS}
+      className={Classes.POPOVER_DISMISS}
       text={<MenuItemText text={label} hotkey={hotkey || [""]} />}
       onClick={(e) => {
         emit(event, args)
@@ -57,7 +56,7 @@ type MenuProps = {
 
 export function FileMenu(props: MenuProps) {
   return (
-    <Popover2
+    <Popover
       minimal={true}
       transitionDuration={0}
 
@@ -65,7 +64,7 @@ export function FileMenu(props: MenuProps) {
       hoverOpenDelay={0}
       hoverCloseDelay={0}
       renderTarget={({ isOpen, ref, ...p }) => (
-        <Button {...p} active={isOpen} elementRef={ref as React.RefObject<HTMLButtonElement>} text="File" />
+        <Button {...p} active={isOpen} ref={ref as React.RefObject<HTMLButtonElement>} text="File" />
       )}
       onInteraction={(e)=>props.onInteraction(e)}
       content={
@@ -85,13 +84,13 @@ export function FileMenu(props: MenuProps) {
 export function EditMenu(props: MenuProps) {
   return (
 
-    <Popover2
+    <Popover
       minimal={true}
       onInteraction={(e)=>props.onInteraction(e)}
       transitionDuration={0}
       isOpen={props.isOpen}
       renderTarget={({ isOpen, ref, ...p }) => (
-        <Button {...p} active={isOpen} elementRef={ref as React.RefObject<HTMLButtonElement>} text="Edit" />
+        <Button {...p} active={isOpen} ref={ref as React.RefObject<HTMLButtonElement>} text="Edit" />
       )}
       content={
         <Menu>
@@ -122,13 +121,13 @@ export function EditMenu(props: MenuProps) {
 
 export function AddMenu(props: MenuProps) {
   return (
-    <Popover2
+    <Popover
     minimal={true}
 
     transitionDuration={0}
     isOpen={props.isOpen}
     renderTarget={({ isOpen, ref, ...p }) => (
-      <Button {...p} active={isOpen} elementRef={ref as React.RefObject<HTMLButtonElement>} text="Add" />
+      <Button {...p} active={isOpen} ref={ref as React.RefObject<HTMLButtonElement>} text="Add" />
     )}
     onInteraction={(e)=>props.onInteraction(e)}
     content={
@@ -153,13 +152,13 @@ export function AddMenu(props: MenuProps) {
 
 export function ViewMenu(props: MenuProps) {
   return (
-    <Popover2
+    <Popover
     minimal={true}
     onInteraction={(e)=>props.onInteraction(e)}
     isOpen={props.isOpen}
     transitionDuration={0}
     renderTarget={({ isOpen, ref, ...p }) => (
-      <Button {...p} active={isOpen} elementRef={ref as React.RefObject<HTMLButtonElement>} text="View" />
+      <Button {...p} active={isOpen} ref={ref as React.RefObject<HTMLButtonElement>} text="View" />
     )}
     content={
       <Menu>
@@ -175,13 +174,13 @@ export function ViewMenu(props: MenuProps) {
 
 export function ToolMenu(props: MenuProps) {
   return (
-    <Popover2
+    <Popover
     minimal={true}
     onInteraction={(e)=>props.onInteraction(e)}
     isOpen={props.isOpen}
     transitionDuration={0}
     renderTarget={({ isOpen, ref, ...p }) => (
-      <Button {...p} active={isOpen} elementRef={ref as React.RefObject<HTMLButtonElement>} text="Tools" />
+      <Button {...p} active={isOpen} ref={ref as React.RefObject<HTMLButtonElement>} text="Tools" />
     )}
     content={
       <Menu>
@@ -197,13 +196,13 @@ export function ToolMenu(props: MenuProps) {
 
 export function ExamplesMenu(props: MenuProps) {
   return (
-    <Popover2
+    <Popover
     minimal={true}
     onInteraction={(e)=>props.onInteraction(e)}
     isOpen={props.isOpen}
     transitionDuration={0}
     renderTarget={({ isOpen, ref, ...p }) => (
-      <Button {...p} active={isOpen} elementRef={ref as React.RefObject<HTMLButtonElement>} text="Examples" />
+      <Button {...p} active={isOpen} ref={ref as React.RefObject<HTMLButtonElement>} text="Examples" />
     )}
     content={
       <Menu>
