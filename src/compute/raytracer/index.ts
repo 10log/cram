@@ -29,7 +29,8 @@ import { filterSignals } from "../../audio-engine/envelope";
 
 import {ImageSourceSolver, ImageSourceSolverParams} from "./image-source/index"; 
 
-const FilterWorker = require("worker-loader!../../audio-engine/filter.worker.ts").default;
+// Webpack 5 native worker support
+const FilterWorker = () => new Worker(new URL('../../audio-engine/filter.worker.ts', import.meta.url));
 
 const {floor, random, abs, asin} = Math;
 const coinFlip = () => random() > 0.5;

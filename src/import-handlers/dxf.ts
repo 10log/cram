@@ -7,9 +7,6 @@ import Surface from '../objects/surface';
 import {useMaterial} from '../store/material-store';
 
 
-const firstHalf = <T extends any[]>(arr: T) => arr.slice(0, arr.length >> 1);
-
-
 const makeBufferGeometry = (position: number[], normals?: number[], texCoords?: number[]) => {
   const buffer = new BufferGeometry();
   buffer.setAttribute("position", new BufferAttribute(new Float32Array(position), 3, false));
@@ -20,7 +17,8 @@ const makeBufferGeometry = (position: number[], normals?: number[], texCoords?: 
 
 export function dxf(data: string){
   const defaultMaterial = [...useMaterial.getState().materials.values()][0];
-  const parsed = new DxfParser().parseSync(data) as Dxf;
+  const parsedData: unknown = new DxfParser().parseSync(data);
+  const parsed = parsedData as Dxf;
   const layerMap = new Map<string, Container>();
   parsed.entities.filter(x=>x.type==="POLYLINE").forEach((polyline,i)=>{
     const material = polyline.materialObjectHandle;
