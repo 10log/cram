@@ -96,9 +96,9 @@ class TreeViewComponent extends Component<Props, State> {
   constructor(props) {
     super(props);
     // Apply default props manually for React 18 compatibility
-    this.propsWithDefaults = { ...defaultProps, ...props } as any;
+    const propsWithDefaults = { ...defaultProps, ...props };
     this.state = {
-      data: cloneDeep(this.propsWithDefaults.data, true),
+      data: cloneDeep(propsWithDefaults.data, true),
       lastCheckToggledNodeIndex: null
     };
 
@@ -118,9 +118,6 @@ class TreeViewComponent extends Component<Props, State> {
   }
 
   componentDidUpdate(prevProps) {
-    // Update merged props when props change
-    this.propsWithDefaults = { ...defaultProps, ...this.props } as any;
-
     if (!isEqual(prevProps.data, this.props.data)) {
       this.setState({ data: cloneDeep(this.props.data, true) });
     }
