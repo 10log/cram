@@ -1,5 +1,7 @@
 const ctx: Worker = self as any;
 
+export {};
+
 
 /*
  * Computes the discrete Fourier transform (DFT) of the given complex vector, storing the result back into the vector.

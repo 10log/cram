@@ -1,3 +1,5 @@
+export {};
+
 const outputShape = [3, 6, 2];
 
 const [nx, ny, nz] = outputShape;

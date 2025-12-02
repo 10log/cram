@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc:*)",
+      "Bash(npm install:*)",
+      "Bash(cat:*)",
+      "Bash(cut:*)",
+      "Bash(git add:*)",
+      "Bash(git -c core.autocrlf=false add CLAUDE.md .claude/)",
+      "Bash(git config:*)",
+      "Bash(GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=\"core.autocrlf\" GIT_CONFIG_VALUE_0=\"false\" git add .claude/ CLAUDE.md)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
