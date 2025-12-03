@@ -43,6 +43,9 @@ type Props = {
   transitionExitTimeout?: number;
 };
 
+// Default props object for React 18 compatibility
+// Used to merge with incoming props in the constructor
+
 const defaultProps = {
   depth: 0,
 
@@ -87,12 +90,15 @@ type State = {
 };
 
 class TreeViewComponent extends Component<Props, State> {
+  // Store merged props as instance variable for React 18 compatibility
+  private propsWithDefaults: any;
+
   constructor(props) {
     super(props);
     // Apply default props manually for React 18 compatibility
-    const propsWithDefaults = { ...defaultProps, ...props };
+    this.propsWithDefaults = { ...defaultProps, ...props } as any;
     this.state = {
-      data: cloneDeep(propsWithDefaults.data, true),
+      data: cloneDeep(this.propsWithDefaults.data, true),
       lastCheckToggledNodeIndex: null
     };
 
@@ -112,6 +118,9 @@ class TreeViewComponent extends Component<Props, State> {
   }
 
   componentDidUpdate(prevProps) {
+    // Update merged props when props change
+    this.propsWithDefaults = { ...defaultProps, ...this.props } as any;
+
     if (!isEqual(prevProps.data, this.props.data)) {
       this.setState({ data: cloneDeep(this.props.data, true) });
     }
