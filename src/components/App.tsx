@@ -1,6 +1,6 @@
 import React from "react";
 import SplitterLayout from "react-splitter-layout";
-import { FocusStyleManager, Position, Drawer, Alert, Intent, ToastProps } from "@blueprintjs/core";
+import { FocusStyleManager } from "@blueprintjs/core";
 import { ItemListRenderer, ItemListRendererProps } from "@blueprintjs/select";
 import ImportDialog from "./ImportDialog";
 import ObjectView from "./object-view/ObjectView";
