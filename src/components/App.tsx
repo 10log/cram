@@ -1,7 +1,7 @@
 import React from "react";
 import SplitterLayout from "react-splitter-layout";
-import { FocusStyleManager, Position, Drawer, Alert, Intent, Toaster, IToastProps } from "@blueprintjs/core";
-import { ItemListRenderer, IItemListRendererProps } from "@blueprintjs/select";
+import { FocusStyleManager, Position, Drawer, Alert, Intent, Toaster, ToastProps } from "@blueprintjs/core";
+import { ItemListRenderer, ItemListRendererProps } from "@blueprintjs/select";
 import ImportDialog from "./ImportDialog";
 import ObjectView from "./object-view/ObjectView";
 // import ConstructionsView from "./ConstructionsView";
@@ -40,6 +40,7 @@ import TreeViewComponent from "../components/TreeViewComponent";
 import {ResultsPanel} from './ResultsPanel';
 import { MaterialSearch } from "./MaterialSearch";
 import EditorContainer from "./EditorContainer";
+import { finishedLoading } from "../index";
 
 const AppToaster = Toaster.create({
   className: "app-toaster",
@@ -92,6 +93,9 @@ export default class App extends React.Component<AppProps, AppState> {
 
   componentDidMount() {
     this.canvas.current && messenger.postMessage("APP_MOUNTED", this.canvas.current);
+
+    // Call finishedLoading after component mounts (proper React 18 lifecycle)
+    finishedLoading();
     let lastPanelSize = 50;
     if(this.editorResultSplitterRef.current){
       //@ts-ignore

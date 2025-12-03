@@ -13,7 +13,7 @@ import { useAppStore } from '../store/app-store';
 import { pickProps } from '../common/helpers';
 import { mmm_dd_yyyy } from "../common/dayt"; 
 import FileTypes from '../common/file-type';
-import { DialogActions } from "@material-ui/core";
+import { DialogActions } from "@mui/material";
 
 
 
@@ -124,11 +124,9 @@ export default function ImportDialog() {
 				</div>
 				{filelist.length > 0 ? (
 					<HTMLTable
-						className={[
-							Classes.HTML_TABLE_BORDERED,
-							Classes.HTML_TABLE_CONDENSED,
-							Classes.HTML_TABLE_STRIPED
-						].join(" ")}
+						compact
+						bordered
+						striped
 						style={{
 							width: "100%",
 							textAlign: "center"

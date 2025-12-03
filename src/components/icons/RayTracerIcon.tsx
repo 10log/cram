@@ -1,3 +1,3 @@
-import RayTracerIcon from "@material-ui/icons/Timeline";
+import RayTracerIcon from "@mui/icons-material/Timeline";
 
 export { RayTracerIcon };

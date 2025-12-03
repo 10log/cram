@@ -96,23 +96,29 @@ checkBrowsers(paths.appPath, isInteractive)
       proxyConfig,
       urls.lanUrlForConfig
     );
+
+    // Add port and host to server config for webpack-dev-server v5
+    serverConfig.port = port;
+    serverConfig.host = HOST;
+
     // Webpack-dev-server v5 uses reversed parameter order
     const devServer = new WebpackDevServer(serverConfig, compiler);
     // Launch WebpackDevServer.
-    devServer.startCallback(port, HOST, err => {
-      if (err) {
-        return console.log(err);
-      }
+    // Note: webpack-dev-server v5 uses promises instead of callbacks
+    devServer.start().then(() => {
       if (isInteractive) {
         clearConsole();
       }
       console.log(chalk.cyan('Starting the development server...\n'));
       openBrowser(urls.localUrlForBrowser);
+    }).catch(err => {
+      console.log(err);
+      process.exit(1);
     });
 
     ['SIGINT', 'SIGTERM'].forEach(function(sig) {
-      process.on(sig, function() {
-        devServer.close();
+      process.on(sig, async function() {
+        await devServer.stop();
         process.exit();
       });
     });

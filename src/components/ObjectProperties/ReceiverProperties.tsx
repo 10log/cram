@@ -11,7 +11,7 @@ import PropertyRowLabel from "../parameter-config/property-row/PropertyRowLabel"
 import PropertyRowButton from "../parameter-config/property-row/PropertyRowButton";
 import GridRowSeperator from "../GridRowSeperator";
 import Messenger from "../../messenger";
-import { IToastProps } from "@blueprintjs/core";
+import { ToastProps } from "@blueprintjs/core";
 
 export interface ReceiverPropertiesProps {
   messenger: Messenger;
@@ -115,7 +115,7 @@ export default function ReceiverProperties(props: ReceiverPropertiesProps) {
                   intent: "warning",
                   timeout: 1750,
                   icon: "issue"
-                } as IToastProps);
+                } as ToastProps);
               }
             }}
             label="Open in Gutter"
@@ -130,7 +130,7 @@ export default function ReceiverProperties(props: ReceiverPropertiesProps) {
                   intent: "warning",
                   timeout: 1750,
                   icon: "issue"
-                } as IToastProps);
+                } as ToastProps);
               }
             }}
             label="Download"
