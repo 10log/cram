@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState } from 'react'
+import { useShallow } from 'zustand/react/shallow';
 import { Dialog, Classes, Button, AnchorButton, Intent } from '@blueprintjs/core';
 import { messenger, emit } from '../messenger';
 import { useAppStore } from '../store/app-store';
@@ -8,7 +9,7 @@ import { pickProps } from '../common/helpers';
 
 
 export const SaveDialog = () => {
-  const { projectName, saveDialogVisible, set } = useAppStore(store => pickProps(["projectName", "saveDialogVisible", "set"], store));
+  const { projectName, saveDialogVisible, set } = useAppStore(useShallow(store => pickProps(["projectName", "saveDialogVisible", "set"], store)));
   const [fileName, setFileName] = useState(projectName);
 
   return (

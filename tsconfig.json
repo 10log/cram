@@ -28,12 +28,10 @@
       "@types/react",
       "@types/react-color",
       "@types/react-dom",
-      "@types/react-select",
       "@types/react-splitter-layout",
       "@types/semver",
       "@types/d3",
       "@types/plotly.js",
-      "@types/react-tabs",
       "@types/styled-components",
       "@types/zip.js"
     ],

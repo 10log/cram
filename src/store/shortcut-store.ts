@@ -1,11 +1,11 @@
 // import hotkeys from 'hotkeys-js';
 import { emit } from "../messenger";
-import create from "zustand";
-import produce from "immer";
+import { create } from 'zustand';
+import { produce } from 'immer';
 import { on } from "../messenger";
 import { Surface } from "../objects/surface";
 import { KeyValuePair } from "../common/key-value-pair";
-import { uuid } from "uuidv4";
+import { v4 as uuid } from 'uuid';
 import properCase from "../common/proper-case";
 import hash from "object-hash";
 // import HashMap from "../common/hash-map";

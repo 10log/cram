@@ -1,5 +1,5 @@
-import create from "zustand";
-import produce from "immer";
+import { create } from 'zustand';
+import { produce } from 'immer';
 import { KeyValuePair } from "../common/key-value-pair";
 import { emit, on } from '../messenger';
 import { result } from "lodash";

@@ -1,4 +1,5 @@
-import React, { CSSProperties, useEffect, useMemo, useState } from 'react';
+import React, { CSSProperties, useEffect, useMemo, useState } from 'react'
+import { useShallow } from 'zustand/react/shallow';;
 import { Group } from '@visx/group';
 import { BarGroup } from '@visx/shape';
 import { AxisBottom, AxisLeft } from '@visx/axis';
@@ -137,7 +138,7 @@ export const Chart = ({
   events = false,
 }: BarGroupProps) => {
 
-  const {info, data: _data, from} = useResult(state=>pickProps(["info", "data", "from"], state.results[uuid] as Result<ResultKind.StatisticalRT60>));
+  const {info, data: _data, from} = useResult(useShallow(state => pickProps(["info", "data", "from"], state.results[uuid] as Result<ResultKind.StatisticalRT60>)));
   const [count, update] = useUpdate();
   const [data, setData] = useState(_data);
   const keys = Object.keys(data[0]).filter(d => d !== 'frequency') as RtType[];
@@ -258,7 +259,7 @@ export const RT60Chart = ({
   height = 300,
   events = false,
 }: BarGroupProps) => {
-  const {info, data, from} = useResult(state=>pickProps(["info", "data", "from"], state.results[uuid] as Result<ResultKind.StatisticalRT60>))
+  const {info, data, from} = useResult(useShallow(state => pickProps(["info", "data", "from"], state.results[uuid] as Result<ResultKind.StatisticalRT60>)));
   const keys = Object.keys(data[0]).filter(d => d !== 'frequency') as RtType[];
 
   const rtTypeColorScale = scaleOrdinal<RtType, string>({

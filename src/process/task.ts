@@ -1,5 +1,5 @@
 import Messenger from "../messenger";
-import { uuid } from "uuidv4";
+import { v4 as uuid } from 'uuid';
 
 export interface TaskParams {
   name: string;

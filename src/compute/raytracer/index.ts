@@ -9,7 +9,7 @@ import Surface from "../../objects/surface";
 import Receiver from "../../objects/receiver";
 import { Stat } from "../../components/parameter-config/Stats";
 import { emit, messenger, on } from "../../messenger";
-import sort from "fast-sort";
+import { sort } from "fast-sort";
 import FileSaver from "file-saver";
 import Plotly, { PlotData } from "plotly.js";
 import { scatteredEnergy } from "./scattered-energy";

@@ -18,7 +18,7 @@ import PropertyRowCheckbox from "./property-row/PropertyRowCheckbox";
 import PropertyButton from "./property-row/PropertyButton";
 import { PropertyRowTextInput } from "./property-row/PropertyRowTextInput";
 import { renderer } from "../../render/renderer";
-import { compareArrays } from "../../common/compare";
+import { useShallow } from "zustand/react/shallow";
 
 
 const { PropertyTextInput, PropertyNumberInput, PropertyCheckboxInput } = createPropertyInputs<RayTracer>(
@@ -28,11 +28,11 @@ const { PropertyTextInput, PropertyNumberInput, PropertyCheckboxInput } = create
 // const Option = ({ item }) => <option value={item.uuid}>{item.name}</option>;
 
 export const ReceiverSelect = ({ uuid }: { uuid: string }) => {
-  const receivers = useContainer((state) => {
+  const receivers = useContainer(useShallow((state) => {
     return filteredMapObject(state.containers, (container) =>
       container.kind === "receiver" ? pickProps(["uuid", "name"], container) : undefined
     ) as { uuid: string; name: string }[];
-  }, (state, newState) => compareArrays(state, newState, (a, b) => a.uuid === b.uuid));
+  }));
 
   const [receiverIDs, setReceiverIDs] = useSolverProperty<RayTracer, "receiverIDs">(
     uuid,
@@ -60,11 +60,11 @@ export const ReceiverSelect = ({ uuid }: { uuid: string }) => {
 };
 
 export const SourceSelect = ({ uuid }: { uuid: string }) => {
-  const sources = useContainer((state) => {
+  const sources = useContainer(useShallow((state) => {
     return filteredMapObject(state.containers, (container) =>
       container.kind === "source" ? pickProps(["uuid", "name"], container) : undefined
     ) as { uuid: string; name: string }[];
-  }, (state, newState) => compareArrays(state, newState, (a, b) => a.uuid === b.uuid));
+  }));
 
   const [sourceIDs, setSourceIDs] = useSolverProperty<RayTracer, "sourceIDs">(
     uuid,

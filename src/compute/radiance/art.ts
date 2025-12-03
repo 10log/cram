@@ -19,7 +19,7 @@ import {
   useResult,
   useSolver
 } from "../../store";
-import { uuid } from "uuidv4";
+import { v4 as uuid } from 'uuid';
 import FileSaver from "file-saver";
 import roundTo from "../../common/round-to";
 import { throwif } from "../../common/throwif";

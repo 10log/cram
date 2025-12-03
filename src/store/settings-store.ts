@@ -1,6 +1,6 @@
-import create from "zustand";
+import { create } from 'zustand';
 import { Searcher } from "fast-fuzzy";
-import produce from "immer";
+import { produce } from 'immer';
 import { KeyValuePair } from "../common/key-value-pair";
 import Container from "../objects/container";
 

@@ -1,6 +1,6 @@
-import create from "zustand";
+import { create } from 'zustand';
 import { FullOptions, Searcher } from "fast-fuzzy";
-import produce from "immer";
+import { produce } from 'immer';
 import materials from "../db/material.json";
 import { AcousticMaterial } from "../db/acoustic-material";
 import Surface from '../objects/surface';

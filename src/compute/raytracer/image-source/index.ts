@@ -1,6 +1,6 @@
 import Solver from "../../solver";
 import { renderer } from "../../../render/renderer";
-import {uuid} from "uuidv4";
+import { v4 as uuid } from 'uuid';
 import * as THREE from "three";
 import { MeshLine, MeshLineMaterial } from 'three.meshline';
 import * as ac from "../../acoustics";

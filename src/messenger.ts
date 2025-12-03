@@ -1,5 +1,5 @@
 import { KeyValuePair } from "./common/key-value-pair";
-import { uuid } from "uuidv4";
+import { v4 as uuid } from 'uuid';
 
 export type EventHandler = (...args) => void;
 
@@ -62,7 +62,6 @@ export default class Messenger{
     postMessage(message: string, ...args) {
         if (message != this.lastMessage) {
             this.lastMessage = message;
-            console.log(message);
         }
         // if message exists
         if (this.dictionary[message]) {

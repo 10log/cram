@@ -15,7 +15,10 @@
       "Bash(npm view:*)",
       "Bash(npm run test:*)",
       "Bash(npm run build:*)",
-      "Bash(unix2dos:*)"
+      "Bash(unix2dos:*)",
+      "Bash(npm outdated)",
+      "Bash(GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=\"core.autocrlf\" GIT_CONFIG_VALUE_0=\"false\" git add:*)",
+      "Bash(git -c core.safecrlf=false add:*)"
     ],
     "deny": [],
     "ask": []
