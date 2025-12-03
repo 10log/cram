@@ -943,7 +943,7 @@ registerAllEvents();
 
 
 
-async function finishedLoading() {
+export async function finishedLoading() {
   // const filepath = "/res/saves/concord2.json";
   // const filename = filepath.slice(filepath.lastIndexOf("/") + 1);
   // const filedata = await(await fetch(filepath)).text();
@@ -975,10 +975,5 @@ if (!container) throw new Error('Root container not found');
 const root = createRoot(container);
 root.render(<App {...cram.state} />);
 
-// Call finishedLoading after render (React 18 renders synchronously, so we can call this immediately)
-// Use setTimeout to ensure render completes
-setTimeout(() => {
-  finishedLoading();
-}, 0);
-
+// Note: finishedLoading is now called from App.componentDidMount for proper React 18 lifecycle
 history.clear();
