@@ -1,5 +1,5 @@
 import React, { CSSProperties, useEffect, useMemo, useState } from 'react'
-import { useShallow } from 'zustand/react/shallow';;
+import { useShallow } from 'zustand/react/shallow';
 import { Group } from '@visx/group';
 import { BarGroup } from '@visx/shape';
 import { AxisBottom, AxisLeft } from '@visx/axis';
