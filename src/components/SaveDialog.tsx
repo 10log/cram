@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { Dialog, Classes, Button, AnchorButton, Intent } from '@blueprintjs/core';
 import { messenger, emit } from '../messenger';
