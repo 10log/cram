@@ -64,7 +64,7 @@ export function FileMenu(props: MenuProps) {
       hoverOpenDelay={0}
       hoverCloseDelay={0}
       renderTarget={({ isOpen, ref, ...p }) => (
-        <Button {...p} active={isOpen} ref={ref as React.RefObject<HTMLButtonElement>} text="File" />
+        <Button {...p} active={isOpen} ref={ref} text="File" />
       )}
       onInteraction={(e)=>props.onInteraction(e)}
       content={
@@ -90,7 +90,7 @@ export function EditMenu(props: MenuProps) {
       transitionDuration={0}
       isOpen={props.isOpen}
       renderTarget={({ isOpen, ref, ...p }) => (
-        <Button {...p} active={isOpen} ref={ref as React.RefObject<HTMLButtonElement>} text="Edit" />
+        <Button {...p} active={isOpen} ref={ref} text="Edit" />
       )}
       content={
         <Menu>
@@ -127,7 +127,7 @@ export function AddMenu(props: MenuProps) {
     transitionDuration={0}
     isOpen={props.isOpen}
     renderTarget={({ isOpen, ref, ...p }) => (
-      <Button {...p} active={isOpen} ref={ref as React.RefObject<HTMLButtonElement>} text="Add" />
+      <Button {...p} active={isOpen} ref={ref} text="Add" />
     )}
     onInteraction={(e)=>props.onInteraction(e)}
     content={
@@ -158,7 +158,7 @@ export function ViewMenu(props: MenuProps) {
     isOpen={props.isOpen}
     transitionDuration={0}
     renderTarget={({ isOpen, ref, ...p }) => (
-      <Button {...p} active={isOpen} ref={ref as React.RefObject<HTMLButtonElement>} text="View" />
+      <Button {...p} active={isOpen} ref={ref} text="View" />
     )}
     content={
       <Menu>
@@ -180,7 +180,7 @@ export function ToolMenu(props: MenuProps) {
     isOpen={props.isOpen}
     transitionDuration={0}
     renderTarget={({ isOpen, ref, ...p }) => (
-      <Button {...p} active={isOpen} ref={ref as React.RefObject<HTMLButtonElement>} text="Tools" />
+      <Button {...p} active={isOpen} ref={ref} text="Tools" />
     )}
     content={
       <Menu>
@@ -202,7 +202,7 @@ export function ExamplesMenu(props: MenuProps) {
     isOpen={props.isOpen}
     transitionDuration={0}
     renderTarget={({ isOpen, ref, ...p }) => (
-      <Button {...p} active={isOpen} ref={ref as React.RefObject<HTMLButtonElement>} text="Examples" />
+      <Button {...p} active={isOpen} ref={ref} text="Examples" />
     )}
     content={
       <Menu>
