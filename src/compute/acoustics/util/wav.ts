@@ -364,7 +364,7 @@ export function encode(channelData: any, opts: encodeParams) {
     samples
   );
   
-  return Buffer.from(buffer);
+  return new Uint8Array(buffer);
 }
 
 export function wavAsBlob(data: Float32Array[], {sampleRate = 44100, bitDepth = 16 }: { sampleRate: number, bitDepth: number }){

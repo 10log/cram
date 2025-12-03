@@ -2007,7 +2007,14 @@ on("REMOVE_RAYTRACER", removeSolver);
 on("ADD_RAYTRACER", addSolver(RayTracer))
 on("RAYTRACER_CLEAR_RAYS", (uuid: string) => void (useSolver.getState().solvers[uuid] as RayTracer).clearRays());
 on("RAYTRACER_PLAY_IR", (uuid: string) => void (useSolver.getState().solvers[uuid] as RayTracer).playImpulseResponse().catch(console.error));
-on("RAYTRACER_DOWNLOAD_IR", (uuid: string) => void (useSolver.getState().solvers[uuid] as RayTracer).downloadImpulseResponse(`ir-${uuid}`).catch(console.error));
+on("RAYTRACER_DOWNLOAD_IR", (uuid: string) => {
+  const solver = useSolver.getState().solvers[uuid] as RayTracer;
+  const containers = useContainer.getState().containers;
+  const sourceName = solver.sourceIDs.length > 0 ? containers[solver.sourceIDs[0]]?.name || 'source' : 'source';
+  const receiverName = solver.receiverIDs.length > 0 ? containers[solver.receiverIDs[0]]?.name || 'receiver' : 'receiver';
+  const filename = `ir-${sourceName}-${receiverName}`.replace(/[^a-zA-Z0-9-_]/g, '_');
+  void solver.downloadImpulseResponse(filename).catch(console.error);
+});
 on("RAYTRACER_DOWNLOAD_IR_OCTAVE", (uuid: string) => void (useSolver.getState().solvers[uuid] as RayTracer).downloadImpulses(uuid));
 
 

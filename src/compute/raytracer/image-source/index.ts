@@ -1102,7 +1102,14 @@ on("UPDATE_IMAGESOURCE", (uuid: string) => void (useSolver.getState().solvers[uu
 on("RESET_IMAGESOURCE", (uuid: string) => void (useSolver.getState().solvers[uuid] as ImageSourceSolver).reset());
 on("CALCULATE_LTP", (uuid: string) => void (useSolver.getState().solvers[uuid] as ImageSourceSolver).calculateLTP(343));
 on("IMAGESOURCE_PLAY_IR", (uuid: string) => void (useSolver.getState().solvers[uuid] as ImageSourceSolver).playImpulseResponse().catch(console.error));
-on("IMAGESOURCE_DOWNLOAD_IR", (uuid: string) => void (useSolver.getState().solvers[uuid] as ImageSourceSolver).downloadImpulseResponse(`ir-imagesource-${uuid}`).catch(console.error));
+on("IMAGESOURCE_DOWNLOAD_IR", (uuid: string) => {
+  const solver = useSolver.getState().solvers[uuid] as ImageSourceSolver;
+  const containers = useContainer.getState().containers;
+  const sourceName = solver.sourceIDs.length > 0 ? containers[solver.sourceIDs[0]]?.name || 'source' : 'source';
+  const receiverName = solver.receiverIDs.length > 0 ? containers[solver.receiverIDs[0]]?.name || 'receiver' : 'receiver';
+  const filename = `ir-imagesource-${sourceName}-${receiverName}`.replace(/[^a-zA-Z0-9-_]/g, '_');
+  void solver.downloadImpulseResponse(filename).catch(console.error);
+});
 
 
 
