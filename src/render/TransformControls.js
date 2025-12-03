@@ -147,6 +147,7 @@ class TransformControls extends Controls {
 		 */
 		defineProperty( 'camera', camera );
 		defineProperty( 'object', undefined );
+		defineProperty( 'allAssociatedObjects', undefined );
 		defineProperty( 'enabled', true );
 
 		/**
