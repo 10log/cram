@@ -138,7 +138,7 @@ export const Chart = ({
   events = false,
 }: BarGroupProps) => {
 
-  const {data: _data} = useResult(useShallow(state => pickProps(["info", "data", "from"], state.results[uuid] as Result<ResultKind.StatisticalRT60>)));
+  const {data: _data} = useResult(useShallow(state => pickProps(["data"], state.results[uuid] as Result<ResultKind.StatisticalRT60>)));
   const [count, update] = useUpdate();
   const [data, setData] = useState(_data);
   const keys = Object.keys(data[0]).filter(d => d !== 'frequency') as RtType[];
@@ -259,7 +259,7 @@ export const RT60Chart = ({
   height = 300,
   events = false,
 }: BarGroupProps) => {
-  const {data} = useResult(useShallow(state => pickProps(["info", "data", "from"], state.results[uuid] as Result<ResultKind.StatisticalRT60>)));
+  const {data} = useResult(useShallow(state => pickProps(["data"], state.results[uuid] as Result<ResultKind.StatisticalRT60>)));
   const keys = Object.keys(data[0]).filter(d => d !== 'frequency') as RtType[];
 
   const rtTypeColorScale = scaleOrdinal<RtType, string>({
