@@ -14,7 +14,7 @@ export interface ReceiverSaveObject {
   visible: boolean;
   position: number[];
   scale: number[];
-  rotation: Array<string | number>;
+  rotation: [number, number, number] | number[];
   uuid: string;
   kind: string;
   color: number;
@@ -80,7 +80,7 @@ export class Receiver extends Container {
     const visible = this.visible;
     const position = this.position.toArray();
     const scale = this.scale.toArray();
-    const rotation = this.rotation.toArray();
+    const rotation = this.rotation.toArray().slice(0, 3) as [number, number, number];
     const color = this.getColorAsNumber();
     const uuid = this.uuid;
     const kind = this.kind;
@@ -103,8 +103,7 @@ export class Receiver extends Container {
     this.rotation.set(
       Number(state.rotation[0]),
       Number(state.rotation[1]),
-      Number(state.rotation[2]),
-      String(state.rotation[3])
+      Number(state.rotation[2])
     );
     this.color = state.color;
     this.uuid = state.uuid;

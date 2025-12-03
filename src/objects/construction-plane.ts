@@ -20,7 +20,7 @@ class ConstructionPlane extends Container {
     plane.setFromNormalAndCoplanarPoint(normal, centroid).normalize();
 
 
-    const planeGeometry = new THREE.PlaneBufferGeometry(props.width || 10, props.height || 10);
+    const planeGeometry = new THREE.PlaneGeometry(props.width || 10, props.height || 10);
     // planeGeometry.translate(centroid, y, z)
 
     // Align the geometry to the plane

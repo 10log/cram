@@ -99,7 +99,7 @@ export default class Model extends Container {
 
     const material = new THREE.MeshPhongMaterial({
       side: THREE.DoubleSide,
-      vertexColors: THREE.VertexColors
+      vertexColors: true
     });
 
     geometry.addGroup(0, 72, 1);
@@ -111,7 +111,7 @@ export default class Model extends Container {
       // opacity: 0.1,
       side: THREE.DoubleSide,
       // reflectivity: 0.15,
-      vertexColors: THREE.VertexColors,
+      vertexColors: true,
       // color: new THREE.Color(0xaaaaaa),
       depthWrite: true,
       depthTest: false
@@ -122,7 +122,7 @@ export default class Model extends Container {
       specular: 0xffffff,
       shininess: 250,
       side: THREE.DoubleSide,
-      vertexColors: THREE.VertexColors
+      vertexColors: true
     });
 
     const lineGeometry = new THREE.BufferGeometry();

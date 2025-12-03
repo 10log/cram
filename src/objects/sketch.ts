@@ -22,7 +22,7 @@ class Sketch extends THREE.Group {
     this.sketchPlane.setFromNormalAndCoplanarPoint(this.sketchPlaneNormal, this.sketchPlaneCentroid).normalize();
 
 
-    var planeGeometry = new THREE.PlaneBufferGeometry(1000, 1000);
+    var planeGeometry = new THREE.PlaneGeometry(1000, 1000);
 
     // Align the geometry to the plane
     const coplanarPoint = new THREE.Vector3();

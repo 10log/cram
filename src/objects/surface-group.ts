@@ -16,7 +16,7 @@ export interface SurfaceGroupSaveObject {
   visible: boolean;
   position: number[];
   scale: number[];
-  rotation: Array<string | number>;
+  rotation: [number, number, number] | number[];
   uuid: string;
   kind: string;
 }
@@ -50,7 +50,7 @@ export default class SurfaceGroup extends Container {
       visible: this.visible,
       name: this.name,
       position: this.position.toArray(),
-      rotation: this.rotation.toArray().slice(0, 3),
+      rotation: this.rotation.toArray().slice(0, 3) as [number, number, number],
       scale: this.scale.toArray(),
       uuid: this.uuid
     } as SurfaceGroupSaveObject;

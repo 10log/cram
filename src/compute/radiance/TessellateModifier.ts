@@ -77,11 +77,11 @@ export class TessellateModifier {
 		const hasUVs = attributes.uv !== undefined;
 		const hasUV2s = attributes.uv2 !== undefined;
 
-		let positions = attributes.position.array as number[];
-		let normals = hasNormals ? attributes.normal.array as number[] : null;
-		let colors = hasColors ? attributes.color.array as number[] : null;
-		let uvs = hasUVs ? attributes.uv.array as number[] : null;
-		let uv2s = hasUV2s ? attributes.uv2.array as number[] : null;
+		let positions = Array.from(attributes.position.array) as number[];
+		let normals = hasNormals ? Array.from(attributes.normal.array) as number[] : null;
+		let colors = hasColors ? Array.from(attributes.color.array) as number[] : null;
+		let uvs = hasUVs ? Array.from(attributes.uv.array) as number[] : null;
+		let uv2s = hasUV2s ? Array.from(attributes.uv2.array) as number[] : null;
 
 		let positions2 = positions;
 		let normals2 = normals;

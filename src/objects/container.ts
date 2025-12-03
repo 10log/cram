@@ -22,7 +22,7 @@ export interface ContainerSaveObject {
   visible: boolean;
   position: number[];
   scale: number[];
-  rotation: Array<string | number>;
+  rotation: [number, number, number] | number[];
   uuid: string;
   kind: string;
   children?: Array<ContainerSaveObject>
@@ -67,7 +67,7 @@ export default class Container extends THREE.Group {
     this.visible = state.visible;
     this.name = state.name;
     this.position.fromArray(state.position);
-    this.rotation.fromArray(state.rotation);
+    this.rotation.fromArray(state.rotation as [number, number, number]);
     this.scale.fromArray(state.scale);
     this.uuid = state.uuid;
     return this;

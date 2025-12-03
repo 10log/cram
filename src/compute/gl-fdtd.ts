@@ -28,8 +28,8 @@ export default class GLFDTD extends Solver {
   ny: number;
   nz: number;
   mesh!: THREE.Mesh;
-  texture1!: THREE.DataTexture3D;
-  texture2!: THREE.DataTexture3D;
+  texture1!: THREE.Data3DTexture;
+  texture2!: THREE.Data3DTexture;
   room: Room;
   constructor(params: GLFDTDParams) {
     super(params);
@@ -59,25 +59,25 @@ export default class GLFDTD extends Solver {
       data1[i] = Math.random();
       data2[i] = Math.random();
 		}
-    this.texture1 = new THREE.DataTexture3D(data1, this.nx, this.ny, this.nz);
+    this.texture1 = new THREE.Data3DTexture(data1, this.nx, this.ny, this.nz);
     this.texture1.format = THREE.AlphaFormat;
     this.texture1.type = THREE.FloatType;
 
-    
-    this.texture2 = new THREE.DataTexture3D(data2, this.nx, this.ny, this.nz);
+
+    this.texture2 = new THREE.Data3DTexture(data2, this.nx, this.ny, this.nz);
     this.texture2.format = THREE.AlphaFormat;
     this.texture2.type = THREE.FloatType;
-    
+
     var material = new THREE.ShaderMaterial({fog:false,
 		uniforms: {
-        prev: this.texture1,
-        curr: this.texture2,
-        nxyz: new THREE.Vector3(this.nx, this.ny, this.nz),
-        dx: this.dx,
-        dt: this.dt,
-        u_length: this.length,
-        u_width: this.width,
-        u_height: this.height
+        prev: { value: this.texture1 },
+        curr: { value: this.texture2 },
+        nxyz: { value: new THREE.Vector3(this.nx, this.ny, this.nz) },
+        dx: { value: this.dx },
+        dt: { value: this.dt },
+        u_length: { value: this.length },
+        u_width: { value: this.width },
+        u_height: { value: this.height }
       },
       // transparent: true,
 			// opacity: 0.1,
@@ -91,7 +91,7 @@ export default class GLFDTD extends Solver {
 		vertexShader: shader.vs,
 		fragmentShader: shader.fs
 	});
-    var geometry = new THREE.BoxBufferGeometry(this.length, this.width, this.height); 
+    var geometry = new THREE.BoxGeometry(this.length, this.width, this.height); 
     const { x, y, z } = this.room.boundingBox.getCenter(new THREE.Vector3());
     geometry.translate(x, y, z);
     this.mesh = new THREE.Mesh(geometry, material);

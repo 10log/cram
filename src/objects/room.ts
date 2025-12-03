@@ -141,7 +141,8 @@ export class Room extends Container {
   calculateBoundingBox() {
     this.boundingBox = this.allSurfaces.reduce((a: THREE.Box3, b: Container) => {
       (b as Surface).geometry.computeBoundingBox();
-      return (a as THREE.Box3).union((b as Surface).geometry.boundingBox);
+      const bbox = (b as Surface).geometry.boundingBox;
+      return bbox ? (a as THREE.Box3).union(bbox) : a;
     }, new THREE.Box3());
     return this.boundingBox;
   }

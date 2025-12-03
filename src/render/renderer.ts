@@ -324,7 +324,8 @@ export default class Renderer {
       if (!e.target.object || !(e.target.object instanceof Container)) {
         return;
       } else {
-        const objects = e.target.allAssociatedObjects;
+        const objects = e.target.allAssociatedObjects as Container[] | undefined;
+        if (!objects) return;
         const undoSaves = new Map<string, any>();
         const redoSaves = new Map<string, any>();
         for (let i = 0; i < objects.length; i++) {
@@ -350,7 +351,8 @@ export default class Renderer {
     });
     //@ts-ignore
     this.transformControls.addEventListener("mouseDown", (e) => {
-      const objects = e.target.allAssociatedObjects;
+      const objects = e.target.allAssociatedObjects as Container[] | undefined;
+      if (!objects) return;
       for (let i = 0; i < objects.length; i++) {
         objects[i].userData.lastSave = objects[i].save();
       }
@@ -619,7 +621,7 @@ export default class Renderer {
   }
 
   storeCameraState() {
-    const obj = this.camera.toJSON();
+    const obj = this.camera.toJSON() as any;
     obj.object.quat = this.camera.quaternion.toArray();
     obj.object.pos = this.camera.position.toArray();
     obj.object.zoom = this.camera.zoom;
@@ -1104,7 +1106,7 @@ on("PHASE_OUT", () => {
 
 on("STOP_OPERATIONS", () => {
   //@ts-ignore
-  renderer.interactables.remove(renderer.transformControls);
+  renderer.interactables.remove(renderer.transformControls._root);
   renderer.transformControls.detach();
   renderer.currentlyMovingObjects = false;
   renderer.overlays.transform.hide();
@@ -1122,7 +1124,7 @@ on("MOVE_SELECTED_OBJECTS", () => {
     renderer.currentlyMovingObjects = true;
     renderer.transformControls.attach([...selectedObjects]);
     //@ts-ignore
-    renderer.interactables.add(renderer.transformControls);
+    renderer.interactables.add(renderer.transformControls._root);
   }
   renderer.needsToRender = true;
 });

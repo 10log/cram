@@ -73,7 +73,7 @@ export class Markup extends Container{
       this.linesBufferGeometry,
       new THREE.LineBasicMaterial({
         fog: false,
-        vertexColors: THREE.VertexColors,
+        vertexColors: true,
         transparent: true,
         opacity: 0.2,
         premultipliedAlpha: true,
@@ -179,7 +179,7 @@ export class Markup extends Container{
     const length = Math.abs(max[0] - min[0]);
     const width = Math.abs(max[1] - min[1]);
     const height = Math.abs(max[2] - min[2]);
-    const geom = new THREE.BoxBufferGeometry(length, width, height);
+    const geom = new THREE.BoxGeometry(length, width, height);
     const mat = new THREE.MeshBasicMaterial({
       color: new THREE.Color(color[0], color[1], color[2]),
       transparent: true,
