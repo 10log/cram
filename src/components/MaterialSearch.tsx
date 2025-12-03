@@ -2,7 +2,6 @@ import React, { useMemo, useRef, useState } from 'react';
 import Surface from '../objects/surface';
 import Messenger, { emit } from '../messenger';
 import { AcousticMaterial } from '../db/acoustic-material';
-import { v4 as uuid } from 'uuid';
 import { absorptionGradient } from './AbsorptionGradient';
 import { clamp } from '../common/clamp';
 import { Drawer, Icon, Position } from '@blueprintjs/core';
