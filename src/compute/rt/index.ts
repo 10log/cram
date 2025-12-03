@@ -8,7 +8,7 @@ import Messenger, { emit, messenger, on } from "../../messenger";
 import { transpose } from '../../common/helpers'
 import { Matrix4, Triangle, Vector3 } from "three";
 import { addSolver, removeSolver, Result, ResultKind, ResultTypes, setSolverProperty, useAppStore, useContainer, useResult, useSolver } from "../../store";
-import { uuid } from "uuidv4";
+import { v4 as uuid } from 'uuid';
 import Container from "../../objects/container";
 import { KVP } from "../../common/key-value-pair";
 import FileSaver from 'file-saver'; 

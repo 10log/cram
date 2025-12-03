@@ -1,5 +1,5 @@
 import { Task } from './task';
-import { uuid } from 'uuidv4';
+import { v4 as uuid } from 'uuid';
 
 export interface ProcessParams {
   name: string;

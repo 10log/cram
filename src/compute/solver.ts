@@ -1,4 +1,4 @@
-import { uuid } from "uuidv4";
+import { v4 as uuid } from 'uuid';
 import { omit } from "../common/helpers";
 import { EditorModes } from "../constants/editor-modes";
 import { emit, on } from "../messenger";

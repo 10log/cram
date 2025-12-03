@@ -1,6 +1,6 @@
 import "./global-overlay.css";
 import roundTo from "../../common/round-to";
-import { uuid } from 'uuidv4';
+import { v4 as uuid } from 'uuid';
 
 
 export interface GlobalOverlayCell<T> {

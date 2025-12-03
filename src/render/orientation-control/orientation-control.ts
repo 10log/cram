@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import PickHelper from "../pick-helper";
 import fontjson from "three/examples/fonts/helvetiker_regular.typeface.json";
 import Container from '../../objects/container';
-import { uuid } from 'uuidv4';
+import { v4 as uuid } from 'uuid';
 import {helperArrow, helperArrowRotateRight, helperArrowRotateLeft} from './helper-arrows';
 
 import "./orientation-control.css";

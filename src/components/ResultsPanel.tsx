@@ -2,13 +2,12 @@ import React, { useEffect, useRef } from "react";
 
 import { useResult, getResultKeys, ResultStore } from "../store/result-store";
 
-import { uuid } from "uuidv4";
 import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
 import { useState } from "react";
-
+import { useShallow } from "zustand/react/shallow";
 
 import LTPChart from "./results/LTPChart";
-import RT60Chart from "./results/RT60Chart"; 
+import RT60Chart from "./results/RT60Chart";
 import { ParentSize } from "@visx/responsive";
 import PanelEmptyText from "./panel-container/PanelEmptyText";
 
@@ -23,10 +22,8 @@ const TabTitle = ({ uuid }) => {
 const resultKeys = (state: ResultStore) => Object.keys(state.results);
 
 export const ResultsPanel = () => {
-  const keys = useResult(resultKeys);
-  const [index, setIndex] = useState(0);
-
-  console.log(keys); 
+  const keys = useResult(useShallow(resultKeys));
+  const [index, setIndex] = useState(0); 
 
   return keys.length > 0 ? (
     <div
@@ -59,22 +56,16 @@ export const ResultsPanel = () => {
 };
 
 const ChartSelect = (uuid) => {
+  const kind = useResult((state) => state.results[uuid.uuid]?.kind);
 
-  useResult((state) => console.log(state.results[uuid.uuid])); 
-  console.log(uuid); 
-
-  switch (useResult((state) => state.results[uuid.uuid].kind)){
-
+  switch (kind) {
     case "linear-time-progression":
       return <LTPChart uuid={uuid.uuid} events />
-    break
 
     case "statisticalRT60":
       return <RT60Chart uuid={uuid.uuid} events />
-    break
 
     default:
       return null;
   }
-
 };

@@ -91,6 +91,11 @@ type State = {
 
 class TreeViewComponent extends Component<Props, State> {
   // Store merged props as instance variable for React 18 compatibility
+  // NOTE: propsWithDefaults is used in constructor (lines 99, 101) and componentDidUpdate (lines 121-123)
+  // to merge default props with incoming props. The rest of the component uses this.props directly,
+  // which works because React 18 still supports static defaultProps on class components.
+  // This pattern was partially implemented during React 18 migration but isn't used consistently throughout.
+  // The component functions correctly as-is since React automatically merges defaultProps with this.props.
   private propsWithDefaults: any;
 
   constructor(props) {

@@ -1,4 +1,5 @@
-import React, { useReducer } from 'react';
+import React, { useReducer } from 'react'
+import { useShallow } from 'zustand/react/shallow';;
 import { RT60 } from '../../compute/rt';
 import Messenger from "../../messenger";
 import RT60Properties from '../ObjectProperties/RT60Properties';
@@ -72,8 +73,8 @@ const Settings = ({ uuid }: { uuid: string }) => {
 
 
 const Export = ({uuid}: { uuid: string }) => {
-  const [open, toggle] = useToggle(true); 
-  const {noResults} = useSolver(state=>pickProps(["noResults"], state.solvers[uuid] as RT60))
+  const [open, toggle] = useToggle(true);
+  const {noResults} = useSolver(useShallow(state => pickProps(["noResults"], state.solvers[uuid] as RT60)));
   const [, forceUpdate] = useReducer((c) => c + 1, 0) as [never, () => void]
 
   useEffect(()=>on("UPDATE_RT60", (e)=>{

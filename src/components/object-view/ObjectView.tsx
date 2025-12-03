@@ -1,9 +1,8 @@
 import React, { useCallback, useEffect, useState } from "react";
 import TreeView from "@mui/lab/TreeView";
+import TreeItem from "@mui/lab/TreeItem";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-
-import TreeItem from "@mui/lab/TreeItem";
 import TreeItemLabel from "../tree-item-label/TreeItemLabel";
 import properCase from "../../common/proper-case";
 import { KeyValuePair } from "../../common/key-value-pair";
@@ -15,6 +14,7 @@ import "./ObjectView.css";
 import Messenger, { emit, on } from "../../messenger";
 import { useContainer } from "../../store";
 import { pickProps } from "../../common/helpers";
+import { useShallow } from "zustand/react/shallow";
 
 
 
@@ -57,7 +57,6 @@ function MapChildren(props: MapChildrenProps) {
   const event = `${container.kind.toUpperCase()}_SET_PROPERTY` as "SOURCE_SET_PROPERTY";
   useEffect(() => on(event, ({uuid, property, value}) => {
     if(uuid === container.uuid && property === "name") {
-      console.log(value);
       setName(value as string);
     }
   }), [container.uuid])
@@ -165,7 +164,7 @@ function MapChildren(props: MapChildrenProps) {
 }
 
 export default function ObjectView() {
-  const {containers, getWorkspace} = useContainer(state=>pickProps(["containers", "getWorkspace"], state));
+  const {containers, getWorkspace} = useContainer(useShallow(state=>pickProps(["containers", "getWorkspace"], state)));
   const [expanded, setExpanded] = useState(["containers"]);
 
   const ContainerLabelStyle = {
@@ -190,8 +189,6 @@ export default function ObjectView() {
       expanded={expanded}
       className="tree-view-root"
       defaultExpanded={[]}
-      defaultExpandIcon={<ExpandMoreIcon fontSize="inherit" />}
-      defaultCollapseIcon={<ChevronRightIcon fontSize="inherit" />}
     >
       <TreeItem
         label={label}

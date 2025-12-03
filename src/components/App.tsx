@@ -1,6 +1,6 @@
 import React from "react";
 import SplitterLayout from "react-splitter-layout";
-import { FocusStyleManager, Position, Drawer, Alert, Intent, Toaster, ToastProps } from "@blueprintjs/core";
+import { FocusStyleManager } from "@blueprintjs/core";
 import { ItemListRenderer, ItemListRendererProps } from "@blueprintjs/select";
 import ImportDialog from "./ImportDialog";
 import ObjectView from "./object-view/ObjectView";
@@ -42,11 +42,8 @@ import { MaterialSearch } from "./MaterialSearch";
 import EditorContainer from "./EditorContainer";
 import { finishedLoading } from "../index";
 
-const AppToaster = Toaster.create({
-  className: "app-toaster",
-  position: Position.TOP,
-  maxToasts: 5
-});
+// Note: AppToaster removed - was unused and caused React 18 deprecation warning
+// If toasts are needed in the future, use OverlaysProvider with useToaster hook
 
 FocusStyleManager.onlyShowFocusOnTabs();
 
@@ -114,8 +111,6 @@ export default class App extends React.Component<AppProps, AppState> {
     }
 
     on("TOGGLE_RESULTS_PANEL", (open) => {
-      console.log(this.editorResultSplitterRef.current);
-
       if(this.editorResultSplitterRef.current){
         emit("RENDERER_SHOULD_ANIMATE", true);
         //@ts-ignore

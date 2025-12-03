@@ -4,7 +4,7 @@ import { Position, Button, Menu, MenuItem, MenuDivider, Colors, Navbar, ButtonGr
 import NavbarMenuItemLabel from "./NavbarMenuItemLabel";
 import MenuItemText from "./MenuItemText";
 import { Characters } from "../constants";
-import create from "zustand";
+import { create } from 'zustand';
 import "./NavBarComponent.css";
 import { useAppStore } from "../store";
 

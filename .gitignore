@@ -136,3 +136,6 @@ src/res/models/semi/semi.blend
 src/res/models/semi/semi.blend1
 src/res/models/semi/semi.blend
 src/res/models/semi/semi.blend1
+
+# claude
+.claude/settings.local.json

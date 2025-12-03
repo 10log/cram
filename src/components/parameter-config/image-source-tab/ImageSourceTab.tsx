@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import "./ImageSourceTab.css";
 import RayTracer from "../../../compute/raytracer";
-import {ImageSourceSolver} from "../../../compute/raytracer/image-source/index"; 
+import {ImageSourceSolver} from "../../../compute/raytracer/image-source/index";
 import { emit, on } from "../../../messenger";
 import { ObjectPropertyInputEvent } from "../../ObjectProperties";
 import { useContainer, useSolver } from "../../../store";
@@ -17,17 +17,18 @@ import PropertyRowFolder from "../property-row/PropertyRowFolder";
 import PropertyRow from "../property-row/PropertyRow";
 import PropertyRowLabel from "../property-row/PropertyRowLabel";
 import PropertyRowCheckbox from "../property-row/PropertyRowCheckbox";
+import { useShallow } from "zustand/react/shallow";
 
 export interface ImageSourceTabProps {
   uuid: string;
 }
 
 export const ReceiverSelect = ({ uuid }: { uuid: string }) => {
-  const receivers = useContainer((state) => {
+  const receivers = useContainer(useShallow((state) => {
     return filteredMapObject(state.containers, (container) =>
       container.kind === "receiver" ? pickProps(["uuid", "name"], container) : undefined
     ) as { uuid: string; name: string }[];
-  });
+  }));
 
   const [receiverIDs, setReceiverIDs] = useSolverProperty<ImageSourceSolver, "receiverIDs">(
     uuid,
@@ -54,11 +55,11 @@ export const ReceiverSelect = ({ uuid }: { uuid: string }) => {
   );
 };
 export const SourceSelect = ({ uuid }: { uuid: string }) => {
-  const sources = useContainer((state) => {
+  const sources = useContainer(useShallow((state) => {
     return filteredMapObject(state.containers, (container) =>
       container.kind === "source" ? pickProps(["uuid", "name"], container) : undefined
     ) as { uuid: string; name: string }[];
-  });
+  }));
 
   const [sourceIDs, setSourceIDs] = useSolverProperty<ImageSourceSolver, "sourceIDs">(
     uuid,
@@ -102,7 +103,7 @@ const General = ({ uuid }: { uuid: string }) => {
 
 const Calculation = ({ uuid }: { uuid: string}) => {
   const [open, toggle] = useToggle(true);
-  const {sourceIDs, receiverIDs} = useSolver(state=>pickProps(["sourceIDs", "receiverIDs"], state.solvers[uuid] as ImageSourceSolver));
+  const {sourceIDs, receiverIDs} = useSolver(useShallow(state => pickProps(["sourceIDs", "receiverIDs"], state.solvers[uuid] as ImageSourceSolver)));
   const disabled = !(sourceIDs.length > 0 && receiverIDs.length > 0);
   const [, forceUpdate] = useReducer((c) => c + 1, 0) as [never, () => void]
   useEffect(()=>on("IMAGESOURCE_SET_PROPERTY", (e)=>{

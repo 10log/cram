@@ -44,7 +44,6 @@ export default function registerSolverEvents(){
   on("RESTORE_SOLVERS", solvers => {
     emit("REMOVE_SOLVERS", getSolverKeys());
   
-    console.log(solvers);
     solvers.forEach((solver) => {
       switch (solver.kind) {
         case "ray-tracer":

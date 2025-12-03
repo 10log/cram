@@ -11,9 +11,10 @@ import {
 import { messenger, emit, on } from '../messenger';
 import { useAppStore } from '../store/app-store';
 import { pickProps } from '../common/helpers';
-import { mmm_dd_yyyy } from "../common/dayt"; 
+import { mmm_dd_yyyy } from "../common/dayt";
 import FileTypes from '../common/file-type';
 import { DialogActions } from "@mui/material";
+import { useShallow } from "zustand/react/shallow";
 
 
 
@@ -61,7 +62,7 @@ const upload = (callback: (files?: File[]) => void) => {
 export default function ImportDialog() {
 	const [dropAllowed, setDropAllowed] = useState(DROP_ALLOWED.IDK);
 	const [filelist, setFilelist] = useState([] as File[]);
-  const { importDialogVisible, set } = useAppStore(store => pickProps(["importDialogVisible", "set"], store));
+  const { importDialogVisible, set } = useAppStore(useShallow(store => pickProps(["importDialogVisible", "set"], store)));
 
 	return (
 		<Dialog

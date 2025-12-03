@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useReducer, useRef, useState } from 'react'
+import { useShallow } from 'zustand/react/shallow';
 import { Result, useResult, ResultKind, ResultTypes } from '../../store/result-store';
 
 import { Bar } from '@visx/shape';
@@ -96,7 +97,7 @@ const useUpdate = () => {
 }
 
 const Chart = ({ uuid, width = 400, height = 200, events = false }: LTPChartProps) => {
-    const {info, data: _data, from} = useResult(state=>pickProps(["info", "data", "from"], state.results[uuid] as Result<ResultKind.LevelTimeProgression>));
+    const {info, data: _data, from} = useResult(useShallow(state=>pickProps(["info", "data", "from"], state.results[uuid] as Result<ResultKind.LevelTimeProgression>)));
     
     const [count, update] = useUpdate();
     const [data, setData] = useState(_data);
@@ -190,9 +191,7 @@ const Chart = ({ uuid, width = 400, height = 200, events = false }: LTPChartProp
 
 export const LTPChart = ({ uuid, width = 400, height = 300, events = false }: LTPChartProps) => {
 
-  console.log(uuid);
-  
-  const {name, info, from} = useResult(state=>pickProps(["name", "info", "from"], state.results[uuid] as Result<ResultKind.LevelTimeProgression>));
+  const {name, info, from} = useResult(useShallow(state=>pickProps(["name", "info", "from"], state.results[uuid] as Result<ResultKind.LevelTimeProgression>)));
   const initialPlotOrders = useSolver(state=>(state.solvers[from] as ImageSourceSolver).plotOrders);
   const frequencies = useSolver(state=>(state.solvers[from] as ImageSourceSolver).frequencies);
 

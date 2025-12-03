@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {on} from '../../messenger';
 import { Tab, Tabs, Classes } from "@blueprintjs/core";
+import { useShallow } from 'zustand/react/shallow';
 
 import './ParameterConfig.css';
 import RayTracerTab from './RayTracerTab';
@@ -61,7 +62,7 @@ const SolverOptionTitle = ({ uuid }) => {
 
 
 export const SolversTab = () => {
-  const solvers = useSolver(state=>state.withProperty(solver=>solver.kind))
+  const solvers = useSolver(useShallow(state=>state.withProperty(solver=>solver.kind)))
   const [index, setIndex] = useState(0);
   useEffect(()=>on("NEW", ()=>setIndex(0)), [])
   const [selectedSolverId, setSelectedSolverId] = useState("choose");
@@ -91,7 +92,7 @@ const ObjectOptionTitle = ({ uuid }) => {
 
 export const ObjectsTab = () => {
 
-  const objects = useContainer(state=>state.withProperty(object=>object.kind))
+  const objects = useContainer(useShallow(state=>state.withProperty(object=>object.kind)))
   const [index, setIndex] = useState(0);
 
   const [selectedObjectId, setSelectedObjectId] = useState("choose");

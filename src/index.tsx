@@ -36,7 +36,7 @@ import * as importHandlers from "./import-handlers";
 import { fileType, allowed } from "./common/file-type";
 
 // data structures / storage
-import { uuid } from "uuidv4";
+import { v4 as uuid } from 'uuid';
 import { KeyValuePair } from "./common/key-value-pair";
 import { layout as defaultLayout } from "./default-storage";
 
@@ -62,7 +62,7 @@ import csg from "./compute/csg";
 import * as THREE from "three";
 import FileSaver from "file-saver";
 import { createFileFromData } from "./common/file";
-import produce, { enableMapSet } from "immer";
+import { produce, enableMapSet } from "immer";
 import {omit} from './common/helpers'
 import { useContainer, useSolver, useResult, useAppStore, useMaterial, SaveState } from "./store";
 import { audioEngine } from './audio-engine/audio-engine';

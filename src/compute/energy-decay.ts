@@ -1,7 +1,7 @@
 // https://dsp.stackexchange.com/questions/17121/calculation-of-reverberation-time-rt60-from-the-impulse-response
 
 import FileSaver from "file-saver";
-import { uuid } from "uuidv4";
+import { v4 as uuid } from 'uuid';
 import { audioEngine, FilteredSource } from "../audio-engine/audio-engine";
 import { emit, on } from "../messenger";
 import { addSolver, setSolverProperty, useSolver } from "../store/solver-store";
