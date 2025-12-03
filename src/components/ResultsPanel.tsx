@@ -2,7 +2,6 @@ import React, { useEffect, useRef } from "react";
 
 import { useResult, getResultKeys, ResultStore } from "../store/result-store";
 
-import { v4 as uuid } from 'uuid';
 import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
 import { useState } from "react";
 import { useShallow } from "zustand/react/shallow";
