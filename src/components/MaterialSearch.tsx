@@ -112,7 +112,7 @@ const MaterialAssignButton = () => {
 export const MaterialSearch = () => {
   const listref = useRef<HTMLDivElement>();
   const listScroll = 0;
-  const { query, search, set } = useMaterial(useShallow(state=>pickProps(["bufferLength", "query", "search", "set"], state)));
+  const { bufferLength, query, search, set } = useMaterial(useShallow(state=>pickProps(["bufferLength", "query", "search", "set"], state)));
   const {materialDrawerOpen, set: setAppStore} = useAppStore(useShallow(state=>pickProps(["materialDrawerOpen", "set"], state)));
 
   const setQuery = (query: string) => set(store=>{ store.query = query });
