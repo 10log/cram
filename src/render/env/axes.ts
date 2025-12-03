@@ -62,9 +62,12 @@ export default class Axes extends Container {
 		
   }
   makeLine(start: THREE.Vector3, end: THREE.Vector3) {
-    const geometry = new THREE.Geometry();
-		geometry.vertices.push(start);
-    geometry.vertices.push(end);
+    const geometry = new THREE.BufferGeometry();
+    const vertices = new Float32Array([
+      start.x, start.y, start.z,
+      end.x, end.y, end.z
+    ]);
+    geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
     return geometry;
   }
 }

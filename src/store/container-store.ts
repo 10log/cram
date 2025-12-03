@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { produce } from 'immer';
+import * as THREE from 'three';
 import { KeyValuePair } from "../common/key-value-pair";
 import Container from "../objects/container";
 import { AllowedNames, omit, filterObjectToArray, reach } from '../common/helpers';

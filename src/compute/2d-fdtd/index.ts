@@ -1,7 +1,7 @@
 import Renderer from "../../render/renderer";
 import { on, postMessage, addMessageHandler, removeMessageHandler, messenger } from "../../messenger";
 import {
-  PlaneBufferGeometry,
+  PlaneGeometry,
   ShaderMaterial,
   UniformsLib,
   Mesh,
@@ -17,7 +17,7 @@ import {
   NearestFilter,
   RGBAFormat,
   UnsignedByteType,
-  Geometry,
+  BufferGeometry,
   Vector3,
   MeshBasicMaterial,
   MeshLambertMaterial
@@ -128,11 +128,14 @@ class FDTD_2D extends Solver {
     props = props || {};
     if (surfaces.length > 0) {
       surface = surfaces.length > 1 ? surfaces[0].mergeSurfaces(surfaces) : surfaces[0];
-      const { max, min } = surface.mesh.geometry.boundingBox;
-      props.width = max.x - min.x;
-      props.height = max.y - min.y;
-      props.offsetX = min.x;
-      props.offsetY = min.y;
+      surface.mesh.geometry.computeBoundingBox();
+      const boundingBox = surface.mesh.geometry.boundingBox;
+      if (boundingBox) {
+        props.width = boundingBox.max.x - boundingBox.min.x;
+        props.height = boundingBox.max.y - boundingBox.min.y;
+        props.offsetX = boundingBox.min.x;
+        props.offsetY = boundingBox.min.y;
+      }
     }
     const _width = (props && props.width) || FDTD_2D_Defaults.width;
     const _height = (props && props.height) || FDTD_2D_Defaults.height;
@@ -158,7 +161,7 @@ class FDTD_2D extends Solver {
     this.messageHandlers = [] as string[][];
     this.eventListeners = [] as (()=>void)[];
 
-    const editGeometry = new PlaneBufferGeometry(this.width, this.height, 1, 1);
+    const editGeometry = new PlaneGeometry(this.width, this.height, 1, 1);
     editGeometry.translate(this.width/2, this.height/2, 0);
     editGeometry.translate(this.offsetX, this.offsetY, 0);
     const editMaterials = [
@@ -228,7 +231,7 @@ class FDTD_2D extends Solver {
   
   init() {
     this.dispose();
-    const geometry = new PlaneBufferGeometry(this.width, this.height, this.nx - 1, this.ny - 1);
+    const geometry = new PlaneGeometry(this.width, this.height, this.nx - 1, this.ny - 1);
     geometry.name = "fdtd-2d-plane-geometry";
     geometry.translate(this.width / 2, this.height / 2, 0);
     geometry.translate(this.offsetX, this.offsetY, 0);
@@ -396,12 +399,12 @@ class FDTD_2D extends Solver {
     this.updateWalls();
   }
   addWallsFromSurfaceEdges(surface: Surface) {
-    const vertices = (surface.edges.geometry as Geometry).vertices as Vector3[];
-    for (let i = 0; i < vertices.length; i += 2) {
-      let x1 = clamp(Math.floor((vertices[i].x - this.offsetX) / this.cellSize), 0, this.nx - 1);
-      let y1 = clamp(Math.floor((vertices[i].y - this.offsetY) / this.cellSize), 0, this.ny - 1);
-      let x2 = clamp(Math.floor((vertices[i + 1].x - this.offsetX) / this.cellSize), 0, this.nx - 1);
-      let y2 = clamp(Math.floor((vertices[i + 1].y - this.offsetY) / this.cellSize), 0, this.ny - 1);
+    const positionAttr = (surface.edges.geometry as BufferGeometry).getAttribute('position');
+    for (let i = 0; i < positionAttr.count; i += 2) {
+      let x1 = clamp(Math.floor((positionAttr.getX(i) - this.offsetX) / this.cellSize), 0, this.nx - 1);
+      let y1 = clamp(Math.floor((positionAttr.getY(i) - this.offsetY) / this.cellSize), 0, this.ny - 1);
+      let x2 = clamp(Math.floor((positionAttr.getX(i + 1) - this.offsetX) / this.cellSize), 0, this.nx - 1);
+      let y2 = clamp(Math.floor((positionAttr.getY(i + 1) - this.offsetY) / this.cellSize), 0, this.ny - 1);
       this.walls.push(new FDTDWall({ x1, y1, x2, y2 }));
     }
     this.updateWalls();
@@ -409,6 +412,7 @@ class FDTD_2D extends Solver {
 
   fillSourceTexture() {
     const pixels = this.sourcemap.image.data;
+    if (!pixels) return;
     let p = 0;
     for (let j = 0; j < this.ny; j++) {
       for (let i = 0; i < this.nx; i++) {
@@ -432,23 +436,25 @@ class FDTD_2D extends Solver {
   }
 
   updateWalls() {
+    const data = this.sourcemap.image.data;
+    if (!data) return;
     for (let i = 0; i < this.walls.length; i++) {
       if (this.walls[i].shouldClearPreviousCells) {
         for (let j = 0; j < this.walls[i].previousCells.length; j++) {
           const index = 4 * (this.walls[i].previousCells[j][1] * this.nx + this.walls[i].previousCells[j][0]);
-          this.sourcemap.image.data[index + 2] = 1;
+          data[index + 2] = 1;
         }
         this.walls[i].shouldClearPreviousCells = false;
       }
       if (this.walls[i].enabled) {
         for (let j = 0; j < this.walls[i].cells.length; j++) {
           const index = 4 * (this.walls[i].cells[j][1] * this.nx + this.walls[i].cells[j][0]);
-          this.sourcemap.image.data[index + 2] = 0;
+          data[index + 2] = 0;
         }
       } else {
         for (let j = 0; j < this.walls[i].cells.length; j++) {
           const index = 4 * (this.walls[i].cells[j][1] * this.nx + this.walls[i].cells[j][0]);
-          this.sourcemap.image.data[index + 2] = 1;
+          data[index + 2] = 1;
         }
       }
     }
@@ -457,6 +463,7 @@ class FDTD_2D extends Solver {
 
   updateSourceTexture() {
     const pixels = this.sourcemap.image.data;
+    if (!pixels) return;
     for (let i = 0; i < this.sourceKeys.length; i++) {
       const x = Math.round((this.sources[this.sourceKeys[i]].x - this.offsetX) / this.cellSize);
       const y = Math.round((this.sources[this.sourceKeys[i]].y - this.offsetY) / this.cellSize);
@@ -483,12 +490,10 @@ class FDTD_2D extends Solver {
   }
   fillTexture(texture: DataTexture) {
     const pixels = texture.image.data;
+    if (!pixels) return;
     let p = 0;
     for (let j = 0; j < this.ny; j++) {
       for (let i = 0; i < this.nx; i++) {
-        const x = i / this.nx;
-        const y = j / this.ny;
-        const n = 3;
         // const value = Math.sin(n * Math.PI * x) * Math.cos(n * Math.PI * y);
         const value = 0;
 

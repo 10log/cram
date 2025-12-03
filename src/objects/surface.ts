@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { VertexNormalsHelper } from "three/examples/jsm/helpers/VertexNormalsHelper.js";
 import Container, { ContainerProps } from "./container";
 import { chunk, chunkf32 } from "../common/chunk";
 import roundTo from "../common/round-to";
@@ -90,36 +91,22 @@ export interface SurfaceProps extends ContainerProps {
 }
 
 export interface BufferGeometrySaveObject {
-  metadata: {
+  metadata?: {
     version: number;
     type: string;
     generator: string;
   };
-  uuid: string;
-  type: string;
-  name: string;
-  data: {
-    attributes: {
-      position: {
-        itemSize: number;
-        type: string;
-        array: number[];
-        normalized: boolean;
-      };
-      normals: {
-        itemSize: number;
-        type: string;
-        array: number[];
-        normalized: boolean;
-      };
-      texCoords: {
-        itemSize: number;
-        type: string;
-        array: number[];
-        normalized: boolean;
-      };
-    };
-    boundingSphere: {
+  uuid?: string;
+  type?: string;
+  name?: string;
+  data?: {
+    attributes: Record<string, {
+      itemSize: number;
+      type: string;
+      array: number[];
+      normalized: boolean;
+    }>;
+    boundingSphere?: {
       center: number[];
       radius: number;
     };
@@ -129,22 +116,27 @@ export interface BufferGeometrySaveObject {
 function restoreBufferGeometry(geom: BufferGeometrySaveObject){
 
   const geometry = new THREE.BufferGeometry();
-  
-  geometry.setAttribute(
-    "position",
-    new THREE.BufferAttribute(
-      new Float32Array(geom.data.attributes.position.array),
-      geom.data.attributes.position.itemSize,
-      geom.data.attributes.position.normalized
-    )
-  );
-  if(geom.data.attributes['normals']){
+
+  if (!geom.data) return geometry;
+
+  const attrs = geom.data.attributes;
+  if (attrs.position) {
+    geometry.setAttribute(
+      "position",
+      new THREE.BufferAttribute(
+        new Float32Array(attrs.position.array),
+        attrs.position.itemSize,
+        attrs.position.normalized
+      )
+    );
+  }
+  if(attrs['normals']){
     geometry.setAttribute(
       "normals",
       new THREE.BufferAttribute(
-        new Float32Array(geom.data.attributes.normals.array),
-        geom.data.attributes.normals.itemSize,
-        geom.data.attributes.normals.normalized
+        new Float32Array(attrs.normals.array),
+        attrs.normals.itemSize,
+        attrs.normals.normalized
       )
     );
   }
@@ -152,18 +144,18 @@ function restoreBufferGeometry(geom: BufferGeometrySaveObject){
     geometry.computeVertexNormals();
     geometry.setAttribute("normals", geometry.getAttribute("normal"));
   }
-  if(geom.data.attributes['texCoords']){
+  if(attrs['texCoords']){
     geometry.setAttribute(
       "texCoords",
       new THREE.BufferAttribute(
-        new Float32Array(geom.data.attributes.texCoords.array),
-        geom.data.attributes.texCoords.itemSize,
-        geom.data.attributes.texCoords.normalized
+        new Float32Array(attrs.texCoords.array),
+        attrs.texCoords.itemSize,
+        attrs.texCoords.normalized
       )
     );
   }
-  geometry.name = geom.name;
-  geometry.uuid = geom.uuid;
+  if (geom.name) geometry.name = geom.name;
+  if (geom.uuid) geometry.uuid = geom.uuid;
 
   return geometry;
 
@@ -206,7 +198,7 @@ class Surface extends Container {
   center!: THREE.Vector3;
   triangles!: Triangles;
   fillSurface!: boolean;
-  vertexNormals!: THREE.VertexNormalsHelper;
+  vertexNormals!: VertexNormalsHelper;
   _triangles!: THREE.Triangle[];
   selectedMaterial!: THREE.MeshLambertMaterial;
   normalMaterial!: THREE.MeshLambertMaterial;
@@ -274,7 +266,7 @@ class Surface extends Container {
     // this.mesh.geometry.computeVertexNormals();
     // const tempmesh = new THREE.Mesh(mergedProps.geometry.clone(), undefined);
     // tempmesh.geometry.computeVertexNormals();
-    this.vertexNormals = new THREE.VertexNormalsHelper(this.mesh, 0.25, 0xff0000, 1);
+    this.vertexNormals = new VertexNormalsHelper(this.mesh, 0.25, 0xff0000);
     this.vertexNormals.geometry.name = "surface-vertex-normals-geometry";
 
     // console.log(mergedProps.geometry.getIndex());
@@ -345,8 +337,8 @@ class Surface extends Container {
       }
     });
 
-    const segments = new THREE.Geometry();
-    const edges = Object.keys(dict)
+    const edgeVertices: number[] = [];
+    Object.keys(dict)
       .reduce((a, b: string) => {
         if (dict[b].keep) {
           a.push(dict[b].line);
@@ -355,9 +347,11 @@ class Surface extends Container {
       }, [] as number[][][])
       .forEach((edge) => {
         edge.forEach((vert) => {
-          segments.vertices.push(new THREE.Vector3(vert[0], vert[1], vert[2]));
+          edgeVertices.push(vert[0], vert[1], vert[2]);
         });
       });
+    const segments = new THREE.BufferGeometry();
+    segments.setAttribute('position', new THREE.Float32BufferAttribute(edgeVertices, 3));
     this.edges = new THREE.LineSegments(segments, defaults.materials.line);
     this.edges.geometry.name = "surface-edges-geometry";
 
@@ -439,9 +433,10 @@ class Surface extends Container {
       fillSurface: this.fillSurface,
       wireframeVisible: this.wireframeVisible,
       edgesVisible: this.edgesVisible,
+      scatteringCoefficient: this.scatteringCoefficient,
       name: this.name,
       position: this.position.toArray(),
-      rotation: this.rotation.toArray().slice(0, 3),
+      rotation: this.rotation.toArray().slice(0, 3) as [number, number, number],
       scale: this.scale.toArray(),
       uuid: this.uuid
     } as SurfaceSaveObject;
@@ -493,7 +488,11 @@ class Surface extends Container {
     return this.edges;
   }
   calculateEdgeLoop() {
-    const verts = (this.edges.geometry as THREE.Geometry).vertices;
+    const positionAttr = (this.edges.geometry as THREE.BufferGeometry).getAttribute('position');
+    const verts: THREE.Vector3[] = [];
+    for (let i = 0; i < positionAttr.count; i++) {
+      verts.push(new THREE.Vector3(positionAttr.getX(i), positionAttr.getY(i), positionAttr.getZ(i)));
+    }
     // const uniqVerts = [...new Set(verts.map(x=>JSON.stringify(x.toArray())))].map(x=>new THREE.Vector3().fromArray(JSON.parse(x)))
     const edgePairs = chunk(verts, 2);
     const edgeLoop = [] as THREE.Vector3[];

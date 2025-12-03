@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { Font } from "three/examples/jsm/loaders/FontLoader.js";
 import PickHelper from "../pick-helper";
 import fontjson from "three/examples/fonts/helvetiker_regular.typeface.json";
 import Container from '../../objects/container';
@@ -87,7 +88,7 @@ export class OrientationControl {
   pointLight: THREE.PointLight;
   ambientLight: THREE.AmbientLight;
   renderer: THREE.WebGLRenderer;
-  font: THREE.Font;
+  font: Font;
   fontMaterial: THREE.MeshBasicMaterial;
   edges: THREE.LineSegments;
   fontMeshes: {
@@ -106,7 +107,7 @@ export class OrientationControl {
     front: THREE.Mesh;
     back: THREE.Mesh;
   };
-  pickPosition: { x: number, y: number; };
+  pickPosition: THREE.Vector2;
   raycaster: THREE.Raycaster;
   _hoveredPlane: THREE.Mesh | undefined;
   shouldRender: boolean;
@@ -129,7 +130,7 @@ export class OrientationControl {
     this._axis = opts && opts.axis || "none";
     this.cameraDistance = 20;
     this.scene = new THREE.Scene();
-    this.pickPosition = { x: 0, y: 0 };
+    this.pickPosition = new THREE.Vector2(0, 0);
     this.raycaster = new THREE.Raycaster();
     this.camera = new THREE.PerspectiveCamera(7.5, 1, 0.01, 50);
     this.camera.up.set(0, 0, 1);
@@ -201,7 +202,7 @@ export class OrientationControl {
     // this.edges.renderOrder = -0.5;
     this.scene.add(this.edges);
     
-    this.font = new THREE.Font(fontjson);
+    this.font = new Font(fontjson);
     this.fontMaterial = new THREE.MeshBasicMaterial({
       color: 0x000000,
       transparent: true,
@@ -655,19 +656,22 @@ export class OrientationControl {
   }
   
   createPlaneMesh(size: number, materialParams: THREE.MeshLambertMaterialParameters) {
-    const mesh = new THREE.Mesh(new THREE.PlaneBufferGeometry(size, size), new THREE.MeshLambertMaterial(materialParams));
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(size, size), new THREE.MeshLambertMaterial(materialParams));
     mesh.userData.selectedColor = 0xbfdefd;
     mesh.userData.normalColor = materialParams.color || 0xffffff;
     return mesh;
   }
   
   getMeshFromText(text: string) {
-    const shapes = this.font.generateShapes(text, 0.125, 4);
-    const fontGeometry = new THREE.ShapeBufferGeometry(shapes);
+    const shapes = this.font.generateShapes(text, 0.125);
+    const fontGeometry = new THREE.ShapeGeometry(shapes);
     fontGeometry.computeBoundingBox();
-    const xMid = -0.5 * (fontGeometry.boundingBox.max.x - fontGeometry.boundingBox.min.x);
-    const yMid = -0.5 * (fontGeometry.boundingBox.max.y - fontGeometry.boundingBox.min.y);
-    fontGeometry.translate(xMid, yMid, 0);
+    const boundingBox = fontGeometry.boundingBox;
+    if (boundingBox) {
+      const xMid = -0.5 * (boundingBox.max.x - boundingBox.min.x);
+      const yMid = -0.5 * (boundingBox.max.y - boundingBox.min.y);
+      fontGeometry.translate(xMid, yMid, 0);
+    }
     return new THREE.Mesh(fontGeometry, this.fontMaterial);
   }
   

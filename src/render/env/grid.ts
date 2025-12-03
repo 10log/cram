@@ -34,7 +34,7 @@ export default class Grid extends Container{
 		TEXTURE_CHECKER.magFilter = THREE.NearestFilter;
     TEXTURE_CHECKER.repeat.set(divisions/2, divisions/2);
 
-		const planeGeo = new THREE.PlaneBufferGeometry(size, size);
+		const planeGeo = new THREE.PlaneGeometry(size, size);
 		planeGeo.name = "grid-checkered-plane-geometry";
 		const planeMat = new THREE.MeshPhongMaterial({
 			fog: true,

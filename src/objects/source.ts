@@ -23,7 +23,7 @@ export interface SourceSaveObject extends ContainerSaveObject {
   visible: boolean;
   position: number[];
   scale: number[];
-  rotation: Array<string | number>;
+  rotation: [number, number, number] | number[];
   uuid: string;
   kind: "source";
   color: number;
@@ -173,23 +173,19 @@ export class Source extends Container {
   }
 
   save() {
-    const name = this.name;
-    const visible = this.visible;
-    const position = this.position.toArray();
-    const scale = this.scale.toArray();
-    const rotation = this.rotation.toArray();
-    const color = this.getColorAsNumber();
-    const uuid = this.uuid;
-    const kind = this.kind;
     return {
-      kind,
-      name,
-      visible,
-      position,
-      scale,
-      rotation,
-      color,
-      uuid
+      kind: this.kind,
+      name: this.name,
+      visible: this.visible,
+      position: this.position.toArray(),
+      scale: this.scale.toArray(),
+      rotation: this.rotation.toArray().slice(0, 3) as [number, number, number],
+      color: this.getColorAsNumber(),
+      uuid: this.uuid,
+      signalSource: this.signalSource,
+      amplitude: this.amplitude,
+      frequency: this.frequency,
+      phase: this.phase
     } as SourceSaveObject;
   }
   restore(state: SourceSaveObject) {
@@ -200,11 +196,14 @@ export class Source extends Container {
     this.rotation.set(
       Number(state.rotation[0]),
       Number(state.rotation[1]),
-      Number(state.rotation[2]),
-      String(state.rotation[3])
+      Number(state.rotation[2])
     );
     this.color = state.color;
     this.uuid = state.uuid;
+    if (state.signalSource !== undefined) this.signalSource = state.signalSource;
+    if (state.amplitude !== undefined) this.amplitude = state.amplitude;
+    if (state.frequency !== undefined) this.frequency = state.frequency;
+    if (state.phase !== undefined) this.phase = state.phase;
     return this;
   }
   updatePreviousPosition() {

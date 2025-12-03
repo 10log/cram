@@ -16,6 +16,7 @@ class Cursor extends Container {
       name: "cursor-material",
       transparent: true,
       blending: THREE.MultiplyBlending,
+      premultipliedAlpha: true,
       polygonOffset: true,
       polygonOffsetFactor: 0.01
     });

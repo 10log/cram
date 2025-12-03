@@ -1,5 +1,5 @@
 import DxfParser from 'dxf-parser';
-import THREE, {BufferGeometry, BufferAttribute} from 'three';
+import {BufferGeometry, BufferAttribute} from 'three';
 import { emit } from '../messenger';
 import Container from '../objects/container';
 import Room from '../objects/room';

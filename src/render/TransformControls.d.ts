@@ -1,9 +1,7 @@
-import { Object3D, Camera, Vector3, Euler, MOUSE } from "Three";
+import { Object3D, Camera, MOUSE } from "three";
 
-export class TransformControls extends Object3D {
-  constructor(object: Camera, domElement?: HTMLElement);
-
-  domElement: HTMLElement;
+export class TransformControls {
+  constructor(camera: Camera, domElement?: HTMLElement | null);
 
   // API
 
@@ -12,29 +10,42 @@ export class TransformControls extends Object3D {
   allAssociatedObjects: Object3D[] | undefined;
   enabled: boolean;
   axis: string | null;
-  mode: string;
+  mode: "translate" | "rotate" | "scale";
   translationSnap: number | null;
   rotationSnap: number | null;
-  space: string;
+  scaleSnap: number | null;
+  space: "world" | "local";
   size: number;
   dragging: boolean;
   showX: boolean;
   showY: boolean;
   showZ: boolean;
   isTransformControls: boolean;
-  mouseButtons: {
-    LEFT: MOUSE;
-    MIDDLE: MOUSE;
-    RIGHT: MOUSE;
-  };
 
-  attach(objects: Object3D|Object3D[]): this;
+  readonly _root: Object3D;
+
+  attach(objects: Object3D | Object3D[]): this;
   detach(): this;
-  getMode(): string;
-  setMode(mode: string): void;
-  setTranslationSnap(translationSnap: Number | null): void;
-  setRotationSnap(rotationSnap: Number | null): void;
+  getMode(): "translate" | "rotate" | "scale";
+  setMode(mode: "translate" | "rotate" | "scale"): void;
+  setTranslationSnap(translationSnap: number | null): void;
+  setRotationSnap(rotationSnap: number | null): void;
+  setScaleSnap(scaleSnap: number | null): void;
   setSize(size: number): void;
-  setSpace(space: string): void;
+  setSpace(space: "world" | "local"): void;
+  reset(): void;
   dispose(): void;
+  addEventListener(type: string, listener: (event: any) => void): void;
+  removeEventListener(type: string, listener: (event: any) => void): void;
+  dispatchEvent(event: { type: string; [key: string]: any }): void;
+}
+
+export class TransformControlsGizmo extends Object3D {
+  isTransformControlsGizmo: boolean;
+  type: "TransformControlsGizmo";
+}
+
+export class TransformControlsPlane extends Object3D {
+  isTransformControlsPlane: boolean;
+  type: "TransformControlsPlane";
 }

@@ -16,8 +16,8 @@ class ConstructionPoint extends Container {
 
     this.kind = "construction-point";
 
-    const geometry = new THREE.Geometry();
-    geometry.vertices.push(props.point);
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute([props.point.x, props.point.y, props.point.z], 3));
     const material = new THREE.PointsMaterial({
       size: 12,
       sizeAttenuation: false,

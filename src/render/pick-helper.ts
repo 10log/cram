@@ -1,6 +1,5 @@
 import * as THREE from "three";
 import Container from "../objects/container";
-import { TransformControls } from "./TransformControls";
 type point = {
   x: number;
   y: number;
@@ -8,7 +7,7 @@ type point = {
 const dist = (p1: point, p2: THREE.Vector3) => Math.sqrt((p2.y - p1.y) ** 2 + (p2.x - p1.x) ** 2);
 const THRESHOLD = 1e-8;
 export default class PickHelper {
-  pickPosition: { x: number; y: number };
+  pickPosition: THREE.Vector2;
   raycaster: THREE.Raycaster;
   pickedObject: any;
   pickedPoint: THREE.Vector3;
@@ -21,7 +20,7 @@ export default class PickHelper {
   __pickedObject: any;
   __pickedPoint: any;
   constructor(scene, camera, mount) {
-    this.pickPosition = { x: 0, y: 0 };
+    this.pickPosition = new THREE.Vector2(0, 0);
     this.raycaster = new THREE.Raycaster();
     this.pickedObject = null;
     this.pickedPoint = new THREE.Vector3(0, 0, 0);
@@ -58,8 +57,11 @@ export default class PickHelper {
 
         //@ts-ignore
         if (
-          intersectedObjects[i].object instanceof TransformControls ||
-          intersectedObjects[i].object.parent instanceof TransformControls ||
+          intersectedObjects[i].object["isTransformControlsRoot"] ||
+          intersectedObjects[i].object["isTransformControlsGizmo"] ||
+          intersectedObjects[i].object["isTransformControlsPlane"] ||
+          intersectedObjects[i].object.parent?.["isTransformControlsRoot"] ||
+          intersectedObjects[i].object.parent?.["isTransformControlsGizmo"] ||
           (intersectedObjects[i].object &&
             intersectedObjects[i].object.parent &&
             // @ts-ignore
@@ -67,7 +69,7 @@ export default class PickHelper {
             // @ts-ignore
             (intersectedObjects[i].object.parent["parent"]["type"] === "TransformControlsGizmo" ||
               // @ts-ignore
-              intersectedObjects[i].object.parent["parent"]["type"] === "TransformControls"))
+              intersectedObjects[i].object.parent["parent"]["isTransformControlsRoot"]))
         ) {
           clickedOnTransformControl = true;
           transformControlIndex = i;

@@ -1628,7 +1628,7 @@ export class DAELoader extends THREE.Loader {
 				case 'rotate':
 					data.obj = new THREE.Vector3();
 					data.obj.fromArray( array );
-					data.angle = THREE.Math.degToRad( array[ 3 ] );
+					data.angle = THREE.MathUtils.degToRad( array[ 3 ] );
 					break;
 			}
 			return data;
@@ -1783,7 +1783,7 @@ export class DAELoader extends THREE.Loader {
 								if ( transform.sid && transform.sid.indexOf( jointIndex ) !== - 1 ) {
 									switch ( joint.type ) {
 										case 'revolute':
-											matrix.multiply( m0.makeRotationAxis( axis, THREE.Math.degToRad( value ) ) );
+											matrix.multiply( m0.makeRotationAxis( axis, THREE.MathUtils.degToRad( value ) ) );
 											break;
 										case 'prismatic':
 											matrix.multiply( m0.makeTranslation( axis.x * value, axis.y * value, axis.z * value ) );
@@ -1848,7 +1848,7 @@ export class DAELoader extends THREE.Loader {
 					case 'rotate':
 						var array = parseFloats( child.textContent );
 						var vector = new THREE.Vector3().fromArray( array );
-						var angle = THREE.Math.degToRad( array[ 3 ] );
+						var angle = THREE.MathUtils.degToRad( array[ 3 ] );
 						transforms.push( {
 							sid: child.getAttribute( 'sid' ),
 							type: child.nodeName,
@@ -1924,7 +1924,7 @@ export class DAELoader extends THREE.Loader {
 						break;
 					case 'rotate':
 						var array = parseFloats( child.textContent );
-						var angle = THREE.Math.degToRad( array[ 3 ] );
+						var angle = THREE.MathUtils.degToRad( array[ 3 ] );
 						data.matrix.multiply( matrix.makeRotationAxis( vector.fromArray( array ), angle ) );
 						data.transforms[ child.getAttribute( 'sid' ) ] = child.nodeName;
 						break;
