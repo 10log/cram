@@ -2,15 +2,14 @@
   background-color: #bdbdbd;
 }
 
-.MuiTreeItem-content:hover{
-    /* background-color: #be1a1a; */
+/* Disable MUI X TreeView default selection/focus highlighting */
+.tree-view-root .MuiTreeItem-content.Mui-selected,
+.tree-view-root .MuiTreeItem-content.Mui-selected:hover,
+.tree-view-root .MuiTreeItem-content.Mui-selected.Mui-focused,
+.tree-view-root .MuiTreeItem-content.Mui-focused {
+  background-color: transparent;
 }
 
-.MuiTreeItem-root:focus{
-  /* background-color: #bdbdbd; */
-}
-
-
-.MuiTreeView-root > *:focus{
-  /* background-color: #be1a1a; */
+.tree-view-root .MuiTreeItem-content:hover {
+  background-color: rgba(0, 0, 0, 0.04);
 }
