@@ -5,7 +5,7 @@ import { Drawer, Position, InputGroup, Button } from "@blueprintjs/core";
 import { KeyValuePair } from "../../common/key-value-pair";
 
 import "./SettingsDrawer.css";
-import Tabs from "@material-ui/core/Tabs/Tabs";
+import Tabs from "@mui/material/Tabs/Tabs";
 import { useAppStore } from "../../store";
 import { useSetting } from "../../store/settings-store";
 

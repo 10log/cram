@@ -43,6 +43,9 @@ type Props = {
   transitionExitTimeout?: number;
 };
 
+// Default props object for React 18 compatibility
+// Used to merge with incoming props in the constructor
+
 const defaultProps = {
   depth: 0,
 
@@ -87,47 +90,15 @@ type State = {
 };
 
 class TreeViewComponent extends Component<Props, State> {
-  static defaultProps = {
-    depth: 0,
+  // Store merged props as instance variable for React 18 compatibility
+  private propsWithDefaults: any;
 
-    deleteElement: <div>(X)</div>,
-
-    getStyleClassCb: (/* node, depth */) => {
-      return "";
-    },
-    isCheckable: (/* node, depth */) => {
-      return true;
-    },
-    isDeletable: (/* node, depth */) => {
-      return true;
-    },
-    isExpandable: (/* node, depth */) => {
-      return true;
-    },
-
-    keywordChildren: "children",
-    keywordChildrenLoading: "isChildrenLoading",
-    keywordLabel: "name",
-    keywordKey: "id",
-
-    loadingElement: <div>loading...</div>,
-
-    noChildrenAvailableMessage: "No data found",
-
-    onCheckToggleCb: (/* Array of nodes, depth */) => {},
-    onDeleteCb: (/* node, updatedData, depth */) => {
-      return true;
-    },
-    onExpandToggleCb: (/* node, depth */) => {},
-    onUpdateCb: (/* updatedData, depth */) => {},
-
-    transitionEnterTimeout: 0,
-    transitionExitTimeout: 0
-  };
   constructor(props) {
     super(props);
+    // Apply default props manually for React 18 compatibility
+    this.propsWithDefaults = { ...defaultProps, ...props } as any;
     this.state = {
-      data: cloneDeep(this.props.data, true),
+      data: cloneDeep(this.propsWithDefaults.data, true),
       lastCheckToggledNodeIndex: null
     };
 
@@ -146,9 +117,12 @@ class TreeViewComponent extends Component<Props, State> {
     this.handleExpandToggle = this.handleExpandToggle.bind(this);
   }
 
-  componentWillReceiveProps(nextProps) {
-    if (!isEqual(nextProps.data, this.props.data)) {
-      this.setState({ data: cloneDeep(nextProps.data, true) });
+  componentDidUpdate(prevProps) {
+    // Update merged props when props change
+    this.propsWithDefaults = { ...defaultProps, ...this.props } as any;
+
+    if (!isEqual(prevProps.data, this.props.data)) {
+      this.setState({ data: cloneDeep(this.props.data, true) });
     }
   }
 

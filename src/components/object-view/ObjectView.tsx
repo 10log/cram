@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useState } from "react";
-import TreeView from "@material-ui/lab/TreeView";
-import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
-import ChevronRightIcon from "@material-ui/icons/ChevronRight";
+import TreeView from "@mui/lab/TreeView";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 
-import TreeItem from "@material-ui/lab/TreeItem";
+import TreeItem from "@mui/lab/TreeItem";
 import TreeItemLabel from "../tree-item-label/TreeItemLabel";
 import properCase from "../../common/proper-case";
 import { KeyValuePair } from "../../common/key-value-pair";
