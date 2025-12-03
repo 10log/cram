@@ -87,7 +87,8 @@ const MaterialList = () => {
 }
 
 const MaterialAssignButton = () => {
-  const selectedSurfaces = useContainer(useShallow(state=>[...state.selectedObjects].filter(x=>x.kind==="surface"))) as Surface[];
+  const selectedObjects = useContainer(state => state.selectedObjects);
+  const selectedSurfaces = useMemo(() => [...selectedObjects].filter(x=>x.kind==="surface") as Surface[], [selectedObjects]);
   const selectedMaterial = useMaterial(state => state.materials.get(state.selectedMaterial));
   return (
     <div className={"material_drawer-display-assign_button"}>

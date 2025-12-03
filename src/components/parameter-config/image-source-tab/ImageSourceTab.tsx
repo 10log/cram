@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useReducer, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import "./ImageSourceTab.css";
 import RayTracer from "../../../compute/raytracer";
 import {ImageSourceSolver} from "../../../compute/raytracer/image-source/index";
@@ -24,11 +24,12 @@ export interface ImageSourceTabProps {
 }
 
 export const ReceiverSelect = ({ uuid }: { uuid: string }) => {
-  const receivers = useContainer(useShallow((state) => {
-    return filteredMapObject(state.containers, (container) =>
+  const containers = useContainer((state) => state.containers);
+  const receivers = useMemo(() => {
+    return filteredMapObject(containers, (container) =>
       container.kind === "receiver" ? pickProps(["uuid", "name"], container) : undefined
     ) as { uuid: string; name: string }[];
-  }));
+  }, [containers]);
 
   const [receiverIDs, setReceiverIDs] = useSolverProperty<ImageSourceSolver, "receiverIDs">(
     uuid,
@@ -55,11 +56,12 @@ export const ReceiverSelect = ({ uuid }: { uuid: string }) => {
   );
 };
 export const SourceSelect = ({ uuid }: { uuid: string }) => {
-  const sources = useContainer(useShallow((state) => {
-    return filteredMapObject(state.containers, (container) =>
+  const containers = useContainer((state) => state.containers);
+  const sources = useMemo(() => {
+    return filteredMapObject(containers, (container) =>
       container.kind === "source" ? pickProps(["uuid", "name"], container) : undefined
     ) as { uuid: string; name: string }[];
-  }));
+  }, [containers]);
 
   const [sourceIDs, setSourceIDs] = useSolverProperty<ImageSourceSolver, "sourceIDs">(
     uuid,

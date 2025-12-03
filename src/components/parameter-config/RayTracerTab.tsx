@@ -1,4 +1,4 @@
-import React, { useEffect, useReducer, useState } from "react";
+import React, { useEffect, useMemo, useReducer, useState } from "react";
 import RayTracer from "../../compute/raytracer";
 import { emit, on } from "../../messenger";
 import { ObjectPropertyInputEvent } from "../ObjectProperties";
@@ -18,7 +18,6 @@ import PropertyRowCheckbox from "./property-row/PropertyRowCheckbox";
 import PropertyButton from "./property-row/PropertyButton";
 import { PropertyRowTextInput } from "./property-row/PropertyRowTextInput";
 import { renderer } from "../../render/renderer";
-import { useShallow } from "zustand/react/shallow";
 
 
 const { PropertyTextInput, PropertyNumberInput, PropertyCheckboxInput } = createPropertyInputs<RayTracer>(
@@ -28,11 +27,12 @@ const { PropertyTextInput, PropertyNumberInput, PropertyCheckboxInput } = create
 // const Option = ({ item }) => <option value={item.uuid}>{item.name}</option>;
 
 export const ReceiverSelect = ({ uuid }: { uuid: string }) => {
-  const receivers = useContainer(useShallow((state) => {
-    return filteredMapObject(state.containers, (container) =>
+  const containers = useContainer((state) => state.containers);
+  const receivers = useMemo(() => {
+    return filteredMapObject(containers, (container) =>
       container.kind === "receiver" ? pickProps(["uuid", "name"], container) : undefined
     ) as { uuid: string; name: string }[];
-  }));
+  }, [containers]);
 
   const [receiverIDs, setReceiverIDs] = useSolverProperty<RayTracer, "receiverIDs">(
     uuid,
@@ -60,11 +60,12 @@ export const ReceiverSelect = ({ uuid }: { uuid: string }) => {
 };
 
 export const SourceSelect = ({ uuid }: { uuid: string }) => {
-  const sources = useContainer(useShallow((state) => {
-    return filteredMapObject(state.containers, (container) =>
+  const containers = useContainer((state) => state.containers);
+  const sources = useMemo(() => {
+    return filteredMapObject(containers, (container) =>
       container.kind === "source" ? pickProps(["uuid", "name"], container) : undefined
     ) as { uuid: string; name: string }[];
-  }));
+  }, [containers]);
 
   const [sourceIDs, setSourceIDs] = useSolverProperty<RayTracer, "sourceIDs">(
     uuid,
