@@ -1,7 +1,6 @@
 import React from 'react';
 
-import { Menu, MenuItem, MenuDivider } from "@blueprintjs/core";
-import { ContextMenu2 } from "@blueprintjs/popover2";
+import { Menu, MenuItem, MenuDivider, ContextMenu as BpContextMenu } from "@blueprintjs/core";
 
 export interface ContextMenuProps {
     handleMenuItemClick: ((event: React.MouseEvent<HTMLElement, MouseEvent>) => void) & ((event: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => void);
@@ -14,7 +13,7 @@ export class ContextMenu extends React.Component<ContextMenuProps, {}> {
         const items = this.props.items || ["Delete", "!seperator", "Add To Global Variables", "Log to Console"];
 
         return (
-            <ContextMenu2
+            <BpContextMenu
                 content={
                     <Menu>
                         {items.map((x, i) => {
@@ -29,7 +28,7 @@ export class ContextMenu extends React.Component<ContextMenuProps, {}> {
                 }
             >
                 {this.props.children}
-            </ContextMenu2>
+            </BpContextMenu>
         );
     }
 }
