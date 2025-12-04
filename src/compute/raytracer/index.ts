@@ -1095,7 +1095,10 @@ class RayTracer extends Solver {
         worker.terminate();
         resolve({ signal, normalizedSignal });
       };
-      worker.onerror = reject;
+      worker.onerror = (error) => {
+        worker.terminate();
+        reject(error);
+      };
     });
   }
   clearRays() {
