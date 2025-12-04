@@ -1,7 +1,6 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import {on} from '../../messenger';
 import { Tab, Tabs, Classes } from "@blueprintjs/core";
-import { useShallow } from 'zustand/react/shallow';
 
 import './ParameterConfig.css';
 import RayTracerTab from './RayTracerTab';
@@ -62,7 +61,14 @@ const SolverOptionTitle = ({ uuid }) => {
 
 
 export const SolversTab = () => {
-  const solvers = useSolver(useShallow(state=>state.withProperty(solver=>solver.kind)))
+  const solversData = useSolver((state) => state.solvers);
+  const solvers = useMemo(() => {
+    const map = new Map<string, string>();
+    Object.keys(solversData).forEach(key => {
+      map.set(key, solversData[key].kind);
+    });
+    return map;
+  }, [solversData]);
   const [index, setIndex] = useState(0);
   useEffect(() => {
     return on("NEW", () => setIndex(0));
@@ -93,8 +99,14 @@ const ObjectOptionTitle = ({ uuid }) => {
 };
 
 export const ObjectsTab = () => {
-
-  const objects = useContainer(useShallow(state=>state.withProperty(object=>object.kind)))
+  const containersData = useContainer((state) => state.containers);
+  const objects = useMemo(() => {
+    const map = new Map<string, string>();
+    Object.keys(containersData).forEach(key => {
+      map.set(key, containersData[key].kind);
+    });
+    return map;
+  }, [containersData]);
   const [index, setIndex] = useState(0);
 
   const [selectedObjectId, setSelectedObjectId] = useState("choose");

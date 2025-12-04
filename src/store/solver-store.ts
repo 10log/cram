@@ -12,30 +12,12 @@ export type SolverStore = {
   solvers: KeyValuePair<Solver>;
   set: SetFunction<SolverStore>;
   keys: () => string[];
-  withProperties: (propertiesGetter: (solver: Solver) => Partial<Solver>) => Map<string, Partial<Solver>>
-  withProperty: <T>(propertyGetter: (solver: Solver) => T) => Map<string, T>
 };
 
 // solver hook
 export const useSolver = create<SolverStore>((set, get) => ({
   solvers: {},
   keys: () => Object.keys(get().solvers),
-  withProperties: (propertiesGetter: (solver: Solver) => Partial<Solver> ) => {
-    const solvers = get().solvers;
-    const solverMap = new Map<string, Partial<Solver>>();
-    Object.keys(solvers).forEach(key=>{
-      solverMap.set(key, propertiesGetter(solvers[key]))
-    });
-    return solverMap;
-  },
-  withProperty:  <T>(propertyGetter: (solver: Solver) => T) => {
-    const solvers = get().solvers;
-    const solverMap = new Map<string, T>();
-    Object.keys(solvers).forEach(key=>{
-      solverMap.set(key, propertyGetter(solvers[key]))
-    });
-    return solverMap;
-  },
   set: (fn) => set(produce(fn))
 }));
 
