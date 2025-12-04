@@ -16,6 +16,7 @@ export type ContainerStore = {
   getRooms: () => Room[];
   withProperties: (propertiesGetter: (container: Container) => Partial<Container>) => Map<string, Partial<Container>>
   withProperty: <T>(propertyGetter: (container: Container) => T) => Map<string, T>
+  getContainersByKind: (kind: Container['kind']) => { uuid: string; name: string }[];
 };
 
 const getWorkspace = (containers: KeyValuePair<Container>) => {
@@ -59,6 +60,12 @@ export const useContainer = create<ContainerStore>((set, get) => ({
       containerMap.set(key, propertyGetter(containers[key]))
     });
     return containerMap;
+  },
+  getContainersByKind: (kind: Container['kind']) => {
+    const containers = get().containers;
+    return Object.values(containers)
+      .filter(c => c.kind === kind)
+      .map(c => ({ uuid: c.uuid, name: c.name }));
   },
 }));
 

@@ -1,16 +1,9 @@
-import React, { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
+import React, { useEffect, useReducer } from "react";
 import "./ImageSourceTab.css";
-import RayTracer from "../../../compute/raytracer";
 import {ImageSourceSolver} from "../../../compute/raytracer/image-source/index";
-import { emit, on } from "../../../messenger";
-import { ObjectPropertyInputEvent } from "../../ObjectProperties";
+import { on } from "../../../messenger";
 import { useContainer, useSolver } from "../../../store";
-import GridRow from "../../GridRow";
-import TextInput from "../../text-input/TextInput";
-import NumberInput from "../../number-input/NumberInput";
-import { filteredMapObject, pickProps, unique } from "../../../common/helpers";
-import GridRowSeperator from "../../GridRowSeperator";
-import Select from 'react-select';
+import { pickProps } from "../../../common/helpers";
 import useToggle from "../../hooks/use-toggle";
 import { createPropertyInputs, useSolverProperty, PropertyButton  } from "../SolverComponents";
 import PropertyRowFolder from "../property-row/PropertyRowFolder";
@@ -24,12 +17,9 @@ export interface ImageSourceTabProps {
 }
 
 export const ReceiverSelect = ({ uuid }: { uuid: string }) => {
-  const containers = useContainer((state) => state.containers);
-  const receivers = useMemo(() => {
-    return filteredMapObject(containers, (container) =>
-      container.kind === "receiver" ? pickProps(["uuid", "name"], container) : undefined
-    ) as { uuid: string; name: string }[];
-  }, [containers]);
+  const receivers = useContainer(
+    useShallow((state) => state.getContainersByKind("receiver"))
+  );
 
   const [receiverIDs, setReceiverIDs] = useSolverProperty<ImageSourceSolver, "receiverIDs">(
     uuid,
@@ -55,13 +45,11 @@ export const ReceiverSelect = ({ uuid }: { uuid: string }) => {
     </>
   );
 };
+
 export const SourceSelect = ({ uuid }: { uuid: string }) => {
-  const containers = useContainer((state) => state.containers);
-  const sources = useMemo(() => {
-    return filteredMapObject(containers, (container) =>
-      container.kind === "source" ? pickProps(["uuid", "name"], container) : undefined
-    ) as { uuid: string; name: string }[];
-  }, [containers]);
+  const sources = useContainer(
+    useShallow((state) => state.getContainersByKind("source"))
+  );
 
   const [sourceIDs, setSourceIDs] = useSolverProperty<ImageSourceSolver, "sourceIDs">(
     uuid,
