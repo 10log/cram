@@ -1,30 +1,27 @@
-import React, { useEffect, useReducer } from "react";
+import React, { useEffect, useMemo, useReducer } from "react";
 import RayTracer from "../../compute/raytracer";
 import { useContainer, useSolver } from "../../store";
-import Select from "react-select";
 import PropertyRow from "./property-row/PropertyRow";
 import PropertyRowFolder from "./property-row/PropertyRowFolder";
-import Solver from "../../compute/solver";
 import { createPropertyInputs, useSolverProperty } from "./SolverComponents";
 import useToggle from "../hooks/use-toggle";
 import PropertyRowLabel from "./property-row/PropertyRowLabel";
 import PropertyRowCheckbox from "./property-row/PropertyRowCheckbox";
 import PropertyButton from "./property-row/PropertyButton";
-import { PropertyRowTextInput } from "./property-row/PropertyRowTextInput";
 import { renderer } from "../../render/renderer";
-import { useShallow } from "zustand/react/shallow";
 
 
 const { PropertyTextInput, PropertyNumberInput, PropertyCheckboxInput } = createPropertyInputs<RayTracer>(
   "RAYTRACER_SET_PROPERTY"
 );
 
-// const Option = ({ item }) => <option value={item.uuid}>{item.name}</option>;
-
 export const ReceiverSelect = ({ uuid }: { uuid: string }) => {
-  const receivers = useContainer(
-    useShallow((state) => state.getContainersByKind("receiver"))
-  );
+  const containers = useContainer((state) => state.containers);
+  const receivers = useMemo(() => {
+    return Object.values(containers)
+      .filter(c => c.kind === "receiver")
+      .map(c => ({ uuid: c.uuid, name: c.name }));
+  }, [containers]);
 
   const [receiverIDs, setReceiverIDs] = useSolverProperty<RayTracer, "receiverIDs">(
     uuid,
@@ -52,9 +49,12 @@ export const ReceiverSelect = ({ uuid }: { uuid: string }) => {
 };
 
 export const SourceSelect = ({ uuid }: { uuid: string }) => {
-  const sources = useContainer(
-    useShallow((state) => state.getContainersByKind("source"))
-  );
+  const containers = useContainer((state) => state.containers);
+  const sources = useMemo(() => {
+    return Object.values(containers)
+      .filter(c => c.kind === "source")
+      .map(c => ({ uuid: c.uuid, name: c.name }));
+  }, [containers]);
 
   const [sourceIDs, setSourceIDs] = useSolverProperty<RayTracer, "sourceIDs">(
     uuid,
