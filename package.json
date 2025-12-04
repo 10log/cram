@@ -57,7 +57,7 @@
     "fast-sort": "^3.4.1",
     "file-saver": "^2.0.2",
     "hotkeys-js": "^3.13.15",
-    "immer": "^10.1.1",
+    "immer": "^11.0.1",
     "lodash": "^4.17.21",
     "normalize.css": "^8.0.1",
     "object-hash": "^3.0.0",
