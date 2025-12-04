@@ -33,7 +33,7 @@
     "@jscad/csg": "^0.7.0",
     "@mui/icons-material": "^7.3.6",
     "@mui/material": "^7.3.6",
-    "@mui/x-tree-view": "^8.19.0",
+    "@mui/x-tree-view": "^8.21.0",
     "@types/d3": "^7.4.3",
     "@types/plotly.js": "^3.0.8",
     "@types/styled-components": "^5.1.34",
