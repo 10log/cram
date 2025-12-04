@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { memo, useCallback, useEffect, useState } from "react";
 import { SimpleTreeView } from "@mui/x-tree-view/SimpleTreeView";
 import { TreeItem } from "@mui/x-tree-view/TreeItem";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -28,7 +28,7 @@ export interface MapChildrenProps {
   setExpanded: (value: React.SetStateAction<string[]>) => void;
 }
 
-function MapChildren(props: MapChildrenProps) {
+const MapChildren = memo(function MapChildren(props: MapChildrenProps) {
   const { container, expanded, setExpanded, parent } = props;
   const [selected, setSelected] = useState(container.selected);
   const [name, setName] = useState(container.name);
@@ -190,7 +190,7 @@ function MapChildren(props: MapChildrenProps) {
         </ContextMenu>
     default: return <></>;
   }
-}
+});
 
 export default function ObjectView() {
   const {containers, getWorkspace} = useContainer(useShallow(state=>pickProps(["containers", "getWorkspace"], state)));
