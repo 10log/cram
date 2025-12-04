@@ -12,8 +12,6 @@ import { useShallow } from 'zustand/react/shallow';
 
 import "./MaterialSearch.css";
 
-
-
 const min = (a: number, b: number) => (a < b ? a : b);
 
 type MaterialDrawerListItemProps = {
@@ -39,8 +37,6 @@ const MaterialDrawerListItem = ({ item }: MaterialDrawerListItemProps) => {
   )
 };
 
-
-
 const Absorption = ({absorption}: {absorption: AcousticMaterial["absorption"]}) => {
   return (
     <div className={"material_drawer-display-material_absorption"}>
@@ -57,11 +53,7 @@ const Absorption = ({absorption}: {absorption: AcousticMaterial["absorption"]}) 
 }
 
 const MaterialProperties = () => {
-
-  const {selectedMaterial, material} = useMaterial(state => ({
-    selectedMaterial: state.selectedMaterial,
-    material: state.materials.get(state.selectedMaterial)
-  }));
+  const material = useMaterial(state => state.materials.get(state.selectedMaterial));
   return material ? (
     <div>
     <div className={"material_drawer-display-material_name"}><span>{material.name}</span></div>
@@ -76,7 +68,7 @@ const MaterialProperties = () => {
 
 const MaterialList = () => {
   const { bufferLength, query, search} = useMaterial(useShallow(state=>pickProps(["bufferLength", "query", "search"], state)));
-  const filteredItems = useMemo(()=>search(query), [query]);
+  const filteredItems = useMemo(()=>search(query), [query, search]);
   return (
     <div className="material_drawer-list" >
       {filteredItems.slice(0, min(bufferLength, filteredItems.length)).map(item => <MaterialDrawerListItem item={item} key={`item-${item.uuid}`} />)}
@@ -95,7 +87,7 @@ const MaterialAssignButton = () => {
         text="assign"
         icon="tick"
         disabled={selectedSurfaces.length === 0}
-        onClick={(e) => {
+        onClick={() => {
           if(selectedMaterial){
             emit("ASSIGN_MATERIAL", {
               material: selectedMaterial as AcousticMaterial,
@@ -109,7 +101,7 @@ const MaterialAssignButton = () => {
 }
 
 export const MaterialSearch = () => {
-  const { bufferLength, query, search, set } = useMaterial(useShallow(state=>pickProps(["bufferLength", "query", "search", "set"], state)));
+  const { query, set } = useMaterial(useShallow(state=>pickProps(["query", "set"], state)));
   const {materialDrawerOpen, set: setAppStore} = useAppStore(useShallow(state=>pickProps(["materialDrawerOpen", "set"], state)));
 
   const setQuery = (query: string) => set(store=>{ store.query = query });
@@ -137,7 +129,7 @@ export const MaterialSearch = () => {
       <div className="material_drawer-container">
         <div className="material_drawer-searchbar-container">
           <div className="material_drawer-searchbar-input_container">
-            <Icon icon="search" iconSize={14} color="darkgray" className="material_drawer-search_icon" />
+            <Icon icon="search" size={14} color="darkgray" className="material_drawer-search_icon" />
             <input
               type="text"
               className="material_drawer-searchbar-input"
@@ -148,12 +140,13 @@ export const MaterialSearch = () => {
         </div>
         <MaterialList />
         <div>
-          <a
+          <button
+            type="button"
             className="show-more"
             onClick={() => set(store=> { store.bufferLength = store.bufferLength + 15 })}
           >
             show more...
-          </a>
+          </button>
         </div>
         <div className={"material_drawer-display-container"}>
           <MaterialProperties />
