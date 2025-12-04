@@ -191,4 +191,8 @@ export default class PickHelper {
     this.pickPosition.x = -100000;
     this.pickPosition.y = -100000;
   }
+
+  updateCamera(camera) {
+    this.camera = camera;
+  }
 }

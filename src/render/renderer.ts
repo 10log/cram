@@ -983,8 +983,8 @@ export default class Renderer {
       this.renderPass.camera = this._camera;
     }
 
-    this.pickHelper = new PickHelper(this.scene, this._camera, this.renderer.domElement);
-    this.needsToRender = true;
+    this.pickHelper.updateCamera(this._camera);
+    this.requestRender();
   }
 
   get fogDensity() {
