@@ -1935,7 +1935,7 @@ class RayTracer extends Solver {
 
         const offlineContext = audioEngine.createOfflineContext(1, signal.length, sampleRate);
 
-        const source = audioEngine.createBufferSource(normalizedSignal, offlineContext)
+        const source = audioEngine.createBufferSource(normalizedSignal, offlineContext);
 
         source.connect(offlineContext.destination);
         source.start();
