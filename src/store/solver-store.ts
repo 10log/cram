@@ -65,9 +65,9 @@ export const setSolverProperty = ({uuid, property, value}) => {
 
 export const callSolverMethod = ({uuid, method, args, isAsync }) => {
   try{
-    const handle = useSolver.getState().solvers[uuid][method];
+    const solver = useSolver.getState().solvers[uuid];
+    const handle = solver[method].bind(solver);
     if(isAsync) {
-      
       handle(args).catch(console.error);
     }
     else{

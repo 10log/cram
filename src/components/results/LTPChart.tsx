@@ -41,6 +41,7 @@ export type LTPChartProps = {
   width?: number;
   height?: number;
   events?: boolean;
+  plotOrders?: number[];
 };
 
 
@@ -96,11 +97,18 @@ const useUpdate = () => {
   return [updateCount, () => setUpdateCount(updateCount + 1)] as  [number, () => void];
 }
 
-const Chart = ({ uuid, width = 400, height = 200, events = false }: LTPChartProps) => {
+const Chart = ({ uuid, width = 400, height = 200, events = false, plotOrders }: LTPChartProps) => {
     const {info, data: _data, from} = useResult(useShallow(state=>pickProps(["info", "data", "from"], state.results[uuid] as Result<ResultKind.LevelTimeProgression>)));
-    
+
     const [count, update] = useUpdate();
     const [data, setData] = useState(_data);
+
+    // Filter data by plotOrders - if plotOrders is empty, show no data
+    const filteredData = useMemo(() => {
+      if (!data) return data;
+      if (!plotOrders) return data;
+      return data.filter(d => plotOrders.includes(d.order));
+    }, [data, plotOrders]);
 
 
     useEffect(() => on("UPDATE_RESULT", (e) => {
@@ -113,24 +121,28 @@ const Chart = ({ uuid, width = 400, height = 200, events = false }: LTPChartProp
 
     const scalePadding = 60;
     const scaleWidth = width-scalePadding;
+    const scaleHeight = height - scalePadding;
+
     // scales, memoize for performance
+    // Must be called before any conditional returns to satisfy Rules of Hooks
     const xScale = useMemo(
       () =>
         scaleLinear<number>({
           range: [0, scaleWidth],
-          domain: [0, Math.max(...data.map(getTime))],
+          domain: [0, data && data.length > 0 ? Math.max(...data.map(getTime)) : 1],
         }),
-      [width, data],
+      [scaleWidth, data],
     );
-    
-    const scaleHeight = height - scalePadding;
+
     const yScale = useMemo(
       () =>
         scaleLinear<number>({
           range: [scaleHeight, 0],
-          domain: [Math.min(...data.map(getPressure))*0.75, Math.max(...data.map(getPressure))],
+          domain: data && data.length > 0
+            ? [Math.min(...data.map(getPressure))*0.75, Math.max(...data.map(getPressure))]
+            : [0, 1],
         }),
-      [height, data],
+      [scaleHeight, data],
     );
 
     const ordinalColorScale = useMemo(
@@ -140,6 +152,17 @@ const Chart = ({ uuid, width = 400, height = 200, events = false }: LTPChartProp
     ),
       [info.maxOrder]
     );
+
+    // Guard against empty data - must be after all hooks
+    if (!data || data.length === 0) {
+      return (
+        <svg width={width} height={height}>
+          <text x={width / 2} y={height / 2} textAnchor="middle">
+            No data yet - click "Update" to calculate
+          </text>
+        </svg>
+      );
+    }
 
     return (
       <svg width={width} height={height}>
@@ -154,7 +177,7 @@ const Chart = ({ uuid, width = 400, height = 200, events = false }: LTPChartProp
         // numTicksColumns={numTicksForWidth(width)}
       />
       <Group>
-        {data.map(d => {
+        {filteredData.map(d => {
           const time = getTime(d);
           const barHeight = scaleHeight - yScale(getPressure(d));
           const barX = xScale(time) + scalePadding;
@@ -233,7 +256,7 @@ export const LTPChart = ({ uuid, width = 400, height = 300, events = false }: LT
     <HorizontalContainer>
       <GraphContainer>
         <ParentSize debounceTime={10}>
-          {({ width })=><Chart {...{ width, height, uuid, events }} />}
+          {({ width })=><Chart {...{ width, height, uuid, events, plotOrders }} />}
         </ParentSize>
       </GraphContainer>
       <VerticalContainer>

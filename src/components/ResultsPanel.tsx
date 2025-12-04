@@ -1,13 +1,15 @@
-import React, { useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 
 import { useResult, getResultKeys, ResultStore } from "../store/result-store";
 
 import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
 import { useState } from "react";
 import { useShallow } from "zustand/react/shallow";
+import { on } from "../messenger";
 
 import LTPChart from "./results/LTPChart";
 import RT60Chart from "./results/RT60Chart";
+import ImpulseResponseChart from "./results/ImpulseResponseChart";
 import { ParentSize } from "@visx/responsive";
 import PanelEmptyText from "./panel-container/PanelEmptyText";
 
@@ -23,7 +25,28 @@ const resultKeys = (state: ResultStore) => Object.keys(state.results);
 
 export const ResultsPanel = () => {
   const keys = useResult(useShallow(resultKeys));
-  const [index, setIndex] = useState(0); 
+  const [index, setIndex] = useState(0);
+
+  // Shared logic for switching to a result tab by uuid
+  const switchToResultTab = useCallback((resultUuid: string) => {
+    setTimeout(() => {
+      const currentKeys = Object.keys(useResult.getState().results);
+      const newIndex = currentKeys.indexOf(resultUuid);
+      if (newIndex !== -1) {
+        setIndex(newIndex);
+      }
+    }, 0);
+  }, []);
+
+  // When a new result is added, switch to that tab
+  useEffect(() => {
+    return on("ADD_RESULT", (e) => switchToResultTab(e.uuid));
+  }, [switchToResultTab]);
+
+  // When a result is updated, switch to that tab (e.g., Calculate LTP)
+  useEffect(() => {
+    return on("UPDATE_RESULT", (e) => switchToResultTab(e.uuid));
+  }, [switchToResultTab]);
 
   return keys.length > 0 ? (
     <div
@@ -64,6 +87,9 @@ const ChartSelect = (uuid) => {
 
     case "statisticalRT60":
       return <RT60Chart uuid={uuid.uuid} events />
+
+    case "impulseResponse":
+      return <ImpulseResponseChart uuid={uuid.uuid} events />
 
     default:
       return null;
