@@ -14,14 +14,14 @@ export interface ARTTabState {
   
 }
 
-function useARTProperties(properties: (keyof ART)[], artsolver: ART, _set: any) {
+function _useARTProperties(properties: (keyof ART)[], artsolver: ART, _set: any) {
   const [state, setState] = useState(pickProps(properties, artsolver));
   const setFunction = <T extends keyof typeof state>(property: T, value: typeof state[T]) => {
     setState({ ...state, [property]: value });
     // set((solvers) => void (solvers.solvers[raytracer.uuid][property] = value));
   };
   return [state, setFunction] as [typeof state, typeof setFunction];
-};
+}
 
 const { PropertyTextInput } = createPropertyInputs<ART>(
   "ART_SET_PROPERTY"

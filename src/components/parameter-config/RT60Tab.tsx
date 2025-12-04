@@ -18,14 +18,14 @@ export interface RT60TabState {
   
 }
 
-function useRT60Properties(properties: (keyof RT60)[], rt60solver: RT60, _set: any) {
+function _useRT60Properties(properties: (keyof RT60)[], rt60solver: RT60, _set: any) {
   const [state, setState] = useState(pickProps(properties, rt60solver));
   const setFunction = <T extends keyof typeof state>(property: T, value: typeof state[T]) => {
     setState({ ...state, [property]: value });
     // set((solvers) => void (solvers.solvers[raytracer.uuid][property] = value));
   };
   return [state, setFunction] as [typeof state, typeof setFunction];
-};
+}
 
 const { PropertyTextInput, PropertyNumberInput } = createPropertyInputs<RT60>(
   "RT60_SET_PROPERTY"
@@ -82,7 +82,7 @@ type DropdownOption = {
   name: string
 };
 
-function getSourcesAndReceivers(state: any) {
+function _getSourcesAndReceivers(state: any) {
   const sources = [] as DropdownOption[];
   const receivers = [] as DropdownOption[];
   Object.keys(state.containers).forEach((uuid) => {

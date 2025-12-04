@@ -17,13 +17,13 @@ export interface EnergyDecayTabState {
     
 }
   
-function useEnergyDecayProperties(properties: (keyof EnergyDecay)[], ed: EnergyDecay, _set: any) {
+function _useEnergyDecayProperties(properties: (keyof EnergyDecay)[], ed: EnergyDecay, _set: any) {
     const [state, setState] = useState(pickProps(properties, ed));
     const setFunction = <T extends keyof typeof state>(property: T, value: typeof state[T]) => {
         setState({ ...state, [property]: value });
     };
     return [state, setFunction] as [typeof state, typeof setFunction];
-};
+}
   
 const { PropertyTextInput } = createPropertyInputs<EnergyDecay>(
     "ENERGYDECAY_SET_PROPERTY"
