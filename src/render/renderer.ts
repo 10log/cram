@@ -489,7 +489,7 @@ export default class Renderer {
     // Throttle mousemove to avoid triggering render for every pixel moved
     const throttledMouseMove = debounce(() => {
       this.needsToRender = true;
-    }, 30); // ~33ms, roughly 30fps for mouse tracking
+    }, 30); // 30 Hz (~33ms period) for mouse tracking
     this.renderer.domElement.addEventListener("mousemove", throttledMouseMove);
 
     this.renderer.domElement.addEventListener("wheel", (e) => {
