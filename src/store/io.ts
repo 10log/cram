@@ -1,19 +1,14 @@
 import FileSaver from 'file-saver';
 import { useContainer, useSolver, useAppStore } from '.';
-import { KeyValuePair } from '../common/key-value-pair';
-import Solver from '../compute/solver';
 
 
 import { on, emit } from '../messenger';
-import { gte } from 'semver';
 import { SourceSaveObject } from '../objects/source';
 import { ReceiverSaveObject } from '../objects/receiver';
 import { RoomSaveObject } from '../objects/room';
-import { SurfaceGroupSaveObject } from '../objects/surface-group';
 import { RayTracerSaveObject } from '../compute/raytracer';
 import { RT60SaveObject } from '../compute/rt';
 import { ImageSourceSaveObject } from '../compute/raytracer/image-source';
-import { getSolverKeys } from './solver-store';
 
 export type ContainerSaveObject = (SourceSaveObject | ReceiverSaveObject | RoomSaveObject);
 export type SolverSaveObject = (RayTracerSaveObject | RT60SaveObject | ImageSourceSaveObject);
@@ -142,7 +137,7 @@ on("NEW", (callback) => {
 
 
 
-on("RESTORE", ({ file, json }) => {
+on("RESTORE", ({ json }) => {
   emit("DESELECT_ALL_OBJECTS");
   emit("RESTORE_CONTAINERS", json.containers);
   emit("RESTORE_SOLVERS", json.solvers);

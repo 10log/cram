@@ -1,6 +1,5 @@
 import { linspace } from "./util/linspace";
 import complex from "complex";
-import randBetween from "./util/rand-between";
 
 const { PI: pi, tanh } = Math;
 const coth = (x: number) => 1 / tanh(x);

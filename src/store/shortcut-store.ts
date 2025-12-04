@@ -102,7 +102,7 @@ on("REGISTER_SHORTCUTS", () => {
   hotkeys.unbind();
   useShortcut.getState().shortcuts.forEach((shortcut) => {
     shortcut.scopes.forEach(scope => {
-      hotkeys(shortcut.key, scope, (event) => {
+      hotkeys(shortcut.key, scope, (_event) => {
         emit(shortcut.event, shortcut.args);
       });
     })

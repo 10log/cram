@@ -11,7 +11,7 @@ export interface SliderInputProps {
 }
 
 export default function SliderInput(props: SliderInputProps) {
-  const [value, setValue] = useState(props.value);
+  const [value, _setValue] = useState(props.value);
 
   const inputProps = {} as React.InputHTMLAttributes<HTMLInputElement>;
   inputProps.type = "range";

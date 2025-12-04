@@ -3,7 +3,7 @@ import { Complex, makeComplexArray } from "../complex";
 import { Float32Array_to_ComplexArray } from "../util/complex-array";
 import { chunk } from "../util/chunk";
 import * as win from "../window/applyWindow";
-import WindowFunctions, { WindowFunction } from "../window/window-functions";
+import { WindowFunction } from "../window/window-functions";
 
 export interface fftoptions {
   buffersize?: number;
@@ -48,7 +48,7 @@ export function fft(values: number[] | Complex[] | Float32Array, opts: fftoption
   }
 
   return (arr as Complex[][]).map((x) => {
-    if (x.length == opts.buffersize) {
+    if (x.length === opts.buffersize) {
       return new FFT().fft1d(x, opts.buffersize || 1024);
     } else {
       return new FFT().fft1d(

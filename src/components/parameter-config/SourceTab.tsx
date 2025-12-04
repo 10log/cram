@@ -1,14 +1,11 @@
 import React from "react";
-import Source, { DirectivityHandler, SignalSource, SignalSourceOptions } from "../../objects/source";
-import Container from "../../objects/container";
+import Source, { DirectivityHandler, SignalSourceOptions } from "../../objects/source";
 import { useContainer } from "../../store";
-import { filteredMapObject, pickProps } from "../../common/helpers";
 import PropertyRow from "./property-row/PropertyRow";
 import PropertyRowFolder from "./property-row/PropertyRowFolder";
-import { createPropertyInputs, useContainerProperty } from "./ContainerComponents";
+import { createPropertyInputs } from "./ContainerComponents";
 import useToggle from "../hooks/use-toggle";
 import PropertyRowLabel from "./property-row/PropertyRowLabel";
-import PropertyRowCheckbox from "./property-row/PropertyRowCheckbox";
 import PropertyButton from "./property-row/PropertyButton";
 import { CLFParser } from "../../import-handlers/CLFParser";
 
@@ -111,9 +108,9 @@ const CLFConfig = ({uuid}: {uuid: string}) => {
   const [open, toggle] = useToggle(true);
   return (
     <PropertyRowFolder label="CLF Config" open={open} onOpenClose={toggle}>
-      <PropertySelect 
-        uuid={uuid} 
-        label="Signal Source" 
+      <PropertySelect
+        uuid={uuid}
+        label="Signal Source"
         tooltip="The source thats generating it's signal"
         property="signalSource"
         options={SignalSourceOptions}
@@ -131,13 +128,13 @@ const CLFConfig = ({uuid}: {uuid: string}) => {
           onChange={(e) => {
               console.log(e.target.files);
               const reader = new FileReader();
-              
-              reader.addEventListener('loadend', (loadEndEvent) => {
-                  let filecontents:string = reader.result as string; 
+
+              reader.addEventListener('loadend', (_loadEndEvent) => {
+                  let filecontents:string = reader.result as string;
                   let clf = new CLFParser(filecontents);
                   let clf_results = clf.parse();
                   const source = useContainer.getState().containers[uuid] as Source;
-                  source.directivityHandler = new DirectivityHandler(1,clf_results); 
+                  source.directivityHandler = new DirectivityHandler(1,clf_results);
 
 
                   // display CLF parser object (debugging)
@@ -147,7 +144,7 @@ const CLFConfig = ({uuid}: {uuid: string}) => {
               });
 
               reader.readAsText(e.target!.files![0]);
-              
+
             }
           }
           />

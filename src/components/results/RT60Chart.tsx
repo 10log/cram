@@ -1,18 +1,16 @@
-import React, { CSSProperties, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { Group } from '@visx/group';
 import { BarGroup } from '@visx/shape';
 import { AxisBottom, AxisLeft } from '@visx/axis';
 import { scaleBand, scaleLinear, scaleOrdinal } from '@visx/scale';
 import { timeParse, timeFormat } from 'd3-time-format';
-import { Grid, GridRows } from '@visx/grid';
+import { GridRows } from '@visx/grid';
 import { Result, ResultKind, useResult } from '../../store/result-store';
 import { pickProps } from '../../common/helpers';
 import { on } from '../../messenger';
 import styled from 'styled-components';
-import { LegendItem, LegendOrdinal } from '@visx/legend';
-import PropertyRowLabel from '../parameter-config/property-row/PropertyRowLabel';
-import { BREADCRUMBS_COLLAPSED } from '@blueprintjs/core/lib/esm/common/classes';
+import { LegendOrdinal } from '@visx/legend';
 
 export type BarGroupProps = {
   uuid: string; 
@@ -29,7 +27,7 @@ export interface RTData {
   ap: number; 
 }
 
-const testrtdata: RTData[] = [
+const _testrtdata: RTData[] = [
   {
     frequency: 125,
   sabine: 0.2,
@@ -78,17 +76,17 @@ export const background = '#612efb';
 
 type RtType = 'Sabine' | 'Eyring' | 'AP'; 
 
-const defaultMargin = { top: 0, right: 0, bottom: 40, left: 0 };
+const _defaultMargin = { top: 0, right: 0, bottom: 40, left: 0 };
 
-const parseDate = timeParse('%Y-%m-%d');
-const format = timeFormat('%b %d');
-const formatDate = (date: string) => format(parseDate(date) as Date);
+const _parseDate = timeParse('%Y-%m-%d');
+const _format = timeFormat('%b %d');
+const _formatDate = (date: string) => _format(_parseDate(date) as Date);
 
 // accessors
-const getFreq = (d: RTData) => d.frequency;
+const _getFreq = (d: RTData) => d.frequency;
 const getFreqAsString = (d: RTData) => (d.frequency).toString()
-const getSabine = (d: RTData) => d.sabine; 
-const getEyring = (d: RTData) => d.eyring; 
+const _getSabine = (d: RTData) => d.sabine;
+const _getEyring = (d: RTData) => d.eyring; 
 
 const VerticalContainer = styled.div`
   display: flex;
@@ -106,14 +104,14 @@ const HorizontalContainer = styled.div`
   flex: 1;
 `;
 
-const LegendContainer = styled.div`
+const _LegendContainer = styled.div`
  display: flex;
  flex-direction: column;
  align-items: center;
  padding: 0px 16px;
 `;
 
-const FrequencyContainer = styled.div`
+const _FrequencyContainer = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -139,7 +137,7 @@ export const Chart = ({
 }: BarGroupProps) => {
 
   const {data: _data} = useResult(useShallow(state => pickProps(["data"], state.results[uuid] as Result<ResultKind.StatisticalRT60>)));
-  const [count, update] = useUpdate();
+  const [_count, _update] = useUpdate();
   const [data, setData] = useState(_data);
   const keys = Object.keys(data[0]).filter(d => d !== 'frequency') as RtType[];
   
@@ -273,14 +271,11 @@ export const RT60Chart = ({
     switch(label){
       case "sabine":
         return "Sabine"
-        break;
       case "eyring":
         return "Norris-Eyring"
-        break;
       case "ap":
         return "Arau-Puchades"
-        break;
-      default: 
+      default:
         return "error"
     }
   }

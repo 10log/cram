@@ -1,9 +1,7 @@
-import { CSG } from '@jscad/csg';
 import { Surface } from '../../objects/surface';
-import { expose } from '../../common/expose';
 // import { splitPolygonByPlane } from './split-polygon';
 
-import { math, geometry, splitPolygonByPlane, } from '../csg';
+import { math, geometry, } from '../csg';
 
 // import {PolygonTreeNode} from './trees/polygon-tree-node';
 // import {PolygonTreeNode} from './trees/polygon-tree-node';
@@ -34,7 +32,7 @@ export class BSP {
       .filter((x) => x);
     return {
       distances,
-      willIntersect: !distances.reduce((a, b, i, arr) => a && Math.sign(b) == Math.sign(arr[0]), true)
+      willIntersect: !distances.reduce((a, b, i, arr) => a && Math.sign(b) === Math.sign(arr[0]), true)
     }
   }
 }

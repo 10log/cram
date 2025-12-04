@@ -1,6 +1,6 @@
 import { on, emit } from "../messenger";
 import { omit } from "../common/helpers";
-import { useSolver, getSolverKeys, setSolverProperty, removeSolver, addSolver } from "../store";
+import { useSolver, getSolverKeys } from "../store";
 import RayTracer, { RayTracerSaveObject } from "./raytracer";
 import RT60, { RT60SaveObject } from "./rt";
 

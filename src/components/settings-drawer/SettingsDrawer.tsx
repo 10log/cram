@@ -1,13 +1,10 @@
 import React, { useState } from "react";
 
-import { Drawer, Position, InputGroup, Button } from "@blueprintjs/core";
+import { Drawer, Position, Button } from "@blueprintjs/core";
 
-import { KeyValuePair } from "../../common/key-value-pair";
 
 import "./SettingsDrawer.css";
-import Tabs from "@mui/material/Tabs/Tabs";
 import { useAppStore } from "../../store";
-import { useSetting } from "../../store/settings-store";
 
 export interface SettingsDrawerProps {
   size: number | string;
@@ -22,7 +19,7 @@ export interface SettingsDrawerProps {
 
 
 export default function SettingsDrawer(props: SettingsDrawerProps) {
-  const [selectedTabId, setSelectedTabId] = useState("renderer");
+  const [_selectedTabId, _setSelectedTabId] = useState("renderer");
   const isOpen = useAppStore(store => store.settingsDrawerVisible);
   const set = useAppStore(store => store.set);
   // const {settings, set} = useSetting(state=>state);
@@ -34,7 +31,7 @@ export default function SettingsDrawer(props: SettingsDrawerProps) {
       autoFocus={true}
       enforceFocus={true}
       hasBackdrop={true}
-      onClose={e=>set(draft=>{ draft.settingsDrawerVisible = false })}
+      onClose={_e=>set(draft=>{ draft.settingsDrawerVisible = false })}
       isOpen={isOpen}
       canOutsideClickClose={true}
       canEscapeKeyClose={true}

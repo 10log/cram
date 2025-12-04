@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { Dialog, Classes, Button, AnchorButton, Intent } from '@blueprintjs/core';
-import { messenger, emit } from '../messenger';
+import { emit } from '../messenger';
 import { useAppStore } from '../store/app-store';
 import { pickProps } from '../common/helpers';
 

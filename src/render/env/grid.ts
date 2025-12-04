@@ -47,7 +47,7 @@ export default class Grid extends Container{
     const mesh = new THREE.Mesh(planeGeo, planeMat);
 
 		
-		this.gridHelper = new ModifiedGridHelper(size, divisions, color1, color2, i=>i%majorLinesEvery!=0);
+		this.gridHelper = new ModifiedGridHelper(size, divisions, color1, color2, i=>i%majorLinesEvery!==0);
 		this.gridHelper.renderOrder = -1;
 		const material = this.gridHelper.material as THREE.LineBasicMaterial;
 		material.fog = true;
@@ -55,8 +55,8 @@ export default class Grid extends Container{
 	  material.opacity = 0.1;
 	  material.color.setRGB(0, 0, 0);
 		this.add(this.gridHelper);
-		
-		this.majorGridHelper = new ModifiedGridHelper(size, divisions, color1, color2, (i) => i % majorLinesEvery == 0 && i != divisions/2);
+
+		this.majorGridHelper = new ModifiedGridHelper(size, divisions, color1, color2, (i) => i % majorLinesEvery === 0 && i !== divisions/2);
 		this.majorGridHelper.renderOrder = -0.5;
 		const majorMaterial = this.majorGridHelper.material as THREE.LineBasicMaterial;
 		majorMaterial.fog = true;

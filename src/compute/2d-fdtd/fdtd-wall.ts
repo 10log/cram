@@ -1,4 +1,3 @@
-import map from "../../common/map";
 import rasterizeLine from './rasterize-line';
 
 export interface FDTDWallProps {

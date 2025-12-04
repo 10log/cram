@@ -1,33 +1,17 @@
-import React, { useEffect, useMemo, useReducer, useRef, useState } from 'react'
-import { Result, useResult, ResultKind, ResultTypes } from '../../store/result-store';
+import React, { useEffect, useMemo, useState } from 'react'
+import { Result, useResult, ResultKind } from '../../store/result-store';
 
 import { Bar } from '@visx/shape';
 import { Group } from '@visx/group';
-import { GradientTealBlue } from '@visx/gradient';
-import { scaleBand, scaleLinear } from '@visx/scale';
-import { Axis, Orientation, SharedAxisProps, AxisScale, AxisBottom, AxisLeft } from '@visx/axis';
-import { Zoom } from '@visx/zoom';
+import { scaleLinear } from '@visx/scale';
+import { AxisBottom, AxisLeft } from '@visx/axis';
 import { Grid } from '@visx/grid';
 import ParentSize from '@visx/responsive/lib/components/ParentSize';
 import styled from 'styled-components';
-import {
-  Legend,
-  LegendLinear,
-  LegendQuantile,
-  LegendOrdinal,
-  LegendSize,
-  LegendThreshold,
-  LegendItem,
-  LegendLabel,
-} from '@visx/legend';
-import { scaleOrdinal } from 'd3-scale';
-import { pickProps, unique } from '../../common/helpers';
-import { emit, on } from '../../messenger';
-import chroma from 'chroma-js';
-import { ImageSourceSolver } from '../../compute/raytracer/image-source';
-import { useSolver } from '../../store';
-import PropertyRowCheckbox from "../parameter-config/property-row/PropertyRowCheckbox";
-import { createPropertyInputs } from '../parameter-config/SolverComponents';
+
+
+import { pickProps } from '../../common/helpers';
+import { on } from '../../messenger';
 // accessors
 const getSabine = (d) => d.sabine;
 const getEyring = (d) => d.eyring;
@@ -46,7 +30,7 @@ export type RT60ChartProps = {
 
 
 
-const legendGlyphSize = 12;
+const _legendGlyphSize = 12;
 
 
 
@@ -66,7 +50,7 @@ const HorizontalContainer = styled.div`
   flex: 1;
 `;
 
-const LegendContainer = styled.div`
+const _LegendContainer = styled.div`
  display: flex;
  flex-direction: column;
  align-items: center;
@@ -84,10 +68,10 @@ const useUpdate = () => {
   return [updateCount, () => setUpdateCount(updateCount + 1)] as  [number, () => void];
 }
 
-const Chart = ({ uuid, width = 400, height = 200, events = false }: RT60ChartProps) => {
-    const {info, data: _data, from} = useResult(state=>pickProps(["info", "data", "from"], state.results[uuid] as Result<ResultKind.StatisticalRT60>));
-    
-    const [count, update] = useUpdate();
+const Chart = ({ uuid, width = 400, height = 200, events: _events = false }: RT60ChartProps) => {
+    const {info: _info, data: _data, from: _from} = useResult(state=>pickProps(["info", "data", "from"], state.results[uuid] as Result<ResultKind.StatisticalRT60>));
+
+    const [_count, _update] = useUpdate();
     const [data, setData] = useState(_data);
 
 
@@ -110,9 +94,9 @@ const Chart = ({ uuid, width = 400, height = 200, events = false }: RT60ChartPro
           range: [0, scaleWidth],
           domain: [0, Math.max(...data.map(getFreq))],
         }),
-      [width, data],
+      [data, scaleWidth],
     );
-    
+
     const scaleHeight = height - scalePadding;
     const yScale = useMemo(
       () =>
@@ -120,7 +104,7 @@ const Chart = ({ uuid, width = 400, height = 200, events = false }: RT60ChartPro
           range: [scaleHeight, 0],
           domain: [0, Math.max(...data.map(getEyring))],
         }),
-      [height, data],
+      [data, scaleHeight],
     );
 
     return (
@@ -168,7 +152,7 @@ const Chart = ({ uuid, width = 400, height = 200, events = false }: RT60ChartPro
 
 
 export const RT60Chart = ({ uuid, width = 400, height = 300, events = false }: RT60ChartProps) => {
-  const {name, info, from} = useResult(state=>pickProps(["name", "info", "from"], state.results[uuid] as Result<ResultKind.StatisticalRT60>));
+  const {name} = useResult(state=>pickProps(["name", "info", "from"], state.results[uuid] as Result<ResultKind.StatisticalRT60>));
 
   useEffect(() => {
     return on("UPDATE_RESULT", (e) => {

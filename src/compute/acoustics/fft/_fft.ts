@@ -7,9 +7,9 @@ export function transform(
   imag: Array<number> | Float32Array
 ): void {
   const n: number = real.length;
-  if (n != imag.length) throw 'Mismatched lengths';
-  if (n == 0) return;
-  else if ((n & (n - 1)) == 0)
+  if (n !== imag.length) throw 'Mismatched lengths';
+  if (n === 0) return;
+  else if ((n & (n - 1)) === 0)
     // Is power of 2
     transformRadix2(real, imag);
   // More complicated algorithm for arbitrary sizes
@@ -37,15 +37,15 @@ export function transformRadix2(
 ): void {
   // Length variables
   const n: number = real.length;
-  if (n != imag.length) throw 'Mismatched lengths';
-  if (n == 1)
+  if (n !== imag.length) throw 'Mismatched lengths';
+  if (n === 1)
     // Trivial transform
     return;
   let levels: number = -1;
   for (let i = 0; i < 32; i++) {
-    if (1 << i == n) levels = i; // Equal to log2(n)
+    if (1 << i === n) levels = i; // Equal to log2(n)
   }
-  if (levels == -1) throw 'Length is not a power of 2';
+  if (levels === -1) throw 'Length is not a power of 2';
 
   // Trigonometric tables
   let cosTable = new Array<number>(n / 2);
@@ -107,7 +107,7 @@ export function transformBluestein(
 ): void {
   // Find a power-of-2 convolution length m such that m >= n * 2 + 1
   const n: number = real.length;
-  if (n != imag.length) throw 'Mismatched lengths';
+  if (n !== imag.length) throw 'Mismatched lengths';
   let m: number = 1;
   while (m < n * 2 + 1) m *= 2;
 
@@ -157,7 +157,7 @@ export function convolveReal(
   out: Array<number> | Float32Array
 ): void {
   const n: number = x.length;
-  if (n != y.length || n != out.length) throw 'Mismatched lengths';
+  if (n !== y.length || n !== out.length) throw 'Mismatched lengths';
   convolveComplex(
     x,
     newArrayOfZeros(n),
@@ -181,11 +181,11 @@ export function convolveComplex(
 ): void {
   const n: number = xreal.length;
   if (
-    n != ximag.length ||
-    n != yreal.length ||
-    n != yimag.length ||
-    n != outreal.length ||
-    n != outimag.length
+    n !== ximag.length ||
+    n !== yreal.length ||
+    n !== yimag.length ||
+    n !== outreal.length ||
+    n !== outimag.length
   )
     throw 'Mismatched lengths';
 

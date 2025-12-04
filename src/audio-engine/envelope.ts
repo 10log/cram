@@ -22,7 +22,7 @@ export function width_factor(r: [number, number], bands: number, overlap: number
 /// l = steepness
 
 export function band_edge_impl(p: number, P: number, l: number) {
-    return l != 0 ? Math.sin(Math.PI * band_edge_impl(p, P, l - 1) / 2)
+    return l !== 0 ? Math.sin(Math.PI * band_edge_impl(p, P, l - 1) / 2)
                   : (((p / P) + 1) / 2);
 }
 
@@ -30,7 +30,7 @@ export function lower_band_edge(p: number, P: number, l: number) {
     if (P < 0) {
         throw new Error("P must be greater or equal to 0.");
     }
-    if (P == 0) {
+    if (P === 0) {
         return 0 <= p ? 1.0 : 0.0;
     }
     return Math.pow(Math.sin(Math.PI * band_edge_impl(p, P, l) / 2), 2.0);
@@ -40,7 +40,7 @@ export function upper_band_edge(p: number, P: number, l: number) {
     if (P < 0) {
         throw new Error("P must be greater or equal to 0.");
     }
-    if (P == 0) {
+    if (P === 0) {
         return p < 0 ? 1.0 : 0.0;
     }
     return Math.pow(Math.cos(Math.PI * band_edge_impl(p, P, l) / 2), 2.0);

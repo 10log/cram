@@ -1,7 +1,6 @@
-import React, { useState, useContext } from "react";
-import Messenger, { emit, postMessage } from "../messenger";
-import { Position, Button, Menu, MenuItem, MenuDivider, Colors, Navbar, ButtonGroup, Popover, Classes } from "@blueprintjs/core";
-import NavbarMenuItemLabel from "./NavbarMenuItemLabel";
+import React from "react";
+import { emit, postMessage } from "../messenger";
+import { Button, Menu, MenuItem, MenuDivider, Navbar, ButtonGroup, Popover, Classes } from "@blueprintjs/core";
 import MenuItemText from "./MenuItemText";
 import { Characters } from "../constants";
 import { create } from 'zustand';
@@ -46,8 +45,6 @@ const MenuItemWithEmitter = ({ label, hotkey, disabled, event, args }: MenuItemW
     />
   );
 }
-
-type InteractionKind = "click" | "click-target" | "hover" | "hover-target" | undefined;
 
 type MenuProps = {
   isOpen: boolean;

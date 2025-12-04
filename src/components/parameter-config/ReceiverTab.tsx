@@ -1,9 +1,9 @@
 import React from "react";
 import Receiver from "../../objects/receiver";
 import PropertyRowFolder from "./property-row/PropertyRowFolder";
-import { createPropertyInputs, useContainerProperty } from "./ContainerComponents";
+import { createPropertyInputs } from "./ContainerComponents";
 import useToggle from "../hooks/use-toggle";
-const { PropertyTextInput, PropertyNumberInput, PropertyCheckboxInput, PropertyVectorInput, PropertySelect } = createPropertyInputs<Receiver>(
+const { PropertyTextInput, PropertyCheckboxInput, PropertyVectorInput } = createPropertyInputs<Receiver>(
   "RECEIVER_SET_PROPERTY"
 );
 

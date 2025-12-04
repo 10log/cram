@@ -10,7 +10,7 @@ import Source from "../../../objects/source";
 import Receiver from "../../../objects/receiver";
 import { Vector3 } from "three";
 import Surface from "../../../objects/surface";
-import _, { intersection } from "lodash";
+import { intersection } from "lodash";
 import { addSolver, removeSolver, Result, ResultKind, ResultTypes, setSolverProperty, useResult, useSolver } from "../../../store";
 import {useContainer} from '../../../store';
 import { pickProps } from "../../../common/helpers";
@@ -75,16 +75,16 @@ class ImageSource{
 
     // compute direct sound path
     if(constructForThis){
-      let thisPath = constructImageSourcePath(this, r); 
-      if(thisPath != null){
-        paths.push(thisPath); 
+      let thisPath = constructImageSourcePath(this, r);
+      if(thisPath !== null){
+        paths.push(thisPath);
       }
     }
 
     for(let i = 0; i<this.children.length; i++){
-      let p = constructImageSourcePath(this.children[i],r); 
+      let p = constructImageSourcePath(this.children[i],r);
 
-      if (p!= null){
+      if (p!== null){
         paths.push(p);
       }
 
@@ -127,11 +127,11 @@ class ImageSource{
   public getChildrenOfOrder(order: number): ImageSource[]{
     let order_children: ImageSource[] = [];
 
-    ((this.order == order) && (this.order == 0)) && order_children.push(this); 
+    ((this.order === order) && (this.order === 0)) && order_children.push(this);
 
     for(let i = 0; i<this.children.length; i++){
-      if(this.children[i].order == order){
-        order_children.push(this.children[i]); 
+      if(this.children[i].order === order){
+        order_children.push(this.children[i]);
       }
 
       if(this.children[i].hasChildren){
@@ -197,7 +197,7 @@ class ImageSourcePath{
           direction.subVectors(segmentEnd, segmentStart);
           direction.normalize(); 
 
-          let raycaster = new THREE.Raycaster; 
+          let raycaster = new THREE.Raycaster(); 
           raycaster.set(segmentStart,direction);
           let intersections; 
           intersections = raycaster.intersectObject(room_surfaces[j].mesh, true);
@@ -246,7 +246,7 @@ class ImageSourcePath{
     for(let s = 0; s<this.path.length; s++){
 
       let intersection = this.path[s];
-      if(intersection.reflectingSurface == null){
+      if(intersection.reflectingSurface === null){
         // either source or a receiver
         // do nothing to intensity levels
       }else{
@@ -465,8 +465,8 @@ export class ImageSourceSolver extends Solver {
 
       // construct all possible paths
       let paths: ImageSourcePath[];
-      let valid_paths: ImageSourcePath[] = []; 
-      if(is_calculated != null){
+      let valid_paths: ImageSourcePath[] = [];
+      if(is_calculated !== null){
         paths = is_calculated.constructPathsForAllDescendents(useContainer.getState().containers[this.receiverIDs[0]] as Receiver);
 
         this.allRayPaths = paths; 
@@ -496,9 +496,9 @@ export class ImageSourceSolver extends Solver {
 
       let result: HybridRayPath[] = [];
 
-      if(sortedPath != undefined){
-        for(let i = 0; i<sortedPath?.length; i++){
-          let t = sortedPath[i].arrivalTime(c); 
+      if(sortedPath != null){
+        for(let i = 0; i<sortedPath.length; i++){
+          let t = sortedPath[i].arrivalTime(c);
           let p = sortedPath[i].arrivalPressure(initialSPLs, freqs); 
           let path: HybridRayPath = {
             time: t, 
@@ -529,7 +529,7 @@ export class ImageSourceSolver extends Solver {
         maxOrder: this.maxReflectionOrder,
         frequency: [this._plotFrequency]
       }
-      if(sortedPath != undefined){
+      if(sortedPath !== undefined){
         for(let i = 0; i<sortedPath?.length; i++){
           let t = sortedPath[i].arrivalTime(343);
           let p = sortedPath[i].arrivalPressure(levelTimeProgression.info.initialSPL, levelTimeProgression.info.frequency);
@@ -551,11 +551,11 @@ export class ImageSourceSolver extends Solver {
     }
 
     getPathsOfOrder(order: number): ImageSourcePath[]{
-      let rayPathsOfOrder: ImageSourcePath[] = []; 
-      if(this.validRayPaths != null){
+      let rayPathsOfOrder: ImageSourcePath[] = [];
+      if(this.validRayPaths !== null){
         for(let i = 0; i<this.validRayPaths?.length; i++){
-          if(this.validRayPaths[i].order == order){
-            rayPathsOfOrder.push(this.validRayPaths[i]); 
+          if(this.validRayPaths[i].order === order){
+            rayPathsOfOrder.push(this.validRayPaths[i]);
           }
         }
       }
@@ -590,7 +590,7 @@ export class ImageSourceSolver extends Solver {
         console.log(receiver);
 
         let paths: ImageSourcePath[];
-        if(is_2 != null){
+        if(is_2 !== null){
           paths = is_2.constructPathsForAllDescendents(receiver);
 
           let f = [125, 250, 500, 1000, 2000, 4000];
@@ -661,12 +661,12 @@ export class ImageSourceSolver extends Solver {
     }
 
     toggleRayPathHighlight(rayPathUUID: string){
-      if(this.validRayPaths != undefined){
-        for(let i = 0; i<this.validRayPaths?.length; i++){
+      if(this.validRayPaths != null){
+        for(let i = 0; i<this.validRayPaths.length; i++){
           if(rayPathUUID === this.validRayPaths[i].uuid){
             this.updateSelectedImageSourcePath(this.validRayPaths[i])
             //@ts-ignore
-            console.log("WILL HIGHLIGHT RAY PATH WITH ARRIVAL SPL " + ac.P2Lp(this.validRayPaths[i].arrivalPressure([100], [1000]) as number) + " AND ARRIVAL TIME " + this.validRayPaths[i].arrivalTime(343)); 
+            console.log("WILL HIGHLIGHT RAY PATH WITH ARRIVAL SPL " + ac.P2Lp(this.validRayPaths[i].arrivalPressure([100], [1000]) as number) + " AND ARRIVAL TIME " + this.validRayPaths[i].arrivalTime(343));
             break;
           }
         }
@@ -677,29 +677,29 @@ export class ImageSourceSolver extends Solver {
     async calculateImpulseResponse(){
       const initialSPL = 100; //PLACEHOLDER
       const freqs = this.frequencies;
-      const sampleRate = 44100; 
+      const sampleRate = 44100;
       const spls = Array(freqs.length).fill(initialSPL);
 
-      if(this.receiverIDs.length == 0) throw Error("No receivers have been assigned to the raytracer");
-      if(this.sourceIDs.length == 0) throw Error("No sources have been assigned to the raytracer");
-      if(this.validRayPaths?.length == 0) throw Error("No rays have been traced yet");
+      if(this.receiverIDs.length === 0) throw Error("No receivers have been assigned to the raytracer");
+      if(this.sourceIDs.length === 0) throw Error("No sources have been assigned to the raytracer");
+      if(this.validRayPaths?.length === 0) throw Error("No rays have been traced yet");
 
       let sortedPath: ImageSourcePath[] | null = this.validRayPaths; 
       sortedPath?.sort((a, b) => (a.arrivalTime(343) > b.arrivalTime(343)) ? 1 : -1); 
 
       console.log(sortedPath);
 
-      if(sortedPath != undefined){
+      if(sortedPath != null){
         const endTime = sortedPath[sortedPath.length - 1].arrivalTime(343)+0.05;
-        const endSample = sampleRate*endTime; 
-  
-        let samples: Float32Array[] = []; 
+        const endSample = sampleRate*endTime;
+
+        let samples: Float32Array[] = [];
         for(let f = 0; f<this.frequencies.length; f++){
-          samples.push(new Float32Array(Math.floor(endSample))); 
+          samples.push(new Float32Array(Math.floor(endSample)));
         }
-        
-        for(let i = 0; i<sortedPath?.length; i++){
-          let t = sortedPath[i].arrivalTime(343); 
+
+        for(let i = 0; i<sortedPath.length; i++){
+          let t = sortedPath[i].arrivalTime(343);
           let p = sortedPath[i].arrivalPressure(spls, this.frequencies); 
 
           (Math.random() > 0.5) && (p=p.map(x=>-x)); 
@@ -819,7 +819,7 @@ export class ImageSourceSolver extends Solver {
     }
 
     set rayPathsVisible(vis: boolean){
-      if(vis == this._rayPathsVisible){
+      if(vis === this._rayPathsVisible){
         // do nothing
       }else{
         if(vis){
@@ -836,7 +836,7 @@ export class ImageSourceSolver extends Solver {
     }
 
     set imageSourcesVisible(vis: boolean){
-      if(vis == this._imageSourcesVisible){
+      if(vis === this._imageSourcesVisible){
         // do nothing
       }else{
         if(vis){
@@ -932,16 +932,16 @@ function computeImageSources(is: ImageSource, maxOrder: number): ImageSource | n
 
   for(let i=0; i<surfaces.length; i++){
   
-    // returns true if current image source's previous reflector is either null (direct sound) or not the current reflector. 
-    let reflectorCondition: boolean = (is.reflector == null || is.reflector != surfaces[i]);
+    // returns true if current image source's previous reflector is either null (direct sound) or not the current reflector.
+    let reflectorCondition: boolean = (is.reflector === null || is.reflector !== surfaces[i]);
 
     // returns true if reflecting surface is in front of previous surface
     let inFrontOf: boolean = true; 
 
     // check if facing each other
-    let facingEachOther: boolean; 
-    if(is.reflector!=null){
-      facingEachOther = surfacesFacingEachother(surfaces[i], is.reflector); 
+    let facingEachOther: boolean;
+    if(is.reflector!==null){
+      facingEachOther = surfacesFacingEachother(surfaces[i], is.reflector);
     }else{
       facingEachOther = true;
     }
@@ -995,8 +995,8 @@ function constructImageSourcePath(is: ImageSource, listener: Receiver): ImageSou
     direction.normalize(); 
 
     raycaster.set(lastPosition,direction);
-    let intersections; 
-    if(is.reflector != null){
+    let intersections;
+    if(is.reflector !== null){
       intersections = raycaster.intersectObject(is.reflector.mesh,true);
     }
     
@@ -1013,8 +1013,8 @@ function constructImageSourcePath(is: ImageSource, listener: Receiver): ImageSou
       return null; // no valid path
     }
 
-    if(is.parent != null){
-      is = is.parent; 
+    if(is.parent !== null){
+      is = is.parent;
     }
 
   }

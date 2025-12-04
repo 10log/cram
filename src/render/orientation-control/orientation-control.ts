@@ -4,7 +4,7 @@ import PickHelper from "../pick-helper";
 import fontjson from "three/examples/fonts/helvetiker_regular.typeface.json";
 import Container from '../../objects/container';
 import { v4 as uuid } from 'uuid';
-import {helperArrow, helperArrowRotateRight, helperArrowRotateLeft} from './helper-arrows';
+import {helperArrow} from './helper-arrows';
 
 import "./orientation-control.css";
 import rotateLeft from './svg-icons/rotate-left.svg';
@@ -124,10 +124,10 @@ export class OrientationControl {
   }
 
   constructor(selector: string, opts?: OrientationControlOptions) {
-    this.width = opts && opts.width || 180;
-    this.height = opts && opts.height || 180;
+    this.width = (opts && opts.width) || 180;
+    this.height = (opts && opts.height) || 180;
     this.clickListeners = new Map<string, (e: OrientationControlClickEvent) => void>();
-    this._axis = opts && opts.axis || "none";
+    this._axis = (opts && opts.axis) || "none";
     this.cameraDistance = 20;
     this.scene = new THREE.Scene();
     this.pickPosition = new THREE.Vector2(0, 0);
@@ -323,7 +323,7 @@ export class OrientationControl {
     this._hoveredPlane = undefined;
     this.renderer.domElement.addEventListener("mousemove", e => {
       // const selection = this.pickHelper.pick(e, [this.cube]);
-      this.setPickPosition(event, this.renderer.domElement);
+      this.setPickPosition(e, this.renderer.domElement);
       this.raycaster.setFromCamera(this.pickPosition, this.camera);
       const intersectedObjects = this.raycaster.intersectObjects([this.cube], true);
       if (intersectedObjects.length) {
@@ -334,7 +334,7 @@ export class OrientationControl {
       }
       this.shouldRender = true;
     });
-    this.renderer.domElement.addEventListener("mousedown", e => {
+    this.renderer.domElement.addEventListener("mousedown", _e => {
       if (this.hoveredPlane) {
         const target = OrientationControlTargets[this.hoveredPlane.name];
         if (target) {
@@ -397,155 +397,155 @@ export class OrientationControl {
         const elt = (parent as HTMLElement);
         if (this.axis !== "none") {
           switch (this.axis) {
-            case OrientationControlTargets.TOP: {
+            case OrientationControlTargets.TOP:
               switch (elt.id) {
-                case "helper-arrow-top": {dispatchTarget(OrientationControlTargets.BACK)} break;
-                case "helper-arrow-bottom": {dispatchTarget(OrientationControlTargets.FRONT)} break;
-                case "helper-arrow-left": {dispatchTarget(OrientationControlTargets.LEFT)} break;
-                case "helper-arrow-right": {dispatchTarget(OrientationControlTargets.RIGHT)} break;
-                case "helper-arrow-rotate-right": {dispatchTarget(OrientationControlTargets.TOP_FROM_RIGHT);} break;
-                case "helper-arrow-rotate-left": {dispatchTarget(OrientationControlTargets.TOP_FROM_LEFT)} break;
+                case "helper-arrow-top": dispatchTarget(OrientationControlTargets.BACK); break;
+                case "helper-arrow-bottom": dispatchTarget(OrientationControlTargets.FRONT); break;
+                case "helper-arrow-left": dispatchTarget(OrientationControlTargets.LEFT); break;
+                case "helper-arrow-right": dispatchTarget(OrientationControlTargets.RIGHT); break;
+                case "helper-arrow-rotate-right": dispatchTarget(OrientationControlTargets.TOP_FROM_RIGHT); break;
+                case "helper-arrow-rotate-left": dispatchTarget(OrientationControlTargets.TOP_FROM_LEFT); break;
                 default: break;
               }
-            } break;
-            case OrientationControlTargets.BOTTOM: {
+              break;
+            case OrientationControlTargets.BOTTOM:
               switch (elt.id) {
-                case "helper-arrow-top": {dispatchTarget(OrientationControlTargets.FRONT)} break;
-                case "helper-arrow-bottom": {dispatchTarget(OrientationControlTargets.BACK)} break;
-                case "helper-arrow-left": {dispatchTarget(OrientationControlTargets.LEFT)} break;
-                case "helper-arrow-right": { dispatchTarget(OrientationControlTargets.RIGHT); } break;
-                case "helper-arrow-rotate-right": {dispatchTarget(OrientationControlTargets.BOTTOM_FROM_LEFT)} break;
-                case "helper-arrow-rotate-left": {dispatchTarget(OrientationControlTargets.BOTTOM_FROM_RIGHT)} break;
+                case "helper-arrow-top": dispatchTarget(OrientationControlTargets.FRONT); break;
+                case "helper-arrow-bottom": dispatchTarget(OrientationControlTargets.BACK); break;
+                case "helper-arrow-left": dispatchTarget(OrientationControlTargets.LEFT); break;
+                case "helper-arrow-right": dispatchTarget(OrientationControlTargets.RIGHT); break;
+                case "helper-arrow-rotate-right": dispatchTarget(OrientationControlTargets.BOTTOM_FROM_LEFT); break;
+                case "helper-arrow-rotate-left": dispatchTarget(OrientationControlTargets.BOTTOM_FROM_RIGHT); break;
                 default: break;
               }
-            } break;
-            case OrientationControlTargets.RIGHT: {
+              break;
+            case OrientationControlTargets.RIGHT:
               switch (elt.id) {
-                case "helper-arrow-top": {dispatchTarget(OrientationControlTargets.TOP_FROM_RIGHT)} break;
-                case "helper-arrow-bottom": {dispatchTarget(OrientationControlTargets.BOTTOM_FROM_RIGHT)} break;
-                case "helper-arrow-left": {dispatchTarget(OrientationControlTargets.FRONT)} break;
-                case "helper-arrow-right": {dispatchTarget(OrientationControlTargets.BACK)} break;
+                case "helper-arrow-top": dispatchTarget(OrientationControlTargets.TOP_FROM_RIGHT); break;
+                case "helper-arrow-bottom": dispatchTarget(OrientationControlTargets.BOTTOM_FROM_RIGHT); break;
+                case "helper-arrow-left": dispatchTarget(OrientationControlTargets.FRONT); break;
+                case "helper-arrow-right": dispatchTarget(OrientationControlTargets.BACK); break;
                 default: break;
               }
-            } break;
-            case OrientationControlTargets.LEFT: {
+              break;
+            case OrientationControlTargets.LEFT:
               switch (elt.id) {
-                case "helper-arrow-top": {dispatchTarget(OrientationControlTargets.TOP_FROM_LEFT)} break;
-                case "helper-arrow-bottom": {dispatchTarget(OrientationControlTargets.BOTTOM_FROM_LEFT)} break;
-                case "helper-arrow-left": {dispatchTarget(OrientationControlTargets.BACK)} break;
-                case "helper-arrow-right": {dispatchTarget(OrientationControlTargets.FRONT)} break;
+                case "helper-arrow-top": dispatchTarget(OrientationControlTargets.TOP_FROM_LEFT); break;
+                case "helper-arrow-bottom": dispatchTarget(OrientationControlTargets.BOTTOM_FROM_LEFT); break;
+                case "helper-arrow-left": dispatchTarget(OrientationControlTargets.BACK); break;
+                case "helper-arrow-right": dispatchTarget(OrientationControlTargets.FRONT); break;
                 default: break;
               }
-            } break;
-            case OrientationControlTargets.FRONT: {
+              break;
+            case OrientationControlTargets.FRONT:
               switch (elt.id) {
-                case "helper-arrow-top": {dispatchTarget(OrientationControlTargets.TOP)} break;
-                case "helper-arrow-bottom": {dispatchTarget(OrientationControlTargets.BOTTOM)} break;
-                case "helper-arrow-left": {dispatchTarget(OrientationControlTargets.LEFT)} break;
-                case "helper-arrow-right": {dispatchTarget(OrientationControlTargets.RIGHT)} break;
+                case "helper-arrow-top": dispatchTarget(OrientationControlTargets.TOP); break;
+                case "helper-arrow-bottom": dispatchTarget(OrientationControlTargets.BOTTOM); break;
+                case "helper-arrow-left": dispatchTarget(OrientationControlTargets.LEFT); break;
+                case "helper-arrow-right": dispatchTarget(OrientationControlTargets.RIGHT); break;
                 default: break;
               }
-            } break;
-            case OrientationControlTargets.BACK: {
+              break;
+            case OrientationControlTargets.BACK:
               switch (elt.id) {
-                case "helper-arrow-top": {dispatchTarget(OrientationControlTargets.TOP_FROM_BACK)} break;
-                case "helper-arrow-bottom": {dispatchTarget(OrientationControlTargets.BOTTOM_FROM_BACK)} break;
-                case "helper-arrow-left": {dispatchTarget(OrientationControlTargets.RIGHT)} break;
-                case "helper-arrow-right": {dispatchTarget(OrientationControlTargets.LEFT)} break;
+                case "helper-arrow-top": dispatchTarget(OrientationControlTargets.TOP_FROM_BACK); break;
+                case "helper-arrow-bottom": dispatchTarget(OrientationControlTargets.BOTTOM_FROM_BACK); break;
+                case "helper-arrow-left": dispatchTarget(OrientationControlTargets.RIGHT); break;
+                case "helper-arrow-right": dispatchTarget(OrientationControlTargets.LEFT); break;
                 default: break;
               }
-            } break;
-            case OrientationControlTargets.TOP_FROM_BACK: {
+              break;
+            case OrientationControlTargets.TOP_FROM_BACK:
               switch (elt.id) {
-                case "helper-arrow-top": {dispatchTarget(OrientationControlTargets.FRONT)} break;
-                case "helper-arrow-bottom": {dispatchTarget(OrientationControlTargets.BACK)} break;
-                case "helper-arrow-left": {dispatchTarget(OrientationControlTargets.RIGHT)} break;
-                case "helper-arrow-right": { dispatchTarget(OrientationControlTargets.LEFT); } break;
-                case "helper-arrow-rotate-right": {dispatchTarget(OrientationControlTargets.TOP_FROM_LEFT);} break;
-                case "helper-arrow-rotate-left": {dispatchTarget(OrientationControlTargets.TOP_FROM_RIGHT)} break;
+                case "helper-arrow-top": dispatchTarget(OrientationControlTargets.FRONT); break;
+                case "helper-arrow-bottom": dispatchTarget(OrientationControlTargets.BACK); break;
+                case "helper-arrow-left": dispatchTarget(OrientationControlTargets.RIGHT); break;
+                case "helper-arrow-right": dispatchTarget(OrientationControlTargets.LEFT); break;
+                case "helper-arrow-rotate-right": dispatchTarget(OrientationControlTargets.TOP_FROM_LEFT); break;
+                case "helper-arrow-rotate-left": dispatchTarget(OrientationControlTargets.TOP_FROM_RIGHT); break;
                 default: break;
               }
-            } break;
-            case OrientationControlTargets.TOP_FROM_FRONT: {
+              break;
+            case OrientationControlTargets.TOP_FROM_FRONT:
               switch (elt.id) {
-                case "helper-arrow-top": {dispatchTarget(OrientationControlTargets.BACK)} break;
-                case "helper-arrow-bottom": {dispatchTarget(OrientationControlTargets.FRONT)} break;
-                case "helper-arrow-left": {dispatchTarget(OrientationControlTargets.LEFT)} break;
-                case "helper-arrow-right": { dispatchTarget(OrientationControlTargets.RIGHT); } break;
-                case "helper-arrow-rotate-right": {dispatchTarget(OrientationControlTargets.TOP_FROM_LEFT)} break;
-                case "helper-arrow-rotate-left": {dispatchTarget(OrientationControlTargets.TOP_FROM_RIGHT)} break;
+                case "helper-arrow-top": dispatchTarget(OrientationControlTargets.BACK); break;
+                case "helper-arrow-bottom": dispatchTarget(OrientationControlTargets.FRONT); break;
+                case "helper-arrow-left": dispatchTarget(OrientationControlTargets.LEFT); break;
+                case "helper-arrow-right": dispatchTarget(OrientationControlTargets.RIGHT); break;
+                case "helper-arrow-rotate-right": dispatchTarget(OrientationControlTargets.TOP_FROM_LEFT); break;
+                case "helper-arrow-rotate-left": dispatchTarget(OrientationControlTargets.TOP_FROM_RIGHT); break;
                 default: break;
               }
-            } break;
-            case OrientationControlTargets.TOP_FROM_LEFT: {
+              break;
+            case OrientationControlTargets.TOP_FROM_LEFT:
               switch (elt.id) {
-                case "helper-arrow-top": {dispatchTarget(OrientationControlTargets.RIGHT)} break;
-                case "helper-arrow-bottom": {dispatchTarget(OrientationControlTargets.LEFT)} break;
-                case "helper-arrow-left": {dispatchTarget(OrientationControlTargets.BACK)} break;
-                case "helper-arrow-right": { dispatchTarget(OrientationControlTargets.FRONT); } break;
-                case "helper-arrow-rotate-right": {dispatchTarget(OrientationControlTargets.TOP)} break;
-                case "helper-arrow-rotate-left": {dispatchTarget(OrientationControlTargets.TOP_FROM_BACK)} break;
+                case "helper-arrow-top": dispatchTarget(OrientationControlTargets.RIGHT); break;
+                case "helper-arrow-bottom": dispatchTarget(OrientationControlTargets.LEFT); break;
+                case "helper-arrow-left": dispatchTarget(OrientationControlTargets.BACK); break;
+                case "helper-arrow-right": dispatchTarget(OrientationControlTargets.FRONT); break;
+                case "helper-arrow-rotate-right": dispatchTarget(OrientationControlTargets.TOP); break;
+                case "helper-arrow-rotate-left": dispatchTarget(OrientationControlTargets.TOP_FROM_BACK); break;
                 default: break;
               }
-            } break;
-            case OrientationControlTargets.TOP_FROM_RIGHT: {
+              break;
+            case OrientationControlTargets.TOP_FROM_RIGHT:
               switch (elt.id) {
-                case "helper-arrow-top": {dispatchTarget(OrientationControlTargets.LEFT)} break;
-                case "helper-arrow-bottom": {dispatchTarget(OrientationControlTargets.RIGHT)} break;
-                case "helper-arrow-left": {dispatchTarget(OrientationControlTargets.FRONT)} break;
-                case "helper-arrow-right": { dispatchTarget(OrientationControlTargets.BACK); } break;
-                case "helper-arrow-rotate-right": {dispatchTarget(OrientationControlTargets.TOP_FROM_BACK);} break;
-                case "helper-arrow-rotate-left": {dispatchTarget(OrientationControlTargets.TOP)} break;
+                case "helper-arrow-top": dispatchTarget(OrientationControlTargets.LEFT); break;
+                case "helper-arrow-bottom": dispatchTarget(OrientationControlTargets.RIGHT); break;
+                case "helper-arrow-left": dispatchTarget(OrientationControlTargets.FRONT); break;
+                case "helper-arrow-right": dispatchTarget(OrientationControlTargets.BACK); break;
+                case "helper-arrow-rotate-right": dispatchTarget(OrientationControlTargets.TOP_FROM_BACK); break;
+                case "helper-arrow-rotate-left": dispatchTarget(OrientationControlTargets.TOP); break;
                 default: break;
               }
-            } break;
-            case OrientationControlTargets.BOTTOM_FROM_BACK: {
+              break;
+            case OrientationControlTargets.BOTTOM_FROM_BACK:
               switch (elt.id) {
-                case "helper-arrow-top": {dispatchTarget(OrientationControlTargets.BACK)} break;
-                case "helper-arrow-bottom": {dispatchTarget(OrientationControlTargets.FRONT)} break;
-                case "helper-arrow-left": {dispatchTarget(OrientationControlTargets.RIGHT)} break;
-                case "helper-arrow-right": { dispatchTarget(OrientationControlTargets.LEFT); } break;
-                case "helper-arrow-rotate-right": {dispatchTarget(OrientationControlTargets.BOTTOM_FROM_RIGHT);} break;
-                case "helper-arrow-rotate-left": {dispatchTarget(OrientationControlTargets.BOTTOM_FROM_LEFT)} break;
+                case "helper-arrow-top": dispatchTarget(OrientationControlTargets.BACK); break;
+                case "helper-arrow-bottom": dispatchTarget(OrientationControlTargets.FRONT); break;
+                case "helper-arrow-left": dispatchTarget(OrientationControlTargets.RIGHT); break;
+                case "helper-arrow-right": dispatchTarget(OrientationControlTargets.LEFT); break;
+                case "helper-arrow-rotate-right": dispatchTarget(OrientationControlTargets.BOTTOM_FROM_RIGHT); break;
+                case "helper-arrow-rotate-left": dispatchTarget(OrientationControlTargets.BOTTOM_FROM_LEFT); break;
                 default: break;
               }
-            } break;
-            case OrientationControlTargets.BOTTOM_FROM_FRONT: {
+              break;
+            case OrientationControlTargets.BOTTOM_FROM_FRONT:
               switch (elt.id) {
-                case "helper-arrow-top": {dispatchTarget(OrientationControlTargets.FRONT)} break;
-                case "helper-arrow-bottom": {dispatchTarget(OrientationControlTargets.BACK)} break;
-                case "helper-arrow-left": {dispatchTarget(OrientationControlTargets.LEFT)} break;
-                case "helper-arrow-right": { dispatchTarget(OrientationControlTargets.RIGHT); } break;
-                case "helper-arrow-rotate-right": {dispatchTarget(OrientationControlTargets.BOTTOM_FROM_LEFT);} break;
-                case "helper-arrow-rotate-left": {dispatchTarget(OrientationControlTargets.BOTTOM_FROM_RIGHT);} break;
+                case "helper-arrow-top": dispatchTarget(OrientationControlTargets.FRONT); break;
+                case "helper-arrow-bottom": dispatchTarget(OrientationControlTargets.BACK); break;
+                case "helper-arrow-left": dispatchTarget(OrientationControlTargets.LEFT); break;
+                case "helper-arrow-right": dispatchTarget(OrientationControlTargets.RIGHT); break;
+                case "helper-arrow-rotate-right": dispatchTarget(OrientationControlTargets.BOTTOM_FROM_LEFT); break;
+                case "helper-arrow-rotate-left": dispatchTarget(OrientationControlTargets.BOTTOM_FROM_RIGHT); break;
                 default: break;
               }
-            } break;
-            case OrientationControlTargets.BOTTOM_FROM_LEFT: {
+              break;
+            case OrientationControlTargets.BOTTOM_FROM_LEFT:
               switch (elt.id) {
-                case "helper-arrow-top": {dispatchTarget(OrientationControlTargets.LEFT)} break;
-                case "helper-arrow-bottom": {dispatchTarget(OrientationControlTargets.RIGHT)} break;
-                case "helper-arrow-left": {dispatchTarget(OrientationControlTargets.BACK)} break;
-                case "helper-arrow-right": { dispatchTarget(OrientationControlTargets.FRONT); } break;
-                case "helper-arrow-rotate-right": {dispatchTarget(OrientationControlTargets.BOTTOM_FROM_BACK);} break;
-                case "helper-arrow-rotate-left": {dispatchTarget(OrientationControlTargets.BOTTOM);} break;
+                case "helper-arrow-top": dispatchTarget(OrientationControlTargets.LEFT); break;
+                case "helper-arrow-bottom": dispatchTarget(OrientationControlTargets.RIGHT); break;
+                case "helper-arrow-left": dispatchTarget(OrientationControlTargets.BACK); break;
+                case "helper-arrow-right": dispatchTarget(OrientationControlTargets.FRONT); break;
+                case "helper-arrow-rotate-right": dispatchTarget(OrientationControlTargets.BOTTOM_FROM_BACK); break;
+                case "helper-arrow-rotate-left": dispatchTarget(OrientationControlTargets.BOTTOM); break;
                 default: break;
               }
-            } break;
-            case OrientationControlTargets.BOTTOM_FROM_RIGHT: {
+              break;
+            case OrientationControlTargets.BOTTOM_FROM_RIGHT:
               switch (elt.id) {
-                case "helper-arrow-top": {dispatchTarget(OrientationControlTargets.RIGHT)} break;
-                case "helper-arrow-bottom": {dispatchTarget(OrientationControlTargets.LEFT)} break;
-                case "helper-arrow-left": {dispatchTarget(OrientationControlTargets.FRONT)} break;
-                case "helper-arrow-right": {dispatchTarget(OrientationControlTargets.BACK)} break;
-                case "helper-arrow-rotate-right": {dispatchTarget(OrientationControlTargets.BOTTOM);} break;
-                case "helper-arrow-rotate-left": {dispatchTarget(OrientationControlTargets.BOTTOM_FROM_BACK);} break;
+                case "helper-arrow-top": dispatchTarget(OrientationControlTargets.RIGHT); break;
+                case "helper-arrow-bottom": dispatchTarget(OrientationControlTargets.LEFT); break;
+                case "helper-arrow-left": dispatchTarget(OrientationControlTargets.FRONT); break;
+                case "helper-arrow-right": dispatchTarget(OrientationControlTargets.BACK); break;
+                case "helper-arrow-rotate-right": dispatchTarget(OrientationControlTargets.BOTTOM); break;
+                case "helper-arrow-rotate-left": dispatchTarget(OrientationControlTargets.BOTTOM_FROM_BACK); break;
                 default: break;
               }
-            } break;
-            default: {
+              break;
+            default:
               console.log(this.axis);
-            } break;
+              break;
           }
         }
       }

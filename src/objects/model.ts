@@ -1,10 +1,7 @@
-import { last, map } from "lodash";
 import * as THREE from "three";
-import { chunk } from "../common/chunk";
 import { addIfUnique } from "../common/helpers";
 import Container, { ContainerProps } from "./container";
-import Surface, { SurfaceSaveObject } from "./surface";
-const { min, max, abs } = Math;
+const { min, max } = Math;
 
 export interface ModelProps extends ContainerProps {
   bufferGeometry: THREE.BufferGeometry;
@@ -29,7 +26,7 @@ export default class Model extends Container {
     this.kind = "model";
     this.init(props, true);
   }
-  init(props: ModelProps, fromConstructor: boolean = false) {
+  init(props: ModelProps, _fromConstructor: boolean = false) {
     const { bufferGeometry } = props;
     const positionBuffer = bufferGeometry.getAttribute("position") as THREE.BufferAttribute;
     const normalBuffer = bufferGeometry.getAttribute("NORMAL") as THREE.BufferAttribute;
@@ -96,11 +93,6 @@ export default class Model extends Container {
         }
       });
     }
-
-    const material = new THREE.MeshPhongMaterial({
-      side: THREE.DoubleSide,
-      vertexColors: true
-    });
 
     geometry.addGroup(0, 72, 1);
     // geometry.addGroup(24, 72, 1);

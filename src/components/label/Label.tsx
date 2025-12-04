@@ -1,8 +1,5 @@
 import React from "react";
 import "./Label.css";
-import { v4 as uuid } from 'uuid';
-
-const joinClasses = (args: string[]) => args.join(" ").trim();
 
 export interface LabelProps {
   children?: React.ReactNode;
@@ -16,8 +13,7 @@ export default function Label(props: LabelProps) {
   const tooltipClassName = props.hasTooltip ? "tooltip" : "";
   const containerProps = {
     className: tooltipClassName,
-    style: props.style || {},
-    id: uuid()
+    style: props.style || {}
   };
   
   return (

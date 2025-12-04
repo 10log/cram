@@ -6,13 +6,10 @@ import { UNITS } from "../enums/units";
 import { RT_CONSTANTS } from "../constants/rt-constants";
 import { third_octave } from "../compute/acoustics";
 import { KVP } from "../common/key-value-pair";
-import RT60 from "../compute/rt";
 import { emit, on } from "../messenger";
-import { addContainer, removeContainer, setContainerProperty, useContainer } from "../store";
+import { addContainer, removeContainer, setContainerProperty } from "../store";
 import { renderer } from "../render/renderer";
-import { filterObjectToArray } from "../common/helpers";
 import { TessellateModifier } from "../compute/radiance/TessellateModifier";
-import { Mesh } from "three";
 
 export interface RoomProps extends ContainerProps {
   surfaces: (Surface|Container)[];

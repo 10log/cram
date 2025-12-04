@@ -1,9 +1,4 @@
-import * as THREE from "three";
-import Receiver from "./receiver";
 import Surface from "./surface";
-import Room from "./room";
-import Source from "./source";
-import { KeyValuePair } from "../common/key-value-pair";
 import { EditorModes } from "../constants";
 import Container from "./container";
 
@@ -61,7 +56,7 @@ export default class SurfaceGroup extends Container {
     }
     return this;
   }
-  onModeChange(mode: EditorModes) {}
+  onModeChange(_mode: EditorModes) {}
   select() {
     this.children.forEach((x: Container) => {
       if (x instanceof Container) {

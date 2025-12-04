@@ -46,7 +46,7 @@ export class BRDF {
         
         
         let specular = this.steps - incoming - 1;
-        if (outgoing == specular)
+        if (outgoing === specular)
           this.coefficients[incoming][outgoing] += specularEnergy;
       }
     }

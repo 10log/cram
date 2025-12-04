@@ -26,7 +26,6 @@ import {cramangle2threejsangle} from "../../common/dir-angle-conversions";
 import { audioEngine } from "../../audio-engine/audio-engine";
 import observe, { Observable } from "../../common/observable";
 import {probability} from '../../common/probability';
-import { filterSignals } from "../../audio-engine/envelope";
 
 import {ImageSourceSolver, ImageSourceSolverParams} from "./image-source/index"; 
 
@@ -43,7 +42,7 @@ function normalize(arr: Float32Array) {
       maxValue = Math.abs(arr[i]);
     }
   }
-  if (maxValue != 0) {
+  if (maxValue !== 0) {
     for (let i = 0; i < arr.length; i++) {
       arr[i] /= maxValue;
     }
@@ -487,7 +486,7 @@ class RayTracer extends Solver {
     const surfaces = [] as THREE.Mesh[];
 
     this.room.surfaces.traverse((container)=>{
-      if(container["kind"] && container["kind"] === "surface"){
+      if(container['kind'] && container['kind'] === 'surface'){
         surfaces.push((container as Surface).mesh);
       }
     });
@@ -609,7 +608,7 @@ class RayTracer extends Solver {
       // console.log("itx",intersections[0].point)
 
       //check to see if the intersection was with a receiver
-      if (intersections[0].object.userData?.kind === "receiver") {
+      if (intersections[0].object.userData?.kind === 'receiver') {
         // find the incident angle
         const angle = intersections[0].face && rd.clone().multiplyScalar(-1).angleTo(intersections[0].face.normal);
 
@@ -785,7 +784,7 @@ class RayTracer extends Solver {
         for (let f = 0; f < frequencies.length; f++) {
           const freq = frequencies[f];
           let coefficient = 1;
-          if (surface.kind === "surface") {
+          if (surface.kind === 'surface') {
             coefficient = surface.reflectionFunction(freq, angle);
           }
           intensities[f] *= coefficient;
@@ -1467,7 +1466,7 @@ class RayTracer extends Solver {
             for (let f = 0; f < freqs.length; f++) {
               const freq = freqs[f];
               let coefficient = 1;
-              if (surface && surface.kind === "surface") {
+              if (surface && surface.kind === 'surface') {
                 coefficient = (surface as Surface).reflectionFunction(freq, angle);
                 // coefficient = 1 - (surface as Surface).absorptionFunction(freq);
               }
@@ -1587,7 +1586,7 @@ class RayTracer extends Solver {
         this.responseByIntensity[recid][srcid].t30 = resampledResponse.map((resp) => {
           let i = 0;
           let val = resp[i];
-          while (val == 0) {
+          while (val === 0) {
             val = resp[i++];
           }
           for (let j = i; j >= 0; j--) {
@@ -1622,7 +1621,7 @@ class RayTracer extends Solver {
         this.responseByIntensity[recid][srcid].t20 = resampledResponse.map((resp) => {
           let i = 0;
           let val = resp[i];
-          while (val == 0) {
+          while (val === 0) {
             val = resp[i++];
           }
           for (let j = i; j >= 0; j--) {
@@ -1657,7 +1656,7 @@ class RayTracer extends Solver {
         this.responseByIntensity[recid][srcid].t60 = resampledResponse.map((resp) => {
           let i = 0;
           let val = resp[i];
-          while (val == 0) {
+          while (val === 0) {
             val = resp[i++];
           }
           for (let j = i; j >= 0; j--) {
@@ -1822,8 +1821,8 @@ class RayTracer extends Solver {
       const surface = useContainer.getState().containers[p.object] as Surface;
       // multiply intensities by the frequency dependant reflection coefficient
       intensities.forEach((I, i) => {
-        let R; 
-        if (freqs[i]==16000){
+        let R;
+        if (freqs[i]===16000){
             R = 1 - surface.absorptionFunction(freqs[8000]); // reflection coefficient
         }else{
             R = 1 - surface.absorptionFunction(freqs[i]); // reflection coefficient
@@ -1843,9 +1842,9 @@ class RayTracer extends Solver {
     return ac.Lp2P(arrivalLp) as number[]; 
   }
   async calculateImpulseResponse(initialSPL = 100, frequencies = ac.Octave(63, 16000), sampleRate = audioEngine.sampleRate): Promise<AudioBuffer> {
-    if(this.receiverIDs.length == 0) throw Error("No receivers have been assigned to the raytracer");
-    if(this.sourceIDs.length == 0) throw Error("No sources have been assigned to the raytracer");
-    if(!this.paths[this.receiverIDs[0]] || this.paths[this.receiverIDs[0]].length == 0) throw Error("No rays have been traced yet");
+    if(this.receiverIDs.length === 0) throw Error("No receivers have been assigned to the raytracer");
+    if(this.sourceIDs.length === 0) throw Error("No sources have been assigned to the raytracer");
+    if(!this.paths[this.receiverIDs[0]] || this.paths[this.receiverIDs[0]].length === 0) throw Error("No rays have been traced yet");
 
     let sorted = this.paths[this.receiverIDs[0]].sort((a,b)=>a.time - b.time) as RayPath[];
 
@@ -1975,9 +1974,9 @@ class RayTracer extends Solver {
     };
   }
   downloadImpulses(filename: string, initialSPL = 100, frequencies = ac.Octave(125, 8000), sampleRate = 44100){
-    if(this.receiverIDs.length == 0) throw Error("No receivers have been assigned to the raytracer");
-    if(this.sourceIDs.length == 0) throw Error("No sources have been assigned to the raytracer");
-    if(this.paths[this.receiverIDs[0]].length == 0) throw Error("No rays have been traced yet");
+    if(this.receiverIDs.length === 0) throw Error("No receivers have been assigned to the raytracer");
+    if(this.sourceIDs.length === 0) throw Error("No sources have been assigned to the raytracer");
+    if(this.paths[this.receiverIDs[0]].length === 0) throw Error("No rays have been traced yet");
 
     const sorted = this.paths[this.receiverIDs[0]].sort((a,b)=>a.time - b.time) as RayPath[];
     const totalTime = sorted[sorted.length - 1].time + 0.05; // end time is latest time of arrival plus 0.05 seconds for safety

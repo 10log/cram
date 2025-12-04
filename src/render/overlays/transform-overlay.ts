@@ -35,7 +35,7 @@ export class TransformOverlay {
     this.cells.set("dy", createCell("dy", 0));
     this.cells.set("dz", createCell("dz", 0));
     
-    this.cells.forEach((elt, key) => {
+    this.cells.forEach((elt, _key) => {
       diffrow.appendChild(elt);
     });
     

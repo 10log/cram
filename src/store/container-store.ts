@@ -3,8 +3,7 @@ import { produce } from 'immer';
 import * as THREE from 'three';
 import { KeyValuePair } from "../common/key-value-pair";
 import Container from "../objects/container";
-import { AllowedNames, omit, filterObjectToArray, reach } from '../common/helpers';
-import {renderer} from '../render/renderer';
+import { AllowedNames, omit, reach } from '../common/helpers';
 import { Room } from "../objects";
 import Solver from "../compute/solver";
 

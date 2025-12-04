@@ -8,16 +8,16 @@ import equal from "fast-deep-equal";
 import cloneDeep from "../common/clone-deep";
 import { TransitionGroup, CSSTransition } from "react-transition-group";
 
+import "./TreeViewComponent.css";
+import { find, get } from "lodash";
+
 function isNil(value) {
-  return value == null;
+  return value === null || value === undefined;
 }
 
 function isEqual(value, other) {
   return equal(value, other);
 }
-
-import "./TreeViewComponent.css";
-import { find, get, isEmpty } from "lodash";
 
 Object.assign(window, { find, get });
 
@@ -295,7 +295,7 @@ class TreeViewComponent extends Component<Props, State> {
 
     return (
       <TransitionGroup>
-        {nodeArray.length == 0
+        {nodeArray.length === 0
           ? this.printNoChildrenMessage()
           : nodeArray.map((node, index) => {
               const nodeText = get(node, keywordLabel!, "");

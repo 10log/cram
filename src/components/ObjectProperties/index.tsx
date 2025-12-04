@@ -16,10 +16,10 @@ export interface ObjectPropertyInputEvent {
 
 export const ObjectProperties = () => {
   const containers = useContainer(state => state.selectedObjects);
-  
-  if(containers.size == 0) return <PanelEmptyText>Nothing Selected</PanelEmptyText>
 
-  if(containers.size == 1) {
+  if(containers.size === 0) return <PanelEmptyText>Nothing Selected</PanelEmptyText>
+
+  if(containers.size === 1) {
     const { uuid, kind } = [...containers.values()][0];
     switch (kind) {
       case "source": return <SourceTab uuid={uuid} />

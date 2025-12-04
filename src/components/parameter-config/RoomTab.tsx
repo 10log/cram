@@ -1,9 +1,9 @@
 import React from "react";
 import Room from "../../objects/room";
 import PropertyRowFolder from "./property-row/PropertyRowFolder";
-import { createPropertyInputs, useContainerProperty } from "./ContainerComponents";
+import { createPropertyInputs } from "./ContainerComponents";
 import useToggle from "../hooks/use-toggle";
-const { PropertyTextInput, PropertyNumberInput, PropertyCheckboxInput, PropertyVectorInput, PropertySelect } = createPropertyInputs<Room>(
+const { PropertyTextInput, PropertyCheckboxInput, PropertyVectorInput } = createPropertyInputs<Room>(
   "ROOM_SET_PROPERTY"
 );
 

@@ -1,4 +1,4 @@
-import { emit } from "../../../messenger";;
+import { emit } from "../../../messenger";
 import React from "react";
 import PropertyRow from "./PropertyRow";
 import PropertyRowButton from "./PropertyRowButton";
@@ -22,7 +22,7 @@ export const PropertyButton = <T extends keyof EventTypes>({
   return (
     <PropertyRow>
       <PropertyRowLabel label={label} hasToolTip tooltip={tooltip} />
-      <PropertyRowButton onClick={(e) => emit(event, args)} label={buttonLabel} disabled={disabled}/>
+      <PropertyRowButton onClick={(_e) => emit(event, args)} label={buttonLabel} disabled={disabled}/>
     </PropertyRow>
   );
 };

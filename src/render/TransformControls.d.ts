@@ -1,4 +1,4 @@
-import { Object3D, Camera, MOUSE } from "three";
+import { Object3D, Camera } from "three";
 
 export class TransformControls {
   constructor(camera: Camera, domElement?: HTMLElement | null);

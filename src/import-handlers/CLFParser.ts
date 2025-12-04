@@ -1,6 +1,3 @@
-import { BREADCRUMBS_COLLAPSED } from "@blueprintjs/core/lib/esm/common/classes";
-import { ifError } from "assert";
-import { forInRight, fromPairs } from "lodash";
 import {Octave, ThirdOctave} from "../compute/acoustics/bands";
 import {directivityData} from "../objects/source";
 
@@ -62,7 +59,7 @@ export class CLFParser{
         }
 
         // create theta list based on radiation type
-        if(this.radiation == "<halfsphere>"){
+        if(this.radiation === "<halfsphere>"){
             this.theta = this.createAngleList(0,this.angleres,90);
         }else{
             this.theta = this.createAngleList(0,this.angleres,180);
@@ -127,7 +124,7 @@ export class CLFParser{
             let sym = String(result.symmetry); 
             result.directivity[i] = this.applySymmetry(sym, this.parseDirectivity(this.frequencies[i]));
 
-            if(result.arcorder == "<reversed>"){
+            if(result.arcorder === "<reversed>"){
                 result.directivity[i].directivity.reverse();
             }
         }
@@ -164,9 +161,8 @@ export class CLFParser{
                             //result is a string
 
                             const comment_re = /(#\w+)/; // regexp defining the beginning of a comment
-                            const empty_re = /^(?![\s\S])/; // regexp defining an empty character  
-                            const newtag_re = /(<[A-Z]+>)/; //regexp defining the beginning of a tag (starting/ending with <> and all caps) 
-                            const nodata_re = /<nodata>/; //regexp to match nodata tags 
+                            const newtag_re = /(<[A-Z]+>)/; //regexp defining the beginning of a tag (starting/ending with <> and all caps)
+                            const nodata_re = /<nodata>/; //regexp to match nodata tags
 
                             let stringData = this.clfData[i][k];
 
@@ -177,7 +173,7 @@ export class CLFParser{
                             }else if(newtag_re.test(stringData)){
                                 // data is a tag. skip the rest of the line
                                 break; 
-                            }else if(stringData=="" || stringData =="\n" || stringData =="\t" || stringData =="\r"){
+                            }else if(stringData==="" || stringData ==="\n" || stringData ==="\t" || stringData ==="\r"){
                                 // data is empty. skip this element
                                 continue; 
                             }else if(nodata_re.test(stringData)){
@@ -196,9 +192,9 @@ export class CLFParser{
                         nextIndex: i+1,
                     };
 
-                    if (pr.result.length == 1){
+                    if (pr.result.length === 1){
                         pr.result = result[0];
-                        return pr; 
+                        return pr;
                     }else{
                         return pr;
                     }
@@ -232,14 +228,13 @@ export class CLFParser{
         let searchStart: number = 0; 
 
         let dir: number[][];
-        dir = Array(Array());
+        dir = Array([]);
 
         while(search){
             let parseResult = this.parseProperty("<BAND>",searchStart)
             searchStart = parseResult.nextIndex; 
 
-            if(typeof parseResult.result === "number" && band == parseResult.result){
-                let parsing: boolean = true; 
+            if(typeof parseResult.result === "number" && band === parseResult.result){
                 let nextBandIndex: number; 
 
                 nextBandIndex = this.parseProperty("<BAND>", searchStart).nextIndex; 
@@ -259,7 +254,7 @@ export class CLFParser{
 
     private parseRowAsNumber(rowNumber: number): number[]{
         let row: string[] = this.clfData[rowNumber];
-        let rowAsNum: number[] = Array();
+        let rowAsNum: number[] = [];
 
         for(let i = 0; i<row.length; i++){
             rowAsNum.push(parseFloat(row[i]));
@@ -271,9 +266,9 @@ export class CLFParser{
     private applySymmetry(symmetryType: string, baseDirData: directivityData): directivityData{
         //apply specified symmetry to a single directivityData interface 
 
-        let resultDir: number[][] = Array(Array());
+        let resultDir: number[][] = Array([]);
 
-        let copyBlock: number[][] = Array(Array());
+        let copyBlock: number[][] = Array([]);
         let copyBlockRev: number[][]; 
 
         switch (symmetryType.trim()){
@@ -351,11 +346,11 @@ export class CLFParser{
     private isvalid(): boolean{
         //check if a CLF file is valid based on the "<CLFn>" tag that should come first
 
-        if (this.clfData[0][0] == "<CLF1>" || this.clfData[0][0] == "<CLF2>"){
+        if (this.clfData[0][0] === "<CLF1>" || this.clfData[0][0] === "<CLF2>"){
             return true;
         }
         else{
-            return false; 
+            return false;
         }
     }
 

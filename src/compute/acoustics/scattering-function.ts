@@ -1,4 +1,3 @@
-import { interpolate } from "chroma-js";
 import interpolateAlpha from "./interpolate-alpha";
 import { between } from "../../common/helpers";
 

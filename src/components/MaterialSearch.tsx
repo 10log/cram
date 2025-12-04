@@ -1,13 +1,11 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useMemo } from 'react';
 import Surface from '../objects/surface';
-import Messenger, { emit } from '../messenger';
+import { emit } from '../messenger';
 import { AcousticMaterial } from '../db/acoustic-material';
 import { absorptionGradient } from './AbsorptionGradient';
-import { clamp } from '../common/clamp';
 import { Drawer, Icon, Position } from '@blueprintjs/core';
 import { Button } from '@blueprintjs/core';
 import ObjectView from './object-view/ObjectView';
-import Container from '../objects/container';
 import { useAppStore, useContainer, useMaterial } from '../store';
 import { pickProps } from '../common/helpers';
 import { useShallow } from 'zustand/react/shallow';
@@ -96,7 +94,7 @@ const MaterialAssignButton = () => {
         intent="success"
         text="assign"
         icon="tick"
-        disabled={selectedSurfaces.length == 0}
+        disabled={selectedSurfaces.length === 0}
         onClick={(e) => {
           if(selectedMaterial){
             emit("ASSIGN_MATERIAL", {
@@ -111,8 +109,6 @@ const MaterialAssignButton = () => {
 }
 
 export const MaterialSearch = () => {
-  const listref = useRef<HTMLDivElement>();
-  const listScroll = 0;
   const { bufferLength, query, search, set } = useMaterial(useShallow(state=>pickProps(["bufferLength", "query", "search", "set"], state)));
   const {materialDrawerOpen, set: setAppStore} = useAppStore(useShallow(state=>pickProps(["materialDrawerOpen", "set"], state)));
 

@@ -1,13 +1,7 @@
 import * as THREE from "three";
-import Receiver, { ReceiverSaveObject } from "./receiver";
-// import Surface from "./surface";
-// import Room, { RoomSaveObject } from "./room";
-// import Source, { SourceSaveObject } from "./source";
-import { KeyValuePair } from "../common/key-value-pair";
 import { EditorModes } from "../constants";
-import { emit, on } from "../messenger";
-import { getContainerKeys, useContainer } from "../store";
-import { filterObjectToArray, omit } from "../common/helpers";
+import { useContainer } from "../store";
+import { filterObjectToArray } from "../common/helpers";
 
 
 
@@ -73,7 +67,7 @@ export default class Container extends THREE.Group {
     return this;
   }
   dispose() {}
-  onModeChange(mode: EditorModes) {}
+  onModeChange(_mode: EditorModes) {}
   select() {
     this.selectChildren();
     this.selected = true;

@@ -2,7 +2,7 @@
 
 import FileSaver from "file-saver";
 import { v4 as uuid } from 'uuid';
-import { audioEngine, FilteredSource } from "../audio-engine/audio-engine";
+import { audioEngine } from "../audio-engine/audio-engine";
 import { emit, on } from "../messenger";
 import { addSolver, setSolverProperty, useSolver } from "../store/solver-store";
 import Solver, { SolverParams } from "./solver";
@@ -80,7 +80,7 @@ class EnergyDecay extends Solver{
     }
 
     calculateAcParams(){
-        if(this.filteredData.length == 0){
+        if(this.filteredData.length === 0){
             console.error("No IR Data Loaded");
         }
 
@@ -206,7 +206,7 @@ function schroederBackwardsIntegration(data: Float32Array){
     let data_reversed_sq_cumsum_div_sum: Float32Array = data_reversed_sq_cumsum.map((x)=>(x/data_sq_sum)); 
 
     let bi_result: Float32Array = data_reversed_sq_cumsum_div_sum.map((x)=>{
-        if(x!=0){
+        if(x!==0){
             return 10*Math.log10(x);
         }else{
             return 0;

@@ -3,7 +3,6 @@ import TextInput from "../text-input/TextInput";
 import NumberInput from "../number-input/NumberInput";
 import { ObjectPropertyInputEvent } from ".";
 import CheckboxInput from "../CheckboxInput";
-import Source from '../../objects/source';
 import GridRow from '../GridRow';
 import Room from '../../objects/room';
 

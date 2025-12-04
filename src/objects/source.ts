@@ -8,10 +8,9 @@ import { EditorModes } from "../constants/editor-modes";
 import { P2I, Lp2P } from "../compute/acoustics";
 import FileSaver from "file-saver";
 import { on } from "../messenger";
-import { addContainer, callContainerMethod, removeContainer, setContainerProperty, useContainer } from "../store";
+import { addContainer, callContainerMethod, removeContainer, setContainerProperty } from "../store";
 import {CLFResult} from "../import-handlers/CLFParser";
 import {dirinterp, dirDataPoint} from "../common/dir-interpolation";
-import { AllowedNames, FilterFlags, filterObjectToArray } from "../common/helpers";
 import { renderer } from "../render/renderer";
 
 const defaults = {
@@ -154,7 +153,7 @@ export class Source extends Container {
         this.mesh.material = this.normalMaterial;
       }
     };
-    this.renderCallback = (time?: number) => {};
+    this.renderCallback = (_time?: number) => {};
 
     this.updateWave = this.updateWave.bind(this);
     this.updatePreviousPosition = this.updatePreviousPosition.bind(this);
@@ -212,7 +211,7 @@ export class Source extends Container {
     this.previousZ = this.position.z;
   }
   updateWave(time: number, frame: number, dt: number) {
-    if (this.position.x != this.previousX || this.position.y != this.previousY || this.position.z != this.previousZ) {
+    if (this.position.x !== this.previousX || this.position.y !== this.previousY || this.position.z !== this.previousZ) {
       this.shouldClearPreviousPosition = true;
     }
 
@@ -220,29 +219,19 @@ export class Source extends Container {
 
     switch (this.signalSource) {
       case SignalSource.NONE:
-        {
-          this.value = 0;
-        }
+        this.value = 0;
         break;
       case SignalSource.OSCILLATOR:
-        {
-          this.value = this.getOscillatorSample(time);
-        }
+        this.value = this.getOscillatorSample(time);
         break;
       case SignalSource.PINK_NOISE:
-        {
-          this.value = this.getPinkNoiseSample(frame);
-        }
+        this.value = this.getPinkNoiseSample(frame);
         break;
       case SignalSource.WHITE_NOISE:
-        {
-          this.value = this.getWhiteNoiseSample();
-        }
+        this.value = this.getWhiteNoiseSample();
         break;
       case SignalSource.PULSE:
-        {
-          this.value = this.getPulseSample(time, dt);
-        }
+        this.value = this.getPulseSample(time, dt);
         break;
       default:
         break;
@@ -268,7 +257,7 @@ export class Source extends Container {
     return time % period < dt ? this.amplitude : 0;
   }
   getPinkNoiseSample(frame: number) {
-    if (frame % this.pinkNoiseSamples.length == this.pinkNoiseSamples.length - 1) {
+    if (frame % this.pinkNoiseSamples.length === this.pinkNoiseSamples.length - 1) {
       this.generatePinkNoiseSamples();
     }
     return this.pinkNoiseSamples[frame % this.pinkNoiseSamples.length];
@@ -315,16 +304,10 @@ export class Source extends Container {
   onModeChange(mode: EditorModes) {
     switch (mode) {
       case EditorModes.OBJECT:
-        {
-        }
         break;
       case EditorModes.SKETCH:
-        {
-        }
         break;
       case EditorModes.EDIT:
-        {
-        }
         break;
       default:
         break;
@@ -473,8 +456,8 @@ export class DirectivityHandler {
           upperPhi = lowerPhi + angularRes; 
         }
 
-        if(upperPhi==360){
-          upperPhi = 0; 
+        if(upperPhi===360){
+          upperPhi = 0;
         }
 
         let nearestTheta = Math.round(theta/angularRes)*angularRes; 
@@ -490,8 +473,8 @@ export class DirectivityHandler {
           upperTheta = lowerTheta + angularRes; 
         }
 
-        let f_index = this.frequencies.indexOf(frequency); 
-        (f_index == -1) && (console.error("invalid frequency")); 
+        let f_index = this.frequencies.indexOf(frequency);
+        (f_index === -1) && (console.error("invalid frequency")); 
 
         let p1: dirDataPoint = {
           phi: lowerPhi, 
@@ -534,17 +517,8 @@ export class DirectivityHandler {
 
 }
 
-enum sourceDirTypes {
-  Omni = 0,
-  UserDefinedCLF
-}
-
 export interface directivityData{
   frequency: number;
-  directivity: number[][]; 
-}
-
-function containerCallMethod(arg0: string, containerCallMethod: any) {
-  throw new Error("Function not implemented.");
+  directivity: number[][];
 }
 

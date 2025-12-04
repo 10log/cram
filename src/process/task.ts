@@ -1,4 +1,3 @@
-import Messenger from "../messenger";
 import { v4 as uuid } from 'uuid';
 
 export interface TaskParams {

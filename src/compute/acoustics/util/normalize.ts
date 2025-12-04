@@ -7,7 +7,7 @@ export function normalize<T>(arr: T) {
       _max = Math.abs(arr[i] as number);
     }
   }
-  if (_max != 0) {
+  if (_max !== 0) {
     //@ts-ignore
     for (let i = 0; i < arr.length; i++) {
       arr[i] = (arr[i] as number) / (_max as number);

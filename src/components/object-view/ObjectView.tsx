@@ -5,13 +5,12 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import TreeItemLabel from "../tree-item-label/TreeItemLabel";
 import properCase from "../../common/proper-case";
-import { KeyValuePair } from "../../common/key-value-pair";
 import Container from "../../objects/container";
 import { Colors } from "@blueprintjs/core";
 import ContextMenu from "../ContextMenu";
-import { NodesIcon, RoomIcon, SurfaceIcon, SourceIcon, ReceiverIcon } from "../icons";
+import { NodesIcon, RoomIcon, SourceIcon, ReceiverIcon } from "../icons";
 import "./ObjectView.css";
-import Messenger, { emit, on } from "../../messenger";
+import { emit, on } from "../../messenger";
 import { useContainer } from "../../store";
 import { pickProps } from "../../common/helpers";
 import { useShallow } from "zustand/react/shallow";
@@ -198,7 +197,7 @@ export default function ObjectView() {
 
   const ContainerLabelStyle = {
     fontWeight: 400,
-    color: Object.keys(containers).length == 0 ? Colors.LIGHT_GRAY3 : "#182026"
+    color: Object.keys(containers).length === 0 ? Colors.LIGHT_GRAY3 : "#182026"
   };
 
   const label = <TreeItemLabel label={<div style={ContainerLabelStyle}>Objects</div>} />;

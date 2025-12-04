@@ -1,4 +1,4 @@
-import React, { useEffect, useReducer, useState } from "react";
+import React, { useEffect, useReducer } from "react";
 import Surface from "../../objects/surface";
 import PropertyRowFolder from "./property-row/PropertyRowFolder";
 import { createPropertyInputs, useContainerProperty } from "./ContainerComponents";
@@ -7,7 +7,7 @@ import { useContainer } from "../../store";
 import { PropertyButton } from "./property-row/PropertyButton";
 import { on } from "../../messenger";
 import { ensureArray } from "../../common/helpers";
-const { PropertyTextInput, PropertyNumberInput, PropertyCheckboxInput, PropertyVectorInput, PropertySelect } = createPropertyInputs<Surface>(
+const { PropertyTextInput, PropertyNumberInput, PropertyCheckboxInput, PropertyVectorInput } = createPropertyInputs<Surface>(
   "SURFACE_SET_PROPERTY"
 );
 

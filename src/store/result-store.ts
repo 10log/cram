@@ -2,7 +2,6 @@ import { create } from 'zustand';
 import { produce } from 'immer';
 import { KeyValuePair } from "../common/key-value-pair";
 import { emit, on } from '../messenger';
-import { result } from "lodash";
 import { omit } from "../common/helpers";
 import useAppStore from "./app-store";
 // import { ChartDataSets } from 'chart.js';
@@ -109,12 +108,12 @@ on("ADD_RESULT", (result) => {
   if(!useAppStore.getState().resultsPanelOpen) emit("TOGGLE_RESULTS_PANEL", true);
 });
 
-on("UPDATE_RESULT", ({ uuid, result }) => {
+on("UPDATE_RESULT", ({ result }) => {
   useResult.getState().set((store) => void (store.results[result.uuid] = result));
   if(!useAppStore.getState().resultsPanelOpen) emit("TOGGLE_RESULTS_PANEL", true);
 });
 
-on("REMOVE_RESULT", ( uuid ) => {
+on("REMOVE_RESULT", (uuid) => {
   useResult.getState().set((store) => {
     store.results = omit([uuid], store.results)
   });

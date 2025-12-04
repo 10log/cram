@@ -1,5 +1,5 @@
-const valueOf = Symbol.prototype.valueOf;
 import kindOf from "./kind-of";
+const valueOf = Symbol.prototype.valueOf;
 
 export function clone(val) {
   switch (kindOf(val)) {

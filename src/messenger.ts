@@ -24,7 +24,7 @@ type EventHandlers =  {
 };
 
 export default class Messenger{
-    static postMessage(arg0: string) {
+    static postMessage(_arg0: string) {
       throw new Error("Method not implemented.");
     }
     private dictionary: KeyValuePair<KeyValuePair<EventHandler>>;
@@ -60,7 +60,7 @@ export default class Messenger{
         }
     }
     postMessage(message: string, ...args) {
-        if (message != this.lastMessage) {
+        if (message !== this.lastMessage) {
             this.lastMessage = message;
         }
         // if message exists
@@ -89,7 +89,7 @@ export default class Messenger{
         this.events[event].before.add(callback);
         return (() => {
             this.events[event].before.delete(callback);
-        }).bind(this) as () => void;
+        }) as () => void;
     }
     on<T extends keyof EventTypes>(event: T, callback: (e: EventTypes[T]) => void) {
         if(!this.events[event]){
@@ -102,7 +102,7 @@ export default class Messenger{
         this.events[event].on.add(callback);
         return (() => {
             this.events[event].on.delete(callback);
-        }).bind(this) as () => void;
+        }) as () => void;
     }
     after<T extends keyof EventTypes>(event: T, callback: (e: EventTypes[T]) => void) {
         if(!this.events[event]){
@@ -115,7 +115,7 @@ export default class Messenger{
         this.events[event].after.add(callback);
         return (() => {
             this.events[event].after.delete(callback);
-        }).bind(this) as () => void;
+        }) as () => void;
     }
 
     emit<T extends keyof EventTypes>(event: T, payload?: EventTypes[T]) {

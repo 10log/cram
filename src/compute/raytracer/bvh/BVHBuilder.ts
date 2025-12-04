@@ -1,3 +1,7 @@
+import { BVHNode } from "./BVHNode";
+import { BVH } from "./BVH";
+import { asyncWork } from './utils'
+
 declare global {
 	interface XYZ {
 		0: number,
@@ -20,11 +24,6 @@ declare global {
 }
 
 const EPSILON = 1e-6;
-
-import { BVHVector3 } from "./BVHVector3";
-import { BVHNode } from "./BVHNode";
-import { BVH } from "./BVH";
-import { asyncWork } from './utils'
 
 export function BVHBuilder(triangles:unknown | Vector[][] | number[] | Float32Array, maxTrianglesPerNode:number = 10) {
 	if(typeof maxTrianglesPerNode !== 'number') throw new Error(`maxTrianglesPerNode must be of type number, got: ${typeof maxTrianglesPerNode}`);
@@ -316,7 +315,7 @@ function isFaceArray(testArray: unknown): testArray is Vector[][] {
 		if(!Array.isArray(face)) return false;
 		if(face.length !== 3) return false;
 		for(let j = 0; j < 3; j++) {
-			const vertex:Vector = <Vector>face[j];
+			const vertex:Vector = face[j] as Vector;
 			if(typeof vertex.x !== "number" || typeof vertex.y !== "number" || typeof vertex.z !== "number") return false;
 		}
 	}
