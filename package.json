@@ -48,7 +48,7 @@
     "@visx/shape": "^3.12.0",
     "@visx/zoom": "^3.12.0",
     "@zip.js/zip.js": "^2.2.23",
-    "chroma-js": "^2.1.0",
+    "chroma-js": "^3.2.0",
     "complex": "^3.0.1",
     "d3": "^7.9.0",
     "dxf-parser": "^1.0.0-alpha.2",
