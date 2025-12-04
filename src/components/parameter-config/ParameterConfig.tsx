@@ -64,7 +64,9 @@ const SolverOptionTitle = ({ uuid }) => {
 export const SolversTab = () => {
   const solvers = useSolver(useShallow(state=>state.withProperty(solver=>solver.kind)))
   const [index, setIndex] = useState(0);
-  useEffect(()=>on("NEW", ()=>setIndex(0)), [])
+  useEffect(() => {
+    return on("NEW", () => setIndex(0));
+  }, []);
   const [selectedSolverId, setSelectedSolverId] = useState("choose");
 
 
@@ -97,13 +99,19 @@ export const ObjectsTab = () => {
 
   const [selectedObjectId, setSelectedObjectId] = useState("choose");
 
-  useEffect(()=>on("NEW", ()=>setIndex(0)), [])
-  useEffect(()=>on("SET_SELECTION", (e)=>{
-    setSelectedObjectId(e[0].uuid)
-  }), [])
-  useEffect(()=>on("APPEND_SELECTION", (e)=>{
-    setSelectedObjectId(e[e.length-1].uuid)
-  }), [])
+  useEffect(() => {
+    return on("NEW", () => setIndex(0));
+  }, []);
+  useEffect(() => {
+    return on("SET_SELECTION", (e) => {
+      setSelectedObjectId(e[0].uuid);
+    });
+  }, []);
+  useEffect(() => {
+    return on("APPEND_SELECTION", (e) => {
+      setSelectedObjectId(e[e.length - 1].uuid);
+    });
+  }, []);
   const validSelection = selectedObjectId && objects.has(selectedObjectId);
   const ObjectParameterConfig = ObjectComponentMap.get(objects.get(selectedObjectId)!)!;
   return (
@@ -126,7 +134,9 @@ export const ObjectsTab = () => {
 
 export const ParameterConfig = () => {
   const [index, setIndex] = useState(0);
-  useEffect(()=>on("NEW", ()=>setIndex(0)), [])
+  useEffect(() => {
+    return on("NEW", () => setIndex(0));
+  }, []);
 
   const [selectedTabId, setSelectedTabId] = useState("renderer")
 

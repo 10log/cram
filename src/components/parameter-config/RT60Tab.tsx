@@ -77,9 +77,11 @@ const Export = ({uuid}: { uuid: string }) => {
   const {noResults} = useSolver(useShallow(state => pickProps(["noResults"], state.solvers[uuid] as RT60)));
   const [, forceUpdate] = useReducer((c) => c + 1, 0) as [never, () => void]
 
-  useEffect(()=>on("UPDATE_RT60", (e)=>{
-    forceUpdate();
-  }));
+  useEffect(() => {
+    return on("UPDATE_RT60", (e) => {
+      forceUpdate();
+    });
+  }, []);
 
   return(
     <PropertyRowFolder label="Export" open={open} onOpenClose={toggle}>
