@@ -944,8 +944,10 @@ export default class Renderer {
       this.isIdle = false;
       requestAnimationFrame(this.render);
     } else {
-      // Idle state - use requestRender() to wake up immediately on user interaction
+      // Idle state - poll at reduced rate to catch external triggers (e.g., raytracer progress)
+      // User interactions use requestRender() to wake up immediately
       this.isIdle = true;
+      setTimeout(() => requestAnimationFrame(this.render), 50);
     }
   }
 
