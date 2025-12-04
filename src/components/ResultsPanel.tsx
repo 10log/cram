@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 
 import { useResult, getResultKeys, ResultStore } from "../store/result-store";
 
@@ -27,33 +27,26 @@ export const ResultsPanel = () => {
   const keys = useResult(useShallow(resultKeys));
   const [index, setIndex] = useState(0);
 
+  // Shared logic for switching to a result tab by uuid
+  const switchToResultTab = useCallback((resultUuid: string) => {
+    setTimeout(() => {
+      const currentKeys = Object.keys(useResult.getState().results);
+      const newIndex = currentKeys.indexOf(resultUuid);
+      if (newIndex !== -1) {
+        setIndex(newIndex);
+      }
+    }, 0);
+  }, []);
+
   // When a new result is added, switch to that tab
   useEffect(() => {
-    return on("ADD_RESULT", (e) => {
-      // After the result is added, find its position and switch to it
-      setTimeout(() => {
-        const currentKeys = Object.keys(useResult.getState().results);
-        const newIndex = currentKeys.indexOf(e.uuid);
-        if (newIndex !== -1) {
-          setIndex(newIndex);
-        }
-      }, 0);
-    });
-  }, []);
+    return on("ADD_RESULT", (e) => switchToResultTab(e.uuid));
+  }, [switchToResultTab]);
 
   // When a result is updated, switch to that tab (e.g., Calculate LTP)
   useEffect(() => {
-    return on("UPDATE_RESULT", (e) => {
-      // After the result is updated, find its position and switch to it
-      setTimeout(() => {
-        const currentKeys = Object.keys(useResult.getState().results);
-        const newIndex = currentKeys.indexOf(e.uuid);
-        if (newIndex !== -1) {
-          setIndex(newIndex);
-        }
-      }, 0);
-    });
-  }, []);
+    return on("UPDATE_RESULT", (e) => switchToResultTab(e.uuid));
+  }, [switchToResultTab]);
 
   return keys.length > 0 ? (
     <div
