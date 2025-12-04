@@ -1,7 +1,6 @@
 import React from "react";
 import TextInput from "../text-input/TextInput";
-import NumberInput, { ObjectPropertyInputEvent } from ".";
-import CheckboxInput from "../CheckboxInput";
+import { ObjectPropertyInputEvent } from ".";
 import Source from '../../objects/source';
 import GridRow from '../GridRow';
 
@@ -25,7 +24,7 @@ const GenericObjectPropertiesContainerStyle: React.CSSProperties = {
 
 export default function GenericObjectProperties(props: GenericObjectPropertiesProps) {
 
-	const XYZProps = {
+	const _XYZProps = {
     style: {
 		  width: "30%"
 	  },

@@ -16,7 +16,7 @@ export function interpolateAlpha(alpha: number[], freq: number[]): (f: number) =
     }
     
     else {
-      return i == 0 ? alpha[i] : alpha[freq.length-1];
+      return i === 0 ? alpha[i] : alpha[freq.length-1];
     }
   }
 }

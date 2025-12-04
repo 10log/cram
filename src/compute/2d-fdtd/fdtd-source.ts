@@ -1,5 +1,4 @@
 import map from '../../common/map';
-import { Vector3 } from 'three';
 
 export interface FDTDSourceProps {
   x: number;

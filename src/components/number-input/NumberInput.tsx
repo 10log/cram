@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { ObjectPropertyInputEvent } from "../ObjectProperties";
 
 export interface NumberInputProps {

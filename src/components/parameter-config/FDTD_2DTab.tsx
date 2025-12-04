@@ -1,16 +1,13 @@
 import React, { useState } from "react";
-import Messenger from "../../messenger";
 import FDTD_2D from "../../compute/2d-fdtd";
-import { clamp } from "../../common/clamp";
 import Slider, { SliderChangeEvent } from '../slider/Slider';
 import PropertyRow from "./property-row/PropertyRow";
-import Label from "../label/Label";
 import PropertyRowLabel from "./property-row/PropertyRowLabel";
 import PropertyRowButton from "./property-row/PropertyRowButton";
 import PropertyRowCheckbox from "./property-row/PropertyRowCheckbox";
 import PropertyRowFolder from "./property-row/PropertyRowFolder";
-import Source, { getSources } from "../../objects/source";
-import Receiver, { getReceivers } from "../../objects/receiver";
+import { getSources } from "../../objects/source";
+import { getReceivers } from "../../objects/receiver";
 import { useSolver } from "../../store";
 
 
@@ -33,7 +30,7 @@ export const FDTD_2DTab = ({uuid}: {uuid: string}) => {
   const [sourcesFolderOpen, setSourcesFolderOpen] = useState(false);
   const [FDTDsourceKeys, setFDTDSourcesKeys] = useState(solver.sourceKeys);
   const notIncludedSources = sources.filter(src => !solver.sources[src.uuid]);
-  
+
   const [receiverFolderOpen, setReceiverFolderOpen] = useState(false);
   const [FDTDreceiverKeys, setFDTDreceiverKeys] = useState(solver.receiverKeys);
   const notIncludedReceiver = receivers.filter((rec) => !solver.receiverKeys[rec.uuid]);
@@ -72,7 +69,7 @@ export const FDTD_2DTab = ({uuid}: {uuid: string}) => {
           hasToolTip={viewFolderOpen}
           value={heightScale}
           onChange={(e: SliderChangeEvent) => {
-            solver.mesh.scale.setZ(e.value == 0 ? 0.001 : e.value);
+            solver.mesh.scale.setZ(e.value === 0 ? 0.001 : e.value);
             setHeightScale(e.value);
           }}
         />
@@ -153,7 +150,7 @@ export const FDTD_2DTab = ({uuid}: {uuid: string}) => {
             })}
           </select>
         </PropertyRow>
-        {FDTDsourceKeys.map((sourcekey, i) => {
+        {FDTDsourceKeys.map((sourcekey) => {
           return (
             <PropertyRow key={sourcekey}>
               <PropertyRowLabel
@@ -162,7 +159,7 @@ export const FDTD_2DTab = ({uuid}: {uuid: string}) => {
               />
               <PropertyRowButton
                 label="Remove"
-                onClick={(e) => {
+                onClick={(_e) => {
                   setFDTDSourcesKeys(solver.sourceKeys.filter((x) => x !== sourcekey));
                   solver.removeSource(sourcekey);
                 }}
@@ -199,13 +196,13 @@ export const FDTD_2DTab = ({uuid}: {uuid: string}) => {
             })}
           </select>
         </PropertyRow>
-        {FDTDreceiverKeys.map((receiverkey, i) => {
+        {FDTDreceiverKeys.map((receiverkey) => {
           return (
             <PropertyRow key={receiverkey}>
               <PropertyRowLabel hasToolTip={false} label={solver.receivers[receiverkey].name} />
               <PropertyRowButton
                 label="Remove"
-                onClick={(e) => {
+                onClick={(_e) => {
                   setFDTDreceiverKeys(solver.receiverKeys.filter((x) => x !== receiverkey));
                   solver.removeReceiver(receiverkey);
                 }}
@@ -217,7 +214,7 @@ export const FDTD_2DTab = ({uuid}: {uuid: string}) => {
       <PropertyRow>
         <PropertyRowLabel label="Run/Pause" tooltip="Runs or pauses the simulation" />
         <PropertyRowButton
-          onClick={(e) => {
+          onClick={(_e) => {
             if (solver.running) {
               solver.stop();
               setRunning(false);
@@ -232,7 +229,7 @@ export const FDTD_2DTab = ({uuid}: {uuid: string}) => {
       <PropertyRow>
         <PropertyRowLabel label="Recording" tooltip="Starts/stops recording" />
         <PropertyRowButton
-          onClick={(e) => {
+          onClick={(_e) => {
             if (solver.recording) {
               solver.recording = false;
               setRecording(false);

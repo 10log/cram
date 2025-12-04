@@ -1,7 +1,6 @@
 import { normalize, wavAsBlob } from '../compute/acoustics';
 import {saveAs} from 'file-saver';
 import {Flower, Fupper} from '../compute/acoustics';
-import { filterSignals } from './envelope';
 import{throwif} from '../common/throwif';
 
 
@@ -155,10 +154,8 @@ export class AudioEngine {
    * @returns an array of filtered source nodes
    */
   public createFilteredSources(dataBuffers: Float32Array[], frequencies: number[], context: AudioContext|OfflineAudioContext = this.context) {
-    throwif(dataBuffers.length == frequencies.length, "There should be exactly one frequency for each data buffer.");
+    throwif(dataBuffers.length === frequencies.length, "There should be exactly one frequency for each data buffer.");
     const sources = [] as FilteredSource[];
-
-    const maxFrequency = frequencies.reduce((a,b)=>Math.max(a,b));
 
     for(let i = 0; i < frequencies.length; i++){
       sources.push(this.createFilteredSource(dataBuffers[i], frequencies[i], 0.707, 1, context));

@@ -86,7 +86,7 @@ const General = ({ uuid }: { uuid: string }) => {
   const [open, toggle] = useToggle(true);
   const observed_name = useSolver(state=>(state.solvers[uuid] as RayTracer).observed_name);
   const [, forceUpdate] = useReducer((c) => c + 1, 0) as [never, () => void]
-  useEffect(()=>observed_name.watch(()=>forceUpdate()), [uuid]);
+  useEffect(()=>observed_name.watch(()=>forceUpdate()), [uuid, observed_name, forceUpdate]);
 
   return (
     <PropertyRowFolder label="General" open={open} onOpenClose={toggle}>

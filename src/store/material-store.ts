@@ -7,7 +7,6 @@ import Surface from '../objects/surface';
 import {on} from '../messenger';
 import { useContainer } from "./container-store";
 import { ensureArray } from "../common/helpers";
-import { KeyValuePair } from "../common/key-value-pair";
 
 export type MaterialStore = {
   materials: Map<string, AcousticMaterial>;
@@ -19,7 +18,7 @@ export type MaterialStore = {
   query: string;
 }
 
-export const useMaterial = create<MaterialStore>((set, get, api) => ({
+export const useMaterial = create<MaterialStore>((set, get) => ({
   materials: new Map(materials.map(material=>[material.uuid, material] as [string, AcousticMaterial])),
   materialSearcher: new Searcher(materials, {
     keySelector: (obj) => obj.material

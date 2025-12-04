@@ -1,27 +1,14 @@
 import React, { useReducer } from 'react'
-import { useShallow } from 'zustand/react/shallow';;
+import { useShallow } from 'zustand/react/shallow';
 import { RT60 } from '../../compute/rt';
-import Messenger from "../../messenger";
-import RT60Properties from '../ObjectProperties/RT60Properties';
-import {ImageSourceSolver} from "../../compute/raytracer/image-source/index"; 
-import { emit, on } from "../../messenger";
-import { ObjectPropertyInputEvent } from "../ObjectProperties";
-import { useContainer, useSolver } from "../../store";
-import GridRow from "../GridRow";
-import TextInput from "../text-input/TextInput";
-import NumberInput from "../number-input/NumberInput";
-import { filteredMapObject, pickProps, unique } from "../../common/helpers";
-import GridRowSeperator from "../GridRowSeperator";
-import Select from 'react-select';
+import { on } from "../../messenger";
+import { useSolver } from "../../store";
+import { pickProps } from "../../common/helpers";
 import useToggle from "../hooks/use-toggle";
-import { createPropertyInputs, useSolverProperty, PropertyButton } from "./SolverComponents";
+import { createPropertyInputs, PropertyButton } from "./SolverComponents";
 import PropertyRowFolder from "./property-row/PropertyRowFolder";
-import PropertyRow from "./property-row/PropertyRow";
-import PropertyRowLabel from "./property-row/PropertyRowLabel";
-import PropertyRowCheckbox from "./property-row/PropertyRowCheckbox";
 import { useState } from 'react';
 import { useEffect } from 'react';
-import { useCallback } from 'react';
 
 export interface RT60TabProps {
   uuid: string; 
@@ -31,7 +18,7 @@ export interface RT60TabState {
   
 }
 
-function useRT60Properties(properties: (keyof RT60)[], rt60solver: RT60, set: any) {
+function useRT60Properties(properties: (keyof RT60)[], rt60solver: RT60, _set: any) {
   const [state, setState] = useState(pickProps(properties, rt60solver));
   const setFunction = <T extends keyof typeof state>(property: T, value: typeof state[T]) => {
     setState({ ...state, [property]: value });
@@ -40,7 +27,7 @@ function useRT60Properties(properties: (keyof RT60)[], rt60solver: RT60, set: an
   return [state, setFunction] as [typeof state, typeof setFunction];
 };
 
-const { PropertyTextInput, PropertyNumberInput, PropertyCheckboxInput } = createPropertyInputs<RT60>(
+const { PropertyTextInput, PropertyNumberInput } = createPropertyInputs<RT60>(
   "RT60_SET_PROPERTY"
 );
 
@@ -78,10 +65,10 @@ const Export = ({uuid}: { uuid: string }) => {
   const [, forceUpdate] = useReducer((c) => c + 1, 0) as [never, () => void]
 
   useEffect(() => {
-    return on("UPDATE_RT60", (e) => {
+    return on("UPDATE_RT60", (_e) => {
       forceUpdate();
     });
-  }, []);
+  }, [forceUpdate]);
 
   return(
     <PropertyRowFolder label="Export" open={open} onOpenClose={toggle}>
@@ -95,7 +82,7 @@ type DropdownOption = {
   name: string
 };
 
-function getSourcesAndReceivers(state) {
+function getSourcesAndReceivers(state: any) {
   const sources = [] as DropdownOption[];
   const receivers = [] as DropdownOption[];
   Object.keys(state.containers).forEach((uuid) => {

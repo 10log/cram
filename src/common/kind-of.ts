@@ -123,7 +123,7 @@ function isRegexp(val) {
   );
 }
 
-function isGeneratorFn(name, val?) {
+function isGeneratorFn(name, _val?) {
   return ctorName(name) === "GeneratorFunction";
 }
 

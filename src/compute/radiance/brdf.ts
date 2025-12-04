@@ -7,10 +7,10 @@ export class BRDF {
   public detail: number;
 
   /**
-   * 
+   *
    * @param detail number of subdivisions
    */
-  constructor(detail: number = DEFAULT_BRDF_DETAIL, absorption){
+  constructor(detail: number = DEFAULT_BRDF_DETAIL, _absorption){
     this.detail = detail;
     const geometry = new IcosahedronGeometry(1, this.detail);
     const positions = geometry.getAttribute('position') as Float32BufferAttribute;

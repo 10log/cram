@@ -5,7 +5,7 @@
 
 // data can be a string, Blob, File, or dataURL
 
-import {MimeType, IMimes} from './mime-type';
+import {MimeType} from './mime-type';
 
 export function download(data: string|Blob|File|URL, strFileName: string, strMimeType: MimeType) {
 
@@ -35,7 +35,7 @@ export function download(data: string|Blob|File|URL, strFileName: string, strMim
   }
 
   //go ahead and download dataURLs right away
-  if (String(x).match(/^data\:[\w+\-]+\/[\w+\-]+[,;]/)) {
+  if (String(x).match(/^data:[\w+\-]+\/[\w+\-]+[,;]/)) {
     //@ts-ignore - IE10 legacy API
     return navigator.msSaveBlob // IE10 can't do a[download], only Blobs:
       //@ts-ignore - IE10 legacy API
@@ -58,7 +58,7 @@ export function download(data: string|Blob|File|URL, strFileName: string, strMim
   function d2b(u) {
     var p = u.split(/[:;,]/),
       t = p[1],
-      dec = p[2] == "base64" ? atob : decodeURIComponent,
+      dec = p[2] === "base64" ? atob : decodeURIComponent,
       bin = dec(p.pop()),
       mx = bin.length,
       i = 0,

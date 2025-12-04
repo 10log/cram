@@ -53,7 +53,7 @@ declare global {
   }
 }
 
-on("OPEN_MATERIAL_DRAWER", (surface) => {
+on("OPEN_MATERIAL_DRAWER", (_surface) => {
   useAppStore.getState().set(draft => {
     draft.materialDrawerOpen = true;
   })

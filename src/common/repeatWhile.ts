@@ -4,7 +4,7 @@ export type IntervalFunctionArgs = {
 };
 
 export function repeatWhile(fn: (args: IntervalFunctionArgs) => boolean, frequency: number): number {
-  let t0 = Date.now();
+  let _t0 = Date.now();
   let count = 0;
   let time = 0;
   let period = 1 / frequency;

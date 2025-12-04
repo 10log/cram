@@ -297,7 +297,6 @@ export function decode(buffer: Buffer | any): any {
           sampleRate,
           channelData,
         };
-        break;
     }
     pos = next;
   }
@@ -311,7 +310,7 @@ export interface encodeParams {
 }
 export function encode(channelData: any, opts: encodeParams) {
   let sampleRate = opts.sampleRate || 48000;
-  let floatingPoint = !!(opts.float || opts.floatingPoint);
+  let floatingPoint = Boolean(opts.float || opts.floatingPoint);
   let bitDepth = floatingPoint ? 32 : opts.bitDepth | 0 || 16;
   let channels = channelData.length;
   let samples = channelData[0].length;

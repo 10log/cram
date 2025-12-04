@@ -3,14 +3,10 @@ import Room from "../../objects/room";
 import Surface from "../../objects/surface";
 import { third_octave, whole_octave } from '../acoustics';
 import { RT_CONSTANTS } from '../../constants/rt-constants';
-import { UNITS } from "../../enums/units";
-import Messenger, { emit, messenger, on } from "../../messenger";
-import { transpose } from '../../common/helpers'
+import { emit, on } from "../../messenger";
 import { Matrix4, Triangle, Vector3 } from "three";
 import { addSolver, removeSolver, Result, ResultKind, ResultTypes, setSolverProperty, useAppStore, useContainer, useResult, useSolver } from "../../store";
 import { v4 as uuid } from 'uuid';
-import Container from "../../objects/container";
-import { KVP } from "../../common/key-value-pair";
 import FileSaver from 'file-saver'; 
 import roundTo from "../../common/round-to";
 
@@ -258,10 +254,10 @@ export class RT60 extends Solver{
     return useContainer.getState().containers[this.roomID] as Room; 
   }
   get noResults(){
-    if (this.sabine_rt.length == 0 && this.eyring_rt.length == 0  && this.ap_rt.length == 0 ){
+    if (this.sabine_rt.length === 0 && this.eyring_rt.length === 0  && this.ap_rt.length === 0 ){
       return true;
     }else{
-      return false; 
+      return false;
     }
   }
   get displayVolume(){
@@ -275,33 +271,25 @@ export class RT60 extends Solver{
 
 function airAbs20c40rh(f: number): number {
   // returns metric value of the air abosprtion coefficient m at 20c 40 rh
-  // hardcoded for capstone demonstration 
+  // hardcoded for capstone demonstration
 
   switch(f){
     case 125:
-      return 0; 
-      break;
-    case 250:
-      return 0; 
-      break;
-    case 500: 
-      return 0.000600423; 
-      break;
-    case 1000:
-      return 0.001069606; 
-      break;
-    case 2000: 
-      return 0.002578866; 
-      break;
-    case 4000:
-      return 0.00839936; 
-      break; 
-    case 8000: 
-      return 0.0246; 
-      break; 
-    default: 
       return 0;
-      break; 
+    case 250:
+      return 0;
+    case 500:
+      return 0.000600423;
+    case 1000:
+      return 0.001069606;
+    case 2000:
+      return 0.002578866;
+    case 4000:
+      return 0.00839936;
+    case 8000:
+      return 0.0246;
+    default:
+      return 0;
   }
 }
 

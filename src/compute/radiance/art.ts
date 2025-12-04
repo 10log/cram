@@ -1,28 +1,15 @@
 import { TessellateModifier } from "./TessellateModifier";
 
 import Solver, { SolverParams } from "../solver";
-import Room from "../../objects/room";
-import Surface from "../../objects/surface";
-import { third_octave, whole_octave } from "../acoustics";
-import { RT_CONSTANTS } from "../../constants/rt-constants";
-import { emit, on } from "../../messenger";
-import { Matrix4, Mesh, Triangle, Vector3 } from "three";
+import { on } from "../../messenger";
+import { Mesh } from "three";
 import {
   addSolver,
   removeSolver,
-  Result,
-  ResultKind,
-  ResultTypes,
   setSolverProperty,
-  useAppStore,
-  useContainer,
-  useResult,
-  useSolver
+  useContainer
 } from "../../store";
 import { v4 as uuid } from 'uuid';
-import FileSaver from "file-saver";
-import roundTo from "../../common/round-to";
-import { throwif } from "../../common/throwif";
 import { renderer } from "../../render/renderer";
 
 export interface ARTProps extends SolverParams {

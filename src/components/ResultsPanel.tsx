@@ -1,6 +1,6 @@
 import React, { memo, useCallback, useEffect } from "react";
 
-import { useResult, getResultKeys, ResultStore } from "../store/result-store";
+import { useResult, ResultStore } from "../store/result-store";
 
 import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
 import { useState } from "react";
@@ -10,7 +10,6 @@ import { on } from "../messenger";
 import LTPChart from "./results/LTPChart";
 import RT60Chart from "./results/RT60Chart";
 import ImpulseResponseChart from "./results/ImpulseResponseChart";
-import { ParentSize } from "@visx/responsive";
 import PanelEmptyText from "./panel-container/PanelEmptyText";
 
 

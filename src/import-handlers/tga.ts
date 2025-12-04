@@ -8,9 +8,6 @@
 import * as THREE from "three";
 
 export class TGALoader extends THREE.Loader {
-  constructor(manager?: THREE.LoadingManager) {
-    super(manager);
-	}
 	load (url, onLoad, onProgress, onError) {
     var scope = this;
 
@@ -443,7 +440,7 @@ export class TGALoader extends THREE.Loader {
     var imageData = context!.createImageData(header.width, header.height);
 
     var result = tgaParse(use_rle, use_pal, header, offset, content);
-    var rgbaData = getTgaRGBA(imageData.data, header.width, header.height, result.pixel_data, result.palettes);
+    getTgaRGBA(imageData.data, header.width, header.height, result.pixel_data, result.palettes);
 
     context!.putImageData(imageData, 0, 0);
 		//@ts-ignore

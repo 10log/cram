@@ -8,7 +8,7 @@ import {
 	HTMLTable
 } from "@blueprintjs/core";
 
-import { messenger, emit, on } from '../messenger';
+import { messenger, on } from '../messenger';
 import { useAppStore } from '../store/app-store';
 import { pickProps } from '../common/helpers';
 import { mmm_dd_yyyy } from "../common/dayt";
@@ -188,7 +188,7 @@ export default function ImportDialog() {
 				<Button
 					className={Classes.BUTTON}
 					intent={Intent.PRIMARY}
-					disabled={filelist.length == 0}
+					disabled={filelist.length === 0}
 					text="Import"
 					onClick={() => {
             messenger.postMessage("IMPORT_FILE", filelist);

@@ -1,13 +1,10 @@
-import React, { useReducer } from 'react';
+import React from 'react';
 import { ART } from '../../compute/radiance/art';
-import { on } from "../../messenger";
-import { useSolver } from "../../store";
 import { pickProps } from "../../common/helpers";
 import useToggle from "../hooks/use-toggle";
-import { createPropertyInputs, PropertyButton } from "./SolverComponents";
+import { createPropertyInputs } from "./SolverComponents";
 import PropertyRowFolder from "./property-row/PropertyRowFolder";
 import { useState } from 'react';
-import { useEffect } from 'react';
 
 export interface ARTTabProps {
   uuid: string; 
@@ -17,7 +14,7 @@ export interface ARTTabState {
   
 }
 
-function useARTProperties(properties: (keyof ART)[], artsolver: ART, set: any) {
+function useARTProperties(properties: (keyof ART)[], artsolver: ART, _set: any) {
   const [state, setState] = useState(pickProps(properties, artsolver));
   const setFunction = <T extends keyof typeof state>(property: T, value: typeof state[T]) => {
     setState({ ...state, [property]: value });
@@ -26,7 +23,7 @@ function useARTProperties(properties: (keyof ART)[], artsolver: ART, set: any) {
   return [state, setFunction] as [typeof state, typeof setFunction];
 };
 
-const { PropertyTextInput, PropertyNumberInput, PropertyCheckboxInput } = createPropertyInputs<ART>(
+const { PropertyTextInput } = createPropertyInputs<ART>(
   "ART_SET_PROPERTY"
 );
 

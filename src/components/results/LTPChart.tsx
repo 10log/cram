@@ -1,23 +1,16 @@
-import React, { useEffect, useMemo, useReducer, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useShallow } from 'zustand/react/shallow';
-import { Result, useResult, ResultKind, ResultTypes } from '../../store/result-store';
+import { Result, useResult, ResultKind } from '../../store/result-store';
 
 import { Bar } from '@visx/shape';
 import { Group } from '@visx/group';
-import { GradientTealBlue } from '@visx/gradient';
-import { scaleBand, scaleLinear } from '@visx/scale';
-import { Axis, Orientation, SharedAxisProps, AxisScale, AxisBottom, AxisLeft } from '@visx/axis';
-import { Zoom } from '@visx/zoom';
+import { scaleLinear } from '@visx/scale';
+import { AxisBottom, AxisLeft } from '@visx/axis';
 import { Grid } from '@visx/grid';
 import ParentSize from '@visx/responsive/lib/components/ParentSize';
 import styled from 'styled-components';
 import {
-  Legend,
-  LegendLinear,
-  LegendQuantile,
   LegendOrdinal,
-  LegendSize,
-  LegendThreshold,
   LegendItem,
   LegendLabel,
 } from '@visx/legend';
@@ -28,13 +21,10 @@ import chroma from 'chroma-js';
 import { ImageSourceSolver } from '../../compute/raytracer/image-source';
 import { useSolver } from '../../store';
 import PropertyRowCheckbox from "../parameter-config/property-row/PropertyRowCheckbox";
-import { createPropertyInputs } from '../parameter-config/SolverComponents';
 import PropertyRowLabel from '../parameter-config/property-row/PropertyRowLabel';
-import PropertyRow from '../parameter-config/property-row/PropertyRow';
 // accessors
 const getTime = (d) => d.time;
 const getPressure = (d) => d.pressure[0];
-const getOrder = (d) => d.order;
 
 export type LTPChartProps = {
   uuid: string;
@@ -100,7 +90,7 @@ const useUpdate = () => {
 const Chart = ({ uuid, width = 400, height = 200, events = false, plotOrders }: LTPChartProps) => {
     const {info, data: _data, from} = useResult(useShallow(state=>pickProps(["info", "data", "from"], state.results[uuid] as Result<ResultKind.LevelTimeProgression>)));
 
-    const [count, update] = useUpdate();
+    const [_count, _update] = useUpdate();
     const [data, setData] = useState(_data);
 
     // Filter data by plotOrders - if plotOrders is empty, show no data
@@ -289,10 +279,6 @@ export const LTPChart = ({ uuid, width = 400, height = 300, events = false }: LT
                         {
                           const newPlotOrders = e.value ? unique([...plotOrders, label.datum]) : plotOrders.reduce((acc, curr) => curr === label.datum ? acc : [...acc, curr], []);
                           emit("IMAGESOURCE_SET_PROPERTY", { uuid: from, property: "plotOrders", value: newPlotOrders })
-                          if(this != undefined){
-                            //@ts-ignore
-                            console.log(this.refs.complete.state.checked)
-                          }
                         }
                       }
                     />
@@ -315,8 +301,8 @@ export const LTPChart = ({ uuid, width = 400, height = 300, events = false }: LT
                     label={f.toString()}
                   />
                   <PropertyRowCheckbox
-                    value={(f)==(info.frequency[0])}
-                    onChange = {(e) => 
+                    value={(f)===(info.frequency[0])}
+                    onChange = {(_e) =>
                       emit("IMAGESOURCE_SET_PROPERTY", { uuid: from, property: "plotFrequency", value: f })
                     }
                   />

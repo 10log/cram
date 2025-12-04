@@ -1,4 +1,4 @@
-import { Camera, MOUSE, Object3D, TOUCH, Vector3 } from "three";
+import { Camera, MOUSE, TOUCH, Vector3 } from "three";
 
 export class OrbitControls {
   constructor(object: Camera, domElement?: HTMLElement);

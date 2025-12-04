@@ -1,7 +1,6 @@
 import * as THREE from 'three';
 import Container, { ContainerProps } from '../objects/container';
 import PointShader from "./shaders/points";
-import { triggerAsyncId } from 'async_hooks';
 
 export interface MarkupProps extends ContainerProps{
   maxlines: number;
@@ -35,9 +34,9 @@ export class Markup extends Container{
   constructor(props?: MarkupProps) {
     super("markup", props);
     
-    this.maxlines = props && props.maxlines || defaultMarkupProps.maxlines;
-    this.maxpoints = props && props.maxpoints || defaultMarkupProps.maxpoints;
-    this.pointScale = props && props.pointScale || defaultMarkupProps.pointScale;
+    this.maxlines = (props && props.maxlines) || defaultMarkupProps.maxlines;
+    this.maxpoints = (props && props.maxpoints) || defaultMarkupProps.maxpoints;
+    this.pointScale = (props && props.pointScale) || defaultMarkupProps.pointScale;
     
     this.linePositionIndex = 0;
     this.pointsPositionIndex = 0;

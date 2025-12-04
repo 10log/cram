@@ -1,40 +1,25 @@
 import React from "react";
 import SplitterLayout from "react-splitter-layout";
 import { FocusStyleManager } from "@blueprintjs/core";
-import { ItemListRenderer, ItemListRendererProps } from "@blueprintjs/select";
 import ImportDialog from "./ImportDialog";
 import ObjectView from "./object-view/ObjectView";
 // import ConstructionsView from "./ConstructionsView";
-import Container from "../objects/container";
 import PanelContainer from "./panel-container/PanelContainer";
-import ObjectProperties from "./ObjectProperties";
-import Messenger, { emit, messenger, on } from "../messenger";
-import { KeyValuePair } from "../common/key-value-pair";
-import SettingsDrawer from "./settings-drawer/SettingsDrawer";
-import { Report } from "../common/browser-report";
+import { emit, messenger, on } from "../messenger";
 
 import "../css";
 import "./App.css";
 
-import { ToolNames } from "../constants/tool-names";
-import { EditorModes } from "../constants/editor-modes";
-import Solver from "../compute/solver";
 
 import { ParameterConfig } from "./parameter-config/ParameterConfig";
 import { Stat } from "./parameter-config/Stats";
 
-import Surface from "../objects/surface";
-import { AcousticMaterial } from "../db/acoustic-material";
 
-import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
-import properCase from "../common/proper-case";
 
 import SaveDialog from "./SaveDialog";
-import OpenWarning from "./OpenWarning";
 
 import { NavBarComponent } from "./NavBarComponent";
 
-import TreeViewComponent from "../components/TreeViewComponent";
 
 
 import {ResultsPanel} from './ResultsPanel';
@@ -99,7 +84,7 @@ export default class App extends React.Component<AppProps, AppState> {
       lastPanelSize = this.editorResultSplitterRef.current.state.secondaryPaneSize || 50;
     }
     const openPanel = () => {
-      if(lastPanelSize == 0){
+      if(lastPanelSize === 0){
         lastPanelSize = 50;
       }
       this.editorResultSplitterRef.current!.setState({ secondaryPaneSize: lastPanelSize }, () => emit("RENDERER_SHOULD_ANIMATE", false));
@@ -114,7 +99,7 @@ export default class App extends React.Component<AppProps, AppState> {
       if(this.editorResultSplitterRef.current){
         emit("RENDERER_SHOULD_ANIMATE", true);
         //@ts-ignore
-        if(this.editorResultSplitterRef.current.state.secondaryPaneSize == 0 || open){
+        if(this.editorResultSplitterRef.current.state.secondaryPaneSize === 0 || open){
           openPanel();
         } else {
           closePanel();

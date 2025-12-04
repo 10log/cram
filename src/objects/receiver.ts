@@ -5,7 +5,7 @@ import { MATCAP_PORCELAIN_WHITE, MATCAP_UNDER_SHADOW } from "./asset-store";
 import FileSaver from "file-saver";
 import { EditorModes } from "../constants/editor-modes";
 import { on } from "../messenger";
-import { addContainer, removeContainer, setContainerProperty, useContainer } from "../store";
+import { addContainer, removeContainer, setContainerProperty } from "../store";
 import { renderer } from "../render/renderer";
 // import { vs, fs } from '../render/shaders/glow';
 
@@ -32,7 +32,7 @@ export class Receiver extends Container {
   selectedMaterial: THREE.MeshMatcapMaterial;
   normalMaterial: THREE.MeshMatcapMaterial;
   fdtdSamples: number[];
-  constructor(name?: string, props?: ReceiverProps) {
+  constructor(name?: string, _props?: ReceiverProps) {
     super(name||"new receiver");
     this.kind = "receiver";
     this.fdtdSamples = [] as number[];
@@ -69,7 +69,7 @@ export class Receiver extends Container {
         this.mesh.material = this.normalMaterial;
       }
     };
-    this.renderCallback = (time?: number) => {};
+    this.renderCallback = (_time?: number) => {};
     renderer.add(this);
   }
   dispose(){
@@ -130,16 +130,10 @@ export class Receiver extends Container {
   onModeChange(mode: EditorModes) {
     switch (mode) {
       case EditorModes.OBJECT:
-        {
-        }
         break;
       case EditorModes.SKETCH:
-        {
-        }
         break;
       case EditorModes.EDIT:
-        {
-        }
         break;
       default:
         break;

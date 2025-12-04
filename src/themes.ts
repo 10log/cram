@@ -21,12 +21,3 @@ export const LightTheme: Theme = {
 export default {
   LightTheme
 };
-
-const a = {
-  a: 4,
-  d: 10
-};
-
-const array = [0, 1, 2];
-
-array.map((element) => ({ result: element * 2 }));

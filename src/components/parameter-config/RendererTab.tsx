@@ -1,17 +1,13 @@
 import React, {useCallback, useState} from "react";
-import Slider, { SliderChangeEvent } from '../slider/Slider';
-import Messenger, { emit } from "../../messenger";
+import Slider from '../slider/Slider';
+import { emit } from "../../messenger";
 
-import { clamp } from '../../common/clamp';
 import PropertyRow from "./property-row/PropertyRow";
-import Label from "../label/Label";
 import PropertyRowLabel from "./property-row/PropertyRowLabel";
 import PropertyRowButton from "./property-row/PropertyRowButton";
 import PropertyRowCheckbox from "./property-row/PropertyRowCheckbox";
 import PropertyRowFolder from "./property-row/PropertyRowFolder";
-import { postMessage } from "../../messenger";
 import Renderer, {renderer} from '../../render/renderer';
-import debounce from "../../common/debounce";
 import useToggle from "../hooks/use-toggle";
 
 export interface RendererTabProps {}

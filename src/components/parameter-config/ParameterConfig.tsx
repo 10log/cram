@@ -69,9 +69,9 @@ export const SolversTab = () => {
     });
     return map;
   }, [solversData]);
-  const [index, setIndex] = useState(0);
+  const [_index, _setIndex] = useState(0);
   useEffect(() => {
-    return on("NEW", () => setIndex(0));
+    return on("NEW", () => _setIndex(0));
   }, []);
   const [selectedSolverId, setSelectedSolverId] = useState("choose");
 
@@ -107,12 +107,12 @@ export const ObjectsTab = () => {
     });
     return map;
   }, [containersData]);
-  const [index, setIndex] = useState(0);
+  const [_index, _setIndex] = useState(0);
 
   const [selectedObjectId, setSelectedObjectId] = useState("choose");
 
   useEffect(() => {
-    return on("NEW", () => setIndex(0));
+    return on("NEW", () => _setIndex(0));
   }, []);
   useEffect(() => {
     return on("SET_SELECTION", (e) => {
@@ -145,9 +145,9 @@ export const ObjectsTab = () => {
 
 
 export const ParameterConfig = () => {
-  const [index, setIndex] = useState(0);
+  const [_index, _setIndex] = useState(0);
   useEffect(() => {
-    return on("NEW", () => setIndex(0));
+    return on("NEW", () => _setIndex(0));
   }, []);
 
   const [selectedTabId, setSelectedTabId] = useState("renderer")

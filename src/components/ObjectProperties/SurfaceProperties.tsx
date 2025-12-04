@@ -3,7 +3,6 @@ import TextInput from "../text-input/TextInput";
 import NumberInput from "../number-input/NumberInput";
 import { ObjectPropertyInputEvent } from ".";
 import CheckboxInput from "../CheckboxInput";
-import Source from '../../objects/source';
 import GridRow from '../GridRow';
 import Surface from '../../objects/surface';
 import GridRowSeperator from "../GridRowSeperator";
@@ -40,24 +39,24 @@ const SurfacePropertiesContainerStyle: React.CSSProperties = {
 	gridColumnGap: ".25em"
 };
 
-const customStyles = {
-  indicatorsContainer: (provided, state) => ({
+const _customStyles = {
+  indicatorsContainer: (provided, _state) => ({
     ...provided,
     padding: 0
   }),
-  clearIndicator: (provided, state) => ({
+  clearIndicator: (provided, _state) => ({
     ...provided,
     padding: 0
   }),
-  dropdownIndicator: (provided, state) => ({
+  dropdownIndicator: (provided, _state) => ({
     ...provided,
     padding: 0
   }),
-  control: (provided, state) => ({
+  control: (provided, _state) => ({
     ...provided,
     minHeight: 0
   }),
-  container: (provided, state) => ({
+  container: (provided, _state) => ({
     ...provided,
     width: "100%"
   })
@@ -77,10 +76,10 @@ export default function SurfaceProperties(props: SurfacePropertiesProps) {
     onChange: props.onPropertyChange
 	}
 	
-	async function getMaterialSuggestions(value: string) {
+	async function _getMaterialSuggestions(value: string) {
 		const materials = props.messenger.postMessage("SEARCH_ALL_MATERIALS", value)[0];
 
-		return new Promise<any[]>((resolve, reject) => { 
+		return new Promise<any[]>((resolve, reject) => {
 			let res = materials;
 			if (res) {
 				resolve(res);

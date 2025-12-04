@@ -15,7 +15,7 @@ export default function MaterialsPanel(props: MaterialsPanelProps) {
   
   const keys = Object.keys(materials[0]);
 
-  const Cell = ({ columnIndex, rowIndex, style }) => (
+  const Cell = ({ columnIndex, rowIndex, style }: { columnIndex: number, rowIndex: number, style: any }) => (
     <div style={style}>
       {JSON.stringify(materials[rowIndex][keys[columnIndex]])}
     </div>
@@ -23,9 +23,9 @@ export default function MaterialsPanel(props: MaterialsPanelProps) {
   
   return (<Grid
     columnCount={5}
-    columnWidth={index => columnWidths[index]}
+    columnWidth={_index => columnWidths[_index]}
     rowCount={500}
-    rowHeight={index => 50}
+    rowHeight={_index => 50}
     height={500}
     width={800}>
     {Cell}

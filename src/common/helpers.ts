@@ -262,7 +262,7 @@ const isNonNullObject = (x) => isObject(x) && nonNull(x);
 export function deepEqual(x: any, y: any) {
   if (Object.is(x, y) || x === y) return true;
   else if (isNonNullObject(x) && isNonNullObject(y)) {
-    if (Object.keys(x).length != Object.keys(y).length) return false;
+    if (Object.keys(x).length !== Object.keys(y).length) return false;
     for (var prop in x) {
       if (y.hasOwnProperty(prop)) {
         if (!deepEqual(x[prop], y[prop])) return false;

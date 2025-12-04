@@ -1,7 +1,6 @@
 import * as THREE from "three";
 
 export class STLLoader {
-	constructor() {}
 	parse(data) {
 		var isBinary = function() {
 			var expect, face_size, n_faces, reader;
@@ -25,7 +24,7 @@ export class STLLoader {
 				// If solid[ i ] does not match the i-th byte, then it is not an
 				// ASCII STL; hence, it is binary and return true.
 
-				if (solid[i] != reader.getUint8(i, false)) return true;
+				if (solid[i] !== reader.getUint8(i, false)) return true;
 			}
 
 			// First 5 bytes read "solid"; declare it to be an ASCII STL
@@ -55,9 +54,9 @@ export class STLLoader {
 
 		for (var index = 0; index < 80 - 10; index++) {
 			if (
-				reader.getUint32(index, false) == 0x434f4c4f /*COLO*/ &&
-				reader.getUint8(index + 4) == 0x52 /*'R'*/ &&
-				reader.getUint8(index + 5) == 0x3d /*'='*/
+				reader.getUint32(index, false) === 0x434f4c4f /*COLO*/ &&
+				reader.getUint8(index + 4) === 0x52 /*'R'*/ &&
+				reader.getUint8(index + 5) === 0x3d /*'='*/
 			) {
 				hasColors = true;
 				colors = [];
@@ -139,7 +138,6 @@ export class STLLoader {
 
 	parseASCII(data) {
 		var geometry,
-			length,
 			patternFace,
 			patternNormal,
 			patternVertex,
@@ -155,7 +153,7 @@ export class STLLoader {
 
 		while ((result = patternFace.exec(data)) !== null) {
 			text = result[0];
-			patternNormal = /normal[\s]+([\-+]?[0-9]+\.?[0-9]*([eE][\-+]?[0-9]+)?)+[\s]+([\-+]?[0-9]*\.?[0-9]+([eE][\-+]?[0-9]+)?)+[\s]+([\-+]?[0-9]*\.?[0-9]+([eE][\-+]?[0-9]+)?)+/g;
+			patternNormal = /normal[\s]+([-+]?[0-9]+\.?[0-9]*([eE][-+]?[0-9]+)?)+[\s]+([-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?)+[\s]+([-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?)+/g;
 
 			while ((result = patternNormal.exec(text)) !== null) {
 				normal.x = parseFloat(result[1]);
@@ -163,7 +161,7 @@ export class STLLoader {
 				normal.z = parseFloat(result[5]);
 			}
 
-			patternVertex = /vertex[\s]+([\-+]?[0-9]+\.?[0-9]*([eE][\-+]?[0-9]+)?)+[\s]+([\-+]?[0-9]*\.?[0-9]+([eE][\-+]?[0-9]+)?)+[\s]+([\-+]?[0-9]*\.?[0-9]+([eE][\-+]?[0-9]+)?)+/g;
+			patternVertex = /vertex[\s]+([-+]?[0-9]+\.?[0-9]*([eE][-+]?[0-9]+)?)+[\s]+([-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?)+[\s]+([-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?)+/g;
 
 			while ((result = patternVertex.exec(text)) !== null) {
 				vertices.push(

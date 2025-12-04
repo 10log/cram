@@ -1,22 +1,21 @@
 // user interface
-import React, { createContext, useReducer } from "react";
+import React from "react";
 import { createRoot } from "react-dom/client";
 import App from "./components/App";
 import { ToastProps } from "@blueprintjs/core";
 
 // command handling
-import hotkeys, { HotkeysEvent, KeyHandler } from "hotkeys-js";
+import hotkeys from "hotkeys-js";
 import Messenger, { on, emit, messenger } from "./messenger";
-import { history, History, Directions, addMoment } from "./history";
+import { history, Directions, addMoment } from "./history";
 
 // objects
 import Container from "./objects/container";
 import Model from "./objects/model";
 import Source from "./objects/source";
 import Receiver from "./objects/receiver";
-import Polygon from "./objects/polygon";
 import Room from "./objects/room";
-import Surface, { SurfaceSaveObject, BufferGeometrySaveObject } from "./objects/surface";
+import Surface from "./objects/surface";
 import AudioFile from "./objects/audio-file";
 import Sketch from "./objects/sketch";
 
@@ -24,8 +23,7 @@ import Sketch from "./objects/sketch";
 import Solver from "./compute/solver";
 import RayTracer from "./compute/raytracer";
 import {ImageSourceSolver, ImageSourceSolverParams} from "./compute/raytracer/image-source/index"
-import RT60, { RT60Props } from "./compute/rt";
-import { FDTD_2D, FDTD_2D_Defaults } from "./compute/2d-fdtd";
+import RT60 from "./compute/rt";
 import * as ac from "./compute/acoustics";
 
 // rendering
@@ -51,32 +49,25 @@ import { AcousticMaterial } from "./db/acoustic-material";
 // utility
 import { Searcher } from "fast-fuzzy";
 import browserReport, { Report } from "./common/browser-report";
-import { chunk } from "./common/chunk";
-import { sizeof } from "./common/sizeof";
-import { addToGlobalVars } from "./common/global-vars";
 import { gte } from "semver";
 
 import expose from "./common/expose";
-import { CSG, CAG } from "@jscad/csg";
-import csg from "./compute/csg";
 import * as THREE from "three";
-import FileSaver from "file-saver";
-import { createFileFromData } from "./common/file";
 import { produce, enableMapSet } from "immer";
 import {omit} from './common/helpers'
 import { useContainer, useSolver, useResult, useAppStore, useMaterial, SaveState } from "./store";
 import { audioEngine } from './audio-engine/audio-engine';
-enableMapSet();
-
-
-
-expose({ omit, Container, audioEngine, useSolver, useContainer, useResult, useAppStore, useMaterial, produce, on, emit });
 
 import examples from './examples';
 import chroma from 'chroma-js';
 import EnergyDecay from "./compute/energy-decay";
 
 import registerAllEvents from './events';
+enableMapSet();
+
+
+
+expose({ omit, Container, audioEngine, useSolver, useContainer, useResult, useAppStore, useMaterial, produce, on, emit });
 
 const materialsIndex = {} as KeyValuePair<AcousticMaterial>;
 
@@ -230,7 +221,7 @@ messenger.addMessageHandler("SHOULD_ADD_RAYTRACER", (acc, ...args) => {
 
 
 
-messenger.addMessageHandler("SHOULD_ADD_IMAGE_SOURCE", (acc, ...args) => {
+messenger.addMessageHandler("SHOULD_ADD_IMAGE_SOURCE", (_acc, ..._args) => {
   const defaults: ImageSourceSolverParams = {
     name: "Image Source",
     roomID: "",
@@ -257,14 +248,14 @@ messenger.addMessageHandler("SHOULD_REMOVE_SOLVER", (acc, id) => {
   }
 });
 
-messenger.addMessageHandler("SHOULD_ADD_RT60", (acc, ...args) => {
+messenger.addMessageHandler("SHOULD_ADD_RT60", (_acc, ..._args) => {
   const rt60 = new RT60(); 
   cram.state.solvers[rt60.uuid] = rt60;
   emit("ADD_RT60", rt60);
   return rt60; 
 });
 
-messenger.addMessageHandler("SHOULD_ADD_ENERGYDECAY", (acc, ...args) => {
+messenger.addMessageHandler("SHOULD_ADD_ENERGYDECAY", (_acc, ..._args) => {
   const ed = new EnergyDecay(); 
   cram.state.solvers[ed.uuid] = ed;
   emit("ADD_ENERGYDECAY", ed);
@@ -369,24 +360,20 @@ messenger.addMessageHandler("SHOULD_REMOVE_CONTAINER", (acc, id) => {
   if (cram.state.containers[id]) {
     switch (cram.state.containers[id].kind) {
       case "source":
-        {
-          cram.state.sources = cram.state.sources.reduce((a, b) => {
-            if (b !== id) {
-              a.push(b);
-            }
-            return a;
-          }, [] as string[]);
-        }
+        cram.state.sources = cram.state.sources.reduce((a, b) => {
+          if (b !== id) {
+            a.push(b);
+          }
+          return a;
+        }, [] as string[]);
         break;
       case "receiver":
-        {
-          cram.state.receivers = cram.state.receivers.reduce((a, b) => {
-            if (b !== id) {
-              a.push(b);
-            }
-            return a;
-          }, [] as string[]);
-        }
+        cram.state.receivers = cram.state.receivers.reduce((a, b) => {
+          if (b !== id) {
+            a.push(b);
+          }
+          return a;
+        }, [] as string[]);
         break;
     }
     cram.state.selectedObjects = cram.state.selectedObjects.filter((x) => x.uuid !== id);
@@ -455,14 +442,10 @@ messenger.addMessageHandler("SHOULD_DUPLICATE_SELECTED_OBJECTS", () => {
     for (let i = 0; i < selection.length; i++) {
       switch (selection[i].kind) {
         case "source":
-          {
-            objs.push(messenger.postMessage("SHOULD_ADD_SOURCE", selection[i], true)[0]);
-          }
+          objs.push(messenger.postMessage("SHOULD_ADD_SOURCE", selection[i], true)[0]);
           break;
         case "receiver":
-          {
-            objs.push(messenger.postMessage("SHOULD_ADD_RECEIVER", selection[i], true)[0]);
-          }
+          objs.push(messenger.postMessage("SHOULD_ADD_RECEIVER", selection[i], true)[0]);
           break;
         default:
           break;
@@ -571,8 +554,7 @@ messenger.addMessageHandler("IMPORT_FILE", (acc, ...args) => {
           }
           break; 
         case "wav":
-          {
-            try {
+          try {
               const result = await (await fetch(objectURL)).arrayBuffer();
               const audioContext = new AudioContext();
               audioContext.decodeAudioData(result, (buffer: AudioBuffer) => {
@@ -592,9 +574,8 @@ messenger.addMessageHandler("IMPORT_FILE", (acc, ...args) => {
                 messenger.postMessage("ADDED_AUDIO_FILE", audioFile);
               });
               console.log(result);
-            } catch (e) {
-              console.error(e);
-            }
+          } catch (e) {
+            console.error(e);
           }
           break;
         default:

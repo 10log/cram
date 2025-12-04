@@ -4,7 +4,6 @@ import { Source, Receiver, Surface, Room } from "../../objects";
 import { useContainer } from "../../store";
 import PropertyRow from "./property-row/PropertyRow";
 import PropertyRowLabel from "./property-row/PropertyRowLabel";
-import PropertyRowButton from "./property-row/PropertyRowButton";
 import { PropertyRowCheckbox } from "./property-row/PropertyRowCheckbox";
 import { PropertyRowTextInput } from "./property-row/PropertyRowTextInput";
 import { PropertyRowNumberInput } from "./property-row/PropertyRowNumberInput";
@@ -38,7 +37,7 @@ export function useContainerProperty<T extends Containers, K extends keyof T>(
     [uuid]
   );
   //@ts-ignore
-  const changeHandler = (e) => emit(event, { uuid, property, value: e.value });
+  const changeHandler = (e: any) => emit(event, { uuid, property, value: e.value });
 
   return [state, changeHandler] as [typeof state, typeof changeHandler];
 }
@@ -46,7 +45,7 @@ export function useContainerProperty<T extends Containers, K extends keyof T>(
 type Option =  { value: string, label: string }
 
 type PropertyRowInputElement = ({ value, onChange, options }: { value: any, onChange: any, options?: Option[]}) => JSX.Element;
-type ConnectedPropertyRowInputElement = ({ uuid, property }) => JSX.Element;
+type ConnectedPropertyRowInputElement = ({ uuid, property }: { uuid: string, property: any }) => JSX.Element;
 const connectComponent = <T extends Containers>(
   event: SetPropertyEventTypes,
   Element: PropertyRowInputElement

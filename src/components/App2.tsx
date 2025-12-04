@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React from 'react';
 import {useAppStore} from '../store'
 import { pickProps } from '../common/helpers';
 import { NavBarComponent } from './NavBarComponent';
@@ -17,7 +17,7 @@ const ProjectName = () => {
 
 type AppProps = {}
 
-export default function App2(props: AppProps){
+export default function App2(_props: AppProps){
   return (
     <div>
       <NavBarComponent />

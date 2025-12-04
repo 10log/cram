@@ -1,8 +1,5 @@
 import * as THREE from "three";
 import Stats from "./Stats";
-import { Line2 } from "three/examples/jsm/lines/Line2";
-import { LineGeometry } from "three/examples/jsm/lines/LineGeometry";
-import { LineMaterial } from "three/examples/jsm/lines/LineMaterial";
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass";
 import { OutlinePass } from "three/examples/jsm/postprocessing/OutlinePass";
@@ -26,7 +23,7 @@ import defaults from "../default-storage";
 import Axes from "./env/axes";
 import Lights from "./env/lights";
 import Room from "../objects/room";
-import Messenger, { emit, messenger, on } from "../messenger";
+import { emit, messenger, on } from "../messenger";
 
 import { addMoment, Directions } from "../history";
 
@@ -49,11 +46,10 @@ import { Markup } from "./Markup";
 import Model from "../objects/model";
 import { useContainer } from "../store";
 import { debounce } from "../common/debounce";
-import { useSetting } from "../store/settings-store";
 
 
 
-const colored_number_html = (num: number) =>
+const _colored_number_html = (num: number) =>
   /*html*/ `<span style="color: ${num < 0 ? "#E68380" : "#A2C982"};">${num.toFixed(3)}</span>`;
 
 export interface SmoothCameraParams {
@@ -201,8 +197,6 @@ export default class Renderer {
   }
 
   init(elt: HTMLCanvasElement) {
-
-    const editorSettings = useSetting.getState().settings.editor;
 
     this.fdtd2drunning = false;
     this.fdtd3drunning = false;
@@ -472,7 +466,7 @@ export default class Renderer {
     messenger.addMessageHandler("GET_RENDERER_STATS_VISIBLE", () => !this.stats.hidden);
 
     // save the state of the camera
-    window.addEventListener("mouseup", (e) => {
+    window.addEventListener("mouseup", (_e) => {
       this.storeCameraState();
       this.needsToRender = true;
     });
@@ -495,7 +489,7 @@ export default class Renderer {
     }, 30); // 30 Hz (~33ms period) for mouse tracking
     this.renderer.domElement.addEventListener("mousemove", debouncedMouseMove);
 
-    this.renderer.domElement.addEventListener("wheel", (e) => {
+    this.renderer.domElement.addEventListener("wheel", (_e) => {
       this.requestRender();
       hotkeys.setScope("EDITOR");
     });
@@ -505,7 +499,7 @@ export default class Renderer {
       const selection = this.pickHelper.pick(e, [this.workspace, this.interactables]);
 
       if (selection.pickedObject) {
-        if (e.button == 0) {
+        if (e.button === 0) {
           const point = this.pickHelper.getPickedPoint();
           this.cursor.position.set(point[0], point[1], point[2]);
           if (!this.currentlyMovingObjects) {
@@ -517,7 +511,7 @@ export default class Renderer {
           }
         }
       } else {
-        if (e.button == 0) {
+        if (e.button === 0) {
           if (!e.shiftKey && !e.altKey) {
             emit("PHASE_OUT");
           }
@@ -579,7 +573,7 @@ export default class Renderer {
     });
 
     this.orientationControl.addClickListener((e) => {
-      if (e.target.match(/top|bottom|right|left|front|back/gim)) {
+      if (e.target.match(/top|bottom|right|left|front|back/gi)) {
         messenger.postMessage("LOOK_ALONG_AXIS", e.target);
       }
     });
@@ -614,7 +608,7 @@ export default class Renderer {
     }, 100);
   }
 
-  onOrbitControlsChange(e) {
+  onOrbitControlsChange(_e) {
     if (this.orientationControl) {
       const pos = this.camera.position
         .clone()
@@ -731,8 +725,7 @@ export default class Renderer {
   }
   checkresize() {
     if (
-      this.renderer.domElement.width !== this.renderer.domElement.parentElement?.clientWidth ||
-      0 ||
+      this.renderer.domElement.width !== (this.renderer.domElement.parentElement?.clientWidth || 0) ||
       this.renderer.domElement.height !== (this.renderer.domElement.parentElement?.clientHeight || 0)
     ) {
       this.resize();
@@ -827,7 +820,7 @@ export default class Renderer {
         .multiplyScalar(this.orientationControl.cameraDistance);
       this.orientationControl.setCameraTransforms(orientationCameraPos, this.camera.quaternion);
 
-      if (timerProgress == 1) {
+      if (timerProgress === 1) {
         this.smoothingCamera = false;
         params.onFinish && params.onFinish(timer);
         this.storeCameraState();
@@ -871,17 +864,13 @@ export default class Renderer {
         .multiplyScalar(this.orientationControl.cameraDistance);
       this.orientationControl.setCameraTransforms(orientationCameraPos, this.camera.quaternion);
 
-      if (timerProgress == 1) {
+      if (timerProgress === 1) {
         this.smoothingCamera = false;
         params.onFinish && params.onFinish(timer);
         this.storeCameraState();
       }
     };
     timer.start();
-  }
-
-  addShape() {
-    var triangleShape = new THREE.Shape().moveTo(80, 20).lineTo(40, 80).lineTo(120, 80).lineTo(80, 20); // close path
   }
 
 
@@ -922,7 +911,6 @@ export default class Renderer {
     this.resizeCanvasToDisplaySize();
 
     const shouldRenderMain = this.needsToRender || this.shouldAnimate;
-    const shouldRenderOrientation = this.orientationControl.shouldRender;
 
     if (shouldRenderMain) {
       this.composer.render();
@@ -1054,7 +1042,7 @@ export default class Renderer {
   }
 
   set isOrtho(ortho: boolean) {
-    if (ortho != this.isOrtho) {
+    if (ortho !== this.isOrtho) {
       this.setOrtho(this.camera instanceof THREE.PerspectiveCamera);
       this.needsToRender = true;
       this.storeCameraState();

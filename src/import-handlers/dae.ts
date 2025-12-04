@@ -9,9 +9,6 @@ import { TGALoader } from './tga';
 
 
 export class DAELoader extends THREE.Loader {
-	constructor(manager?: THREE.LoadingManager) {
-		super(manager);
-	}
 	load( url, onLoad, onProgress, onError ) {
 		var scope = this;
 		var path = ( scope.path === '' ) ? THREE.LoaderUtils.extractUrlBase( url ) : scope.path;

@@ -4,7 +4,7 @@ import { on } from "../messenger";
 
 export type HistoryStore = {};
 
-export const useHistory = create<HistoryStore>((set) => ({}));
+export const useHistory = create<HistoryStore>((_set) => ({}));
 
 declare global {
   interface EventTypes {

@@ -33,14 +33,13 @@ export default class PickHelper {
   }
 
   // This really needs to be refactored... what a mess
-  pick(event, objects = this.objects, scene = this.scene, camera = this.camera, mount = this.mount) {
+  pick(event, objects = this.objects, _scene = this.scene, _camera = this.camera, mount = this.mount) {
     this.setPickPosition(event, mount);
     this.raycaster.setFromCamera(this.pickPosition, this.camera);
 
     const intersectedObjects = this.raycaster.intersectObjects(objects, true);
 
     if (intersectedObjects.length) {
-      let i = 0;
       let clickedOnSourceReceiver = false;
       let sourceReceiverIndex = 0;
       let clickedOnTransformControl = false;
@@ -79,7 +78,7 @@ export default class PickHelper {
           //@ts-ignore
           intersectedObjects[i].object.parent["kind"] &&
           //@ts-ignore
-          intersectedObjects[i].object.parent["kind"].match(/source|receiver/gim)
+          intersectedObjects[i].object.parent["kind"].match(/source|receiver/gi)
         ) {
           clickedOnSourceReceiver = true;
           sourceReceiverIndex = i;

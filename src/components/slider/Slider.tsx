@@ -56,7 +56,7 @@ export default class Slider extends React.Component<SliderProps, SliderState>{
         <div className="slider-component">
           <button
             className={"slider-step decrement"}
-            onClick={(e) => {
+            onClick={(_e) => {
               let value = this.state.stagedValue - this.props.step;
               if (value < this.props.min) {
                 value = this.props.min;
@@ -81,7 +81,7 @@ export default class Slider extends React.Component<SliderProps, SliderState>{
           />
           <button
             className={"slider-step increment"}
-            onClick={(e) => {
+            onClick={(_e) => {
               let value = this.state.stagedValue + this.props.step;
               if (value > this.props.max) {
                 value = this.props.max;
@@ -100,13 +100,13 @@ export default class Slider extends React.Component<SliderProps, SliderState>{
           step={this.props.step}
           id={this.props.id + "-number"}
           value={this.state.editing ? this.state.stagedValue : this.props.value}
-          onFocus={e => {
+          onFocus={_e => {
             this.setState({
               stagedValue: this.props.value,
               editing: true
             });
           }}
-          onBlur={e => {
+          onBlur={_e => {
             this.setState({editing: false})
           }}
           onChange={(e) => {
@@ -123,14 +123,16 @@ export default class Slider extends React.Component<SliderProps, SliderState>{
                 this.setStagedValue(value, () => this.props.onChange({ id: this.props.id, value }));
                 const elt = document.getElementById(this.props.id + "-number");
                 elt && elt.blur();
-              } break;
+                break;
+              }
               case "Escape": {
                 const value = this.props.value;
                 this.setStagedValue(value);
                 const elt = document.getElementById(this.props.id + "-number");
                 elt && elt.blur();
                 // e.preventDefault();
-              } break;
+                break;
+              }
               default: break;
             }
           }}

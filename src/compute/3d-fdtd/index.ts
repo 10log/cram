@@ -1,5 +1,5 @@
 //@ts-nocheck
-import { GPU, IGPUKernelSettings, IKernelFunctionThis } from "gpu.js";
+import { GPU } from "gpu.js";
 const { sin, cos, PI: pi } = Math;
 /**
  * 
@@ -62,7 +62,7 @@ export class FDTD_3D {
           this.Vz[index] = 0;
           this.rho[index] = 1.225; // kg / m^3
           this.cr[index] = 1;
-          if (k == this.nz / 2 && j == this.ny / 2 && i == this.nx / 2) {
+          if (k === this.nz / 2 && j === this.ny / 2 && i === this.nx / 2) {
             this.Po[index] = 1;
           }
         }
@@ -122,20 +122,20 @@ export class FDTD_3D {
 
         const p = Po[index];
 
-        const p_xstep = x == nx - 1 ? Po[x_prev] : Po[x_next];
-        const rho_xstep = x == nx - 1 ? rho[x_prev] : rho[x_next];
+        const p_xstep = x === nx - 1 ? Po[x_prev] : Po[x_next];
+        const rho_xstep = x === nx - 1 ? rho[x_prev] : rho[x_next];
 
-        const p_ystep = y == ny - 1 ? Po[y_prev] : Po[y_next];
-        const rho_ystep = y == ny - 1 ? rho[y_prev] : rho[y_next];
+        const p_ystep = y === ny - 1 ? Po[y_prev] : Po[y_next];
+        const rho_ystep = y === ny - 1 ? rho[y_prev] : rho[y_next];
 
-        const p_zstep = z == nz - 1 ? Po[z_prev] : Po[z_next];
-        const rho_zstep = z == nz - 1 ? rho[z_prev] : rho[z_next];
+        const p_zstep = z === nz - 1 ? Po[z_prev] : Po[z_next];
+        const rho_zstep = z === nz - 1 ? rho[z_prev] : rho[z_next];
 
         const coef = rho[index] * Math.pow(cr[index], 2) * c0 * Sc;
 
-        const vx_prev = x == 0 ? 0 : Vx[x_prev];
-        const vy_prev = y == 0 ? 0 : Vy[y_prev];
-        const vz_prev = z == 0 ? 0 : Vz[z_prev];
+        const vx_prev = x === 0 ? 0 : Vx[x_prev];
+        const vy_prev = y === 0 ? 0 : Vy[y_prev];
+        const vz_prev = z === 0 ? 0 : Vz[z_prev];
 
         return (
           p -

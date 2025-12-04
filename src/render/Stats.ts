@@ -201,7 +201,7 @@ class Stats {
   }
   showSinglePanel(id: number) {
     for (let i = 0; i < this.container.children.length; i++) {
-      if (i == id) {
+      if (i === id) {
         (this.container.children[i] as HTMLCanvasElement).classList.remove("renderer-stats-panel-hidden");
       }
       else {
@@ -219,37 +219,29 @@ class Stats {
   set displayStyle(displayStyle: number) {
     switch (displayStyle) {
       case this.DISPLAY_STYLES.NONE:
-        {
-          this.hide();
-          this._displayStyle = displayStyle;
-        }
+        this.hide();
+        this._displayStyle = displayStyle;
         break;
       case this.DISPLAY_STYLES.SINGLE:
-        {
-          this.unhide();
-          this.container.classList.remove("renderer-stats-container-stacked-x");
-          this.container.classList.remove("renderer-stats-container-stacked-y");
-          this.showSinglePanel(this.currentPanelIndex);
-          this._displayStyle = displayStyle;
-        }
+        this.unhide();
+        this.container.classList.remove("renderer-stats-container-stacked-x");
+        this.container.classList.remove("renderer-stats-container-stacked-y");
+        this.showSinglePanel(this.currentPanelIndex);
+        this._displayStyle = displayStyle;
         break;
       case this.DISPLAY_STYLES.STACKED_X:
-        {
-          this.unhide();
-          this.container.classList.remove("renderer-stats-container-stacked-y");
-          this.container.classList.add("renderer-stats-container-stacked-x");
-          this.showAllPanels();
-          this._displayStyle = displayStyle;
-        }
+        this.unhide();
+        this.container.classList.remove("renderer-stats-container-stacked-y");
+        this.container.classList.add("renderer-stats-container-stacked-x");
+        this.showAllPanels();
+        this._displayStyle = displayStyle;
         break;
       case this.DISPLAY_STYLES.STACKED_Y:
-        {
-          this.unhide();
-          this.container.classList.remove("renderer-stats-container-stacked-x");
-          this.container.classList.add("renderer-stats-container-stacked-y");
-          this.showAllPanels();
-          this._displayStyle = displayStyle;
-        }
+        this.unhide();
+        this.container.classList.remove("renderer-stats-container-stacked-x");
+        this.container.classList.add("renderer-stats-container-stacked-y");
+        this.showAllPanels();
+        this._displayStyle = displayStyle;
         break;
       default:
         break;
@@ -275,10 +267,10 @@ class Stats {
     event.preventDefault();
     if (event.shiftKey) {
       const displayStyle = (this._displayStyle + 1) % Object.keys(this.DISPLAY_STYLES).length;
-      this.displayStyle = displayStyle == this.DISPLAY_STYLES.NONE ? displayStyle + 1 : displayStyle;
+      this.displayStyle = displayStyle === this.DISPLAY_STYLES.NONE ? displayStyle + 1 : displayStyle;
     }
     else {
-      if (this.displayStyle == this.DISPLAY_STYLES.SINGLE) {
+      if (this.displayStyle === this.DISPLAY_STYLES.SINGLE) {
         this.showSinglePanel((this.currentPanelIndex + 1) % this.container.children.length);
       }
     }

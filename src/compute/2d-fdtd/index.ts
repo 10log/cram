@@ -1,5 +1,4 @@
-import Renderer from "../../render/renderer";
-import { on, postMessage, addMessageHandler, removeMessageHandler, messenger } from "../../messenger";
+import { on, postMessage, removeMessageHandler } from "../../messenger";
 import {
   PlaneGeometry,
   ShaderMaterial,
@@ -18,7 +17,6 @@ import {
   RGBAFormat,
   UnsignedByteType,
   BufferGeometry,
-  Vector3,
   MeshBasicMaterial,
   MeshLambertMaterial
 } from "three";
@@ -28,7 +26,6 @@ import {
 } from "three/examples/jsm/misc/GPUComputationRenderer.js";
 import shaders from "./shaders";
 import Solver from "../solver";
-import FDTDSource from "./fdtd-source";
 
 import Source from "../../objects/source";
 import Receiver from "../../objects/receiver";
@@ -38,9 +35,8 @@ import Surface from "../../objects/surface";
 import { KeyValuePair } from "../../common/key-value-pair";
 import { clamp } from "../../common/clamp";
 import { EditorModes } from "../../constants";
-import { addSolver, removeSolver, setSolverProperty, useContainer } from "../../store";
+import { useContainer } from "../../store";
 import { renderer } from "../../render/renderer";
-import { pickProps } from "../../common/helpers";
 
 const CELL_RESOLUTION = 256;
 
@@ -139,10 +135,10 @@ class FDTD_2D extends Solver {
     }
     const _width = (props && props.width) || FDTD_2D_Defaults.width;
     const _height = (props && props.height) || FDTD_2D_Defaults.height;
-    
+
     this.offsetX = (props && props.offsetX) || FDTD_2D_Defaults.offsetX;
     this.offsetY = (props && props.offsetY) || FDTD_2D_Defaults.offsetY;
-    
+
     this.cellSize = (props && props.cellSize) || Math.max(_width, _height) / CELL_RESOLUTION;
 
     this.nx = Math.ceil(_width / this.cellSize);
@@ -416,9 +412,6 @@ class FDTD_2D extends Solver {
     let p = 0;
     for (let j = 0; j < this.ny; j++) {
       for (let i = 0; i < this.nx; i++) {
-        const x = i / this.nx;
-        const y = j / this.ny;
-        const n = 3;
         pixels[p + 0] = 0;
         pixels[p + 1] = 0;
         pixels[p + 2] = 1;
@@ -524,7 +517,6 @@ class FDTD_2D extends Solver {
           this.readLevelImage
         );
         const pixels = new Float32Array(this.readLevelImage.buffer);
-        const normal = [pixels[1], pixels[2]];
         const level = pixels[0];
         this.receivers[key].fdtdSamples.push((level-127.5)/127.5);
       }

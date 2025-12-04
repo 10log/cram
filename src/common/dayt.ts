@@ -16,7 +16,7 @@ export function parse(time) {
 		.toString()
 		.split(/\s+/gim)
 		.filter(x =>
-			x.match(/^(\w{3}|\d{1,2}|\d{4}|(\d{2}\:\d{2}\:\d{2}))$/gim)
+			x.match(/^(\w{3}|\d{1,2}|\d{4}|(\d{2}:\d{2}:\d{2}))$/gim)
 		);
 }
 

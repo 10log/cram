@@ -1,17 +1,16 @@
 import DxfParser from 'dxf-parser';
 import {BufferGeometry, BufferAttribute} from 'three';
-import { emit } from '../messenger';
 import Container from '../objects/container';
 import Room from '../objects/room';
 import Surface from '../objects/surface';
 import {useMaterial} from '../store/material-store';
 
 
-const makeBufferGeometry = (position: number[], normals?: number[], texCoords?: number[]) => {
+const makeBufferGeometry = (position: number[], _normals?: number[], _texCoords?: number[]) => {
   const buffer = new BufferGeometry();
   buffer.setAttribute("position", new BufferAttribute(new Float32Array(position), 3, false));
-  if(normals) buffer.setAttribute("normals", new BufferAttribute(new Float32Array(normals), 3, false));
-  if(texCoords) buffer.setAttribute("texCoords", new BufferAttribute(new Float32Array(texCoords), 3, false));
+  if(_normals) buffer.setAttribute("normals", new BufferAttribute(new Float32Array(_normals), 3, false));
+  if(_texCoords) buffer.setAttribute("texCoords", new BufferAttribute(new Float32Array(_texCoords), 3, false));
   return buffer;
 }
 
@@ -21,7 +20,7 @@ export function dxf(data: string){
   const parsed = parsedData as Dxf;
   const layerMap = new Map<string, Container>();
   parsed.entities.filter(x=>x.type==="POLYLINE").forEach((polyline,i)=>{
-    const material = polyline.materialObjectHandle;
+    const _material = polyline.materialObjectHandle;
     const layer = polyline.layer;
     if(!layerMap.has(layer)){
       layerMap.set(layer, new Container(layer));

@@ -1,10 +1,10 @@
 export function makeVariableName(str: string) {
-  const seperatorCharacters = /[\s\.\,\:\&]+/i;
+  const seperatorCharacters = /[\s.,:\&]+/i;
   const nonWordCharacters = /[^\w]+/i;
   return str
-    .toLowerCase() 
-    .split(seperatorCharacters) 
-    .map(x => x.replace(nonWordCharacters, '')) 
+    .toLowerCase()
+    .split(seperatorCharacters)
+    .map(x => x.replace(nonWordCharacters, ''))
     .join("_");
 }
 

@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { VertexNormalsHelper } from "three/examples/jsm/helpers/VertexNormalsHelper.js";
 import Container, { ContainerProps } from "./container";
-import { chunk, chunkf32 } from "../common/chunk";
+import { chunk } from "../common/chunk";
 import roundTo from "../common/round-to";
 import { KeyValuePair } from "../common/key-value-pair";
 import interpolateAlpha from "../compute/acoustics/interpolate-alpha";
@@ -10,15 +10,13 @@ import { AcousticMaterial } from "../db/acoustic-material";
 import { BRDF } from "../compute/raytracer/brdf";
 import Room from "./room";
 import csg from "../compute/csg";
-import { numbersEqualWithinTolerence, equalWithinTolerenceFactory } from "../common/equal-within-range";
-import { addContainer, removeContainer, setContainerProperty, setNestedContainerProperty } from "../store";
+import { numbersEqualWithinTolerence } from "../common/equal-within-range";
+import { addContainer, removeContainer, setContainerProperty } from "../store";
 import { on } from "../messenger";
 import {scatteringFunction} from '../compute/acoustics/scattering-function';
 import { TessellateModifier } from "../compute/radiance/TessellateModifier";
 import { Float32BufferAttribute } from "three";
 import SurfaceElement from "./surface-element";
-
-const v3eq = equalWithinTolerenceFactory(["x", "y", "z"])(csg.math.constants.EPS as number);
 
 /** Vector3 as an array (i.e. [x,y,z]) */
 export type Vector3A = [number, number, number];
@@ -332,7 +330,6 @@ class Surface extends Container {
         } else {
           // make sure we dont keep this edge
           dict[linekey].keep = false;
-          const otherIndex = dict[linekey].triangle_index;
         }
       }
     });
@@ -502,7 +499,7 @@ class Surface extends Container {
     edgeLoop.push(edgePairs[j][1]);
     while (edgeLoop.length < edgePairs.length) {
       for (let i = 0; i < edgePairs.length; i++) {
-        if (i != j) {
+        if (i !== j) {
           if (edgeLoop[edgeLoop.length - 1].equals(edgePairs[i][0])) {
             edgeLoop.push(edgePairs[i][1]);
             j = i;
@@ -564,7 +561,6 @@ class Surface extends Container {
     this.add(this.tessellatedMesh);
 
     const position = geometry.getAttribute('position') as Float32BufferAttribute;
-    const array = position.array as Float32Array;
     const surfaceElements = [] as SurfaceElement[];
     for(let i = 0; i<position.count; i+=3){
       const element = new SurfaceElement(position, i+0, i+1, i+2);

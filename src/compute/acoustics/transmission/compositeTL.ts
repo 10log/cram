@@ -1,10 +1,10 @@
+import { tau } from './tau';
+
 interface WallElement {
   tau?: number;
   area: number;
   TL?: number;
 }
-
-import { tau } from './tau';
 
 export function compositeTL(wallElements: WallElement[]): number {
   let num = wallElements

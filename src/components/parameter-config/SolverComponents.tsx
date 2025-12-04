@@ -7,7 +7,6 @@ import PropertyRowButton from "./property-row/PropertyRowButton";
 import { PropertyRowCheckbox } from "./property-row/PropertyRowCheckbox";
 import { PropertyRowTextInput } from "./property-row/PropertyRowTextInput";
 import { PropertyRowNumberInput } from "./property-row/PropertyRowNumberInput";
-import Solver from "../../compute/solver";
 import RayTracer from "../../compute/raytracer";
 import FDTD_2D from "../../compute/2d-fdtd"
 import {AllowedNames } from '../../common/helpers';
@@ -40,12 +39,12 @@ export function useSolverProperty<T extends RayTracer | FDTD_2D|ImageSourceSolve
     [uuid]
   );
   //@ts-ignore
-  const changeHandler = (e) => emit(event, { uuid, property, value: e.value });
+  const changeHandler = (e: any) => emit(event, { uuid, property, value: e.value });
 
   return [state, changeHandler] as [typeof state, typeof changeHandler];
 }
 
-type PropertyRowInputElement = ({ value, onChange }) => JSX.Element;
+type PropertyRowInputElement = ({ value, onChange }: { value: any, onChange: any }) => JSX.Element;
 type Props<T extends RayTracer | FDTD_2D|ImageSourceSolver|RT60|EnergyDecay|ART, K extends keyof T> = {
   uuid: string;
   property: K;
@@ -91,7 +90,7 @@ export const PropertyButton = <T extends keyof EventTypes>({
   return (
     <PropertyRow>
       <PropertyRowLabel label={label} hasToolTip tooltip={tooltip} />
-      <PropertyRowButton onClick={(e) => emit(event, args)} label={label} disabled={disabled} />
+      <PropertyRowButton onClick={(_e) => emit(event, args)} label={label} disabled={disabled} />
     </PropertyRow>
   );
 };

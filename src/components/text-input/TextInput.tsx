@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { ObjectPropertyInputEvent } from "../ObjectProperties";
 
 export interface TextInputProps {
@@ -19,9 +19,6 @@ export function TextInput(props: TextInputProps) {
   
    const basestyle: React.CSSProperties = {
    };
-   let mergedStyles = props.style
-     ? Object.assign(basestyle, props.style)
-     : basestyle;
 
 
   

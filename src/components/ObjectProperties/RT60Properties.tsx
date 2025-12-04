@@ -1,15 +1,9 @@
-import React, { Fragment } from "react";
+import React from "react";
 import TextInput from "../text-input/TextInput";
-import NumberInput, { ObjectPropertyInputEvent } from ".";
-import CheckboxInput from "../CheckboxInput";
-import Source from "../../objects/source";
+import { ObjectPropertyInputEvent } from ".";
 import GridRow from "../GridRow";
-import GridRowSeperator from "../GridRowSeperator";
 import {RT60} from "../../compute/rt";
-import { Button } from "@blueprintjs/core";
-import Select, { components } from "react-select";
 import Messenger from "../../messenger";
-import * as ac from '../../compute/acoustics';
 import "./RT60Properties.css";
 
 export interface RT60PropertiesProps {
@@ -38,7 +32,7 @@ const RT60PropertiesContainerStyle: React.CSSProperties = {
 };
 
 export default function RT60Properties(props: RT60PropertiesProps) {
-  const XYZProps = {
+  const _XYZProps = {
     style: {
       width: "30%"
     },
@@ -47,24 +41,24 @@ export default function RT60Properties(props: RT60PropertiesProps) {
 
 
 
-  const customStyles = {
-    indicatorsContainer: (provided, state) => ({
+  const _customStyles = {
+    indicatorsContainer: (provided, _state) => ({
       ...provided,
       padding: 0
     }),
-    clearIndicator: (provided, state) => ({
+    clearIndicator: (provided, _state) => ({
       ...provided,
       padding: 0
     }),
-    dropdownIndicator: (provided, state) => ({
+    dropdownIndicator: (provided, _state) => ({
       ...provided,
       padding: 0
     }),
-    control: (provided, state) => ({
+    control: (provided, _state) => ({
       ...provided,
       minHeight: 0
     }),
-    container: (provided, state) => ({
+    container: (provided, _state) => ({
       ...provided,
       width: "100%"
     })

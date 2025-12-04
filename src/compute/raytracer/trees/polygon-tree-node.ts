@@ -236,7 +236,6 @@ export class PolygonTreeNode {
   clear() {
     let children = [this] as PolygonTreeNode[];
     let queue = [children] as PolygonTreeNode[][];
-    let l;
     for (let i = 0; i < queue.length; ++i) { // queue size can change in loop, don't cache length
       children = queue[i];
       let l = children.length;

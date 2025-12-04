@@ -172,7 +172,7 @@ export class FFT {
    */
   private calcFactors(size: number) {
     const N = size;
-    if (size != this.previousArraySize) {
+    if (size !== this.previousArraySize) {
       this.w = new Array(N);
       for (let k = 0; k < N / 2; k++) {
         let c = this.exponential((-2 * Math.PI * k) / N);
@@ -186,7 +186,7 @@ export class FFT {
    * @param size Array size
    */
   private createBitReversalTable(size: number) {
-    if (size != this.previousArraySize) {
+    if (size !== this.previousArraySize) {
       const N = size;
       const power = this.getExponent2(size);
       this.bitReversalTable = new Array(N);
@@ -221,7 +221,7 @@ export class FFT {
    */
   private getExponent2(n: number): number {
     let p = Math.log2(n);
-    if (Number.isInteger(p) == false) {
+    if (Number.isInteger(p) === false) {
       throw Error();
     }
     return p;
@@ -250,7 +250,7 @@ export class FFT {
    * @param size New array size
    */
   private updateArraySize(size: number) {
-    if (size != this.previousArraySize) {
+    if (size !== this.previousArraySize) {
       this.previousArraySize = size;
     }
   }

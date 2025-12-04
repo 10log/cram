@@ -112,7 +112,7 @@ export class OBJLoader {
 
 	private parseGroup(lineItems: string[]): void {
 		if (lineItems.length !== 2) {
-			throw "Group statements must have exactly 1 argument (eg. g group_1)";
+			throw new Error("Group statements must have exactly 1 argument (eg. g group_1)");
 		}
 
 		this.currentGroup = lineItems[1];
@@ -145,7 +145,7 @@ export class OBJLoader {
 	private parsePolygon(lineItems: string[]): void {
 		const totalVertices = lineItems.length - 1;
 		if (totalVertices < 3) {
-			throw `Face statement has less than 3 vertices`;
+			throw new Error(`Face statement has less than 3 vertices`);
 		}
 
 		const face: IFace = {
@@ -160,7 +160,7 @@ export class OBJLoader {
 			const vertexValues = vertexString.split("/");
 
 			if (vertexValues.length < 1 || vertexValues.length > 3) {
-				throw `Two many values (separated by /) for a single vertex`;
+				throw new Error(`Two many values (separated by /) for a single vertex`);
 			}
 
 			let vertexIndex = 0;
@@ -175,7 +175,7 @@ export class OBJLoader {
 			}
 
 			if (vertexIndex === 0) {
-				throw "Faces uses invalid vertex index of 0";
+				throw new Error("Faces uses invalid vertex index of 0");
 			}
 
 			// Negative vertex indices refer to the nth last defined vertex
@@ -208,7 +208,7 @@ export class OBJLoader {
 
 	private parseSmoothShadingStatement(lineItems: string[]): void {
 		if (lineItems.length !== 2) {
-			throw "Smoothing group statements must have exactly 1 argument (eg. s <number|off>)";
+			throw new Error("Smoothing group statements must have exactly 1 argument (eg. s <number|off>)");
 		}
 
 		const groupNumber =
