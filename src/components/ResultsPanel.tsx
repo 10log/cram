@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from "react";
+import React, { memo, useCallback, useEffect } from "react";
 
 import { useResult, getResultKeys, ResultStore } from "../store/result-store";
 
@@ -15,10 +15,10 @@ import PanelEmptyText from "./panel-container/PanelEmptyText";
 
 
 
-const TabTitle = ({ uuid }) => {
+const TabTitle = memo(({ uuid }: { uuid: string }) => {
   const name = useResult((state) => state.results[uuid].name);
   return <span>{name}</span>;
-};
+});
 
 
 const resultKeys = (state: ResultStore) => Object.keys(state.results);
@@ -70,7 +70,8 @@ export const ResultsPanel = () => {
           ))}
         </TabList>
         {keys.map((key) => (
-          <TabPanel key={key}><ChartSelect uuid={key}/>
+          <TabPanel key={key}>
+            <ChartSelect uuid={key} />
           </TabPanel>
         ))}
       </Tabs>
@@ -78,20 +79,20 @@ export const ResultsPanel = () => {
   ) : <PanelEmptyText>No Results Yet!</PanelEmptyText>;
 };
 
-const ChartSelect = (uuid) => {
-  const kind = useResult((state) => state.results[uuid.uuid]?.kind);
+const ChartSelect = memo(({ uuid }: { uuid: string }) => {
+  const kind = useResult((state) => state.results[uuid]?.kind);
 
   switch (kind) {
     case "linear-time-progression":
-      return <LTPChart uuid={uuid.uuid} events />
+      return <LTPChart uuid={uuid} events />
 
     case "statisticalRT60":
-      return <RT60Chart uuid={uuid.uuid} events />
+      return <RT60Chart uuid={uuid} events />
 
     case "impulseResponse":
-      return <ImpulseResponseChart uuid={uuid.uuid} events />
+      return <ImpulseResponseChart uuid={uuid} events />
 
     default:
       return null;
   }
-};
+});

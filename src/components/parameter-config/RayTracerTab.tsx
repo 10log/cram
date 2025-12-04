@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useReducer } from "react";
+import React, { memo, useEffect, useMemo, useReducer } from "react";
 import RayTracer from "../../compute/raytracer";
 import { useContainer, useSolver } from "../../store";
 import PropertyRow from "./property-row/PropertyRow";
@@ -15,7 +15,7 @@ const { PropertyTextInput, PropertyNumberInput, PropertyCheckboxInput } = create
   "RAYTRACER_SET_PROPERTY"
 );
 
-export const ReceiverSelect = ({ uuid }: { uuid: string }) => {
+export const ReceiverSelect = memo(({ uuid }: { uuid: string }) => {
   const containers = useContainer((state) => state.containers);
   const receivers = useMemo(() => {
     return Object.values(containers)
@@ -46,9 +46,9 @@ export const ReceiverSelect = ({ uuid }: { uuid: string }) => {
       ))}
     </>
   );
-};
+});
 
-export const SourceSelect = ({ uuid }: { uuid: string }) => {
+export const SourceSelect = memo(({ uuid }: { uuid: string }) => {
   const containers = useContainer((state) => state.containers);
   const sources = useMemo(() => {
     return Object.values(containers)
@@ -79,7 +79,7 @@ export const SourceSelect = ({ uuid }: { uuid: string }) => {
       ))}
     </>
   );
-};
+});
 
 
 const General = ({ uuid }: { uuid: string }) => {
