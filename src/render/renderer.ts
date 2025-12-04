@@ -48,6 +48,7 @@ import { Processes } from "../constants/processes";
 import { Markup } from "./Markup";
 import Model from "../objects/model";
 import { useContainer } from "../store";
+import { debounce } from "../common/debounce";
 import { useSetting } from "../store/settings-store";
 
 
@@ -485,9 +486,11 @@ export default class Renderer {
       }
     });
 
-    this.renderer.domElement.addEventListener("mousemove", (e) => {
+    // Throttle mousemove to avoid triggering render for every pixel moved
+    const throttledMouseMove = debounce(() => {
       this.needsToRender = true;
-    });
+    }, 30); // ~33ms, roughly 30fps for mouse tracking
+    this.renderer.domElement.addEventListener("mousemove", throttledMouseMove);
 
     this.renderer.domElement.addEventListener("wheel", (e) => {
       this.needsToRender = true;
@@ -905,21 +908,30 @@ export default class Renderer {
     this.update();
     this.resizeCanvasToDisplaySize();
 
-    if (this.needsToRender || this.shouldAnimate || this.orientationControl.shouldRender) {
+    const shouldRenderMain = this.needsToRender || this.shouldAnimate;
+    const shouldRenderOrientation = this.orientationControl.shouldRender;
+
+    if (shouldRenderMain) {
       this.composer.render();
-
       this.updateCursorSize();
-
+      // Sync orientation control when main scene renders
       this.orientationControl.shouldRender = true;
-
       messenger.postMessage("RENDERER_UPDATED");
       emit("RENDERER_UPDATED", undefined);
       this.needsToRender = false;
     }
+
     if (this.orientationControl.shouldRender) {
       this.orientationControl.render();
     }
-    requestAnimationFrame(this.render);
+
+    // Only continue animation loop at 60fps when actively rendering
+    if (shouldRenderMain || shouldRenderOrientation || this.shouldAnimate) {
+      requestAnimationFrame(this.render);
+    } else {
+      // Idle state - poll at reduced rate to catch external triggers
+      setTimeout(() => requestAnimationFrame(this.render), 100);
+    }
   }
 
   /**
