@@ -11,7 +11,8 @@ import useAppStore from "./app-store";
 export enum ResultKind {
   LevelTimeProgression = "linear-time-progression",
   Default = "default",
-  StatisticalRT60 = "statisticalRT60"
+  StatisticalRT60 = "statisticalRT60",
+  ImpulseResponse = "impulseResponse"
 }
 
 
@@ -39,13 +40,24 @@ export interface ResultTypes {
       frequency: number[];
       airabsorption: boolean;
       humidity: number;
-      temperature: number; 
+      temperature: number;
     };
     data: {
-      sabine: number; 
+      sabine: number;
       eyring: number;
       ap: number;
-      frequency: number; 
+      frequency: number;
+    }[];
+  }
+  [ResultKind.ImpulseResponse]: {
+    info: {
+      sampleRate: number;
+      sourceName: string;
+      receiverName: string;
+    };
+    data: {
+      time: number;
+      amplitude: number;
     }[];
   }
 }

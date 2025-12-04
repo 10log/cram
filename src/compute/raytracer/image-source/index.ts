@@ -511,9 +511,17 @@ export class ImageSourceSolver extends Solver {
     }
 
     calculateLTP(c: number, consoleOutput: boolean = false){
+      // If no paths have been calculated yet, run the calculation first
+      if (!this.validRayPaths || this.validRayPaths.length === 0) {
+        if (this.sourceIDs.length > 0 && this.receiverIDs.length > 0) {
+          this.updateImageSourceCalculation();
+          return; // updateImageSourceCalculation calls calculateLTP at the end
+        }
+        return;
+      }
 
-      let sortedPath: ImageSourcePath[] | null = this.validRayPaths; 
-      sortedPath?.sort((a, b) => (a.arrivalTime(c) > b.arrivalTime(c)) ? 1 : -1); 
+      let sortedPath: ImageSourcePath[] | null = this.validRayPaths;
+      sortedPath?.sort((a, b) => (a.arrivalTime(c) > b.arrivalTime(c)) ? 1 : -1);
       const levelTimeProgression = { ...useResult.getState().results[this.levelTimeProgression] as Result<ResultKind.LevelTimeProgression> };
       levelTimeProgression.data = [] as ResultTypes[ResultKind.LevelTimeProgression]["data"];
       levelTimeProgression.info = {
@@ -523,10 +531,10 @@ export class ImageSourceSolver extends Solver {
       }
       if(sortedPath != undefined){
         for(let i = 0; i<sortedPath?.length; i++){
-          let t = sortedPath[i].arrivalTime(343); 
-          let p = sortedPath[i].arrivalPressure(levelTimeProgression.info.initialSPL, levelTimeProgression.info.frequency); 
+          let t = sortedPath[i].arrivalTime(343);
+          let p = sortedPath[i].arrivalPressure(levelTimeProgression.info.initialSPL, levelTimeProgression.info.frequency);
           if(consoleOutput){
-            console.log("Arrival: " + (i+1) + " | Arrival Time: (s) " + t + " | Arrival Pressure(1000Hz): " + p + " | Order " + sortedPath[i].order); 
+            console.log("Arrival: " + (i+1) + " | Arrival Time: (s) " + t + " | Arrival Pressure(1000Hz): " + p + " | Order " + sortedPath[i].order);
           }
 
           levelTimeProgression.data.push({
