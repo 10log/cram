@@ -15,9 +15,7 @@ process.on('unhandledRejection', err => {
 // Ensure environment variables are read.
 require('../config/env');
 
-
-const jest = require('jest');
-const execSync = require('child_process').execSync;
+const { execSync, spawn } = require('child_process');
 let argv = process.argv.slice(2);
 
 function isInGitRepository() {
@@ -49,5 +47,13 @@ if (
   argv.push(hasSourceControl ? '--watch' : '--watchAll');
 }
 
+// Use Jest CLI directly (jest.run() is deprecated in Jest 30+)
+const jestBin = require.resolve('jest/bin/jest');
+const child = spawn(process.execPath, [jestBin, ...argv], {
+  stdio: 'inherit',
+  env: process.env
+});
 
-jest.run(argv);
+child.on('close', code => {
+  process.exit(code);
+});
