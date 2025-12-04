@@ -1,5 +1,5 @@
 import React from "react";
-import SplitterLayout from "react-splitter-layout";
+import SplitterLayout from "react-splitter-layout-react-v18";
 import { FocusStyleManager } from "@blueprintjs/core";
 import ImportDialog from "./ImportDialog";
 import ObjectView from "./object-view/ObjectView";

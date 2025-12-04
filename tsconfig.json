@@ -28,7 +28,6 @@
       "@types/react",
       "@types/react-color",
       "@types/react-dom",
-      "@types/react-splitter-layout",
       "@types/semver",
       "@types/d3",
       "@types/plotly.js",
