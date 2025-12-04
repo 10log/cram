@@ -184,6 +184,9 @@ export default class Renderer {
 
   shouldAnimate: boolean;
 
+  /** Tracks if render loop is in idle polling mode */
+  private isIdle: boolean = false;
+
   orientationControl!: OrientationControl;
 
   currentProcess!: Processes;
@@ -488,12 +491,12 @@ export default class Renderer {
 
     // Debounce mousemove to avoid triggering render for every pixel moved
     const debouncedMouseMove = debounce(() => {
-      this.needsToRender = true;
+      this.requestRender();
     }, 30); // 30 Hz (~33ms period) for mouse tracking
     this.renderer.domElement.addEventListener("mousemove", debouncedMouseMove);
 
     this.renderer.domElement.addEventListener("wheel", (e) => {
-      this.needsToRender = true;
+      this.requestRender();
       hotkeys.setScope("EDITOR");
     });
 
@@ -521,7 +524,7 @@ export default class Renderer {
         }
       }
       // console.log(this.pickHelper);
-      this.needsToRender = true;
+      this.requestRender();
     });
 
     this.controls.addEventListener("change", this.onOrbitControlsChange);
@@ -904,6 +907,16 @@ export default class Renderer {
       this.cursor.sprite.scale.setScalar(0.035);
     }
   }
+
+  /** Request a render, waking up from idle state if necessary */
+  requestRender() {
+    this.needsToRender = true;
+    if (this.isIdle) {
+      this.isIdle = false;
+      requestAnimationFrame(this.render);
+    }
+  }
+
   render() {
     this.update();
     this.resizeCanvasToDisplaySize();
@@ -928,10 +941,11 @@ export default class Renderer {
     // Only continue animation loop at 60fps when actively rendering
     // Re-read orientationControl.shouldRender since it may have been set in the shouldRenderMain block
     if (shouldRenderMain || this.orientationControl.shouldRender) {
+      this.isIdle = false;
       requestAnimationFrame(this.render);
     } else {
-      // Idle state - poll at reduced rate to catch external triggers
-      setTimeout(() => requestAnimationFrame(this.render), 100);
+      // Idle state - use requestRender() to wake up immediately on user interaction
+      this.isIdle = true;
     }
   }
 
@@ -1099,11 +1113,14 @@ declare global {
 }
 
 on("RENDER", () => {
-  renderer.needsToRender = true;
+  renderer.requestRender();
 });
 
 on("RENDERER_SHOULD_ANIMATE", shouldAnimate => {
   renderer.shouldAnimate = shouldAnimate;
+  if (shouldAnimate) {
+    renderer.requestRender();
+  }
 });
 
 on("PHASE_OUT", () => {
@@ -1114,7 +1131,7 @@ on("PHASE_OUT", () => {
     emit("DESELECT_ALL_OBJECTS");
     // hotkeys.setScope("NORMAL");
   }
-  renderer.needsToRender = true;
+  renderer.requestRender();
 });
 
 on("STOP_OPERATIONS", () => {
@@ -1123,7 +1140,7 @@ on("STOP_OPERATIONS", () => {
   renderer.transformControls.detach();
   renderer.currentlyMovingObjects = false;
   renderer.overlays.transform.hide();
-  renderer.needsToRender = true;
+  renderer.requestRender();
 });
 
 on("MOVE_SELECTED_OBJECTS", () => {
@@ -1139,7 +1156,7 @@ on("MOVE_SELECTED_OBJECTS", () => {
     //@ts-ignore
     renderer.interactables.add(renderer.transformControls._root);
   }
-  renderer.needsToRender = true;
+  renderer.requestRender();
 });
 
 
@@ -1166,7 +1183,7 @@ on("FOCUS_ON_SELECTED_OBJECTS", () => {
     };
     renderer.smoothCameraTo({ position, target, duration, onFinish, easingFunction });
   }
-  renderer.needsToRender = true;
+  renderer.requestRender();
 });
 
 on("FOCUS_ON_CURSOR", () => {
@@ -1178,6 +1195,6 @@ on("FOCUS_ON_CURSOR", () => {
     renderer.controls.target.set(target.x, target.y, target.z);
   };
   renderer.smoothCameraTo({ position, target, duration, onFinish, easingFunction });
-  renderer.needsToRender = true;
+  renderer.requestRender();
 });
 
