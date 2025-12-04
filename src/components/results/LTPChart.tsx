@@ -111,13 +111,15 @@ const Chart = ({ uuid, width = 400, height = 200, events = false, plotOrders }: 
     }, [data, plotOrders]);
 
 
-    useEffect(() => on("UPDATE_RESULT", (e) => {
-      if(e.uuid === uuid){
-        //@ts-ignore
-        setData(e.result.data);
-        // update();
-      }
-    }), [uuid])
+    useEffect(() => {
+      return on("UPDATE_RESULT", (e) => {
+        if (e.uuid === uuid) {
+          //@ts-ignore
+          setData(e.result.data);
+          // update();
+        }
+      });
+    }, [uuid]);
 
     const scalePadding = 60;
     const scaleWidth = width-scalePadding;
@@ -221,18 +223,22 @@ export const LTPChart = ({ uuid, width = 400, height = 300, events = false }: LT
   const [plotOrders, setPlotOrders] = useState(initialPlotOrders);
   const [order, setMaxOrder] = useState(info.maxOrder);
 
-  useEffect(() => on("UPDATE_RESULT", (e)=>{
-    if(e.uuid === uuid){
-      //@ts-ignore
-      setMaxOrder(e.result.info.maxOrder);
-    }
-  }), [uuid]);  
+  useEffect(() => {
+    return on("UPDATE_RESULT", (e) => {
+      if (e.uuid === uuid) {
+        //@ts-ignore
+        setMaxOrder(e.result.info.maxOrder);
+      }
+    });
+  }, [uuid]);
 
-  useEffect(() => on("IMAGESOURCE_SET_PROPERTY", (e)=>{
-    if(e.uuid === from && e.property === "plotOrders"){
+  useEffect(() => {
+    return on("IMAGESOURCE_SET_PROPERTY", (e) => {
+      if (e.uuid === from && e.property === "plotOrders") {
         setPlotOrders(e.value);
-    }
-  }), [uuid]);  
+      }
+    });
+  }, [from]);  
 
   const ordinalColorScale = useMemo(
     () => scaleOrdinal(

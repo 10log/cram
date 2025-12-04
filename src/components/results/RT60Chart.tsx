@@ -163,12 +163,14 @@ export const Chart = ({
     range: [blue, green, darkgreen],
   });
 
-  useEffect(() => on("UPDATE_RESULT", (e) => {
-    if(e.uuid === uuid){
-      //@ts-ignore
-      setData(e.result.data);
-    }
-  }), [uuid])
+  useEffect(() => {
+    return on("UPDATE_RESULT", (e) => {
+      if (e.uuid === uuid) {
+        //@ts-ignore
+        setData(e.result.data);
+      }
+    });
+  }, [uuid]);
 
   const scalePadding = 60;
   const topPadding = 30; 

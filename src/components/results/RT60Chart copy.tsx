@@ -91,13 +91,15 @@ const Chart = ({ uuid, width = 400, height = 200, events = false }: RT60ChartPro
     const [data, setData] = useState(_data);
 
 
-    useEffect(() => on("UPDATE_RESULT", (e) => {
-      if(e.uuid === uuid){
-        //@ts-ignore
-        setData(e.result.data);
-        // update();
-      }
-    }), [uuid])
+    useEffect(() => {
+      return on("UPDATE_RESULT", (e) => {
+        if (e.uuid === uuid) {
+          //@ts-ignore
+          setData(e.result.data);
+          // update();
+        }
+      });
+    }, [uuid]);
 
     const scalePadding = 60;
     const scaleWidth = width-scalePadding;
@@ -168,12 +170,14 @@ const Chart = ({ uuid, width = 400, height = 200, events = false }: RT60ChartPro
 export const RT60Chart = ({ uuid, width = 400, height = 300, events = false }: RT60ChartProps) => {
   const {name, info, from} = useResult(state=>pickProps(["name", "info", "from"], state.results[uuid] as Result<ResultKind.StatisticalRT60>));
 
-  useEffect(() => on("UPDATE_RESULT", (e)=>{
-    if(e.uuid === uuid){
-      //@ts-ignore
-      //setMaxOrder(e.result.info.maxOrder);
-    }
-  }), [uuid]);  
+  useEffect(() => {
+    return on("UPDATE_RESULT", (e) => {
+      if (e.uuid === uuid) {
+        //@ts-ignore
+        //setMaxOrder(e.result.info.maxOrder);
+      }
+    });
+  }, [uuid]);  
 
   return width < 10 ? null : (
     <VerticalContainer>

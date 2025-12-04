@@ -92,12 +92,14 @@ const Transform = ({ uuid }: { uuid: string }) => {
 const MaterialButton = ({uuid}: {uuid: string}) => {
   const name = useContainer(state=>(state.containers[uuid] as Surface).acousticMaterial.name);
   const [, forceUpdate] = useReducer((c) => c + 1, 0) as [never, () => void]
-  useEffect(()=>on("ASSIGN_MATERIAL", ({ target })=>{
-    const surfaceInTarget = ensureArray(target).reduce((acc, curr) => acc || curr.uuid === uuid, false);
-    if(surfaceInTarget){
-      forceUpdate();
-    }
-  }), [uuid]);
+  useEffect(() => {
+    return on("ASSIGN_MATERIAL", ({ target }) => {
+      const surfaceInTarget = ensureArray(target).reduce((acc, curr) => acc || curr.uuid === uuid, false);
+      if (surfaceInTarget) {
+        forceUpdate();
+      }
+    });
+  }, [uuid]);
   return (
     <PropertyButton label="Material" buttonLabel={name} event="OPEN_MATERIAL_DRAWER" args={undefined} tooltip="Opens the material search screen"/>
   )

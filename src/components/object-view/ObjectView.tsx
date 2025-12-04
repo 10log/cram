@@ -44,22 +44,28 @@ function MapChildren(props: MapChildrenProps) {
     }
   }, [container]);
 
-  useEffect(()=>on("APPEND_SELECTION", (containers) => {
-    if(containers.includes(container)){
-      setSelected(true);
-    }
-  }), [container])
+  useEffect(() => {
+    return on("APPEND_SELECTION", (containers) => {
+      if (containers.includes(container)) {
+        setSelected(true);
+      }
+    });
+  }, [container]);
 
-  useEffect(()=>on("SET_SELECTION", (containers) => {
-    setSelected(containers.includes(container))
-  }), [container])
+  useEffect(() => {
+    return on("SET_SELECTION", (containers) => {
+      setSelected(containers.includes(container));
+    });
+  }, [container]);
 
   const event = `${container.kind.toUpperCase()}_SET_PROPERTY` as "SOURCE_SET_PROPERTY";
-  useEffect(() => on(event, ({uuid, property, value}) => {
-    if(uuid === container.uuid && property === "name") {
-      setName(value as string);
-    }
-  }), [container.uuid])
+  useEffect(() => {
+    return on(event, ({ uuid, property, value }) => {
+      if (uuid === container.uuid && property === "name") {
+        setName(value as string);
+      }
+    });
+  }, [container.uuid, event]);
 
   const label = <TreeItemLabel {...{ label: genericLabel, meta }} />;
   const roomLabel = <TreeItemLabel icon={<RoomIcon fontSize="inherit" />} {...{ label: genericLabel, meta }} />;
