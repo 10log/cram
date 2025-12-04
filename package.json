@@ -71,7 +71,7 @@
     "react-select": "^5.10.2",
     "react-splitter-layout-react-v18": "^4.0.3",
     "react-tabs": "^6.1.0",
-    "react-window": "^1.8.11",
+    "react-window": "^2.2.3",
     "semver": "^7.6.3",
     "simple-statistics": "^7.1.0",
     "styled-components": "^6.1.19",
