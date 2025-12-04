@@ -22,5 +22,4 @@ import "./float-button.css";
 import "./settings.css";
 import "./parameter-config.css";
 import "./small-button.css";
-import "./suggestions.css";
 import "./orient.css";
