@@ -926,7 +926,8 @@ export default class Renderer {
     }
 
     // Only continue animation loop at 60fps when actively rendering
-    if (shouldRenderMain || shouldRenderOrientation || this.shouldAnimate) {
+    // Re-read orientationControl.shouldRender since it may have been set in the shouldRenderMain block
+    if (shouldRenderMain || this.orientationControl.shouldRender || this.shouldAnimate) {
       requestAnimationFrame(this.render);
     } else {
       // Idle state - poll at reduced rate to catch external triggers
