@@ -111,7 +111,7 @@
     "chalk": "^4.1.2",
     "css-loader": "^6.11.0",
     "dotenv": "^16.4.7",
-    "dotenv-expand": "^11.0.7",
+    "dotenv-expand": "^12.0.3",
     "eslint": "^8.57.1",
     "eslint-config-react-app": "^7.0.1",
     "eslint-plugin-flowtype": "^8.0.3",
