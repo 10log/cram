@@ -87,7 +87,7 @@ const defaultShortcuts = [{
 ] as Shortcut[];
 
 export const useShortcut = create<ShortcutStore>((set) => ({
-  shortcuts: new Map(defaultShortcuts.map(shortcut=>[hash(shortcut), shortcut])),
+  shortcuts: new Map(defaultShortcuts.map(shortcut=>[hash(shortcut as object), shortcut])),
   set: (fn) => set(produce(fn)),
 }));
 
