@@ -1,0 +1,181 @@
+/**
+ * SaveDialog Tests
+ *
+ * Tests for the save dialog component that manages:
+ * - Dialog visibility based on store state
+ * - File name input
+ * - Cancel and Save button actions
+ */
+
+import React from 'react';
+import { render, screen, fireEvent, act, cleanup } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { SaveDialog } from '../SaveDialog';
+import { useAppStore } from '../../store/app-store';
+
+// Mock Blueprint.js Dialog
+jest.mock('@blueprintjs/core', () => ({
+  Dialog: ({ isOpen, children, title }: any) =>
+    isOpen ? (
+      <div data-testid="dialog" role="dialog" aria-label={title}>
+        <h2>{title}</h2>
+        {children}
+      </div>
+    ) : null,
+  Classes: {
+    DIALOG_BODY: 'dialog-body',
+    DIALOG_FOOTER: 'dialog-footer',
+    DIALOG_FOOTER_ACTIONS: 'dialog-footer-actions',
+  },
+  Button: ({ children, onClick }: any) => (
+    <button onClick={onClick}>{children}</button>
+  ),
+  AnchorButton: ({ children, onClick, intent }: any) => (
+    <button onClick={onClick} data-intent={intent}>
+      {children}
+    </button>
+  ),
+  Intent: {
+    SUCCESS: 'success',
+  },
+}));
+
+// Mock messenger
+jest.mock('../../messenger', () => ({
+  on: jest.fn(() => jest.fn()),
+  emit: jest.fn(),
+}));
+
+describe('SaveDialog', () => {
+  const originalState = useAppStore.getState();
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    // Reset store
+    useAppStore.setState({
+      ...originalState,
+      projectName: 'test-project',
+      saveDialogVisible: false,
+    });
+  });
+
+  afterEach(() => {
+    cleanup();
+    useAppStore.setState(originalState);
+  });
+
+  describe('Visibility', () => {
+    it('is hidden when saveDialogVisible is false', () => {
+      useAppStore.setState({ saveDialogVisible: false });
+      render(<SaveDialog />);
+      expect(screen.queryByTestId('dialog')).not.toBeInTheDocument();
+    });
+
+    it('is visible when saveDialogVisible is true', () => {
+      useAppStore.setState({ saveDialogVisible: true });
+      render(<SaveDialog />);
+      expect(screen.getByTestId('dialog')).toBeInTheDocument();
+    });
+
+    it('displays dialog title', () => {
+      useAppStore.setState({ saveDialogVisible: true });
+      render(<SaveDialog />);
+      expect(screen.getByText('Save Project')).toBeInTheDocument();
+    });
+  });
+
+  describe('File Name Input', () => {
+    beforeEach(() => {
+      useAppStore.setState({ saveDialogVisible: true, projectName: 'my-project' });
+    });
+
+    it('displays input field', () => {
+      render(<SaveDialog />);
+      const input = screen.getByRole('textbox');
+      expect(input).toBeInTheDocument();
+    });
+
+    it('initializes with project name from store', () => {
+      render(<SaveDialog />);
+      const input = screen.getByRole('textbox') as HTMLInputElement;
+      expect(input.value).toBe('my-project');
+    });
+
+    it('updates value on user input', async () => {
+      const user = userEvent.setup();
+      render(<SaveDialog />);
+      const input = screen.getByRole('textbox') as HTMLInputElement;
+
+      await user.clear(input);
+      await user.type(input, 'new-project-name');
+
+      expect(input.value).toBe('new-project-name');
+    });
+  });
+
+  describe('Cancel Button', () => {
+    beforeEach(() => {
+      useAppStore.setState({ saveDialogVisible: true });
+    });
+
+    it('renders Cancel button', () => {
+      render(<SaveDialog />);
+      expect(screen.getByText('Cancel')).toBeInTheDocument();
+    });
+
+    it('closes dialog when Cancel is clicked', async () => {
+      const user = userEvent.setup();
+      render(<SaveDialog />);
+
+      await user.click(screen.getByText('Cancel'));
+
+      expect(useAppStore.getState().saveDialogVisible).toBe(false);
+    });
+  });
+
+  describe('Save Button', () => {
+    beforeEach(() => {
+      useAppStore.setState({ saveDialogVisible: true });
+    });
+
+    it('renders Save button', () => {
+      render(<SaveDialog />);
+      expect(screen.getByText('Save')).toBeInTheDocument();
+    });
+
+    it('has success intent', () => {
+      render(<SaveDialog />);
+      const saveButton = screen.getByText('Save');
+      expect(saveButton).toHaveAttribute('data-intent', 'success');
+    });
+
+    it('emits SAVE event when clicked', async () => {
+      const { emit } = require('../../messenger');
+      const user = userEvent.setup();
+      render(<SaveDialog />);
+
+      await user.click(screen.getByText('Save'));
+
+      expect(emit).toHaveBeenCalledWith('SAVE', expect.any(Function));
+    });
+  });
+
+  describe('Dialog Structure', () => {
+    beforeEach(() => {
+      useAppStore.setState({ saveDialogVisible: true });
+    });
+
+    it('contains dialog body with input', () => {
+      render(<SaveDialog />);
+      const body = document.querySelector('.dialog-body');
+      expect(body).toBeInTheDocument();
+      expect(body?.querySelector('input')).toBeInTheDocument();
+    });
+
+    it('contains dialog footer with buttons', () => {
+      render(<SaveDialog />);
+      const footer = document.querySelector('.dialog-footer');
+      expect(footer).toBeInTheDocument();
+    });
+  });
+});

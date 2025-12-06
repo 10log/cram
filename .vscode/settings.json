@@ -1,5 +1,7 @@
 {
     "files.associations": {
         "*.as.ts": "assemblyscript"
-    }
+    },
+    "playwright.reuseBrowser": false,
+    "playwright.showTrace": false
 }
