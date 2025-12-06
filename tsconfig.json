@@ -62,10 +62,13 @@
     "src/as/assembly",
     "src/__tests__/**",
     "src/__mocks__/**",
+    "src/__fixtures__/**",
     "src/**/*.spec.ts",
     "src/**/*.spec.tsx",
     "src/**/*.test.ts",
     "src/**/*.test.tsx",
+    "src/setupTests.ts",
+    "src/test-utils/**",
     "e2e/**"
   ]
 }
