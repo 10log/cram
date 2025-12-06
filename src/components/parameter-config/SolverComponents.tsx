@@ -31,8 +31,8 @@ export function useSolverProperty<T extends RayTracer | FDTD_2D|ImageSourceSolve
   // Include version in selector to force re-render when properties change
   const value = useSolver<T[K]>(
     (state) => {
-      // Access version to subscribe to changes (unused but triggers re-render)
-      void state.version;
+      // Access state.version to ensure selector subscribes to version changes (triggers re-render)
+      const _version = state.version;
       return (state.solvers[uuid] as T)[property];
     }
   );

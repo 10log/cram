@@ -41,13 +41,6 @@ const ResultsSectionLabel = styled.div`
   color: #656d76;
 `;
 
-const NoResultsText = styled.div`
-  font-size: 11px;
-  color: #8c959f;
-  font-style: italic;
-  padding: 4px 0;
-`;
-
 /**
  * Maps solver kind to its parameter configuration component
  */

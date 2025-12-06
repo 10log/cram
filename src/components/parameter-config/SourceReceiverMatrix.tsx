@@ -127,18 +127,13 @@ export const SourceReceiverMatrix = memo(({ uuid, disabled = false, eventType = 
         setReceiverIDs({ value: newReceiverIDs });
       }
     } else {
-      // Count how many selected receivers this source pairs with
-      const sourceReceiverCount = receiverIDs.filter(rid => rid === receiverId || receiverIDs.includes(rid)).length;
-      // Count how many selected sources this receiver pairs with
-      const receiverSourceCount = sourceIDs.filter(sid => sid === sourceId || sourceIDs.includes(sid)).length;
-
       // Remove the source if it only pairs with this one receiver
-      if (sourceReceiverCount === 1 || receiverIDs.length === 1) {
+      if (receiverIDs.length === 1) {
         setSourceIDs({ value: sourceIDs.filter(id => id !== sourceId) });
       }
 
       // Remove the receiver if it only pairs with this one source
-      if (receiverSourceCount === 1 || sourceIDs.length === 1) {
+      if (sourceIDs.length === 1) {
         setReceiverIDs({ value: receiverIDs.filter(id => id !== receiverId) });
       }
     }
