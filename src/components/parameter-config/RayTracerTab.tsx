@@ -1,100 +1,17 @@
-import React, { memo, useEffect, useMemo, useReducer } from "react";
+import React, { useEffect } from "react";
 import RayTracer from "../../compute/raytracer";
-import { useContainer, useSolver } from "../../store";
-import PropertyRow from "./property-row/PropertyRow";
 import PropertyRowFolder from "./property-row/PropertyRowFolder";
 import { createPropertyInputs, useSolverProperty } from "./SolverComponents";
 import useToggle from "../hooks/use-toggle";
-import PropertyRowLabel from "./property-row/PropertyRowLabel";
-import PropertyRowCheckbox from "./property-row/PropertyRowCheckbox";
 import PropertyButton from "./property-row/PropertyButton";
 import { renderer } from "../../render/renderer";
+import SourceReceiverMatrix from "./SourceReceiverMatrix";
 
 
 const { PropertyTextInput, PropertyNumberInput, PropertyCheckboxInput } = createPropertyInputs<RayTracer>(
   "RAYTRACER_SET_PROPERTY"
 );
 
-export const ReceiverSelect = memo(({ uuid }: { uuid: string }) => {
-  const containers = useContainer((state) => state.containers);
-  const receivers = useMemo(() => {
-    return Object.values(containers)
-      .filter(c => c.kind === "receiver")
-      .map(c => ({ uuid: c.uuid, name: c.name }));
-  }, [containers]);
-
-  const [receiverIDs, setReceiverIDs] = useSolverProperty<RayTracer, "receiverIDs">(
-    uuid,
-    "receiverIDs",
-    "RAYTRACER_SET_PROPERTY"
-  );
-
-  return (
-    <>
-      {receivers.map((rec) => (
-        <PropertyRow key={rec.uuid}>
-          <PropertyRowLabel label={rec.name} hasToolTip={false} />
-          <PropertyRowCheckbox
-            value={receiverIDs.includes(rec.uuid)}
-            onChange={(e) =>
-              setReceiverIDs({
-                value: e.value ? [...receiverIDs, rec.uuid] : receiverIDs.filter((x) => x !== rec.uuid)
-              })
-            }
-          />
-        </PropertyRow>
-      ))}
-    </>
-  );
-});
-
-export const SourceSelect = memo(({ uuid }: { uuid: string }) => {
-  const containers = useContainer((state) => state.containers);
-  const sources = useMemo(() => {
-    return Object.values(containers)
-      .filter(c => c.kind === "source")
-      .map(c => ({ uuid: c.uuid, name: c.name }));
-  }, [containers]);
-
-  const [sourceIDs, setSourceIDs] = useSolverProperty<RayTracer, "sourceIDs">(
-    uuid,
-    "sourceIDs",
-    "RAYTRACER_SET_PROPERTY"
-  );
-
-  return (
-    <>
-      {sources.map((src) => (
-        <PropertyRow key={src.uuid}>
-          <PropertyRowLabel label={src.name} hasToolTip={false} />
-          <PropertyRowCheckbox
-            value={sourceIDs.includes(src.uuid)}
-            onChange={(e) =>
-              setSourceIDs({
-                value: e.value ? [...sourceIDs, src.uuid] : sourceIDs.filter((x) => x !== src.uuid)
-              })
-            }
-          />
-        </PropertyRow>
-      ))}
-    </>
-  );
-});
-
-
-const General = ({ uuid }: { uuid: string }) => {
-  const [open, toggle] = useToggle(true);
-  const observed_name = useSolver(state=>(state.solvers[uuid] as RayTracer).observed_name);
-  const [, forceUpdate] = useReducer((c) => c + 1, 0) as [never, () => void]
-  useEffect(()=>observed_name.watch(()=>forceUpdate()), [uuid, observed_name, forceUpdate]);
-
-  return (
-    <PropertyRowFolder label="General" open={open} onOpenClose={toggle}>
-      <PropertyTextInput uuid={uuid} label="Name" property="name" tooltip="Sets the name of this solver" />
-      {/* <PropertyRowTextInput value={observed_name.value} onChange={(e)=>{observed_name.value = e.value}}/> */}
-    </PropertyRowFolder>
-  );
-};
 
 const Parameters = ({ uuid }: { uuid: string }) => {
   const [open, toggle] = useToggle(true);
@@ -117,26 +34,23 @@ const Parameters = ({ uuid }: { uuid: string }) => {
   );
 };
 
-const RecieverConfiguration = ({ uuid }: { uuid: string }) => {
+const SourceReceiverPairs = ({ uuid }: { uuid: string }) => {
   const [open, toggle] = useToggle(true);
+  const [ignoreReceivers] = useSolverProperty<RayTracer, "runningWithoutReceivers">(
+    uuid,
+    "runningWithoutReceivers",
+    "RAYTRACER_SET_PROPERTY"
+  );
+
   return (
-    <PropertyRowFolder label="Reciever Configuration" open={open} onOpenClose={toggle}>
-      <ReceiverSelect uuid={uuid} />
+    <PropertyRowFolder label="Source / Receiver Pairs" open={open} onOpenClose={toggle}>
       <PropertyCheckboxInput
         uuid={uuid}
         label="Ignore Receivers"
         property="runningWithoutReceivers"
-        tooltip="Ignores receiver intersections"
+        tooltip="Ignores receiver intersections (visualization only)"
       />
-    </PropertyRowFolder>
-  );
-};
-
-const SourceConfiguration = ({ uuid }: { uuid: string }) => {
-  const [open, toggle] = useToggle(true);
-  return (
-    <PropertyRowFolder label="Source Configuration" open={open} onOpenClose={toggle}>
-      <SourceSelect uuid={uuid} />
+      <SourceReceiverMatrix uuid={uuid} disabled={ignoreReceivers} />
     </PropertyRowFolder>
   );
 };
@@ -188,13 +102,12 @@ const Hybrid = ({ uuid }: { uuid: string}) => {
 
 const Output = ({uuid}: {uuid: string}) => {
   const [open, toggle] = useToggle(true);
-  const [impulseResponsePlaying, setImpulseResponsePlaying] = useSolverProperty<RayTracer, "impulseResponsePlaying">(uuid, "impulseResponsePlaying", "RAYTRACER_SET_PROPERTY");
+  const [impulseResponsePlaying] = useSolverProperty<RayTracer, "impulseResponsePlaying">(uuid, "impulseResponsePlaying", "RAYTRACER_SET_PROPERTY");
   return (
     <PropertyRowFolder label="Impulse Response" open={open} onOpenClose={toggle}>
-      <PropertyButton event="RAYTRACER_CALL_METHOD" args={{method: "reportImpulseResponse", uuid, isAsync: true, args: undefined}} label="Calculate" tooltip="Calculates the impulse response" />
       <PropertyButton event="RAYTRACER_PLAY_IR" args={uuid} label="Play" tooltip="Plays the calculated impulse response" disabled={impulseResponsePlaying} />
       <PropertyButton event="RAYTRACER_DOWNLOAD_IR" args={uuid} label="Download" tooltip="Downloads the calculated broadband impulse response" />
-      <PropertyButton event="RAYTRACER_DOWNLOAD_IR_OCTAVE" args={uuid} label="Download by Octave" tooltip="Downloads the impulse response in each octave" />  
+      <PropertyButton event="RAYTRACER_DOWNLOAD_IR_OCTAVE" args={uuid} label="Download by Octave" tooltip="Downloads the impulse response in each octave" />
     </PropertyRowFolder>
   );
 }
@@ -210,10 +123,8 @@ export const RayTracerTab = ({ uuid }: { uuid: string }) => {
   }, [uuid]);
   return (
     <div>
-      <General uuid={uuid} />
       <Parameters uuid={uuid} />
-      <SourceConfiguration uuid={uuid} />
-      <RecieverConfiguration uuid={uuid} />
+      <SourceReceiverPairs uuid={uuid} />
       <StyleProperties uuid={uuid} />
       <SolverControls uuid={uuid} />
       <Hybrid uuid={uuid} />

@@ -6,10 +6,12 @@ import Container from "../objects/container";
 import { AllowedNames, omit, reach } from '../common/helpers';
 import { Room } from "../objects";
 import Solver from "../compute/solver";
+import { emit } from "../messenger";
 
 export type ContainerStore = {
   containers: KeyValuePair<Container>;
   selectedObjects: Set<Container>;
+  version: number;
   set: SetFunction<ContainerStore>;
   getWorkspace: () => THREE.Object3D | null;
   getRooms: () => Room[];
@@ -38,6 +40,7 @@ const getRooms = (containers: KeyValuePair<Container>) => {
 export const useContainer = create<ContainerStore>((set, get) => ({
   containers: {},
   selectedObjects: new Set(),
+  version: 0,
   set: (fn) => set(produce(fn)),
   getWorkspace: () => getWorkspace(get().containers),
   getRooms: () => getRooms(get().containers),
@@ -71,9 +74,18 @@ export const removeContainer = (uuid: keyof ContainerStore['containers']) => {
 
 
 export const setContainerProperty = ({uuid, property, value}) => {
+  // Access the actual container instance directly (not through Immer draft)
+  // so that class setters (like position.setX) are properly invoked
+  const container = useContainer.getState().containers[uuid];
+  if (container) {
+    container[property] = value;
+  }
+  // Update version to trigger re-renders
   useContainer.getState().set(store => {
-    store.containers[uuid][property]=value;
+    store.version++;
   });
+  // Request a render to update the Three.js view
+  emit("RENDER", undefined);
 }
 
 export const setNestedContainerProperty = ({path, property, value}) => {

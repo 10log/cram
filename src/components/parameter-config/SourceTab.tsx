@@ -8,62 +8,15 @@ import useToggle from "../hooks/use-toggle";
 import PropertyRowLabel from "./property-row/PropertyRowLabel";
 import PropertyButton from "./property-row/PropertyButton";
 import { CLFParser } from "../../import-handlers/CLFParser";
+import TransformTable from "./TransformTable";
 
-const { PropertyTextInput, PropertyNumberInput, PropertyCheckboxInput, PropertyVectorInput, PropertySelect } = createPropertyInputs<Source>(
+const { PropertyNumberInput, PropertySelect } = createPropertyInputs<Source>(
   "SOURCE_SET_PROPERTY"
 );
 
-const General = ({ uuid }: { uuid: string }) => {
-  const [open, toggle] = useToggle(true);
-  return (
-    <PropertyRowFolder label="General" open={open} onOpenClose={toggle}>
-      <PropertyTextInput uuid={uuid} label="Name" property="name" tooltip="Sets the name of this container" />
-    </PropertyRowFolder>
-  );
-};
-
-const Visual = ({ uuid }: { uuid: string }) => {
-  const [open, toggle] = useToggle(true);
-  return (
-    <PropertyRowFolder label="Visual" open={open} onOpenClose={toggle}>
-      <PropertyCheckboxInput
-        uuid={uuid}
-        label="Visible"
-        property="visible"
-        tooltip="Toggles the visibility of this container"
-      /> 
-    </PropertyRowFolder>
-  );
-};
-
-
-
-
-const Transform = ({ uuid }: { uuid: string }) => {
-  const [open, toggle] = useToggle(true);
-  return (
-    <PropertyRowFolder label="Transform" open={open} onOpenClose={toggle}>
-      <PropertyVectorInput
-        uuid={uuid}
-        label="Position"
-        property={["x", "y", "z"]}
-        tooltip="Sets the container's position" 
-      />
-      <PropertyVectorInput
-        uuid={uuid}
-        label="Scale"
-        property={["scalex", "scaley", "scalez"]}
-        tooltip="Sets the container's scale" 
-      />
-      <PropertyVectorInput
-        uuid={uuid}
-        label="Rotation"
-        property={["rotationx", "rotationy", "rotationz"]}
-        tooltip="Sets the container's rotation" 
-      />
-    </PropertyRowFolder>
-  );
-};
+const Transform = ({ uuid }: { uuid: string }) => (
+  <TransformTable uuid={uuid} event="SOURCE_SET_PROPERTY" />
+);
 
 
 const Configuration = ({ uuid }: { uuid: string }) => {
@@ -192,8 +145,6 @@ const CLFConfig = ({uuid}: {uuid: string}) => {
 export const SourceTab = ({ uuid }: { uuid: string }) => {
   return (
     <div>
-      <General uuid={uuid} />
-      <Visual uuid={uuid} />
       <Transform uuid={uuid} />
       <Configuration uuid={uuid} />
       <FDTDConfig uuid={uuid} />

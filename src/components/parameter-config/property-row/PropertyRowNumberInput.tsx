@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback } from "react";
 import styled from 'styled-components';
 
 export const StyledInput = styled.input`
@@ -18,6 +18,14 @@ export const StyledInput = styled.input`
   -moz-appearance: none;
   appearance: none;
 
+  /* Hide spin buttons */
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  -moz-appearance: textfield;
+
   :hover{
     outline: none;
     box-shadow: 0 0 0 0 rgba(19,124,189,0), 0 0 0 0 rgba(19,124,189,0), inset 0 0 0 1px rgba(16,22,26,.15), inset 0 1px 1px rgba(16,22,26,.2);
@@ -33,24 +41,39 @@ export const StyledInput = styled.input`
 interface Props {
   value: number;
   onChange: ({ value }: {value: number }) => void;
-  step?: number
+  step?: number;
+  min?: number;
+  max?: number;
 }
 
-export const PropertyRowNumberInput = ({ value, onChange, step }: Props) => {
-  const [_value, setValue] = useState(value);
+export const PropertyRowNumberInput = ({ value, onChange, step = 1, min, max }: Props) => {
+  const handleWheel = useCallback((e: React.WheelEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const delta = e.deltaY < 0 ? step : -step;
+    let newValue = value + delta;
+    if (min !== undefined) newValue = Math.max(min, newValue);
+    if (max !== undefined) newValue = Math.min(max, newValue);
+    if (!Number.isNaN(newValue)) {
+      onChange({ value: newValue });
+    }
+  }, [value, step, min, max, onChange]);
+
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.currentTarget.valueAsNumber;
+    if (!Number.isNaN(newValue)) {
+      onChange({ value: newValue });
+    }
+  }, [onChange]);
+
   return (
     <StyledInput
       type="number"
-      onBlur={() => {
-        if(!Number.isNaN(_value)){
-          onChange({value: _value});
-        } else{
-          setValue(value);
-        }
-      }}
-      onChange={(e) => setValue(e.currentTarget.valueAsNumber) }
-      value={_value}
+      onChange={handleChange}
+      onWheel={handleWheel}
+      value={value}
       step={step}
+      min={min}
+      max={max}
     />
   )
 }

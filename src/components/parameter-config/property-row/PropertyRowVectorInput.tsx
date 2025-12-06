@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 import styled from 'styled-components';
 
 const StyledInput = styled.input`
@@ -19,6 +19,14 @@ const StyledInput = styled.input`
   -moz-appearance: none;
   appearance: none;
 
+  /* Hide spin buttons */
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  -moz-appearance: textfield;
+
   :hover{
     outline: none;
     box-shadow: 0 0 0 0 rgba(19,124,189,0), 0 0 0 0 rgba(19,124,189,0), inset 0 0 0 1px rgba(16,22,26,.15), inset 0 1px 1px rgba(16,22,26,.2);
@@ -34,13 +42,40 @@ const StyledInput = styled.input`
 interface Props {
   value: number;
   onChange: ({ value }: {value: number }) => void;
+  step?: number;
+  min?: number;
+  max?: number;
 }
 
-export const PropertyRowVectorInput = ({ value, onChange }: Props) => (
-  <StyledInput
-    type="number"
-    onChange={(e) => onChange({ value: e.currentTarget.valueAsNumber })}
-    value={value}
-  />
-)
+export const PropertyRowVectorInput = ({ value, onChange, step = 1, min, max }: Props) => {
+  const handleWheel = useCallback((e: React.WheelEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const delta = e.deltaY < 0 ? step : -step;
+    let newValue = value + delta;
+    if (min !== undefined) newValue = Math.max(min, newValue);
+    if (max !== undefined) newValue = Math.min(max, newValue);
+    if (!Number.isNaN(newValue)) {
+      onChange({ value: newValue });
+    }
+  }, [value, step, min, max, onChange]);
+
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.currentTarget.valueAsNumber;
+    if (!Number.isNaN(newValue)) {
+      onChange({ value: newValue });
+    }
+  }, [onChange]);
+
+  return (
+    <StyledInput
+      type="number"
+      onChange={handleChange}
+      onWheel={handleWheel}
+      value={value}
+      step={step}
+      min={min}
+      max={max}
+    />
+  );
+}
 

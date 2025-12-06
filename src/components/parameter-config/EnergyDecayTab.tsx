@@ -1,39 +1,19 @@
 import React from 'react';
 import { emit } from "../../messenger";
-import { pickProps } from "../../common/helpers";
 import useToggle from "../hooks/use-toggle";
-import { createPropertyInputs, PropertyButton } from "./SolverComponents";
+import { PropertyButton } from "./SolverComponents";
 import PropertyRowFolder from "./property-row/PropertyRowFolder";
 import PropertyRow from "./property-row/PropertyRow";
 import PropertyRowLabel from "./property-row/PropertyRowLabel";
-import { useState } from 'react';
-import EnergyDecay from '../../compute/energy-decay';
 
 export interface EnergyDecayTabProps {
-    uuid: string; 
+    uuid: string;
 }
   
-export interface EnergyDecayTabState {
-    
-}
-  
-function _useEnergyDecayProperties(properties: (keyof EnergyDecay)[], ed: EnergyDecay, _set: any) {
-    const [state, setState] = useState(pickProps(properties, ed));
-    const setFunction = <T extends keyof typeof state>(property: T, value: typeof state[T]) => {
-        setState({ ...state, [property]: value });
-    };
-    return [state, setFunction] as [typeof state, typeof setFunction];
-}
-  
-const { PropertyTextInput } = createPropertyInputs<EnergyDecay>(
-    "ENERGYDECAY_SET_PROPERTY"
-);
-
-const General = ({ uuid }: { uuid: string }) => {
+const Input = ({ uuid }: { uuid: string }) => {
     const [open, toggle] = useToggle(true);
     return (
-      <PropertyRowFolder label="General" open={open} onOpenClose={toggle}>
-        <PropertyTextInput uuid={uuid} label="Name" property="name" tooltip="Sets the name of the solver" />
+      <PropertyRowFolder label="Input" open={open} onOpenClose={toggle}>
         <PropertyRow>
             <PropertyRowLabel label={"Upload IR"}></PropertyRowLabel>
             <div style={{alignItems:'center'}}>
@@ -42,7 +22,6 @@ const General = ({ uuid }: { uuid: string }) => {
                 id = "irinput"
                 accept = ".wav"
                 onChange={(e) => {
-                    //console.log(e.target.files);
                     const reader = new FileReader();
 
                     reader.addEventListener('loadend', (_loadEndEvent) => {
@@ -62,7 +41,7 @@ const General = ({ uuid }: { uuid: string }) => {
 
 export const EnergyDecayTab = ({ uuid }: EnergyDecayTabProps) => {
     return (
-        <General uuid={uuid} />
+        <Input uuid={uuid} />
     );
 };
 

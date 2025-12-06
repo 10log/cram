@@ -47,6 +47,11 @@ export const ResultsPanel = () => {
     return on("UPDATE_RESULT", (e) => switchToResultTab(e.uuid));
   }, [switchToResultTab]);
 
+  // When a result is selected from ResultPreview, switch to that tab
+  useEffect(() => {
+    return on("SELECT_RESULT_TAB", (uuid: string) => switchToResultTab(uuid));
+  }, [switchToResultTab]);
+
   return keys.length > 0 ? (
     <div
       style={{
@@ -95,3 +100,9 @@ const ChartSelect = memo(({ uuid }: { uuid: string }) => {
       return null;
   }
 });
+
+declare global {
+  interface EventTypes {
+    SELECT_RESULT_TAB: string;
+  }
+}

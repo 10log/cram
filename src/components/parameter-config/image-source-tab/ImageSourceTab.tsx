@@ -1,98 +1,28 @@
-import React, { useEffect, useMemo, useReducer } from "react";
+import React, { useEffect, useReducer } from "react";
 import "./ImageSourceTab.css";
 import {ImageSourceSolver} from "../../../compute/raytracer/image-source/index";
 import { on } from "../../../messenger";
-import { useContainer, useSolver } from "../../../store";
+import { useSolver } from "../../../store";
 import { pickProps } from "../../../common/helpers";
 import useToggle from "../../hooks/use-toggle";
 import { createPropertyInputs, useSolverProperty, PropertyButton  } from "../SolverComponents";
 import PropertyRowFolder from "../property-row/PropertyRowFolder";
-import PropertyRow from "../property-row/PropertyRow";
-import PropertyRowLabel from "../property-row/PropertyRowLabel";
-import PropertyRowCheckbox from "../property-row/PropertyRowCheckbox";
 import { useShallow } from "zustand/react/shallow";
+import SourceReceiverMatrix from "../SourceReceiverMatrix";
 
 export interface ImageSourceTabProps {
   uuid: string;
 }
 
-export const ReceiverSelect = ({ uuid }: { uuid: string }) => {
-  const containers = useContainer((state) => state.containers);
-  const receivers = useMemo(() => {
-    return Object.values(containers)
-      .filter(c => c.kind === "receiver")
-      .map(c => ({ uuid: c.uuid, name: c.name }));
-  }, [containers]);
-
-  const [receiverIDs, setReceiverIDs] = useSolverProperty<ImageSourceSolver, "receiverIDs">(
-    uuid,
-    "receiverIDs",
-    "IMAGESOURCE_SET_PROPERTY"
-  );
-
-  return (
-    <>
-      {receivers.map((rec) => (
-        <PropertyRow key={rec.uuid}>
-          <PropertyRowLabel label={rec.name} hasToolTip={false} />
-          <PropertyRowCheckbox
-            value={receiverIDs.includes(rec.uuid)}
-            onChange={(e) =>
-              setReceiverIDs({
-                value: e.value ? [...receiverIDs, rec.uuid] : receiverIDs.filter((x) => x !== rec.uuid)
-              })
-            }
-          />
-        </PropertyRow>
-      ))}
-    </>
-  );
-};
-
-export const SourceSelect = ({ uuid }: { uuid: string }) => {
-  const containers = useContainer((state) => state.containers);
-  const sources = useMemo(() => {
-    return Object.values(containers)
-      .filter(c => c.kind === "source")
-      .map(c => ({ uuid: c.uuid, name: c.name }));
-  }, [containers]);
-
-  const [sourceIDs, setSourceIDs] = useSolverProperty<ImageSourceSolver, "sourceIDs">(
-    uuid,
-    "sourceIDs",
-    "IMAGESOURCE_SET_PROPERTY"
-  );
-
-  return (
-    <>
-      {sources.map((src) => (
-        <PropertyRow key={src.uuid}>
-          <PropertyRowLabel label={src.name} hasToolTip={false} />
-          <PropertyRowCheckbox
-            value={sourceIDs.includes(src.uuid)}
-            onChange={(e) =>
-              setSourceIDs({
-                value: e.value ? [...sourceIDs, src.uuid] : sourceIDs.filter((x) => x !== src.uuid)
-              })
-            }
-          />
-        </PropertyRow>
-      ))}
-    </>
-  );
-};
-
-
-const { PropertyTextInput, PropertyNumberInput, PropertyCheckboxInput } = createPropertyInputs<ImageSourceSolver>(
+const { PropertyNumberInput, PropertyCheckboxInput } = createPropertyInputs<ImageSourceSolver>(
   "IMAGESOURCE_SET_PROPERTY"
 );
 
-
-const General = ({ uuid }: { uuid: string }) => {
+const SourceReceiverPairs = ({ uuid }: { uuid: string }) => {
   const [open, toggle] = useToggle(true);
   return (
-    <PropertyRowFolder label="General" open={open} onOpenClose={toggle}>
-      <PropertyTextInput uuid={uuid} label="Name" property="name" tooltip="Sets the name of this solver" />
+    <PropertyRowFolder label="Source / Receiver Pairs" open={open} onOpenClose={toggle}>
+      <SourceReceiverMatrix uuid={uuid} eventType="IMAGESOURCE_SET_PROPERTY" />
     </PropertyRowFolder>
   );
 };
@@ -114,24 +44,6 @@ const Calculation = ({ uuid }: { uuid: string}) => {
       <PropertyNumberInput uuid={uuid} label="Maximum Order" property="maxReflectionOrderReset" tooltip="Sets the maximum reflection order"/>
       <PropertyButton disabled={disabled} event="UPDATE_IMAGESOURCE" args={uuid} label="Update" tooltip="Updates Imagesource Calculation" />
       <PropertyButton disabled={disabled} event="RESET_IMAGESOURCE" args={uuid} label="Clear" tooltip="Clears Imagesource Calculation" />
-    </PropertyRowFolder>
-  );
-}
-
-const SourceConfiguration = ({ uuid }: { uuid: string}) => {
-  const [open, toggle] = useToggle(true);
-  return (
-    <PropertyRowFolder label="Source Configuration" open={open} onOpenClose={toggle}>
-      <SourceSelect uuid={uuid} />
-    </PropertyRowFolder>
-  );
-}
-
-const ReceiverConfiguration = ({ uuid }: { uuid: string}) => {
-  const [open, toggle] = useToggle(true);
-  return (
-    <PropertyRowFolder label="Receiver Configuration" open={open} onOpenClose={toggle}>
-      <ReceiverSelect uuid={uuid} />
     </PropertyRowFolder>
   );
 }
@@ -165,13 +77,10 @@ const Developer = ({ uuid }: { uuid: string}) => {
   );
 }
 export const ImageSourceTab = ({ uuid }: ImageSourceTabProps) => {
-
   return (
     <div>
-      <General uuid={uuid} />
       <Calculation uuid={uuid}/>
-      <SourceConfiguration uuid={uuid}/>
-      <ReceiverConfiguration uuid={uuid}/>
+      <SourceReceiverPairs uuid={uuid}/>
       <Graphing uuid={uuid}/>
       <ImpulseResponse uuid={uuid}/>
       <Developer uuid={uuid}/>

@@ -6,6 +6,13 @@ import { UNITS } from "../enums/units";
 
 type Version = `${number}.${number}.${number}`;
 
+export interface ProgressInfo {
+  visible: boolean;
+  message: string;
+  progress: number; // 0-100, or -1 for indeterminate
+  solverUuid?: string;
+}
+
 export type AppStore = {
   units: UNITS,
   version: Version,
@@ -22,6 +29,7 @@ export type AppStore = {
   resultsPanelOpen: boolean;
   canUndo: boolean,
   canRedo: boolean,
+  progress: ProgressInfo;
   set: (fn: (draft: AppStore) => void) => void;
 };
 
@@ -43,6 +51,12 @@ export const useAppStore = create<AppStore>((set) => ({
   materialDrawerOpen: false,
   settingsDrawerVisible: false,
   resultsPanelOpen: false,
+  progress: {
+    visible: false,
+    message: "",
+    progress: -1,
+    solverUuid: undefined
+  },
   set: (fn: (draft: AppStore) => void) => set(produce(fn))
 }));
 
@@ -50,6 +64,9 @@ declare global {
   interface EventTypes {
     OPEN_MATERIAL_DRAWER: Surface | undefined;
     TOGGLE_MATERIAL_SEARCH: undefined;
+    SHOW_PROGRESS: { message: string; progress?: number; solverUuid?: string };
+    UPDATE_PROGRESS: { progress: number; message?: string };
+    HIDE_PROGRESS: undefined;
   }
 }
 
@@ -74,5 +91,32 @@ on("TOGGLE_RESULTS_PANEL", (open) => {
     }
   })
 })
+
+on("SHOW_PROGRESS", ({ message, progress = -1, solverUuid }) => {
+  useAppStore.getState().set(draft => {
+    draft.progress.visible = true;
+    draft.progress.message = message;
+    draft.progress.progress = progress;
+    draft.progress.solverUuid = solverUuid;
+  });
+});
+
+on("UPDATE_PROGRESS", ({ progress, message }) => {
+  useAppStore.getState().set(draft => {
+    draft.progress.progress = progress;
+    if (message !== undefined) {
+      draft.progress.message = message;
+    }
+  });
+});
+
+on("HIDE_PROGRESS", () => {
+  useAppStore.getState().set(draft => {
+    draft.progress.visible = false;
+    draft.progress.message = "";
+    draft.progress.progress = -1;
+    draft.progress.solverUuid = undefined;
+  });
+});
 
 export default useAppStore;

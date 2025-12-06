@@ -27,15 +27,14 @@ function _useRT60Properties(properties: (keyof RT60)[], rt60solver: RT60, _set: 
   return [state, setFunction] as [typeof state, typeof setFunction];
 }
 
-const { PropertyTextInput, PropertyNumberInput } = createPropertyInputs<RT60>(
+const { PropertyNumberInput } = createPropertyInputs<RT60>(
   "RT60_SET_PROPERTY"
 );
 
-const General = ({ uuid }: { uuid: string }) => {
+const Controls = ({ uuid }: { uuid: string }) => {
   const [open, toggle] = useToggle(true);
   return (
-    <PropertyRowFolder label="General" open={open} onOpenClose={toggle}>
-      <PropertyTextInput uuid={uuid} label="Name" property="name" tooltip="Sets the name of this solver" />
+    <PropertyRowFolder label="Controls" open={open} onOpenClose={toggle}>
       <PropertyButton event="UPDATE_RT60" args={uuid} label="Update" tooltip="Updates RT Calculation"/>
     </PropertyRowFolder>
   );
@@ -105,7 +104,7 @@ function _getSourcesAndReceivers(state: any) {
 export const RT60Tab = ({ uuid }: RT60TabProps) => {
   return (
     <div>
-      <General uuid={uuid} />
+      <Controls uuid={uuid} />
       <Settings uuid={uuid} />
       <Export uuid={uuid} />
     </div>
