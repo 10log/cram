@@ -2,7 +2,7 @@ import React from "react";
 import SplitterLayout from "react-splitter-layout-react-v18";
 import { FocusStyleManager } from "@blueprintjs/core";
 import ImportDialog from "./ImportDialog";
-import ObjectView from "./object-view/ObjectView";
+// import ObjectView from "./object-view/ObjectView";
 // import ConstructionsView from "./ConstructionsView";
 import PanelContainer from "./panel-container/PanelContainer";
 import { emit, messenger, on } from "../messenger";
@@ -11,14 +11,16 @@ import "../css";
 import "./App.css";
 
 
-import { ParameterConfig } from "./parameter-config/ParameterConfig";
 import { Stat } from "./parameter-config/Stats";
+import { SolverCardList } from "./solver-cards";
+import { ObjectCardList } from "./object-cards";
 
 
 
 import SaveDialog from "./SaveDialog";
 
 import { NavBarComponent } from "./NavBarComponent";
+import ProgressIndicator from "./ProgressIndicator";
 
 
 
@@ -119,12 +121,6 @@ export default class App extends React.Component<AppProps, AppState> {
   }
 
   render() {
-    const ObjectViewPanel = (
-      <PanelContainer>
-        <ObjectView />
-      </PanelContainer>
-    );
-
     const Editor = (
         <EditorContainer>
               <div id="response-overlay" className={"response_overlay response_overlay-hidden"} ref={this.responseOverlay} />
@@ -137,9 +133,10 @@ export default class App extends React.Component<AppProps, AppState> {
     return (
       <div>
         <NavBarComponent />
+        <ProgressIndicator />
         {/* <SettingsDrawer /> */}
 
-        
+
         <MaterialSearch />
 
 
@@ -164,8 +161,8 @@ export default class App extends React.Component<AppProps, AppState> {
               // this.setState({ rightPanelSize: value });
             }}
           >
-            <SplitterLayout 
-              vertical 
+            <SplitterLayout
+              vertical
               percentage
               secondaryInitialSize={0}
               onDragStart={() => {emit("RENDERER_SHOULD_ANIMATE", true);}}
@@ -178,28 +175,12 @@ export default class App extends React.Component<AppProps, AppState> {
               </PanelContainer>
             </SplitterLayout>
 
-            <SplitterLayout
-              vertical
-              primaryMinSize={40}
-              secondaryMinSize={1}
-              secondaryInitialSize={this.props.rightPanelTopInitialSize}
-              customClassName="canvas-parameter-config"
-              onDragEnd={() => {
-                this.saveLayout();
-              }}
-              onSecondaryPaneSizeChange={(value: number) => {
-                this.rightPanelTopSize = value;
-                // this.setState({ rightPanelTopSize: value });
-              }}
-            >
-              <PanelContainer>
-                <>{ObjectViewPanel}</>
-              </PanelContainer>
-
-              <PanelContainer className="panel full parameter-config-panel">
-                <ParameterConfig />
-              </PanelContainer>
-            </SplitterLayout>
+            <PanelContainer className="panel full">
+              <div style={{ height: '100%', overflowY: 'auto' }}>
+                <ObjectCardList />
+                <SolverCardList />
+              </div>
+            </PanelContainer>
           </SplitterLayout>
       </div>
     );

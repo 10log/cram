@@ -11,8 +11,8 @@ import { BRDF } from "../compute/raytracer/brdf";
 import Room from "./room";
 import csg from "../compute/csg";
 import { numbersEqualWithinTolerence } from "../common/equal-within-range";
-import { addContainer, removeContainer, setContainerProperty } from "../store";
-import { on } from "../messenger";
+import { addContainer, removeContainer, setContainerProperty, useContainer } from "../store";
+import { on, emit } from "../messenger";
 import {scatteringFunction} from '../compute/acoustics/scattering-function';
 import { TessellateModifier } from "../compute/radiance/TessellateModifier";
 import { Float32BufferAttribute } from "three";
@@ -42,6 +42,18 @@ const defaults = {
       depthWrite: true,
       depthTest: false,
       name: "surface-selected-material"
+    }),
+
+    hovered: new THREE.MeshLambertMaterial({
+      fog: false,
+      color: new THREE.Color(0xffeb3b),
+      transparent: true,
+      opacity: 0.4,
+      side: THREE.DoubleSide,
+      reflectivity: 0.15,
+      depthWrite: true,
+      depthTest: false,
+      name: "surface-hovered-material"
     }),
 
     mesh: new THREE.MeshLambertMaterial({
@@ -469,6 +481,22 @@ class Surface extends Container {
     (this.mesh.material as THREE.MeshLambertMaterial) = this.normalMaterial;
     (this.mesh.material as THREE.MeshLambertMaterial).needsUpdate = true;
   }
+  hover() {
+    // Don't override selected state with hover
+    if (!this.selected) {
+      (this.mesh.material as THREE.MeshLambertMaterial) = defaults.materials.hovered;
+      (this.mesh.material as THREE.MeshLambertMaterial).needsUpdate = true;
+    }
+  }
+  unhover() {
+    // Restore to appropriate state
+    if (this.selected) {
+      (this.mesh.material as THREE.MeshLambertMaterial) = this.selectedMaterial;
+    } else {
+      (this.mesh.material as THREE.MeshLambertMaterial) = this.normalMaterial;
+    }
+    (this.mesh.material as THREE.MeshLambertMaterial).needsUpdate = true;
+  }
 
 
   resetHits() {
@@ -697,12 +725,30 @@ declare global {
     ADD_SURFACE: Surface | undefined;
     SURFACE_SET_PROPERTY: SetPropertyPayload<Surface>;
     REMOVE_SURFACE: string;
+    SURFACE_HOVER: string;
+    SURFACE_UNHOVER: string;
   }
 }
 
 on("ADD_SURFACE", addContainer(Surface))
 on("REMOVE_SURFACE", removeContainer);
 on("SURFACE_SET_PROPERTY", setContainerProperty)
+on("SURFACE_HOVER", (uuid) => {
+  const { containers } = useContainer.getState();
+  const surface = containers[uuid] as Surface;
+  if (surface && surface.hover) {
+    surface.hover();
+    emit("RENDER", undefined);
+  }
+});
+on("SURFACE_UNHOVER", (uuid) => {
+  const { containers } = useContainer.getState();
+  const surface = containers[uuid] as Surface;
+  if (surface && surface.unhover) {
+    surface.unhover();
+    emit("RENDER", undefined);
+  }
+});
 
 
 export default Surface;

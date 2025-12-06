@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { emit, on } from "../../messenger";
+import React from "react";
+import { emit } from "../../messenger";
 import { useSolver } from "../../store";
 import PropertyRow from "./property-row/PropertyRow";
 import PropertyRowLabel from "./property-row/PropertyRowLabel";
@@ -28,20 +28,18 @@ export function useSolverProperty<T extends RayTracer | FDTD_2D|ImageSourceSolve
   property: K,
   event: SetPropertyEventTypes
 ) {
-  const defaultValue = useSolver<T[K]>(
-    (state) => (state.solvers[uuid] as T)[property]
-  );
-  const [state, setState] = useState<T[K]>(defaultValue);
-  useEffect(
-    () => on(event, (props) => {
-      if(props.uuid === uuid && props.property === property) setState(props.value) 
-    }),
-    [uuid]
+  // Include version in selector to force re-render when properties change
+  const value = useSolver<T[K]>(
+    (state) => {
+      // Access version to subscribe to changes (unused but triggers re-render)
+      void state.version;
+      return (state.solvers[uuid] as T)[property];
+    }
   );
   //@ts-ignore
   const changeHandler = (e: any) => emit(event, { uuid, property, value: e.value });
 
-  return [state, changeHandler] as [typeof state, typeof changeHandler];
+  return [value, changeHandler] as [typeof value, typeof changeHandler];
 }
 
 type PropertyRowInputElement = ({ value, onChange }: { value: any, onChange: any }) => JSX.Element;

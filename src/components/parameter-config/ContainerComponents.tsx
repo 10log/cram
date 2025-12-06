@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { emit, on } from "../../messenger";
+import React from "react";
+import { emit } from "../../messenger";
 import { Source, Receiver, Surface, Room } from "../../objects";
 import { useContainer } from "../../store";
 import PropertyRow from "./property-row/PropertyRow";
@@ -25,21 +25,18 @@ export function useContainerProperty<T extends Containers, K extends keyof T>(
   property: K,
   event: SetPropertyEventTypes
 ) {
-  const defaultValue = useContainer<T[K]>(
-    (state) => (state.containers[uuid] as T)[property]
-  );
-  const [state, setState] = useState<T[K]>(defaultValue);
-  useEffect(
-    () => on(event, (props) => {
-      //@ts-ignore
-      if(props.uuid === uuid && props.property === property) setState(props.value) 
-    }),
-    [uuid]
+  // Include version in selector to force re-render when properties change
+  const value = useContainer<T[K]>(
+    (state) => {
+      // Access version to subscribe to changes (unused but triggers re-render)
+      void state.version;
+      return (state.containers[uuid] as T)[property];
+    }
   );
   //@ts-ignore
   const changeHandler = (e: any) => emit(event, { uuid, property, value: e.value });
 
-  return [state, changeHandler] as [typeof state, typeof changeHandler];
+  return [value, changeHandler] as [typeof value, typeof changeHandler];
 }
 
 type Option =  { value: string, label: string }

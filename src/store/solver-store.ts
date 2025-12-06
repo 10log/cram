@@ -10,6 +10,7 @@ import { omit } from "../common/helpers";
 /* Solver */
 export type SolverStore = {
   solvers: KeyValuePair<Solver>;
+  version: number;
   set: SetFunction<SolverStore>;
   keys: () => string[];
 };
@@ -17,6 +18,7 @@ export type SolverStore = {
 // solver hook
 export const useSolver = create<SolverStore>((set, get) => ({
   solvers: {},
+  version: 0,
   keys: () => Object.keys(get().solvers),
   set: (fn) => set(produce(fn))
 }));
@@ -40,8 +42,15 @@ export const removeSolver = (uuid: keyof SolverStore['solvers']) => {
 
 
 export const setSolverProperty = ({uuid, property, value}) => {
+  // Access the actual solver instance directly (not through Immer draft)
+  // so that class setters are properly invoked
+  const solver = useSolver.getState().solvers[uuid];
+  if (solver) {
+    solver[property] = value;
+  }
+  // Update version to trigger re-renders
   useSolver.getState().set(store => {
-    store.solvers[uuid][property]=value;
+    store.version++;
   });
 }
 

@@ -30,6 +30,12 @@ describe('useAppStore', () => {
       resultsPanelOpen: false,
       canUndo: false,
       canRedo: false,
+      progress: {
+        visible: false,
+        message: '',
+        progress: -1,
+        solverUuid: undefined,
+      },
     });
   });
 
@@ -228,6 +234,78 @@ describe('useAppStore', () => {
         draft.rendererStatsVisible = false;
       });
       expect(useAppStore.getState().rendererStatsVisible).toBe(false);
+    });
+  });
+
+  describe('Progress Indicator', () => {
+    it('has progress hidden by default', () => {
+      const progress = useAppStore.getState().progress;
+      expect(progress.visible).toBe(false);
+      expect(progress.message).toBe('');
+      expect(progress.progress).toBe(-1);
+      expect(progress.solverUuid).toBeUndefined();
+    });
+
+    it('shows progress indicator', () => {
+      useAppStore.getState().set((draft) => {
+        draft.progress.visible = true;
+        draft.progress.message = 'Loading...';
+        draft.progress.progress = 50;
+        draft.progress.solverUuid = 'solver-123';
+      });
+
+      const progress = useAppStore.getState().progress;
+      expect(progress.visible).toBe(true);
+      expect(progress.message).toBe('Loading...');
+      expect(progress.progress).toBe(50);
+      expect(progress.solverUuid).toBe('solver-123');
+    });
+
+    it('updates progress value', () => {
+      useAppStore.getState().set((draft) => {
+        draft.progress.visible = true;
+        draft.progress.progress = 25;
+      });
+      expect(useAppStore.getState().progress.progress).toBe(25);
+
+      useAppStore.getState().set((draft) => {
+        draft.progress.progress = 75;
+      });
+      expect(useAppStore.getState().progress.progress).toBe(75);
+    });
+
+    it('supports indeterminate progress (-1)', () => {
+      useAppStore.getState().set((draft) => {
+        draft.progress.visible = true;
+        draft.progress.progress = -1;
+        draft.progress.message = 'Processing...';
+      });
+
+      const progress = useAppStore.getState().progress;
+      expect(progress.progress).toBe(-1);
+      expect(progress.message).toBe('Processing...');
+    });
+
+    it('hides progress indicator', () => {
+      // First show it
+      useAppStore.getState().set((draft) => {
+        draft.progress.visible = true;
+        draft.progress.message = 'Loading...';
+        draft.progress.progress = 50;
+      });
+
+      // Then hide it
+      useAppStore.getState().set((draft) => {
+        draft.progress.visible = false;
+        draft.progress.message = '';
+        draft.progress.progress = -1;
+        draft.progress.solverUuid = undefined;
+      });
+
+      const progress = useAppStore.getState().progress;
+      expect(progress.visible).toBe(false);
+      expect(progress.message).toBe('');
+      expect(progress.progress).toBe(-1);
     });
   });
 });

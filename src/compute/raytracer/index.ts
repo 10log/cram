@@ -984,64 +984,156 @@ class RayTracer extends Solver {
 
   async reportImpulseResponse() {
     if (this.receiverIDs.length === 0 || this.sourceIDs.length === 0) return;
-    if (!this.paths[this.receiverIDs[0]] || this.paths[this.receiverIDs[0]].length === 0) return;
 
-    try {
-      const sampleRate = audioEngine.sampleRate;
-      const { normalizedSignal } = await this.calculateImpulseResponseForDisplay();
+    const containers = useContainer.getState().containers;
+    const sampleRate = audioEngine.sampleRate;
+    const { useResult } = require("../../store/result-store");
 
-      // Also calculate the full impulse response for playback (in the background)
-      this.calculateImpulseResponse().then(ir => {
-        this.impulseResponse = ir;
-      }).catch(console.error);
-
-      // Downsample for display (max 2000 points for performance)
-      const maxDisplayPoints = 2000;
-      const step = Math.max(1, Math.floor(normalizedSignal.length / maxDisplayPoints));
-      const displayData: { time: number; amplitude: number }[] = [];
-
-      for (let i = 0; i < normalizedSignal.length; i += step) {
-        displayData.push({
-          time: i / sampleRate,
-          amplitude: normalizedSignal[i]
-        });
+    // Count total pairs to calculate progress
+    const pairs: Array<{ sourceId: string; receiverId: string; paths: RayPath[] }> = [];
+    for (const sourceId of this.sourceIDs) {
+      for (const receiverId of this.receiverIDs) {
+        if (!this.paths[receiverId] || this.paths[receiverId].length === 0) continue;
+        const pathsForPair = this.paths[receiverId].filter(p => p.source === sourceId);
+        if (pathsForPair.length > 0) {
+          pairs.push({ sourceId, receiverId, paths: pathsForPair });
+        }
       }
+    }
 
-      const containers = useContainer.getState().containers;
-      const sourceId = this.sourceIDs[0];
-      const receiverId = this.receiverIDs[0];
+    if (pairs.length === 0) return;
+
+    // Show progress indicator
+    emit("SHOW_PROGRESS", {
+      message: "Calculating impulse response...",
+      progress: 0,
+      solverUuid: this.uuid
+    });
+
+    // Calculate IR for each source-receiver pair
+    for (let i = 0; i < pairs.length; i++) {
+      const { sourceId, receiverId, paths: pathsForPair } = pairs[i];
       const sourceName = containers[sourceId]?.name || 'Source';
       const receiverName = containers[receiverId]?.name || 'Receiver';
 
-      // Use a deterministic UUID based on source/receiver pair so we update the same tab
-      const resultUuid = `${this.uuid}-ir-${sourceId}-${receiverId}`;
+      // Update progress
+      const progressPercent = Math.round((i / pairs.length) * 100);
+      emit("UPDATE_PROGRESS", {
+        progress: progressPercent,
+        message: `Calculating IR: ${sourceName} → ${receiverName}`
+      });
 
-      const { useResult } = require("../../store/result-store");
-      const existingResult = useResult.getState().results[resultUuid];
+      try {
+        const { normalizedSignal } = await this.calculateImpulseResponseForPair(sourceId, receiverId, pathsForPair);
 
-      const result = {
-        kind: ResultKind.ImpulseResponse,
-        name: `IR: ${sourceName} → ${receiverName}`,
-        uuid: resultUuid,
-        from: this.uuid,
-        info: {
-          sampleRate,
-          sourceName,
-          receiverName
-        },
-        data: displayData
-      };
+        // Also calculate the full impulse response for playback (first pair only)
+        if (sourceId === this.sourceIDs[0] && receiverId === this.receiverIDs[0]) {
+          this.calculateImpulseResponse().then(ir => {
+            this.impulseResponse = ir;
+          }).catch(console.error);
+        }
 
-      if (existingResult) {
-        // Update existing result
-        emit("UPDATE_RESULT", { uuid: resultUuid, result });
-      } else {
-        // Add new result
-        emit("ADD_RESULT", result);
+        // Downsample for display (max 2000 points for performance)
+        const maxDisplayPoints = 2000;
+        const step = Math.max(1, Math.floor(normalizedSignal.length / maxDisplayPoints));
+        const displayData: { time: number; amplitude: number }[] = [];
+
+        for (let j = 0; j < normalizedSignal.length; j += step) {
+          displayData.push({
+            time: j / sampleRate,
+            amplitude: normalizedSignal[j]
+          });
+        }
+
+        // Use a deterministic UUID based on source/receiver pair so we update the same tab
+        const resultUuid = `${this.uuid}-ir-${sourceId}-${receiverId}`;
+
+        const existingResult = useResult.getState().results[resultUuid];
+
+        const result = {
+          kind: ResultKind.ImpulseResponse,
+          name: `IR: ${sourceName} → ${receiverName}`,
+          uuid: resultUuid,
+          from: this.uuid,
+          info: {
+            sampleRate,
+            sourceName,
+            receiverName,
+            sourceId,
+            receiverId
+          },
+          data: displayData
+        };
+
+        if (existingResult) {
+          // Update existing result
+          emit("UPDATE_RESULT", { uuid: resultUuid, result });
+        } else {
+          // Add new result
+          emit("ADD_RESULT", result);
+        }
+      } catch (err) {
+        console.error(`Failed to calculate impulse response for ${sourceId} -> ${receiverId}:`, err);
       }
-    } catch (err) {
-      console.error("Failed to calculate impulse response:", err);
     }
+
+    // Hide progress indicator
+    emit("HIDE_PROGRESS", undefined);
+  }
+
+  async calculateImpulseResponseForPair(sourceId: string, receiverId: string, paths: RayPath[], initialSPL = 100, frequencies = ac.Octave(63, 16000), sampleRate = audioEngine.sampleRate): Promise<{ signal: Float32Array; normalizedSignal: Float32Array }> {
+    if (paths.length === 0) throw Error("No rays have been traced for this pair");
+
+    let sorted = paths.sort((a, b) => a.time - b.time) as RayPath[];
+
+    const totalTime = sorted[sorted.length - 1].time + 0.05;
+
+    const spls = Array(frequencies.length).fill(initialSPL);
+
+    const numberOfSamples = floor(sampleRate * totalTime) * 2;
+
+    let samples: Array<Float32Array> = [];
+    for (let f = 0; f < frequencies.length; f++) {
+      samples.push(new Float32Array(numberOfSamples));
+    }
+
+    // add in raytracer paths
+    for (let i = 0; i < sorted.length; i++) {
+      const randomPhase = coinFlip() ? 1 : -1;
+      const t = sorted[i].time;
+      const p = this.arrivalPressure(spls, frequencies, sorted[i]).map(x => x * randomPhase);
+      const roundedSample = floor(t * sampleRate);
+
+      for (let f = 0; f < frequencies.length; f++) {
+        samples[f][roundedSample] += p[f];
+      }
+    }
+
+    const worker = FilterWorker();
+
+    return new Promise((resolve, reject) => {
+      worker.postMessage({ samples });
+      worker.onmessage = (event) => {
+        const filteredSamples = event.data.samples as Float32Array[];
+
+        const signal = new Float32Array(filteredSamples[0].length >> 1);
+
+        for (let i = 0; i < filteredSamples.length; i++) {
+          for (let j = 0; j < signal.length; j++) {
+            signal[j] += filteredSamples[i][j];
+          }
+        }
+
+        const normalizedSignal = normalize(signal.slice());
+
+        worker.terminate();
+        resolve({ signal, normalizedSignal });
+      };
+      worker.onerror = (error) => {
+        worker.terminate();
+        reject(error);
+      };
+    });
   }
 
   async calculateImpulseResponseForDisplay(initialSPL = 100, frequencies = ac.Octave(63, 16000), sampleRate = audioEngine.sampleRate): Promise<{ signal: Float32Array; normalizedSignal: Float32Array }> {
@@ -1129,17 +1221,11 @@ class RayTracer extends Solver {
   clearImpulseResponseResults() {
     const { useResult } = require("../../store/result-store");
     const results = useResult.getState().results;
-    // Find any impulse response results from this raytracer and clear their data
+    // Find any impulse response results from this raytracer and remove them
     Object.keys(results).forEach((key) => {
       const result = results[key];
       if (result.from === this.uuid && result.kind === ResultKind.ImpulseResponse) {
-        emit("UPDATE_RESULT", {
-          uuid: key,
-          result: {
-            ...result,
-            data: [] // Empty data will show "No impulse response data" message
-          }
-        });
+        emit("REMOVE_RESULT", key);
       }
     });
   }
