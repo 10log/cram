@@ -18,8 +18,16 @@
     "start": "node scripts/start.js",
     "build": "node scripts/build.js",
     "test": "node scripts/test.js --passWithNoTests",
+    "test:watch": "node scripts/test.js --watch",
+    "test:coverage": "node scripts/test.js --coverage",
+    "test:perf": "node scripts/test.js --testPathPatterns=perf\\.spec --runInBand",
+    "test:perf:update-baseline": "cross-env UPDATE_PERF_BASELINE=1 npm run test:perf",
     "lint": "eslint src/",
-    "lint:types": "tsc --noEmit"
+    "lint:types": "tsc --noEmit",
+    "test:e2e": "npx playwright test",
+    "test:e2e:update": "npx playwright test --update-snapshots",
+    "test:e2e:ui": "npx playwright test --ui",
+    "test:e2e:report": "npx playwright show-report"
   },
   "dependencies": {
     "@babel/runtime": "^7.28.4",
@@ -89,6 +97,10 @@
     "@babel/preset-env": "^7.28.5",
     "@babel/preset-react": "^7.28.5",
     "@babel/preset-typescript": "^7.28.5",
+    "@playwright/test": "^1.57.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
     "@types/chroma-js": "^3.1.2",
     "@types/file-saver": "^2.0.1",
     "@types/lodash": "^4.17.21",
@@ -119,6 +131,7 @@
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-unused-imports": "^4.3.0",
+    "fast-check": "^4.3.0",
     "file-loader": "^6.2.0",
     "fork-ts-checker-webpack-plugin": "^9.1.0",
     "fs-extra": "^11.3.2",
@@ -154,14 +167,32 @@
   "jest": {
     "collectCoverageFrom": [
       "src/**/*.{js,jsx,ts,tsx}",
-      "!src/**/*.d.ts"
+      "!src/**/*.d.ts",
+      "!src/__fixtures__/**",
+      "!src/__tests__/utils/**"
     ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 50,
+        "functions": 50,
+        "lines": 50,
+        "statements": 50
+      }
+    },
     "setupFiles": [
       "react-app-polyfill/jsdom"
+    ],
+    "setupFilesAfterEnv": [
+      "<rootDir>/src/setupTests.ts"
     ],
     "testMatch": [
       "<rootDir>/src/**/__tests__/**/*.{js,jsx,ts,tsx}",
       "<rootDir>/src/**/?(*.)(spec|test).{js,jsx,ts,tsx}"
+    ],
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "\\.perf\\.spec\\.",
+      "src/__tests__/utils/"
     ],
     "testEnvironment": "jsdom",
     "testEnvironmentOptions": {
@@ -173,7 +204,7 @@
       "^(?!.*\\.(js|jsx|ts|tsx|css|json)$)": "<rootDir>/config/jest/fileTransform.js"
     },
     "transformIgnorePatterns": [
-      "[/\\\\]node_modules[/\\\\].+\\.(js|jsx|ts|tsx)$",
+      "node_modules/(?!(uuid|three|three-mesh-bvh)/)",
       "^.+\\.module\\.(css|sass|scss)$"
     ],
     "moduleNameMapper": {

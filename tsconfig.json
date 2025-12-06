@@ -59,6 +59,13 @@
   "exclude": [
     "node_modules/**",
     "src/compute/raytracer/lib",
-    "src/as/assembly"
+    "src/as/assembly",
+    "src/__tests__/**",
+    "src/__mocks__/**",
+    "src/**/*.spec.ts",
+    "src/**/*.spec.tsx",
+    "src/**/*.test.ts",
+    "src/**/*.test.tsx",
+    "e2e/**"
   ]
 }

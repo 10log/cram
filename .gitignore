@@ -139,3 +139,11 @@ src/res/models/semi/semi.blend1
 
 # claude
 .claude/settings.local.json
+
+# Performance baseline (machine-specific)
+.performance-baseline.json
+
+# Playwright
+playwright-report/
+e2e/test-results/
+test-results/
