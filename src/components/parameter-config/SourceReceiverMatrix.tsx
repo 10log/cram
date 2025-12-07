@@ -74,7 +74,7 @@ const CornerCell = styled.th`
 interface SourceReceiverMatrixProps {
   uuid: string;
   disabled?: boolean;
-  eventType?: "RAYTRACER_SET_PROPERTY" | "IMAGESOURCE_SET_PROPERTY";
+  eventType?: "RAYTRACER_SET_PROPERTY" | "IMAGESOURCE_SET_PROPERTY" | "BEAMTRACE_SET_PROPERTY";
 }
 
 export const SourceReceiverMatrix = memo(({ uuid, disabled = false, eventType = "RAYTRACER_SET_PROPERTY" }: SourceReceiverMatrixProps) => {
@@ -93,17 +93,21 @@ export const SourceReceiverMatrix = memo(({ uuid, disabled = false, eventType = 
       .map(c => ({ uuid: c.uuid, name: c.name }));
   }, [containers, version]);
 
-  const [sourceIDs, setSourceIDs] = useSolverProperty<RayTracer, "sourceIDs">(
+  const [sourceIDsRaw, setSourceIDs] = useSolverProperty<RayTracer, "sourceIDs">(
     uuid,
     "sourceIDs",
     eventType
   );
 
-  const [receiverIDs, setReceiverIDs] = useSolverProperty<RayTracer, "receiverIDs">(
+  const [receiverIDsRaw, setReceiverIDs] = useSolverProperty<RayTracer, "receiverIDs">(
     uuid,
     "receiverIDs",
     eventType
   );
+
+  // Provide defaults for undefined arrays
+  const sourceIDs = sourceIDsRaw || [];
+  const receiverIDs = receiverIDsRaw || [];
 
   // Check if a source-receiver pair is selected
   const isPairSelected = useCallback((sourceId: string, receiverId: string) => {

@@ -88,21 +88,6 @@ const MenuButton = styled.div`
   }
 `;
 
-const ResultBadge = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 14px;
-  height: 14px;
-  padding: 0 4px;
-  margin-right: 4px;
-  background-color: #2d72d2;
-  border-radius: 7px;
-  font-size: 10px;
-  font-weight: 600;
-  color: white;
-`;
-
 const spin = keyframes`
   from {
     transform: rotate(0deg);
@@ -151,7 +136,6 @@ export interface SolverCardHeaderProps {
   name: string;
   kind: string;
   expanded: boolean;
-  resultCount?: number;
   isRunning?: boolean;
   canRun?: boolean;
   onToggle: () => void;
@@ -164,7 +148,6 @@ export default function SolverCardHeader({
   name,
   kind,
   expanded,
-  resultCount = 0,
   isRunning = false,
   canRun = false,
   onToggle,
@@ -202,7 +185,6 @@ export default function SolverCardHeader({
           <AutorenewIcon />
         </RunningButton>
       )}
-      {resultCount > 0 && <ResultBadge>{resultCount}</ResultBadge>}
       {(onDelete || onDuplicate) && (
         <Popover content={menu} position={Position.BOTTOM_RIGHT} minimal>
           <MenuButton onClick={handleMenuClick}>

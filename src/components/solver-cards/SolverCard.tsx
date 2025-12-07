@@ -1,10 +1,8 @@
 import React, { useState, useCallback, useMemo } from "react";
 import styled from "styled-components";
 import { useSolver, removeSolver } from "../../store/solver-store";
-import { useResultsForSolver } from "../../store/result-store";
 import { emit } from "../../messenger";
 import SolverCardHeader from "./SolverCardHeader";
-import ResultPreview from "./ResultPreview";
 import RayTracer from "../../compute/raytracer";
 
 // Import solver parameter components
@@ -14,6 +12,7 @@ import RT60Tab from "../parameter-config/RT60Tab";
 import FDTD_2DTab from "../parameter-config/FDTD_2DTab";
 import EnergyDecayTab from "../parameter-config/EnergyDecayTab";
 import ARTTab from "../parameter-config/ARTTab";
+import BeamTraceTab from "../parameter-config/BeamTraceTab";
 
 const CardContainer = styled.div`
   border-bottom: 1px solid #e1e4e8;
@@ -28,19 +27,6 @@ const ParameterSection = styled.div`
   padding: 4px 0;
 `;
 
-const ResultsSection = styled.div`
-  padding: 4px 8px 8px 8px;
-`;
-
-const ResultsSectionLabel = styled.div`
-  display: flex;
-  align-items: center;
-  padding: 4px 0;
-  font-size: 11px;
-  font-weight: 500;
-  color: #656d76;
-`;
-
 /**
  * Maps solver kind to its parameter configuration component
  */
@@ -51,6 +37,7 @@ const SolverComponentMap = new Map<string, React.ComponentType<{ uuid: string }>
   ["fdtd-2d", FDTD_2DTab],
   ["energydecay", EnergyDecayTab],
   ["art", ARTTab],
+  ["beam-trace", BeamTraceTab],
 ]);
 
 export interface SolverCardProps {
@@ -62,8 +49,6 @@ export default function SolverCard({ uuid, defaultExpanded = false }: SolverCard
   const [expanded, setExpanded] = useState(defaultExpanded);
 
   const solver = useSolver((state) => state.solvers[uuid]);
-  const version = useSolver((state) => state.version);
-  const results = useResultsForSolver(uuid);
 
   const handleToggle = useCallback(() => {
     setExpanded((prev) => !prev);
@@ -85,7 +70,7 @@ export default function SolverCard({ uuid, defaultExpanded = false }: SolverCard
     if (!solver || solver.kind !== "ray-tracer") return false;
     const rt = solver as RayTracer;
     return rt.sourceIDs?.length > 0 && rt.receiverIDs?.length > 0;
-  }, [solver, version]);
+  }, [solver]);
 
   // If solver doesn't exist (was deleted), don't render
   if (!solver) {
@@ -100,7 +85,6 @@ export default function SolverCard({ uuid, defaultExpanded = false }: SolverCard
         name={solver.name}
         kind={solver.kind}
         expanded={expanded}
-        resultCount={results.length}
         isRunning={'isRunning' in solver && (solver as { isRunning: boolean }).isRunning}
         canRun={canRun}
         onToggle={handleToggle}
@@ -112,14 +96,6 @@ export default function SolverCard({ uuid, defaultExpanded = false }: SolverCard
           <ParameterSection>
             <ParameterComponent uuid={uuid} />
           </ParameterSection>
-        )}
-        {results.length > 0 && (
-          <ResultsSection>
-            <ResultsSectionLabel>Results</ResultsSectionLabel>
-            {results.map((result) => (
-              <ResultPreview key={result.uuid} uuid={result.uuid} />
-            ))}
-          </ResultsSection>
         )}
       </CardContent>
     </CardContainer>

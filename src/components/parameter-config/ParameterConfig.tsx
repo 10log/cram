@@ -16,6 +16,7 @@ import SourceTab from './SourceTab';
 import ReceiverTab from './ReceiverTab';
 import SurfaceTab from './SurfaceTab';
 import ARTTab from './ARTTab';
+import BeamTraceTab from './BeamTraceTab';
 
 
 const SelectContainer = styled.div`
@@ -41,7 +42,8 @@ const SolverComponentMap = new Map<string, ({ uuid }) => JSX.Element>([
   ["rt60", RT60Tab],
   ["fdtd-2d", FDTD_2DTab],
   ["energydecay", EnergyDecayTab],
-  ["art", ARTTab]
+  ["art", ARTTab],
+  ["beam-trace", BeamTraceTab]
 ]);
 
 const ObjectComponentMap = new Map<string, ({ uuid }) => JSX.Element>([
