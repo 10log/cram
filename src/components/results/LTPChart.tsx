@@ -19,7 +19,11 @@ import { pickProps, unique } from '../../common/helpers';
 import { emit, on } from '../../messenger';
 import chroma from 'chroma-js';
 import { ImageSourceSolver } from '../../compute/raytracer/image-source';
+import { BeamTraceSolver } from '../../compute/beam-trace';
 import { useSolver } from '../../store';
+
+// Type for solvers that can generate LTP results
+type LTPSolver = ImageSourceSolver | BeamTraceSolver;
 import PropertyRowCheckbox from "../parameter-config/property-row/PropertyRowCheckbox";
 import PropertyRowLabel from '../parameter-config/property-row/PropertyRowLabel';
 // accessors
@@ -32,6 +36,7 @@ export type LTPChartProps = {
   height?: number;
   events?: boolean;
   plotOrders?: number[];
+  solverKind?: string;
 };
 
 
@@ -87,7 +92,7 @@ const useUpdate = () => {
   return [updateCount, () => setUpdateCount(updateCount + 1)] as  [number, () => void];
 }
 
-const Chart = ({ uuid, width = 400, height = 200, events = false, plotOrders }: LTPChartProps) => {
+const Chart = ({ uuid, width = 400, height = 200, events = false, plotOrders, solverKind }: LTPChartProps) => {
     const {info, data: _data, from} = useResult(useShallow(state=>pickProps(["info", "data", "from"], state.results[uuid] as Result<ResultKind.LevelTimeProgression>)));
 
     const [_count, _update] = useUpdate();
@@ -189,8 +194,11 @@ const Chart = ({ uuid, width = 400, height = 200, events = false, plotOrders }: 
                 
               }}  
               onClick={() => {
-                let imagesourcesolver = useSolver.getState().solvers[from] as ImageSourceSolver;
-                if (events) imagesourcesolver.toggleRayPathHighlight(d.uuid);
+                if (!events) return;
+                const solver = useSolver.getState().solvers[from] as LTPSolver;
+                if (solver && 'toggleRayPathHighlight' in solver) {
+                  (solver as ImageSourceSolver | BeamTraceSolver).toggleRayPathHighlight(d.uuid);
+                }
               }}
             />
           );
@@ -207,8 +215,10 @@ const Chart = ({ uuid, width = 400, height = 200, events = false, plotOrders }: 
 export const LTPChart = ({ uuid, width = 400, height = 300, events = false }: LTPChartProps) => {
 
   const {name, info, from} = useResult(useShallow(state=>pickProps(["name", "info", "from"], state.results[uuid] as Result<ResultKind.LevelTimeProgression>)));
-  const initialPlotOrders = useSolver(state=>(state.solvers[from] as ImageSourceSolver).plotOrders);
-  const frequencies = useSolver(state=>(state.solvers[from] as ImageSourceSolver).frequencies);
+  const solver = useSolver(state => state.solvers[from] as LTPSolver | undefined);
+  const initialPlotOrders = solver?.plotOrders ?? [];
+  const frequencies = solver?.frequencies ?? [125, 250, 500, 1000, 2000, 4000, 8000];
+  const solverKind = solver?.kind;
 
   const [plotOrders, setPlotOrders] = useState(initialPlotOrders);
   const [order, setMaxOrder] = useState(info.maxOrder);
@@ -217,17 +227,27 @@ export const LTPChart = ({ uuid, width = 400, height = 300, events = false }: LT
     return on("UPDATE_RESULT", (e) => {
       if (e.uuid === uuid) {
         //@ts-ignore
-        setMaxOrder(e.result.info.maxOrder);
+        const newMaxOrder = e.result.info.maxOrder;
+        setMaxOrder(newMaxOrder);
+        // Auto-show all orders when maxOrder changes (new orders are added)
+        const allOrders = Array.from({ length: newMaxOrder + 1 }, (_, i) => i);
+        setPlotOrders(allOrders);
       }
     });
   }, [uuid]);
 
   useEffect(() => {
-    return on("IMAGESOURCE_SET_PROPERTY", (e) => {
+    const unsubImage = on("IMAGESOURCE_SET_PROPERTY", (e) => {
       if (e.uuid === from && e.property === "plotOrders") {
-        setPlotOrders(e.value);
+        setPlotOrders(e.value as number[]);
       }
     });
+    const unsubBeam = on("BEAMTRACE_SET_PROPERTY", (e) => {
+      if (e.uuid === from && e.property === "plotOrders") {
+        setPlotOrders(e.value as number[]);
+      }
+    });
+    return () => { unsubImage(); unsubBeam(); };
   }, [from]);  
 
   const ordinalColorScale = useMemo(
@@ -252,7 +272,7 @@ export const LTPChart = ({ uuid, width = 400, height = 300, events = false }: LT
     <HorizontalContainer>
       <GraphContainer>
         <ParentSize debounceTime={10}>
-          {({ width })=><Chart {...{ width, height, uuid, events, plotOrders }} />}
+          {({ width })=><Chart {...{ width, height, uuid, events, plotOrders, solverKind }} />}
         </ParentSize>
       </GraphContainer>
       <VerticalContainer>
@@ -278,7 +298,8 @@ export const LTPChart = ({ uuid, width = 400, height = 300, events = false }: LT
                       onChange={(e) =>
                         {
                           const newPlotOrders = e.value ? unique([...plotOrders, label.datum]) : plotOrders.reduce((acc, curr) => curr === label.datum ? acc : [...acc, curr], []);
-                          emit("IMAGESOURCE_SET_PROPERTY", { uuid: from, property: "plotOrders", value: newPlotOrders })
+                          const eventType = solverKind === "beam-trace" ? "BEAMTRACE_SET_PROPERTY" : "IMAGESOURCE_SET_PROPERTY";
+                          emit(eventType, { uuid: from, property: "plotOrders", value: newPlotOrders })
                         }
                       }
                     />
@@ -302,9 +323,10 @@ export const LTPChart = ({ uuid, width = 400, height = 300, events = false }: LT
                   />
                   <PropertyRowCheckbox
                     value={(f)===(info.frequency[0])}
-                    onChange = {(_e) =>
-                      emit("IMAGESOURCE_SET_PROPERTY", { uuid: from, property: "plotFrequency", value: f })
-                    }
+                    onChange = {(_e) => {
+                      const eventType = solverKind === "beam-trace" ? "BEAMTRACE_SET_PROPERTY" : "IMAGESOURCE_SET_PROPERTY";
+                      emit(eventType, { uuid: from, property: "plotFrequency", value: f })
+                    }}
                   />
                 </LegendItem>
               ))}

@@ -8,10 +8,11 @@ import Solver from "./solver";
 import ImageSourceSolver, { ImageSourceSaveObject } from "./raytracer/image-source";
 import registerFDTDEvents from './2d-fdtd/events';
 import ART, { ARTSaveObject } from "./radiance/art";
+import BeamTraceSolver, { BeamTraceSaveObject } from "./beam-trace";
 
 declare global {
   interface EventTypes {
-    RESTORE_SOLVERS: (RayTracerSaveObject | RT60SaveObject | ImageSourceSaveObject | ARTSaveObject)[];
+    RESTORE_SOLVERS: (RayTracerSaveObject | RT60SaveObject | ImageSourceSaveObject | ARTSaveObject | BeamTraceSaveObject)[];
     REMOVE_SOLVERS: string|string[];
     LOG_SOLVER: string;
   }
@@ -62,9 +63,12 @@ export default function registerSolverEvents(){
           });
           // emit("ADD_IMAGESOURCE", restore(ImageSourceSolver, solver));
           break;
+        case "beam-trace":
+          emit("ADD_BEAMTRACE", restore(BeamTraceSolver, solver));
+          break;
       }
     });
-  
+
   })
   
 }

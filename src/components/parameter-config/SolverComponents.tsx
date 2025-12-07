@@ -14,6 +14,7 @@ import { ImageSourceSolver } from "../../compute/raytracer/image-source";
 import RT60 from "../../compute/rt";
 import ART from "../../compute/radiance/art";
 import EnergyDecay from "../../compute/energy-decay";
+import { BeamTraceSolver } from "../../compute/beam-trace";
 
 type SetPropertyEventTypes =
   | AllowedNames<EventTypes, SetPropertyPayload<FDTD_2D>>
@@ -22,18 +23,20 @@ type SetPropertyEventTypes =
   | AllowedNames<EventTypes, SetPropertyPayload<RT60>>
   | AllowedNames<EventTypes, SetPropertyPayload<EnergyDecay>>
   | AllowedNames<EventTypes, SetPropertyPayload<ART>>
+  | AllowedNames<EventTypes, SetPropertyPayload<BeamTraceSolver>>
 
-export function useSolverProperty<T extends RayTracer | FDTD_2D|ImageSourceSolver|RT60|EnergyDecay|ART, K extends keyof T>(
+export function useSolverProperty<T extends RayTracer | FDTD_2D|ImageSourceSolver|RT60|EnergyDecay|ART|BeamTraceSolver, K extends keyof T>(
   uuid: string,
   property: K,
   event: SetPropertyEventTypes
 ) {
   // Include version in selector to force re-render when properties change
-  const value = useSolver<T[K]>(
+  const value = useSolver<T[K] | undefined>(
     (state) => {
       // Access state.version to ensure selector subscribes to version changes (triggers re-render)
       const _version = state.version;
-      return (state.solvers[uuid] as T)[property];
+      const solver = state.solvers[uuid] as T | undefined;
+      return solver?.[property];
     }
   );
   //@ts-ignore
@@ -43,7 +46,7 @@ export function useSolverProperty<T extends RayTracer | FDTD_2D|ImageSourceSolve
 }
 
 type PropertyRowInputElement = ({ value, onChange }: { value: any, onChange: any }) => JSX.Element;
-type Props<T extends RayTracer | FDTD_2D|ImageSourceSolver|RT60|EnergyDecay|ART, K extends keyof T> = {
+type Props<T extends RayTracer | FDTD_2D|ImageSourceSolver|RT60|EnergyDecay|ART|BeamTraceSolver, K extends keyof T> = {
   uuid: string;
   property: K;
   label: string;
@@ -53,7 +56,7 @@ type Props<T extends RayTracer | FDTD_2D|ImageSourceSolver|RT60|EnergyDecay|ART,
   }
 };
 
-export const createPropertyInput = <T extends RayTracer | FDTD_2D|ImageSourceSolver|RT60|EnergyDecay|ART>(
+export const createPropertyInput = <T extends RayTracer | FDTD_2D|ImageSourceSolver|RT60|EnergyDecay|ART|BeamTraceSolver>(
   event: SetPropertyEventTypes,
   Element: PropertyRowInputElement
 ) => <K extends keyof T>({ uuid, property, label, tooltip, elementProps }: Props<T, K>) => {
@@ -66,7 +69,7 @@ export const createPropertyInput = <T extends RayTracer | FDTD_2D|ImageSourceSol
   );
 };
 
-export const createPropertyInputs = <T extends RayTracer|FDTD_2D|ImageSourceSolver|RT60|EnergyDecay|ART>(event: SetPropertyEventTypes) => ({
+export const createPropertyInputs = <T extends RayTracer|FDTD_2D|ImageSourceSolver|RT60|EnergyDecay|ART|BeamTraceSolver>(event: SetPropertyEventTypes) => ({
   PropertyTextInput: createPropertyInput<T>(event, PropertyRowTextInput),
   PropertyNumberInput: createPropertyInput<T>(event, PropertyRowNumberInput),
   PropertyCheckboxInput: createPropertyInput<T>(event, PropertyRowCheckbox),
