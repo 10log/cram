@@ -66,7 +66,7 @@ export class Markup extends Container{
     this.pointsBufferGeometry = new THREE.BufferGeometry();
     
     this.linesBufferGeometry.name = "markup-linesBufferGeometry";
-    this.pointsBufferGeometry.name = "markup-linesBufferGeometry";
+    this.pointsBufferGeometry.name = "markup-pointsBufferGeometry";
     
     // Buffer size = maxlines * 3 floats per vertex (x, y, z)
     // Each line segment needs 2 vertices, so maxlines vertices = maxlines/2 line segments
@@ -80,7 +80,7 @@ export class Markup extends Container{
     this.pointsBufferGeometry.setAttribute("position", this.pointsBufferAttribute);
     
     this.linesBufferGeometry.setDrawRange(0, this.maxlines);
-    this.linesBufferGeometry.setDrawRange(0, this.maxpoints);
+    this.pointsBufferGeometry.setDrawRange(0, this.maxpoints);
     
     this.colorBufferAttribute = new THREE.Float32BufferAttribute(new Float32Array(this.maxpoints * 3), 3);
     this.colorBufferAttribute.setUsage(THREE.DynamicDrawUsage);

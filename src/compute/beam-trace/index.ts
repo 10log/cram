@@ -5,7 +5,6 @@ import { v4 as uuidv4 } from 'uuid';
 import {
   Polygon3D,
   Source3D,
-  Listener3D,
   Solver3D,
   computePathLength,
   computeArrivalTime,
@@ -531,7 +530,7 @@ export class BeamTraceSolver extends Solver {
   }
 
   // Calculate Level Time Progression result
-  calculateLTP(c: number = 343) {
+  calculateLTP(_c: number = 343) {
     if (this.validPaths.length === 0) return;
 
     // Sort paths by arrival time
@@ -664,10 +663,10 @@ export class BeamTraceSolver extends Solver {
       let bestDistance = Infinity;
 
       beamData.forEach((beam: BeamVisualizationData) => {
-        const beamPolygonId = (beam as unknown as { polygonId: number }).polygonId;
+        const beamPolygonId = beam.reflectorPolygonId;
 
-        // Must match polygon and reflection order
-        if (beamPolygonId !== polygonId || beam.reflectionOrder !== reflectionIndex) return;
+        // Must match polygon and reflection order (skip if no polygon)
+        if (beamPolygonId === null || beamPolygonId !== polygonId || beam.reflectionOrder !== reflectionIndex) return;
 
         // Skip beams with no valid aperture
         if (!beam.apertureVertices || beam.apertureVertices.length < 3) return;
@@ -798,14 +797,15 @@ export class BeamTraceSolver extends Solver {
 
     const beamData = this.btSolver.getBeamsForVisualization(this.maxReflectionOrder);
     beamData.forEach((beam: BeamVisualizationData) => {
-      const polygonId = (beam as unknown as { polygonId: number }).polygonId;
-      const beamKey = `${polygonId}-${beam.reflectionOrder}`;
-      const isValid = validBeamKeys.has(beamKey);
+      const polygonId = beam.reflectorPolygonId;
 
-      // Skip beams with no valid aperture (fully clipped beams)
-      if (!beam.apertureVertices || beam.apertureVertices.length < 3) {
+      // Skip beams with no polygon ID or no valid aperture (fully clipped beams)
+      if (polygonId === null || !beam.apertureVertices || beam.apertureVertices.length < 3) {
         return;
       }
+
+      const beamKey = `${polygonId}-${beam.reflectionOrder}`;
+      const isValid = validBeamKeys.has(beamKey);
 
       const apex: [number, number, number] = [
         beam.virtualSource[0],
