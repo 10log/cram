@@ -16,7 +16,7 @@ declare module 'beam-trace' {
     reflectionOrder: number;
     virtualSource: Point3D;
     apertureVertices: Point3D[];
-    reflectorPolygonId: number | null;
+    polygonId: number;
   }
 
   export interface PerformanceMetrics3D {

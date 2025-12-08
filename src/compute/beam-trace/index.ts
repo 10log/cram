@@ -663,7 +663,7 @@ export class BeamTraceSolver extends Solver {
       let bestDistance = Infinity;
 
       beamData.forEach((beam: BeamVisualizationData) => {
-        const beamPolygonId = beam.reflectorPolygonId;
+        const beamPolygonId = beam.polygonId;
 
         // Must match polygon and reflection order (skip if no polygon)
         if (beamPolygonId === null || beamPolygonId !== polygonId || beam.reflectionOrder !== reflectionIndex) return;
@@ -797,7 +797,7 @@ export class BeamTraceSolver extends Solver {
 
     const beamData = this.btSolver.getBeamsForVisualization(this.maxReflectionOrder);
     beamData.forEach((beam: BeamVisualizationData) => {
-      const polygonId = beam.reflectorPolygonId;
+      const polygonId = beam.polygonId;
 
       // Skip beams with no polygon ID or no valid aperture (fully clipped beams)
       if (polygonId === null || !beam.apertureVertices || beam.apertureVertices.length < 3) {
