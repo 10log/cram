@@ -98,15 +98,12 @@ export default function SolverCard({ uuid, defaultExpanded = false }: SolverCard
     }
   }, [solver]);
 
-  // Calculate handler
+  // Calculate handler (RT60 relies on auto-calculate, so not included here)
   const handleCalculate = useCallback(() => {
     if (!solver) return;
     switch (solver.kind) {
       case "beamtrace":
         emit("BEAMTRACE_CALCULATE", uuid);
-        break;
-      case "rt60":
-        emit("UPDATE_RT60", uuid);
         break;
       case "image-source":
         emit("UPDATE_IMAGESOURCE", uuid);
