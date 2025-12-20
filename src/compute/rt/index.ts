@@ -73,6 +73,14 @@ export class RT60 extends Solver{
      } as RT60SaveObject;
   }
 
+  restore(state: RT60SaveObject) {
+    // Let the base Solver restore shared properties like autoCalculate
+    super.restore(state);
+    // Restore RT60-specific/core identity properties
+    this.kind = state.kind;
+    return this;
+  }
+
   calculate(){
 
     this.reset(); 
