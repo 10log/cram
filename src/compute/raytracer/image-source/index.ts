@@ -282,6 +282,7 @@ export type ImageSourceSaveObject = {
   name: string;
   kind: "image-source";
   uuid: string;
+  autoCalculate: boolean;
   roomID: string;
   sourceIDs: string[];
   surfaceIDs: string[];
@@ -412,6 +413,7 @@ export class ImageSourceSolver extends Solver {
         "name",
         "kind",
         "uuid",
+        "autoCalculate",
         "roomID",
         "sourceIDs",
         "surfaceIDs",

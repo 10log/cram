@@ -128,7 +128,8 @@ on("ADD_RESULT", (result) => {
 
 on("UPDATE_RESULT", ({ result }) => {
   useResult.getState().set((store) => void (store.results[result.uuid] = result));
-  if(!useAppStore.getState().resultsPanelOpen) emit("TOGGLE_RESULTS_PANEL", true);
+  // Don't force-open the panel on updates - only on new results via ADD_RESULT
+  // This prevents auto-calculate from disrupting the user's current view
 });
 
 on("REMOVE_RESULT", (uuid) => {

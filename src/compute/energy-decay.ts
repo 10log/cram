@@ -28,6 +28,7 @@ export type EnergyDecaySaveObject = {
     uuid: string;
     name: string;
     kind: "energydecay";
+    autoCalculate: boolean;
 }
 
 const defaults = {

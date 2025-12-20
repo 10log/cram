@@ -37,14 +37,16 @@ export const ResultsPanel = () => {
     }, 0);
   }, []);
 
-  // When a new result is added, switch to that tab
+  // When a new result is added, only switch if it's the first result
+  // This prevents auto-calculate from disrupting the user's current view
   useEffect(() => {
-    return on("ADD_RESULT", (e) => switchToResultTab(e.uuid));
-  }, [switchToResultTab]);
-
-  // When a result is updated, switch to that tab (e.g., Calculate LTP)
-  useEffect(() => {
-    return on("UPDATE_RESULT", (e) => switchToResultTab(e.uuid));
+    return on("ADD_RESULT", (e) => {
+      const currentKeys = Object.keys(useResult.getState().results);
+      // Only auto-switch if this is the first result (list was empty before this add)
+      if (currentKeys.length <= 1) {
+        switchToResultTab(e.uuid);
+      }
+    });
   }, [switchToResultTab]);
 
   // When a result is selected from ResultPreview, switch to that tab

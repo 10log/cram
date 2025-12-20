@@ -15,6 +15,8 @@ export default abstract class Solver {
   running: boolean;
   update!: () => void;
   clearpass: boolean;
+  autoCalculate: boolean;
+
   constructor(params?: SolverParams) {
     this.params = params || {};
     this.name = (params && params.name) || "untitled solver";
@@ -22,19 +24,27 @@ export default abstract class Solver {
     this.uuid = uuid();
     this.running = false;
     this.clearpass = false;
+    this.autoCalculate = false;
     this.update = () => {};
   }
+
+  /** Override in subclasses to perform the solver's calculation */
+  calculate(): void {
+    // Default implementation does nothing - override in subclasses
+  }
   save() {
-    const { name, kind, uuid } = this;
+    const { name, kind, uuid, autoCalculate } = this;
     return {
       name,
       kind,
-      uuid
+      uuid,
+      autoCalculate
     };
   }
   restore(state) {
     this.name = state.name;
     this.uuid = state.uuid;
+    this.autoCalculate = state.autoCalculate ?? false;
     return this;
   }
   dispose() {

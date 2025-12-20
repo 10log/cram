@@ -159,9 +159,9 @@ export default class Messenger{
 
 export const messenger = new Messenger();
 export const emit = messenger.emit.bind(messenger) as Messenger['emit'];
-export const before = messenger.on.bind(messenger) as Messenger['before'];
+export const before = messenger.before.bind(messenger) as Messenger['before'];
 export const on = messenger.on.bind(messenger) as Messenger['on'];
-export const after = messenger.on.bind(messenger) as Messenger['after'];
+export const after = messenger.after.bind(messenger) as Messenger['after'];
 
 export const postMessage = messenger.postMessage.bind(messenger) as Messenger['postMessage'];
 export const addMessageHandler = messenger.addMessageHandler.bind(messenger) as Messenger['addMessageHandler'];
