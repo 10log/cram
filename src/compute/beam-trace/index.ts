@@ -947,8 +947,15 @@ export class BeamTraceSolver extends Solver {
       this.virtualSourcesGroup.remove(child);
       if (child instanceof THREE.Mesh) {
         child.geometry?.dispose();
-        if (child.material instanceof THREE.Material) {
-          child.material.dispose();
+        const material = child.material;
+        if (Array.isArray(material)) {
+          for (const mat of material) {
+            if (mat instanceof THREE.Material) {
+              mat.dispose();
+            }
+          }
+        } else if (material instanceof THREE.Material) {
+          material.dispose();
         }
       }
     }

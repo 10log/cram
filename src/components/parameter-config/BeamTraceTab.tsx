@@ -15,7 +15,7 @@ export interface BeamTraceTabProps {
   uuid: string;
 }
 
-const { PropertyNumberInput, PropertyCheckboxInput } = createPropertyInputs<BeamTraceSolver>(
+const { PropertyNumberInput } = createPropertyInputs<BeamTraceSolver>(
   "BEAMTRACE_SET_PROPERTY"
 );
 
