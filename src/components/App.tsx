@@ -21,6 +21,7 @@ import SaveDialog from "./SaveDialog";
 
 import { NavBarComponent } from "./NavBarComponent";
 import ProgressIndicator from "./ProgressIndicator";
+import AutoCalculateProgress from "./AutoCalculateProgress";
 
 
 
@@ -134,6 +135,7 @@ export default class App extends React.Component<AppProps, AppState> {
       <div>
         <NavBarComponent />
         <ProgressIndicator />
+        <AutoCalculateProgress />
         {/* <SettingsDrawer /> */}
 
 

@@ -1,13 +1,9 @@
-import React, { useEffect, useReducer } from "react";
+import React from "react";
 import "./ImageSourceTab.css";
 import {ImageSourceSolver} from "../../../compute/raytracer/image-source/index";
-import { on } from "../../../messenger";
-import { useSolver } from "../../../store";
-import { pickProps } from "../../../common/helpers";
 import useToggle from "../../hooks/use-toggle";
-import { createPropertyInputs, useSolverProperty, PropertyButton  } from "../SolverComponents";
+import { createPropertyInputs, PropertyButton } from "../SolverComponents";
 import PropertyRowFolder from "../property-row/PropertyRowFolder";
-import { useShallow } from "zustand/react/shallow";
 import SourceReceiverMatrix from "../SourceReceiverMatrix";
 
 export interface ImageSourceTabProps {
@@ -29,21 +25,9 @@ const SourceReceiverPairs = ({ uuid }: { uuid: string }) => {
 
 const Calculation = ({ uuid }: { uuid: string}) => {
   const [open, toggle] = useToggle(true);
-  const {sourceIDs, receiverIDs} = useSolver(useShallow(state => pickProps(["sourceIDs", "receiverIDs"], state.solvers[uuid] as ImageSourceSolver)));
-  const disabled = !(sourceIDs.length > 0 && receiverIDs.length > 0);
-  const [, forceUpdate] = useReducer((c) => c + 1, 0) as [never, () => void]
-  useEffect(() => {
-    return on("IMAGESOURCE_SET_PROPERTY", (e) => {
-      if (e.uuid === uuid && (e.property === "sourceIDs" || e.property === "receiverIDs")) {
-        forceUpdate();
-      }
-    });
-  }, [uuid]);
   return (
     <PropertyRowFolder label="Calculation" open={open} onOpenClose={toggle}>
       <PropertyNumberInput uuid={uuid} label="Maximum Order" property="maxReflectionOrderReset" tooltip="Sets the maximum reflection order"/>
-      <PropertyButton disabled={disabled} event="UPDATE_IMAGESOURCE" args={uuid} label="Update" tooltip="Updates Imagesource Calculation" />
-      <PropertyButton disabled={disabled} event="RESET_IMAGESOURCE" args={uuid} label="Clear" tooltip="Clears Imagesource Calculation" />
     </PropertyRowFolder>
   );
 }

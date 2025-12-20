@@ -30,6 +30,7 @@ export type AppStore = {
   canUndo: boolean,
   canRedo: boolean,
   progress: ProgressInfo;
+  autoCalculate: boolean;
   set: (fn: (draft: AppStore) => void) => void;
 };
 
@@ -57,6 +58,7 @@ export const useAppStore = create<AppStore>((set) => ({
     progress: -1,
     solverUuid: undefined
   },
+  autoCalculate: true,
   set: (fn: (draft: AppStore) => void) => set(produce(fn))
 }));
 
@@ -67,6 +69,7 @@ declare global {
     SHOW_PROGRESS: { message: string; progress?: number; solverUuid?: string };
     UPDATE_PROGRESS: { progress: number; message?: string };
     HIDE_PROGRESS: undefined;
+    SET_AUTO_CALCULATE: boolean;
   }
 }
 
@@ -116,6 +119,12 @@ on("HIDE_PROGRESS", () => {
     draft.progress.message = "";
     draft.progress.progress = -1;
     draft.progress.solverUuid = undefined;
+  });
+});
+
+on("SET_AUTO_CALCULATE", (enabled) => {
+  useAppStore.getState().set(draft => {
+    draft.autoCalculate = enabled;
   });
 });
 

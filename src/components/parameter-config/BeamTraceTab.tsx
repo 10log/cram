@@ -11,6 +11,9 @@ import PropertyRowLabel from "./property-row/PropertyRowLabel";
 import { PropertyRowSelect } from "./property-row/PropertyRowSelect";
 import PropertyRowCheckbox from "./property-row/PropertyRowCheckbox";
 
+// PropertyButton is still used for ImpulseResponse section
+void PropertyButton;
+
 export interface BeamTraceTabProps {
   uuid: string;
 }
@@ -34,58 +37,8 @@ const SourceReceiverPairs = ({ uuid }: { uuid: string }) => {
   );
 };
 
-const CalculatingIndicator = () => (
-  <div style={{
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-    padding: "4px 8px",
-    color: "#4a9eff"
-  }}>
-    <div style={{
-      width: "12px",
-      height: "12px",
-      border: "2px solid #4a9eff",
-      borderTopColor: "transparent",
-      borderRadius: "50%",
-      animation: "spin 0.8s linear infinite"
-    }} />
-    <span style={{ fontSize: "12px" }}>Calculating...</span>
-    <style>{`
-      @keyframes spin {
-        to { transform: rotate(360deg); }
-      }
-    `}</style>
-  </div>
-);
-
 const Calculation = ({ uuid }: { uuid: string }) => {
   const [open, toggle] = useToggle(true);
-  const [calculating, setCalculating] = React.useState(false);
-  const solver = useSolver(state => state.solvers[uuid] as BeamTraceSolver | undefined);
-  const sourceIDs = solver?.sourceIDs || [];
-  const receiverIDs = solver?.receiverIDs || [];
-  const disabled = !(sourceIDs.length > 0 && receiverIDs.length > 0);
-  const [, forceUpdate] = useReducer((c) => c + 1, 0) as [never, () => void];
-
-  useEffect(() => {
-    return on("BEAMTRACE_SET_PROPERTY", (e) => {
-      if (e.uuid === uuid && (e.property === "sourceIDs" || e.property === "receiverIDs")) {
-        forceUpdate();
-      }
-    });
-  }, [uuid]);
-
-  // Track calculation start/end
-  useEffect(() => {
-    const unsubStart = on("BEAMTRACE_CALCULATE", (id) => {
-      if (id === uuid) setCalculating(true);
-    });
-    const unsubComplete = on("BEAMTRACE_CALCULATE_COMPLETE", (id) => {
-      if (id === uuid) setCalculating(false);
-    });
-    return () => { unsubStart(); unsubComplete(); };
-  }, [uuid]);
 
   return (
     <PropertyRowFolder label="Calculation" open={open} onOpenClose={toggle}>
@@ -94,21 +47,6 @@ const Calculation = ({ uuid }: { uuid: string }) => {
         label="Max Reflection Order"
         property="maxReflectionOrderReset"
         tooltip="Maximum number of reflections to trace (1-6 recommended)"
-      />
-      {calculating && <CalculatingIndicator />}
-      <PropertyButton
-        disabled={disabled || calculating}
-        event="BEAMTRACE_CALCULATE"
-        args={uuid}
-        label={calculating ? "Calculating..." : "Calculate"}
-        tooltip="Calculate beam trace paths"
-      />
-      <PropertyButton
-        disabled={disabled || calculating}
-        event="BEAMTRACE_RESET"
-        args={uuid}
-        label="Clear"
-        tooltip="Clear calculated paths"
       />
     </PropertyRowFolder>
   );

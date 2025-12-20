@@ -31,15 +31,6 @@ const { PropertyNumberInput } = createPropertyInputs<RT60>(
   "RT60_SET_PROPERTY"
 );
 
-const Controls = ({ uuid }: { uuid: string }) => {
-  const [open, toggle] = useToggle(true);
-  return (
-    <PropertyRowFolder label="Controls" open={open} onOpenClose={toggle}>
-      <PropertyButton event="UPDATE_RT60" args={uuid} label="Update" tooltip="Updates RT Calculation"/>
-    </PropertyRowFolder>
-  );
-};
-
 const Settings = ({ uuid }: { uuid: string }) => {
   const [open, toggle] = useToggle(true);
   return (
@@ -104,7 +95,6 @@ function _getSourcesAndReceivers(state: any) {
 export const RT60Tab = ({ uuid }: RT60TabProps) => {
   return (
     <div>
-      <Controls uuid={uuid} />
       <Settings uuid={uuid} />
       <Export uuid={uuid} />
     </div>

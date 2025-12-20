@@ -79,6 +79,7 @@ export interface BeamTraceSaveObject {
   name: string;
   kind: "beam-trace";
   uuid: string;
+  autoCalculate: boolean;
   roomID: string;
   sourceIDs: string[];
   receiverIDs: string[];
@@ -258,6 +259,7 @@ export class BeamTraceSolver extends Solver {
         "name",
         "kind",
         "uuid",
+        "autoCalculate",
         "roomID",
         "sourceIDs",
         "receiverIDs",
@@ -275,6 +277,7 @@ export class BeamTraceSolver extends Solver {
   restore(state: BeamTraceSaveObject): this {
     this.name = state.name;
     this.uuid = state.uuid;
+    this.autoCalculate = state.autoCalculate ?? false;
     this.roomID = state.roomID;
     this.sourceIDs = state.sourceIDs;
     this.receiverIDs = state.receiverIDs;
@@ -1192,8 +1195,9 @@ export class BeamTraceSolver extends Solver {
   set maxReflectionOrderReset(order: number) {
     // Clamp to non-negative integer
     this.maxReflectionOrder = Math.max(0, Math.floor(order));
-    // Update plotOrders to include all orders up to the new max
+    // Update plotOrders and visibleOrders to include all orders up to the new max
     this._plotOrders = Array.from({ length: this.maxReflectionOrder + 1 }, (_, i) => i);
+    this._visibleOrders = Array.from({ length: this.maxReflectionOrder + 1 }, (_, i) => i);
     // Auto-recalculate if we have sources and receivers configured
     if (this.sourceIDs.length > 0 && this.receiverIDs.length > 0) {
       this.calculate();

@@ -3,7 +3,8 @@ import styled, { keyframes } from "styled-components";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
-import AutorenewIcon from "@mui/icons-material/Autorenew";
+import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import ClearIcon from "@mui/icons-material/Clear";
 import ScatterPlotIcon from "@mui/icons-material/ScatterPlot"; // Ray Tracer
 import AccountTreeIcon from "@mui/icons-material/AccountTree"; // Image Source
 import GridOnIcon from "@mui/icons-material/GridOn"; // FDTD
@@ -11,6 +12,7 @@ import BarChartIcon from "@mui/icons-material/BarChart"; // RT60
 import GraphicEqIcon from "@mui/icons-material/GraphicEq"; // Energy Decay
 import BlurOnIcon from "@mui/icons-material/BlurOn"; // ART
 import SettingsIcon from "@mui/icons-material/Settings"; // Renderer
+import TimelineIcon from "@mui/icons-material/Timeline"; // Beam Trace
 import { Menu, MenuItem, Popover, Position } from "@blueprintjs/core";
 
 const HeaderContainer = styled.div<{ $expanded: boolean }>`
@@ -64,15 +66,19 @@ const Title = styled.div`
   white-space: nowrap;
 `;
 
-const MenuButton = styled.div`
+const MenuButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
   width: 18px;
   height: 18px;
   border-radius: 3px;
+  border: none;
+  background: transparent;
+  padding: 0;
   color: #8c959f;
   opacity: 0;
+  cursor: pointer;
 
   svg {
     font-size: 14px;
@@ -97,7 +103,7 @@ const spin = keyframes`
   }
 `;
 
-const RunningButton = styled.div<{ $isRunning: boolean }>`
+const ActionButton = styled.div<{ $disabled?: boolean; $calculating?: boolean }>`
   display: flex;
   align-items: center;
   justify-content: center;
@@ -105,17 +111,18 @@ const RunningButton = styled.div<{ $isRunning: boolean }>`
   height: 18px;
   margin-right: 4px;
   border-radius: 3px;
-  color: ${(props) => (props.$isRunning ? "#2d72d2" : "#8c959f")};
-  cursor: pointer;
+  color: ${(props) => (props.$disabled ? "#c0c0c0" : "#8c959f")};
+  cursor: ${(props) => (props.$disabled ? "default" : "pointer")};
+  pointer-events: ${(props) => (props.$disabled ? "none" : "auto")};
 
   svg {
     font-size: 14px;
-    animation: ${(props) => (props.$isRunning ? spin : "none")} 1s linear infinite;
+    animation: ${(props) => (props.$calculating ? spin : "none")} 1s linear infinite;
   }
 
   &:hover {
-    background-color: #d0d7de;
-    color: ${(props) => (props.$isRunning ? "#2d72d2" : "#1c2127")};
+    background-color: ${(props) => (props.$disabled ? "transparent" : "#d0d7de")};
+    color: ${(props) => (props.$disabled ? "#c0c0c0" : "#1c2127")};
   }
 `;
 
@@ -130,16 +137,18 @@ const SolverIconMap: Record<string, React.ElementType> = {
   "energydecay": GraphicEqIcon,
   "art": BlurOnIcon,
   "renderer": SettingsIcon,
+  "beamtrace": TimelineIcon,
 };
 
 export interface SolverCardHeaderProps {
   name: string;
   kind: string;
   expanded: boolean;
-  isRunning?: boolean;
-  canRun?: boolean;
+  canCalculate?: boolean;
+  isCalculating?: boolean;
   onToggle: () => void;
-  onRunningToggle?: () => void;
+  onCalculate?: () => void;
+  onClear?: () => void;
   onDelete?: () => void;
   onDuplicate?: () => void;
 }
@@ -148,22 +157,24 @@ export default function SolverCardHeader({
   name,
   kind,
   expanded,
-  isRunning = false,
-  canRun = false,
+  canCalculate = false,
+  isCalculating = false,
   onToggle,
-  onRunningToggle,
+  onCalculate,
+  onClear,
   onDelete,
   onDuplicate,
 }: SolverCardHeaderProps) {
   const Icon = SolverIconMap[kind] || ScatterPlotIcon;
 
-  const handleMenuClick = (e: React.MouseEvent) => {
+  const handleCalculateClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    onCalculate?.();
   };
 
-  const handleRunningClick = (e: React.MouseEvent) => {
+  const handleClearClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onRunningToggle?.();
+    onClear?.();
   };
 
   const menu = (
@@ -180,17 +191,48 @@ export default function SolverCardHeader({
         <Icon />
       </IconContainer>
       <Title>{name}</Title>
-      {canRun && (
-        <RunningButton $isRunning={isRunning} onClick={handleRunningClick}>
-          <AutorenewIcon />
-        </RunningButton>
+      {onCalculate && (
+        <ActionButton
+          $disabled={!canCalculate || isCalculating}
+          $calculating={isCalculating}
+          onClick={handleCalculateClick}
+          title={isCalculating ? "Calculating..." : "Calculate"}
+        >
+          <PlayArrowIcon />
+        </ActionButton>
+      )}
+      {onClear && (
+        <ActionButton
+          $disabled={isCalculating}
+          onClick={handleClearClick}
+          title="Clear"
+        >
+          <ClearIcon />
+        </ActionButton>
       )}
       {(onDelete || onDuplicate) && (
-        <Popover content={menu} position={Position.BOTTOM_RIGHT} minimal>
-          <MenuButton onClick={handleMenuClick}>
-            <MoreVertIcon />
-          </MenuButton>
-        </Popover>
+        <Popover
+          content={menu}
+          position={Position.BOTTOM_RIGHT}
+          minimal
+          transitionDuration={0}
+          renderTarget={({ isOpen, ref, ...targetProps }) => (
+            <MenuButton
+              {...targetProps}
+              ref={ref as React.Ref<HTMLButtonElement>}
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                // Let Blueprint handle the popover open/close via targetProps
+                if (targetProps.onClick) {
+                  targetProps.onClick(e as any);
+                }
+              }}
+            >
+              <MoreVertIcon />
+            </MenuButton>
+          )}
+        />
       )}
     </HeaderContainer>
   );

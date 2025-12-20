@@ -1,9 +1,11 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import styled from "styled-components";
 import { useSolver, removeSolver } from "../../store/solver-store";
-import { emit } from "../../messenger";
+import { emit, on } from "../../messenger";
 import SolverCardHeader from "./SolverCardHeader";
 import RayTracer from "../../compute/raytracer";
+import { BeamTraceSolver } from "../../compute/beam-trace";
+import ImageSourceSolver from "../../compute/raytracer/image-source";
 
 // Import solver parameter components
 import RayTracerTab from "../parameter-config/RayTracerTab";
@@ -47,6 +49,7 @@ export interface SolverCardProps {
 
 export default function SolverCard({ uuid, defaultExpanded = false }: SolverCardProps) {
   const [expanded, setExpanded] = useState(defaultExpanded);
+  const [isCalculating, setIsCalculating] = useState(false);
 
   const solver = useSolver((state) => state.solvers[uuid]);
 
@@ -58,24 +61,84 @@ export default function SolverCard({ uuid, defaultExpanded = false }: SolverCard
     removeSolver(uuid);
   }, [uuid]);
 
-  const handleRunningToggle = useCallback(() => {
-    if (solver && 'isRunning' in solver) {
-      const isRunning = (solver as RayTracer).isRunning;
-      emit("RAYTRACER_SET_PROPERTY", { uuid, property: "isRunning", value: !isRunning });
+  // Track calculation state for beam-trace solver
+  useEffect(() => {
+    if (!solver) return;
+    if (solver.kind === "beamtrace") {
+      const unsubStart = on("BEAMTRACE_CALCULATE", (id) => {
+        if (id === uuid) setIsCalculating(true);
+      });
+      const unsubComplete = on("BEAMTRACE_CALCULATE_COMPLETE", (id) => {
+        if (id === uuid) setIsCalculating(false);
+      });
+      return () => { unsubStart(); unsubComplete(); };
     }
   }, [solver, uuid]);
 
-  // Check if solver can run (has sources and receivers configured)
-  const canRun = useMemo(() => {
-    if (!solver || solver.kind !== "ray-tracer") return false;
-    const rt = solver as RayTracer;
-    return rt.sourceIDs?.length > 0 && rt.receiverIDs?.length > 0;
+  // Check if solver can calculate (has sources and receivers configured)
+  const canCalculate = useMemo(() => {
+    if (!solver) return false;
+    switch (solver.kind) {
+      case "beamtrace": {
+        const bt = solver as BeamTraceSolver;
+        return bt.sourceIDs?.length > 0 && bt.receiverIDs?.length > 0;
+      }
+      case "image-source": {
+        const is = solver as ImageSourceSolver;
+        return is.sourceIDs?.length > 0 && is.receiverIDs?.length > 0;
+      }
+      case "ray-tracer": {
+        const rt = solver as RayTracer;
+        return rt.sourceIDs?.length > 0 && rt.receiverIDs?.length > 0;
+      }
+      case "rt60":
+        return true;
+      default:
+        return false;
+    }
   }, [solver]);
+
+  // Calculate handler (RT60 relies on auto-calculate, so not included here)
+  const handleCalculate = useCallback(() => {
+    if (!solver) return;
+    switch (solver.kind) {
+      case "beamtrace":
+        emit("BEAMTRACE_CALCULATE", uuid);
+        break;
+      case "image-source":
+        emit("UPDATE_IMAGESOURCE", uuid);
+        break;
+      case "ray-tracer":
+        emit("RAYTRACER_SET_PROPERTY", { uuid, property: "isRunning", value: true });
+        break;
+    }
+  }, [solver, uuid]);
+
+  // Clear handler
+  const handleClear = useCallback(() => {
+    if (!solver) return;
+    switch (solver.kind) {
+      case "beamtrace":
+        emit("BEAMTRACE_RESET", uuid);
+        break;
+      case "image-source":
+        emit("RESET_IMAGESOURCE", uuid);
+        break;
+      case "ray-tracer":
+        emit("RAYTRACER_CLEAR_RAYS", uuid);
+        break;
+    }
+  }, [solver, uuid]);
 
   // If solver doesn't exist (was deleted), don't render
   if (!solver) {
     return null;
   }
+
+  // Determine if this solver supports calculate/clear
+  // RT60 relies on auto-calculate, so no manual calculate button needed
+  const supportsCalculate = ["beamtrace", "image-source", "ray-tracer"].includes(solver.kind);
+  const supportsClear = ["beamtrace", "image-source", "ray-tracer"].includes(solver.kind);
 
   const ParameterComponent = SolverComponentMap.get(solver.kind);
 
@@ -85,10 +148,11 @@ export default function SolverCard({ uuid, defaultExpanded = false }: SolverCard
         name={solver.name}
         kind={solver.kind}
         expanded={expanded}
-        isRunning={'isRunning' in solver && (solver as { isRunning: boolean }).isRunning}
-        canRun={canRun}
+        canCalculate={canCalculate}
+        isCalculating={isCalculating}
         onToggle={handleToggle}
-        onRunningToggle={handleRunningToggle}
+        onCalculate={supportsCalculate ? handleCalculate : undefined}
+        onClear={supportsClear ? handleClear : undefined}
         onDelete={handleDelete}
       />
       <CardContent $expanded={expanded}>

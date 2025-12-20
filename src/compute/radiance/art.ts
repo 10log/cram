@@ -21,6 +21,7 @@ export type ARTSaveObject = {
   uuid: string;
   name: string;
   kind: string;
+  autoCalculate: boolean;
 };
 
 const defaults = {
@@ -47,17 +48,19 @@ export class ART extends Solver {
   }
 
   save() {
-    const { name, kind, uuid } = this;
+    const { name, kind, uuid, autoCalculate } = this;
     return {
       name,
       kind,
-      uuid
+      uuid,
+      autoCalculate
     } as ARTSaveObject;
   }
 
   restore(state: ARTSaveObject) {
     this.name = state.name;
     this.uuid = state.uuid;
+    this.autoCalculate = state.autoCalculate ?? false;
     return this;
   }
 

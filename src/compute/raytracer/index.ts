@@ -139,6 +139,7 @@ export type RayTracerSaveObject = {
   name: string;
   kind: "ray-tracer";
   uuid: string;
+  autoCalculate: boolean;
   roomID: string;
   sourceIDs: string[];
   surfaceIDs: string[];
@@ -418,6 +419,7 @@ class RayTracer extends Solver {
       name,
       kind,
       uuid,
+      autoCalculate,
       roomID,
       sourceIDs,
       surfaceIDs,
@@ -437,6 +439,7 @@ class RayTracer extends Solver {
       name,
       kind,
       uuid,
+      autoCalculate,
       roomID,
       sourceIDs,
       surfaceIDs,

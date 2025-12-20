@@ -19,6 +19,7 @@ export type RT60SaveObject = {
   uuid: string;
   name: string;
   kind: "rt60";
+  autoCalculate: boolean;
 }
 
 const defaults = {
@@ -63,12 +64,21 @@ export class RT60 extends Solver{
   }
 
   save() {
-     const { name, kind, uuid } = this;
+     const { name, kind, uuid, autoCalculate } = this;
      return {
        name,
        kind,
        uuid,
+       autoCalculate,
      } as RT60SaveObject;
+  }
+
+  restore(state: RT60SaveObject) {
+    // Let the base Solver restore shared properties like autoCalculate
+    super.restore(state);
+    // Restore RT60-specific/core identity properties
+    this.kind = state.kind;
+    return this;
   }
 
   calculate(){
@@ -81,20 +91,19 @@ export class RT60 extends Solver{
 
     if(!this.resultExists){
       emit("ADD_RESULT", {
-        kind: ResultKind.StatisticalRT60, 
+        kind: ResultKind.StatisticalRT60,
         data: [],
         info: {
           frequency: this.frequencies,
           airabsorption: false,
-          temperature: 20, 
-          humidity: 40, 
+          temperature: 20,
+          humidity: 40,
         },
         name: `Statistical RT Results`,
         uuid: this.resultID,
         from: this.uuid
       } as Result<ResultKind.StatisticalRT60>);
-    }else{
-
+      this.resultExists = true;
     }
 
     const rt60results = { ...useResult.getState().results[this.resultID] as Result<ResultKind.StatisticalRT60> };

@@ -1,9 +1,8 @@
 import React, { useEffect } from "react";
 import RayTracer from "../../compute/raytracer";
 import PropertyRowFolder from "./property-row/PropertyRowFolder";
-import { createPropertyInputs, useSolverProperty } from "./SolverComponents";
+import { createPropertyInputs, useSolverProperty, PropertyButton } from "./SolverComponents";
 import useToggle from "../hooks/use-toggle";
-import PropertyButton from "./property-row/PropertyButton";
 import { renderer } from "../../render/renderer";
 import SourceReceiverMatrix from "./SourceReceiverMatrix";
 
@@ -85,7 +84,6 @@ const SolverControls = ({ uuid }: { uuid: string }) => {
   return (
     <PropertyRowFolder label="Solver Controls" open={open} onOpenClose={toggle}>
       <PropertyCheckboxInput uuid={uuid} label="Running" property="isRunning" tooltip="Starts/stops the raytracer" />
-      <PropertyButton event="RAYTRACER_CLEAR_RAYS" args={uuid} label="Clear Rays" tooltip="Clears all of the rays" />
     </PropertyRowFolder>
   );
 };
