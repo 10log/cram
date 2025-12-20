@@ -1,4 +1,4 @@
-import React, { useEffect, useReducer, useCallback } from "react";
+import React, { useEffect, useReducer } from "react";
 import { BeamTraceSolver } from "../../compute/beam-trace";
 import { emit, on } from "../../messenger";
 import { useSolver } from "../../store";
@@ -114,32 +114,8 @@ const Calculation = ({ uuid }: { uuid: string }) => {
   );
 };
 
-// Order toggle button for visible orders selection
-const OrderToggle = ({ order, active, onClick }: { order: number; active: boolean; onClick: () => void }) => (
-  <button
-    onClick={onClick}
-    style={{
-      width: "24px",
-      height: "24px",
-      border: "1px solid #555",
-      borderRadius: "4px",
-      background: active ? "#4a9eff" : "#333",
-      color: active ? "#fff" : "#888",
-      cursor: "pointer",
-      fontSize: "11px",
-      fontWeight: active ? "bold" : "normal",
-      padding: 0,
-      margin: "0 2px"
-    }}
-    title={`Order ${order}: ${active ? "visible" : "hidden"}`}
-  >
-    {order}
-  </button>
-);
-
 const Visualization = ({ uuid }: { uuid: string }) => {
   const [open, toggle] = useToggle(true);
-  const solver = useSolver(state => state.solvers[uuid] as BeamTraceSolver | undefined);
   const [mode, setMode] = useSolverProperty<BeamTraceSolver, "visualizationMode">(
     uuid,
     "visualizationMode",
@@ -150,22 +126,6 @@ const Visualization = ({ uuid }: { uuid: string }) => {
     "showAllBeams",
     "BEAMTRACE_SET_PROPERTY"
   );
-  const [visibleOrders, setVisibleOrders] = useSolverProperty<BeamTraceSolver, "visibleOrders">(
-    uuid,
-    "visibleOrders",
-    "BEAMTRACE_SET_PROPERTY"
-  );
-
-  const maxOrder = solver?.maxReflectionOrder ?? 3;
-  const orders = Array.from({ length: maxOrder + 1 }, (_, i) => i);
-  const currentVisibleOrders = visibleOrders || orders;
-
-  const toggleOrder = useCallback((order: number) => {
-    const newOrders = currentVisibleOrders.includes(order)
-      ? currentVisibleOrders.filter(o => o !== order)
-      : [...currentVisibleOrders, order].sort((a, b) => a - b);
-    setVisibleOrders(newOrders);
-  }, [currentVisibleOrders, setVisibleOrders]);
 
   const showBeamsOptions = mode === "beams" || mode === "both";
 
@@ -188,19 +148,6 @@ const Visualization = ({ uuid }: { uuid: string }) => {
           />
         </PropertyRow>
       )}
-      <PropertyRow>
-        <PropertyRowLabel label="Visible Orders" hasToolTip tooltip="Click to toggle visibility of each reflection order" />
-        <div style={{ display: "flex", alignItems: "center", padding: "4px 8px" }}>
-          {orders.map(order => (
-            <OrderToggle
-              key={order}
-              order={order}
-              active={currentVisibleOrders.includes(order)}
-              onClick={() => toggleOrder(order)}
-            />
-          ))}
-        </div>
-      </PropertyRow>
     </PropertyRowFolder>
   );
 };
