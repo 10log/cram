@@ -882,7 +882,10 @@ export default class Renderer {
     } else if (this.fdtd2drunning || this.fdtd3drunning) {
       this.needsToRender = true;
     }
+  }
 
+  /** Update stats after an actual frame render */
+  updateStats() {
     this.stats.update();
     this.overlays.global.setCellValue("fps", this.stats.fpsPanelValue);
     if (this.stats.memPanel) {
@@ -915,6 +918,8 @@ export default class Renderer {
     if (shouldRenderMain) {
       this.composer.render();
       this.updateCursorSize();
+      // Update stats only when an actual frame is rendered
+      this.updateStats();
       // Sync orientation control when main scene renders
       this.orientationControl.shouldRender = true;
       messenger.postMessage("RENDERER_UPDATED");
