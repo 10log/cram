@@ -43,7 +43,7 @@ export const ResultsPanel = () => {
     return on("ADD_RESULT", (e) => {
       const currentKeys = Object.keys(useResult.getState().results);
       // Only auto-switch if this is the first result (list was empty before this add)
-      if (currentKeys.length <= 1) {
+      if (currentKeys.length === 1) {
         switchToResultTab(e.uuid);
       }
     });
