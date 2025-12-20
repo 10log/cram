@@ -39,6 +39,16 @@ vec3 rgb2hsl( vec3 c ){
 }
 
 void main() {
-  gl_FragColor = vec4(vColor, 1.0);
-  
+  // Render as circle/sphere instead of square
+  vec2 center = gl_PointCoord - vec2(0.5);
+  float dist = length(center);
+
+  // Discard pixels outside the circle
+  if (dist > 0.5) {
+    discard;
+  }
+
+  // Add slight shading for 3D sphere effect
+  float shade = 1.0 - dist * 0.5;
+  gl_FragColor = vec4(vColor * shade, 1.0);
 }

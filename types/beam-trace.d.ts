@@ -12,22 +12,62 @@ declare module 'beam-trace' {
 
   export type ReflectionPath3D = PathPoint3D[];
 
+  // Detailed reflection information
+  export interface ReflectionDetail3D {
+    polygon: Polygon3D;
+    polygonId: number;
+    hitPoint: Vector3;
+    incidenceAngle: number;
+    reflectionAngle: number;
+    incomingDirection: Vector3;
+    outgoingDirection: Vector3;
+    surfaceNormal: Vector3;
+    reflectionOrder: number;
+    cumulativeDistance: number;
+    incomingSegmentLength: number;
+    isGrazing: boolean;
+  }
+
+  export interface SegmentDetail3D {
+    startPoint: Vector3;
+    endPoint: Vector3;
+    length: number;
+    segmentIndex: number;
+  }
+
+  export interface DetailedReflectionPath3D {
+    listenerPosition: Vector3;
+    sourcePosition: Vector3;
+    totalPathLength: number;
+    reflectionCount: number;
+    reflections: ReflectionDetail3D[];
+    segments: SegmentDetail3D[];
+    simplePath: ReflectionPath3D;
+  }
+
   export interface BeamVisualizationData {
     reflectionOrder: number;
     virtualSource: Point3D;
     apertureVertices: Point3D[];
     polygonId: number;
+    polygonPath: number[];
   }
 
   export interface PerformanceMetrics3D {
     validPathCount: number;
     raycastCount: number;
     failPlaneCacheHits: number;
+    failPlaneCacheMisses: number;
     bucketsSkipped: number;
+    bucketsTotal: number;
+    bucketsChecked: number;
+    totalLeafNodes: number;
+    skipSphereCount: number;
   }
 
   export interface OptimizedSolver3DConfig {
     maxReflectionOrder?: number;
+    bucketSize?: number;
   }
 
   // Polygon3D class
@@ -59,12 +99,17 @@ declare module 'beam-trace' {
     constructor(polygons: Polygon3D[], source: Source3D, config?: OptimizedSolver3DConfig);
 
     getPaths(listener: Listener3D | Vector3): ReflectionPath3D[];
+    getDetailedPaths(listener: Listener3D | Vector3): DetailedReflectionPath3D[];
     getMetrics(): PerformanceMetrics3D;
     clearCache(): void;
     getLeafNodeCount(): number;
     getMaxReflectionOrder(): number;
     getBeamsForVisualization(maxOrder?: number): BeamVisualizationData[];
+    debugBeamPath(listener: Listener3D | Vector3, polygonPath: number[]): void;
   }
+
+  // Debug functions
+  export function setBSPDebug(enabled: boolean): void;
 
   // Utility functions
   export function computePathLength(path: ReflectionPath3D): number;

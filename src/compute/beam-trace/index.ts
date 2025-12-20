@@ -10,7 +10,12 @@ import {
   computeArrivalTime,
   getPathReflectionOrder,
 } from 'beam-trace';
-import type { ReflectionPath3D, BeamVisualizationData, Vector3 as BT_Vector3 } from 'beam-trace';
+import type {
+  ReflectionPath3D,
+  DetailedReflectionPath3D,
+  BeamVisualizationData,
+  Vector3 as BT_Vector3
+} from 'beam-trace';
 
 import Room, { getRooms } from "../../objects/room";
 import Source from "../../objects/source";
@@ -58,6 +63,14 @@ export interface BeamTracePath {
   length: number;
   arrivalTime: number;
   polygonIds: (number | null)[];
+  // Detailed reflection info (optional, populated when using getDetailedPaths)
+  reflections?: {
+    polygonId: number;
+    hitPoint: THREE.Vector3;
+    incidenceAngle: number;
+    surfaceNormal: THREE.Vector3;
+    isGrazing: boolean;
+  }[];
 }
 
 export type VisualizationMode = "rays" | "beams" | "both";
@@ -71,6 +84,8 @@ export interface BeamTraceSaveObject {
   receiverIDs: string[];
   maxReflectionOrder: number;
   visualizationMode: VisualizationMode;
+  showAllBeams: boolean;
+  visibleOrders: number[];
   frequencies: number[];
   levelTimeProgression: string;
   impulseResponseResult: string;
@@ -84,6 +99,8 @@ export interface BeamTraceSolverParams {
   receiverIDs?: string[];
   maxReflectionOrder?: number;
   visualizationMode?: VisualizationMode;
+  showAllBeams?: boolean;
+  visibleOrders?: number[];
   frequencies?: number[];
   levelTimeProgression?: string;
   impulseResponseResult?: string;
@@ -97,6 +114,8 @@ const defaults: Required<BeamTraceSolverParams> = {
   receiverIDs: [],
   maxReflectionOrder: 3,
   visualizationMode: "rays",
+  showAllBeams: false,
+  visibleOrders: [0, 1, 2, 3],
   frequencies: [125, 250, 500, 1000, 2000, 4000, 8000],
   levelTimeProgression: "",
   impulseResponseResult: "",
@@ -112,6 +131,8 @@ export class BeamTraceSolver extends Solver {
   impulseResponseResult: string;
 
   private _visualizationMode: VisualizationMode;
+  private _showAllBeams: boolean;
+  private _visibleOrders: number[];
   private _plotFrequency: number;
   private _plotOrders: number[];
 
@@ -143,19 +164,16 @@ export class BeamTraceSolver extends Solver {
     };
   } | null = null;
 
-  // Beam visualization metadata for click handling
-  private beamPointsMetadata: Array<{
-    position: THREE.Vector3;
-    polygonId: number;
-    reflectionOrder: number;
-    apertureVertexCount: number;
-    virtualSource: [number, number, number];
-    isValidBeam: boolean;  // Whether this beam passed filtering
-    beamKey: string;       // The key used for filtering
-  }> = [];
+  // Group for virtual source meshes (replaces Points for reliable raycasting)
+  private virtualSourcesGroup: THREE.Group;
+  // Map from virtual source mesh to beam data for click detection
+  private virtualSourceMap: Map<THREE.Mesh, BeamVisualizationData & { polygonPath: number[] }> = new Map();
+  // Currently selected virtual source mesh
+  private selectedVirtualSource: THREE.Mesh | null = null;
 
   // Click handler cleanup
   private clickHandler: ((event: MouseEvent) => void) | null = null;
+  private hoverHandler: ((event: MouseEvent) => void) | null = null;
 
   // Selected path highlight (for LTP chart click interaction)
   private selectedPath: THREE.Mesh;
@@ -174,6 +192,8 @@ export class BeamTraceSolver extends Solver {
     this.maxReflectionOrder = p.maxReflectionOrder;
     this.frequencies = p.frequencies;
     this._visualizationMode = p.visualizationMode;
+    this._showAllBeams = p.showAllBeams;
+    this._visibleOrders = p.visibleOrders.length > 0 ? p.visibleOrders : Array.from({ length: p.maxReflectionOrder + 1 }, (_, i) => i);
     this._plotFrequency = 1000;
     this._plotOrders = Array.from({ length: p.maxReflectionOrder + 1 }, (_, i) => i); // [0, 1, 2, ... maxReflectionOrder]
     this.levelTimeProgression = p.levelTimeProgression || uuidv4();
@@ -225,22 +245,31 @@ export class BeamTraceSolver extends Solver {
     this.selectedBeamsGroup = new THREE.Group();
     this.selectedBeamsGroup.name = "selected-beams-highlight";
     renderer.markup.add(this.selectedBeamsGroup);
+
+    // Create group for virtual source spheres
+    this.virtualSourcesGroup = new THREE.Group();
+    this.virtualSourcesGroup.name = "virtual-sources";
+    renderer.markup.add(this.virtualSourcesGroup);
   }
 
   save(): BeamTraceSaveObject {
-    return pickProps([
-      "name",
-      "kind",
-      "uuid",
-      "roomID",
-      "sourceIDs",
-      "receiverIDs",
-      "maxReflectionOrder",
-      "visualizationMode",
-      "frequencies",
-      "levelTimeProgression",
-      "impulseResponseResult"
-    ], this) as BeamTraceSaveObject;
+    return {
+      ...pickProps([
+        "name",
+        "kind",
+        "uuid",
+        "roomID",
+        "sourceIDs",
+        "receiverIDs",
+        "maxReflectionOrder",
+        "frequencies",
+        "levelTimeProgression",
+        "impulseResponseResult"
+      ], this),
+      visualizationMode: this._visualizationMode,
+      showAllBeams: this._showAllBeams,
+      visibleOrders: this._visibleOrders,
+    } as BeamTraceSaveObject;
   }
 
   restore(state: BeamTraceSaveObject): this {
@@ -251,6 +280,8 @@ export class BeamTraceSolver extends Solver {
     this.receiverIDs = state.receiverIDs;
     this.maxReflectionOrder = state.maxReflectionOrder;
     this._visualizationMode = state.visualizationMode || "rays";
+    this._showAllBeams = state.showAllBeams ?? false;
+    this._visibleOrders = state.visibleOrders ?? Array.from({ length: this.maxReflectionOrder + 1 }, (_, i) => i);
     this.frequencies = state.frequencies;
     this.levelTimeProgression = state.levelTimeProgression || uuidv4();
     this.impulseResponseResult = state.impulseResponseResult || uuidv4();
@@ -262,66 +293,206 @@ export class BeamTraceSolver extends Solver {
     this.removeClickHandler();
     renderer.markup.remove(this.selectedPath);
     renderer.markup.remove(this.selectedBeamsGroup);
+    renderer.markup.remove(this.virtualSourcesGroup);
     emit("REMOVE_RESULT", this.levelTimeProgression);
     emit("REMOVE_RESULT", this.impulseResponseResult);
   }
 
   private setupClickHandler() {
-    // Remove existing handler if any
+    // Remove existing handlers if any
     this.removeClickHandler();
 
-    this.clickHandler = (event: MouseEvent) => {
-      // Only handle left clicks
-      if (event.button !== 0) return;
+    const canvas = renderer.renderer.domElement;
 
-      // Get renderer canvas
-      const canvas = renderer.renderer.domElement;
+    // Helper to get mouse position in normalized device coordinates
+    const getMouseNDC = (event: MouseEvent): THREE.Vector2 => {
       const rect = canvas.getBoundingClientRect();
-
-      // Calculate normalized device coordinates
-      const mouse = new THREE.Vector2(
+      return new THREE.Vector2(
         ((event.clientX - rect.left) / rect.width) * 2 - 1,
         -((event.clientY - rect.top) / rect.height) * 2 + 1
       );
+    };
 
-      // Create raycaster
+    // Hover handler - change cursor when over a clickable virtual source
+    this.hoverHandler = (event: MouseEvent) => {
+      if (this.virtualSourceMap.size === 0) {
+        canvas.style.cursor = 'default';
+        return;
+      }
+
+      const mouse = getMouseNDC(event);
       const raycaster = new THREE.Raycaster();
       raycaster.setFromCamera(mouse, renderer.camera);
-      raycaster.params.Points = { threshold: 0.5 };
 
-      // Check intersection with markup points
-      const intersects = raycaster.intersectObject(renderer.markup.points);
+      const virtualSourceMeshes = Array.from(this.virtualSourceMap.keys());
+      const intersects = raycaster.intersectObjects(virtualSourceMeshes);
 
       if (intersects.length > 0) {
-        const intersect = intersects[0];
-        const pointIndex = intersect.index;
+        canvas.style.cursor = 'pointer';
+      } else {
+        canvas.style.cursor = 'default';
+      }
+    };
 
-        if (pointIndex !== undefined && pointIndex < this.beamPointsMetadata.length) {
-          const metadata = this.beamPointsMetadata[pointIndex];
-          const surface = this.polygonToSurface.get(metadata.polygonId);
+    // Click handler
+    this.clickHandler = (event: MouseEvent) => {
+      // Only handle left clicks
+      if (event.button !== 0) return;
+      if (this.virtualSourceMap.size === 0) return;
 
-          console.group(`🔍 Beam Debug Info (Point ${pointIndex})`);
-          console.log(`Virtual Source: [${metadata.virtualSource.map(v => v.toFixed(3)).join(', ')}]`);
-          console.log(`Polygon ID: ${metadata.polygonId}`);
-          console.log(`Reflection Order: ${metadata.reflectionOrder}`);
-          console.log(`Aperture Vertices: ${metadata.apertureVertexCount}`);
-          console.log(`Beam Key: "${metadata.beamKey}"`);
-          console.log(`Is Valid (passed filter): ${metadata.isValidBeam}`);
-          if (surface) {
-            console.log(`Surface: ${surface.name} (${surface.uuid})`);
+      const mouse = getMouseNDC(event);
+      const raycaster = new THREE.Raycaster();
+      raycaster.setFromCamera(mouse, renderer.camera);
+
+      const virtualSourceMeshes = Array.from(this.virtualSourceMap.keys());
+      const intersects = raycaster.intersectObjects(virtualSourceMeshes);
+
+      if (intersects.length > 0) {
+        const clickedMesh = intersects[0].object as THREE.Mesh;
+        const beam = this.virtualSourceMap.get(clickedMesh);
+
+        if (beam) {
+          // Toggle selection - if already selected, deselect
+          if (this.selectedVirtualSource === clickedMesh) {
+            this.selectedVirtualSource = null;
+            this.clearSelectedBeams();
+          } else {
+            this.selectedVirtualSource = clickedMesh;
+            this.highlightVirtualSourcePath(beam);
           }
-          console.groupEnd();
         }
       }
     };
 
-    renderer.renderer.domElement.addEventListener('click', this.clickHandler);
+    canvas.addEventListener('click', this.clickHandler);
+    canvas.addEventListener('mousemove', this.hoverHandler);
+  }
+
+  // Highlight the ray path from a clicked virtual source to the receiver
+  // beam contains polygonPath which is the sequence of polygon IDs for reflections
+  private highlightVirtualSourcePath(beam: BeamVisualizationData & { polygonPath: number[] }) {
+    // Clear previous selections
+    (this.selectedPath.geometry as MeshLine).setPoints([]);
+    this.clearSelectedBeams();
+
+    const colorHex = getOrderColor(beam.reflectionOrder, this.maxReflectionOrder);
+    const vs = new THREE.Vector3(beam.virtualSource[0], beam.virtualSource[1], beam.virtualSource[2]);
+
+    // Get receiver position
+    if (this.receiverIDs.length === 0) return;
+    const receiver = useContainer.getState().containers[this.receiverIDs[0]] as Receiver;
+    if (!receiver) return;
+    const receiverPos = receiver.position.clone();
+
+    // Draw dashed line from virtual source to receiver (the "unfolded" path)
+    const dashedMaterial = new THREE.LineDashedMaterial({
+      color: colorHex,
+      transparent: true,
+      opacity: 0.4,
+      dashSize: 0.3,
+      gapSize: 0.15
+    });
+    const unfoldedLineGeom = new THREE.BufferGeometry().setFromPoints([vs, receiverPos]);
+    const unfoldedLine = new THREE.Line(unfoldedLineGeom, dashedMaterial);
+    unfoldedLine.computeLineDistances();
+    this.selectedBeamsGroup.add(unfoldedLine);
+
+    // Add a larger highlight sphere on the virtual source
+    const highlightGeom = new THREE.SphereGeometry(0.18, 16, 16);
+    const highlightMat = new THREE.MeshBasicMaterial({
+      color: colorHex,
+      transparent: true,
+      opacity: 0.4
+    });
+    const highlightMesh = new THREE.Mesh(highlightGeom, highlightMat);
+    highlightMesh.position.copy(vs);
+    this.selectedBeamsGroup.add(highlightMesh);
+
+    // Find the matching path inside the room by comparing polygon sequence
+    const polygonPath = beam.polygonPath;
+    if (!polygonPath || polygonPath.length === 0) return;
+
+    const targetOrder = beam.reflectionOrder;
+
+    for (const path of this.validPaths) {
+      // Path structure: path.polygonIds = [null (listener), polyN, poly_{N-1}, ..., poly_1, null (source)]
+      // A path with N reflections has length N+2 (including source and listener points)
+      const pathOrder = path.order;
+
+      if (pathOrder !== targetOrder) continue;
+
+      // Check if the polygon sequence matches
+      // polygonPath is [poly0, poly1, ..., polyN] (first to last reflection, root to leaf in beam tree)
+      // path.polygonIds is [null, polyN, poly_{N-1}, ..., poly_1, null] (leaf to root order)
+      // So we need to compare in reverse: polygonPath[i] should match path.polygonIds[pathOrder - i]
+      let matches = true;
+      for (let i = 0; i < polygonPath.length; i++) {
+        const pathIndex = pathOrder - i; // Index of reflection point in path (1-based from listener)
+        const pathPolygonId = path.polygonIds[pathIndex];
+        if (pathPolygonId !== polygonPath[i]) {
+          matches = false;
+          break;
+        }
+      }
+
+      if (matches) {
+        // Draw the actual ray path inside the room as thick cylinders
+        const points = path.points;
+        const numReflections = path.order;
+
+        for (let i = 0; i < points.length - 1; i++) {
+          const start = points[i];
+          const end = points[i + 1];
+          const segLen = start.distanceTo(end);
+          const midPoint = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5);
+
+          // Color based on segment order
+          const segmentOrder = numReflections - i;
+          const segColor = (segmentOrder === 0) ? 0xffffff : getOrderColor(segmentOrder, this.maxReflectionOrder);
+
+          const cylGeom = new THREE.CylinderGeometry(0.025, 0.025, segLen, 8);
+          const cylMat = new THREE.MeshBasicMaterial({ color: segColor });
+          const cyl = new THREE.Mesh(cylGeom, cylMat);
+
+          cyl.position.copy(midPoint);
+          const direction = new THREE.Vector3().subVectors(end, start).normalize();
+          const quaternion = new THREE.Quaternion();
+          quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction);
+          cyl.setRotationFromQuaternion(quaternion);
+
+          this.selectedBeamsGroup.add(cyl);
+        }
+
+        // Add spheres at reflection points
+        for (let i = 1; i < path.points.length - 1; i++) {
+          const pointOrder = numReflections - i + 1;
+          const pointColor = getOrderColor(pointOrder, this.maxReflectionOrder);
+
+          const pointGeom = new THREE.SphereGeometry(0.08, 12, 12);
+          const pointMat = new THREE.MeshBasicMaterial({ color: pointColor });
+          const pointMesh = new THREE.Mesh(pointGeom, pointMat);
+          pointMesh.position.copy(path.points[i]);
+          this.selectedBeamsGroup.add(pointMesh);
+        }
+
+        renderer.needsToRender = true;
+        return;
+      }
+    }
+
+    renderer.needsToRender = true;
   }
 
   private removeClickHandler() {
+    const canvas = renderer.renderer.domElement;
     if (this.clickHandler) {
-      renderer.renderer.domElement.removeEventListener('click', this.clickHandler);
+      canvas.removeEventListener('click', this.clickHandler);
       this.clickHandler = null;
+    }
+    if (this.hoverHandler) {
+      canvas.removeEventListener('mousemove', this.hoverHandler);
+      this.hoverHandler = null;
+      canvas.style.cursor = 'default';
     }
   }
 
@@ -602,128 +773,7 @@ export class BeamTraceSolver extends Solver {
     }
 
     const pathIndex = parseInt(match[1], 10);
-
-    // Sort paths by arrival time (same as calculateLTP) to get consistent indexing
-    const sortedPaths = [...this.validPaths].sort((a, b) => a.arrivalTime - b.arrivalTime);
-
-    if (pathIndex < 0 || pathIndex >= sortedPaths.length) {
-      console.warn('BeamTraceSolver: Path index out of bounds:', pathIndex);
-      return;
-    }
-
-    const path = sortedPaths[pathIndex];
-
-    // Update the highlighted path line geometry (ray inside room)
-    const points = path.points.map(p => p.toArray()).flat();
-    (this.selectedPath.geometry as MeshLine).setPoints(points);
-
-    // Clear previous beam highlights
-    this.clearSelectedBeams();
-
-    // Always highlight beams for this path (shows virtual source cone outside room)
-    if (this.btSolver) {
-      this.highlightBeamsForPath(path);
-    }
-
-    console.log(`BeamTraceSolver: Highlighting path ${pathIndex} with order ${path.order}, arrival time ${path.arrivalTime.toFixed(4)}s`);
-
-    renderer.needsToRender = true;
-  }
-
-  // Highlight beams that correspond to a specific path's reflections
-  private highlightBeamsForPath(path: BeamTracePath) {
-    if (!this.btSolver) return;
-
-    // Get all beams
-    const beamData = this.btSolver.getBeamsForVisualization(this.maxReflectionOrder);
-
-    // For each reflection order in the path, find the best matching beam
-    // path.points: [source, reflection1, reflection2, ..., receiver]
-    // path.polygonIds: [null, polygonId1, polygonId2, ..., null]
-    // We need to find beams that match each (polygonId, reflectionOrder) AND
-    // whose virtual source is consistent with this specific path
-
-    const highlightMaterial = new THREE.LineBasicMaterial({
-      color: 0xff0000,
-      linewidth: 2,
-      transparent: true,
-      opacity: 0.9
-    });
-
-    // For each reflection in the path (indices 1 to path.order)
-    for (let reflectionIndex = 1; reflectionIndex <= path.order; reflectionIndex++) {
-      const polygonId = path.polygonIds[reflectionIndex];
-      if (polygonId === null) continue;
-
-      const reflectionPoint = path.points[reflectionIndex];
-
-      // Find the beam at this reflection order on this polygon that best matches
-      // We check if the reflection point lies on the line from virtual source to receiver
-      let bestBeam: BeamVisualizationData | null = null;
-      let bestDistance = Infinity;
-
-      beamData.forEach((beam: BeamVisualizationData) => {
-        const beamPolygonId = beam.polygonId;
-
-        // Must match polygon and reflection order (skip if no polygon)
-        if (beamPolygonId === null || beamPolygonId !== polygonId || beam.reflectionOrder !== reflectionIndex) return;
-
-        // Skip beams with no valid aperture
-        if (!beam.apertureVertices || beam.apertureVertices.length < 3) return;
-
-        // Check how close the reflection point is to the line from virtual source to receiver
-        // A path goes: virtual source -> reflection point -> ... -> receiver
-        // For the beam that generated this path, the reflection point should lie
-        // on the line from virtual source to the next point (or receiver if last reflection)
-        const virtualSource = new THREE.Vector3(
-          beam.virtualSource[0],
-          beam.virtualSource[1],
-          beam.virtualSource[2]
-        );
-
-        // The receiver is the last point in the path
-        const receiver = path.points[path.points.length - 1];
-
-        // Calculate distance from reflection point to the line (virtualSource -> receiver)
-        const lineDir = receiver.clone().sub(virtualSource).normalize();
-        const toPoint = reflectionPoint.clone().sub(virtualSource);
-        const projection = toPoint.dot(lineDir);
-        const closestPointOnLine = virtualSource.clone().add(lineDir.multiplyScalar(projection));
-        const distance = reflectionPoint.distanceTo(closestPointOnLine);
-
-        if (distance < bestDistance) {
-          bestDistance = distance;
-          bestBeam = beam;
-        }
-      });
-
-      // Highlight the best matching beam (if found and distance is reasonable)
-      if (bestBeam !== null && bestDistance < 0.1) { // 10cm tolerance
-        const matchedBeam = bestBeam as BeamVisualizationData;
-        const apex = new THREE.Vector3(
-          matchedBeam.virtualSource[0],
-          matchedBeam.virtualSource[1],
-          matchedBeam.virtualSource[2]
-        );
-
-        // Draw highlighted pyramidal edges from apex to each aperture vertex
-        matchedBeam.apertureVertices.forEach((v, i) => {
-          const vertex = new THREE.Vector3(v[0], v[1], v[2]);
-          const nextV = matchedBeam.apertureVertices[(i + 1) % matchedBeam.apertureVertices.length];
-          const nextVertex = new THREE.Vector3(nextV[0], nextV[1], nextV[2]);
-
-          // Line from apex to this vertex
-          const apexLineGeom = new THREE.BufferGeometry().setFromPoints([apex, vertex]);
-          const apexLine = new THREE.Line(apexLineGeom, highlightMaterial);
-          this.selectedBeamsGroup.add(apexLine);
-
-          // Line along aperture edge
-          const edgeGeom = new THREE.BufferGeometry().setFromPoints([vertex, nextVertex]);
-          const edgeLine = new THREE.Line(edgeGeom, highlightMaterial);
-          this.selectedBeamsGroup.add(edgeLine);
-        });
-      }
-    }
+    this.highlightPathByIndex(pathIndex);
   }
 
   // Visualization methods
@@ -731,12 +781,19 @@ export class BeamTraceSolver extends Solver {
     // Clear lines and points using renderer.markup (same as ImageSourceSolver)
     renderer.markup.clearLines();
     renderer.markup.clearPoints();
+    // Clear virtual source meshes
+    this.clearVirtualSources();
+    this.virtualSourceMap.clear();
+    this.selectedVirtualSource = null;
   }
 
   private drawPaths() {
     // Use renderer.markup.addLine() like ImageSourceSolver for consistent visualization
     // Use the same color scale as LTPChart for visual consistency
-    this.validPaths.forEach(path => {
+    // Filter paths by visible orders
+    const filteredPaths = this.validPaths.filter(path => this._visibleOrders.includes(path.order));
+
+    filteredPaths.forEach(path => {
       const colorHex = getOrderColor(path.order, this.maxReflectionOrder);
       // Convert hex color to RGB (0-1 range)
       const r = ((colorHex >> 16) & 0xff) / 255;
@@ -774,100 +831,134 @@ export class BeamTraceSolver extends Solver {
   private drawBeams() {
     if (!this.btSolver) return;
 
-    // Clear beam metadata for click handling
-    this.beamPointsMetadata = [];
+    // Clear virtual source meshes and map
+    this.clearVirtualSources();
+    this.virtualSourceMap.clear();
+    this.selectedVirtualSource = null;
 
-    // Collect (polygonId, reflectionOrder) pairs from valid paths
-    // A beam is only valid if it reflects off polygon P at reflection order N
-    // AND there's a valid path where the Nth reflection is off polygon P
-    const validBeamKeys = new Set<string>();
-    this.validPaths.forEach(path => {
-      // path.polygonIds array: [null (source), polygonId1, polygonId2, ..., null (receiver)]
-      // For a path of order N, there are N reflections
-      // Index 0 = source (null), Index 1 = first reflection, ..., Index N = Nth reflection, Index N+1 = receiver (null)
-      // beam.reflectionOrder is 1-indexed: 1 = first reflection, 2 = second, etc.
-      // So we need to map: path index i -> reflection order i (for i > 0 and id !== null)
-      path.polygonIds.forEach((id, index) => {
-        if (id !== null) {
-          // index corresponds to reflectionOrder (1 = first reflection, etc.)
-          validBeamKeys.add(`${id}-${index}`);
-        }
-      });
+    // Get current paths to determine which virtual sources are valid
+    const paths = this.validPaths;
+
+    // Build a map of valid paths by their polygon sequence for quick lookup
+    const validPathsByPolygonSequence = new Map<string, BeamTracePath>();
+    paths.forEach(path => {
+      // Build polygon sequence key (excluding null entries for source/receiver)
+      const polygonSequence = path.polygonIds.filter(id => id !== null).join(',');
+      if (polygonSequence) {
+        validPathsByPolygonSequence.set(polygonSequence, path);
+      }
     });
 
     const beamData = this.btSolver.getBeamsForVisualization(this.maxReflectionOrder);
+
     beamData.forEach((beam: BeamVisualizationData) => {
-      const polygonId = beam.polygonId;
-
-      // Skip beams with no polygon ID or no valid aperture (fully clipped beams)
-      if (polygonId === null || !beam.apertureVertices || beam.apertureVertices.length < 3) {
+      // Filter by visible orders
+      if (!this._visibleOrders.includes(beam.reflectionOrder)) {
         return;
       }
 
-      const beamKey = `${polygonId}-${beam.reflectionOrder}`;
-      const isValid = validBeamKeys.has(beamKey);
+      // Check if this beam has a valid path to the receiver
+      const hasValidPath = this.beamHasValidPath(beam, paths);
 
-      const apex: [number, number, number] = [
-        beam.virtualSource[0],
-        beam.virtualSource[1],
-        beam.virtualSource[2]
-      ];
-
-      // Skip invalid beams (don't show orphaned sources)
-      if (!isValid) {
+      // Skip virtual sources without valid paths unless showAllBeams is enabled
+      if (!hasValidPath && !this._showAllBeams) {
         return;
       }
 
-      // Calculate color based on reflection order (using same scale as LTPChart)
+      // Calculate sphere radius based on reflection order (smaller for higher orders)
+      const radius = Math.max(0.05, 0.10 - beam.reflectionOrder * 0.01);
+
+      // Get color based on reflection order
       const colorHex = getOrderColor(beam.reflectionOrder, this.maxReflectionOrder);
-      const r = ((colorHex >> 16) & 0xff) / 255;
-      const g = ((colorHex >> 8) & 0xff) / 255;
-      const b = (colorHex & 0xff) / 255;
-      const color: [number, number, number] = [r, g, b];
 
-      // Add virtual source point
-      renderer.markup.addPoint(apex, color);
+      // Dim invalid beams
+      let finalColor = colorHex;
+      if (!hasValidPath) {
+        // Mix with gray to dim
+        const r = ((colorHex >> 16) & 0xff) * 0.4 + 128 * 0.6;
+        const g = ((colorHex >> 8) & 0xff) * 0.4 + 128 * 0.6;
+        const b = (colorHex & 0xff) * 0.4 + 128 * 0.6;
+        finalColor = (Math.round(r) << 16) | (Math.round(g) << 8) | Math.round(b);
+      }
 
-      // Store metadata for click handling (must match point index)
-      this.beamPointsMetadata.push({
-        position: new THREE.Vector3(apex[0], apex[1], apex[2]),
-        polygonId,
-        reflectionOrder: beam.reflectionOrder,
-        apertureVertexCount: beam.apertureVertices.length,
-        virtualSource: apex,
-        isValidBeam: isValid,
-        beamKey
+      const vs = new THREE.Vector3(beam.virtualSource[0], beam.virtualSource[1], beam.virtualSource[2]);
+
+      // Create virtual source sphere mesh
+      const vsGeom = new THREE.SphereGeometry(radius, 12, 12);
+      const vsMat = new THREE.MeshStandardMaterial({
+        color: finalColor,
+        transparent: !hasValidPath,
+        opacity: hasValidPath ? 1.0 : 0.4,
+        roughness: 0.6,
+        metalness: 0.1
       });
+      const vsMesh = new THREE.Mesh(vsGeom, vsMat);
+      vsMesh.position.copy(vs);
+      this.virtualSourcesGroup.add(vsMesh);
 
-      // Draw pyramidal edges from apex to each aperture vertex using addLine
-      beam.apertureVertices.forEach((v, i) => {
-        const vertex: [number, number, number] = [v[0], v[1], v[2]];
-        const nextV = beam.apertureVertices[(i + 1) % beam.apertureVertices.length];
-        const nextVertex: [number, number, number] = [nextV[0], nextV[1], nextV[2]];
-
-        // Line from apex to this vertex
-        renderer.markup.addLine(apex, vertex, color, color);
-
-        // Line along aperture edge (connecting vertices)
-        renderer.markup.addLine(vertex, nextVertex, color, color);
-      });
+      // Register this mesh for click detection (only valid beams are clickable)
+      if (hasValidPath) {
+        this.virtualSourceMap.set(vsMesh, {
+          ...beam,
+          polygonPath: beam.polygonPath || []
+        });
+      }
     });
 
-    // Get buffer usage stats and store in metrics
-    const usageStats = renderer.markup.getUsageStats();
-    if (this.lastMetrics) {
-      this.lastMetrics.bufferUsage = usageStats;
-    }
-
-    // Log buffer usage (warning at 80%, error at overflow)
-    if (usageStats.overflowWarning) {
-      console.error(`⚠️ Beam-trace buffer overflow! Lines: ${usageStats.linesUsed}/${usageStats.linesCapacity}, Points: ${usageStats.pointsUsed}/${usageStats.pointsCapacity}. Reduce reflection order.`);
-    } else if (usageStats.linesPercent > 80 || usageStats.pointsPercent > 80) {
-      console.warn(`Buffer usage high: Lines ${usageStats.linesPercent.toFixed(1)}%, Points ${usageStats.pointsPercent.toFixed(1)}%`);
-    }
-
-    // Setup click handler for debugging beam info on click
+    // Setup click handler for virtual source selection
     this.setupClickHandler();
+
+    renderer.needsToRender = true;
+  }
+
+  // Check if a beam has a valid path to the receiver
+  private beamHasValidPath(beam: BeamVisualizationData, paths: BeamTracePath[]): boolean {
+    const polygonPath = beam.polygonPath;
+    if (!polygonPath || polygonPath.length === 0) return false;
+
+    const targetOrder = beam.reflectionOrder;
+
+    for (const path of paths) {
+      if (path.order !== targetOrder) continue;
+
+      // Check if the polygon sequence matches
+      // polygonPath is [poly0, poly1, ..., polyN] (first to last reflection)
+      // path.polygonIds is [null, polyN, poly_{N-1}, ..., poly_1, null] (leaf to root order)
+      let matches = true;
+      for (let i = 0; i < polygonPath.length; i++) {
+        const pathIndex = targetOrder - i;
+        const pathPolygonId = path.polygonIds[pathIndex];
+        if (pathPolygonId !== polygonPath[i]) {
+          matches = false;
+          break;
+        }
+      }
+
+      if (matches) return true;
+    }
+
+    return false;
+  }
+
+  // Clear virtual source meshes
+  private clearVirtualSources() {
+    while (this.virtualSourcesGroup.children.length > 0) {
+      const child = this.virtualSourcesGroup.children[0];
+      this.virtualSourcesGroup.remove(child);
+      if (child instanceof THREE.Mesh) {
+        child.geometry?.dispose();
+        const material = child.material;
+        if (Array.isArray(material)) {
+          for (const mat of material) {
+            if (mat instanceof THREE.Material) {
+              mat.dispose();
+            }
+          }
+        } else if (material instanceof THREE.Material) {
+          material.dispose();
+        }
+      }
+    }
   }
 
   // Calculate impulse response
@@ -1147,6 +1238,205 @@ export class BeamTraceSolver extends Solver {
         break;
     }
 
+    renderer.needsToRender = true;
+  }
+
+  // Show all beams toggle (including invalid/orphaned beams)
+  get showAllBeams(): boolean {
+    return this._showAllBeams;
+  }
+
+  set showAllBeams(value: boolean) {
+    this._showAllBeams = value;
+    // Redraw beams if in beams or both mode
+    if (this._visualizationMode === "beams" || this._visualizationMode === "both") {
+      this.clearVisualization();
+      if (this._visualizationMode === "both" && this.validPaths.length > 0) {
+        this.drawPaths();
+      }
+      if (this.btSolver) {
+        this.drawBeams();
+      }
+      renderer.needsToRender = true;
+    }
+  }
+
+  // Visible reflection orders for filtering visualization
+  get visibleOrders(): number[] {
+    return this._visibleOrders;
+  }
+
+  set visibleOrders(orders: number[]) {
+    this._visibleOrders = orders;
+    // Redraw visualization with new filter
+    this.clearVisualization();
+    switch (this._visualizationMode) {
+      case "rays":
+        if (this.validPaths.length > 0) {
+          this.drawPaths();
+        }
+        break;
+      case "beams":
+        if (this.btSolver) {
+          this.drawBeams();
+        }
+        break;
+      case "both":
+        if (this.validPaths.length > 0) {
+          this.drawPaths();
+        }
+        if (this.btSolver) {
+          this.drawBeams();
+        }
+        break;
+    }
+    renderer.needsToRender = true;
+  }
+
+  // Debug a specific beam path by polygon IDs
+  debugBeamPath(polygonPath: number[]) {
+    if (!this.btSolver) {
+      console.warn("BeamTraceSolver: No solver built. Run calculate() first.");
+      return;
+    }
+    if (this.receiverIDs.length === 0) {
+      console.warn("BeamTraceSolver: No receiver selected for debugging.");
+      return;
+    }
+
+    const receiver = useContainer.getState().containers[this.receiverIDs[0]] as Receiver;
+    if (!receiver) {
+      console.warn("BeamTraceSolver: Receiver not found.");
+      return;
+    }
+
+    const listenerPos: BT_Vector3 = [
+      receiver.position.x,
+      receiver.position.y,
+      receiver.position.z
+    ];
+
+    console.group(`🔍 Debugging beam path: [${polygonPath.join(' → ')}]`);
+    this.btSolver.debugBeamPath(listenerPos, polygonPath);
+    console.groupEnd();
+  }
+
+  // Enable/disable BSP debug output (placeholder - setBSPDebug not exported from beam-trace)
+  setBSPDebug(enabled: boolean) {
+    // Note: setBSPDebug is not currently exported from beam-trace package
+    // This is a placeholder that logs the intent
+    console.log(`BeamTraceSolver: BSP debug ${enabled ? 'enabled' : 'disabled'} (note: requires beam-trace package update to export setBSPDebug)`);
+  }
+
+  // Get detailed paths with reflection information
+  getDetailedPaths(): DetailedReflectionPath3D[] {
+    if (!this.btSolver) {
+      console.warn("BeamTraceSolver: No solver built. Run calculate() first.");
+      return [];
+    }
+    if (this.receiverIDs.length === 0) {
+      console.warn("BeamTraceSolver: No receiver selected.");
+      return [];
+    }
+
+    const receiver = useContainer.getState().containers[this.receiverIDs[0]] as Receiver;
+    if (!receiver) {
+      console.warn("BeamTraceSolver: Receiver not found.");
+      return [];
+    }
+
+    const listenerPos: BT_Vector3 = [
+      receiver.position.x,
+      receiver.position.y,
+      receiver.position.z
+    ];
+
+    return this.btSolver.getDetailedPaths(listenerPos);
+  }
+
+  // Highlight a specific path by index (for interactive selection)
+  highlightPathByIndex(pathIndex: number) {
+    const sortedPaths = [...this.validPaths].sort((a, b) => a.arrivalTime - b.arrivalTime);
+
+    if (pathIndex < 0 || pathIndex >= sortedPaths.length) {
+      console.warn('BeamTraceSolver: Path index out of bounds:', pathIndex);
+      return;
+    }
+
+    const path = sortedPaths[pathIndex];
+
+    // Clear previous selections
+    (this.selectedPath.geometry as MeshLine).setPoints([]);
+    this.clearSelectedBeams();
+
+    // Get the order-based color for this path
+    const pathColorHex = getOrderColor(path.order, this.maxReflectionOrder);
+
+    // Draw the ray path inside the room with order-based color (solid lines)
+    const rayMaterial = new THREE.LineBasicMaterial({
+      color: pathColorHex,
+      linewidth: 2,
+      transparent: false
+    });
+
+    // Draw each segment of the ray path
+    for (let i = 0; i < path.points.length - 1; i++) {
+      const segmentGeom = new THREE.BufferGeometry().setFromPoints([
+        path.points[i],
+        path.points[i + 1]
+      ]);
+      const segmentLine = new THREE.Line(segmentGeom, rayMaterial);
+      this.selectedBeamsGroup.add(segmentLine);
+    }
+
+    // Draw dashed line from virtual source to receiver for each reflection order
+    if (this.btSolver && this.receiverIDs.length > 0) {
+      const receiver = useContainer.getState().containers[this.receiverIDs[0]] as Receiver;
+      if (receiver) {
+        // Find the virtual source for the highest order beam in this path
+        const beamData = this.btSolver.getBeamsForVisualization(this.maxReflectionOrder);
+        const lastPolygonId = path.polygonIds[path.order];
+
+        if (lastPolygonId !== null) {
+          const matchingBeam = beamData.find((beam: BeamVisualizationData) =>
+            beam.polygonId === lastPolygonId && beam.reflectionOrder === path.order
+          );
+
+          if (matchingBeam) {
+            const dashedMaterial = new THREE.LineDashedMaterial({
+              color: pathColorHex,
+              linewidth: 1,
+              dashSize: 0.3,
+              gapSize: 0.15,
+              transparent: true,
+              opacity: 0.7
+            });
+
+            const virtualSourcePos = new THREE.Vector3(
+              matchingBeam.virtualSource[0],
+              matchingBeam.virtualSource[1],
+              matchingBeam.virtualSource[2]
+            );
+            const receiverPos = receiver.position.clone();
+
+            const dashedLineGeom = new THREE.BufferGeometry().setFromPoints([virtualSourcePos, receiverPos]);
+            const dashedLine = new THREE.Line(dashedLineGeom, dashedMaterial);
+            dashedLine.computeLineDistances();
+            this.selectedBeamsGroup.add(dashedLine);
+          }
+        }
+      }
+    }
+
+    console.log(`BeamTraceSolver: Highlighting path ${pathIndex} with order ${path.order}, arrival time ${path.arrivalTime.toFixed(4)}s`);
+
+    renderer.needsToRender = true;
+  }
+
+  // Clear the current path highlight
+  clearPathHighlight() {
+    (this.selectedPath.geometry as MeshLine).setPoints([]);
+    this.clearSelectedBeams();
     renderer.needsToRender = true;
   }
 }
