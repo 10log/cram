@@ -1,6 +1,6 @@
-import React, { useEffect, useReducer } from "react";
+import React, { useEffect, useReducer, useCallback } from "react";
 import { BeamTraceSolver } from "../../compute/beam-trace";
-import { on } from "../../messenger";
+import { emit, on } from "../../messenger";
 import { useSolver } from "../../store";
 import useToggle from "../hooks/use-toggle";
 import { createPropertyInputs, PropertyButton, useSolverProperty } from "./SolverComponents";
@@ -9,12 +9,13 @@ import SourceReceiverMatrix from "./SourceReceiverMatrix";
 import PropertyRow from "./property-row/PropertyRow";
 import PropertyRowLabel from "./property-row/PropertyRowLabel";
 import { PropertyRowSelect } from "./property-row/PropertyRowSelect";
+import PropertyRowCheckbox from "./property-row/PropertyRowCheckbox";
 
 export interface BeamTraceTabProps {
   uuid: string;
 }
 
-const { PropertyNumberInput } = createPropertyInputs<BeamTraceSolver>(
+const { PropertyNumberInput, PropertyCheckboxInput } = createPropertyInputs<BeamTraceSolver>(
   "BEAMTRACE_SET_PROPERTY"
 );
 
@@ -113,13 +114,60 @@ const Calculation = ({ uuid }: { uuid: string }) => {
   );
 };
 
+// Order toggle button for visible orders selection
+const OrderToggle = ({ order, active, onClick }: { order: number; active: boolean; onClick: () => void }) => (
+  <button
+    onClick={onClick}
+    style={{
+      width: "24px",
+      height: "24px",
+      border: "1px solid #555",
+      borderRadius: "4px",
+      background: active ? "#4a9eff" : "#333",
+      color: active ? "#fff" : "#888",
+      cursor: "pointer",
+      fontSize: "11px",
+      fontWeight: active ? "bold" : "normal",
+      padding: 0,
+      margin: "0 2px"
+    }}
+    title={`Order ${order}: ${active ? "visible" : "hidden"}`}
+  >
+    {order}
+  </button>
+);
+
 const Visualization = ({ uuid }: { uuid: string }) => {
   const [open, toggle] = useToggle(true);
+  const solver = useSolver(state => state.solvers[uuid] as BeamTraceSolver | undefined);
   const [mode, setMode] = useSolverProperty<BeamTraceSolver, "visualizationMode">(
     uuid,
     "visualizationMode",
     "BEAMTRACE_SET_PROPERTY"
   );
+  const [showAllBeams, setShowAllBeams] = useSolverProperty<BeamTraceSolver, "showAllBeams">(
+    uuid,
+    "showAllBeams",
+    "BEAMTRACE_SET_PROPERTY"
+  );
+  const [visibleOrders, setVisibleOrders] = useSolverProperty<BeamTraceSolver, "visibleOrders">(
+    uuid,
+    "visibleOrders",
+    "BEAMTRACE_SET_PROPERTY"
+  );
+
+  const maxOrder = solver?.maxReflectionOrder ?? 3;
+  const orders = Array.from({ length: maxOrder + 1 }, (_, i) => i);
+  const currentVisibleOrders = visibleOrders || orders;
+
+  const toggleOrder = useCallback((order: number) => {
+    const newOrders = currentVisibleOrders.includes(order)
+      ? currentVisibleOrders.filter(o => o !== order)
+      : [...currentVisibleOrders, order].sort((a, b) => a - b);
+    setVisibleOrders(newOrders);
+  }, [currentVisibleOrders, setVisibleOrders]);
+
+  const showBeamsOptions = mode === "beams" || mode === "both";
 
   return (
     <PropertyRowFolder label="Visualization" open={open} onOpenClose={toggle}>
@@ -130,6 +178,28 @@ const Visualization = ({ uuid }: { uuid: string }) => {
           onChange={setMode}
           options={visualizationModeOptions}
         />
+      </PropertyRow>
+      {showBeamsOptions && (
+        <PropertyRow>
+          <PropertyRowLabel label="Show All Beams" hasToolTip tooltip="Show all virtual sources, including invalid/orphaned ones" />
+          <PropertyRowCheckbox
+            value={showAllBeams || false}
+            onChange={({ value }) => setShowAllBeams(value)}
+          />
+        </PropertyRow>
+      )}
+      <PropertyRow>
+        <PropertyRowLabel label="Visible Orders" hasToolTip tooltip="Click to toggle visibility of each reflection order" />
+        <div style={{ display: "flex", alignItems: "center", padding: "4px 8px" }}>
+          {orders.map(order => (
+            <OrderToggle
+              key={order}
+              order={order}
+              active={currentVisibleOrders.includes(order)}
+              onClick={() => toggleOrder(order)}
+            />
+          ))}
+        </div>
       </PropertyRow>
     </PropertyRowFolder>
   );
@@ -263,9 +333,90 @@ const ImpulseResponse = ({ uuid }: { uuid: string }) => {
   );
 };
 
+// Keyboard shortcuts component for reflection order control
+const KeyboardShortcuts = ({ uuid }: { uuid: string }) => {
+  const solver = useSolver(state => state.solvers[uuid] as BeamTraceSolver | undefined);
+  const [mode] = useSolverProperty<BeamTraceSolver, "visualizationMode">(
+    uuid,
+    "visualizationMode",
+    "BEAMTRACE_SET_PROPERTY"
+  );
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't handle if typing in an input
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      const currentOrder = solver?.maxReflectionOrder ?? 3;
+
+      switch (e.key) {
+        case "+":
+        case "=":
+        case "ArrowUp":
+          // Increase reflection order (max 6)
+          if (currentOrder < 6) {
+            emit("BEAMTRACE_SET_PROPERTY", {
+              uuid,
+              property: "maxReflectionOrderReset",
+              value: currentOrder + 1
+            });
+          }
+          e.preventDefault();
+          break;
+        case "-":
+        case "_":
+        case "ArrowDown":
+          // Decrease reflection order (min 0)
+          if (currentOrder > 0) {
+            emit("BEAMTRACE_SET_PROPERTY", {
+              uuid,
+              property: "maxReflectionOrderReset",
+              value: currentOrder - 1
+            });
+          }
+          e.preventDefault();
+          break;
+        case "b":
+        case "B":
+          // Toggle between paths and sources view
+          if (mode === "rays") {
+            emit("BEAMTRACE_SET_PROPERTY", {
+              uuid,
+              property: "visualizationMode",
+              value: "beams"
+            });
+          } else if (mode === "beams") {
+            emit("BEAMTRACE_SET_PROPERTY", {
+              uuid,
+              property: "visualizationMode",
+              value: "rays"
+            });
+          } else {
+            // If "both", toggle to rays
+            emit("BEAMTRACE_SET_PROPERTY", {
+              uuid,
+              property: "visualizationMode",
+              value: "rays"
+            });
+          }
+          e.preventDefault();
+          break;
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [uuid, solver?.maxReflectionOrder, mode]);
+
+  return null;
+};
+
 export const BeamTraceTab = ({ uuid }: BeamTraceTabProps) => {
   return (
     <div>
+      <KeyboardShortcuts uuid={uuid} />
       <Calculation uuid={uuid} />
       <SourceReceiverPairs uuid={uuid} />
       <Visualization uuid={uuid} />

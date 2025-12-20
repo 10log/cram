@@ -16,7 +16,7 @@ export interface MarkupProps extends ContainerProps{
 export const defaultMarkupProps = {
   maxlines: 5e5,
   maxpoints: 5e4,
-  pointScale: 3
+  pointScale: 7
 }
 
 export interface MarkupUsageStats {
@@ -97,7 +97,7 @@ export class Markup extends Container{
         fog: false,
         vertexColors: true,
         transparent: true,
-        opacity: 0.2,
+        opacity: 0.6,
         premultipliedAlpha: true,
         blending: THREE.NormalBlending,
         depthFunc: THREE.AlwaysDepth,
