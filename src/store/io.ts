@@ -71,6 +71,7 @@ on("SAVE", (callback) => {
 
   const projectName = state.meta.name;
   FileSaver.saveAs(blob, `${projectName}.json`);
+  emit("MARK_CLEAN", undefined);
   if (callback) callback();
 });
 
@@ -99,6 +100,17 @@ const open = (callback: (files: FileList | undefined) => Promise<any>) => {
 
 
 on("OPEN", async (callback) => {
+  const { hasUnsavedChanges } = useAppStore.getState();
+
+  // Skip warning if no unsaved changes
+  if (hasUnsavedChanges) {
+    const confirmed = confirm("Open a file? Unsaved data will be lost.");
+    if (!confirmed) {
+      if (callback) callback();
+      return;
+    }
+  }
+
   open(async (files: FileList | undefined) => {
     if (!files) return;
     const objectURL = URL.createObjectURL(files![0]);
@@ -116,19 +128,21 @@ on("OPEN", async (callback) => {
 
 
 on("NEW", (callback) => {
-  const confirmed = confirm("Create a new project? Unsaved data will be lost.");
+  const { hasUnsavedChanges, version } = useAppStore.getState();
+
+  // Skip warning if no unsaved changes
+  const confirmed = !hasUnsavedChanges || confirm("Create a new project? Unsaved data will be lost.");
   if(confirmed){
-    const version = useAppStore.getState().version;
-    const newSaveState = { 
-      json: { 
-        containers: [], 
-        solvers: [], 
-        meta: { 
-          name: "untitled", 
-          version, 
-          timestamp: new Date().toJSON() 
+    const newSaveState = {
+      json: {
+        containers: [],
+        solvers: [],
+        meta: {
+          name: "untitled",
+          version,
+          timestamp: new Date().toJSON()
         }
-      } 
+      }
     };
     emit("RESTORE", newSaveState);
   }
@@ -141,7 +155,10 @@ on("RESTORE", ({ json }) => {
   emit("DESELECT_ALL_OBJECTS");
   emit("RESTORE_CONTAINERS", json.containers);
   emit("RESTORE_SOLVERS", json.solvers);
-  useAppStore.getState().set((state) => { state.projectName = json.meta.name });
+  useAppStore.getState().set((state) => {
+    state.projectName = json.meta.name;
+    state.hasUnsavedChanges = false;
+  });
 });
 
 

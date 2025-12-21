@@ -48,13 +48,14 @@ export const useContainer = create<ContainerStore>((set, get) => ({
 
 export const addContainer = <T extends Container>(ContainerClass: new(...args) => T) => (container: T|undefined) => {
   const c = container || new ContainerClass() as T;
-  useContainer.setState((state) => ({ 
-    ...state, 
+  useContainer.setState((state) => ({
+    ...state,
     containers: {
-      ...state.containers, 
+      ...state.containers,
       [c!.uuid]: c
-    } 
+    }
   }), true);
+  emit("MARK_DIRTY", undefined);
 };
 
 export const removeContainer = (uuid: keyof ContainerStore['containers']) => {
@@ -65,10 +66,10 @@ export const removeContainer = (uuid: keyof ContainerStore['containers']) => {
       store.selectedObjects.delete(useContainer.getState().containers[uuid]);
     });
     useContainer.setState(state => ({
-      ...state, 
+      ...state,
       containers: omit([uuid], state.containers)
     }), true);
-
+    emit("MARK_DIRTY", undefined);
   }
 }
 
@@ -86,6 +87,7 @@ export const setContainerProperty = ({uuid, property, value}) => {
   });
   // Request a render to update the Three.js view
   emit("RENDER", undefined);
+  emit("MARK_DIRTY", undefined);
 }
 
 export const setNestedContainerProperty = ({path, property, value}) => {
@@ -95,6 +97,7 @@ export const setNestedContainerProperty = ({path, property, value}) => {
       container[property] = value;
     }
   });
+  emit("MARK_DIRTY", undefined);
 }
 
 export const callContainerMethod = ({uuid, method, args}) => {
