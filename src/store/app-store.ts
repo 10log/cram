@@ -31,6 +31,7 @@ export type AppStore = {
   canRedo: boolean,
   progress: ProgressInfo;
   autoCalculate: boolean;
+  hasUnsavedChanges: boolean;
   set: (fn: (draft: AppStore) => void) => void;
 };
 
@@ -59,6 +60,7 @@ export const useAppStore = create<AppStore>((set) => ({
     solverUuid: undefined
   },
   autoCalculate: true,
+  hasUnsavedChanges: false,
   set: (fn: (draft: AppStore) => void) => set(produce(fn))
 }));
 
@@ -70,6 +72,8 @@ declare global {
     UPDATE_PROGRESS: { progress: number; message?: string };
     HIDE_PROGRESS: undefined;
     SET_AUTO_CALCULATE: boolean;
+    MARK_DIRTY: undefined;
+    MARK_CLEAN: undefined;
   }
 }
 
@@ -125,6 +129,18 @@ on("HIDE_PROGRESS", () => {
 on("SET_AUTO_CALCULATE", (enabled) => {
   useAppStore.getState().set(draft => {
     draft.autoCalculate = enabled;
+  });
+});
+
+on("MARK_DIRTY", () => {
+  useAppStore.getState().set(draft => {
+    draft.hasUnsavedChanges = true;
+  });
+});
+
+on("MARK_CLEAN", () => {
+  useAppStore.getState().set(draft => {
+    draft.hasUnsavedChanges = false;
   });
 });
 

@@ -1,6 +1,6 @@
 import examples, { Example } from ".";
 import { on, emit } from "../messenger";
-import { SaveState } from "../store";
+import { SaveState, useAppStore } from "../store";
 
 
 declare global {
@@ -10,10 +10,16 @@ declare global {
 }
 
 on("OPEN_EXAMPLE", (example) => {
-  const json = examples[example] as SaveState;
-  emit("NEW", (success) => {
-    if(success){
-      emit("RESTORE", { json });
+  const { hasUnsavedChanges } = useAppStore.getState();
+
+  // Skip warning if no unsaved changes
+  if (hasUnsavedChanges) {
+    const confirmed = confirm("Open an example? Unsaved data will be lost.");
+    if (!confirmed) {
+      return;
     }
-  })
+  }
+
+  const json = examples[example] as SaveState;
+  emit("RESTORE", { json });
 })

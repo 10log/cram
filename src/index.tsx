@@ -943,6 +943,8 @@ export async function finishedLoading() {
   });
   emit("ADD_IMAGESOURCE");
   emit("ADD_RT60");
+  // Mark project as clean after initial load since solvers were added programmatically
+  emit("MARK_CLEAN", undefined);
   setTimeout(()=>{
     emit("TOGGLE_RESULTS_PANEL", false);
     emit("RENDER");

@@ -4,6 +4,7 @@ import { produce } from 'immer';
 import { KeyValuePair } from "../common/key-value-pair";
 import Solver from "../compute/solver";
 import { omit } from "../common/helpers";
+import { emit } from "../messenger";
 
 
 
@@ -31,6 +32,7 @@ export const addSolver = <T extends Solver>(SolverClass: new() => T) => (solver:
   useSolver.getState().set(draft=>{
     draft.solvers[s!.uuid] = s;
   });
+  emit("MARK_DIRTY", undefined);
 };
 
 
@@ -38,6 +40,7 @@ export const removeSolver = (uuid: keyof SolverStore['solvers']) => {
   useSolver.getState().set(draft=>{
     draft.solvers = omit([uuid], draft.solvers);
   });
+  emit("MARK_DIRTY", undefined);
 }
 
 
@@ -52,6 +55,7 @@ export const setSolverProperty = ({uuid, property, value}) => {
   useSolver.getState().set(store => {
     store.version++;
   });
+  emit("MARK_DIRTY", undefined);
 }
 
 export const callSolverMethod = ({uuid, method, args, isAsync }) => {
