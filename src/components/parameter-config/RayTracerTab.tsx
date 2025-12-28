@@ -1,10 +1,15 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import RayTracer from "../../compute/raytracer";
 import PropertyRowFolder from "./property-row/PropertyRowFolder";
+import PropertyRow from "./property-row/PropertyRow";
+import PropertyRowLabel from "./property-row/PropertyRowLabel";
+import PropertyRowButton from "./property-row/PropertyRowButton";
+import { PropertyRowSelect } from "./property-row/PropertyRowSelect";
 import { createPropertyInputs, useSolverProperty, PropertyButton } from "./SolverComponents";
 import useToggle from "../hooks/use-toggle";
 import { renderer } from "../../render/renderer";
 import SourceReceiverMatrix from "./SourceReceiverMatrix";
+import { emit } from "../../messenger";
 
 
 const { PropertyTextInput, PropertyNumberInput, PropertyCheckboxInput } = createPropertyInputs<RayTracer>(
@@ -110,6 +115,38 @@ const Output = ({uuid}: {uuid: string}) => {
   );
 }
 
+const AmbisonicOutput = ({uuid}: {uuid: string}) => {
+  const [open, toggle] = useToggle(false);
+  const [order, setOrder] = useState("1");
+  const [validRayCount] = useSolverProperty<RayTracer, "validRayCount">(uuid, "validRayCount", "RAYTRACER_SET_PROPERTY");
+  const disabled = !validRayCount || validRayCount === 0;
+
+  const handleDownload = () => {
+    emit("RAYTRACER_DOWNLOAD_AMBISONIC_IR", { uuid, order: parseInt(order) });
+  };
+
+  return (
+    <PropertyRowFolder label="Ambisonic Output" open={open} onOpenClose={toggle}>
+      <PropertyRow>
+        <PropertyRowLabel label="Order" hasToolTip tooltip="Ambisonic order (1=FOA 4ch, 2=HOA 9ch, 3=HOA 16ch)" />
+        <PropertyRowSelect
+          value={order}
+          onChange={({ value }) => setOrder(value)}
+          options={[
+            { value: "1", label: "1st Order (4 ch)" },
+            { value: "2", label: "2nd Order (9 ch)" },
+            { value: "3", label: "3rd Order (16 ch)" }
+          ]}
+        />
+      </PropertyRow>
+      <PropertyRow>
+        <PropertyRowLabel label="" hasToolTip tooltip="Downloads ambisonic impulse response (ACN/N3D format)" />
+        <PropertyRowButton onClick={handleDownload} label="Download" disabled={disabled} />
+      </PropertyRow>
+    </PropertyRowFolder>
+  );
+}
+
 export const RayTracerTab = ({ uuid }: { uuid: string }) => {
   useEffect(() => {
     const cells = renderer.overlays.global.cells;
@@ -127,6 +164,7 @@ export const RayTracerTab = ({ uuid }: { uuid: string }) => {
       <SolverControls uuid={uuid} />
       <Hybrid uuid={uuid} />
       <Output uuid={uuid} />
+      <AmbisonicOutput uuid={uuid} />
     </div>
   );
 };

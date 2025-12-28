@@ -1,4 +1,4 @@
-import React, { useEffect, useReducer } from "react";
+import React, { useEffect, useReducer, useState } from "react";
 import { BeamTraceSolver } from "../../compute/beam-trace";
 import { emit, on } from "../../messenger";
 import { useSolver } from "../../store";
@@ -8,6 +8,7 @@ import PropertyRowFolder from "./property-row/PropertyRowFolder";
 import SourceReceiverMatrix from "./SourceReceiverMatrix";
 import PropertyRow from "./property-row/PropertyRow";
 import PropertyRowLabel from "./property-row/PropertyRowLabel";
+import PropertyRowButton from "./property-row/PropertyRowButton";
 import { PropertyRowSelect } from "./property-row/PropertyRowSelect";
 import PropertyRowCheckbox from "./property-row/PropertyRowCheckbox";
 
@@ -218,6 +219,38 @@ const ImpulseResponse = ({ uuid }: { uuid: string }) => {
   );
 };
 
+const AmbisonicOutput = ({ uuid }: { uuid: string }) => {
+  const [open, toggle] = useToggle(false);
+  const [order, setOrder] = useState("1");
+  const solver = useSolver(state => state.solvers[uuid] as BeamTraceSolver);
+  const disabled = !solver || solver.numValidPaths === 0;
+
+  const handleDownload = () => {
+    emit("BEAMTRACE_DOWNLOAD_AMBISONIC_IR", { uuid, order: parseInt(order) });
+  };
+
+  return (
+    <PropertyRowFolder label="Ambisonic Output" open={open} onOpenClose={toggle}>
+      <PropertyRow>
+        <PropertyRowLabel label="Order" hasToolTip tooltip="Ambisonic order (1=FOA 4ch, 2=HOA 9ch, 3=HOA 16ch)" />
+        <PropertyRowSelect
+          value={order}
+          onChange={({ value }) => setOrder(value)}
+          options={[
+            { value: "1", label: "1st Order (4 ch)" },
+            { value: "2", label: "2nd Order (9 ch)" },
+            { value: "3", label: "3rd Order (16 ch)" }
+          ]}
+        />
+      </PropertyRow>
+      <PropertyRow>
+        <PropertyRowLabel label="" hasToolTip tooltip="Downloads ambisonic impulse response (ACN/N3D format)" />
+        <PropertyRowButton onClick={handleDownload} label="Download" disabled={disabled} />
+      </PropertyRow>
+    </PropertyRowFolder>
+  );
+};
+
 // Keyboard shortcuts component for reflection order control
 const KeyboardShortcuts = ({ uuid }: { uuid: string }) => {
   const solver = useSolver(state => state.solvers[uuid] as BeamTraceSolver | undefined);
@@ -307,6 +340,7 @@ export const BeamTraceTab = ({ uuid }: BeamTraceTabProps) => {
       <Visualization uuid={uuid} />
       <Statistics uuid={uuid} />
       <ImpulseResponse uuid={uuid} />
+      <AmbisonicOutput uuid={uuid} />
     </div>
   );
 };

@@ -55,6 +55,7 @@
     "@visx/shape": "^3.12.0",
     "@visx/zoom": "^3.12.0",
     "@zip.js/zip.js": "^2.2.23",
+    "ambisonics": "github:10log/TSAmbisonics",
     "beam-trace": "github:10log/BeamTrace2D#master",
     "chroma-js": "^3.2.0",
     "complex": "^3.0.1",
