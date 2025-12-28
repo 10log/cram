@@ -637,7 +637,7 @@ class RayTracer extends Solver {
 
         // Compute arrival direction (direction ray arrives FROM, normalized)
         // This is the opposite of the ray direction (ray travels toward receiver)
-        const arrivalDir = rd.clone().normalize();
+        const arrivalDir = rd.clone().normalize().negate();
         const arrivalDirection: [number, number, number] = [arrivalDir.x, arrivalDir.y, arrivalDir.z];
 
         // end the chain here
