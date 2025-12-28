@@ -30,6 +30,7 @@ import { normalize } from "../acoustics";
 import FileSaver from 'file-saver';
 import { audioEngine } from "../../audio-engine/audio-engine";
 import chroma from 'chroma-js';
+import { encodeBufferFromDirection, getAmbisonicChannelCount } from "ambisonics";
 
 // Helper to create a highlighted path line (same as ImageSourceSolver)
 function createHighlightLine(): THREE.Mesh {
@@ -63,6 +64,8 @@ export interface BeamTracePath {
   length: number;
   arrivalTime: number;
   polygonIds: (number | null)[];
+  /** Direction from which the path arrives at the receiver (normalized) */
+  arrivalDirection: THREE.Vector3;
   // Detailed reflection info (optional, populated when using getDetailedPaths)
   reflections?: {
     polygonId: number;
@@ -700,7 +703,20 @@ export class BeamTraceSolver extends Solver {
     const order = getPathReflectionOrder(path);
     const polygonIds = path.map(p => p.polygonId);
 
-    return { points, order, length, arrivalTime, polygonIds };
+    // Compute arrival direction (direction from second-to-last point to receiver)
+    // points[0] is the receiver, points[1] is the last reflection point (or source for direct)
+    let arrivalDirection: THREE.Vector3;
+    if (points.length >= 2) {
+      arrivalDirection = new THREE.Vector3()
+        .subVectors(points[0], points[1])
+        .normalize()
+        .negate(); // Negate to get direction ray arrives FROM
+    } else {
+      // Fallback for edge case
+      arrivalDirection = new THREE.Vector3(0, 0, 1);
+    }
+
+    return { points, order, length, arrivalTime, polygonIds, arrivalDirection };
   }
 
   // Calculate Level Time Progression result
@@ -1140,6 +1156,173 @@ export class BeamTraceSolver extends Solver {
     FileSaver.saveAs(blob, filename + extension);
   }
 
+  // Ambisonic impulse response storage
+  ambisonicImpulseResponse?: AudioBuffer;
+  ambisonicOrder: number = 1;
+
+  /**
+   * Calculate an ambisonic impulse response from the beam-traced paths.
+   * Each reflection is encoded based on its arrival direction at the receiver.
+   *
+   * @param order - Ambisonic order (1 = first order with 4 channels, 2 = 9 channels, etc.)
+   * @returns Promise resolving to an AudioBuffer with ambisonic channels
+   */
+  async calculateAmbisonicImpulseResponse(order: number = 1): Promise<AudioBuffer> {
+    if (this.validPaths.length === 0) {
+      throw new Error("No paths calculated yet. Run calculate() first.");
+    }
+
+    const sampleRate = audioEngine.sampleRate;
+    const initialSPL = 100;
+    const spls = Array(this.frequencies.length).fill(initialSPL);
+
+    const totalTime = this.validPaths[this.validPaths.length - 1].arrivalTime + 0.05;
+    if (totalTime <= 0) throw new Error("Invalid impulse response duration");
+    const numberOfSamples = Math.floor(sampleRate * totalTime) * 2;
+    if (numberOfSamples < 2) throw new Error("Impulse response too short to process");
+    const nCh = getAmbisonicChannelCount(order);
+
+    // Create per-frequency, per-channel sample buffers
+    const samples: Float32Array[][] = [];
+    for (let f = 0; f < this.frequencies.length; f++) {
+      samples.push([]);
+      for (let ch = 0; ch < nCh; ch++) {
+        samples[f].push(new Float32Array(numberOfSamples));
+      }
+    }
+
+    // Process each path
+    for (const path of this.validPaths) {
+      const randomPhase = Math.random() > 0.5 ? 1 : -1;
+      const pressure = this.calculateArrivalPressure(spls, path);
+      const roundedSample = Math.floor(path.arrivalTime * sampleRate);
+
+      if (roundedSample >= numberOfSamples) continue;
+
+      // Get arrival direction
+      const dir = path.arrivalDirection;
+
+      // Create a single-sample impulse for this reflection
+      const impulse = new Float32Array(1);
+
+      // Encode each frequency band
+      for (let f = 0; f < this.frequencies.length; f++) {
+        impulse[0] = pressure[f] * randomPhase;
+
+        // Encode the impulse at this direction (using Three.js coordinate system)
+        const encoded = encodeBufferFromDirection(impulse, dir.x, dir.y, dir.z, order, 'threejs');
+
+        // Add to the output buffers
+        for (let ch = 0; ch < nCh; ch++) {
+          samples[f][ch][roundedSample] += encoded[ch][0];
+        }
+      }
+    }
+
+    // Use filter worker to apply octave-band filtering
+    const FilterWorker = () => new Worker(new URL('../../audio-engine/filter.worker.ts', import.meta.url));
+
+    return new Promise((resolve, reject) => {
+      // Process each ambisonic channel through the filter bank
+      const processChannel = async (chIndex: number): Promise<Float32Array> => {
+        return new Promise((resolveChannel) => {
+          const channelFreqSamples: Float32Array[] = [];
+          for (let f = 0; f < this.frequencies.length; f++) {
+            channelFreqSamples.push(samples[f][chIndex]);
+          }
+
+          const channelWorker = FilterWorker();
+          channelWorker.postMessage({ samples: channelFreqSamples });
+          channelWorker.onmessage = (event) => {
+            const filteredSamples = event.data.samples as Float32Array[];
+            const signal = new Float32Array(filteredSamples[0].length >> 1);
+
+            for (let f = 0; f < filteredSamples.length; f++) {
+              for (let j = 0; j < signal.length; j++) {
+                signal[j] += filteredSamples[f][j];
+              }
+            }
+
+            channelWorker.terminate();
+            resolveChannel(signal);
+          };
+        });
+      };
+
+      // Process all channels
+      Promise.all(
+        Array.from({ length: nCh }, (_, ch) => processChannel(ch))
+      ).then((channelSignals) => {
+        // Find global max for normalization
+        let max = 0;
+        for (const signal of channelSignals) {
+          for (let j = 0; j < signal.length; j++) {
+            if (Math.abs(signal[j]) > max) {
+              max = Math.abs(signal[j]);
+            }
+          }
+        }
+
+        // Normalize all channels by the same factor
+        if (max > 0) {
+          for (const signal of channelSignals) {
+            for (let j = 0; j < signal.length; j++) {
+              signal[j] /= max;
+            }
+          }
+        }
+
+        // Create multi-channel AudioBuffer
+        const signalLength = channelSignals[0].length;
+        if (signalLength === 0) {
+          reject(new Error("Filtered signal has zero length"));
+          return;
+        }
+        const offlineContext = audioEngine.createOfflineContext(nCh, signalLength, sampleRate);
+        const buffer = offlineContext.createBuffer(nCh, signalLength, sampleRate);
+
+        for (let ch = 0; ch < nCh; ch++) {
+          buffer.copyToChannel(new Float32Array(channelSignals[ch]), ch);
+        }
+
+        this.ambisonicImpulseResponse = buffer;
+        this.ambisonicOrder = order;
+        resolve(buffer);
+      }).catch(reject);
+    });
+  }
+
+  /**
+   * Download the ambisonic impulse response as a multi-channel WAV file.
+   * Channels are in ACN order with N3D normalization.
+   *
+   * @param filename - Output filename (without extension)
+   * @param order - Ambisonic order (default: 1)
+   * @param sampleRate - Sample rate for the output
+   */
+  async downloadAmbisonicImpulseResponse(
+    filename: string,
+    order: number = 1,
+    sampleRate = audioEngine.sampleRate
+  ) {
+    // Calculate if not already cached or if order changed
+    if (!this.ambisonicImpulseResponse || this.ambisonicOrder !== order) {
+      await this.calculateAmbisonicImpulseResponse(order);
+    }
+
+    const nCh = this.ambisonicImpulseResponse!.numberOfChannels;
+    const channelData: Float32Array[] = [];
+
+    for (let ch = 0; ch < nCh; ch++) {
+      channelData.push(this.ambisonicImpulseResponse!.getChannelData(ch));
+    }
+
+    const blob = ac.wavAsBlob(channelData, { sampleRate, bitDepth: 32 });
+    const extension = !filename.endsWith(".wav") ? ".wav" : "";
+    const orderLabel = order === 1 ? "FOA" : `HOA${order}`;
+    FileSaver.saveAs(blob, `${filename}_${orderLabel}${extension}`);
+  }
+
   // Clear results
   reset() {
     this.validPaths = [];
@@ -1458,6 +1641,7 @@ declare global {
     BEAMTRACE_RESET: string;
     BEAMTRACE_PLAY_IR: string;
     BEAMTRACE_DOWNLOAD_IR: string;
+    BEAMTRACE_DOWNLOAD_AMBISONIC_IR: { uuid: string; order: number };
     SHOULD_ADD_BEAMTRACE: undefined;
   }
 }
@@ -1495,6 +1679,17 @@ on("BEAMTRACE_DOWNLOAD_IR", (uuid: string) => {
   const filename = `ir-beamtrace-${sourceName}-${receiverName}`.replace(/[^a-zA-Z0-9-_]/g, '_');
   solver.downloadImpulseResponse(filename).catch((err: Error) => {
     window.alert(err.message || "Failed to download impulse response");
+  });
+});
+
+on("BEAMTRACE_DOWNLOAD_AMBISONIC_IR", ({ uuid, order }: { uuid: string; order: number }) => {
+  const solver = useSolver.getState().solvers[uuid] as BeamTraceSolver;
+  const containers = useContainer.getState().containers;
+  const sourceName = solver.sourceIDs.length > 0 ? containers[solver.sourceIDs[0]]?.name || 'source' : 'source';
+  const receiverName = solver.receiverIDs.length > 0 ? containers[solver.receiverIDs[0]]?.name || 'receiver' : 'receiver';
+  const filename = `ir-beamtrace-ambi-${sourceName}-${receiverName}`.replace(/[^a-zA-Z0-9-_]/g, '_');
+  solver.downloadAmbisonicImpulseResponse(filename, order).catch((err: Error) => {
+    window.alert(err.message || "Failed to download ambisonic impulse response");
   });
 });
 

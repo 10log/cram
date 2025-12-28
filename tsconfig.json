@@ -55,7 +55,8 @@
     "types/three-mesh-bvh.d.ts",
     "types/global.d.ts",
     "types/csg.d.ts",
-    "types/beam-trace.d.ts"
+    "types/beam-trace.d.ts",
+    "types/ambisonics.d.ts"
   ],
   "exclude": [
     "node_modules/**",
