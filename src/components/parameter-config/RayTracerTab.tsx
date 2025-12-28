@@ -118,6 +118,8 @@ const Output = ({uuid}: {uuid: string}) => {
 const AmbisonicOutput = ({uuid}: {uuid: string}) => {
   const [open, toggle] = useToggle(false);
   const [order, setOrder] = useState("1");
+  const [validRayCount] = useSolverProperty<RayTracer, "validRayCount">(uuid, "validRayCount", "RAYTRACER_SET_PROPERTY");
+  const disabled = !validRayCount || validRayCount === 0;
 
   const handleDownload = () => {
     emit("RAYTRACER_DOWNLOAD_AMBISONIC_IR", { uuid, order: parseInt(order) });
@@ -139,7 +141,7 @@ const AmbisonicOutput = ({uuid}: {uuid: string}) => {
       </PropertyRow>
       <PropertyRow>
         <PropertyRowLabel label="" hasToolTip tooltip="Downloads ambisonic impulse response (ACN/N3D format)" />
-        <PropertyRowButton onClick={handleDownload} label="Download" />
+        <PropertyRowButton onClick={handleDownload} label="Download" disabled={disabled} />
       </PropertyRow>
     </PropertyRowFolder>
   );
