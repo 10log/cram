@@ -1298,12 +1298,10 @@ export class BeamTraceSolver extends Solver {
    *
    * @param filename - Output filename (without extension)
    * @param order - Ambisonic order (default: 1)
-   * @param sampleRate - Sample rate for the output
    */
   async downloadAmbisonicImpulseResponse(
     filename: string,
-    order: number = 1,
-    sampleRate = audioEngine.sampleRate
+    order: number = 1
   ) {
     // Calculate if not already cached or if order changed
     if (!this.ambisonicImpulseResponse || this.ambisonicOrder !== order) {
@@ -1311,6 +1309,7 @@ export class BeamTraceSolver extends Solver {
     }
 
     const nCh = this.ambisonicImpulseResponse!.numberOfChannels;
+    const sampleRate = this.ambisonicImpulseResponse!.sampleRate;
     const channelData: Float32Array[] = [];
 
     for (let ch = 0; ch < nCh; ch++) {
