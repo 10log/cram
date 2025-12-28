@@ -2095,6 +2095,8 @@ class RayTracer extends Solver {
       const p = this.arrivalPressure(spls, frequencies, path).map(x => x * randomPhase);
       const roundedSample = floor(t * sampleRate);
 
+      if (roundedSample >= numberOfSamples) continue;
+
       // Get arrival direction (default to front if not available)
       const dir = path.arrivalDirection || [0, 0, 1];
 
