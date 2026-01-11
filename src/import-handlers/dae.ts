@@ -2293,7 +2293,7 @@ export class DAELoader extends THREE.Loader {
 		}
 		//
 		const animations = [] as Array<any>;
-		const kinematics = {};
+		let kinematics = {} as any;
 		let count = 0;
 		//
 		const library = {
