@@ -14,6 +14,10 @@
     "fdtd"
   ],
   "main": "src/index.tsx",
+  "exports": {
+    ".": "./src/lib/index.ts",
+    "./styles": "./src/css/index.ts"
+  },
   "scripts": {
     "start": "node scripts/start.js",
     "build": "node scripts/build.js",
