@@ -144,4 +144,41 @@ on("MARK_CLEAN", () => {
   });
 });
 
+/**
+ * Reset the app store to its initial state.
+ * Preserves version number.
+ */
+export const resetAppStore = () => {
+  const { version } = useAppStore.getState();
+
+  // Partial update to preserve methods
+  useAppStore.setState({
+    units: UNITS.METERS,
+    version,
+    canDuplicate: false,
+    rendererStatsVisible: false,
+    saveDialogVisible: false,
+    projectName: "",
+    openWarningVisible: false,
+    newWarningVisible: false,
+    importDialogVisible: false,
+    selectedObjects: undefined,
+    canRedo: false,
+    canUndo: false,
+    materialDrawerOpen: false,
+    settingsDrawerVisible: false,
+    resultsPanelOpen: false,
+    progress: {
+      visible: false,
+      message: "",
+      progress: -1,
+      solverUuid: undefined
+    },
+    autoCalculate: true,
+    hasUnsavedChanges: false,
+  });
+
+  console.log('[AppStore] Reset complete');
+};
+
 export default useAppStore;

@@ -47,3 +47,16 @@ on("ASSIGN_MATERIAL", ({material, target}) => {
   })
 })
 
+/**
+ * Reset the material store to its initial state.
+ * Note: Materials are loaded from static JSON, so we just reset user state.
+ */
+export const resetMaterialStore = () => {
+  useMaterial.setState({
+    selectedMaterial: "",
+    query: "",
+  }, false);
+
+  console.log('[MaterialStore] Reset complete');
+};
+

@@ -109,6 +109,31 @@ export const callContainerMethod = ({uuid, method, args}) => {
 
 export const getContainerKeys = () => Object.keys(useContainer.getState().containers);
 
+/**
+ * Reset the container store to its initial state.
+ * Disposes all containers before clearing.
+ */
+export const resetContainerStore = () => {
+  // Dispose all containers to clean up Three.js resources
+  const { containers, selectedObjects } = useContainer.getState();
+  Object.values(containers).forEach(container => {
+    try {
+      container.dispose();
+    } catch (e) {
+      console.warn('[ContainerStore] Error disposing container:', e);
+    }
+  });
+  selectedObjects.clear();
+
+  // Reset to initial state (partial update to preserve methods)
+  useContainer.setState({
+    containers: {},
+    selectedObjects: new Set(),
+    version: 0,
+  });
+
+  console.log('[ContainerStore] Reset complete');
+};
 
 declare global {
   type CallMethodArgs<T extends Object, K extends AllowedNames<T, Function>> = {

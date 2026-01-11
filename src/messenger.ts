@@ -155,8 +155,39 @@ export default class Messenger{
             delete this.messageListeners[id];
         }
     }
+
+    /**
+     * Clear all handlers and events.
+     * Use this when disposing of the messenger.
+     */
+    clear() {
+        // Clear all message handlers
+        this.dictionary = {};
+        this.messageListeners = {};
+
+        // Clear all typed events
+        for (const event of Object.keys(this.events) as Array<keyof EventTypes>) {
+            if (this.events[event]) {
+                this.events[event].before.clear();
+                this.events[event].on.clear();
+                this.events[event].after.clear();
+            }
+        }
+        this.events = {} as EventHandlers;
+        this.lastMessage = "";
+
+        console.log('[Messenger] Cleared all handlers');
+    }
 }
 
+/**
+ * Factory function to create a new Messenger instance
+ */
+export function createMessenger(): Messenger {
+    return new Messenger();
+}
+
+// Default singleton for standalone mode
 export const messenger = new Messenger();
 export const emit = messenger.emit.bind(messenger) as Messenger['emit'];
 export const before = messenger.before.bind(messenger) as Messenger['before'];

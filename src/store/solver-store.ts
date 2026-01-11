@@ -75,3 +75,29 @@ export const callSolverMethod = ({uuid, method, args, isAsync }) => {
 }
 
 export const getSolverKeys = () => Object.keys(useSolver.getState().solvers);
+
+/**
+ * Reset the solver store to its initial state.
+ * Disposes all solvers before clearing.
+ */
+export const resetSolverStore = () => {
+  // Dispose all solvers to clean up resources
+  const { solvers } = useSolver.getState();
+  Object.values(solvers).forEach(solver => {
+    try {
+      if (typeof solver.dispose === 'function') {
+        solver.dispose();
+      }
+    } catch (e) {
+      console.warn('[SolverStore] Error disposing solver:', e);
+    }
+  });
+
+  // Reset to initial state (partial update to preserve methods)
+  useSolver.setState({
+    solvers: {},
+    version: 0,
+  });
+
+  console.log('[SolverStore] Reset complete');
+};

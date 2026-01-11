@@ -465,19 +465,19 @@ export default class Renderer {
 
     messenger.addMessageHandler("GET_RENDERER_STATS_VISIBLE", () => !this.stats.hidden);
 
-    // save the state of the camera
-    window.addEventListener("mouseup", (_e) => {
+    // save the state of the camera (using cleanup-aware listener)
+    this.addCleanupListener(window, "mouseup", (_e) => {
       this.storeCameraState();
       this.needsToRender = true;
     });
 
-    window.addEventListener("keydown", (e) => {
+    this.addCleanupListener(window, "keydown", (e) => {
       if (this.modifierKeyState.hasOwnProperty(e.key)) {
         this.modifierKeyState[e.key] += 1;
       }
     });
 
-    window.addEventListener("keyup", (e) => {
+    this.addCleanupListener(window, "keyup", (e) => {
       if (this.modifierKeyState.hasOwnProperty(e.key)) {
         this.modifierKeyState[e.key] -= 1;
       }
@@ -1089,8 +1089,101 @@ export default class Renderer {
   private get mode() {
     return messenger.postMessage("GET_EDITOR_MODE")[0];
   }
+
+  /**
+   * Tracks event listener cleanup functions
+   */
+  private cleanupFunctions: Array<() => void> = [];
+
+  /**
+   * Register an event listener that will be cleaned up on dispose
+   */
+  private addCleanupListener<K extends keyof WindowEventMap>(
+    target: Window | HTMLElement,
+    type: K,
+    listener: (ev: WindowEventMap[K]) => void
+  ) {
+    target.addEventListener(type, listener as EventListener);
+    this.cleanupFunctions.push(() => target.removeEventListener(type, listener as EventListener));
+  }
+
+  /**
+   * Dispose of the renderer and clean up all resources
+   */
+  dispose() {
+    // Cancel any pending animation frame
+    if (this.animationFrameId !== undefined) {
+      cancelAnimationFrame(this.animationFrameId);
+      this.animationFrameId = undefined;
+    }
+
+    // Run all cleanup functions (removes event listeners)
+    this.cleanupFunctions.forEach(fn => fn());
+    this.cleanupFunctions = [];
+
+    // Dispose of Three.js resources
+    if (this.composer) {
+      this.composer.dispose();
+    }
+
+    if (this.renderer) {
+      this.renderer.dispose();
+      this.renderer.forceContextLoss();
+    }
+
+    // Dispose of controls
+    if (this.controls) {
+      this.controls.dispose();
+    }
+
+    if (this.transformControls) {
+      this.transformControls.dispose();
+    }
+
+    // Traverse scene and dispose geometries/materials
+    if (this.scene) {
+      this.scene.traverse((object) => {
+        if (object instanceof THREE.Mesh) {
+          if (object.geometry) {
+            object.geometry.dispose();
+          }
+          if (object.material) {
+            if (Array.isArray(object.material)) {
+              object.material.forEach(mat => mat.dispose());
+            } else {
+              object.material.dispose();
+            }
+          }
+        }
+      });
+    }
+
+    // Dispose textures
+    if (this.textures) {
+      Object.values(this.textures).forEach(texture => texture.dispose());
+    }
+
+    // Clear overlays
+    if (this.overlays) {
+      this.overlays.transform.hide();
+      this.overlays.global.hide();
+    }
+
+    console.log('[Renderer] Disposed');
+  }
+
+  /** Animation frame ID for cancellation */
+  private animationFrameId?: number;
 }
 
+/**
+ * Factory function to create a new Renderer instance
+ */
+export function createRenderer(): Renderer {
+  return new Renderer();
+}
+
+// Default singleton for standalone mode
 export const renderer = new Renderer();
 
 declare global {

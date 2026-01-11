@@ -168,3 +168,16 @@ on("RECEIVER_SET_PROPERTY", (payload: { uuid: string; property: string; value: a
   }
 });
 
+/**
+ * Reset the result store to its initial state.
+ */
+export const resetResultStore = () => {
+  // Partial update to preserve methods
+  useResult.setState({
+    results: {},
+    openTabIndex: 0,
+  });
+
+  console.log('[ResultStore] Reset complete');
+};
+

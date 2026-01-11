@@ -110,3 +110,15 @@ export const useSetting = create<SettingsStore>((set) => ({
   set: (fn) => set(produce(fn))
 }));
 
+/**
+ * Reset the settings store to default values.
+ */
+export const resetSettingsStore = () => {
+  // Partial update to preserve methods
+  useSetting.setState({
+    settings: defaultSettings,
+  });
+
+  console.log('[SettingsStore] Reset complete');
+};
+
