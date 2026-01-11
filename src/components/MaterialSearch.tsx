@@ -3,8 +3,18 @@ import Surface from '../objects/surface';
 import { emit } from '../messenger';
 import { AcousticMaterial } from '../db/acoustic-material';
 import { absorptionGradient } from './AbsorptionGradient';
-import { Drawer, Icon, Position } from '@blueprintjs/core';
-import { Button } from '@blueprintjs/core';
+import {
+  Drawer,
+  Box,
+  Typography,
+  IconButton,
+  InputAdornment,
+  TextField,
+  Button
+} from '@mui/material';
+import SearchIcon from '@mui/icons-material/Search';
+import CloseIcon from '@mui/icons-material/Close';
+import CheckIcon from '@mui/icons-material/Check';
 import ObjectView from './object-view/ObjectView';
 import { useAppStore, useContainer, useMaterial } from '../store';
 import { pickProps } from '../common/helpers';
@@ -83,9 +93,9 @@ const MaterialAssignButton = () => {
   return (
     <div className={"material_drawer-display-assign_button"}>
       <Button
-        intent="success"
-        text="assign"
-        icon="tick"
+        variant="contained"
+        color="success"
+        startIcon={<CheckIcon />}
         disabled={selectedSurfaces.length === 0}
         onClick={() => {
           if(selectedMaterial){
@@ -95,7 +105,9 @@ const MaterialAssignButton = () => {
             });
           }
         }}
-      />
+      >
+        Assign
+      </Button>
     </div>
   )
 }
@@ -105,55 +117,71 @@ export const MaterialSearch = () => {
   const {materialDrawerOpen, set: setAppStore} = useAppStore(useShallow(state=>pickProps(["materialDrawerOpen", "set"], state)));
 
   const setQuery = (query: string) => set(store=>{ store.query = query });
-
+  const handleClose = () => setAppStore(draft=>{ draft.materialDrawerOpen = false });
 
   return (
     <Drawer
-    position={Position.RIGHT}
-    size="100%"
-    autoFocus={true}
-    enforceFocus={true}
-    hasBackdrop={true}
-    onClose={()=>setAppStore(draft=>{ draft.materialDrawerOpen = false })}
-    canOutsideClickClose={true}
-    canEscapeKeyClose={true}
-    isCloseButtonShown={true}
-    title="Material Selection"
-    isOpen={materialDrawerOpen}
-  >
-  
-    <div className="material_drawer-grid">
-      <div className="material_drawer-surface-container">
-          <ObjectView />
-      </div>
-      <div className="material_drawer-container">
-        <div className="material_drawer-searchbar-container">
-          <div className="material_drawer-searchbar-input_container">
-            <Icon icon="search" size={14} color="darkgray" className="material_drawer-search_icon" />
-            <input
-              type="text"
-              className="material_drawer-searchbar-input"
+      anchor="right"
+      open={materialDrawerOpen}
+      onClose={handleClose}
+      sx={{
+        '& .MuiDrawer-paper': {
+          width: '100%',
+          maxWidth: '600px',
+        }
+      }}
+    >
+      <Box sx={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        p: 2,
+        borderBottom: 1,
+        borderColor: 'divider'
+      }}>
+        <Typography variant="h6">Material Selection</Typography>
+        <IconButton onClick={handleClose} size="small">
+          <CloseIcon />
+        </IconButton>
+      </Box>
+
+      <div className="material_drawer-grid">
+        <div className="material_drawer-surface-container">
+            <ObjectView />
+        </div>
+        <div className="material_drawer-container">
+          <div className="material_drawer-searchbar-container">
+            <TextField
+              size="small"
+              fullWidth
+              placeholder="Search materials..."
               value={query}
-              onChange={e=>setQuery(e.currentTarget.value)}
+              onChange={e=>setQuery(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon fontSize="small" color="action" />
+                  </InputAdornment>
+                ),
+              }}
             />
           </div>
-        </div>
-        <MaterialList />
-        <div>
-          <button
-            type="button"
-            className="show-more"
-            onClick={() => set(store=> { store.bufferLength = store.bufferLength + 15 })}
-          >
-            show more...
-          </button>
-        </div>
-        <div className={"material_drawer-display-container"}>
-          <MaterialProperties />
-          <MaterialAssignButton />
+          <MaterialList />
+          <div>
+            <button
+              type="button"
+              className="show-more"
+              onClick={() => set(store=> { store.bufferLength = store.bufferLength + 15 })}
+            >
+              show more...
+            </button>
+          </div>
+          <div className={"material_drawer-display-container"}>
+            <MaterialProperties />
+            <MaterialAssignButton />
+          </div>
         </div>
       </div>
-    </div>
     </Drawer>
   );
 }

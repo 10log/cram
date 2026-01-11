@@ -12,7 +12,6 @@ import PropertyRow from "../parameter-config/property-row/PropertyRow";
 import PropertyRowLabel from "../parameter-config/property-row/PropertyRowLabel";
 import PropertyRowButton from "../parameter-config/property-row/PropertyRowButton";
 import { ObjectPropertyInputEvent } from ".";
-import { ToastProps } from "@blueprintjs/core";
 import decimalPrecision from "../../common/decimal-precision";
 import {CLFParser} from "../../import-handlers/CLFParser";
 
@@ -209,9 +208,8 @@ export default function SourceProperties(props: SourcePropertiesProps) {
                 props.messenger.postMessage("SHOW_TOAST", {
                   message: `No signal data.`,
                   intent: "warning",
-                  timeout: 1750,
-                  icon: "issue"
-                } as ToastProps);
+                  timeout: 1750
+                });
               }
             }}
             label="Download"

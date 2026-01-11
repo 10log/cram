@@ -1,43 +1,60 @@
 import React, { useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
-import { Dialog, Classes, Button, AnchorButton, Intent } from '@blueprintjs/core';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField
+} from '@mui/material';
 import { emit } from '../messenger';
 import { useAppStore } from '../store/app-store';
 import { pickProps } from '../common/helpers';
-
-
-
 
 export const SaveDialog = () => {
   const { projectName, saveDialogVisible, set } = useAppStore(useShallow(store => pickProps(["projectName", "saveDialogVisible", "set"], store)));
   const [fileName, setFileName] = useState(projectName);
 
+  const handleClose = () => {
+    set(store => { store.saveDialogVisible = false; });
+  };
+
+  const handleSave = () => {
+    emit("SAVE", handleClose);
+  };
+
   return (
     <Dialog
-      isOpen={saveDialogVisible}
+      open={saveDialogVisible}
+      onClose={handleClose}
       transitionDuration={100}
-      title="Save Project"
+      maxWidth="sm"
+      fullWidth
     >
-      <div className={Classes.DIALOG_BODY}>
-        <input
+      <DialogTitle>Save Project</DialogTitle>
+      <DialogContent>
+        <TextField
+          autoFocus
+          margin="dense"
+          label="File name"
           type="text"
+          fullWidth
+          variant="outlined"
           value={fileName}
-          onChange={e=>setFileName(e.currentTarget.value)}
-        ></input>
-      </div>
-      <div className={Classes.DIALOG_FOOTER}>
-        <div className={Classes.DIALOG_FOOTER_ACTIONS}>
-          <Button onClick={() => set(store => { store.saveDialogVisible = false; }) }>
-            Cancel
-          </Button>
-          <AnchorButton intent={Intent.SUCCESS} onClick={() => emit("SAVE", () => set(store => { store.saveDialogVisible = false; }) )}>
-            Save
-          </AnchorButton>
-        </div>
-      </div>
+          onChange={e => setFileName(e.target.value)}
+        />
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={handleClose}>
+          Cancel
+        </Button>
+        <Button variant="contained" color="success" onClick={handleSave}>
+          Save
+        </Button>
+      </DialogActions>
     </Dialog>
   );
-
 }
 
 export default SaveDialog;

@@ -1,10 +1,9 @@
 
 import "normalize.css";
+// Blueprint CSS kept for NavBarComponent (excluded from MUI migration per plan)
 import "@blueprintjs/core/lib/css/blueprint.css";
-import "@blueprintjs/table/lib/css/table.css";
 // Note: Using custom icons CSS without font-face declarations since we use SVG icons
 import "./blueprint-icons-no-fonts.css";
-// Note: popover2 CSS is now included in core in Blueprint v5
 
 import "./global.css";
 

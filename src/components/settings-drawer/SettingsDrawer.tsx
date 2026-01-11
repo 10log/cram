@@ -1,7 +1,14 @@
 import React, { useState } from "react";
 
-import { Drawer, Position, Button } from "@blueprintjs/core";
-
+import {
+  Drawer,
+  Box,
+  Typography,
+  IconButton,
+  Button
+} from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
+import CheckIcon from "@mui/icons-material/Check";
 
 import "./SettingsDrawer.css";
 import { useAppStore } from "../../store";
@@ -16,54 +23,48 @@ export interface SettingsDrawerProps {
   onSubmit?: (((event: React.MouseEvent<HTMLElement, MouseEvent>) => void) & ((event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void))
 }
 
-
-
 export default function SettingsDrawer(props: SettingsDrawerProps) {
   const [_selectedTabId, _setSelectedTabId] = useState("renderer");
   const isOpen = useAppStore(store => store.settingsDrawerVisible);
   const set = useAppStore(store => store.set);
-  // const {settings, set} = useSetting(state=>state);
+
+  const handleClose = () => set(draft => { draft.settingsDrawerVisible = false; });
 
   return (
     <Drawer
-      position={Position.RIGHT}
-      size="55%"
-      autoFocus={true}
-      enforceFocus={true}
-      hasBackdrop={true}
-      onClose={_e=>set(draft=>{ draft.settingsDrawerVisible = false })}
-      isOpen={isOpen}
-      canOutsideClickClose={true}
-      canEscapeKeyClose={true}
-      isCloseButtonShown={true}
-      title={
-        <div className="settings-title-bar">
-          <div className="settings-title-bar-title">Settings</div>
-					<div className="settings-title-bar-apply">
-						<Button text="Apply" rightIcon="small-tick" minimal intent="success" style={{
-							display: "inline"
-						}} onClick={props.onSubmit}/>
-					</div>
-        </div>
-      }
-      
-      >
-      {/* <Tabs selectedIndex={selectedIndex} onSelect={e=>setSelectedIndex(e)}>
-        <TabList>
-          <Tab disabled />
-          {Object.keys(this.state.settings).map((key) => {
-            return <Tab key={"settings-tabname-" + key}>{properCase(key)}</Tab>;
-          })}
-        </TabList>
-        <TabPanel />
-        {Object.keys(this.state.settings).map((key) => {
-          return (
-            <TabPanel key={"settings-tabpanel-" + key}>
-              <SettingsPanel messenger={messenger} category={key} />
-            </TabPanel>
-          );
-        })}
-      </Tabs> */}
+      anchor="right"
+      open={isOpen}
+      onClose={handleClose}
+      sx={{
+        '& .MuiDrawer-paper': {
+          width: '55%',
+        }
+      }}
+    >
+      <Box sx={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        p: 2,
+        borderBottom: 1,
+        borderColor: 'divider'
+      }}>
+        <Typography variant="h6">Settings</Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Button
+            variant="text"
+            color="success"
+            endIcon={<CheckIcon />}
+            onClick={props.onSubmit}
+          >
+            Apply
+          </Button>
+          <IconButton onClick={handleClose} size="small">
+            <CloseIcon />
+          </IconButton>
+        </Box>
+      </Box>
+      {/* Content would go here */}
     </Drawer>
   );
 }

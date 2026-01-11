@@ -1,6 +1,6 @@
 import React, {useEffect, useMemo, useState} from 'react';
 import {on} from '../../messenger';
-import { Tab, Tabs, Classes } from "@blueprintjs/core";
+import { Tabs, Tab, Box } from "@mui/material";
 
 import './ParameterConfig.css';
 import RayTracerTab from './RayTracerTab';
@@ -17,6 +17,20 @@ import ReceiverTab from './ReceiverTab';
 import SurfaceTab from './SurfaceTab';
 import ARTTab from './ARTTab';
 import BeamTraceTab from './BeamTraceTab';
+
+interface TabPanelProps {
+  children?: React.ReactNode;
+  value: string;
+  index: string;
+}
+
+function TabPanel({ children, value, index }: TabPanelProps) {
+  return (
+    <div hidden={value !== index}>
+      {value === index && <Box sx={{ pt: 1 }}>{children}</Box>}
+    </div>
+  );
+}
 
 
 const SelectContainer = styled.div`
@@ -154,13 +168,31 @@ export const ParameterConfig = () => {
 
   const [selectedTabId, setSelectedTabId] = useState("renderer")
 
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: string) => {
+    setSelectedTabId(newValue);
+  };
+
   return (
-    <div>
-      <Tabs id="parameter-config-tabs" className="parameter-config-tabs-container" onChange={e=>setSelectedTabId(`${e}`)} selectedTabId={selectedTabId}>
-        <Tab id="renderer" title={<TabText>Renderer</TabText>} className={Classes.BUTTON_TEXT} panel={<RendererTab />} />
-        <Tab id="solvers" title={<TabText>Solvers</TabText>} className={Classes.BUTTON_TEXT} panel={<SolversTab />} />
-        <Tab id="objects" title={<TabText>Objects</TabText>} className={Classes.BUTTON_TEXT} panel={<ObjectsTab />} />
+    <div className="parameter-config-tabs-container">
+      <Tabs
+        value={selectedTabId}
+        onChange={handleTabChange}
+        variant="fullWidth"
+        sx={{ borderBottom: 1, borderColor: 'divider' }}
+      >
+        <Tab value="renderer" label={<TabText>Renderer</TabText>} />
+        <Tab value="solvers" label={<TabText>Solvers</TabText>} />
+        <Tab value="objects" label={<TabText>Objects</TabText>} />
       </Tabs>
+      <TabPanel value={selectedTabId} index="renderer">
+        <RendererTab />
+      </TabPanel>
+      <TabPanel value={selectedTabId} index="solvers">
+        <SolversTab />
+      </TabPanel>
+      <TabPanel value={selectedTabId} index="objects">
+        <ObjectsTab />
+      </TabPanel>
     </div>
   );
 };

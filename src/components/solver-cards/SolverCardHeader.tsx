@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import styled, { keyframes } from "styled-components";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
@@ -13,7 +13,9 @@ import GraphicEqIcon from "@mui/icons-material/GraphicEq"; // Energy Decay
 import BlurOnIcon from "@mui/icons-material/BlurOn"; // ART
 import SettingsIcon from "@mui/icons-material/Settings"; // Renderer
 import TimelineIcon from "@mui/icons-material/Timeline"; // Beam Trace
-import { Menu, MenuItem, Popover, Position } from "@blueprintjs/core";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import DeleteIcon from "@mui/icons-material/Delete";
+import { Menu, MenuItem, ListItemIcon, ListItemText } from "@mui/material";
 
 const HeaderContainer = styled.div<{ $expanded: boolean }>`
   display: flex;
@@ -166,6 +168,8 @@ export default function SolverCardHeader({
   onDuplicate,
 }: SolverCardHeaderProps) {
   const Icon = SolverIconMap[kind] || ScatterPlotIcon;
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const menuOpen = Boolean(anchorEl);
 
   const handleCalculateClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -177,12 +181,24 @@ export default function SolverCardHeader({
     onClear?.();
   };
 
-  const menu = (
-    <Menu>
-      {onDuplicate && <MenuItem text="Duplicate" icon="duplicate" onClick={onDuplicate} />}
-      {onDelete && <MenuItem text="Delete" icon="trash" intent="danger" onClick={onDelete} />}
-    </Menu>
-  );
+  const handleMenuClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    setAnchorEl(e.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleDuplicate = () => {
+    handleMenuClose();
+    onDuplicate?.();
+  };
+
+  const handleDelete = () => {
+    handleMenuClose();
+    onDelete?.();
+  };
 
   return (
     <HeaderContainer $expanded={expanded} onClick={onToggle}>
@@ -211,28 +227,44 @@ export default function SolverCardHeader({
         </ActionButton>
       )}
       {(onDelete || onDuplicate) && (
-        <Popover
-          content={menu}
-          position={Position.BOTTOM_RIGHT}
-          minimal
-          transitionDuration={0}
-          renderTarget={({ isOpen, ref, ...targetProps }) => (
-            <MenuButton
-              {...targetProps}
-              ref={ref as React.Ref<HTMLButtonElement>}
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                // Let Blueprint handle the popover open/close via targetProps
-                if (targetProps.onClick) {
-                  targetProps.onClick(e as any);
-                }
-              }}
-            >
-              <MoreVertIcon />
-            </MenuButton>
-          )}
-        />
+        <>
+          <MenuButton
+            type="button"
+            onClick={handleMenuClick}
+          >
+            <MoreVertIcon />
+          </MenuButton>
+          <Menu
+            anchorEl={anchorEl}
+            open={menuOpen}
+            onClose={handleMenuClose}
+            anchorOrigin={{
+              vertical: 'bottom',
+              horizontal: 'right',
+            }}
+            transformOrigin={{
+              vertical: 'top',
+              horizontal: 'right',
+            }}
+          >
+            {onDuplicate && (
+              <MenuItem onClick={handleDuplicate}>
+                <ListItemIcon>
+                  <ContentCopyIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText>Duplicate</ListItemText>
+              </MenuItem>
+            )}
+            {onDelete && (
+              <MenuItem onClick={handleDelete} sx={{ color: 'error.main' }}>
+                <ListItemIcon>
+                  <DeleteIcon fontSize="small" color="error" />
+                </ListItemIcon>
+                <ListItemText>Delete</ListItemText>
+              </MenuItem>
+            )}
+          </Menu>
+        </>
       )}
     </HeaderContainer>
   );

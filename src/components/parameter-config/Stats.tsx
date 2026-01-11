@@ -1,29 +1,44 @@
 import React from 'react';
-import { Cell, Column, Table } from "@blueprintjs/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper
+} from "@mui/material";
 
-export interface Stat{
+export interface Stat {
   name: string;
   value: number | string;
 }
-
 
 export interface StatsProps {
   data: Stat[];
 }
 
 export default function Stats(props: StatsProps) {
-  const valueCellRenderer = (i: number) => {
-    return <Cell>{props.data[i].value}</Cell>;
-  };
-  const nameCellRenderer = (i: number) => {
-    return <Cell>{props.data[i].name}</Cell>;
-  };
   return (
     <div className="stats">
-      <Table numRows={props.data.length}>
-        <Column name="Property" cellRenderer={nameCellRenderer}></Column>
-        <Column name="Value" cellRenderer={valueCellRenderer}></Column>
-      </Table>
+      <TableContainer component={Paper} variant="outlined">
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              <TableCell>Property</TableCell>
+              <TableCell>Value</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {props.data.map((stat, index) => (
+              <TableRow key={stat.name + index} hover>
+                <TableCell>{stat.name}</TableCell>
+                <TableCell>{stat.value}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
     </div>
   );
 }

@@ -13,31 +13,30 @@ import userEvent from '@testing-library/user-event';
 import { SaveDialog } from '../SaveDialog';
 import { useAppStore } from '../../store/app-store';
 
-// Mock Blueprint.js Dialog
-jest.mock('@blueprintjs/core', () => ({
-  Dialog: ({ isOpen, children, title }: any) =>
-    isOpen ? (
-      <div data-testid="dialog" role="dialog" aria-label={title}>
-        <h2>{title}</h2>
+// Mock MUI Dialog components
+jest.mock('@mui/material', () => ({
+  Dialog: ({ open, children }: any) =>
+    open ? (
+      <div data-testid="dialog" role="dialog">
         {children}
       </div>
     ) : null,
-  Classes: {
-    DIALOG_BODY: 'dialog-body',
-    DIALOG_FOOTER: 'dialog-footer',
-    DIALOG_FOOTER_ACTIONS: 'dialog-footer-actions',
-  },
-  Button: ({ children, onClick }: any) => (
-    <button onClick={onClick}>{children}</button>
-  ),
-  AnchorButton: ({ children, onClick, intent }: any) => (
-    <button onClick={onClick} data-intent={intent}>
+  DialogTitle: ({ children }: any) => <h2>{children}</h2>,
+  DialogContent: ({ children }: any) => <div className="dialog-body">{children}</div>,
+  DialogActions: ({ children }: any) => <div className="dialog-footer">{children}</div>,
+  Button: ({ children, onClick, color, variant }: any) => (
+    <button onClick={onClick} data-intent={color}>
       {children}
     </button>
   ),
-  Intent: {
-    SUCCESS: 'success',
-  },
+  TextField: ({ label, value, onChange, ...props }: any) => (
+    <input
+      aria-label={label}
+      value={value}
+      onChange={(e) => onChange && onChange(e)}
+      {...props}
+    />
+  ),
 }));
 
 // Mock messenger

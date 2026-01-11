@@ -7,7 +7,6 @@
  * Called by CRAMEditor during component initialization.
  */
 
-import { ToastProps } from "@blueprintjs/core";
 import { v4 as uuid } from 'uuid';
 import hotkeys from "hotkeys-js";
 import * as THREE from "three";
@@ -529,16 +528,14 @@ export function registerMessageHandlers(
       msg.postMessage("SHOW_TOAST", {
         message: `Assigned material to ${surfaceCount} surface${surfaceCount > 1 ? "s" : ""}.`,
         intent: "success",
-        timeout: 1750,
-        icon: "tick"
-      } as ToastProps);
+        timeout: 1750
+      });
     } else {
       msg.postMessage("SHOW_TOAST", {
         message: `No surfaces are selected.`,
         intent: "warning",
-        timeout: 1750,
-        icon: "issue"
-      } as ToastProps);
+        timeout: 1750
+      });
     }
   });
 

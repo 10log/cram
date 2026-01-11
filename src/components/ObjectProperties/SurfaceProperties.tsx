@@ -8,7 +8,8 @@ import Surface from '../../objects/surface';
 import GridRowSeperator from "../GridRowSeperator";
 
 import Messenger from "../../messenger";
-import { Button, Tag } from "@blueprintjs/core";
+import { Chip, IconButton } from "@mui/material";
+import EditIcon from "@mui/icons-material/Edit";
 
 
 
@@ -156,15 +157,18 @@ export default function SurfaceProperties(props: SurfacePropertiesProps) {
             display: "unset"
           }}>
           {props.object instanceof Surface && (props.object as Surface) && (
-            // (<Button text={props.object.acousticMaterial.name} minimal={true} />)
             <>
-              <Tag
-              // onRemove={removable && onRemove}
-              // icon={icon === true ? "home" : undefined}
+              <Chip
+                label={props.object.acousticMaterial.name}
+                size="small"
+                variant="outlined"
+              />
+              <IconButton
+                size="small"
+                onClick={() => props.messenger.postMessage("OPEN_MATERIAL_SEARCH", props.object)}
               >
-                {props.object.acousticMaterial.name}
-              </Tag>
-              <Button icon="edit" minimal small onClick={(e) => props.messenger.postMessage("OPEN_MATERIAL_SEARCH", props.object)} />
+                <EditIcon fontSize="small" />
+              </IconButton>
             </>
           )}
         </GridRow>

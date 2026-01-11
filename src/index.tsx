@@ -2,7 +2,6 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 import App from "./components/App";
-import { ToastProps } from "@blueprintjs/core";
 
 // command handling
 import hotkeys from "hotkeys-js";
@@ -679,16 +678,14 @@ messenger.addMessageHandler("ASSIGN_MATERIAL", (acc, material) => {
     messenger.postMessage("SHOW_TOAST", {
       message: `Assigned material to ${surfaceCount} surface${surfaceCount > 1 ? "s" : ""}.`,
       intent: "success",
-      timeout: 1750,
-      icon: "tick"
-    } as ToastProps);
+      timeout: 1750
+    });
   } else {
     messenger.postMessage("SHOW_TOAST", {
       message: `No surfaces are selected.`,
       intent: "warning",
-      timeout: 1750,
-      icon: "issue"
-    } as ToastProps);
+      timeout: 1750
+    });
   }
 });
 

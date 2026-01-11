@@ -14,34 +14,30 @@ import userEvent from '@testing-library/user-event';
 import ImportDialog, { DROP_ALLOWED } from '../ImportDialog';
 import { useAppStore } from '../../store/app-store';
 
-// Mock Blueprint.js components
-jest.mock('@blueprintjs/core', () => ({
-  Dialog: ({ isOpen, children, title, onClose }: any) =>
-    isOpen ? (
-      <div data-testid="dialog" role="dialog" aria-label={title}>
-        <h2>{title}</h2>
+// Mock MUI components
+jest.mock('@mui/material', () => ({
+  Dialog: ({ open, children, onClose }: any) =>
+    open ? (
+      <div data-testid="dialog" role="dialog">
         <button data-testid="close-button" onClick={onClose}>Close</button>
         {children}
       </div>
     ) : null,
-  Classes: {
-    DIALOG_BODY: 'dialog-body',
-    BUTTON: 'bp-button',
-  },
-  Button: ({ children, onClick, disabled, text }: any) => (
+  DialogTitle: ({ children }: any) => <h2>{children}</h2>,
+  DialogContent: ({ children }: any) => <div className="dialog-body">{children}</div>,
+  DialogActions: ({ children }: any) => <div data-testid="dialog-actions">{children}</div>,
+  Button: ({ children, onClick, disabled, variant, color }: any) => (
     <button onClick={onClick} disabled={disabled}>
-      {text || children}
+      {children}
     </button>
   ),
-  Intent: {
-    PRIMARY: 'primary',
-  },
-  HTMLTable: ({ children }: any) => <table>{children}</table>,
-}));
-
-// Mock MUI DialogActions
-jest.mock('@mui/material', () => ({
-  DialogActions: ({ children }: any) => <div data-testid="dialog-actions">{children}</div>,
+  Table: ({ children }: any) => <table>{children}</table>,
+  TableBody: ({ children }: any) => <tbody>{children}</tbody>,
+  TableCell: ({ children }: any) => <td>{children}</td>,
+  TableContainer: ({ children }: any) => <div>{children}</div>,
+  TableHead: ({ children }: any) => <thead>{children}</thead>,
+  TableRow: ({ children }: any) => <tr>{children}</tr>,
+  Paper: ({ children }: any) => <div>{children}</div>,
 }));
 
 // Mock messenger

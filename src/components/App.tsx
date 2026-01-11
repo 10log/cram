@@ -1,6 +1,5 @@
 import React from "react";
 import SplitterLayout from "react-splitter-layout-react-v18";
-import { FocusStyleManager } from "@blueprintjs/core";
 import ImportDialog from "./ImportDialog";
 // import ObjectView from "./object-view/ObjectView";
 // import ConstructionsView from "./ConstructionsView";
@@ -32,9 +31,7 @@ import EditorContainer from "./EditorContainer";
 import { finishedLoading } from "../index";
 
 // Note: AppToaster removed - was unused and caused React 18 deprecation warning
-// If toasts are needed in the future, use OverlaysProvider with useToaster hook
-
-FocusStyleManager.onlyShowFocusOnTabs();
+// If toasts are needed in the future, use MUI Snackbar or similar
 
 export interface AppProps {
   rightPanelTopInitialSize: number;

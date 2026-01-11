@@ -11,7 +11,6 @@ import PropertyRowLabel from "../parameter-config/property-row/PropertyRowLabel"
 import PropertyRowButton from "../parameter-config/property-row/PropertyRowButton";
 import GridRowSeperator from "../GridRowSeperator";
 import Messenger from "../../messenger";
-import { ToastProps } from "@blueprintjs/core";
 
 export interface ReceiverPropertiesProps {
   messenger: Messenger;
@@ -128,9 +127,8 @@ export default function ReceiverProperties(props: ReceiverPropertiesProps) {
                 props.messenger.postMessage("SHOW_TOAST", {
                   message: `No data has been recorded!`,
                   intent: "warning",
-                  timeout: 1750,
-                  icon: "issue"
-                } as ToastProps);
+                  timeout: 1750
+                });
               }
             }}
             label="Download"

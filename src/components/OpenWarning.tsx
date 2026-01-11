@@ -1,5 +1,12 @@
 import React from "react";
-import { Dialog, Classes, Button, Intent } from "@blueprintjs/core";
+import {
+  Dialog,
+  DialogContent,
+  DialogActions,
+  Button,
+  Typography,
+  Box
+} from "@mui/material";
 
 export interface OpenWarningProps {
   isOpen: boolean;
@@ -8,28 +15,33 @@ export interface OpenWarningProps {
   onSave: (e?: React.MouseEvent<HTMLElement, MouseEvent>) => void;
 }
 
-
 function OpenWarning(props: OpenWarningProps) {
   return (
     <Dialog
-      isOpen={props.isOpen}
+      open={props.isOpen}
       transitionDuration={100}
     >
-      <div className={Classes.DIALOG_BODY}>
-        <p>This project has unsaved changes</p>
-      </div>
-      <div className={Classes.DIALOG_FOOTER}>
-        <div className={Classes.DIALOG_FOOTER_ACTIONS}>
+      <DialogContent>
+        <Typography>This project has unsaved changes</Typography>
+      </DialogContent>
+      <DialogActions>
+        <Box sx={{ flexGrow: 1 }}>
           <Button
             onClick={props.onDiscard}
-            intent={Intent.WARNING}
-            className={Classes.positionClass("left")}
-            text="Discard Changes"
-          />
-          <Button onClick={props.onCancel} text="Cancel" />
-          <Button intent={Intent.SUCCESS} onClick={props.onSave} text="Save"/>
-        </div>
-      </div>
+            color="warning"
+          >
+            Discard Changes
+          </Button>
+        </Box>
+        <Button onClick={props.onCancel}>Cancel</Button>
+        <Button
+          variant="contained"
+          color="success"
+          onClick={props.onSave}
+        >
+          Save
+        </Button>
+      </DialogActions>
     </Dialog>
   );
 }
