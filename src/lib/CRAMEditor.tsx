@@ -14,21 +14,26 @@ import type { SaveState } from '../store/io';
 import App from '../components/App';
 
 // Messenger and events
-import { emit, messenger, postMessage } from '../messenger';
+import { emit, messenger } from '../messenger';
 
-// Store access for save/load
-import { useAppStore } from '../store';
+// Store access for save/load and cleanup
+import { useAppStore, resetAllStores } from '../store';
+
+// Renderer for cleanup
+import { renderer } from '../render/renderer';
 
 // Layout defaults
 import { layout as defaultLayout } from '../default-storage';
 
+// Storage utility for namespaced localStorage
+import storage, { setStoragePrefix } from './storage';
+
 /**
- * Get layout from localStorage with optional prefix
+ * Get layout from localStorage with the configured prefix
  */
-function getLayout(storagePrefix: string = 'cram') {
-  const key = storagePrefix ? `${storagePrefix}-layout` : 'layout';
+function getLayout() {
   try {
-    const stored = localStorage.getItem(key);
+    const stored = storage.getItem('layout');
     if (stored) {
       return JSON.parse(stored);
     }
@@ -53,7 +58,11 @@ export const CRAMEditor = forwardRef<CRAMEditorRef, CRAMEditorProps>(
     } = props;
 
     const initializedRef = useRef(false);
-    const layoutRef = useRef(getLayout(storagePrefix));
+
+    // Set storage prefix on mount (before reading layout)
+    // This must happen synchronously before any localStorage reads
+    setStoragePrefix(storagePrefix);
+    const layoutRef = useRef(getLayout());
 
     // Track dirty state changes for onProjectChange callback
     useEffect(() => {
@@ -81,11 +90,37 @@ export const CRAMEditor = forwardRef<CRAMEditorRef, CRAMEditorProps>(
       }
     }, [initialProject]);
 
-    // Mark as initialized after mount
+    // Mark as initialized after mount and handle cleanup on unmount
     useEffect(() => {
       initializedRef.current = true;
+
+      // Cleanup function - runs when component unmounts
       return () => {
+        console.log('[CRAMEditor] Unmounting - cleaning up resources...');
         initializedRef.current = false;
+
+        // Dispose renderer (WebGL context, event listeners, Three.js resources)
+        try {
+          renderer.dispose();
+        } catch (e) {
+          console.warn('[CRAMEditor] Error disposing renderer:', e);
+        }
+
+        // Clear messenger handlers
+        try {
+          messenger.clear();
+        } catch (e) {
+          console.warn('[CRAMEditor] Error clearing messenger:', e);
+        }
+
+        // Reset all Zustand stores
+        try {
+          resetAllStores();
+        } catch (e) {
+          console.warn('[CRAMEditor] Error resetting stores:', e);
+        }
+
+        console.log('[CRAMEditor] Cleanup complete');
       };
     }, []);
 

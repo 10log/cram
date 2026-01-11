@@ -37,6 +37,10 @@ import { fileType, allowed } from "./common/file-type";
 import { v4 as uuid } from 'uuid';
 import { KeyValuePair } from "./common/key-value-pair";
 import { layout as defaultLayout } from "./default-storage";
+import storage, { setStoragePrefix } from "./lib/storage";
+
+// Set default storage prefix for standalone mode
+setStoragePrefix('cram');
 
 // constants
 import { EditorModes } from "./constants/editor-modes";
@@ -75,7 +79,7 @@ materials.forEach((x) => {
   materialsIndex[x.uuid] = x;
 });
 
-const layout = JSON.parse(localStorage.getItem("layout") || defaultLayout);
+const layout = JSON.parse(storage.getItem("layout") || defaultLayout);
 
 export interface State {
   leftPanelInitialSize: number;

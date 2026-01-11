@@ -6,6 +6,7 @@ import ImportDialog from "./ImportDialog";
 // import ConstructionsView from "./ConstructionsView";
 import PanelContainer from "./panel-container/PanelContainer";
 import { emit, messenger, on } from "../messenger";
+import storage from "../lib/storage";
 
 import "../css";
 import "./App.css";
@@ -120,7 +121,7 @@ export default class App extends React.Component<AppProps, AppState> {
       leftPanelInitialSize: this.leftPanelSize,
       rightPanelTopInitialSize: this.rightPanelTopSize
     };
-    localStorage.setItem("layout", JSON.stringify(layout));
+    storage.setItem("layout", JSON.stringify(layout));
   }
 
   render() {

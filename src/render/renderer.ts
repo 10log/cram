@@ -46,6 +46,7 @@ import { Markup } from "./Markup";
 import Model from "../objects/model";
 import { useContainer } from "../store";
 import { debounce } from "../common/debounce";
+import storage from "../lib/storage";
 
 
 
@@ -525,7 +526,7 @@ export default class Renderer {
 
     // this.composer.render();
     let storedState = JSON.parse(defaults.camera) as CameraStore;
-    const camerastorage = localStorage.getItem("camera");
+    const camerastorage = storage.getItem("camera");
     if (camerastorage) {
       storedState = JSON.parse(camerastorage);
     }
@@ -561,7 +562,7 @@ export default class Renderer {
     }
 
     const storedOrientation = JSON.parse(
-      localStorage.getItem("orientationControl") || defaults.orientationControl
+      storage.getItem("orientationControl") || defaults.orientationControl
     ) as OrientationControlOptions;
 
     this.orientationControl = new OrientationControl("#orientation-overlay", {
@@ -628,8 +629,8 @@ export default class Renderer {
     obj.object.target = this.controls.target.toArray();
 
     const orientState = this.orientationControl.save();
-    localStorage.setItem("camera", JSON.stringify(obj));
-    localStorage.setItem("orientationControl", JSON.stringify(orientState));
+    storage.setItem("camera", JSON.stringify(obj));
+    storage.setItem("orientationControl", JSON.stringify(orientState));
   }
 
   resetControls() {
