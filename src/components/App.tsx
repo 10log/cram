@@ -40,6 +40,8 @@ export interface AppProps {
   bottomPanelInitialSize: number;
   rightPanelInitialSize: number;
   leftPanelInitialSize: number;
+  /** Whether to show the navigation bar (default: true) */
+  showNavBar?: boolean;
 }
 
 type AppState = {
@@ -131,9 +133,11 @@ export default class App extends React.Component<AppProps, AppState> {
           </EditorContainer>
     )
 
+    const { showNavBar = true } = this.props;
+
     return (
       <div>
-        <NavBarComponent />
+        {showNavBar && <NavBarComponent />}
         <ProgressIndicator />
         <AutoCalculateProgress />
         {/* <SettingsDrawer /> */}

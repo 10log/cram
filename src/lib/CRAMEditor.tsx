@@ -1,0 +1,194 @@
+/**
+ * CRAMEditor - Embeddable React component for CRAM acoustic simulation
+ *
+ * This component provides a clean API for embedding CRAM in a parent application.
+ * It handles initialization, lifecycle management, and exposes an imperative API
+ * for programmatic control.
+ */
+
+import React, { useEffect, useRef, useImperativeHandle, forwardRef, useCallback } from 'react';
+import type { CRAMEditorProps, CRAMEditorRef, SolverType } from './types';
+import type { SaveState } from '../store/io';
+
+// Components
+import App from '../components/App';
+
+// Messenger and events
+import { emit, messenger, postMessage } from '../messenger';
+
+// Store access for save/load
+import { useAppStore } from '../store';
+
+// Layout defaults
+import { layout as defaultLayout } from '../default-storage';
+
+/**
+ * Get layout from localStorage with optional prefix
+ */
+function getLayout(storagePrefix: string = 'cram') {
+  const key = storagePrefix ? `${storagePrefix}-layout` : 'layout';
+  try {
+    const stored = localStorage.getItem(key);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch (e) {
+    console.warn('Failed to parse layout from localStorage:', e);
+  }
+  return JSON.parse(defaultLayout);
+}
+
+/**
+ * CRAMEditor component - the main embeddable CRAM editor
+ */
+export const CRAMEditor = forwardRef<CRAMEditorRef, CRAMEditorProps>(
+  function CRAMEditor(props, ref) {
+    const {
+      initialProject,
+      onSave,
+      onProjectChange,
+      onError,
+      storagePrefix = 'cram',
+      showNavBar = true,
+    } = props;
+
+    const initializedRef = useRef(false);
+    const layoutRef = useRef(getLayout(storagePrefix));
+
+    // Track dirty state changes for onProjectChange callback
+    useEffect(() => {
+      if (!onProjectChange) return;
+
+      const unsubscribe = useAppStore.subscribe((state, prevState) => {
+        if (state.hasUnsavedChanges && !prevState.hasUnsavedChanges) {
+          // Project became dirty - get current state and notify
+          try {
+            const currentState = getSaveState();
+            onProjectChange(currentState);
+          } catch (e) {
+            onError?.(e as Error);
+          }
+        }
+      });
+
+      return unsubscribe;
+    }, [onProjectChange, onError]);
+
+    // Handle initial project load
+    useEffect(() => {
+      if (initialProject && initializedRef.current) {
+        emit('RESTORE', { json: initialProject });
+      }
+    }, [initialProject]);
+
+    // Mark as initialized after mount
+    useEffect(() => {
+      initializedRef.current = true;
+      return () => {
+        initializedRef.current = false;
+      };
+    }, []);
+
+    // Helper to get current save state
+    const getSaveState = useCallback((): SaveState => {
+      const containers = messenger.postMessage('SAVE_CONTAINERS')[0] || [];
+      const solvers = messenger.postMessage('SAVE_SOLVERS')[0] || [];
+      const { projectName, version } = useAppStore.getState();
+
+      return {
+        meta: {
+          version: version as `${number}.${number}.${number}`,
+          name: projectName,
+          timestamp: new Date().toISOString(),
+        },
+        containers,
+        solvers,
+      };
+    }, []);
+
+    // Imperative handle for parent component control
+    useImperativeHandle(ref, () => ({
+      // Project operations
+      newProject: () => {
+        emit('NEW', undefined);
+      },
+
+      save: (): SaveState => {
+        const state = getSaveState();
+        onSave?.(state);
+        return state;
+      },
+
+      load: (state: SaveState) => {
+        emit('RESTORE', { json: state });
+      },
+
+      importFile: async (file: File): Promise<void> => {
+        return new Promise((resolve, reject) => {
+          try {
+            messenger.postMessage('IMPORT_FILE', [file]);
+            // Give import time to process
+            setTimeout(resolve, 100);
+          } catch (e) {
+            reject(e);
+          }
+        });
+      },
+
+      // Scene operations
+      addSource: () => {
+        messenger.postMessage('SHOULD_ADD_SOURCE');
+      },
+
+      addReceiver: () => {
+        messenger.postMessage('SHOULD_ADD_RECEIVER');
+      },
+
+      addSolver: (type: SolverType) => {
+        const solverEvents: Record<SolverType, string> = {
+          'raytracer': 'SHOULD_ADD_RAYTRACER',
+          'image-source': 'SHOULD_ADD_IMAGE_SOURCE',
+          'beam-trace': 'SHOULD_ADD_BEAMTRACE',
+          'fdtd-2d': 'ADD_FDTD_2D',
+          'rt60': 'SHOULD_ADD_RT60',
+          'energy-decay': 'SHOULD_ADD_ENERGYDECAY',
+          'art': 'ADD_ART',
+        };
+
+        const eventName = solverEvents[type];
+        if (eventName) {
+          if (eventName.startsWith('SHOULD_')) {
+            messenger.postMessage(eventName);
+          } else {
+            emit(eventName as keyof EventTypes, undefined);
+          }
+        }
+      },
+
+      // Edit operations
+      undo: () => {
+        messenger.postMessage('UNDO');
+      },
+
+      redo: () => {
+        messenger.postMessage('REDO');
+      },
+
+      // View operations
+      toggleResultsPanel: () => {
+        emit('TOGGLE_RESULTS_PANEL', undefined);
+      },
+    }), [getSaveState, onSave]);
+
+    // Render the App component with layout props
+    // showNavBar is passed down to conditionally render the navbar
+    return (
+      <App
+        {...layoutRef.current}
+        showNavBar={showNavBar}
+      />
+    );
+  }
+);
+
+export default CRAMEditor;
