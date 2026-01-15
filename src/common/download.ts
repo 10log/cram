@@ -1,4 +1,3 @@
-// @ts-nocheck
 //downloadocument.js v3.0, by dandavis; 2008-2014. [CCBY2] see http://danml.com/downloadocument.html for tests/usage
 // v1 landed a FF+Chrome compat way of downloading strings to local un-named files, upgraded to use a hidden frame and optional mime
 // v2 added named files via a[download], msSaveBlob, IE (10+) support, and window.URL support for larger+faster saves than dataURLs
@@ -27,11 +26,14 @@ export function download(data: string|Blob|File|URL, strFileName: string, strMim
 
   //if(typeof B.bind === 'function' ){ B=B.bind(window); }
 
+  // @ts-ignore - legacy callback bind pattern: download.bind(true, "text/xml", "export.xml")
   if (String(this) === "true") {
     //reverse arguments, allowing downloadocument.bind(true, "text/xml", "export.xml") to act as a callback
-    //@ts-ignore
+    // @ts-ignore - dynamic argument reversal
     x = [x, m];
+    // @ts-ignore
     m = x[0];
+    // @ts-ignore
     x = x[1];
   }
 
@@ -60,7 +62,7 @@ export function download(data: string|Blob|File|URL, strFileName: string, strMim
     var p = u.split(/[:;,]/),
       t = p[1],
       dec = p[2] === "base64" ? atob : decodeURIComponent,
-      bin = dec(p.pop()),
+      bin = dec(p.pop()!),
       mx = bin.length,
       i = 0,
       uia = new Uint8Array(mx);

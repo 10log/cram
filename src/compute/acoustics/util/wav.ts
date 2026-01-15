@@ -1,6 +1,7 @@
-//@ts-nocheck
+type DecoderFunction = (buffer: ArrayBuffer, offset: number, output: number[][], channels: number, samples: number) => void;
+type EncoderFunction = (buffer: ArrayBuffer, offset: number, input: number[][], channels: number, samples: number) => void;
 
-export const data_decoders = {
+export const data_decoders: Record<string, DecoderFunction> = {
   pcm8: (
     buffer: ArrayBuffer,
     offset: number,
@@ -97,7 +98,7 @@ export const data_decoders = {
   },
 };
 
-export const data_encoders = {
+export const data_encoders: Record<string, EncoderFunction> = {
   pcm8: (
     buffer: ArrayBuffer,
     offset: number,
@@ -202,30 +203,44 @@ export const data_encoders = {
   },
 };
 
-function lookup(table: any, bitDepth: number, floatingPoint: boolean) {
-  let name = 'pcm' + bitDepth + (floatingPoint ? 'f' : '');
-  let fn = table[name];
+function lookupDecoder(bitDepth: number, floatingPoint: boolean): DecoderFunction {
+  const name = 'pcm' + bitDepth + (floatingPoint ? 'f' : '');
+  const fn = data_decoders[name];
   if (!fn) throw new TypeError('Unsupported data format: ' + name);
   return fn;
 }
 
-export function decode(buffer: Buffer | any): any {
+function lookupEncoder(bitDepth: number, floatingPoint: boolean): EncoderFunction {
+  const name = 'pcm' + bitDepth + (floatingPoint ? 'f' : '');
+  const fn = data_encoders[name];
+  if (!fn) throw new TypeError('Unsupported data format: ' + name);
+  return fn;
+}
+
+interface DecodeResult {
+  sampleRate: number;
+  channelData: Float32Array[];
+}
+
+export function decode(buffer: ArrayBuffer | { buffer: ArrayBuffer; byteOffset: number; length: number }): DecodeResult | undefined {
   let pos = 0,
     end = 0;
-  if (buffer.buffer) {
+  let arrayBuffer: ArrayBuffer;
+  if ('buffer' in buffer) {
     // If we are handed a typed array or a buffer, then we have to consider the
     // offset and length into the underlying array buffer.
     pos = buffer.byteOffset;
     end = buffer.length;
-    buffer = buffer.buffer;
+    arrayBuffer = buffer.buffer;
   } else {
     // If we are handed a straight up array buffer, start at offset 0 and use
     // the full length of the buffer.
     pos = 0;
     end = buffer.byteLength;
+    arrayBuffer = buffer;
   }
 
-  let v = new DataView(buffer);
+  const v = new DataView(arrayBuffer);
 
   function u8() {
     let x = v.getUint8(pos);
@@ -280,16 +295,16 @@ export function decode(buffer: Buffer | any): any {
         break;
       case 'data':
         if (!fmt) throw new TypeError('Missing "fmt " chunk.');
-        let samples = Math.floor(size / fmt.blockSize);
-        let channels = fmt.channels;
-        let sampleRate = fmt.sampleRate;
-        let channelData = [];
+        const samples = Math.floor(size / fmt.blockSize);
+        const channels = fmt.channels;
+        const sampleRate = fmt.sampleRate;
+        const channelData: Float32Array[] = [];
         for (let ch = 0; ch < channels; ++ch)
           channelData[ch] = new Float32Array(samples);
-        lookup(data_decoders, fmt.bitDepth, fmt.floatingPoint)(
-          buffer,
+        lookupDecoder(fmt.bitDepth, fmt.floatingPoint)(
+          arrayBuffer,
           pos,
-          channelData,
+          channelData as unknown as number[][],
           channels,
           samples
         );
@@ -308,15 +323,15 @@ export interface encodeParams {
   bitDepth: number;
   channels: number;
 }
-export function encode(channelData: any, opts: encodeParams) {
-  let sampleRate = opts.sampleRate || 48000;
-  let floatingPoint = Boolean(opts.float || opts.floatingPoint);
-  let bitDepth = floatingPoint ? 32 : opts.bitDepth | 0 || 16;
-  let channels = channelData.length;
-  let samples = channelData[0].length;
-  let buffer = new ArrayBuffer(44 + samples * channels * (bitDepth >> 3));
+export function encode(channelData: number[][] | Float32Array[], opts: encodeParams): Uint8Array {
+  const sampleRate = opts.sampleRate || 48000;
+  const floatingPoint = Boolean(opts.float || opts.floatingPoint);
+  const bitDepth = floatingPoint ? 32 : opts.bitDepth | 0 || 16;
+  const channels = channelData.length;
+  const samples = channelData[0].length;
+  const buffer = new ArrayBuffer(44 + samples * channels * (bitDepth >> 3));
 
-  let v = new DataView(buffer);
+  const v = new DataView(buffer);
   let pos = 0;
 
   function u8(x: number) {
@@ -355,10 +370,10 @@ export function encode(channelData: any, opts: encodeParams) {
   // write 'data' chunk
   string('data');
   u32(buffer.byteLength - 44);
-  lookup(data_encoders, bitDepth, floatingPoint)(
+  lookupEncoder(bitDepth, floatingPoint)(
     buffer,
     pos,
-    channelData,
+    channelData as number[][],
     channels,
     samples
   );
@@ -366,10 +381,11 @@ export function encode(channelData: any, opts: encodeParams) {
   return new Uint8Array(buffer);
 }
 
-export function wavAsBlob(data: Float32Array[], {sampleRate = 44100, bitDepth = 16 }: { sampleRate: number, bitDepth: number }){
-  return new Blob([encode(data, {
-    channels: data.length, 
+export function wavAsBlob(data: Float32Array[], {sampleRate = 44100, bitDepth = 16 }: { sampleRate: number, bitDepth: number }): Blob {
+  const encoded = encode(data, {
+    channels: data.length,
     sampleRate,
     bitDepth
-  })], {type: "audio/wav"})
+  });
+  return new Blob([encoded.buffer as ArrayBuffer], {type: "audio/wav"});
 }

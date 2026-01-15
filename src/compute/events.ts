@@ -5,11 +5,14 @@ import type Solver from "./solver";
 
 // Use dynamic imports for solver classes to enable code splitting
 // Type imports are fine - they're erased at compile time
-import type { RayTracerSaveObject } from "./raytracer";
+import type RayTracer from "./raytracer";
+import type { RayTracerSaveObject, RayTracerParams } from "./raytracer";
+import type RT60 from "./rt";
 import type { RT60SaveObject } from "./rt";
 import type { ImageSourceSaveObject } from "./raytracer/image-source";
-import type { ARTSaveObject } from "./radiance/art";
-import type { BeamTraceSaveObject } from "./beam-trace";
+import type ART from "./radiance/art";
+import type { ARTSaveObject, ARTProps } from "./radiance/art";
+import type { BeamTraceSolver, BeamTraceSaveObject } from "./beam-trace";
 
 declare global {
   interface EventTypes {
@@ -23,16 +26,16 @@ declare global {
 async function restoreSolver(kind: string, saveObject: unknown): Promise<Solver> {
   switch (kind) {
     case "ray-tracer": {
-      const { default: RayTracer } = await import("./raytracer");
-      return new RayTracer(saveObject).restore(saveObject as RayTracerSaveObject);
+      const { default: RayTracerClass } = await import("./raytracer");
+      return new RayTracerClass(saveObject as RayTracerParams).restore(saveObject as RayTracerSaveObject);
     }
     case "rt60": {
-      const { default: RT60 } = await import("./rt");
-      return new RT60().restore(saveObject as RT60SaveObject);
+      const { default: RT60Class } = await import("./rt");
+      return new RT60Class().restore(saveObject as RT60SaveObject);
     }
     case "art": {
-      const { default: ART } = await import("./radiance/art");
-      return new ART(saveObject).restore(saveObject as ARTSaveObject);
+      const { default: ARTClass } = await import("./radiance/art");
+      return new ARTClass(saveObject as ARTProps).restore(saveObject as ARTSaveObject);
     }
     case "image-source": {
       const { default: ImageSourceSolver } = await import("./raytracer/image-source");
@@ -72,13 +75,13 @@ export default function registerSolverEvents(){
         const restored = await restoreSolver(solver.kind, solver);
         switch (solver.kind) {
           case "ray-tracer":
-            emit("ADD_RAYTRACER", restored);
+            emit("ADD_RAYTRACER", restored as RayTracer);
             break;
           case "rt60":
-            emit("ADD_RT60", restored);
+            emit("ADD_RT60", restored as RT60);
             break;
           case "art":
-            emit("ADD_ART", restored);
+            emit("ADD_ART", restored as ART);
             break;
           case "image-source":
             useSolver.getState().set(draft => {
@@ -86,7 +89,7 @@ export default function registerSolverEvents(){
             });
             break;
           case "beam-trace":
-            emit("ADD_BEAMTRACE", restored);
+            emit("ADD_BEAMTRACE", restored as BeamTraceSolver);
             break;
         }
       } catch (e) {

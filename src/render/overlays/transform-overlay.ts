@@ -1,4 +1,3 @@
-// @ts-nocheck
 import "./transform-overlay.css";
 import roundTo from '../../common/round-to';
 
@@ -60,8 +59,9 @@ export class TransformOverlay {
     this.updateHTML();
   }
   updateHTML() {
+    const values: Record<string, number> = { dx: this.dx, dy: this.dy, dz: this.dz };
     this.cells.forEach((elt, key) => {
-      elt.textContent = roundTo(this[key] || 0, 4).toString();
+      elt.textContent = roundTo(values[key] || 0, 4).toString();
     })
   }
   show() {

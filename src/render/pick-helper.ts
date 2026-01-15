@@ -1,4 +1,3 @@
-// @ts-nocheck
 import * as THREE from "three";
 import Container from "../objects/container";
 type point = {
@@ -55,31 +54,28 @@ export default class PickHelper {
           indicesWithinThreshold.push(i);
         }
 
-        //@ts-ignore
+        const obj = intersectedObjects[i].object as THREE.Object3D & Record<string, unknown>;
+        const parent = obj.parent as (THREE.Object3D & Record<string, unknown>) | null;
+        const grandparent = parent?.parent as (THREE.Object3D & Record<string, unknown>) | null;
         if (
-          intersectedObjects[i].object["isTransformControlsRoot"] ||
-          intersectedObjects[i].object["isTransformControlsGizmo"] ||
-          intersectedObjects[i].object["isTransformControlsPlane"] ||
-          intersectedObjects[i].object.parent?.["isTransformControlsRoot"] ||
-          intersectedObjects[i].object.parent?.["isTransformControlsGizmo"] ||
-          (intersectedObjects[i].object &&
-            intersectedObjects[i].object.parent &&
-            // @ts-ignore
-            intersectedObjects[i].object.parent["parent"] &&
-            // @ts-ignore
-            (intersectedObjects[i].object.parent["parent"]["type"] === "TransformControlsGizmo" ||
-              // @ts-ignore
-              intersectedObjects[i].object.parent["parent"]["isTransformControlsRoot"]))
+          obj["isTransformControlsRoot"] ||
+          obj["isTransformControlsGizmo"] ||
+          obj["isTransformControlsPlane"] ||
+          parent?.["isTransformControlsRoot"] ||
+          parent?.["isTransformControlsGizmo"] ||
+          (obj &&
+            parent &&
+            grandparent &&
+            (grandparent["type"] === "TransformControlsGizmo" ||
+              grandparent["isTransformControlsRoot"]))
         ) {
           clickedOnTransformControl = true;
           transformControlIndex = i;
         } else if (
-          intersectedObjects[i].object &&
-          intersectedObjects[i].object.parent &&
-          //@ts-ignore
-          intersectedObjects[i].object.parent["kind"] &&
-          //@ts-ignore
-          intersectedObjects[i].object.parent["kind"].match(/source|receiver/gi)
+          obj &&
+          parent &&
+          parent["kind"] &&
+          (parent["kind"] as string).match(/source|receiver/gi)
         ) {
           clickedOnSourceReceiver = true;
           sourceReceiverIndex = i;

@@ -1,17 +1,16 @@
-// @ts-nocheck
 import { v4 as uuid } from 'uuid';
 
 export interface TaskParams {
   name: string;
   id?: string;
   desc: string;
-  complete: (...args) => any;
+  complete: (...args: unknown[]) => unknown;
 }
 
 export class Task{
   name: string;
   desc: string;
-  complete: (...args) => any;
+  complete: (...args: unknown[]) => unknown;
   id: string;
   constructor(params: TaskParams) {
     this.name = params.name;

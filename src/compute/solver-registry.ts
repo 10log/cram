@@ -44,13 +44,9 @@ export function hasSolverFactory(kind: string): boolean {
 // Register all solver factories with dynamic imports
 // These imports only execute when the factory is called
 
-registerSolverFactory("ray-tracer", async (cram, props) => {
+registerSolverFactory("ray-tracer", async (_cram, props) => {
   const { default: RayTracer } = await import("./raytracer");
-  return new RayTracer({
-    ...props,
-    renderer: cram.state.renderer,
-    containers: cram.state.containers
-  });
+  return new RayTracer(props);
 });
 
 registerSolverFactory("image-source", async (_cram, _props) => {

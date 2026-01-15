@@ -1,8 +1,12 @@
-// @ts-nocheck
 import * as THREE from "three";
 
+interface STLGeometry extends THREE.BufferGeometry {
+	hasColors?: boolean;
+	alpha?: number;
+}
+
 export class STLLoader {
-	parse(data) {
+	parse(data: ArrayBuffer | string): STLGeometry {
 		var isBinary = function() {
 			var expect, face_size, n_faces, reader;
 			reader = new DataView(binData);
@@ -25,7 +29,7 @@ export class STLLoader {
 				// If solid[ i ] does not match the i-th byte, then it is not an
 				// ASCII STL; hence, it is binary and return true.
 
-				if (solid[i] !== reader.getUint8(i, false)) return true;
+				if (solid[i] !== reader.getUint8(i)) return true;
 			}
 
 			// First 5 bytes read "solid"; declare it to be an ASCII STL
@@ -39,16 +43,16 @@ export class STLLoader {
 			: this.parseASCII(this.ensureString(data));
 	}
 
-	parseBinary(data) {
+	parseBinary(data: ArrayBuffer): STLGeometry {
 		var reader = new DataView(data);
 		var faces = reader.getUint32(80, true);
 
-		var r,
-			g,
-			b,
+		var r: number | undefined,
+			g: number | undefined,
+			b: number | undefined,
 			hasColors = false,
-			colors;
-		var defaultR, defaultG, defaultB, alpha;
+			colors: number[] = [];
+		var defaultR: number | undefined, defaultG: number | undefined, defaultB: number | undefined, alpha: number | undefined;
 
 		// process STL header
 		// check for default color in header ("COLOR=rgba" sequence).
@@ -60,7 +64,6 @@ export class STLLoader {
 				reader.getUint8(index + 5) === 0x3d /*'='*/
 			) {
 				hasColors = true;
-				colors = [];
 
 				defaultR = reader.getUint8(index + 6) / 255;
 				defaultG = reader.getUint8(index + 7) / 255;
@@ -109,7 +112,7 @@ export class STLLoader {
 				normals.push(normalX, normalY, normalZ);
 
 				if (hasColors) {
-					colors.push(r, g, b);
+					colors.push(r!, g!, b!);
 				}
 			}
 		}
@@ -128,16 +131,14 @@ export class STLLoader {
 				"color",
 				new THREE.BufferAttribute(new Float32Array(colors), 3)
 			);
-			//@ts-ignore
-			geometry.hasColors = true;
-			//@ts-ignore
-			geometry.alpha = alpha;
+			(geometry as STLGeometry).hasColors = true;
+			(geometry as STLGeometry).alpha = alpha;
 		}
 
 		return geometry;
 	}
 
-	parseASCII(data) {
+	parseASCII(data: string): STLGeometry {
 		var geometry,
 			patternFace,
 			patternNormal,
@@ -186,7 +187,7 @@ export class STLLoader {
 		return geometry;
 	}
 
-	ensureString(buf) {
+	ensureString(buf: ArrayBuffer | string): string {
 		if (typeof buf !== "string") {
 			var array_buffer = new Uint8Array(buf);
 			var strArray = [] as String[];
@@ -199,7 +200,7 @@ export class STLLoader {
 		}
 	}
 
-	ensureBinary(buf) {
+	ensureBinary(buf: ArrayBuffer | string): ArrayBuffer {
 		if (typeof buf === "string") {
 			var array_buffer = new Uint8Array(buf.length);
 			for (var i = 0; i < buf.length; i++) {

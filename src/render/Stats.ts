@@ -1,4 +1,3 @@
-// @ts-nocheck
 // modified from https://github.com/mrdoob/stats.js/
 
 import "./Stats.css";
@@ -186,7 +185,9 @@ class Stats {
     this.fpsPanelValue = 0;
     this.msPanel = this.addPanel(new StatsPanel("Frame Time", { ...panelSharedProps, unit: "ms" }));
     this.msPanelValue = 0;
-    if (self.performance && self.performance["memory"]) {
+    // Chrome-only memory API
+    const perfWithMemory = self.performance as Performance & { memory?: { usedJSHeapSize: number; jsHeapSizeLimit: number } };
+    if (perfWithMemory.memory) {
       this.memPanel = this.addPanel(new StatsPanel("Heap", { ...panelSharedProps, unit: "MB" }));
       this.memPanelValue = 0;
     }
@@ -295,9 +296,12 @@ class Stats {
       this.frames = 0;
 
       if (this.memPanel) {
-        let memory = performance["memory"];
-        this.memPanelValue = memory.usedJSHeapSize / 1048576;
-        this.memPanel.update(this.memPanelValue, memory.jsHeapSizeLimit / 1048576);
+        const perfWithMemory = performance as Performance & { memory?: { usedJSHeapSize: number; jsHeapSizeLimit: number } };
+        const memory = perfWithMemory.memory;
+        if (memory) {
+          this.memPanelValue = memory.usedJSHeapSize / 1048576;
+          this.memPanel.update(this.memPanelValue, memory.jsHeapSizeLimit / 1048576);
+        }
       }
     }
 
