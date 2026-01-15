@@ -1,7 +1,5 @@
-//@ts-ignore
-import vs from "raw-loader!glslify-loader!./shader.vert";
-//@ts-ignore
-import fs from "raw-loader!glslify-loader!./shader.frag";
+import vs from "./shader.vert?raw";
+import fs from "./shader.frag?raw";
 
 export default {
     vs,
