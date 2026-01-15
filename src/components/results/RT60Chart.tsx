@@ -74,7 +74,7 @@ const black = '#000000';
 
 export const background = '#612efb';
 
-type RtType = 'Sabine' | 'Eyring' | 'AP'; 
+type RtType = 'sabine' | 'eyring' | 'ap'; 
 
 const _defaultMargin = { top: 0, right: 0, bottom: 40, left: 0 };
 

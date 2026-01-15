@@ -15,19 +15,19 @@ export interface Model {
   geometry: THREE.BufferGeometry;
 }
 
-export function tds(data) { 
+export function tds(data: ArrayBuffer) {
   const loader = new TDSLoader();
   const res = loader.parse(data,"/");
   return res;
 }
 
-export function stl2(data) {
+export function stl2(data: ArrayBuffer | string) {
   const loader = new THREESTLLoader();
   const res = loader.parse(data) as THREE.BufferGeometry;
   return res;
 }
 
-export function stl(data) {
+export function stl(data: ArrayBuffer | string) {
   const loader = new STLLoader();
   const res = loader.parse(data) as THREE.BufferGeometry;
   const positionsAttribute = res.attributes["position"] as THREE.BufferAttribute;
@@ -58,7 +58,7 @@ export function stl(data) {
   return models;
 }
 
-export function obj(data) {
+export function obj(data: string) {
   const loader = new OBJLoader(data);
   const res = loader.parse();
 
@@ -101,13 +101,13 @@ export function obj(data) {
   return models;
 }
 
-export function tga(data) {
+export function tga(data: ArrayBuffer) {
   const loader = new TGALoader();
   const res = loader.parse(data);
   return res;
 }
 
-export function dae(data) {
+export function dae(data: string) {
   const loader = new DAELoader();
   var xml = new DOMParser().parseFromString(data, "application/xml");
   // console.log(xml);

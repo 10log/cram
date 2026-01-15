@@ -169,7 +169,7 @@ export class AudioEngine {
     return samples;
   }
 
-  async testFilters(frequencies, sampleRate=44100) {
+  async testFilters(frequencies: number[], sampleRate=44100) {
 
     const samples = Array(frequencies.length).fill(0).map(x=>this.diracDelta());
     const offlineContext = this.createOfflineContext(1, samples[0].length, sampleRate);

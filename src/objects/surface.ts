@@ -383,7 +383,7 @@ class Surface extends Container {
     for (const key in this.acousticMaterial.absorption) {
       this.brdf.push(
         new BRDF({
-          absorptionCoefficient: this.acousticMaterial.absorption[key],
+          absorptionCoefficient: (this.acousticMaterial.absorption as Record<string, number>)[key],
           diffusionCoefficient: 0.1
         })
       );
@@ -400,7 +400,7 @@ class Surface extends Container {
 
     const almostEquals = numbersEqualWithinTolerence(1e-6);
 
-    const normalAlmostEqualsPlane = (n0, n1) => !almostEquals(n0.x, n1[0]) || !almostEquals(n0.y, n1[1]) || !almostEquals(n0.z, n1[2])
+    const normalAlmostEqualsPlane = (n0: THREE.Vector3, n1: number[]) => !almostEquals(n0.x, n1[0]) || !almostEquals(n0.y, n1[1]) || !almostEquals(n0.z, n1[2])
 
     if (normalAlmostEqualsPlane(this.normal, this.polygon.plane)) {
       // console.warn(new Error(`Surface '${this.name}' has a normal vector issue`));
@@ -612,14 +612,14 @@ class Surface extends Container {
   set acousticMaterial(material: AcousticMaterial) {
     this._acousticMaterial = material;
     const freq = Object.keys(this._acousticMaterial.absorption).map((x) => Number(x));
-    this.absorption = freq.map((x) => this._acousticMaterial.absorption[String(x)]);
+    this.absorption = freq.map((x) => (this._acousticMaterial.absorption as Record<string, number>)[String(x)]);
     this.absorptionFunction = interpolateAlpha(this.absorption, freq);
     this.reflectionFunction = (freq, theta) => reflectionCoefficient(this.absorptionFunction(freq), theta);
     this.brdf = [] as BRDF[];
     for (const key in this.acousticMaterial.absorption) {
       this.brdf.push(
         new BRDF({
-          absorptionCoefficient: this.acousticMaterial.absorption[key],
+          absorptionCoefficient: (this.acousticMaterial.absorption as Record<string, number>)[key],
           diffusionCoefficient: 0.1
         })
       );

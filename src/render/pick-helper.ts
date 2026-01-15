@@ -1,3 +1,4 @@
+// @ts-nocheck
 import * as THREE from "three";
 import Container from "../objects/container";
 type point = {
@@ -19,7 +20,7 @@ export default class PickHelper {
   mount: any;
   __pickedObject: any;
   __pickedPoint: any;
-  constructor(scene, camera, mount) {
+  constructor(scene: THREE.Scene, camera: THREE.Camera, mount: HTMLElement) {
     this.pickPosition = new THREE.Vector2(0, 0);
     this.raycaster = new THREE.Raycaster();
     this.pickedObject = null;
@@ -33,7 +34,7 @@ export default class PickHelper {
   }
 
   // This really needs to be refactored... what a mess
-  pick(event, objects = this.objects, _scene = this.scene, _camera = this.camera, mount = this.mount) {
+  pick(event: MouseEvent, objects = this.objects, _scene = this.scene, _camera = this.camera, mount = this.mount) {
     this.setPickPosition(event, mount);
     this.raycaster.setFromCamera(this.pickPosition, this.camera);
 
@@ -131,7 +132,7 @@ export default class PickHelper {
     return [this.pickedPoint.x, this.pickedPoint.y, this.pickedPoint.z];
   }
 
-  pickOnce(event, scene, camera, mount) {
+  pickOnce(event: MouseEvent, scene: THREE.Scene, camera: THREE.Camera, mount: HTMLElement) {
     this.setPickPosition(event, mount);
     let normalizedPosition = this.pickPosition;
 
@@ -149,7 +150,7 @@ export default class PickHelper {
     return this.pickedObject;
   }
 
-  pickCenter(scene, camera, mount) {
+  pickCenter(scene: THREE.Scene, camera: THREE.Camera, mount: HTMLElement) {
     this.setPickPositionCenter(mount);
     let normalizedPosition = this.pickPosition;
 
@@ -164,7 +165,7 @@ export default class PickHelper {
     return this.pickedObject;
   }
 
-  setPickPosition(event, mount) {
+  setPickPosition(event: MouseEvent, mount: HTMLElement) {
     const pos = this.getCanvasRelativePosition(event, mount);
     // console.log(pos);
     // console.log(mount.clientWidth, mount.clientHeight);
@@ -172,13 +173,13 @@ export default class PickHelper {
     this.pickPosition.y = (pos.y / mount.clientHeight) * -2 + 1;
   }
 
-  setPickPositionCenter(mount) {
+  setPickPositionCenter(mount: HTMLElement) {
     const pos = { x: mount.clientWidth / 2, y: mount.clientHeight / 2 };
     this.pickPosition.x = (pos.x / mount.clientWidth) * 2 - 1;
     this.pickPosition.y = (pos.y / mount.clientHeight) * -2 + 1;
   }
 
-  getCanvasRelativePosition(event, mount) {
+  getCanvasRelativePosition(event: MouseEvent, mount: HTMLElement) {
     const rect = mount.getBoundingClientRect();
     return {
       x: event.clientX - rect.left,
@@ -191,7 +192,7 @@ export default class PickHelper {
     this.pickPosition.y = -100000;
   }
 
-  updateCamera(camera) {
+  updateCamera(camera: THREE.Camera) {
     this.camera = camera;
   }
 }

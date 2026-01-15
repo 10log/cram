@@ -86,8 +86,8 @@ export default class Model extends Container {
         [c, a]
       ];
 
-      edges.forEach((edge: [number, number]) => {
-        const hash = edgeHash(edge);
+      edges.forEach((edge) => {
+        const hash = edgeHash(edge as [number, number]);
         if (isUnique(hash)) {
           edgeindices.push(...edge);
         }

@@ -39,23 +39,26 @@ export default class Container extends THREE.Group {
     props &&
       (() => {
         for (const key in props) {
-          this[key] = props[key];
+          (this as Record<string, unknown>)[key] = (props as Record<string, unknown>)[key];
         }
       })();
     this.selected = false;
     this.renderCallback = () => {};
   }
-  save() {
+  save(): ContainerSaveObject {
     return {
       kind: this.kind,
       visible: this.visible,
       name: this.name,
       position: this.position.toArray(),
-      rotation: this.rotation.toArray().slice(0, 3),
+      rotation: this.rotation.toArray().slice(0, 3) as [number, number, number],
       scale: this.scale.toArray(),
       uuid: this.uuid,
-      children: this.children.reduce((acc, curr) => typeof curr['save'] === "function" ? [...acc, curr['save']()] : acc, [])
-    } as ContainerSaveObject;
+      children: this.children.reduce((acc: ContainerSaveObject[], curr) => {
+        const child = curr as Container;
+        return typeof child.save === "function" ? [...acc, child.save()] : acc;
+      }, [] as ContainerSaveObject[])
+    };
   }
   restore(state: ContainerSaveObject) {
     this.visible = state.visible;
@@ -83,24 +86,28 @@ export default class Container extends THREE.Group {
     (this.children.filter(x=>x instanceof Container) as Container[]).forEach((x) => x.deselect());
   }
 
-  traverse(callback, depth = 0) {
+  traverse(callback: (obj: Container, depth: number) => void, depth = 0) {
     callback(this, depth);
     var children = this.children;
 
     for (var i = 0, l = children.length; i < l; i++) {
-      //@ts-ignore
-      children[i].traverse(callback, depth + 1);
+      const child = children[i] as Container;
+      if (child.traverse) {
+        child.traverse(callback, depth + 1);
+      }
     }
   }
 
-  traverseVisible(callback, depth = 0) {
+  traverseVisible(callback: (obj: Container, depth: number) => void, depth = 0) {
     if (this.visible === false) return;
     callback(this, depth);
     var children = this.children;
 
     for (var i = 0, l = children.length; i < l; i++) {
-      //@ts-ignore
-      children[i].traverseVisible(callback, depth + 1);
+      const child = children[i] as Container;
+      if (child.traverseVisible) {
+        child.traverseVisible(callback, depth + 1);
+      }
     }
   }
 

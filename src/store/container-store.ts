@@ -46,7 +46,7 @@ export const useContainer = create<ContainerStore>((set, get) => ({
   getRooms: () => getRooms(get().containers),
 }));
 
-export const addContainer = <T extends Container>(ContainerClass: new(...args) => T) => (container: T|undefined) => {
+export const addContainer = <T extends Container>(ContainerClass: new(...args: any[]) => T) => (container: T|undefined) => {
   const c = container || new ContainerClass() as T;
   useContainer.setState((state) => ({
     ...state,
@@ -74,12 +74,12 @@ export const removeContainer = (uuid: keyof ContainerStore['containers']) => {
 }
 
 
-export const setContainerProperty = ({uuid, property, value}) => {
+export const setContainerProperty = ({uuid, property, value}: {uuid: string, property: string, value: unknown}) => {
   // Access the actual container instance directly (not through Immer draft)
   // so that class setters (like position.setX) are properly invoked
   const container = useContainer.getState().containers[uuid];
   if (container) {
-    container[property] = value;
+    (container as unknown as Record<string, unknown>)[property] = value;
   }
   // Update version to trigger re-renders
   useContainer.getState().set(store => {
@@ -90,9 +90,9 @@ export const setContainerProperty = ({uuid, property, value}) => {
   emit("MARK_DIRTY", undefined);
 }
 
-export const setNestedContainerProperty = ({path, property, value}) => {
+export const setNestedContainerProperty = ({path, property, value}: {path: (string | number)[], property: string, value: unknown}) => {
   useContainer.getState().set(store => {
-    const container = reach(store.containers, path);
+    const container = reach(store.containers, path) as Record<string, unknown> | undefined;
     if(container && container.hasOwnProperty(property)){
       container[property] = value;
     }
@@ -100,9 +100,11 @@ export const setNestedContainerProperty = ({path, property, value}) => {
   emit("MARK_DIRTY", undefined);
 }
 
-export const callContainerMethod = ({uuid, method, args}) => {
+export const callContainerMethod = ({uuid, method, args = []}: {uuid: string, method?: string, args?: unknown[]}) => {
+  if (!method) return;
   useContainer.getState().set(store => {
-    store.containers[uuid][method](...args);
+    const container = store.containers[uuid] as unknown as Record<string, (...args: unknown[]) => unknown>;
+    container[method](...args);
   });
 }
 

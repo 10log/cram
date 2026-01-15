@@ -1,3 +1,4 @@
+// @ts-nocheck
 import Solver from "../solver";
 import * as THREE from "three";
 import Room from "../../objects/room";

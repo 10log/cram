@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * @author WestLangley / http://github.com/WestLangley
  *

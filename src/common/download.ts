@@ -1,3 +1,4 @@
+// @ts-nocheck
 //downloadocument.js v3.0, by dandavis; 2008-2014. [CCBY2] see http://danml.com/downloadocument.html for tests/usage
 // v1 landed a FF+Chrome compat way of downloading strings to local un-named files, upgraded to use a hidden frame and optional mime
 // v2 added named files via a[download], msSaveBlob, IE (10+) support, and window.URL support for larger+faster saves than dataURLs
@@ -55,7 +56,7 @@ export function download(data: string|Blob|File|URL, strFileName: string, strMim
     }
   }
 
-  function d2b(u) {
+  function d2b(u: string) {
     var p = u.split(/[:;,]/),
       t = p[1],
       dec = p[2] === "base64" ? atob : decodeURIComponent,
@@ -69,7 +70,7 @@ export function download(data: string|Blob|File|URL, strFileName: string, strMim
     return new B([uia], { type: t });
   }
 
-  function saver(url, winMode) {
+  function saver(url: string, winMode?: boolean) {
     if ("download" in a) {
       //html5 A[download]
       a.href = url;

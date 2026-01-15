@@ -1,7 +1,7 @@
 import { KeyValuePair } from "./common/key-value-pair";
 import { v4 as uuid } from 'uuid';
 
-export type EventHandler = (...args) => void;
+export type EventHandler = (...args: unknown[]) => void;
 
 declare global {
     type EventWithPayload<T> = {
@@ -59,7 +59,7 @@ export default class Messenger{
             delete this.dictionary[message][id];
         }
     }
-    postMessage(message: string, ...args) {
+    postMessage(message: string, ...args: unknown[]) {
         if (message !== this.lastMessage) {
             this.lastMessage = message;
         }
@@ -150,7 +150,7 @@ export default class Messenger{
         const id = uuid();
         this.messageListeners[id] = callback;
     }
-    removeMessageListener(id) {
+    removeMessageListener(id: string) {
         if (this.messageListeners[id]) {
             delete this.messageListeners[id];
         }

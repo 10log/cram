@@ -30,7 +30,7 @@ export function dxf(data: string){
     const indices = [] as number[][];
     polyline.vertices.forEach(vertex=>{
       if(vertex["faceA"]){
-        indices.push([vertex["faceA"], vertex["faceB"], vertex["faceC"]].map(Math.abs).map(x=>x-1));
+        indices.push([vertex["faceA"]!, vertex["faceB"]!, vertex["faceC"]!].map(Math.abs).map(x=>x-1));
       } else {
         vertices.push([vertex.x,vertex.y,vertex.z!]);
       }

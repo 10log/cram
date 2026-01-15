@@ -1,8 +1,8 @@
-export function unix(){
+export function unix(): number {
   return Date.now();
 }
 
-export function mmddyyyy(t=Date.now()) {
+export function mmddyyyy(t: number = Date.now()): string {
   const d = new Date(t);
   const month = d.getMonth();
   const day = d.getDay();
@@ -11,7 +11,7 @@ export function mmddyyyy(t=Date.now()) {
   return `${month}-${day}-${year} at ${time}`;
 }
 
-export function parse(time) {
+export function parse(time: number | string | Date): string[] {
   return new Date(time)
 		.toString()
 		.split(/\s+/gim)
@@ -20,7 +20,7 @@ export function parse(time) {
 		);
 }
 
-export function mmm_dd_yyyy(time) {
+export function mmm_dd_yyyy(time: number | string | Date): string {
   return new Date(time)
 		.toString()
 		.split(/\s+/gim)

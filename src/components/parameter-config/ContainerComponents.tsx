@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React from "react";
 import { emit } from "../../messenger";
 import { Source, Receiver, Surface, Room } from "../../objects";

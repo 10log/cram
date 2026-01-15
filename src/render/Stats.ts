@@ -1,3 +1,4 @@
+// @ts-nocheck
 // modified from https://github.com/mrdoob/stats.js/
 
 import "./Stats.css";

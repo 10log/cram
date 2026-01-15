@@ -41,7 +41,7 @@ export default abstract class Solver {
       autoCalculate
     };
   }
-  restore(state) {
+  restore(state: { name: string; uuid: string; autoCalculate?: boolean }) {
     this.name = state.name;
     this.uuid = state.uuid;
     this.autoCalculate = state.autoCalculate ?? false;

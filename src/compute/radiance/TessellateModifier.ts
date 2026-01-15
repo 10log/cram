@@ -92,7 +92,7 @@ export class TessellateModifier {
 		let iteration = 0;
 		let tessellating = true;
 
-		function addTriangle( a, b, c ) {
+		function addTriangle( a: number, b: number, c: number ) {
 
 			const v1 = vs[ a ];
 			const v2 = vs[ b ];

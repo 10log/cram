@@ -7,20 +7,44 @@
 
 import * as THREE from "three";
 
+interface TGAHeader {
+  id_length: number;
+  colormap_type: number;
+  image_type: number;
+  colormap_index: number;
+  colormap_length: number;
+  colormap_size: number;
+  origin: number[];
+  width: number;
+  height: number;
+  pixel_size: number;
+  flags: number;
+}
+
+interface TGAParseResult {
+  pixel_data: Uint8Array;
+  palettes: Uint8Array | undefined;
+}
+
 export class TGALoader extends THREE.Loader {
-	load (url, onLoad, onProgress, onError) {
-    var scope = this;
+	load(
+    url: string,
+    onLoad?: (texture: THREE.Texture) => void,
+    onProgress?: (event: ProgressEvent) => void,
+    onError?: (error: unknown) => void
+  ): THREE.Texture {
+    const scope = this;
 
-    var texture = new THREE.Texture();
+    const texture = new THREE.Texture();
 
-    var loader = new THREE.FileLoader(this.manager);
+    const loader = new THREE.FileLoader(this.manager);
     loader.setResponseType("arraybuffer");
     loader.setPath(this.path);
 
     loader.load(
       url,
       function (buffer) {
-        texture.image = scope.parse(buffer);
+        texture.image = scope.parse(buffer as ArrayBuffer);
         texture.needsUpdate = true;
 
         if (onLoad !== undefined) {
@@ -33,13 +57,27 @@ export class TGALoader extends THREE.Loader {
 
     return texture;
   }
-  parse(buffer) {
+  parse(buffer: ArrayBuffer): HTMLCanvasElement | ImageBitmap {
     // reference from vthibault, https://github.com/vthibault/roBrowser/blob/master/src/Loaders/Targa.js
 
-    function tgaCheckHeader(header) {
+    // TGA constants
+    const TGA_TYPE_NO_DATA = 0,
+      TGA_TYPE_INDEXED = 1,
+      TGA_TYPE_RGB = 2,
+      TGA_TYPE_GREY = 3,
+      TGA_TYPE_RLE_INDEXED = 9,
+      TGA_TYPE_RLE_RGB = 10,
+      TGA_TYPE_RLE_GREY = 11,
+      TGA_ORIGIN_MASK = 0x30,
+      TGA_ORIGIN_SHIFT = 0x04,
+      TGA_ORIGIN_BL = 0x00,
+      TGA_ORIGIN_BR = 0x01,
+      TGA_ORIGIN_UL = 0x02,
+      TGA_ORIGIN_UR = 0x03;
+
+    function tgaCheckHeader(header: TGAHeader): void {
       switch (header.image_type) {
         // check indexed type
-
         case TGA_TYPE_INDEXED:
         case TGA_TYPE_RLE_INDEXED:
           if (header.colormap_length > 256 || header.colormap_size !== 24 || header.colormap_type !== 1) {
@@ -48,7 +86,6 @@ export class TGALoader extends THREE.Loader {
           break;
 
         // check colormap type
-
         case TGA_TYPE_RGB:
         case TGA_TYPE_GREY:
         case TGA_TYPE_RLE_RGB:
@@ -59,68 +96,59 @@ export class TGALoader extends THREE.Loader {
           break;
 
         // What the need of a file without data ?
-
         case TGA_TYPE_NO_DATA:
           console.error("THREE.TGALoader: No data.");
           break;
 
         // Invalid type ?
-
         default:
           console.error('THREE.TGALoader: Invalid type "%s".', header.image_type);
       }
 
       // check image width and height
-
       if (header.width <= 0 || header.height <= 0) {
         console.error("THREE.TGALoader: Invalid image size.");
       }
 
       // check image pixel size
-
       if (header.pixel_size !== 8 && header.pixel_size !== 16 && header.pixel_size !== 24 && header.pixel_size !== 32) {
         console.error('THREE.TGALoader: Invalid pixel size "%s".', header.pixel_size);
       }
     }
 
     // parse tga image buffer
+    function tgaParse(use_rle: boolean, use_pal: boolean, header: TGAHeader, offset: number, data: Uint8Array): TGAParseResult {
+      let pixel_data: Uint8Array;
+      let palettes: Uint8Array | undefined;
 
-    function tgaParse(use_rle, use_pal, header, offset, data) {
-      var pixel_data, pixel_size, pixel_total, palettes;
-
-      pixel_size = header.pixel_size >> 3;
-      pixel_total = header.width * header.height * pixel_size;
+      const pixel_size = header.pixel_size >> 3;
+      const pixel_total = header.width * header.height * pixel_size;
 
       // read palettes
-
       if (use_pal) {
         palettes = data.subarray(offset, (offset += header.colormap_length * (header.colormap_size >> 3)));
       }
 
       // read RLE
-
       if (use_rle) {
         pixel_data = new Uint8Array(pixel_total);
 
-        var c, count, i;
-        var shift = 0;
-        var pixels = new Uint8Array(pixel_size);
+        let c: number, count: number, i: number;
+        let shift = 0;
+        const pixels = new Uint8Array(pixel_size);
 
         while (shift < pixel_total) {
           c = data[offset++];
           count = (c & 0x7f) + 1;
 
           // RLE pixels
-
           if (c & 0x80) {
             // bind pixel tmp array
-
             for (i = 0; i < pixel_size; ++i) {
               pixels[i] = data[offset++];
             }
 
             // copy pixel array
-
             for (i = 0; i < count; ++i) {
               pixel_data.set(pixels, shift + i * pixel_size);
             }
@@ -128,7 +156,6 @@ export class TGALoader extends THREE.Loader {
             shift += pixel_size * count;
           } else {
             // raw pixels
-
             count *= pixel_size;
             for (i = 0; i < count; ++i) {
               pixel_data[shift + i] = data[offset++];
@@ -138,7 +165,6 @@ export class TGALoader extends THREE.Loader {
         }
       } else {
         // raw pixels
-
         pixel_data = data.subarray(offset, (offset += use_pal ? header.width * header.height : pixel_total));
       }
 
@@ -148,13 +174,13 @@ export class TGALoader extends THREE.Loader {
       };
     }
 
-    function tgaGetImageData8bits(imageData, y_start, y_step, y_end, x_start, x_step, x_end, image, palettes) {
-      var colormap = palettes;
-      var color,
-        i = 0,
-        x,
-        y;
-      var width = header.width;
+    function tgaGetImageData8bits(
+      imageData: Uint8ClampedArray, y_start: number, y_step: number, y_end: number,
+      x_start: number, x_step: number, x_end: number, image: Uint8Array, palettes: Uint8Array
+    ): Uint8ClampedArray {
+      const colormap = palettes;
+      let color: number, i = 0, x: number, y: number;
+      const width = header.width;
 
       for (y = y_start; y !== y_end; y += y_step) {
         for (x = x_start; x !== x_end; x += x_step, i++) {
@@ -169,12 +195,12 @@ export class TGALoader extends THREE.Loader {
       return imageData;
     }
 
-    function tgaGetImageData16bits(imageData, y_start, y_step, y_end, x_start, x_step, x_end, image) {
-      var color,
-        i = 0,
-        x,
-        y;
-      var width = header.width;
+    function tgaGetImageData16bits(
+      imageData: Uint8ClampedArray, y_start: number, y_step: number, y_end: number,
+      x_start: number, x_step: number, x_end: number, image: Uint8Array
+    ): Uint8ClampedArray {
+      let color: number, i = 0, x: number, y: number;
+      const width = header.width;
 
       for (y = y_start; y !== y_end; y += y_step) {
         for (x = x_start; x !== x_end; x += x_step, i += 2) {
@@ -189,11 +215,12 @@ export class TGALoader extends THREE.Loader {
       return imageData;
     }
 
-    function tgaGetImageData24bits(imageData, y_start, y_step, y_end, x_start, x_step, x_end, image) {
-      var i = 0,
-        x,
-        y;
-      var width = header.width;
+    function tgaGetImageData24bits(
+      imageData: Uint8ClampedArray, y_start: number, y_step: number, y_end: number,
+      x_start: number, x_step: number, x_end: number, image: Uint8Array
+    ): Uint8ClampedArray {
+      let i = 0, x: number, y: number;
+      const width = header.width;
 
       for (y = y_start; y !== y_end; y += y_step) {
         for (x = x_start; x !== x_end; x += x_step, i += 3) {
@@ -207,11 +234,12 @@ export class TGALoader extends THREE.Loader {
       return imageData;
     }
 
-    function tgaGetImageData32bits(imageData, y_start, y_step, y_end, x_start, x_step, x_end, image) {
-      var i = 0,
-        x,
-        y;
-      var width = header.width;
+    function tgaGetImageData32bits(
+      imageData: Uint8ClampedArray, y_start: number, y_step: number, y_end: number,
+      x_start: number, x_step: number, x_end: number, image: Uint8Array
+    ): Uint8ClampedArray {
+      let i = 0, x: number, y: number;
+      const width = header.width;
 
       for (y = y_start; y !== y_end; y += y_step) {
         for (x = x_start; x !== x_end; x += x_step, i += 4) {
@@ -225,12 +253,12 @@ export class TGALoader extends THREE.Loader {
       return imageData;
     }
 
-    function tgaGetImageDataGrey8bits(imageData, y_start, y_step, y_end, x_start, x_step, x_end, image) {
-      var color,
-        i = 0,
-        x,
-        y;
-      var width = header.width;
+    function tgaGetImageDataGrey8bits(
+      imageData: Uint8ClampedArray, y_start: number, y_step: number, y_end: number,
+      x_start: number, x_step: number, x_end: number, image: Uint8Array
+    ): Uint8ClampedArray {
+      let color: number, i = 0, x: number, y: number;
+      const width = header.width;
 
       for (y = y_start; y !== y_end; y += y_step) {
         for (x = x_start; x !== x_end; x += x_step, i++) {
@@ -245,11 +273,12 @@ export class TGALoader extends THREE.Loader {
       return imageData;
     }
 
-    function tgaGetImageDataGrey16bits(imageData, y_start, y_step, y_end, x_start, x_step, x_end, image) {
-      var i = 0,
-        x,
-        y;
-      var width = header.width;
+    function tgaGetImageDataGrey16bits(
+      imageData: Uint8ClampedArray, y_start: number, y_step: number, y_end: number,
+      x_start: number, x_step: number, x_end: number, image: Uint8Array
+    ): Uint8ClampedArray {
+      let i = 0, x: number, y: number;
+      const width = header.width;
 
       for (y = y_start; y !== y_end; y += y_step) {
         for (x = x_start; x !== x_end; x += x_step, i += 2) {
@@ -263,8 +292,10 @@ export class TGALoader extends THREE.Loader {
       return imageData;
     }
 
-    function getTgaRGBA(data, width, height, image, palette) {
-      var x_start, y_start, x_step, y_step, x_end, y_end;
+    function getTgaRGBA(
+      data: Uint8ClampedArray, width: number, height: number, image: Uint8Array, palette: Uint8Array | undefined
+    ): Uint8ClampedArray {
+      let x_start: number, y_start: number, x_step: number, y_step: number, x_end: number, y_end: number;
 
       switch ((header.flags & TGA_ORIGIN_MASK) >> TGA_ORIGIN_SHIFT) {
         default:
@@ -322,7 +353,7 @@ export class TGALoader extends THREE.Loader {
       } else {
         switch (header.pixel_size) {
           case 8:
-            tgaGetImageData8bits(data, y_start, y_step, y_end, x_start, x_step, x_end, image, palette);
+            tgaGetImageData8bits(data, y_start, y_step, y_end, x_start, x_step, x_end, image, palette!);
             break;
 
           case 16:
@@ -343,61 +374,39 @@ export class TGALoader extends THREE.Loader {
         }
       }
 
-      // Load image data according to specific method
-      // var func = 'tgaGetImageData' + (use_grey ? 'Grey' : '') + (header.pixel_size) + 'bits';
-      // func(data, y_start, y_step, y_end, x_start, x_step, x_end, width, image, palette );
       return data;
     }
 
-    // TGA constants
+    if (buffer.byteLength < 19) console.error("THREE.TGALoader: Not enough data to contain header.");
 
-    var TGA_TYPE_NO_DATA = 0,
-      TGA_TYPE_INDEXED = 1,
-      TGA_TYPE_RGB = 2,
-      TGA_TYPE_GREY = 3,
-      TGA_TYPE_RLE_INDEXED = 9,
-      TGA_TYPE_RLE_RGB = 10,
-      TGA_TYPE_RLE_GREY = 11,
-      TGA_ORIGIN_MASK = 0x30,
-      TGA_ORIGIN_SHIFT = 0x04,
-      TGA_ORIGIN_BL = 0x00,
-      TGA_ORIGIN_BR = 0x01,
-      TGA_ORIGIN_UL = 0x02,
-      TGA_ORIGIN_UR = 0x03;
-
-    if (buffer.length < 19) console.error("THREE.TGALoader: Not enough data to contain header.");
-
-    var content = new Uint8Array(buffer),
-      offset = 0,
-      header = {
-        id_length: content[offset++],
-        colormap_type: content[offset++],
-        image_type: content[offset++],
-        colormap_index: content[offset++] | (content[offset++] << 8),
-        colormap_length: content[offset++] | (content[offset++] << 8),
-        colormap_size: content[offset++],
-        origin: [content[offset++] | (content[offset++] << 8), content[offset++] | (content[offset++] << 8)],
-        width: content[offset++] | (content[offset++] << 8),
-        height: content[offset++] | (content[offset++] << 8),
-        pixel_size: content[offset++],
-        flags: content[offset++]
-      };
+    const content = new Uint8Array(buffer);
+    let offset = 0;
+    const header: TGAHeader = {
+      id_length: content[offset++],
+      colormap_type: content[offset++],
+      image_type: content[offset++],
+      colormap_index: content[offset++] | (content[offset++] << 8),
+      colormap_length: content[offset++] | (content[offset++] << 8),
+      colormap_size: content[offset++],
+      origin: [content[offset++] | (content[offset++] << 8), content[offset++] | (content[offset++] << 8)],
+      width: content[offset++] | (content[offset++] << 8),
+      height: content[offset++] | (content[offset++] << 8),
+      pixel_size: content[offset++],
+      flags: content[offset++]
+    };
 
     // check tga if it is valid format
-
     tgaCheckHeader(header);
 
-    if (header.id_length + offset > buffer.length) {
+    if (header.id_length + offset > buffer.byteLength) {
       console.error("THREE.TGALoader: No data.");
     }
 
     // skip the needn't data
-
     offset += header.id_length;
 
     // get targa information about RLE compression and palette
-
-    var use_rle = false,
+    let use_rle = false,
       use_pal = false,
       use_grey = false;
 
@@ -428,22 +437,19 @@ export class TGALoader extends THREE.Loader {
         break;
     }
 
-    //
+    const useOffscreen = typeof OffscreenCanvas !== "undefined";
 
-    var useOffscreen = typeof OffscreenCanvas !== "undefined";
-
-    var canvas = useOffscreen ? new OffscreenCanvas(header.width, header.height) : document.createElement("canvas");
+    const canvas = useOffscreen ? new OffscreenCanvas(header.width, header.height) : document.createElement("canvas");
     canvas.width = header.width;
     canvas.height = header.height;
 
-    var context = canvas.getContext("2d");
-    var imageData = context!.createImageData(header.width, header.height);
+    const context = canvas.getContext("2d") as CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
+    const imageData = context.createImageData(header.width, header.height);
 
-    var result = tgaParse(use_rle, use_pal, header, offset, content);
+    const result = tgaParse(use_rle, use_pal, header, offset, content);
     getTgaRGBA(imageData.data, header.width, header.height, result.pixel_data, result.palettes);
 
-    context!.putImageData(imageData, 0, 0);
-		//@ts-ignore
-    return useOffscreen ? canvas.transferToImageBitmap() : canvas;
+    context.putImageData(imageData, 0, 0);
+    return useOffscreen ? (canvas as OffscreenCanvas).transferToImageBitmap() : canvas as HTMLCanvasElement;
   }
 }

@@ -44,12 +44,12 @@ export const removeSolver = (uuid: keyof SolverStore['solvers']) => {
 }
 
 
-export const setSolverProperty = ({uuid, property, value}) => {
+export const setSolverProperty = ({uuid, property, value}: {uuid: string, property: string, value: unknown}) => {
   // Access the actual solver instance directly (not through Immer draft)
   // so that class setters are properly invoked
   const solver = useSolver.getState().solvers[uuid];
   if (solver) {
-    solver[property] = value;
+    (solver as unknown as Record<string, unknown>)[property] = value;
   }
   // Update version to trigger re-renders
   useSolver.getState().set(store => {
@@ -58,12 +58,12 @@ export const setSolverProperty = ({uuid, property, value}) => {
   emit("MARK_DIRTY", undefined);
 }
 
-export const callSolverMethod = ({uuid, method, args, isAsync }) => {
+export const callSolverMethod = ({uuid, method, args, isAsync}: {uuid: string, method: string, args: unknown[], isAsync?: boolean}) => {
   try{
-    const solver = useSolver.getState().solvers[uuid];
+    const solver = useSolver.getState().solvers[uuid] as unknown as Record<string, (...args: unknown[]) => unknown | Promise<unknown>>;
     const handle = solver[method].bind(solver);
     if(isAsync) {
-      handle(args).catch(console.error);
+      (handle(args) as Promise<unknown>).catch(console.error);
     }
     else{
       handle(args);

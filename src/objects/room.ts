@@ -62,7 +62,7 @@ export class Room extends Container {
       if(surface['kind']==="surface"){
         emit("ADD_SURFACE", surface as Surface);
       }
-      surface.traverse((obj)=>{
+      surface.traverse((obj: Container)=>{
         if(obj['kind'] && obj['kind']==="surface"){
           emit("ADD_SURFACE", obj as Surface);
         }
@@ -86,7 +86,7 @@ export class Room extends Container {
   }
   save() {
     return {
-      surfaces: this.surfaces.children.map((surf: Surface) => surf.save()),
+      surfaces: (this.surfaces.children as Surface[]).map((surf) => surf.save()),
       kind: this.kind,
       name: this.name,
       uuid: this.uuid,
@@ -210,7 +210,7 @@ export class Room extends Container {
    */
   get allSurfaces(){
     const surfaces = [] as Surface[];
-    this.surfaces.traverse((container)=>{
+    this.surfaces.traverse((container: Container)=>{
       if(container["kind"] && container["kind"] === "surface"){
         surfaces.push(container as Surface);
       }

@@ -41,7 +41,7 @@ export class BVHNode {
 		this.startIndex = -1;
 		this.endIndex = -1;
 	}
-	get children() {
+	get children(): (BVHNode | null)[] {
 		return [this.node0, this.node1];
 	}
 	

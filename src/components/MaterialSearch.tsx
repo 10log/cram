@@ -52,9 +52,9 @@ const Absorption = ({absorption}: {absorption: AcousticMaterial["absorption"]}) 
     <div className={"material_drawer-display-material_absorption"}>
       {
         Object.keys(absorption).map((frequency) => (
-          <div key={`${frequency}-${absorption[frequency]}`}>
+          <div key={`${frequency}-${(absorption as Record<string, number>)[frequency]}`}>
             <div className="material_drawer-display-material_absorption-header">{frequency}Hz</div>
-            <div className="material_drawer-display-material_absorption-value">{absorption[frequency]}</div>
+            <div className="material_drawer-display-material_absorption-value">{(absorption as Record<string, number>)[frequency]}</div>
           </div>
         ))
       }
@@ -81,7 +81,7 @@ const MaterialList = () => {
   const filteredItems = useMemo(()=>search(query), [query, search]);
   return (
     <div className="material_drawer-list" >
-      {filteredItems.slice(0, min(bufferLength, filteredItems.length)).map(item => <MaterialDrawerListItem item={item} key={`item-${item.uuid}`} />)}
+      {filteredItems.slice(0, min(bufferLength, filteredItems.length)).map((item: AcousticMaterial) => <MaterialDrawerListItem item={item} key={`item-${item.uuid}`} />)}
     </div>
   );
 }

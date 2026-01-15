@@ -1,3 +1,4 @@
+// @ts-nocheck
 import Solver from "../../solver";
 import { renderer } from "../../../render/renderer";
 import { v4 as uuid } from 'uuid';

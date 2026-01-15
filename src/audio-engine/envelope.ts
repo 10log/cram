@@ -21,7 +21,7 @@ export function width_factor(r: [number, number], bands: number, overlap: number
 /// P = relative width
 /// l = steepness
 
-export function band_edge_impl(p: number, P: number, l: number) {
+export function band_edge_impl(p: number, P: number, l: number): number {
     return l !== 0 ? Math.sin(Math.PI * band_edge_impl(p, P, l - 1) / 2)
                   : (((p / P) + 1) / 2);
 }

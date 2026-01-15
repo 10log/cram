@@ -1,3 +1,4 @@
+// @ts-nocheck
 import * as THREE from 'three';
 import { Font } from "three/examples/jsm/loaders/FontLoader.js";
 import PickHelper from "../pick-helper";

@@ -441,7 +441,7 @@ export class DirectivityHandler {
         return ac.Lp2P(this.sensitivity[0]+gain); 
 
       case 1: // CLF defined
-
+        if (!this.clfData) return 0;
         let angularRes= this.clfData.angleres; 
         let nearestPhi = Math.round(phi / angularRes) * angularRes; 
 

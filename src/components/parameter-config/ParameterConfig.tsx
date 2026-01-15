@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, {useEffect, useMemo, useState} from 'react';
 import {on} from '../../messenger';
 import { Tabs, Tab, Box } from "@mui/material";

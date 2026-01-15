@@ -24,15 +24,15 @@ export class BSP {
     debugger;
     this.tree = new Tree(surfaces.map((x) => x.polygon));
   }
-  getPointDistances(p1, p2) {
+  getPointDistances(p1: { plane: { signedDistanceToPoint: (pos: unknown) => number } }, p2: { vertices: { pos: unknown }[] }) {
     const distances = p2.vertices
-      .map((v) => {
+      .map((v: { pos: unknown }) => {
         return p1.plane.signedDistanceToPoint(v.pos);
       })
-      .filter((x) => x);
+      .filter((x: number) => x);
     return {
       distances,
-      willIntersect: !distances.reduce((a, b, i, arr) => a && Math.sign(b) === Math.sign(arr[0]), true)
+      willIntersect: !distances.reduce((a: boolean, b: number, i: number, arr: number[]) => a && Math.sign(b) === Math.sign(arr[0]), true)
     }
   }
 }

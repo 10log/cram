@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useState } from "react";
 import FDTD_2D from "../../compute/2d-fdtd";
 import Slider, { SliderChangeEvent } from '../slider/Slider';

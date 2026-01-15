@@ -33,7 +33,7 @@ export default class SurfaceGroup extends Container {
     props &&
       (() => {
         for (const key in props) {
-          this[key] = props[key];
+          (this as Record<string, unknown>)[key] = (props as Record<string, unknown>)[key];
         }
       })();
     this.selected = false;
@@ -52,13 +52,13 @@ export default class SurfaceGroup extends Container {
   }
   restore(state: SurfaceGroupSaveObject) {
     for(const key in state){
-      this[key] = state[key];
+      (this as Record<string, unknown>)[key] = (state as unknown as Record<string, unknown>)[key];
     }
     return this;
   }
   onModeChange(_mode: EditorModes) {}
   select() {
-    this.children.forEach((x: Container) => {
+    (this.children as Container[]).forEach((x) => {
       if (x instanceof Container) {
         x.select();
       }
@@ -66,7 +66,7 @@ export default class SurfaceGroup extends Container {
     this.selected = true;
   }
   deselect() {
-    this.children.forEach((x: Container) => {
+    (this.children as Container[]).forEach((x) => {
       if (x instanceof Container) {
         x.deselect();
       }
@@ -74,14 +74,14 @@ export default class SurfaceGroup extends Container {
     this.selected = false;
   }
   selectChildren() {
-    this.children.forEach((x: Container) => {
+    (this.children as Container[]).forEach((x) => {
       if (x instanceof Container) {
         x.select();
       }
     });
   }
   deselectChildren() {
-    this.children.forEach((x: Container) => {
+    (this.children as Container[]).forEach((x) => {
       if (x instanceof Container) {
         x.deselect();
       }

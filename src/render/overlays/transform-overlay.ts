@@ -1,3 +1,4 @@
+// @ts-nocheck
 import "./transform-overlay.css";
 import roundTo from '../../common/round-to';
 

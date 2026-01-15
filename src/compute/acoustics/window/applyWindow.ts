@@ -1,6 +1,9 @@
 import WindowFunctions from './window-functions';
 import { Complex } from '../complex';
-export const applyWindow = (window: string) => (arr: []) => {
+
+type WindowFunctionName = keyof typeof WindowFunctions;
+
+export const applyWindow = (window: WindowFunctionName) => (arr: number[]) => {
   if (WindowFunctions[window]) {
     return WindowFunctions[window](arr.length).map(
       (x: number, i: number) => arr[i] * x
@@ -8,7 +11,7 @@ export const applyWindow = (window: string) => (arr: []) => {
   } else throw new Error(`'${window}' does not exist`);
 };
 
-export const applyWindowComplex = (window: string) => (arr: Complex[]) => {
+export const applyWindowComplex = (window: WindowFunctionName) => (arr: Complex[]) => {
   if (WindowFunctions[window]) {
     return WindowFunctions[window](arr.length).map(
       (x: number, i: number) =>

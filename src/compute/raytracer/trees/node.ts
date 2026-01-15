@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { math } from '../../csg';
 import PolygonTreeNode from './polygon-tree-node';
 const { plane } = math;

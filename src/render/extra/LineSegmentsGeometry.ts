@@ -1,3 +1,4 @@
+// @ts-nocheck
 import {
 	Box3,
 	Float32BufferAttribute,

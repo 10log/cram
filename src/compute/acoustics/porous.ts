@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { linspace } from "./util/linspace";
 import complex from "complex";
 

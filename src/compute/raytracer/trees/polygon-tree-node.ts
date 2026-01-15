@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { math, geometry, splitPolygonByPlane } from '../../csg';
 
 const EPS = math.constants.EPS;

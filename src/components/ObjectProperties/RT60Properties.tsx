@@ -42,23 +42,23 @@ export default function RT60Properties(props: RT60PropertiesProps) {
 
 
   const _customStyles = {
-    indicatorsContainer: (provided, _state) => ({
+    indicatorsContainer: (provided: React.CSSProperties, _state: unknown) => ({
       ...provided,
       padding: 0
     }),
-    clearIndicator: (provided, _state) => ({
+    clearIndicator: (provided: React.CSSProperties, _state: unknown) => ({
       ...provided,
       padding: 0
     }),
-    dropdownIndicator: (provided, _state) => ({
+    dropdownIndicator: (provided: React.CSSProperties, _state: unknown) => ({
       ...provided,
       padding: 0
     }),
-    control: (provided, _state) => ({
+    control: (provided: React.CSSProperties, _state: unknown) => ({
       ...provided,
       minHeight: 0
     }),
-    container: (provided, _state) => ({
+    container: (provided: React.CSSProperties, _state: unknown) => ({
       ...provided,
       width: "100%"
     })

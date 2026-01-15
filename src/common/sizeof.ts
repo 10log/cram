@@ -1,10 +1,10 @@
-export function sizeof(object) {
-  var objectList = [];
-  var stack = [object];
-  var bytes = 0;
+export function sizeof(object: unknown): number {
+  const objectList: unknown[] = [];
+  const stack: unknown[] = [object];
+  let bytes = 0;
 
   while (stack.length) {
-    var value = stack.pop();
+    const value = stack.pop();
 
     if (typeof value === "boolean") {
       bytes += 4;
@@ -12,13 +12,11 @@ export function sizeof(object) {
       bytes += value.length * 2;
     } else if (typeof value === "number") {
       bytes += 8;
-      //@ts-ignore
-    } else if (typeof value === "object" && objectList.indexOf(value) === -1) {
-      //@ts-ignore
+    } else if (typeof value === "object" && value !== null && objectList.indexOf(value) === -1) {
       objectList.push(value);
 
-      for (var i in value) {
-        stack.push(value[i]);
+      for (const i in value) {
+        stack.push((value as Record<string, unknown>)[i]);
       }
     }
   }

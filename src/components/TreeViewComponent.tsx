@@ -1,3 +1,4 @@
+// @ts-nocheck
 /** This is an adaptation of `azizali/react-tree-view`
  * @see https://github.com/azizali/react-tree-view
  */

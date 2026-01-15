@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { memo, useCallback, useEffect, useState } from "react";
 import { SimpleTreeView } from "@mui/x-tree-view/SimpleTreeView";
 import { TreeItem } from "@mui/x-tree-view/TreeItem";

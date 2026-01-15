@@ -11,7 +11,7 @@ export default class Lights extends Container {
     ambientLight.layers.enableAll();
     this.ambientLights.add(ambientLight);
   }
-  setHelpersVisible(visible) {
+  setHelpersVisible(visible: boolean) {
     this.helpers.visible = visible;
   }
   get ambientLights() {

@@ -1,4 +1,4 @@
-export function rasterizeLine(x1, y1, x2, y2) {
+export function rasterizeLine(x1: number, y1: number, x2: number, y2: number) {
   
   const pixels = [] as number[][];
   

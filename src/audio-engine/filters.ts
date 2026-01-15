@@ -1,6 +1,6 @@
 const { pow, round, sin, cos, PI: pi } = Math;
 
-export function wayverb_filters(ω_lowest, ω_highest, Nbands, sampleRate, totalSamples) {
+export function wayverb_filters(ω_lowest: number, ω_highest: number, Nbands: number, sampleRate: number, totalSamples: number) {
 
   const x = (ω_highest / ω_lowest) ** (1 / Nbands);
   const ω_edges = [...Array(Nbands)].map((_, i) => ω_lowest * (ω_highest / ω_lowest) ** ((i) / Nbands));
@@ -11,11 +11,11 @@ export function wayverb_filters(ω_lowest, ω_highest, Nbands, sampleRate, total
   const o = 1;
   const filters = ω_edges.map((ω_edge)=> {
     const P = ω_edge * o * w;
-    const phi = (p) => 0.5 * (p / P + 1);
-    const g_lower = (p) => {
+    const phi = (p: number) => 0.5 * (p / P + 1);
+    const g_lower = (p: number) => {
       return pow(sin(pi / 2 * phi(p)), 2);
     }
-    const g_upper = (p) => {
+    const g_upper = (p: number) => {
       return pow(cos(pi / 2 * phi(p)), 2);
     }
     const arr = Array(round(P / df)).fill(0);

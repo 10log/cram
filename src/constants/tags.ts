@@ -37,7 +37,7 @@ export const stringIteratorTag = "[object String Iterator]";
 export const arrayIteratorTag = "[object Array Iterator]";
 
 /** Used to identify `toStringTag` values of typed arrays. */
-export const typedArrayTags = {};
+export const typedArrayTags: Record<string, boolean> = {};
 typedArrayTags[float32Tag] = typedArrayTags[float64Tag] = typedArrayTags[int8Tag] = typedArrayTags[
   int16Tag
 ] = typedArrayTags[int32Tag] = typedArrayTags[uint8Tag] = typedArrayTags[uint8ClampedTag] = typedArrayTags[
@@ -52,7 +52,7 @@ typedArrayTags[argsTag] = typedArrayTags[arrayTag] = typedArrayTags[arrayBufferT
 ] = typedArrayTags[setTag] = typedArrayTags[stringTag] = typedArrayTags[weakMapTag] = false;
 
 /** Used to identify `toStringTag` values supported by `_.clone`. */
-export const cloneableTags = {};
+export const cloneableTags: Record<string, boolean> = {};
 cloneableTags[argsTag] = cloneableTags[arrayTag] = cloneableTags[arrayBufferTag] = cloneableTags[
   dataViewTag
 ] = cloneableTags[boolTag] = cloneableTags[dateTag] = cloneableTags[float32Tag] = cloneableTags[

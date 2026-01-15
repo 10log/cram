@@ -4,8 +4,8 @@ export default class Timer {
   time: number;
   progress: number;
   length: number;
-  onFinish: (...args) => void
-  constructor(length: number, onFinish?: (...args) => void) {
+  onFinish: (...args: unknown[]) => void
+  constructor(length: number, onFinish?: (...args: unknown[]) => void) {
     this.length = length;
     this.progress = 0;
     this.time = 0;

@@ -1,12 +1,12 @@
-export function isPlainObject(o) {
+export function isPlainObject(o: unknown): boolean {
   if (Object.prototype.toString.call(o) !== "[object Object]") return false;
 
   // If has modified constructor
-  let ctor = o.constructor;
+  const ctor = (o as Record<string, unknown>).constructor;
   if (ctor === undefined) return true;
 
   // If has modified prototype
-  let prot = ctor.prototype;
+  const prot = ctor.prototype;
   if (Object.prototype.toString.call(o) !== "[object Object]") return false;
 
   // If constructor does not have an Object-specific method

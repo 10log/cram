@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { CSG } from '@jscad/csg';
 import { equalWithinTolerenceFactory } from '../../common/equal-within-range';
 

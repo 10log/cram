@@ -45,7 +45,7 @@ class EnergyDecay extends Solver{
     public broadbandIRSampleRate: number; 
     public broadbandIRSource: any; 
 
-    public source;
+    public source: AudioBufferSourceNode | null = null;
 
     public filteredData: Float32Array[]; 
     public filteredEnergyDecayData: Float32Array[]; 
@@ -129,7 +129,7 @@ class EnergyDecay extends Solver{
         FileSaver.saveAs(csvFile, `energy-decay-${this.uuid}.csv`);
       }
 
-    play(source){
+    play(source: AudioBufferSourceNode){
         if (audioEngine.context.state === 'suspended') {
             audioEngine.context.resume();
           }
@@ -237,10 +237,10 @@ function sum(data: Float32Array): number{
 }
 
 function cumsum(data: Float32Array): Float32Array{
-    const cumulativeSum = (sum => value => sum += value)(0);
+    const cumulativeSum = ((sum: number) => (value: number) => sum += value)(0);
     let cumsum_array = data.map(cumulativeSum);
 
-    return cumsum_array; 
+    return cumsum_array;
 }
 
 function abs(data: Float32Array): Float32Array{

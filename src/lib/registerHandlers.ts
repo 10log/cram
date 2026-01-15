@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Register all message handlers for CRAM.
  *

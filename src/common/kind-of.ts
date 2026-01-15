@@ -1,10 +1,10 @@
 const toString = Object.prototype.toString;
 
-export function kindOf(val) {
+export function kindOf(val: unknown): string {
   if (val === void 0) return "undefined";
   if (val === null) return "null";
 
-  var type = typeof val;
+  const type = typeof val;
   if (type === "boolean") return "boolean";
   if (type === "string") return "string";
   if (type === "number") return "number";
@@ -66,78 +66,81 @@ export function kindOf(val) {
   }
 
   // Non-plain objects
-  type = toString.call(val);
-  switch (type) {
-    //@ts-ignore
+  const toStringType = toString.call(val);
+  switch (toStringType) {
     case "[object Object]":
       return "object";
     // iterators
-    //@ts-ignore
     case "[object Map Iterator]":
       return "mapiterator";
-    //@ts-ignore
     case "[object Set Iterator]":
       return "setiterator";
-    //@ts-ignore
     case "[object String Iterator]":
       return "stringiterator";
-    //@ts-ignore
     case "[object Array Iterator]":
       return "arrayiterator";
   }
 
   // other
-  return type.slice(8, -1).toLowerCase().replace(/\s/g, "");
+  return toStringType.slice(8, -1).toLowerCase().replace(/\s/g, "");
 }
 
-function ctorName(val) {
-  return typeof val.constructor === "function" ? val.constructor.name : null;
+function ctorName(val: unknown): string | null {
+  return typeof (val as { constructor?: { name?: string } }).constructor === "function"
+    ? (val as { constructor: { name: string } }).constructor.name
+    : null;
 }
 
-function isArray(val) {
+function isArray(val: unknown): val is unknown[] {
   if (Array.isArray) return Array.isArray(val);
   return val instanceof Array;
 }
 
-function isError(val) {
+function isError(val: unknown): val is Error {
   return (
     val instanceof Error ||
-    (typeof val.message === "string" && val.constructor && typeof val.constructor.stackTraceLimit === "number")
+    (typeof (val as Error).message === "string" &&
+     (val as { constructor?: { stackTraceLimit?: number } }).constructor !== undefined &&
+     typeof (val as { constructor: { stackTraceLimit?: number } }).constructor.stackTraceLimit === "number")
   );
 }
 
-function isDate(val) {
+function isDate(val: unknown): val is Date {
   if (val instanceof Date) return true;
+  const d = val as { toDateString?: unknown; getDate?: unknown; setDate?: unknown };
   return (
-    typeof val.toDateString === "function" && typeof val.getDate === "function" && typeof val.setDate === "function"
+    typeof d.toDateString === "function" && typeof d.getDate === "function" && typeof d.setDate === "function"
   );
 }
 
-function isRegexp(val) {
+function isRegexp(val: unknown): val is RegExp {
   if (val instanceof RegExp) return true;
+  const r = val as { flags?: unknown; ignoreCase?: unknown; multiline?: unknown; global?: unknown };
   return (
-    typeof val.flags === "string" &&
-    typeof val.ignoreCase === "boolean" &&
-    typeof val.multiline === "boolean" &&
-    typeof val.global === "boolean"
+    typeof r.flags === "string" &&
+    typeof r.ignoreCase === "boolean" &&
+    typeof r.multiline === "boolean" &&
+    typeof r.global === "boolean"
   );
 }
 
-function isGeneratorFn(name, _val?) {
-  return ctorName(name) === "GeneratorFunction";
+function isGeneratorFn(val: unknown): boolean {
+  return ctorName(val) === "GeneratorFunction";
 }
 
-function isGeneratorObj(val) {
-  return typeof val.throw === "function" && typeof val.return === "function" && typeof val.next === "function";
+function isGeneratorObj(val: unknown): boolean {
+  const g = val as { throw?: unknown; return?: unknown; next?: unknown };
+  return typeof g.throw === "function" && typeof g.return === "function" && typeof g.next === "function";
 }
 
-function isArguments(val) {
+function isArguments(val: unknown): boolean {
   try {
-    if (typeof val.length === "number" && typeof val.callee === "function") {
+    const a = val as { length?: unknown; callee?: unknown };
+    if (typeof a.length === "number" && typeof a.callee === "function") {
       return true;
     }
   } catch (err) {
-    if (err.message.indexOf("callee") !== -1) {
+    if (err instanceof Error && err.message.indexOf("callee") !== -1) {
       return true;
     }
   }
@@ -149,9 +152,10 @@ function isArguments(val) {
  * take a look at https://github.com/feross/is-buffer
  */
 
-function isBuffer(val) {
-  if (val.constructor && typeof val.constructor.isBuffer === "function") {
-    return val.constructor.isBuffer(val);
+function isBuffer(val: unknown): boolean {
+  const b = val as { constructor?: { isBuffer?: (v: unknown) => boolean } };
+  if (b.constructor && typeof b.constructor.isBuffer === "function") {
+    return b.constructor.isBuffer(val);
   }
   return false;
 }

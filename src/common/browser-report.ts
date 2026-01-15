@@ -58,7 +58,7 @@ export interface Report {
 	timestamp: string;
 }
 
-export default function browerReport(userAgent) {
+export default function browerReport(userAgent?: string) {
   let definePropertySupported;
 	let match;
 	let uuid;
@@ -290,7 +290,7 @@ export default function browerReport(userAgent) {
 	 * helper function to safely log warning messages
 	 */
 	/* eslint-disable no-console */
-	function warning(msg) {
+	function warning(msg: string) {
 		if (window.console) {
 			if (console.warn) {
 				console.warn(msg);
@@ -354,6 +354,7 @@ export default function browerReport(userAgent) {
 
 			for (i = 0; i < l; i += 1) {
 				plugin = plugins.item(i);
+				if (!plugin) continue;
 
 				// what version of Adobe Flash
 				if (plugin.name.indexOf("Flash") >= 0) {

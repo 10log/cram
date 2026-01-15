@@ -28,7 +28,7 @@ export function absorptionGradient(absorption: Absorption | number[]) {
     const colors = [63, 125, 250, 500, 1000, 2000, 4000, 8000]
       .map((x, i) => {
         const percentage = (100 * (i + 1)) / 9;
-        const col = scale(absorption[String(x)]);
+        const col = scale((absorption as Record<string, number>)[String(x)]);
         return `${col} ${Math.round(percentage)}%`;
       })
       .join(",");

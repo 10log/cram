@@ -74,7 +74,7 @@ export function splitEvery(arr: Array<any>, n: number) {
   );
 }
 
-export const multiMap = (fn) => (a, b) => a.map((x, i) => fn(x, b[i]));
+export const multiMap = <T, U, R>(fn: (a: T, b: U) => R) => (a: T[], b: U[]): R[] => a.map((x, i) => fn(x, b[i]));
 
 export const addArray = multiMap(add);
 export const subtractArray = multiMap(subtract);
@@ -138,7 +138,7 @@ export const at = (obj: any, path: string) => {
   return obj[keys[0]];
 };
 
-export const reach = <T>(obj: T, path: Array<string|number>) => path.reduce((acc, val) => acc && acc[val], obj);
+export const reach = <T>(obj: T, path: Array<string|number>) => path.reduce((acc, val) => acc && (acc as Record<string | number, unknown>)[val], obj as unknown);
 
 export function derivative(arr: number[]) {
   const temp = [] as number[];
@@ -256,9 +256,9 @@ export function* getAdjacentIterator(n: number, range: [number, number]) {
   return;
 }
 
-const isObject = (x) => typeof x === "object";
-const nonNull = (x) => x != null;
-const isNonNullObject = (x) => isObject(x) && nonNull(x);
+const isObject = (x: unknown): boolean => typeof x === "object";
+const nonNull = (x: unknown): boolean => x != null;
+const isNonNullObject = (x: unknown): boolean => isObject(x) && nonNull(x);
 export function deepEqual(x: any, y: any) {
   if (Object.is(x, y) || x === y) return true;
   else if (isNonNullObject(x) && isNonNullObject(y)) {
@@ -427,12 +427,12 @@ export const omit = <T extends Object, K extends keyof T>(props: K[], obj: T) =>
 export const ensureArray = <T>(value: T|T[]) => value instanceof Array ? value : [value];
 
 
-export const curry = <T extends (...args: any) => any>(func: T) => {
-  return function curried(...args) {
+export const curry = <T extends (...args: unknown[]) => unknown>(func: T) => {
+  return function curried(this: unknown, ...args: unknown[]): unknown {
     if (args.length >= func.length) {
       return func.apply(this, args);
     } else {
-      return function(...rest) {
+      return function(this: unknown, ...rest: unknown[]): unknown {
         return curried.apply(this, args.concat(rest));
       }
     }

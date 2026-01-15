@@ -1,9 +1,8 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
-    "strict": false,
+    "strict": true,
     "allowJs": true,
-    "noImplicitAny": false,
     "noFallthroughCasesInSwitch": true,
     "downlevelIteration": true,
     "strictNullChecks": true,

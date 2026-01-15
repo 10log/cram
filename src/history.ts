@@ -7,7 +7,7 @@ export interface Directions {
 }
 
 export interface MomentProps{
-  recallFunction: (direction?: keyof Directions, ...args) => void;
+  recallFunction: (direction?: keyof Directions, ...args: unknown[]) => void;
   objectId: string;
   category: string;
 }
@@ -17,7 +17,7 @@ export class Moment {
   objectId: string;
   category: string;
   timestamp: number;
-  recallFunction: (...args) => void;
+  recallFunction: (direction?: keyof Directions, ...args: unknown[]) => void;
   constructor(props: MomentProps) {
     this.uuid = uuid();
     this.objectId = props.objectId;
