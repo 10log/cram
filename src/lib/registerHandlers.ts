@@ -26,11 +26,8 @@ import Model from "../objects/model";
 import AudioFile from "../objects/audio-file";
 import Sketch from "../objects/sketch";
 
-// Solvers
-import RayTracer from "../compute/raytracer";
-import { ImageSourceSolver, ImageSourceSolverParams } from "../compute/raytracer/image-source/index";
-import RT60 from "../compute/rt";
-import EnergyDecay from "../compute/energy-decay";
+// Solver registry for dynamic imports (code splitting)
+import { createSolver } from "../compute/solver-registry";
 
 // Import handlers
 import * as importHandlers from "../import-handlers";
@@ -92,32 +89,16 @@ export function registerMessageHandlers(
     return res;
   });
 
-  msg.addMessageHandler("SHOULD_ADD_RAYTRACER", (acc, ...args) => {
+  msg.addMessageHandler("SHOULD_ADD_RAYTRACER", async (acc, ...args) => {
     const props = (args && args[0]) || {};
-    const raytracer = new RayTracer({
-      ...props[0],
-      renderer: cram.state.renderer,
-      containers: cram.state.containers
-    });
+    const raytracer = await createSolver("ray-tracer", cram, props[0]);
     cram.state.solvers[raytracer.uuid] = raytracer;
     emit("ADD_RAYTRACER", raytracer);
     return raytracer;
   });
 
-  msg.addMessageHandler("SHOULD_ADD_IMAGE_SOURCE", (_acc, ..._args) => {
-    const defaults: ImageSourceSolverParams = {
-      name: "Image Source",
-      roomID: "",
-      sourceIDs: [] as string[],
-      surfaceIDs: [] as string[],
-      receiverIDs: [] as string[],
-      maxReflectionOrder: 2,
-      imageSourcesVisible: false,
-      rayPathsVisible: true,
-      plotOrders: [0, 1, 2],
-      frequencies: [125, 250, 500, 1000, 2000, 4000, 8000],
-    };
-    const imagesource = new ImageSourceSolver(defaults);
+  msg.addMessageHandler("SHOULD_ADD_IMAGE_SOURCE", async (_acc, ..._args) => {
+    const imagesource = await createSolver("image-source", cram);
     cram.state.solvers[imagesource.uuid] = imagesource;
     emit("ADD_IMAGESOURCE", imagesource);
     return imagesource;
@@ -131,27 +112,32 @@ export function registerMessageHandlers(
     }
   });
 
-  msg.addMessageHandler("SHOULD_ADD_RT60", (_acc, ..._args) => {
-    const rt60 = new RT60();
+  msg.addMessageHandler("SHOULD_ADD_RT60", async (_acc, ..._args) => {
+    const rt60 = await createSolver("rt60", cram);
     cram.state.solvers[rt60.uuid] = rt60;
     emit("ADD_RT60", rt60);
     return rt60;
   });
 
-  msg.addMessageHandler("SHOULD_ADD_ENERGYDECAY", (_acc, ..._args) => {
-    const ed = new EnergyDecay();
+  msg.addMessageHandler("SHOULD_ADD_ENERGYDECAY", async (_acc, ..._args) => {
+    const ed = await createSolver("energydecay", cram);
     cram.state.solvers[ed.uuid] = ed;
     emit("ADD_ENERGYDECAY", ed);
     return ed;
   });
 
   msg.addMessageHandler("RAYTRACER_CALCULATE_RESPONSE", (acc, id, frequencies) => {
-    cram.state.solvers[id] instanceof RayTracer &&
-      (cram.state.solvers[id] as RayTracer).calculateReflectionLoss(frequencies);
+    const solver = cram.state.solvers[id];
+    if (solver?.kind === "ray-tracer" && "calculateReflectionLoss" in solver) {
+      (solver as { calculateReflectionLoss: (f: number[]) => void }).calculateReflectionLoss(frequencies);
+    }
   });
 
   msg.addMessageHandler("RAYTRACER_QUICK_ESTIMATE", (acc, id) => {
-    cram.state.solvers[id] instanceof RayTracer && (cram.state.solvers[id] as RayTracer).startQuickEstimate();
+    const solver = cram.state.solvers[id];
+    if (solver?.kind === "ray-tracer" && "startQuickEstimate" in solver) {
+      (solver as { startQuickEstimate: () => void }).startQuickEstimate();
+    }
   });
 
   msg.addMessageHandler("FETCH_ALL_SOURCES", (acc, ...args) => {
@@ -212,7 +198,10 @@ export function registerMessageHandlers(
     cram.state.renderer.add(source);
     emit("ADD_SOURCE", source);
     Object.keys(cram.state.solvers).forEach((x) => {
-      cram.state.solvers[x] instanceof RayTracer && (cram.state.solvers[x] as RayTracer).addSource(source);
+      const solver = cram.state.solvers[x];
+      if (solver?.kind === "ray-tracer" && "addSource" in solver) {
+        (solver as { addSource: (s: Source) => void }).addSource(source);
+      }
     });
 
     if (shouldAddMoment) {
@@ -288,7 +277,10 @@ export function registerMessageHandlers(
     cram.state.renderer.add(rec);
     emit("ADD_RECEIVER", rec);
     Object.keys(cram.state.solvers).forEach((x) => {
-      cram.state.solvers[x] instanceof RayTracer && (cram.state.solvers[x] as RayTracer).addReceiver(rec);
+      const solver = cram.state.solvers[x];
+      if (solver?.kind === "ray-tracer" && "addReceiver" in solver) {
+        (solver as { addReceiver: (r: Receiver) => void }).addReceiver(rec);
+      }
     });
 
     if (shouldAddMoment) {
@@ -453,22 +445,25 @@ export function registerMessageHandlers(
   });
 
   msg.addMessageHandler("RAYTRACER_SHOULD_PLAY", (acc, ...args) => {
-    if (cram.state.solvers[args[0]] instanceof RayTracer) {
-      (cram.state.solvers[args[0]] as RayTracer).isRunning = true;
+    const solver = cram.state.solvers[args[0]];
+    if (solver?.kind === "ray-tracer" && "isRunning" in solver) {
+      (solver as { isRunning: boolean }).isRunning = true;
     }
-    return cram.state.solvers[args[0]] && cram.state.solvers[args[0]].running;
+    return solver?.running;
   });
 
   msg.addMessageHandler("RAYTRACER_SHOULD_PAUSE", (acc, ...args) => {
-    if (cram.state.solvers[args[0]] instanceof RayTracer) {
-      (cram.state.solvers[args[0]] as RayTracer).isRunning = false;
+    const solver = cram.state.solvers[args[0]];
+    if (solver?.kind === "ray-tracer" && "isRunning" in solver) {
+      (solver as { isRunning: boolean }).isRunning = false;
     }
-    return cram.state.solvers[args[0]].running;
+    return solver?.running;
   });
 
   msg.addMessageHandler("RAYTRACER_SHOULD_CLEAR", (acc, ...args) => {
-    if (cram.state.solvers[args[0]] instanceof RayTracer) {
-      (cram.state.solvers[args[0]] as RayTracer).clearRays();
+    const solver = cram.state.solvers[args[0]];
+    if (solver?.kind === "ray-tracer" && "clearRays" in solver) {
+      (solver as { clearRays: () => void }).clearRays();
     }
   });
 

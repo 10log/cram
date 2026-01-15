@@ -1,20 +1,17 @@
-import React, { useState, useCallback, useMemo, useEffect } from "react";
+import React, { useState, useCallback, useMemo, useEffect, lazy, Suspense } from "react";
 import styled from "styled-components";
 import { useSolver, removeSolver } from "../../store/solver-store";
 import { emit, on } from "../../messenger";
 import SolverCardHeader from "./SolverCardHeader";
-import RayTracer from "../../compute/raytracer";
-import { BeamTraceSolver } from "../../compute/beam-trace";
-import ImageSourceSolver from "../../compute/raytracer/image-source";
 
-// Import solver parameter components
-import RayTracerTab from "../parameter-config/RayTracerTab";
-import { ImageSourceTab } from "../parameter-config/image-source-tab/ImageSourceTab";
-import RT60Tab from "../parameter-config/RT60Tab";
-import FDTD_2DTab from "../parameter-config/FDTD_2DTab";
-import EnergyDecayTab from "../parameter-config/EnergyDecayTab";
-import ARTTab from "../parameter-config/ARTTab";
-import BeamTraceTab from "../parameter-config/BeamTraceTab";
+// Lazy load solver parameter components for code splitting
+const RayTracerTab = lazy(() => import("../parameter-config/RayTracerTab"));
+const ImageSourceTab = lazy(() => import("../parameter-config/image-source-tab/ImageSourceTab").then(m => ({ default: m.ImageSourceTab })));
+const RT60Tab = lazy(() => import("../parameter-config/RT60Tab"));
+const FDTD_2DTab = lazy(() => import("../parameter-config/FDTD_2DTab"));
+const EnergyDecayTab = lazy(() => import("../parameter-config/EnergyDecayTab"));
+const ARTTab = lazy(() => import("../parameter-config/ARTTab"));
+const BeamTraceTab = lazy(() => import("../parameter-config/BeamTraceTab"));
 
 const CardContainer = styled.div`
   border-bottom: 1px solid #e1e4e8;
@@ -76,21 +73,16 @@ export default function SolverCard({ uuid, defaultExpanded = false }: SolverCard
   }, [solver, uuid]);
 
   // Check if solver can calculate (has sources and receivers configured)
+  // Using duck typing to avoid importing solver classes
   const canCalculate = useMemo(() => {
     if (!solver) return false;
+    // Duck type for solvers with sourceIDs/receiverIDs
+    const s = solver as { sourceIDs?: string[]; receiverIDs?: string[] };
     switch (solver.kind) {
-      case "beamtrace": {
-        const bt = solver as BeamTraceSolver;
-        return bt.sourceIDs?.length > 0 && bt.receiverIDs?.length > 0;
-      }
-      case "image-source": {
-        const is = solver as ImageSourceSolver;
-        return is.sourceIDs?.length > 0 && is.receiverIDs?.length > 0;
-      }
-      case "ray-tracer": {
-        const rt = solver as RayTracer;
-        return rt.sourceIDs?.length > 0 && rt.receiverIDs?.length > 0;
-      }
+      case "beamtrace":
+      case "image-source":
+      case "ray-tracer":
+        return (s.sourceIDs?.length ?? 0) > 0 && (s.receiverIDs?.length ?? 0) > 0;
       case "rt60":
         return true;
       default:
@@ -158,7 +150,9 @@ export default function SolverCard({ uuid, defaultExpanded = false }: SolverCard
       <CardContent $expanded={expanded}>
         {ParameterComponent && (
           <ParameterSection>
-            <ParameterComponent uuid={uuid} />
+            <Suspense fallback={<div style={{ padding: '8px', color: '#666' }}>Loading...</div>}>
+              <ParameterComponent uuid={uuid} />
+            </Suspense>
           </ParameterSection>
         )}
       </CardContent>

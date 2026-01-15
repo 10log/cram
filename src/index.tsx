@@ -21,9 +21,7 @@ import Sketch from "./objects/sketch";
 
 // compute/solvers
 import Solver from "./compute/solver";
-import RayTracer from "./compute/raytracer";
-import {ImageSourceSolver, ImageSourceSolverParams} from "./compute/raytracer/image-source/index"
-import RT60 from "./compute/rt";
+import { createSolver } from "./compute/solver-registry";
 import * as ac from "./compute/acoustics";
 
 // rendering
@@ -64,7 +62,6 @@ import { audioEngine } from './audio-engine/audio-engine';
 
 import examples from './examples';
 import chroma from 'chroma-js';
-import EnergyDecay from "./compute/energy-decay";
 
 import registerAllEvents from './events';
 enableMapSet();
@@ -210,38 +207,19 @@ messenger.addMessageHandler("SEARCH_ALL_MATERIALS", (acc, ...args) => {
   return res;
 });
 
-messenger.addMessageHandler("SHOULD_ADD_RAYTRACER", (acc, ...args) => {
+messenger.addMessageHandler("SHOULD_ADD_RAYTRACER", async (acc, ...args) => {
   const props = (args && args[0]) || {};
-  const raytracer = new RayTracer({
-    ...props[0],
-    renderer: cram.state.renderer,
-    containers: cram.state.containers
-  });
+  const raytracer = await createSolver("ray-tracer", cram, props[0]);
   cram.state.solvers[raytracer.uuid] = raytracer;
   emit("ADD_RAYTRACER", raytracer);
-
   return raytracer;
 });
 
-
-
-messenger.addMessageHandler("SHOULD_ADD_IMAGE_SOURCE", (_acc, ..._args) => {
-  const defaults: ImageSourceSolverParams = {
-    name: "Image Source",
-    roomID: "",
-    sourceIDs: [] as string[],
-    surfaceIDs: [] as string[],
-    receiverIDs: [] as string[],
-    maxReflectionOrder: 2,
-    imageSourcesVisible: false,
-    rayPathsVisible: true, 
-    plotOrders: [0, 1, 2],
-    frequencies: [125,250,500,1000,2000,4000,8000],
-  };
-  const imagesource = new ImageSourceSolver(defaults); 
-  cram.state.solvers[imagesource.uuid] = imagesource; 
-  emit("ADD_IMAGESOURCE",imagesource);
-  return imagesource; 
+messenger.addMessageHandler("SHOULD_ADD_IMAGE_SOURCE", async (_acc, ..._args) => {
+  const imagesource = await createSolver("image-source", cram);
+  cram.state.solvers[imagesource.uuid] = imagesource;
+  emit("ADD_IMAGESOURCE", imagesource);
+  return imagesource;
 });
 
 messenger.addMessageHandler("SHOULD_REMOVE_SOLVER", (acc, id) => {
@@ -252,27 +230,32 @@ messenger.addMessageHandler("SHOULD_REMOVE_SOLVER", (acc, id) => {
   }
 });
 
-messenger.addMessageHandler("SHOULD_ADD_RT60", (_acc, ..._args) => {
-  const rt60 = new RT60(); 
+messenger.addMessageHandler("SHOULD_ADD_RT60", async (_acc, ..._args) => {
+  const rt60 = await createSolver("rt60", cram);
   cram.state.solvers[rt60.uuid] = rt60;
   emit("ADD_RT60", rt60);
-  return rt60; 
+  return rt60;
 });
 
-messenger.addMessageHandler("SHOULD_ADD_ENERGYDECAY", (_acc, ..._args) => {
-  const ed = new EnergyDecay(); 
+messenger.addMessageHandler("SHOULD_ADD_ENERGYDECAY", async (_acc, ..._args) => {
+  const ed = await createSolver("energydecay", cram);
   cram.state.solvers[ed.uuid] = ed;
   emit("ADD_ENERGYDECAY", ed);
-  return ed; 
+  return ed;
 });
 
 messenger.addMessageHandler("RAYTRACER_CALCULATE_RESPONSE", (acc, id, frequencies) => {
-  cram.state.solvers[id] instanceof RayTracer &&
-    (cram.state.solvers[id] as RayTracer).calculateReflectionLoss(frequencies);
+  const solver = cram.state.solvers[id];
+  if (solver?.kind === "ray-tracer" && "calculateReflectionLoss" in solver) {
+    (solver as { calculateReflectionLoss: (f: number[]) => void }).calculateReflectionLoss(frequencies);
+  }
 });
 
 messenger.addMessageHandler("RAYTRACER_QUICK_ESTIMATE", (acc, id) => {
-  cram.state.solvers[id] instanceof RayTracer && (cram.state.solvers[id] as RayTracer).startQuickEstimate();
+  const solver = cram.state.solvers[id];
+  if (solver?.kind === "ray-tracer" && "startQuickEstimate" in solver) {
+    (solver as { startQuickEstimate: () => void }).startQuickEstimate();
+  }
 });
 
 messenger.addMessageHandler("FETCH_ALL_SOURCES", (acc, ...args) => {
@@ -340,7 +323,10 @@ messenger.addMessageHandler("SHOULD_ADD_SOURCE", (acc, ...args) => {
   cram.state.renderer.add(source);
   emit("ADD_SOURCE", source);
   Object.keys(cram.state.solvers).forEach((x) => {
-    cram.state.solvers[x] instanceof RayTracer && (cram.state.solvers[x] as RayTracer).addSource(source);
+    const solver = cram.state.solvers[x];
+    if (solver?.kind === "ray-tracer" && "addSource" in solver) {
+      (solver as { addSource: (s: Source) => void }).addSource(source);
+    }
   });
 
   if (shouldAddMoment) {
@@ -419,7 +405,10 @@ messenger.addMessageHandler("SHOULD_ADD_RECEIVER", (acc, ...args) => {
   cram.state.renderer.add(rec);
   emit("ADD_RECEIVER", rec);
   Object.keys(cram.state.solvers).forEach((x) => {
-    cram.state.solvers[x] instanceof RayTracer && (cram.state.solvers[x] as RayTracer).addReceiver(rec);
+    const solver = cram.state.solvers[x];
+    if (solver?.kind === "ray-tracer" && "addReceiver" in solver) {
+      (solver as { addReceiver: (r: Receiver) => void }).addReceiver(rec);
+    }
   });
 
   if (shouldAddMoment) {
@@ -603,22 +592,25 @@ messenger.addMessageHandler("RENDERER_UPDATED", () => {
 });
 
 messenger.addMessageHandler("RAYTRACER_SHOULD_PLAY", (acc, ...args) => {
-  if (cram.state.solvers[args[0]] instanceof RayTracer) {
-    (cram.state.solvers[args[0]] as RayTracer).isRunning = true;
+  const solver = cram.state.solvers[args[0]];
+  if (solver?.kind === "ray-tracer" && "isRunning" in solver) {
+    (solver as { isRunning: boolean }).isRunning = true;
   }
-  return cram.state.solvers[args[0]] && cram.state.solvers[args[0]].running;
+  return solver?.running;
 });
 
 messenger.addMessageHandler("RAYTRACER_SHOULD_PAUSE", (acc, ...args) => {
-  if (cram.state.solvers[args[0]] instanceof RayTracer) {
-    (cram.state.solvers[args[0]] as RayTracer).isRunning = false;
+  const solver = cram.state.solvers[args[0]];
+  if (solver?.kind === "ray-tracer" && "isRunning" in solver) {
+    (solver as { isRunning: boolean }).isRunning = false;
   }
-  return cram.state.solvers[args[0]].running;
+  return solver?.running;
 });
 
 messenger.addMessageHandler("RAYTRACER_SHOULD_CLEAR", (acc, ...args) => {
-  if (cram.state.solvers[args[0]] instanceof RayTracer) {
-    (cram.state.solvers[args[0]] as RayTracer).clearRays();
+  const solver = cram.state.solvers[args[0]];
+  if (solver?.kind === "ray-tracer" && "clearRays" in solver) {
+    (solver as { clearRays: () => void }).clearRays();
   }
 });
 
