@@ -36,7 +36,6 @@
     "start": "vite",
     "build": "vite build",
     "build:lib": "vite build --mode lib",
-    "prepare": "npm run build:lib",
     "preview": "vite preview",
     "test": "node scripts/test.js --passWithNoTests",
     "test:watch": "node scripts/test.js --watch",
