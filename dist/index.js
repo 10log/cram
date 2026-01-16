@@ -1,4 +1,4 @@
-import { aR as r, aR as t } from "./index-Cyx44W_I.mjs";
+import { aR as r, aR as t } from "./index-gsnxGZDe.mjs";
 export {
   r as CRAMEditor,
   t as default
