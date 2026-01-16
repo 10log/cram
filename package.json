@@ -13,15 +13,30 @@
     "image-source",
     "fdtd"
   ],
-  "main": "src/index.tsx",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./src/lib/index.ts",
   "exports": {
-    ".": "./src/lib/index.ts",
-    "./styles": "./src/css/index.ts"
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./src/lib/index.ts"
+    },
+    "./styles": {
+      "import": "./dist/styles.js",
+      "types": "./src/css/index.ts"
+    }
   },
+  "files": [
+    "dist",
+    "src/lib",
+    "src/css"
+  ],
   "scripts": {
     "dev": "vite",
     "start": "vite",
     "build": "vite build",
+    "build:lib": "vite build --mode lib",
+    "prepare": "npm run build:lib",
     "preview": "vite preview",
     "test": "node scripts/test.js --passWithNoTests",
     "test:watch": "node scripts/test.js --watch",
