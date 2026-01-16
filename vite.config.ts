@@ -34,6 +34,13 @@ export default defineConfig(({ command, mode }) => {
             '@mui/icons-material',
             '@emotion/react',
             '@emotion/styled',
+            // Externalize three.js and related packages to avoid conflicts
+            // with host app (e.g., Autodesk Forge viewer has its own THREE)
+            'three',
+            'three-mesh-bvh',
+            'three.meshline',
+            'zustand',
+            'styled-components',
           ],
           output: {
             globals: {
