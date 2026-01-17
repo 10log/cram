@@ -32,6 +32,7 @@ export default defineConfig(({ command, mode }) => {
             'react/jsx-runtime',
             '@mui/material',
             '@mui/icons-material',
+            '@mui/x-tree-view',
             '@emotion/react',
             '@emotion/styled',
             // Externalize three.js and related packages to avoid conflicts
@@ -41,6 +42,28 @@ export default defineConfig(({ command, mode }) => {
             'three.meshline',
             'zustand',
             'styled-components',
+            // Externalize Blueprint UI (large)
+            '@blueprintjs/core',
+            '@blueprintjs/icons',
+            '@blueprintjs/select',
+            '@blueprintjs/table',
+            // Externalize charting/visualization libs (large)
+            'plotly.js',
+            'react-plotly.js',
+            'd3',
+            '@visx/axis',
+            '@visx/gradient',
+            '@visx/grid',
+            '@visx/group',
+            '@visx/legend',
+            '@visx/responsive',
+            '@visx/scale',
+            '@visx/shape',
+            '@visx/zoom',
+            // Externalize other heavy deps
+            'immer',
+            'chroma-js',
+            'lodash',
           ],
           output: {
             globals: {

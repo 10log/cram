@@ -1,4 +1,4 @@
-import { a2 as r, a2 as t } from "./index-BaH-Rmpc.mjs";
+import { $ as r, $ as t } from "./index-KmIKz-wL.mjs";
 export {
   r as CRAMEditor,
   t as default
