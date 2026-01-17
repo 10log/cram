@@ -133,7 +133,7 @@ describe('container-store', () => {
 
   describe('subscription', () => {
     it('notifies subscribers on state change', () => {
-      const callback = jest.fn();
+      const callback = vi.fn();
       const unsubscribe = useContainer.subscribe(callback);
 
       const container = new Container('Test');
@@ -145,7 +145,7 @@ describe('container-store', () => {
     });
 
     it('unsubscribe stops notifications', () => {
-      const callback = jest.fn();
+      const callback = vi.fn();
       const unsubscribe = useContainer.subscribe(callback);
       unsubscribe();
 

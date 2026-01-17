@@ -11,15 +11,15 @@ import { ProgressIndicator } from '../ProgressIndicator';
 import { useAppStore } from '../../store/app-store';
 
 // Mock the app store
-jest.mock('../../store/app-store', () => ({
-  useAppStore: jest.fn(),
+vi.mock('../../store/app-store', () => ({
+  useAppStore: vi.fn(),
 }));
 
 const mockUseAppStore = useAppStore as jest.MockedFunction<typeof useAppStore>;
 
 describe('ProgressIndicator', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('Visibility', () => {

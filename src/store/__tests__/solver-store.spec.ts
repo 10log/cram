@@ -16,8 +16,8 @@ import {
 import Solver from '../../compute/solver';
 
 // Mock uuid to have predictable test values
-jest.mock('uuid', () => ({
-  v4: jest.fn(() => 'test-uuid-' + Math.random().toString(36).substr(2, 9)),
+vi.mock('uuid', () => ({
+  v4: vi.fn(() => 'test-uuid-' + Math.random().toString(36).substr(2, 9)),
 }));
 
 // Concrete implementation of Solver for testing
@@ -261,7 +261,7 @@ describe('Solver Store', () => {
 
     it('calls update method', () => {
       const solver = new TestSolver('MySolver');
-      solver.update = jest.fn();
+      solver.update = vi.fn();
 
       const add = addSolver(TestSolver);
       add(solver);
@@ -281,7 +281,7 @@ describe('Solver Store', () => {
       const add = addSolver(TestSolver);
       add(solver);
 
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation();
 
       // Call non-existent method
       callSolverMethod({
@@ -296,7 +296,7 @@ describe('Solver Store', () => {
     });
 
     it('handles calling method on non-existent solver', () => {
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation();
 
       callSolverMethod({
         uuid: 'non-existent-uuid',

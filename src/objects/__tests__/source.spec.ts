@@ -1,58 +1,58 @@
 // Mock Three.js first before any imports
-jest.mock('three', () => {
+vi.mock('three', () => {
   const actual = jest.requireActual('../../__mocks__/three');
   return actual;
 });
 
 // Mock renderer to avoid Three.js ESM imports
-jest.mock('../../render/renderer', () => ({
+vi.mock('../../render/renderer', () => ({
   renderer: {
-    add: jest.fn(),
-    remove: jest.fn(),
+    add: vi.fn(),
+    remove: vi.fn(),
   },
 }));
 
 // Mock messenger
-jest.mock('../../messenger', () => ({
-  on: jest.fn(),
-  emit: jest.fn(),
-  off: jest.fn(),
+vi.mock('../../messenger', () => ({
+  on: vi.fn(),
+  emit: vi.fn(),
+  off: vi.fn(),
 }));
 
 // Mock store
-jest.mock('../../store', () => ({
-  addContainer: jest.fn(() => jest.fn()),
-  removeContainer: jest.fn(),
-  setContainerProperty: jest.fn(),
-  callContainerMethod: jest.fn(),
+vi.mock('../../store', () => ({
+  addContainer: vi.fn(() => vi.fn()),
+  removeContainer: vi.fn(),
+  setContainerProperty: vi.fn(),
+  callContainerMethod: vi.fn(),
 }));
 
 // Mock chroma-js
-jest.mock('chroma-js', () => ({
+vi.mock('chroma-js', () => ({
   __esModule: true,
-  default: jest.fn((color) => ({
-    brighten: jest.fn().mockReturnValue({
-      num: jest.fn().mockReturnValue(0xffffff),
+  default: vi.fn((color) => ({
+    brighten: vi.fn().mockReturnValue({
+      num: vi.fn().mockReturnValue(0xffffff),
     }),
-    num: jest.fn().mockReturnValue(0xffffff),
+    num: vi.fn().mockReturnValue(0xffffff),
   })),
 }));
 
 // Mock asset-store
-jest.mock('../asset-store', () => ({
+vi.mock('../asset-store', () => ({
   MATCAP_PORCELAIN_WHITE: null,
   MATCAP_UNDER_SHADOW: null,
 }));
 
 // Mock file-saver
-jest.mock('file-saver', () => ({
-  saveAs: jest.fn(),
+vi.mock('file-saver', () => ({
+  saveAs: vi.fn(),
 }));
 
 // Mock acoustics
-jest.mock('../../compute/acoustics', () => ({
-  P2I: jest.fn().mockReturnValue(1),
-  Lp2P: jest.fn().mockReturnValue(1),
+vi.mock('../../compute/acoustics', () => ({
+  P2I: vi.fn().mockReturnValue(1),
+  Lp2P: vi.fn().mockReturnValue(1),
 }));
 
 import Source, { SourceSaveObject, SignalSource, DirectivityHandler } from '../source';
@@ -716,7 +716,7 @@ describe('DirectivityHandler', () => {
     });
 
     it('handles unknown source type', () => {
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation();
       const handler = new DirectivityHandler(99);
       expect(handler.sourceDirType).toBe(99);
       expect(consoleSpy).toHaveBeenCalledWith('Unknown Source Directivity Type');

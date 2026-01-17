@@ -40,10 +40,11 @@
     "build": "vite build",
     "build:lib": "vite build --mode lib",
     "preview": "vite preview",
-    "test": "node scripts/test.js --passWithNoTests",
-    "test:watch": "node scripts/test.js --watch",
-    "test:coverage": "node scripts/test.js --coverage",
-    "test:perf": "node scripts/test.js --testPathPatterns=perf\\.spec --runInBand",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:ui": "vitest --ui",
+    "test:perf": "vitest run --testNamePattern=perf",
     "test:perf:update-baseline": "cross-env UPDATE_PERF_BASELINE=1 npm run test:perf",
     "lint": "eslint src/",
     "lint:types": "tsc --noEmit",
@@ -117,10 +118,6 @@
     "react-dom": "^18.0.0"
   },
   "devDependencies": {
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "@vitejs/plugin-react": "^4.3.4",
-    "vite": "^6.2.0",
     "@babel/core": "^7.28.5",
     "@babel/eslint-parser": "^7.28.5",
     "@babel/preset-env": "^7.28.5",
@@ -143,7 +140,9 @@
     "@types/recharts": "^1.8.5",
     "@types/semver": "^7.3.1",
     "@types/three": "^0.181.0",
-    "babel-jest": "^30.2.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "@vitest/coverage-v8": "^4.0.17",
+    "@vitest/ui": "^4.0.17",
     "babel-preset-react-app": "^10.0.0",
     "chalk": "^4.1.2",
     "dotenv": "^17.2.3",
@@ -157,12 +156,15 @@
     "eslint-plugin-unused-imports": "^4.3.0",
     "fast-check": "^4.5.0",
     "fs-extra": "^11.3.3",
-    "jest": "^30.2.0",
-    "jest-environment-jsdom": "^30.2.0",
+    "jsdom": "^27.4.0",
     "postcss": "^8.4.31",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "react-is": "^18.3.1",
     "resolve": "^1.22.11",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "vite": "^6.2.0",
+    "vitest": "^4.0.17"
   },
   "browserslist": [
     ">0.2%",
@@ -170,66 +172,6 @@
     "not ie <= 11",
     "not op_mini all"
   ],
-  "jest": {
-    "collectCoverageFrom": [
-      "src/**/*.{js,jsx,ts,tsx}",
-      "!src/**/*.d.ts",
-      "!src/__fixtures__/**",
-      "!src/__tests__/utils/**"
-    ],
-    "coverageThreshold": {
-      "global": {
-        "branches": 50,
-        "functions": 50,
-        "lines": 50,
-        "statements": 50
-      }
-    },
-    "setupFiles": [
-      "react-app-polyfill/jsdom"
-    ],
-    "setupFilesAfterEnv": [
-      "<rootDir>/src/setupTests.ts"
-    ],
-    "testMatch": [
-      "<rootDir>/src/**/__tests__/**/*.{js,jsx,ts,tsx}",
-      "<rootDir>/src/**/?(*.)(spec|test).{js,jsx,ts,tsx}"
-    ],
-    "testPathIgnorePatterns": [
-      "/node_modules/",
-      "\\.perf\\.spec\\.",
-      "src/__tests__/utils/"
-    ],
-    "testEnvironment": "jsdom",
-    "testEnvironmentOptions": {
-      "url": "http://localhost"
-    },
-    "transform": {
-      "^.+\\.(js|jsx|ts|tsx)$": "babel-jest",
-      "^.+\\.css$": "<rootDir>/config/jest/cssTransform.js",
-      "^(?!.*\\.(js|jsx|ts|tsx|css|json)$)": "<rootDir>/config/jest/fileTransform.js"
-    },
-    "transformIgnorePatterns": [
-      "node_modules/(?!(uuid|three|three-mesh-bvh)/)",
-      "^.+\\.module\\.(css|sass|scss)$"
-    ],
-    "moduleNameMapper": {
-      "^react-native$": "react-native-web",
-      "^.+\\.module\\.(css|sass|scss)$": "identity-obj-proxy"
-    },
-    "moduleFileExtensions": [
-      "web.js",
-      "js",
-      "web.ts",
-      "ts",
-      "web.tsx",
-      "tsx",
-      "json",
-      "web.jsx",
-      "jsx",
-      "node"
-    ]
-  },
   "babel": {
     "presets": [
       "react-app"

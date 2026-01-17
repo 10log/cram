@@ -8,7 +8,7 @@
 import { measureMemory } from '../../test-utils/benchmark';
 
 // Mock Three.js
-jest.mock('three');
+vi.mock('three');
 
 describe('Memory Leak Detection', () => {
   describe('Object Allocation Patterns', () => {
@@ -476,7 +476,7 @@ describe('Memory Leak Detection', () => {
       class MockMaterial {
         disposed = false;
         map: { dispose: () => void } | null = {
-          dispose: jest.fn(),
+          dispose: vi.fn(),
         };
 
         dispose(): void {
@@ -505,8 +505,8 @@ describe('Memory Leak Detection', () => {
 
       const createMockMesh = (): MockObject3D => ({
         children: [],
-        geometry: { dispose: jest.fn() },
-        material: { dispose: jest.fn() },
+        geometry: { dispose: vi.fn() },
+        material: { dispose: vi.fn() },
       });
 
       const createMockGroup = (children: MockObject3D[]): MockObject3D => ({

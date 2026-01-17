@@ -13,11 +13,11 @@ import PropertyRowButton from '../PropertyRowButton';
 describe('PropertyRowButton', () => {
   const defaultProps = {
     label: 'Click Me',
-    onClick: jest.fn(),
+    onClick: vi.fn(),
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('Rendering', () => {
@@ -41,7 +41,7 @@ describe('PropertyRowButton', () => {
 
   describe('onClick Handler', () => {
     it('calls onClick when clicked', () => {
-      const handleClick = jest.fn();
+      const handleClick = vi.fn();
       render(<PropertyRowButton {...defaultProps} onClick={handleClick} />);
       const button = screen.getByRole('button');
 
@@ -51,7 +51,7 @@ describe('PropertyRowButton', () => {
     });
 
     it('passes event to onClick handler', () => {
-      const handleClick = jest.fn();
+      const handleClick = vi.fn();
       render(<PropertyRowButton {...defaultProps} onClick={handleClick} />);
       const button = screen.getByRole('button');
 
@@ -65,7 +65,7 @@ describe('PropertyRowButton', () => {
     });
 
     it('handles multiple clicks', () => {
-      const handleClick = jest.fn();
+      const handleClick = vi.fn();
       render(<PropertyRowButton {...defaultProps} onClick={handleClick} />);
       const button = screen.getByRole('button');
 
@@ -85,7 +85,7 @@ describe('PropertyRowButton', () => {
     });
 
     it('does not call onClick when disabled', () => {
-      const handleClick = jest.fn();
+      const handleClick = vi.fn();
       render(
         <PropertyRowButton {...defaultProps} onClick={handleClick} disabled={true} />
       );
@@ -124,7 +124,7 @@ describe('PropertyRowButton', () => {
     });
 
     it('can be activated with Enter key', async () => {
-      const handleClick = jest.fn();
+      const handleClick = vi.fn();
       const user = userEvent.setup();
       render(<PropertyRowButton {...defaultProps} onClick={handleClick} />);
       const button = screen.getByRole('button');
@@ -136,7 +136,7 @@ describe('PropertyRowButton', () => {
     });
 
     it('can be activated with Space key', async () => {
-      const handleClick = jest.fn();
+      const handleClick = vi.fn();
       const user = userEvent.setup();
       render(<PropertyRowButton {...defaultProps} onClick={handleClick} />);
       const button = screen.getByRole('button');

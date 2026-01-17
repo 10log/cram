@@ -8,15 +8,15 @@
 import { benchmark, BenchmarkResult } from '../../../test-utils/benchmark';
 
 // Mock dependencies that would be needed
-jest.mock('../../../render/renderer', () => ({
+vi.mock('../../../render/renderer', () => ({
   renderer: {
-    add: jest.fn(),
-    remove: jest.fn(),
-    requestRender: jest.fn(),
+    add: vi.fn(),
+    remove: vi.fn(),
+    requestRender: vi.fn(),
   },
 }));
 
-jest.mock('../../../store', () => ({
+vi.mock('../../../store', () => ({
   useContainer: {
     getState: () => ({
       containers: {},
@@ -26,22 +26,22 @@ jest.mock('../../../store', () => ({
   useSolver: {
     getState: () => ({ solvers: {} }),
   },
-  addSolver: jest.fn(),
-  removeSolver: jest.fn(),
-  setSolverProperty: jest.fn(),
-  callSolverMethod: jest.fn(),
+  addSolver: vi.fn(),
+  removeSolver: vi.fn(),
+  setSolverProperty: vi.fn(),
+  callSolverMethod: vi.fn(),
 }));
 
-jest.mock('../../../messenger', () => ({
-  emit: jest.fn(),
-  on: jest.fn(),
+vi.mock('../../../messenger', () => ({
+  emit: vi.fn(),
+  on: vi.fn(),
   messenger: {
-    on: jest.fn(),
-    emit: jest.fn(),
+    on: vi.fn(),
+    emit: vi.fn(),
   },
 }));
 
-jest.mock('../../../audio-engine/audio-engine', () => ({
+vi.mock('../../../audio-engine/audio-engine', () => ({
   audioEngine: {
     context: null,
   },

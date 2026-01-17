@@ -12,11 +12,11 @@ import { PropertyRowTextInput } from '../PropertyRowTextInput';
 describe('PropertyRowTextInput', () => {
   const defaultProps = {
     value: '',
-    onChange: jest.fn(),
+    onChange: vi.fn(),
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('Rendering', () => {
@@ -47,7 +47,7 @@ describe('PropertyRowTextInput', () => {
 
   describe('onChange Handler', () => {
     it('calls onChange when typing', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<PropertyRowTextInput {...defaultProps} onChange={handleChange} />);
       const input = screen.getByRole('textbox');
 
@@ -57,7 +57,7 @@ describe('PropertyRowTextInput', () => {
     });
 
     it('calls onChange with each keystroke', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<PropertyRowTextInput {...defaultProps} onChange={handleChange} />);
       const input = screen.getByRole('textbox');
 
@@ -72,7 +72,7 @@ describe('PropertyRowTextInput', () => {
     });
 
     it('calls onChange when clearing input', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<PropertyRowTextInput {...defaultProps} value="existing" onChange={handleChange} />);
       const input = screen.getByRole('textbox');
 
@@ -94,7 +94,7 @@ describe('PropertyRowTextInput', () => {
 
     it('value is controlled externally', () => {
       // Without updating value prop, display stays the same
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<PropertyRowTextInput value="fixed" onChange={handleChange} />);
       const input = screen.getByRole('textbox');
 
@@ -119,7 +119,7 @@ describe('PropertyRowTextInput', () => {
 
     it('allows typing text', async () => {
       const user = userEvent.setup();
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<PropertyRowTextInput {...defaultProps} onChange={handleChange} />);
       const input = screen.getByRole('textbox');
 
@@ -145,7 +145,7 @@ describe('PropertyRowTextInput', () => {
 
   describe('Special Characters', () => {
     it('handles special characters', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<PropertyRowTextInput {...defaultProps} onChange={handleChange} />);
       const input = screen.getByRole('textbox');
 
@@ -155,7 +155,7 @@ describe('PropertyRowTextInput', () => {
     });
 
     it('handles unicode characters', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<PropertyRowTextInput {...defaultProps} onChange={handleChange} />);
       const input = screen.getByRole('textbox');
 
@@ -165,7 +165,7 @@ describe('PropertyRowTextInput', () => {
     });
 
     it('handles text with spaces', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<PropertyRowTextInput {...defaultProps} onChange={handleChange} />);
       const input = screen.getByRole('textbox');
 
@@ -179,7 +179,7 @@ describe('PropertyRowTextInput', () => {
   describe('Edge Cases', () => {
     it('handles very long text', () => {
       const longText = 'a'.repeat(1000);
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<PropertyRowTextInput {...defaultProps} onChange={handleChange} />);
       const input = screen.getByRole('textbox');
 
@@ -189,7 +189,7 @@ describe('PropertyRowTextInput', () => {
     });
 
     it('handles whitespace-only input', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<PropertyRowTextInput {...defaultProps} onChange={handleChange} />);
       const input = screen.getByRole('textbox');
 
@@ -199,7 +199,7 @@ describe('PropertyRowTextInput', () => {
     });
 
     it('handles rapid typing', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<PropertyRowTextInput {...defaultProps} onChange={handleChange} />);
       const input = screen.getByRole('textbox');
 

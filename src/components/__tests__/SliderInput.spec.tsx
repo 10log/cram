@@ -14,11 +14,11 @@ describe('SliderInput', () => {
   const defaultProps: SliderInputProps = {
     id: 'testSlider',
     value: 50,
-    onChange: jest.fn(),
+    onChange: vi.fn(),
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('Rendering', () => {
@@ -89,7 +89,7 @@ describe('SliderInput', () => {
 
   describe('onChange Handler', () => {
     it('calls onChange when value changes', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<SliderInput {...defaultProps} onChange={handleChange} />);
       const slider = screen.getByRole('slider');
 
@@ -99,7 +99,7 @@ describe('SliderInput', () => {
     });
 
     it('calls onChange with input event', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<SliderInput {...defaultProps} onChange={handleChange} />);
       const slider = screen.getByRole('slider');
 
@@ -109,7 +109,7 @@ describe('SliderInput', () => {
     });
 
     it('receives the raw event object', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<SliderInput {...defaultProps} onChange={handleChange} />);
       const slider = screen.getByRole('slider');
 

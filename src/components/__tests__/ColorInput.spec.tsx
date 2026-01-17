@@ -14,11 +14,11 @@ describe('ColorInput', () => {
   const defaultProps: ColorInputProps = {
     name: 'testColor',
     value: '#000000',
-    onChange: jest.fn(),
+    onChange: vi.fn(),
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('Rendering', () => {
@@ -62,7 +62,7 @@ describe('ColorInput', () => {
 
   describe('onChange Handler', () => {
     it('calls onChange when color changes', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<ColorInput {...defaultProps} onChange={handleChange} />);
       const input = document.querySelector('input[type="color"]') as HTMLInputElement;
 
@@ -72,7 +72,7 @@ describe('ColorInput', () => {
     });
 
     it('passes the native event to onChange', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<ColorInput {...defaultProps} onChange={handleChange} />);
       const input = document.querySelector('input[type="color"]') as HTMLInputElement;
 
@@ -86,7 +86,7 @@ describe('ColorInput', () => {
     });
 
     it('can access the new color value from event', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<ColorInput {...defaultProps} onChange={handleChange} />);
       const input = document.querySelector('input[type="color"]') as HTMLInputElement;
 
@@ -159,7 +159,7 @@ describe('ColorInput', () => {
 
   describe('Edge Cases', () => {
     it('handles multiple color changes', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<ColorInput {...defaultProps} onChange={handleChange} />);
       const input = document.querySelector('input[type="color"]') as HTMLInputElement;
 

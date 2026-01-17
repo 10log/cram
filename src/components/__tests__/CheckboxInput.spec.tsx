@@ -14,11 +14,11 @@ describe('CheckboxInput', () => {
   const defaultProps: CheckboxInputProps = {
     name: 'testCheckbox',
     checked: false,
-    onChange: jest.fn(),
+    onChange: vi.fn(),
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('Rendering', () => {
@@ -63,7 +63,7 @@ describe('CheckboxInput', () => {
 
   describe('onChange Handler', () => {
     it('calls onChange when clicked', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<CheckboxInput {...defaultProps} onChange={handleChange} />);
       const checkbox = screen.getByRole('checkbox');
 
@@ -73,7 +73,7 @@ describe('CheckboxInput', () => {
     });
 
     it('passes correct event structure when checking', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(
         <CheckboxInput
           {...defaultProps}
@@ -97,7 +97,7 @@ describe('CheckboxInput', () => {
     });
 
     it('passes correct event structure when unchecking', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(
         <CheckboxInput
           {...defaultProps}
@@ -121,7 +121,7 @@ describe('CheckboxInput', () => {
     });
 
     it('includes value and checked properties with same boolean value', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<CheckboxInput {...defaultProps} onChange={handleChange} />);
       const checkbox = screen.getByRole('checkbox');
 
@@ -174,7 +174,7 @@ describe('CheckboxInput', () => {
     });
 
     it('can be toggled with space key', async () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       const user = userEvent.setup();
       render(<CheckboxInput {...defaultProps} onChange={handleChange} />);
       const checkbox = screen.getByRole('checkbox');
@@ -204,7 +204,7 @@ describe('CheckboxInput', () => {
 
   describe('Edge Cases', () => {
     it('handles rapid toggling', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<CheckboxInput {...defaultProps} onChange={handleChange} />);
       const checkbox = screen.getByRole('checkbox');
 

@@ -14,12 +14,12 @@ describe('PropertyRowFolder', () => {
   const defaultProps = {
     label: 'Settings',
     open: false,
-    onOpenClose: jest.fn(),
+    onOpenClose: vi.fn(),
     children: <div data-testid="folder-content">Folder Content</div>,
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('Rendering', () => {
@@ -97,7 +97,7 @@ describe('PropertyRowFolder', () => {
 
   describe('onOpenClose Handler', () => {
     it('calls onOpenClose when label is clicked', () => {
-      const handleOpenClose = jest.fn();
+      const handleOpenClose = vi.fn();
       render(
         <PropertyRowFolder {...defaultProps} onOpenClose={handleOpenClose} />
       );
@@ -109,7 +109,7 @@ describe('PropertyRowFolder', () => {
     });
 
     it('passes id to onOpenClose when provided', () => {
-      const handleOpenClose = jest.fn();
+      const handleOpenClose = vi.fn();
       render(
         <PropertyRowFolder
           {...defaultProps}
@@ -125,7 +125,7 @@ describe('PropertyRowFolder', () => {
     });
 
     it('passes undefined to onOpenClose when id not provided', () => {
-      const handleOpenClose = jest.fn();
+      const handleOpenClose = vi.fn();
       render(
         <PropertyRowFolder {...defaultProps} onOpenClose={handleOpenClose} />
       );
@@ -137,7 +137,7 @@ describe('PropertyRowFolder', () => {
     });
 
     it('clicking icon area also triggers onOpenClose', () => {
-      const handleOpenClose = jest.fn();
+      const handleOpenClose = vi.fn();
       const { container } = render(
         <PropertyRowFolder {...defaultProps} onOpenClose={handleOpenClose} />
       );
@@ -178,7 +178,7 @@ describe('PropertyRowFolder', () => {
 
   describe('Accessibility', () => {
     it('label area is clickable', async () => {
-      const handleOpenClose = jest.fn();
+      const handleOpenClose = vi.fn();
       const user = userEvent.setup();
       render(
         <PropertyRowFolder {...defaultProps} onOpenClose={handleOpenClose} />
@@ -215,7 +215,7 @@ describe('PropertyRowFolder', () => {
     });
 
     it('handles rapid open/close toggling', () => {
-      const handleOpenClose = jest.fn();
+      const handleOpenClose = vi.fn();
       render(
         <PropertyRowFolder {...defaultProps} onOpenClose={handleOpenClose} />
       );

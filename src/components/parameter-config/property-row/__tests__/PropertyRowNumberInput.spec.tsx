@@ -13,11 +13,11 @@ import { PropertyRowNumberInput } from '../PropertyRowNumberInput';
 describe('PropertyRowNumberInput', () => {
   const defaultProps = {
     value: 0,
-    onChange: jest.fn(),
+    onChange: vi.fn(),
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('Rendering', () => {
@@ -48,7 +48,7 @@ describe('PropertyRowNumberInput', () => {
 
   describe('Local State Management', () => {
     it('updates local value on change without calling onChange', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<PropertyRowNumberInput {...defaultProps} onChange={handleChange} />);
       const input = screen.getByRole('spinbutton');
 
@@ -61,7 +61,7 @@ describe('PropertyRowNumberInput', () => {
     });
 
     it('calls onChange on blur with valid number', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<PropertyRowNumberInput {...defaultProps} onChange={handleChange} />);
       const input = screen.getByRole('spinbutton');
 
@@ -72,7 +72,7 @@ describe('PropertyRowNumberInput', () => {
     });
 
     it('does not call onChange on blur with NaN', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<PropertyRowNumberInput {...defaultProps} value={10} onChange={handleChange} />);
       const input = screen.getByRole('spinbutton');
 
@@ -99,7 +99,7 @@ describe('PropertyRowNumberInput', () => {
 
   describe('Value Types', () => {
     it('handles integer values', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<PropertyRowNumberInput {...defaultProps} onChange={handleChange} />);
       const input = screen.getByRole('spinbutton');
 
@@ -110,7 +110,7 @@ describe('PropertyRowNumberInput', () => {
     });
 
     it('handles decimal values', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<PropertyRowNumberInput {...defaultProps} step={0.01} onChange={handleChange} />);
       const input = screen.getByRole('spinbutton');
 
@@ -121,7 +121,7 @@ describe('PropertyRowNumberInput', () => {
     });
 
     it('handles negative values', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<PropertyRowNumberInput {...defaultProps} onChange={handleChange} />);
       const input = screen.getByRole('spinbutton');
 
@@ -132,7 +132,7 @@ describe('PropertyRowNumberInput', () => {
     });
 
     it('handles zero value', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<PropertyRowNumberInput {...defaultProps} value={10} onChange={handleChange} />);
       const input = screen.getByRole('spinbutton');
 
@@ -169,7 +169,7 @@ describe('PropertyRowNumberInput', () => {
 
   describe('Edge Cases', () => {
     it('handles very large numbers', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<PropertyRowNumberInput {...defaultProps} onChange={handleChange} />);
       const input = screen.getByRole('spinbutton');
 
@@ -180,7 +180,7 @@ describe('PropertyRowNumberInput', () => {
     });
 
     it('handles very small decimal numbers', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<PropertyRowNumberInput {...defaultProps} step={0.0001} onChange={handleChange} />);
       const input = screen.getByRole('spinbutton');
 
@@ -191,7 +191,7 @@ describe('PropertyRowNumberInput', () => {
     });
 
     it('handles scientific notation', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<PropertyRowNumberInput {...defaultProps} onChange={handleChange} />);
       const input = screen.getByRole('spinbutton');
 

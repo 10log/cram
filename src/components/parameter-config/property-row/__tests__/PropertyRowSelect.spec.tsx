@@ -19,12 +19,12 @@ describe('PropertyRowSelect', () => {
 
   const defaultProps = {
     value: 'option1',
-    onChange: jest.fn(),
+    onChange: vi.fn(),
     options: defaultOptions,
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('Rendering', () => {
@@ -64,7 +64,7 @@ describe('PropertyRowSelect', () => {
 
   describe('onChange Handler', () => {
     it('calls onChange when selection changes', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<PropertyRowSelect {...defaultProps} onChange={handleChange} />);
       const select = screen.getByRole('combobox');
 
@@ -74,7 +74,7 @@ describe('PropertyRowSelect', () => {
     });
 
     it('calls onChange with the selected value', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<PropertyRowSelect {...defaultProps} onChange={handleChange} />);
       const select = screen.getByRole('combobox');
 
@@ -84,7 +84,7 @@ describe('PropertyRowSelect', () => {
     });
 
     it('calls onChange only once per selection', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<PropertyRowSelect {...defaultProps} onChange={handleChange} />);
       const select = screen.getByRole('combobox');
 
@@ -154,7 +154,7 @@ describe('PropertyRowSelect', () => {
         { value: '2', label: 'Two' },
         { value: '3', label: 'Three' },
       ];
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(
         <PropertyRowSelect
           value="1"
@@ -182,7 +182,7 @@ describe('PropertyRowSelect', () => {
     });
 
     it('can be navigated with keyboard', async () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       const user = userEvent.setup();
       render(<PropertyRowSelect {...defaultProps} onChange={handleChange} />);
       const select = screen.getByRole('combobox');

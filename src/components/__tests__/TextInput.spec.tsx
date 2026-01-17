@@ -14,11 +14,11 @@ describe('TextInput', () => {
   const defaultProps: TextInputProps = {
     name: 'testInput',
     value: '',
-    onChange: jest.fn(),
+    onChange: vi.fn(),
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('Rendering', () => {
@@ -69,7 +69,7 @@ describe('TextInput', () => {
 
   describe('onChange Handler', () => {
     it('calls onChange when value changes', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<TextInput {...defaultProps} onChange={handleChange} />);
       const input = screen.getByRole('textbox');
 
@@ -79,7 +79,7 @@ describe('TextInput', () => {
     });
 
     it('passes correct event structure to onChange', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(
         <TextInput
           {...defaultProps}
@@ -101,7 +101,7 @@ describe('TextInput', () => {
     });
 
     it('uses name as id fallback when id not provided', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(
         <TextInput
           {...defaultProps}
@@ -121,7 +121,7 @@ describe('TextInput', () => {
     });
 
     it('handles empty string input', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<TextInput {...defaultProps} value="existing" onChange={handleChange} />);
       const input = screen.getByRole('textbox');
 
@@ -135,7 +135,7 @@ describe('TextInput', () => {
     });
 
     it('handles special characters', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<TextInput {...defaultProps} onChange={handleChange} />);
       const input = screen.getByRole('textbox');
 
@@ -149,7 +149,7 @@ describe('TextInput', () => {
     });
 
     it('handles unicode characters', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<TextInput {...defaultProps} onChange={handleChange} />);
       const input = screen.getByRole('textbox');
 
@@ -183,7 +183,7 @@ describe('TextInput', () => {
     });
 
     it('supports keyboard input', async () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       const user = userEvent.setup();
       render(<TextInput {...defaultProps} onChange={handleChange} />);
       const input = screen.getByRole('textbox');
@@ -197,7 +197,7 @@ describe('TextInput', () => {
 
   describe('Edge Cases', () => {
     it('handles very long strings', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       const longString = 'a'.repeat(10000);
       render(<TextInput {...defaultProps} onChange={handleChange} />);
       const input = screen.getByRole('textbox');
@@ -212,7 +212,7 @@ describe('TextInput', () => {
     });
 
     it('handles whitespace-only input', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<TextInput {...defaultProps} onChange={handleChange} />);
       const input = screen.getByRole('textbox');
 
@@ -227,7 +227,7 @@ describe('TextInput', () => {
 
     it('handles tab characters in input', () => {
       // Note: Single-line text inputs strip newlines in browsers
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<TextInput {...defaultProps} onChange={handleChange} />);
       const input = screen.getByRole('textbox');
 
