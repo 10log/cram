@@ -1,5 +1,6 @@
 import React, { Fragment } from "react";
-import styled from "styled-components";
+import Box from "@mui/material/Box";
+import type { SxProps, Theme } from "@mui/material/styles";
 
 export interface GridRowProps {
   label?: React.ReactNode | React.ReactNode[];
@@ -8,24 +9,24 @@ export interface GridRowProps {
   style?: React.CSSProperties;
 }
 
-const Label = styled.div`
-  display: grid;
-  grid-column-start: 1;
-  grid-column-end: 2;
-  text-align: end;
-`;
+const labelSx: SxProps<Theme> = {
+  display: "grid",
+  gridColumnStart: 1,
+  gridColumnEnd: 2,
+  textAlign: "end",
+};
 
-const InputContainer = styled.div`
-  display: grid;
-  grid-column-start: 2;
-  grid-column-end: 3;
-`;
+const inputContainerSx: SxProps<Theme> = {
+  display: "grid",
+  gridColumnStart: 2,
+  gridColumnEnd: 3,
+};
 
 export default function GridRow(props: GridRowProps) {
   return (
     <Fragment>
-      <Label>{props.label}</Label>
-      <InputContainer>{props.children}</InputContainer>
+      <Box sx={labelSx}>{props.label}</Box>
+      <Box sx={inputContainerSx}>{props.children}</Box>
     </Fragment>
   );
 }

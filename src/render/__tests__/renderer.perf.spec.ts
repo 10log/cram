@@ -8,9 +8,9 @@
 import { benchmark } from '../../test-utils/benchmark';
 
 // Mock Three.js and related modules
-jest.mock('three');
+vi.mock('three');
 
-jest.mock('../../store', () => ({
+vi.mock('../../store', () => ({
   useContainer: {
     getState: () => ({
       containers: {},
@@ -22,12 +22,12 @@ jest.mock('../../store', () => ({
   },
 }));
 
-jest.mock('../../messenger', () => ({
-  emit: jest.fn(),
-  on: jest.fn(),
+vi.mock('../../messenger', () => ({
+  emit: vi.fn(),
+  on: vi.fn(),
   messenger: {
-    on: jest.fn(),
-    emit: jest.fn(),
+    on: vi.fn(),
+    emit: vi.fn(),
   },
 }));
 

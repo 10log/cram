@@ -14,11 +14,11 @@ describe('NumberInput', () => {
   const defaultProps: NumberInputProps = {
     name: 'testInput',
     value: 0,
-    onChange: jest.fn(),
+    onChange: vi.fn(),
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('Rendering', () => {
@@ -116,7 +116,7 @@ describe('NumberInput', () => {
 
   describe('onChange Handler', () => {
     it('calls onChange when value changes', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<NumberInput {...defaultProps} onChange={handleChange} />);
       const input = screen.getByRole('spinbutton');
 
@@ -126,7 +126,7 @@ describe('NumberInput', () => {
     });
 
     it('passes correct event structure to onChange', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(
         <NumberInput
           {...defaultProps}
@@ -148,7 +148,7 @@ describe('NumberInput', () => {
     });
 
     it('converts string input to number in onChange', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<NumberInput {...defaultProps} onChange={handleChange} />);
       const input = screen.getByRole('spinbutton');
 
@@ -162,7 +162,7 @@ describe('NumberInput', () => {
     });
 
     it('handles negative numbers', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<NumberInput {...defaultProps} onChange={handleChange} />);
       const input = screen.getByRole('spinbutton');
 
@@ -176,7 +176,7 @@ describe('NumberInput', () => {
     });
 
     it('handles zero', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<NumberInput {...defaultProps} value={10} onChange={handleChange} />);
       const input = screen.getByRole('spinbutton');
 
@@ -191,7 +191,7 @@ describe('NumberInput', () => {
 
     it('handles empty input (Number("") returns 0)', () => {
       // Note: Number('') returns 0 in JavaScript, not NaN
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<NumberInput {...defaultProps} onChange={handleChange} />);
       const input = screen.getByRole('spinbutton');
 
@@ -225,7 +225,7 @@ describe('NumberInput', () => {
     });
 
     it('supports keyboard input', async () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       const user = userEvent.setup();
       render(<NumberInput {...defaultProps} onChange={handleChange} />);
       const input = screen.getByRole('spinbutton');
@@ -241,7 +241,7 @@ describe('NumberInput', () => {
 
   describe('Edge Cases', () => {
     it('handles very large numbers', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<NumberInput {...defaultProps} onChange={handleChange} />);
       const input = screen.getByRole('spinbutton');
 
@@ -255,7 +255,7 @@ describe('NumberInput', () => {
     });
 
     it('handles scientific notation', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<NumberInput {...defaultProps} onChange={handleChange} />);
       const input = screen.getByRole('spinbutton');
 
@@ -269,7 +269,7 @@ describe('NumberInput', () => {
     });
 
     it('handles decimal precision', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<NumberInput {...defaultProps} onChange={handleChange} />);
       const input = screen.getByRole('spinbutton');
 

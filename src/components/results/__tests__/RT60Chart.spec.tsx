@@ -13,17 +13,17 @@ import { RT60Chart, Chart, RTData } from '../RT60Chart';
 import { useResult, ResultKind } from '../../../store/result-store';
 
 // Mock d3-time-format (ESM module)
-jest.mock('d3-time-format', () => ({
+vi.mock('d3-time-format', () => ({
   timeParse: () => () => new Date(),
   timeFormat: () => () => 'Jan 01',
 }));
 
 // Mock visx components
-jest.mock('@visx/group', () => ({
+vi.mock('@visx/group', () => ({
   Group: ({ children }: any) => <g data-testid="visx-group">{children}</g>,
 }));
 
-jest.mock('@visx/shape', () => ({
+vi.mock('@visx/shape', () => ({
   BarGroup: ({ children, data }: any) => (
     <g data-testid="bar-group">
       {typeof children === 'function'
@@ -37,12 +37,12 @@ jest.mock('@visx/shape', () => ({
   ),
 }));
 
-jest.mock('@visx/axis', () => ({
+vi.mock('@visx/axis', () => ({
   AxisBottom: ({ label }: any) => <g data-testid="axis-bottom"><text>{label}</text></g>,
   AxisLeft: ({ label }: any) => <g data-testid="axis-left"><text>{label}</text></g>,
 }));
 
-jest.mock('@visx/scale', () => ({
+vi.mock('@visx/scale', () => ({
   scaleBand: () => {
     const scale = (value: any) => 0;
     scale.domain = () => scale;
@@ -66,11 +66,11 @@ jest.mock('@visx/scale', () => ({
   },
 }));
 
-jest.mock('@visx/grid', () => ({
+vi.mock('@visx/grid', () => ({
   GridRows: () => <g data-testid="grid-rows" />,
 }));
 
-jest.mock('@visx/legend', () => ({
+vi.mock('@visx/legend', () => ({
   LegendOrdinal: ({ scale, labelFormat }: any) => (
     <div data-testid="legend">
       {scale.domain().map((key: string) => (
@@ -81,9 +81,9 @@ jest.mock('@visx/legend', () => ({
 }));
 
 // Mock messenger
-jest.mock('../../../messenger', () => ({
-  on: jest.fn(() => jest.fn()),
-  emit: jest.fn(),
+vi.mock('../../../messenger', () => ({
+  on: vi.fn(() => vi.fn()),
+  emit: vi.fn(),
 }));
 
 describe('RT60Chart', () => {

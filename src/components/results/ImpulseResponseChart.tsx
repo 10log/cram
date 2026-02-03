@@ -1,15 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { useShallow } from 'zustand/react/shallow';
-import { Group } from '@visx/group';
-import { LinePath } from '@visx/shape';
-import { AxisBottom, AxisLeft } from '@visx/axis';
-import { scaleLinear } from '@visx/scale';
-import { Grid } from '@visx/grid';
-import { Result, ResultKind, useResult } from '../../store/result-store';
-import { pickProps } from '../../common/helpers';
-import { on } from '../../messenger';
-import styled from 'styled-components';
-import ParentSize from '@visx/responsive/lib/components/ParentSize';
+import React, { useState, useEffect } from "react";
+import { useShallow } from "zustand/react/shallow";
+import { Group } from "@visx/group";
+import { LinePath } from "@visx/shape";
+import { AxisBottom, AxisLeft } from "@visx/axis";
+import { scaleLinear } from "@visx/scale";
+import { Grid } from "@visx/grid";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import type { SxProps, Theme } from "@mui/material/styles";
+import { Result, ResultKind, useResult } from "../../store/result-store";
+import { pickProps } from "../../common/helpers";
+import { on } from "../../messenger";
+import ParentSize from "@visx/responsive/lib/components/ParentSize";
 
 export type ImpulseResponseChartProps = {
   uuid: string;
@@ -18,34 +20,34 @@ export type ImpulseResponseChartProps = {
   events?: boolean;
 };
 
-const VerticalContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-`;
+const verticalContainerSx: SxProps<Theme> = {
+  display: "flex",
+  flexDirection: "column",
+};
 
-const Title = styled.div`
-  display: flex;
-  justify-content: center;
-`;
+const titleSx: SxProps<Theme> = {
+  display: "flex",
+  justifyContent: "center",
+};
 
-const HorizontalContainer = styled.div`
-  display: flex;
-  flex-direction: row;
-  flex: 1;
-`;
+const horizontalContainerSx: SxProps<Theme> = {
+  display: "flex",
+  flexDirection: "row",
+  flex: 1,
+};
 
-const GraphContainer = styled.div`
-  display: flex;
-  flex: 8;
-  width: 100%;
-`;
+const graphContainerSx: SxProps<Theme> = {
+  display: "flex",
+  flex: 8,
+  width: "100%",
+};
 
-const InfoContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  padding: 8px 16px;
-  font-size: 12px;
-`;
+const infoContainerSx: SxProps<Theme> = {
+  display: "flex",
+  flexDirection: "column",
+  p: "8px 16px",
+  fontSize: 12,
+};
 
 const getTime = (d: { time: number; amplitude: number }) => d.time;
 const getAmplitude = (d: { time: number; amplitude: number }) => d.amplitude;
@@ -53,7 +55,7 @@ const getAmplitude = (d: { time: number; amplitude: number }) => d.amplitude;
 const Chart = ({ uuid, width = 400, height = 200 }: ImpulseResponseChartProps) => {
   const { data: _data } = useResult(
     useShallow((state) =>
-      pickProps(['data'], state.results[uuid] as Result<ResultKind.ImpulseResponse>)
+      pickProps(["data"], state.results[uuid] as Result<ResultKind.ImpulseResponse>)
     )
   );
 
@@ -61,7 +63,7 @@ const Chart = ({ uuid, width = 400, height = 200 }: ImpulseResponseChartProps) =
 
   useEffect(
     () =>
-      on('UPDATE_RESULT', (e) => {
+      on("UPDATE_RESULT", (e) => {
         if (e.uuid === uuid) {
           setData((e.result as Result<ResultKind.ImpulseResponse>).data);
         }
@@ -126,12 +128,7 @@ const Chart = ({ uuid, width = 400, height = 200 }: ImpulseResponseChartProps) =
           strokeWidth={1}
         />
       </Group>
-      <AxisBottom
-        scale={xScale}
-        top={scaleHeight}
-        left={scalePadding}
-        label="Time (s)"
-      />
+      <AxisBottom scale={xScale} top={scaleHeight} left={scalePadding} label="Time (s)" />
       <AxisLeft scale={yScale} left={scalePadding} label="Amplitude" />
     </svg>
   );
@@ -145,20 +142,20 @@ export const ImpulseResponseChart = ({
 }: ImpulseResponseChartProps) => {
   const { name, info } = useResult(
     useShallow((state) =>
-      pickProps(['name', 'info'], state.results[uuid] as Result<ResultKind.ImpulseResponse>)
+      pickProps(["name", "info"], state.results[uuid] as Result<ResultKind.ImpulseResponse>)
     )
   );
 
   return width < 10 ? null : (
-    <VerticalContainer>
-      <Title>{name}</Title>
-      <HorizontalContainer>
-        <GraphContainer>
+    <Box sx={verticalContainerSx}>
+      <Typography sx={titleSx}>{name}</Typography>
+      <Box sx={horizontalContainerSx}>
+        <Box sx={graphContainerSx}>
           <ParentSize debounceTime={10}>
             {({ width }) => <Chart {...{ width, height, uuid, events }} />}
           </ParentSize>
-        </GraphContainer>
-        <InfoContainer>
+        </Box>
+        <Box sx={infoContainerSx}>
           <div>
             <b>Source:</b> {info.sourceName}
           </div>
@@ -168,9 +165,9 @@ export const ImpulseResponseChart = ({
           <div>
             <b>Sample Rate:</b> {info.sampleRate} Hz
           </div>
-        </InfoContainer>
-      </HorizontalContainer>
-    </VerticalContainer>
+        </Box>
+      </Box>
+    </Box>
   );
 };
 

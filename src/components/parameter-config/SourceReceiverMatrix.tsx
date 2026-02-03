@@ -1,75 +1,79 @@
 import React, { memo, useMemo, useCallback } from "react";
-import styled from "styled-components";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import Checkbox from "@mui/material/Checkbox";
+import type { SxProps, Theme } from "@mui/material/styles";
 import { useContainer } from "../../store";
 import { useSolverProperty } from "./SolverComponents";
 import RayTracer from "../../compute/raytracer";
 
-const MatrixContainer = styled.div<{ $disabled?: boolean }>`
-  padding: 4px 8px;
-  overflow-x: auto;
-  opacity: ${(props) => (props.$disabled ? 0.5 : 1)};
-  pointer-events: ${(props) => (props.$disabled ? "none" : "auto")};
-`;
+const matrixContainerSx = (disabled: boolean): SxProps<Theme> => ({
+  p: "4px 8px",
+  overflowX: "auto",
+  opacity: disabled ? 0.5 : 1,
+  pointerEvents: disabled ? "none" : "auto",
+});
 
-const Table = styled.table`
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 11px;
-`;
+const tableSx: SxProps<Theme> = {
+  width: "100%",
+  borderCollapse: "collapse",
+  fontSize: 11,
+  "& th, & td": {
+    p: "4px 6px",
+  },
+};
 
-const HeaderCell = styled.th`
-  padding: 4px 6px;
-  text-align: center;
-  font-weight: 500;
-  color: #1c2127;
-  border-bottom: 1px solid #e1e4e8;
-  white-space: nowrap;
-  max-width: 80px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-`;
+const headerCellSx: SxProps<Theme> = {
+  textAlign: "center",
+  fontWeight: 500,
+  color: "#1c2127",
+  borderBottom: "1px solid #e1e4e8",
+  whiteSpace: "nowrap",
+  maxWidth: 80,
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+};
 
-const RowHeaderCell = styled.td`
-  padding: 4px 6px;
-  font-weight: 500;
-  color: #1c2127;
-  border-right: 1px solid #e1e4e8;
-  white-space: nowrap;
-  max-width: 80px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-`;
+const rowHeaderCellSx: SxProps<Theme> = {
+  fontWeight: 500,
+  color: "#1c2127",
+  borderRight: "1px solid #e1e4e8",
+  whiteSpace: "nowrap",
+  maxWidth: 80,
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+};
 
-const DataCell = styled.td`
-  padding: 4px;
-  text-align: center;
-  border-bottom: 1px solid #f0f0f0;
-`;
+const dataCellSx: SxProps<Theme> = {
+  textAlign: "center",
+  borderBottom: "1px solid #f0f0f0",
+};
 
-const Checkbox = styled.input.attrs({ type: "checkbox" })`
-  width: 14px;
-  height: 14px;
-  cursor: pointer;
-  accent-color: #2d72d2;
-`;
+const cornerCellSx: SxProps<Theme> = {
+  textAlign: "right",
+  fontWeight: 400,
+  fontSize: 10,
+  color: "#656d76",
+  borderBottom: "1px solid #e1e4e8",
+  borderRight: "1px solid #e1e4e8",
+};
 
-const EmptyMessage = styled.div`
-  padding: 12px 8px;
-  font-size: 11px;
-  color: #8c959f;
-  font-style: italic;
-  text-align: center;
-`;
+const emptyMessageSx: SxProps<Theme> = {
+  p: "12px 8px",
+  fontSize: 11,
+  color: "#8c959f",
+  fontStyle: "italic",
+  textAlign: "center",
+};
 
-const CornerCell = styled.th`
-  padding: 4px 6px;
-  text-align: right;
-  font-weight: 400;
-  font-size: 10px;
-  color: #656d76;
-  border-bottom: 1px solid #e1e4e8;
-  border-right: 1px solid #e1e4e8;
-`;
+const checkboxSx: SxProps<Theme> = {
+  p: 0,
+  width: 14,
+  height: 14,
+  "& .MuiSvgIcon-root": {
+    fontSize: 18,
+  },
+};
 
 interface SourceReceiverMatrixProps {
   uuid: string;
@@ -144,48 +148,50 @@ export const SourceReceiverMatrix = memo(({ uuid, disabled = false, eventType = 
   }, [sourceIDs, receiverIDs, setSourceIDs, setReceiverIDs]);
 
   if (sources.length === 0 && receivers.length === 0) {
-    return <EmptyMessage>Add sources and receivers to configure pairs</EmptyMessage>;
+    return <Typography sx={emptyMessageSx}>Add sources and receivers to configure pairs</Typography>;
   }
 
   if (sources.length === 0) {
-    return <EmptyMessage>Add sources to configure pairs</EmptyMessage>;
+    return <Typography sx={emptyMessageSx}>Add sources to configure pairs</Typography>;
   }
 
   if (receivers.length === 0) {
-    return <EmptyMessage>Add receivers to configure pairs</EmptyMessage>;
+    return <Typography sx={emptyMessageSx}>Add receivers to configure pairs</Typography>;
   }
 
   return (
-    <MatrixContainer $disabled={disabled}>
-      <Table>
+    <Box sx={matrixContainerSx(disabled)}>
+      <Box component="table" sx={tableSx}>
         <thead>
           <tr>
-            <CornerCell>Src \ Rec</CornerCell>
+            <Box component="th" sx={cornerCellSx}>Src \ Rec</Box>
             {receivers.map(rec => (
-              <HeaderCell key={rec.uuid} title={rec.name}>
+              <Box component="th" key={rec.uuid} sx={headerCellSx} title={rec.name}>
                 {rec.name}
-              </HeaderCell>
+              </Box>
             ))}
           </tr>
         </thead>
         <tbody>
           {sources.map(src => (
             <tr key={src.uuid}>
-              <RowHeaderCell title={src.name}>{src.name}</RowHeaderCell>
+              <Box component="td" sx={rowHeaderCellSx} title={src.name}>{src.name}</Box>
               {receivers.map(rec => (
-                <DataCell key={`${src.uuid}-${rec.uuid}`}>
+                <Box component="td" key={`${src.uuid}-${rec.uuid}`} sx={dataCellSx}>
                   <Checkbox
                     checked={isPairSelected(src.uuid, rec.uuid)}
                     onChange={(e) => togglePair(src.uuid, rec.uuid, e.target.checked)}
                     title={`${src.name} → ${rec.name}`}
+                    sx={checkboxSx}
+                    size="small"
                   />
-                </DataCell>
+                </Box>
               ))}
             </tr>
           ))}
         </tbody>
-      </Table>
-    </MatrixContainer>
+      </Box>
+    </Box>
   );
 });
 

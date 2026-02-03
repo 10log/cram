@@ -1,36 +1,31 @@
 import React from "react";
-import styled from 'styled-components';
+import Box from "@mui/material/Box";
+import type { SxProps, Theme } from "@mui/material/styles";
 
-
-const StyledTextInput = styled.input`
-
-    margin-left: .5em;
-    margin-right: .5em;
-    outline: none;
-    border: none;
-    border-radius: 2px;
-    background: rgba(246, 248, 250, 0.75);
-    padding: 0 10px;
-    vertical-align: middle;
-    color: #182026;
-    -webkit-transition: -webkit-box-shadow .05s cubic-bezier(.4,1,.75,.9);
-    -webkit-transition: box-shadow .05s cubic-bezier(.4,1,.75,.9);
-    transition: box-shadow .05s cubic-bezier(.4,1,.75,.9);
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-  :hover{
-    outline: none;
-    box-shadow: 0 0 0 0 rgba(19,124,189,0), 0 0 0 0 rgba(19,124,189,0), inset 0 0 0 1px rgba(16,22,26,.15), inset 0 1px 1px rgba(16,22,26,.2);
-    background: rgba(246, 248, 250, 1.0);
-  }
-  :focus{
-    box-shadow: 0 0 0 0 rgba(19,124,189,0), 0 0 0 0 rgba(19,124,189,0), inset 0 0 0 1px rgba(16,22,26,.15), inset 0 1px 1px rgba(16,22,26,.2);
-    background: rgba(246, 248, 250, 0.75);
-  }
-
-`;
-
+const styledTextInputSx: SxProps<Theme> = {
+  ml: "0.5em",
+  mr: "0.5em",
+  outline: "none",
+  border: "none",
+  borderRadius: "2px",
+  bgcolor: "rgba(246, 248, 250, 0.75)",
+  p: "0 10px",
+  verticalAlign: "middle",
+  color: "#182026",
+  transition: "box-shadow 0.05s cubic-bezier(0.4, 1, 0.75, 0.9)",
+  appearance: "none",
+  "&:hover": {
+    outline: "none",
+    boxShadow:
+      "0 0 0 0 rgba(19,124,189,0), 0 0 0 0 rgba(19,124,189,0), inset 0 0 0 1px rgba(16,22,26,.15), inset 0 1px 1px rgba(16,22,26,.2)",
+    bgcolor: "rgba(246, 248, 250, 1.0)",
+  },
+  "&:focus": {
+    boxShadow:
+      "0 0 0 0 rgba(19,124,189,0), 0 0 0 0 rgba(19,124,189,0), inset 0 0 0 1px rgba(16,22,26,.15), inset 0 1px 1px rgba(16,22,26,.2)",
+    bgcolor: "rgba(246, 248, 250, 0.75)",
+  },
+};
 
 interface Props {
   value: string;
@@ -38,9 +33,11 @@ interface Props {
 }
 
 export const PropertyRowTextInput = ({ value, onChange }: Props) => (
-  <StyledTextInput
+  <Box
+    component="input"
     type="text"
-    onChange={(e) => onChange({ value: e.currentTarget.value })}
+    onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange({ value: e.currentTarget.value })}
     value={value}
+    sx={styledTextInputSx}
   />
-)
+);

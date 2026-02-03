@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from "react";
-import styled, { keyframes } from "styled-components";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import { keyframes } from "@emotion/react";
+import type { SxProps, Theme } from "@mui/material/styles";
 import { on } from "../messenger";
 
 const slideIn = keyframes`
@@ -24,48 +27,38 @@ const slideOut = keyframes`
   }
 `;
 
-const Container = styled.div<{ $visible: boolean }>`
-  position: fixed;
-  bottom: 16px;
-  right: 16px;
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 14px;
-  background: rgba(255, 255, 255, 0.95);
-  border: 1px solid #d0d7de;
-  border-radius: 6px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
-  animation: ${(props) => (props.$visible ? slideIn : slideOut)} 0.2s ease-out forwards;
-  pointer-events: ${(props) => (props.$visible ? "auto" : "none")};
-  font-size: 12px;
-`;
-
 const spin = keyframes`
   to {
     transform: rotate(360deg);
   }
 `;
 
-const Spinner = styled.div`
-  width: 14px;
-  height: 14px;
-  border: 2px solid #2d72d2;
-  border-top-color: transparent;
-  border-radius: 50%;
-  animation: ${spin} 0.8s linear infinite;
-`;
+const containerSx = (visible: boolean): SxProps<Theme> => ({
+  position: "fixed",
+  bottom: 16,
+  right: 16,
+  zIndex: 1000,
+  display: "flex",
+  alignItems: "center",
+  gap: "10px",
+  p: "8px 14px",
+  bgcolor: "rgba(255, 255, 255, 0.95)",
+  border: "1px solid #d0d7de",
+  borderRadius: "6px",
+  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.12)",
+  animation: `${visible ? slideIn : slideOut} 0.2s ease-out forwards`,
+  pointerEvents: visible ? "auto" : "none",
+  fontSize: 12,
+});
 
-const Message = styled.span`
-  color: #1c2127;
-  white-space: nowrap;
-`;
-
-const SolverCount = styled.span`
-  color: #5c7080;
-  font-size: 11px;
-`;
+const spinnerSx: SxProps<Theme> = {
+  width: 14,
+  height: 14,
+  border: "2px solid #2d72d2",
+  borderTopColor: "transparent",
+  borderRadius: "50%",
+  animation: `${spin} 0.8s linear infinite`,
+};
 
 interface ProgressState {
   visible: boolean;
@@ -101,13 +94,17 @@ export const AutoCalculateProgress: React.FC = () => {
   }
 
   return (
-    <Container $visible={state.visible}>
-      <Spinner />
-      <Message>{state.message}</Message>
+    <Box sx={containerSx(state.visible)}>
+      <Box sx={spinnerSx} />
+      <Typography component="span" sx={{ color: "#1c2127", whiteSpace: "nowrap" }}>
+        {state.message}
+      </Typography>
       {state.solverCount > 1 && (
-        <SolverCount>({state.solverCount} solvers)</SolverCount>
+        <Typography component="span" sx={{ color: "#5c7080", fontSize: 11 }}>
+          ({state.solverCount} solvers)
+        </Typography>
       )}
-    </Container>
+    </Box>
   );
 };
 

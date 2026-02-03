@@ -15,23 +15,23 @@ import { ResultsPanel } from '../ResultsPanel';
 import { useResult, ResultKind } from '../../store/result-store';
 
 // Mock the chart components
-jest.mock('../results/LTPChart', () => ({
+vi.mock('../results/LTPChart', () => ({
   __esModule: true,
   default: ({ uuid }: { uuid: string }) => <div data-testid="ltp-chart">{uuid}</div>,
 }));
 
-jest.mock('../results/RT60Chart', () => ({
+vi.mock('../results/RT60Chart', () => ({
   __esModule: true,
   default: ({ uuid }: { uuid: string }) => <div data-testid="rt60-chart">{uuid}</div>,
 }));
 
-jest.mock('../results/ImpulseResponseChart', () => ({
+vi.mock('../results/ImpulseResponseChart', () => ({
   __esModule: true,
   default: ({ uuid }: { uuid: string }) => <div data-testid="ir-chart">{uuid}</div>,
 }));
 
 // Mock react-tabs
-jest.mock('react-tabs', () => ({
+vi.mock('react-tabs', () => ({
   Tab: ({ children }: { children: React.ReactNode }) => <div role="tab">{children}</div>,
   Tabs: ({ children, selectedIndex, onSelect }: any) => (
     <div data-testid="tabs" data-selected={selectedIndex}>
@@ -43,9 +43,9 @@ jest.mock('react-tabs', () => ({
 }));
 
 // Mock messenger
-jest.mock('../../messenger', () => ({
-  on: jest.fn(() => jest.fn()),
-  emit: jest.fn(),
+vi.mock('../../messenger', () => ({
+  on: vi.fn(() => vi.fn()),
+  emit: vi.fn(),
 }));
 
 describe('ResultsPanel', () => {

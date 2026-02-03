@@ -1,5 +1,7 @@
 import React, { useState } from "react";
-import styled, { keyframes } from "styled-components";
+import Box from "@mui/material/Box";
+import type { SxProps, Theme } from "@mui/material/styles";
+import { keyframes } from "@emotion/react";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
@@ -15,118 +17,109 @@ import SettingsIcon from "@mui/icons-material/Settings"; // Renderer
 import TimelineIcon from "@mui/icons-material/Timeline"; // Beam Trace
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { Menu, MenuItem, ListItemIcon, ListItemText } from "@mui/material";
-
-const HeaderContainer = styled.div<{ $expanded: boolean }>`
-  display: flex;
-  align-items: center;
-  padding: 4px 8px;
-  background-color: ${(props) => (props.$expanded ? "#e8ecef" : "transparent")};
-  cursor: pointer;
-  user-select: none;
-
-  &:hover {
-    background-color: #e8ecef;
-  }
-`;
-
-const ExpandIcon = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 16px;
-  height: 16px;
-  margin-right: 4px;
-  color: #5c6670;
-
-  svg {
-    font-size: 16px;
-  }
-`;
-
-const IconContainer = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 16px;
-  height: 16px;
-  margin-right: 6px;
-  color: #5c6670;
-
-  svg {
-    font-size: 14px;
-  }
-`;
-
-const Title = styled.div`
-  flex: 1;
-  font-size: 12px;
-  font-weight: 500;
-  color: #1c2127;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-`;
-
-const MenuButton = styled.button`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  border-radius: 3px;
-  border: none;
-  background: transparent;
-  padding: 0;
-  color: #8c959f;
-  opacity: 0;
-  cursor: pointer;
-
-  svg {
-    font-size: 14px;
-  }
-
-  ${HeaderContainer}:hover & {
-    opacity: 1;
-  }
-
-  &:hover {
-    background-color: #d0d7de;
-    color: #1c2127;
-  }
-`;
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import ListItemText from "@mui/material/ListItemText";
 
 const spin = keyframes`
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 `;
 
-const ActionButton = styled.div<{ $disabled?: boolean; $calculating?: boolean }>`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  margin-right: 4px;
-  border-radius: 3px;
-  color: ${(props) => (props.$disabled ? "#c0c0c0" : "#8c959f")};
-  cursor: ${(props) => (props.$disabled ? "default" : "pointer")};
-  pointer-events: ${(props) => (props.$disabled ? "none" : "auto")};
+const headerContainerSx = (expanded: boolean): SxProps<Theme> => ({
+  display: "flex",
+  alignItems: "center",
+  p: "4px 8px",
+  bgcolor: expanded ? "#e8ecef" : "transparent",
+  cursor: "pointer",
+  userSelect: "none",
+  "&:hover": {
+    bgcolor: "#e8ecef",
+  },
+  "&:hover .menu-button": {
+    opacity: 1,
+  },
+});
 
-  svg {
-    font-size: 14px;
-    animation: ${(props) => (props.$calculating ? spin : "none")} 1s linear infinite;
-  }
+const expandIconSx: SxProps<Theme> = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: 16,
+  height: 16,
+  mr: "4px",
+  color: "#5c6670",
+  "& svg": {
+    fontSize: 16,
+  },
+};
 
-  &:hover {
-    background-color: ${(props) => (props.$disabled ? "transparent" : "#d0d7de")};
-    color: ${(props) => (props.$disabled ? "#c0c0c0" : "#1c2127")};
-  }
-`;
+const iconContainerSx: SxProps<Theme> = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: 16,
+  height: 16,
+  mr: "6px",
+  color: "#5c6670",
+  "& svg": {
+    fontSize: 14,
+  },
+};
+
+const titleSx: SxProps<Theme> = {
+  flex: 1,
+  fontSize: 12,
+  fontWeight: 500,
+  color: "#1c2127",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+};
+
+const menuButtonSx: SxProps<Theme> = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: 18,
+  height: 18,
+  borderRadius: "3px",
+  border: "none",
+  background: "transparent",
+  p: 0,
+  color: "#8c959f",
+  opacity: 0,
+  cursor: "pointer",
+  "& svg": {
+    fontSize: 14,
+  },
+  "&:hover": {
+    bgcolor: "#d0d7de",
+    color: "#1c2127",
+  },
+};
+
+const actionButtonSx = (disabled: boolean, calculating: boolean): SxProps<Theme> => ({
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: 18,
+  height: 18,
+  mr: "4px",
+  borderRadius: "3px",
+  color: disabled ? "#c0c0c0" : "#8c959f",
+  cursor: disabled ? "default" : "pointer",
+  pointerEvents: disabled ? "none" : "auto",
+  "& svg": {
+    fontSize: 14,
+    animation: calculating ? `${spin} 1s linear infinite` : "none",
+  },
+  "&:hover": {
+    bgcolor: disabled ? "transparent" : "#d0d7de",
+    color: disabled ? "#c0c0c0" : "#1c2127",
+  },
+});
 
 /**
  * Maps solver kind to its icon component
@@ -201,39 +194,41 @@ export default function SolverCardHeader({
   };
 
   return (
-    <HeaderContainer $expanded={expanded} onClick={onToggle}>
-      <ExpandIcon>{expanded ? <ExpandMoreIcon /> : <ChevronRightIcon />}</ExpandIcon>
-      <IconContainer>
+    <Box sx={headerContainerSx(expanded)} onClick={onToggle}>
+      <Box sx={expandIconSx}>{expanded ? <ExpandMoreIcon /> : <ChevronRightIcon />}</Box>
+      <Box sx={iconContainerSx}>
         <Icon />
-      </IconContainer>
-      <Title>{name}</Title>
+      </Box>
+      <Box sx={titleSx}>{name}</Box>
       {onCalculate && (
-        <ActionButton
-          $disabled={!canCalculate || isCalculating}
-          $calculating={isCalculating}
+        <Box
+          sx={actionButtonSx(!canCalculate || isCalculating, isCalculating)}
           onClick={handleCalculateClick}
           title={isCalculating ? "Calculating..." : "Calculate"}
         >
           <PlayArrowIcon />
-        </ActionButton>
+        </Box>
       )}
       {onClear && (
-        <ActionButton
-          $disabled={isCalculating}
+        <Box
+          sx={actionButtonSx(isCalculating, false)}
           onClick={handleClearClick}
           title="Clear"
         >
           <ClearIcon />
-        </ActionButton>
+        </Box>
       )}
       {(onDelete || onDuplicate) && (
         <>
-          <MenuButton
+          <Box
+            component="button"
             type="button"
+            className="menu-button"
+            sx={menuButtonSx}
             onClick={handleMenuClick}
           >
             <MoreVertIcon />
-          </MenuButton>
+          </Box>
           <Menu
             anchorEl={anchorEl}
             open={menuOpen}
@@ -266,6 +261,6 @@ export default function SolverCardHeader({
           </Menu>
         </>
       )}
-    </HeaderContainer>
+    </Box>
   );
 }

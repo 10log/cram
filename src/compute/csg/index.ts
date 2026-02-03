@@ -1,36 +1,45 @@
+//@ts-nocheck
+/**
+ * CSG module - now using @jscad/modeling v2
+ *
+ * This file re-exports from the new modeling module which uses @jscad/modeling
+ * instead of the old @jscad/csg. This solves the circular dependency issues
+ * that caused TDZ errors when bundled with Vite/Rollup.
+ */
+
 import {
-  // color,
   connectors,
   geometry,
   math,
   primitives,
   text,
-  // utils,
   booleans,
   expansions,
   extrusions,
   hulls,
   measurements,
   transforms,
-  extra,
+  color as colorModule,
+  utils,
   split,
-  bsp
-} from './csg';
+  bsp,
+  Tree,
+  PolygonTreeNode,
+  Node,
+  splitPolygonByPlane,
+  splitLineSegmentByPlane,
+} from '../modeling';
 
-const color = extra.color;
-const utils = extra.utils;
-const splitPolygonByPlane = split.polygonByPlane;
-const splitLineByPlane = split.lineSegmentByPlane;
-const { Tree, PolygonTreeNode, Node } = bsp;
+// Backwards compatibility aliases
+const color = colorModule;
+const splitLineByPlane = splitLineSegmentByPlane;
 
 export {
-  // color,
   connectors,
   geometry,
   math,
   primitives,
   text,
-  // utils,
   booleans,
   expansions,
   extrusions,
@@ -47,13 +56,11 @@ export {
 };
 
 export default {
-  // color,
   connectors,
   geometry,
   math,
   primitives,
   text,
-  // utils,
   booleans,
   expansions,
   extrusions,

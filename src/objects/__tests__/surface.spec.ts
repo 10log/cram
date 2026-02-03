@@ -1,44 +1,44 @@
 // Mock Three.js first before any imports
-jest.mock('three', () => {
+vi.mock('three', () => {
   const actual = jest.requireActual('../../__mocks__/three');
   return actual;
 });
 
 // Mock VertexNormalsHelper from three/examples
-jest.mock('three/examples/jsm/helpers/VertexNormalsHelper.js', () => ({
-  VertexNormalsHelper: jest.fn().mockImplementation(() => ({
+vi.mock('three/examples/jsm/helpers/VertexNormalsHelper.js', () => ({
+  VertexNormalsHelper: vi.fn().mockImplementation(() => ({
     visible: false,
     geometry: { name: '' },
   })),
 }));
 
 // Mock messenger
-jest.mock('../../messenger', () => ({
-  on: jest.fn(),
-  emit: jest.fn(),
-  off: jest.fn(),
+vi.mock('../../messenger', () => ({
+  on: vi.fn(),
+  emit: vi.fn(),
+  off: vi.fn(),
 }));
 
 // Mock store
-jest.mock('../../store', () => ({
-  addContainer: jest.fn(() => jest.fn()),
-  removeContainer: jest.fn(),
-  setContainerProperty: jest.fn(),
+vi.mock('../../store', () => ({
+  addContainer: vi.fn(() => vi.fn()),
+  removeContainer: vi.fn(),
+  setContainerProperty: vi.fn(),
 }));
 
 // Mock CSG
-jest.mock('../../compute/csg', () => ({
+vi.mock('../../compute/csg', () => ({
   math: {
     vec3: {
-      fromArray: jest.fn((arr) => arr),
+      fromArray: vi.fn((arr) => arr),
     },
     plane: {
-      fromPoints: jest.fn(() => [0, 0, 1, 0]),
+      fromPoints: vi.fn(() => [0, 0, 1, 0]),
     },
   },
   geometry: {
     poly3: {
-      fromPointsAndPlane: jest.fn(() => ({
+      fromPointsAndPlane: vi.fn(() => ({
         vertices: [],
         plane: [0, 0, 1, 0],
       })),
@@ -47,45 +47,45 @@ jest.mock('../../compute/csg', () => ({
 }));
 
 // Mock BRDF
-jest.mock('../../compute/raytracer/brdf', () => ({
-  BRDF: jest.fn().mockImplementation(() => ({})),
+vi.mock('../../compute/raytracer/brdf', () => ({
+  BRDF: vi.fn().mockImplementation(() => ({})),
 }));
 
 // Mock interpolateAlpha
-jest.mock('../../compute/acoustics/interpolate-alpha', () => ({
+vi.mock('../../compute/acoustics/interpolate-alpha', () => ({
   __esModule: true,
-  default: jest.fn().mockReturnValue((freq: number) => 0.5),
+  default: vi.fn().mockReturnValue((freq: number) => 0.5),
 }));
 
 // Mock reflectionCoefficient
-jest.mock('../../compute/acoustics/reflection-coefficient', () => ({
+vi.mock('../../compute/acoustics/reflection-coefficient', () => ({
   __esModule: true,
-  default: jest.fn().mockReturnValue(0.5),
+  default: vi.fn().mockReturnValue(0.5),
 }));
 
 // Mock scatteringFunction
-jest.mock('../../compute/acoustics/scattering-function', () => ({
-  scatteringFunction: jest.fn().mockReturnValue((f: number) => 0.1),
+vi.mock('../../compute/acoustics/scattering-function', () => ({
+  scatteringFunction: vi.fn().mockReturnValue((f: number) => 0.1),
 }));
 
 // Mock TessellateModifier
-jest.mock('../../compute/radiance/TessellateModifier', () => ({
-  TessellateModifier: jest.fn().mockImplementation(() => ({
-    modify: jest.fn().mockReturnValue({
-      getAttribute: jest.fn().mockReturnValue({
+vi.mock('../../compute/radiance/TessellateModifier', () => ({
+  TessellateModifier: vi.fn().mockImplementation(() => ({
+    modify: vi.fn().mockReturnValue({
+      getAttribute: vi.fn().mockReturnValue({
         count: 0,
-        getX: jest.fn(),
-        getY: jest.fn(),
-        getZ: jest.fn(),
+        getX: vi.fn(),
+        getY: vi.fn(),
+        getZ: vi.fn(),
       }),
     }),
   })),
 }));
 
 // Mock SurfaceElement
-jest.mock('../surface-element', () => ({
+vi.mock('../surface-element', () => ({
   __esModule: true,
-  default: jest.fn().mockImplementation(() => ({})),
+  default: vi.fn().mockImplementation(() => ({})),
 }));
 
 // Create mock geometry before importing Surface
@@ -200,8 +200,8 @@ describe('Surface', () => {
   describe('destroyEvents', () => {
     it('calls and removes all event destructors', () => {
       const surface = new Surface('Test');
-      const destructor1 = jest.fn();
-      const destructor2 = jest.fn();
+      const destructor1 = vi.fn();
+      const destructor2 = vi.fn();
 
       surface.eventDestructors.push(destructor1, destructor2);
       surface.destroyEvents();

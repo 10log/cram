@@ -1,7 +1,8 @@
 // @ts-nocheck
 import React, {useEffect, useMemo, useState} from 'react';
 import {on} from '../../messenger';
-import { Tabs, Tab, Box } from "@mui/material";
+import { Tabs, Tab, Box, Typography } from "@mui/material";
+import type { SxProps, Theme } from "@mui/material/styles";
 
 import './ParameterConfig.css';
 import RayTracerTab from './RayTracerTab';
@@ -9,7 +10,6 @@ import RendererTab from './RendererTab';
 import FDTD_2DTab from './FDTD_2DTab';
 import { ImageSourceTab } from './image-source-tab/ImageSourceTab';
 import { useContainer, useSolver } from '../../store';
-import styled from 'styled-components';
 import RT60Tab from './RT60Tab';
 import EnergyDecayTab from './EnergyDecayTab';
 import RoomTab from './RoomTab';
@@ -33,18 +33,14 @@ function TabPanel({ children, value, index }: TabPanelProps) {
   );
 }
 
+const selectContainerSx: SxProps<Theme> = {
+  display: "grid",
+  m: "0 1em 1em 1em",
+};
 
-const SelectContainer = styled.div`
-  display: grid;
-  margin: 0 1em 1em 1em;
-`;
-
-const TabText = styled.div`
-  user-select: none;
-  -moz-user-select: none;
-  -webkit-user-select: none;
-  -ms-user-select: none;
-`;
+const tabTextSx: SxProps<Theme> = {
+  userSelect: "none",
+};
 
 export interface ParameterConfigState {
   selectedTabIndex: number;
@@ -96,12 +92,12 @@ export const SolversTab = () => {
   const SolverParameterConfig = SolverComponentMap.get(solvers.get(selectedSolverId)!)!;
   return (
     <div>
-      <SelectContainer>
+      <Box sx={selectContainerSx}>
         <select value={selectedSolverId} onChange={event => setSelectedSolverId(event.currentTarget.value)}>
           <option value="choose">Choose a Solver</option>
           {[...solvers].map(([uuid, _], i) => <SolverOptionTitle key={`${uuid}-${i}-tab`} uuid={uuid} />)}
         </select>
-      </SelectContainer>
+      </Box>
       {solvers.has(selectedSolverId) ? <SolverParameterConfig uuid={selectedSolverId} /> : <></>}
     </div>
   );
@@ -145,13 +141,12 @@ export const ObjectsTab = () => {
   const ObjectParameterConfig = ObjectComponentMap.get(objects.get(selectedObjectId)!)!;
   return (
     <div>
-      <SelectContainer>
-        
+      <Box sx={selectContainerSx}>
         <select value={selectedObjectId} onChange={event => setSelectedObjectId(event.currentTarget.value)}>
         <option value="choose">Choose an Object</option>
           {[...objects].map(([uuid, _], i) => <ObjectOptionTitle key={`${uuid}-${i}-tab`} uuid={uuid} />)}
         </select>
-      </SelectContainer>
+      </Box>
       {validSelection ? <ObjectParameterConfig uuid={selectedObjectId} /> : <></>}
     </div>
   );
@@ -181,9 +176,9 @@ export const ParameterConfig = () => {
         variant="fullWidth"
         sx={{ borderBottom: 1, borderColor: 'divider' }}
       >
-        <Tab value="renderer" label={<TabText>Renderer</TabText>} />
-        <Tab value="solvers" label={<TabText>Solvers</TabText>} />
-        <Tab value="objects" label={<TabText>Objects</TabText>} />
+        <Tab value="renderer" label={<Typography sx={tabTextSx}>Renderer</Typography>} />
+        <Tab value="solvers" label={<Typography sx={tabTextSx}>Solvers</Typography>} />
+        <Tab value="objects" label={<Typography sx={tabTextSx}>Objects</Typography>} />
       </Tabs>
       <TabPanel value={selectedTabId} index="renderer">
         <RendererTab />

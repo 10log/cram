@@ -1,22 +1,22 @@
-import React from 'react';
+import React from "react";
+import Box from "@mui/material/Box";
+import type { SxProps, Theme } from "@mui/material/styles";
 
-import styled from 'styled-components';
+const menuItemTextSx: SxProps<Theme> = {
+  display: "flex",
+  justifyContent: "space-between",
+};
 
-const MenuItemTextComponent = styled.div`
-  display: flex;
-  justify-content: space-between;
-`;
+const hotkeyContainerSx: SxProps<Theme> = {
+  display: "flex",
+  justifyContent: "space-between",
+};
 
-const MenuItemHotKeyContainer = styled.div`
-  display: flex;  
-  justify-content: space-between;
-`;
+const hotkeySx: SxProps<Theme> = {
+  minWidth: "10px",
+};
 
-const MenuItemHotKey = styled.span`
-  min-width: 10px;
-`;
-
-export interface MenuItemTextProps{
+export interface MenuItemTextProps {
   text: string;
   hotkey: string[];
 }
@@ -24,11 +24,15 @@ export interface MenuItemTextProps{
 export default function MenuItemText(props: MenuItemTextProps) {
   const id = props.hotkey.join("");
   return (
-    <MenuItemTextComponent>
+    <Box sx={menuItemTextSx}>
       <div>{props.text}</div>
-      <MenuItemHotKeyContainer>
-        {props.hotkey.map((key, i) => <MenuItemHotKey key={id+props.text+String(i)}>{key}</MenuItemHotKey>)}
-      </MenuItemHotKeyContainer>
-    </MenuItemTextComponent>
+      <Box sx={hotkeyContainerSx}>
+        {props.hotkey.map((key, i) => (
+          <Box component="span" key={id + props.text + String(i)} sx={hotkeySx}>
+            {key}
+          </Box>
+        ))}
+      </Box>
+    </Box>
   );
 }

@@ -1,26 +1,28 @@
 import React from "react";
-import styled from 'styled-components'
-import Label from '../../label/Label';
+import Box from "@mui/material/Box";
+import type { SxProps, Theme } from "@mui/material/styles";
+import Label from "../../label/Label";
 
-const PropertyRowLabelContainer = styled.div`
-  text-align: right;
-  min-width: 100px;
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-`;
+const propertyRowLabelContainerSx: SxProps<Theme> = {
+  textAlign: "right",
+  minWidth: "100px",
+  display: "flex",
+  justifyContent: "flex-end",
+  alignItems: "center",
+};
 
 export interface PropertyRowLabelProps {
   label: string;
   tooltip?: string;
   hasToolTip?: boolean;
 }
+
 export default function PropertyRowLabel(props: PropertyRowLabelProps) {
   return (
-    <PropertyRowLabelContainer>
+    <Box sx={propertyRowLabelContainerSx}>
       <Label hasTooltip={props.hasToolTip} tooltipText={props.tooltip || ""}>
         {props.label}
       </Label>
-    </PropertyRowLabelContainer>
+    </Box>
   );
 }

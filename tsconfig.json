@@ -9,8 +9,8 @@
     "strictPropertyInitialization": true,
     "forceConsistentCasingInFileNames": true,
     "noErrorTruncation": true,
-    "jsx": "preserve",
-    "target": "es2020",
+    "jsx": "react-jsx",
+    "target": "esnext",
     "module": "esnext",
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
@@ -36,7 +36,8 @@
 
     "lib": [
       "dom",
-      "es2020",
+      "dom.iterable",
+      "esnext",
       "webworker"
     ],
     "skipLibCheck": true,

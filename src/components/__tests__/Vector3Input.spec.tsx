@@ -16,11 +16,11 @@ describe('Vector3Input', () => {
     min: -100,
     max: 100,
     step: 1,
-    onChange: jest.fn(),
+    onChange: vi.fn(),
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('Rendering', () => {
@@ -88,7 +88,7 @@ describe('Vector3Input', () => {
 
   describe('Form Submission', () => {
     it('calls onChange when form is submitted', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<Vector3Input {...defaultProps} onChange={handleChange} />);
 
       // Get the first form and submit it
@@ -99,7 +99,7 @@ describe('Vector3Input', () => {
     });
 
     it('passes clamped values in onChange', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<Vector3Input {...defaultProps} min={0} max={10} onChange={handleChange} />);
 
       const inputs = screen.getAllByRole('spinbutton');
@@ -117,7 +117,7 @@ describe('Vector3Input', () => {
     });
 
     it('clamps negative values to min', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<Vector3Input {...defaultProps} min={0} max={100} onChange={handleChange} />);
 
       const inputs = screen.getAllByRole('spinbutton');

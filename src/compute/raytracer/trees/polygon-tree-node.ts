@@ -1,7 +1,8 @@
 // @ts-nocheck
 import { math, geometry, splitPolygonByPlane } from '../../csg';
 
-const EPS = math.constants.EPS;
+// Epsilon constant for floating point comparisons
+const EPS = 1e-5;
 const vec3 = math.vec3;
 const poly3 = geometry.poly3;
 

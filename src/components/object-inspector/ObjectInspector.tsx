@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
-import styled from "styled-components";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import type { SxProps, Theme } from "@mui/material/styles";
 import CloseIcon from "@mui/icons-material/Close";
 import { NodesIcon, RoomIcon, SourceIcon, ReceiverIcon } from "../icons";
 import { on } from "../../messenger";
@@ -11,74 +13,73 @@ import SourceTab from "../parameter-config/SourceTab";
 import ReceiverTab from "../parameter-config/ReceiverTab";
 import SurfaceTab from "../parameter-config/SurfaceTab";
 
-const InspectorContainer = styled.div`
-  border-top: 1px solid #d0d7de;
-  background-color: #fff;
-`;
+const inspectorContainerSx: SxProps<Theme> = {
+  borderTop: "1px solid #d0d7de",
+  bgcolor: "#fff",
+};
 
-const InspectorHeader = styled.div`
-  display: flex;
-  align-items: center;
-  padding: 8px 12px;
-  background-color: #f6f8fa;
-  border-bottom: 1px solid #e1e4e8;
-`;
+const inspectorHeaderSx: SxProps<Theme> = {
+  display: "flex",
+  alignItems: "center",
+  p: "8px 12px",
+  bgcolor: "#f6f8fa",
+  borderBottom: "1px solid #e1e4e8",
+};
 
-const IconContainer = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  margin-right: 8px;
-  color: #5c6670;
-`;
+const iconContainerSx: SxProps<Theme> = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: 20,
+  height: 20,
+  mr: 1,
+  color: "#5c6670",
+};
 
-const Title = styled.div`
-  flex: 1;
-  font-size: 12px;
-  font-weight: 500;
-  color: #1c2127;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-`;
+const titleSx: SxProps<Theme> = {
+  flex: 1,
+  fontSize: 12,
+  fontWeight: 500,
+  color: "#1c2127",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+};
 
-const ObjectKind = styled.span`
-  font-size: 11px;
-  font-weight: 400;
-  color: #656d76;
-  margin-left: 6px;
-`;
+const objectKindSx: SxProps<Theme> = {
+  fontSize: 11,
+  fontWeight: 400,
+  color: "#656d76",
+  ml: "6px",
+};
 
-const CloseButton = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 3px;
-  color: #656d76;
-  cursor: pointer;
+const closeButtonSx: SxProps<Theme> = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: 20,
+  height: 20,
+  borderRadius: "3px",
+  color: "#656d76",
+  cursor: "pointer",
+  "&:hover": {
+    bgcolor: "#dde3e8",
+    color: "#1c2127",
+  },
+};
 
-  &:hover {
-    background-color: #dde3e8;
-    color: #1c2127;
-  }
-`;
+const inspectorContentSx: SxProps<Theme> = {
+  p: "8px 0",
+  maxHeight: 300,
+  overflowY: "auto",
+};
 
-const InspectorContent = styled.div`
-  padding: 8px 0;
-  max-height: 300px;
-  overflow-y: auto;
-`;
-
-const EmptyState = styled.div`
-  padding: 16px;
-  text-align: center;
-  color: #8c959f;
-  font-size: 12px;
-`;
+const emptyStateSx: SxProps<Theme> = {
+  p: 2,
+  textAlign: "center",
+  color: "#8c959f",
+  fontSize: 12,
+};
 
 /**
  * Maps object kind to its icon component
@@ -140,26 +141,30 @@ export default function ObjectInspector() {
   const ParameterComponent = ObjectComponentMap.get(kind);
 
   return (
-    <InspectorContainer>
-      <InspectorHeader>
-        <IconContainer>
+    <Box sx={inspectorContainerSx}>
+      <Box sx={inspectorHeaderSx}>
+        <Box sx={iconContainerSx}>
           <Icon fontSize="small" />
-        </IconContainer>
-        <Title>
+        </Box>
+        <Typography sx={titleSx}>
           {selectedObject.name || "Untitled"}
-          <ObjectKind>{kind}</ObjectKind>
-        </Title>
-        <CloseButton onClick={handleClose} title="Close inspector">
+          <Typography component="span" sx={objectKindSx}>
+            {kind}
+          </Typography>
+        </Typography>
+        <Box sx={closeButtonSx} onClick={handleClose} title="Close inspector">
           <CloseIcon style={{ fontSize: 16 }} />
-        </CloseButton>
-      </InspectorHeader>
-      <InspectorContent>
+        </Box>
+      </Box>
+      <Box sx={inspectorContentSx}>
         {ParameterComponent ? (
           <ParameterComponent uuid={selectedObject.uuid} />
         ) : (
-          <EmptyState>No properties available for this object type.</EmptyState>
+          <Typography sx={emptyStateSx}>
+            No properties available for this object type.
+          </Typography>
         )}
-      </InspectorContent>
-    </InspectorContainer>
+      </Box>
+    </Box>
   );
 }

@@ -3,8 +3,14 @@
 // flatten the given argument into a single flat array
 // the argument can be composed of multiple depths of values and arrays
 
-import { CSG } from '@jscad/csg';
+// Use dynamic import with top-level await to ensure jscad-bundle is fully
+// loaded and initialized before any other code runs. This prevents TDZ errors
+// from circular dependencies when bundlers reorder module code.
+// The @vite-ignore comment prevents Vite/Rollup from processing the import,
+// keeping the esbuild-generated CommonJS wrappers intact.
+const jscadBundle = await import(/* @vite-ignore */ './jscad-bundle.js').then(m => m.default);
 
+const { CSG } = jscadBundle;
 const { Plane, Vector3D, Line2D, Line3D } = CSG;
 
 const flatten = (arr) => {

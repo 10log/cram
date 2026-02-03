@@ -1,55 +1,33 @@
 import React from "react";
+import Box from "@mui/material/Box";
+import type { SxProps, Theme } from "@mui/material/styles";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import Label from "../../label/Label";
-import styled from "styled-components";
 
-const PropertyRowFolderLabel = styled.div`
-  :hover {
-    background-color: #eaeef1;
-    cursor: pointer;
-    user-select: none;
-  }
-`;
+const propertyRowFolderLabelSx: SxProps<Theme> = {
+  "&:hover": {
+    bgcolor: "#eaeef1",
+    cursor: "pointer",
+    userSelect: "none",
+  },
+};
 
-const PropertyRowFolderContainer = styled.div`
-  > * {
-    --transition-time: 50ms;
-    --folder-contents-shadow-top: inset 0px 15px 10px -15px rgba(221, 226, 230, 0.5);
-    --folder-contents-shadow-bottom: inset 0px -15px 10px -15px rgba(221, 226, 230, 0.5);
-    --transition-function: cubic-bezier(0.25, 0.1, 0.25, 1);
-  }
-  padding-bottom: .25em;
-`;
+const propertyRowFolderContainerSx: SxProps<Theme> = {
+  "--transition-time": "50ms",
+  "--folder-contents-shadow-top": "inset 0px 15px 10px -15px rgba(221, 226, 230, 0.5)",
+  "--folder-contents-shadow-bottom": "inset 0px -15px 10px -15px rgba(221, 226, 230, 0.5)",
+  "--transition-function": "cubic-bezier(0.25, 0.1, 0.25, 1)",
+  pb: "0.25em",
+};
 
-const PropertyRowFolderContents = styled.div`
-  
-    height: 100px;
-    padding-top: 0.5em;
-    padding-bottom: 0.5em;
-    overflow: hidden;
-
-    /* -webkit-box-shadow: var(--folder-contents-shadow-top), var(--folder-contents-shadow-bottom); */
-    /* -moz-box-shadow: var(--folder-contents-shadow-top), var(--folder-contents-shadow-bottom); */
-    /* box-shadow: var(--folder-contents-shadow-top), var(--folder-contents-shadow-bottom); */
-    /* background-color: #000000; */
-
-    -webkit-transition: all var(--transition-time) var(--transition-function);
-    -moz-transition: all var(--transition-time) var(--transition-function);
-    -o-transition: all var(--transition-time) var(--transition-function);
-    transition: all var(--transition-time) var(--transition-function);
-    
-    [hidden] {
-      height: 0;
-      padding-top: 0;
-      padding-bottom: 0;
-    
-      -webkit-transition: all var(--transition-time) var(--transition-function);
-      -moz-transition: all var(--transition-time) var(--transition-function);
-      -o-transition: all var(--transition-time) var(--transition-function);
-      transition: all var(--transition-time) var(--transition-function);
-    }
-`;
+const propertyRowFolderContentsSx = (open: boolean): SxProps<Theme> => ({
+  height: open ? "max-content" : 0,
+  pt: open ? "0.5em" : 0,
+  pb: open ? "0.5em" : 0,
+  overflow: "hidden",
+  transition: "all 50ms cubic-bezier(0.25, 0.1, 0.25, 1)",
+});
 
 export interface PropertyRowFolderProps {
   label: string;
@@ -58,26 +36,19 @@ export interface PropertyRowFolderProps {
   id?: string;
   onOpenClose: (id?: string) => void;
 }
+
 export default function PropertyRowFolder(props: PropertyRowFolderProps) {
-  const contentClassNames = ["property-row-folder-contents", "property-row-folder-contents-hidden"];
-  const contentStyle = {} as React.CSSProperties;
-  if (props.open) {
-    // contentStyle.height = `calc(${props.children.length}rem + 1em)`;
-    contentStyle.height = `max-content`;
-  }
   return (
-    <PropertyRowFolderContainer>
-      <PropertyRowFolderLabel onClick={() => props.onOpenClose(props.id)}>
+    <Box sx={propertyRowFolderContainerSx}>
+      <Box sx={propertyRowFolderLabelSx} onClick={() => props.onOpenClose(props.id)}>
         <span style={{ verticalAlign: "middle" }}>
           {props.open ? <ExpandMoreIcon fontSize="inherit" /> : <ChevronRightIcon fontSize="inherit" />}
         </span>
         <Label hasTooltip={false} style={{ display: "inline-block" }}>
           {props.label}
         </Label>
-      </PropertyRowFolderLabel>
-      <PropertyRowFolderContents hidden={!props.open} style={contentStyle}>
-        {props.children}
-      </PropertyRowFolderContents>
-    </PropertyRowFolderContainer>
+      </Box>
+      <Box sx={propertyRowFolderContentsSx(props.open)}>{props.children}</Box>
+    </Box>
   );
 }

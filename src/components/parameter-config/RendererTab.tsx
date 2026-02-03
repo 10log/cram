@@ -49,7 +49,7 @@ type RendererSliderProps = {
 }
 
 
-const updateProjectionMatrix = (renderer: Renderer) => renderer.camera.updateProjectionMatrix();
+const updateProjectionMatrix = (renderer: Renderer) => renderer.camera?.updateProjectionMatrix();
 
 
 const RendererSlider = ({label, property, tooltip, updateFn, min, max, step}: RendererSliderProps) => {

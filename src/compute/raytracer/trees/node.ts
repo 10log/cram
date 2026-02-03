@@ -36,7 +36,7 @@ export class Node {
     let node;
     for (let i = 0; i < queue.length; i++) {
       node = queue[i];
-      if (node.plane) node.plane = plane.flip(node.plane);
+      if (node.plane) node.plane = plane.flip(plane.create(), node.plane);
       if (node.front) queue.push(node.front);
       if (node.back) queue.push(node.back);
       let temp = node.front;

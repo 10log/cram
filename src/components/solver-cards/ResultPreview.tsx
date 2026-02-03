@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
-import styled from "styled-components";
+import Box from "@mui/material/Box";
+import type { SxProps, Theme } from "@mui/material/styles";
 import { useShallow } from "zustand/react/shallow";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import BarChartIcon from "@mui/icons-material/BarChart";
@@ -15,72 +16,70 @@ import { Bar } from "@visx/shape";
 import { Group } from "@visx/group";
 import chroma from "chroma-js";
 
-const PreviewContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  padding: 8px;
-  margin: 4px 0;
-  background-color: #fff;
-  border: 1px solid #e1e4e8;
-  border-radius: 4px;
-  cursor: pointer;
+const previewContainerSx: SxProps<Theme> = {
+  display: "flex",
+  flexDirection: "column",
+  p: "8px",
+  my: "4px",
+  bgcolor: "#fff",
+  border: "1px solid #e1e4e8",
+  borderRadius: "4px",
+  cursor: "pointer",
+  "&:hover": {
+    bgcolor: "#f6f8fa",
+    borderColor: "#d0d7de",
+  },
+};
 
-  &:hover {
-    background-color: #f6f8fa;
-    border-color: #d0d7de;
-  }
-`;
+const previewHeaderSx: SxProps<Theme> = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  mb: "6px",
+};
 
-const PreviewHeader = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 6px;
-`;
+const previewTitleSx: SxProps<Theme> = {
+  display: "flex",
+  alignItems: "center",
+  gap: "6px",
+  fontSize: 12,
+  fontWeight: 500,
+  color: "#1c2127",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+};
 
-const PreviewTitle = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  font-weight: 500;
-  color: #1c2127;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-`;
+const expandButtonSx: SxProps<Theme> = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  p: "2px",
+  borderRadius: "3px",
+  color: "#656d76",
+  "&:hover": {
+    bgcolor: "#dde3e8",
+    color: "#1c2127",
+  },
+};
 
-const ExpandButton = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2px;
-  border-radius: 3px;
-  color: #656d76;
+const miniChartContainerSx: SxProps<Theme> = {
+  height: 40,
+  width: "100%",
+  bgcolor: "#f6f8fa",
+  borderRadius: "3px",
+  overflow: "hidden",
+};
 
-  &:hover {
-    background-color: #dde3e8;
-    color: #1c2127;
-  }
-`;
-
-const MiniChartContainer = styled.div`
-  height: 40px;
-  width: 100%;
-  background-color: #f6f8fa;
-  border-radius: 3px;
-  overflow: hidden;
-`;
-
-const NoDataText = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  font-size: 11px;
-  color: #8c959f;
-  font-style: italic;
-`;
+const noDataTextSx: SxProps<Theme> = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  height: "100%",
+  fontSize: 11,
+  color: "#8c959f",
+  fontStyle: "italic",
+};
 
 /**
  * Maps result kind to its icon component
@@ -271,7 +270,7 @@ export default function ResultPreview({ uuid }: ResultPreviewProps) {
 
   const renderMiniChart = () => {
     if (!hasData) {
-      return <NoDataText>No data yet</NoDataText>;
+      return <Box sx={noDataTextSx}>No data yet</Box>;
     }
 
     switch (kind) {
@@ -282,22 +281,22 @@ export default function ResultPreview({ uuid }: ResultPreviewProps) {
       case ResultKind.ImpulseResponse:
         return <MiniIRChart data={data} />;
       default:
-        return <NoDataText>Preview not available</NoDataText>;
+        return <Box sx={noDataTextSx}>Preview not available</Box>;
     }
   };
 
   return (
-    <PreviewContainer onClick={handleClick}>
-      <PreviewHeader>
-        <PreviewTitle>
+    <Box sx={previewContainerSx} onClick={handleClick}>
+      <Box sx={previewHeaderSx}>
+        <Box sx={previewTitleSx}>
           <Icon style={{ fontSize: 14 }} />
           {name}
-        </PreviewTitle>
-        <ExpandButton onClick={handleExpandClick} title="Open in Results panel">
+        </Box>
+        <Box sx={expandButtonSx} onClick={handleExpandClick} title="Open in Results panel">
           <OpenInNewIcon style={{ fontSize: 14 }} />
-        </ExpandButton>
-      </PreviewHeader>
-      <MiniChartContainer>{renderMiniChart()}</MiniChartContainer>
-    </PreviewContainer>
+        </Box>
+      </Box>
+      <Box sx={miniChartContainerSx}>{renderMiniChart()}</Box>
+    </Box>
   );
 }

@@ -13,11 +13,11 @@ import { PropertyRowCheckbox } from '../PropertyRowCheckbox';
 describe('PropertyRowCheckbox', () => {
   const defaultProps = {
     value: false,
-    onChange: jest.fn(),
+    onChange: vi.fn(),
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('Rendering', () => {
@@ -48,7 +48,7 @@ describe('PropertyRowCheckbox', () => {
 
   describe('onChange Handler', () => {
     it('calls onChange when clicking unchecked checkbox', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<PropertyRowCheckbox value={false} onChange={handleChange} />);
       const checkbox = screen.getByRole('checkbox');
 
@@ -58,7 +58,7 @@ describe('PropertyRowCheckbox', () => {
     });
 
     it('calls onChange when clicking checked checkbox', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<PropertyRowCheckbox value={true} onChange={handleChange} />);
       const checkbox = screen.getByRole('checkbox');
 
@@ -68,7 +68,7 @@ describe('PropertyRowCheckbox', () => {
     });
 
     it('calls onChange with correct value on each toggle', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       const { rerender } = render(
         <PropertyRowCheckbox value={false} onChange={handleChange} />
       );
@@ -126,7 +126,7 @@ describe('PropertyRowCheckbox', () => {
     });
 
     it('can be toggled with space key', async () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       const user = userEvent.setup();
       render(<PropertyRowCheckbox {...defaultProps} onChange={handleChange} />);
       const checkbox = screen.getByRole('checkbox');
@@ -138,7 +138,7 @@ describe('PropertyRowCheckbox', () => {
     });
 
     it('can be toggled with enter key via click', async () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       const user = userEvent.setup();
       render(<PropertyRowCheckbox {...defaultProps} onChange={handleChange} />);
       const checkbox = screen.getByRole('checkbox');
@@ -151,7 +151,7 @@ describe('PropertyRowCheckbox', () => {
 
   describe('Edge Cases', () => {
     it('handles rapid toggling', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<PropertyRowCheckbox {...defaultProps} onChange={handleChange} />);
       const checkbox = screen.getByRole('checkbox');
 
@@ -164,7 +164,7 @@ describe('PropertyRowCheckbox', () => {
     });
 
     it('onChange receives boolean values only', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<PropertyRowCheckbox value={false} onChange={handleChange} />);
       const checkbox = screen.getByRole('checkbox');
 

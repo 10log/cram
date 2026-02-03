@@ -9,7 +9,9 @@ import { GridRows } from '@visx/grid';
 import { Result, ResultKind, useResult } from '../../store/result-store';
 import { pickProps } from '../../common/helpers';
 import { on } from '../../messenger';
-import styled from 'styled-components';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import type { SxProps, Theme } from '@mui/material/styles';
 import { LegendOrdinal } from '@visx/legend';
 
 export type BarGroupProps = {
@@ -88,41 +90,27 @@ const getFreqAsString = (d: RTData) => (d.frequency).toString()
 const _getSabine = (d: RTData) => d.sabine;
 const _getEyring = (d: RTData) => d.eyring; 
 
-const VerticalContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-`;
+const verticalContainerSx: SxProps<Theme> = {
+  display: "flex",
+  flexDirection: "column",
+};
 
-const Title = styled.div`
-  display: flex; 
-  justify-content: center;
-`;
+const titleSx: SxProps<Theme> = {
+  display: "flex",
+  justifyContent: "center",
+};
 
-const HorizontalContainer = styled.div`
-  display: flex;
-  flex-direction: row;
-  flex: 1;
-`;
+const horizontalContainerSx: SxProps<Theme> = {
+  display: "flex",
+  flexDirection: "row",
+  flex: 1,
+};
 
-const _LegendContainer = styled.div`
- display: flex;
- flex-direction: column;
- align-items: center;
- padding: 0px 16px;
-`;
-
-const _FrequencyContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 16px 16px;
-`;
-
-const GraphContainer = styled.div`
-  display: flex;
-  flex: 8;
-  width: 80%;
-`;
+const graphContainerSx: SxProps<Theme> = {
+  display: "flex",
+  flex: 8,
+  width: "80%",
+};
 
 const useUpdate = () => {
   const [updateCount, setUpdateCount] = useState<number>(0);
@@ -281,17 +269,17 @@ export const RT60Chart = ({
   }
 
   return width < 10 ? null : (
-    <VerticalContainer>
-      <Title>{'Statistical RT60 Results'}</Title>
-      <HorizontalContainer>
-        <GraphContainer>
+    <Box sx={verticalContainerSx}>
+      <Typography sx={titleSx}>{'Statistical RT60 Results'}</Typography>
+      <Box sx={horizontalContainerSx}>
+        <Box sx={graphContainerSx}>
           <Chart {...{ width, height, uuid, events }}></Chart>
-        </GraphContainer>
-        <VerticalContainer>
+        </Box>
+        <Box sx={verticalContainerSx}>
           <LegendOrdinal scale={rtTypeColorScale} labelFormat={label => legendLabel(label)}/>
-        </VerticalContainer>
-      </HorizontalContainer>
-    </VerticalContainer>
+        </Box>
+      </Box>
+    </Box>
   );
 }; 
 

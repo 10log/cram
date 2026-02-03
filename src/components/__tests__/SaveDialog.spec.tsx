@@ -14,7 +14,7 @@ import { SaveDialog } from '../SaveDialog';
 import { useAppStore } from '../../store/app-store';
 
 // Mock MUI Dialog components
-jest.mock('@mui/material', () => ({
+vi.mock('@mui/material', () => ({
   Dialog: ({ open, children }: any) =>
     open ? (
       <div data-testid="dialog" role="dialog">
@@ -40,16 +40,16 @@ jest.mock('@mui/material', () => ({
 }));
 
 // Mock messenger
-jest.mock('../../messenger', () => ({
-  on: jest.fn(() => jest.fn()),
-  emit: jest.fn(),
+vi.mock('../../messenger', () => ({
+  on: vi.fn(() => vi.fn()),
+  emit: vi.fn(),
 }));
 
 describe('SaveDialog', () => {
   const originalState = useAppStore.getState();
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     // Reset store
     useAppStore.setState({
       ...originalState,

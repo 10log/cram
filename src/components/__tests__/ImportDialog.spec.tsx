@@ -15,7 +15,7 @@ import ImportDialog, { DROP_ALLOWED } from '../ImportDialog';
 import { useAppStore } from '../../store/app-store';
 
 // Mock MUI components
-jest.mock('@mui/material', () => ({
+vi.mock('@mui/material', () => ({
   Dialog: ({ open, children, onClose }: any) =>
     open ? (
       <div data-testid="dialog" role="dialog">
@@ -41,16 +41,16 @@ jest.mock('@mui/material', () => ({
 }));
 
 // Mock messenger
-jest.mock('../../messenger', () => ({
+vi.mock('../../messenger', () => ({
   messenger: {
-    postMessage: jest.fn(),
+    postMessage: vi.fn(),
   },
-  on: jest.fn(() => jest.fn()),
-  emit: jest.fn(),
+  on: vi.fn(() => vi.fn()),
+  emit: vi.fn(),
 }));
 
 // Mock file-type
-jest.mock('../../common/file-type', () => ({
+vi.mock('../../common/file-type', () => ({
   __esModule: true,
   default: {
     assoc: { obj: 'icon-obj', stl: 'icon-stl' },
@@ -60,7 +60,7 @@ jest.mock('../../common/file-type', () => ({
 }));
 
 // Mock dayt
-jest.mock('../../common/dayt', () => ({
+vi.mock('../../common/dayt', () => ({
   mmm_dd_yyyy: (timestamp: number) => 'Jan 01, 2024',
 }));
 
@@ -68,7 +68,7 @@ describe('ImportDialog', () => {
   const originalState = useAppStore.getState();
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     useAppStore.setState({
       ...originalState,
       importDialogVisible: false,

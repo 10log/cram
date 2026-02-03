@@ -1,24 +1,22 @@
 import React from "react";
-import styled from 'styled-components';
+import Box from "@mui/material/Box";
+import type { SxProps, Theme } from "@mui/material/styles";
 
-const PropertyRowContainer = styled.div`
-  display: grid;
-  grid-template-columns: 3fr 8fr 2fr;
-  user-select: none;
-  font-size: 9pt;
-  margin-bottom: .125em;
-  :last-child {
-    margin-bottom: 0;
-  }
-`;
-export interface PropertyRowProps{
+const propertyRowContainerSx: SxProps<Theme> = {
+  display: "grid",
+  gridTemplateColumns: "3fr 8fr 2fr",
+  userSelect: "none",
+  fontSize: "9pt",
+  mb: "0.125em",
+  "&:last-child": {
+    mb: 0,
+  },
+};
+
+export interface PropertyRowProps {
   children: React.ReactNode;
 }
 
 export default function PropertyRow(props: PropertyRowProps) {
-  return (
-    <PropertyRowContainer>
-      {props.children}
-    </PropertyRowContainer>
-  )
+  return <Box sx={propertyRowContainerSx}>{props.children}</Box>;
 }

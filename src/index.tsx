@@ -950,7 +950,7 @@ export async function finishedLoading() {
 const container = document.getElementById("root");
 if (!container) throw new Error('Root container not found');
 const root = createRoot(container);
-root.render(<App {...cram.state} />);
+root.render(<App {...cram.state} onMount={finishedLoading} />);
 
-// Note: finishedLoading is now called from App.componentDidMount for proper React 18 lifecycle
+// finishedLoading is passed as onMount prop and called from App.componentDidMount
 history.clear();

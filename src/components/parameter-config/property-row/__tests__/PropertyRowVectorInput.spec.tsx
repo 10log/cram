@@ -13,11 +13,11 @@ import { PropertyRowVectorInput } from '../PropertyRowVectorInput';
 describe('PropertyRowVectorInput', () => {
   const defaultProps = {
     value: 0,
-    onChange: jest.fn(),
+    onChange: vi.fn(),
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('Rendering', () => {
@@ -60,7 +60,7 @@ describe('PropertyRowVectorInput', () => {
 
   describe('onChange Handler', () => {
     it('calls onChange when value changes', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<PropertyRowVectorInput {...defaultProps} onChange={handleChange} />);
       const input = screen.getByRole('spinbutton');
 
@@ -70,7 +70,7 @@ describe('PropertyRowVectorInput', () => {
     });
 
     it('calls onChange with numeric value', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<PropertyRowVectorInput {...defaultProps} onChange={handleChange} />);
       const input = screen.getByRole('spinbutton');
 
@@ -80,7 +80,7 @@ describe('PropertyRowVectorInput', () => {
     });
 
     it('calls onChange with negative numbers', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<PropertyRowVectorInput {...defaultProps} onChange={handleChange} />);
       const input = screen.getByRole('spinbutton');
 
@@ -90,7 +90,7 @@ describe('PropertyRowVectorInput', () => {
     });
 
     it('calls onChange with NaN when cleared', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<PropertyRowVectorInput {...defaultProps} value={10} onChange={handleChange} />);
       const input = screen.getByRole('spinbutton');
 
@@ -112,7 +112,7 @@ describe('PropertyRowVectorInput', () => {
     });
 
     it('value is controlled externally', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<PropertyRowVectorInput value={5} onChange={handleChange} />);
       const input = screen.getByRole('spinbutton');
 
@@ -137,7 +137,7 @@ describe('PropertyRowVectorInput', () => {
 
     it('allows typing numbers', async () => {
       const user = userEvent.setup();
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<PropertyRowVectorInput {...defaultProps} onChange={handleChange} />);
       const input = screen.getByRole('spinbutton');
 
@@ -150,7 +150,7 @@ describe('PropertyRowVectorInput', () => {
     });
 
     it('supports increment/decrement with arrows', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<PropertyRowVectorInput {...defaultProps} value={10} onChange={handleChange} />);
       const input = screen.getByRole('spinbutton');
 
@@ -163,7 +163,7 @@ describe('PropertyRowVectorInput', () => {
 
   describe('Value Types', () => {
     it('handles integer values', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<PropertyRowVectorInput {...defaultProps} onChange={handleChange} />);
       const input = screen.getByRole('spinbutton');
 
@@ -173,7 +173,7 @@ describe('PropertyRowVectorInput', () => {
     });
 
     it('handles decimal values', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<PropertyRowVectorInput {...defaultProps} onChange={handleChange} />);
       const input = screen.getByRole('spinbutton');
 
@@ -183,7 +183,7 @@ describe('PropertyRowVectorInput', () => {
     });
 
     it('handles scientific notation', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<PropertyRowVectorInput {...defaultProps} onChange={handleChange} />);
       const input = screen.getByRole('spinbutton');
 
@@ -193,7 +193,7 @@ describe('PropertyRowVectorInput', () => {
     });
 
     it('handles very small decimals', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<PropertyRowVectorInput {...defaultProps} onChange={handleChange} />);
       const input = screen.getByRole('spinbutton');
 
@@ -205,7 +205,7 @@ describe('PropertyRowVectorInput', () => {
 
   describe('Edge Cases', () => {
     it('handles very large numbers', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<PropertyRowVectorInput {...defaultProps} onChange={handleChange} />);
       const input = screen.getByRole('spinbutton');
 
@@ -215,7 +215,7 @@ describe('PropertyRowVectorInput', () => {
     });
 
     it('handles very small negative numbers', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<PropertyRowVectorInput {...defaultProps} onChange={handleChange} />);
       const input = screen.getByRole('spinbutton');
 
@@ -225,7 +225,7 @@ describe('PropertyRowVectorInput', () => {
     });
 
     it('handles rapid value changes', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<PropertyRowVectorInput {...defaultProps} onChange={handleChange} />);
       const input = screen.getByRole('spinbutton');
 
@@ -238,7 +238,7 @@ describe('PropertyRowVectorInput', () => {
     });
 
     it('handles floating point precision', () => {
-      const handleChange = jest.fn();
+      const handleChange = vi.fn();
       render(<PropertyRowVectorInput {...defaultProps} onChange={handleChange} />);
       const input = screen.getByRole('spinbutton');
 
