@@ -25,7 +25,7 @@
       "import": "./dist/styles.js",
       "types": "./src/css/index.ts"
     },
-    "./styles.css": "./dist/cram.ui.css"
+    "./dist/*": "./dist/*"
   },
   "files": [
     "dist",
