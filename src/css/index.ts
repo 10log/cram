@@ -22,3 +22,7 @@ import "./settings.css";
 import "./parameter-config.css";
 import "./small-button.css";
 import "./orient.css";
+
+// Canvas overlays (transform overlay, etc.)
+import "../render/overlays/canvas-overlay.css";
+import "../render/overlays/transform-overlay.css";
