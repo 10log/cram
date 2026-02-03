@@ -38,6 +38,8 @@ export interface CRAMEditorProps {
   storagePrefix?: string;
   /** Show the navigation bar (default: true for standalone, false for embedded) */
   showNavBar?: boolean;
+  /** Fixed width for the right properties panel in pixels. When set, uses flex layout instead of resizable splitter */
+  fixedPanelWidth?: number;
 }
 
 /**
