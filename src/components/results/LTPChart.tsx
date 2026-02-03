@@ -9,7 +9,9 @@ import { scaleLinear } from '@visx/scale';
 import { AxisBottom, AxisLeft } from '@visx/axis';
 import { Grid } from '@visx/grid';
 import ParentSize from '@visx/responsive/lib/components/ParentSize';
-import styled from 'styled-components';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import type { SxProps, Theme } from '@mui/material/styles';
 import {
   LegendOrdinal,
   LegendItem,
@@ -40,53 +42,47 @@ export type LTPChartProps = {
   solverKind?: string;
 };
 
-
-
 const range = (start: number, stop: number) => [...Array(stop-start)].map((x,i) => start + i)
 const colorScale = chroma.scale(['#ff8a0b', '#000080']).mode('lch');
 const getOrderColors = (n: number) => colorScale.colors(n);
 
-
-
 const legendGlyphSize = 12;
 
+const verticalContainerSx: SxProps<Theme> = {
+  display: "flex",
+  flexDirection: "column",
+};
 
+const titleSx: SxProps<Theme> = {
+  display: "flex",
+  justifyContent: "center",
+};
 
-const VerticalContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-`;
+const horizontalContainerSx: SxProps<Theme> = {
+  display: "flex",
+  flexDirection: "row",
+  flex: 1,
+};
 
-const Title = styled.div`
-  display: flex; 
-  justify-content: center;
-`;
+const legendContainerSx: SxProps<Theme> = {
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  p: "0px 16px",
+};
 
-const HorizontalContainer = styled.div`
-  display: flex;
-  flex-direction: row;
-  flex: 1;
-`;
+const frequencyContainerSx: SxProps<Theme> = {
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  p: "16px 16px",
+};
 
-const LegendContainer = styled.div`
- display: flex;
- flex-direction: column;
- align-items: center;
- padding: 0px 16px;
-`;
-
-const FrequencyContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 16px 16px;
-`;
-
-const GraphContainer = styled.div`
-  display: flex;
-  flex: 8;
-  width: 80%;
-`;
+const graphContainerSx: SxProps<Theme> = {
+  display: "flex",
+  flex: 8,
+  width: "80%",
+};
 
 const useUpdate = () => {
   const [updateCount, setUpdateCount] = useState<number>(0);
@@ -268,18 +264,18 @@ export const LTPChart = ({ uuid, width = 400, height = 300, events = false }: LT
   // );
 
   return width < 10 ? null : (
-    <VerticalContainer>
-      <Title>{name}</Title>
-    <HorizontalContainer>
-      <GraphContainer>
+    <Box sx={verticalContainerSx}>
+      <Typography sx={titleSx}>{name}</Typography>
+    <Box sx={horizontalContainerSx}>
+      <Box sx={graphContainerSx}>
         <ParentSize debounceTime={10}>
           {({ width })=><Chart {...{ width, height, uuid, events, plotOrders, solverKind }} />}
         </ParentSize>
-      </GraphContainer>
-      <VerticalContainer>
+      </Box>
+      <Box sx={verticalContainerSx}>
         <LegendOrdinal scale={ordinalColorScale} labelFormat={label => `Order ${label}`}>
             {labels => (
-              <LegendContainer>
+              <Box sx={legendContainerSx}>
                 {labels.map((label, i) => (
                   <LegendItem
                     key={`legend-quantile-${i}`}
@@ -306,12 +302,12 @@ export const LTPChart = ({ uuid, width = 400, height = 300, events = false }: LT
                     />
                   </LegendItem>
                 ))}
-              </LegendContainer>
+              </Box>
             )}
           </LegendOrdinal>
-          <FrequencyContainer>
-            <Title><b>Octave Band (Hz)</b></Title>
-            <LegendContainer>
+          <Box sx={frequencyContainerSx}>
+            <Typography sx={titleSx}><b>Octave Band (Hz)</b></Typography>
+            <Box sx={legendContainerSx}>
               {frequencies.map((f)=>(
                 <LegendItem
                   key={`freq-control-${f}`}
@@ -331,11 +327,11 @@ export const LTPChart = ({ uuid, width = 400, height = 300, events = false }: LT
                   />
                 </LegendItem>
               ))}
-            </LegendContainer>
-          </FrequencyContainer>
-        </VerticalContainer>
-      </HorizontalContainer>
-    </VerticalContainer>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
+    </Box>
   );
 }
 

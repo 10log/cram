@@ -31,7 +31,7 @@ describe('BVHBuilder', () => {
     });
 
     it('warns for non-integer maxTrianglesPerNode', () => {
-      const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation();
       const triangles = [createTriangle(0, 0, 0)];
       BVHBuilder(triangles, 1.5);
       expect(warnSpy).toHaveBeenCalledWith(
@@ -47,7 +47,7 @@ describe('BVHBuilder', () => {
     });
 
     it('warns for empty array', () => {
-      const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation();
       BVHBuilder([]);
       expect(warnSpy).toHaveBeenCalledWith(
         'triangles appears to be an array with 0 elements.'

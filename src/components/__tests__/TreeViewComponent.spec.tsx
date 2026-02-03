@@ -15,19 +15,19 @@ import userEvent from '@testing-library/user-event';
 import TreeViewComponent from '../TreeViewComponent';
 
 // Mock CSS import
-jest.mock('../TreeViewComponent.css', () => ({}));
+vi.mock('../TreeViewComponent.css', () => ({}));
 
 // Mock react-transition-group
-jest.mock('react-transition-group', () => ({
+vi.mock('react-transition-group', () => ({
   TransitionGroup: ({ children }: any) => <div data-testid="transition-group">{children}</div>,
   CSSTransition: ({ children }: any) => <div data-testid="css-transition">{children}</div>,
 }));
 
 describe('TreeViewComponent', () => {
-  const mockOnUpdateCb = jest.fn();
-  const mockOnCheckToggleCb = jest.fn();
-  const mockOnDeleteCb = jest.fn().mockReturnValue(true);
-  const mockOnExpandToggleCb = jest.fn();
+  const mockOnUpdateCb = vi.fn();
+  const mockOnCheckToggleCb = vi.fn();
+  const mockOnDeleteCb = vi.fn().mockReturnValue(true);
+  const mockOnExpandToggleCb = vi.fn();
 
   const defaultProps = {
     data: [],
@@ -42,7 +42,7 @@ describe('TreeViewComponent', () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('Rendering', () => {

@@ -1,5 +1,6 @@
 import React from "react";
-import styled from "styled-components";
+import Box from "@mui/material/Box";
+import type { SxProps, Theme } from "@mui/material/styles";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import Label from "../label/Label";
@@ -19,94 +20,87 @@ type TransformProperty =
   | "scalex" | "scaley" | "scalez"
   | "rotationx" | "rotationy" | "rotationz";
 
-const FolderContainer = styled.div`
-  > * {
-    --transition-time: 50ms;
-    --transition-function: cubic-bezier(0.25, 0.1, 0.25, 1);
-  }
-  padding-bottom: 0.25em;
-`;
+const folderContainerSx: SxProps<Theme> = {
+  "--transition-time": "50ms",
+  "--transition-function": "cubic-bezier(0.25, 0.1, 0.25, 1)",
+  pb: "0.25em",
+};
 
-const FolderLabel = styled.div`
-  :hover {
-    background-color: #eaeef1;
-    cursor: pointer;
-    user-select: none;
-  }
-`;
+const folderLabelSx: SxProps<Theme> = {
+  "&:hover": {
+    bgcolor: "#eaeef1",
+    cursor: "pointer",
+    userSelect: "none",
+  },
+};
 
-const FolderContents = styled.div<{ $open: boolean }>`
-  height: ${(props) => (props.$open ? "max-content" : "0")};
-  padding-top: ${(props) => (props.$open ? "0.5em" : "0")};
-  padding-bottom: ${(props) => (props.$open ? "0.5em" : "0")};
-  overflow: hidden;
-  transition: all var(--transition-time) var(--transition-function);
-`;
+const folderContentsSx = (open: boolean): SxProps<Theme> => ({
+  height: open ? "max-content" : 0,
+  pt: open ? "0.5em" : 0,
+  pb: open ? "0.5em" : 0,
+  overflow: "hidden",
+  transition: "all 50ms cubic-bezier(0.25, 0.1, 0.25, 1)",
+});
 
-const Table = styled.table`
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 12px;
-`;
+const tableSx: SxProps<Theme> = {
+  width: "100%",
+  borderCollapse: "collapse",
+  fontSize: 12,
+};
 
-const HeaderRow = styled.tr`
-  th {
-    padding: 2px 4px;
-    font-weight: 500;
-    color: #5c6670;
-    text-align: center;
-  }
-  th:first-child {
-    width: 60px;
-    text-align: left;
-    padding-left: 8px;
-  }
-`;
+const headerRowSx: SxProps<Theme> = {
+  "& th": {
+    p: "2px 4px",
+    fontWeight: 500,
+    color: "#5c6670",
+    textAlign: "center",
+  },
+  "& th:first-of-type": {
+    width: 60,
+    textAlign: "left",
+    pl: 1,
+  },
+};
 
-const DataRow = styled.tr`
-  td {
-    padding: 2px 4px;
-  }
-  td:first-child {
-    font-weight: 500;
-    color: #1c2127;
-    padding-left: 8px;
-  }
-`;
+const dataRowSx: SxProps<Theme> = {
+  "& td": {
+    p: "2px 4px",
+  },
+  "& td:first-of-type": {
+    fontWeight: 500,
+    color: "#1c2127",
+    pl: 1,
+  },
+};
 
-const StyledInput = styled.input`
-  width: 100%;
-  text-align: center;
-  outline: none;
-  border: none;
-  border-radius: 2px;
-  background: rgba(246, 248, 250, 0.75);
-  padding: 2px 4px;
-  color: #182026;
-  transition: box-shadow 0.05s cubic-bezier(0.4, 1, 0.75, 0.9);
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-
-  &::-webkit-outer-spin-button,
-  &::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-  }
-  -moz-appearance: textfield;
-
-  :hover {
-    outline: none;
-    box-shadow: 0 0 0 0 rgba(19, 124, 189, 0), 0 0 0 0 rgba(19, 124, 189, 0),
-      inset 0 0 0 1px rgba(16, 22, 26, 0.15), inset 0 1px 1px rgba(16, 22, 26, 0.2);
-    background: rgba(246, 248, 250, 1);
-  }
-  :focus {
-    box-shadow: 0 0 0 0 rgba(19, 124, 189, 0), 0 0 0 0 rgba(19, 124, 189, 0),
-      inset 0 0 0 1px rgba(16, 22, 26, 0.15), inset 0 1px 1px rgba(16, 22, 26, 0.2);
-    background: rgba(246, 248, 250, 0.75);
-  }
-`;
+const styledInputSx: SxProps<Theme> = {
+  width: "100%",
+  textAlign: "center",
+  outline: "none",
+  border: "none",
+  borderRadius: "2px",
+  bgcolor: "rgba(246, 248, 250, 0.75)",
+  p: "2px 4px",
+  color: "#182026",
+  transition: "box-shadow 0.05s cubic-bezier(0.4, 1, 0.75, 0.9)",
+  appearance: "none",
+  "&::-webkit-outer-spin-button, &::-webkit-inner-spin-button": {
+    WebkitAppearance: "none",
+    m: 0,
+  },
+  MozAppearance: "textfield",
+  "&:hover": {
+    outline: "none",
+    boxShadow:
+      "0 0 0 0 rgba(19, 124, 189, 0), 0 0 0 0 rgba(19, 124, 189, 0), inset 0 0 0 1px rgba(16, 22, 26, 0.15), inset 0 1px 1px rgba(16, 22, 26, 0.2)",
+    bgcolor: "rgba(246, 248, 250, 1)",
+  },
+  "&:focus": {
+    boxShadow:
+      "0 0 0 0 rgba(19, 124, 189, 0), 0 0 0 0 rgba(19, 124, 189, 0), inset 0 0 0 1px rgba(16, 22, 26, 0.15), inset 0 1px 1px rgba(16, 22, 26, 0.2)",
+    bgcolor: "rgba(246, 248, 250, 0.75)",
+  },
+};
 
 interface TransformInputProps {
   uuid: string;
@@ -139,12 +133,14 @@ const TransformInput = ({ uuid, property, event }: TransformInputProps) => {
   };
 
   return (
-    <StyledInput
+    <Box
+      component="input"
       type="number"
       value={value}
       onChange={handleChange}
       onWheel={handleWheel}
       step={1}
+      sx={styledInputSx}
     />
   );
 };
@@ -158,47 +154,47 @@ export default function TransformTable({ uuid, event }: TransformTableProps) {
   const [open, toggle] = useToggle(true);
 
   return (
-    <FolderContainer>
-      <FolderLabel onClick={toggle}>
+    <Box sx={folderContainerSx}>
+      <Box sx={folderLabelSx} onClick={toggle}>
         <span style={{ verticalAlign: "middle" }}>
           {open ? <ExpandMoreIcon fontSize="inherit" /> : <ChevronRightIcon fontSize="inherit" />}
         </span>
         <Label hasTooltip={false} style={{ display: "inline-block" }}>
           Transform
         </Label>
-      </FolderLabel>
-      <FolderContents $open={open}>
-        <Table>
+      </Box>
+      <Box sx={folderContentsSx(open)}>
+        <Box component="table" sx={tableSx}>
           <thead>
-            <HeaderRow>
+            <Box component="tr" sx={headerRowSx}>
               <th></th>
               <th>X</th>
               <th>Y</th>
               <th>Z</th>
-            </HeaderRow>
+            </Box>
           </thead>
           <tbody>
-            <DataRow>
+            <Box component="tr" sx={dataRowSx}>
               <td>Position</td>
               <td><TransformInput uuid={uuid} property="x" event={event} /></td>
               <td><TransformInput uuid={uuid} property="y" event={event} /></td>
               <td><TransformInput uuid={uuid} property="z" event={event} /></td>
-            </DataRow>
-            <DataRow>
+            </Box>
+            <Box component="tr" sx={dataRowSx}>
               <td>Scale</td>
               <td><TransformInput uuid={uuid} property="scalex" event={event} /></td>
               <td><TransformInput uuid={uuid} property="scaley" event={event} /></td>
               <td><TransformInput uuid={uuid} property="scalez" event={event} /></td>
-            </DataRow>
-            <DataRow>
+            </Box>
+            <Box component="tr" sx={dataRowSx}>
               <td>Rotation</td>
               <td><TransformInput uuid={uuid} property="rotationx" event={event} /></td>
               <td><TransformInput uuid={uuid} property="rotationy" event={event} /></td>
               <td><TransformInput uuid={uuid} property="rotationz" event={event} /></td>
-            </DataRow>
+            </Box>
           </tbody>
-        </Table>
-      </FolderContents>
-    </FolderContainer>
+        </Box>
+      </Box>
+    </Box>
   );
 }

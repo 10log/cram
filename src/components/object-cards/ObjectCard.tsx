@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect, useMemo } from "react";
-import styled from "styled-components";
+import Box from "@mui/material/Box";
+import type { SxProps, Theme } from "@mui/material/styles";
 import { useContainer } from "../../store";
 import { emit, on } from "../../messenger";
 import ObjectCardHeader from "./ObjectCardHeader";
@@ -12,22 +13,22 @@ import SourceTab from "../parameter-config/SourceTab";
 import ReceiverTab from "../parameter-config/ReceiverTab";
 import SurfaceTab from "../parameter-config/SurfaceTab";
 
-const CardContainer = styled.div`
-  border-bottom: 1px solid #e1e4e8;
-`;
+const cardContainerSx: SxProps<Theme> = {
+  borderBottom: "1px solid #e1e4e8",
+};
 
-const CardContent = styled.div<{ $expanded: boolean }>`
-  display: ${(props) => (props.$expanded ? "block" : "none")};
-  padding-left: 20px;
-`;
+const cardContentSx = (expanded: boolean): SxProps<Theme> => ({
+  display: expanded ? "block" : "none",
+  pl: "20px",
+});
 
-const ParameterSection = styled.div`
-  padding: 4px 0;
-`;
+const parameterSectionSx: SxProps<Theme> = {
+  py: "4px",
+};
 
-const ChildrenSection = styled.div`
-  border-top: 1px solid #e1e4e8;
-`;
+const childrenSectionSx: SxProps<Theme> = {
+  borderTop: "1px solid #e1e4e8",
+};
 
 /**
  * Maps object kind to its parameter configuration component
@@ -151,7 +152,7 @@ export default function ObjectCard({ uuid, defaultExpanded = false, isChild = fa
   const ParameterComponent = ObjectComponentMap.get(kind);
 
   return (
-    <CardContainer>
+    <Box sx={cardContainerSx}>
       <ObjectCardHeader
         name={name}
         kind={kind}
@@ -165,20 +166,20 @@ export default function ObjectCard({ uuid, defaultExpanded = false, isChild = fa
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       />
-      <CardContent $expanded={expanded}>
+      <Box sx={cardContentSx(expanded)}>
         {ParameterComponent && (
-          <ParameterSection>
+          <Box sx={parameterSectionSx}>
             <ParameterComponent uuid={uuid} />
-          </ParameterSection>
+          </Box>
         )}
         {childSurfaceUuids.length > 0 && (
-          <ChildrenSection>
+          <Box sx={childrenSectionSx}>
             {childSurfaceUuids.map((surfaceUuid) => (
               <ObjectCard key={surfaceUuid} uuid={surfaceUuid} isChild />
             ))}
-          </ChildrenSection>
+          </Box>
         )}
-      </CardContent>
-    </CardContainer>
+      </Box>
+    </Box>
   );
 }

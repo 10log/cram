@@ -1,20 +1,21 @@
 import React, { useState, useCallback } from "react";
-import styled from "styled-components";
+import Box from "@mui/material/Box";
+import type { SxProps, Theme } from "@mui/material/styles";
 import SolverCardHeader from "./SolverCardHeader";
 import RendererTab from "../parameter-config/RendererTab";
 
-const CardContainer = styled.div`
-  border-bottom: 1px solid #e1e4e8;
-`;
+const cardContainerSx: SxProps<Theme> = {
+  borderBottom: "1px solid #e1e4e8",
+};
 
-const CardContent = styled.div<{ $expanded: boolean }>`
-  display: ${(props) => (props.$expanded ? "block" : "none")};
-  padding-left: 20px;
-`;
+const cardContentSx = (expanded: boolean): SxProps<Theme> => ({
+  display: expanded ? "block" : "none",
+  pl: "20px",
+});
 
-const ParameterSection = styled.div`
-  padding: 4px 0;
-`;
+const parameterSectionSx: SxProps<Theme> = {
+  py: "4px",
+};
 
 export interface RendererCardProps {
   defaultExpanded?: boolean;
@@ -28,18 +29,18 @@ export default function RendererCard({ defaultExpanded = false }: RendererCardPr
   }, []);
 
   return (
-    <CardContainer>
+    <Box sx={cardContainerSx}>
       <SolverCardHeader
         name="Renderer"
         kind="renderer"
         expanded={expanded}
         onToggle={handleToggle}
       />
-      <CardContent $expanded={expanded}>
-        <ParameterSection>
+      <Box sx={cardContentSx(expanded)}>
+        <Box sx={parameterSectionSx}>
           <RendererTab />
-        </ParameterSection>
-      </CardContent>
-    </CardContainer>
+        </Box>
+      </Box>
+    </Box>
   );
 }

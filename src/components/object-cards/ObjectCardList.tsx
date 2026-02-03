@@ -1,5 +1,7 @@
 import React, { useMemo, useState } from "react";
-import styled from "styled-components";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import type { SxProps, Theme } from "@mui/material/styles";
 import { useShallow } from "zustand/react/shallow";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
@@ -7,84 +9,81 @@ import CategoryIcon from "@mui/icons-material/Category";
 import { useContainer } from "../../store";
 import ObjectCard from "./ObjectCard";
 
-const ListContainer = styled.div`
-  overflow-y: auto;
-`;
+const listContainerSx: SxProps<Theme> = {
+  overflowY: "auto",
+};
 
-const GroupHeader = styled.div<{ $expanded: boolean }>`
-  display: flex;
-  align-items: center;
-  padding: 4px 8px;
-  background-color: ${(props) => (props.$expanded ? "#e8ecef" : "transparent")};
-  cursor: pointer;
-  user-select: none;
-  border-bottom: 1px solid #e1e4e8;
+const groupHeaderSx = (expanded: boolean): SxProps<Theme> => ({
+  display: "flex",
+  alignItems: "center",
+  p: "4px 8px",
+  bgcolor: expanded ? "#e8ecef" : "transparent",
+  cursor: "pointer",
+  userSelect: "none",
+  borderBottom: "1px solid #e1e4e8",
+  "&:hover": {
+    bgcolor: "#e8ecef",
+  },
+});
 
-  &:hover {
-    background-color: #e8ecef;
-  }
-`;
+const expandIconSx: SxProps<Theme> = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: 16,
+  height: 16,
+  mr: "4px",
+  color: "#5c6670",
+  "& svg": {
+    fontSize: 16,
+  },
+};
 
-const ExpandIcon = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 16px;
-  height: 16px;
-  margin-right: 4px;
-  color: #5c6670;
+const iconContainerSx: SxProps<Theme> = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: 16,
+  height: 16,
+  mr: "6px",
+  color: "#5c6670",
+  "& svg": {
+    fontSize: 14,
+  },
+};
 
-  svg {
-    font-size: 16px;
-  }
-`;
+const groupTitleSx: SxProps<Theme> = {
+  flex: 1,
+  fontSize: 12,
+  fontWeight: 500,
+  color: "#1c2127",
+};
 
-const IconContainer = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 16px;
-  height: 16px;
-  margin-right: 6px;
-  color: #5c6670;
+const countBadgeSx: SxProps<Theme> = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  minWidth: 14,
+  height: 14,
+  p: "0 4px",
+  bgcolor: "#8c959f",
+  borderRadius: "7px",
+  fontSize: 10,
+  fontWeight: 600,
+  color: "white",
+};
 
-  svg {
-    font-size: 14px;
-  }
-`;
+const groupContentSx = (expanded: boolean): SxProps<Theme> => ({
+  display: expanded ? "block" : "none",
+  pl: "20px",
+});
 
-const GroupTitle = styled.div`
-  flex: 1;
-  font-size: 12px;
-  font-weight: 500;
-  color: #1c2127;
-`;
-
-const CountBadge = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 14px;
-  height: 14px;
-  padding: 0 4px;
-  background-color: #8c959f;
-  border-radius: 7px;
-  font-size: 10px;
-  font-weight: 600;
-  color: white;
-`;
-
-const GroupContent = styled.div<{ $expanded: boolean }>`
-  display: ${(props) => (props.$expanded ? "block" : "none")};
-  padding-left: 20px;
-`;
-
-const EmptyState = styled.div`
-  padding: 24px 16px;
-  text-align: center;
-  color: #8c959f;
-  font-size: 13px;
-`;
+const emptyStateSx: SxProps<Theme> = {
+  p: "24px 16px",
+  textAlign: "center",
+  color: "#8c959f",
+  fontSize: 13,
+};
 
 interface ObjectsByKind {
   rooms: string[];
@@ -128,20 +127,22 @@ export default function ObjectCardList() {
     objectsByKind.receivers.length;
 
   return (
-    <ListContainer>
-      <GroupHeader $expanded={expanded} onClick={() => setExpanded(!expanded)}>
-        <ExpandIcon>
+    <Box sx={listContainerSx}>
+      <Box sx={groupHeaderSx(expanded)} onClick={() => setExpanded(!expanded)}>
+        <Box sx={expandIconSx}>
           {expanded ? <ExpandMoreIcon /> : <ChevronRightIcon />}
-        </ExpandIcon>
-        <IconContainer>
+        </Box>
+        <Box sx={iconContainerSx}>
           <CategoryIcon />
-        </IconContainer>
-        <GroupTitle>Objects</GroupTitle>
-        {totalCount > 0 && <CountBadge>{totalCount}</CountBadge>}
-      </GroupHeader>
-      <GroupContent $expanded={expanded}>
+        </Box>
+        <Typography sx={groupTitleSx}>Objects</Typography>
+        {totalCount > 0 && <Box sx={countBadgeSx}>{totalCount}</Box>}
+      </Box>
+      <Box sx={groupContentSx(expanded)}>
         {totalCount === 0 ? (
-          <EmptyState>No objects yet. Import a model or add objects from the menu.</EmptyState>
+          <Typography sx={emptyStateSx}>
+            No objects yet. Import a model or add objects from the menu.
+          </Typography>
         ) : (
           <>
             {objectsByKind.rooms.map((uuid) => (
@@ -155,7 +156,7 @@ export default function ObjectCardList() {
             ))}
           </>
         )}
-      </GroupContent>
-    </ListContainer>
+      </Box>
+    </Box>
   );
 }

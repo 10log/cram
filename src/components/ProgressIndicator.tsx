@@ -1,5 +1,8 @@
 import React from "react";
-import styled, { keyframes } from "styled-components";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import { keyframes } from "@emotion/react";
+import type { SxProps, Theme } from "@mui/material/styles";
 import { useAppStore } from "../store/app-store";
 
 const slideIn = keyframes`
@@ -24,38 +27,6 @@ const slideOut = keyframes`
   }
 `;
 
-const Container = styled.div<{ $visible: boolean }>`
-  position: fixed;
-  top: 50px; /* Below navbar */
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 16px;
-  background: #fff;
-  border: 1px solid #d0d7de;
-  border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  animation: ${(props) => (props.$visible ? slideIn : slideOut)} 0.2s ease-out forwards;
-  pointer-events: ${(props) => (props.$visible ? "auto" : "none")};
-`;
-
-const Message = styled.span`
-  font-size: 12px;
-  color: #1c2127;
-  white-space: nowrap;
-`;
-
-const ProgressBarContainer = styled.div`
-  width: 120px;
-  height: 4px;
-  background: #e1e4e8;
-  border-radius: 2px;
-  overflow: hidden;
-`;
-
 const indeterminateAnimation = keyframes`
   0% {
     transform: translateX(-100%);
@@ -65,14 +36,46 @@ const indeterminateAnimation = keyframes`
   }
 `;
 
-const ProgressBarFill = styled.div<{ $progress: number; $indeterminate: boolean }>`
-  height: 100%;
-  background: #2d72d2;
-  border-radius: 2px;
-  transition: width 0.2s ease-out;
-  width: ${(props) => (props.$indeterminate ? "50%" : `${props.$progress}%`)};
-  animation: ${(props) => (props.$indeterminate ? indeterminateAnimation : "none")} 1s ease-in-out infinite;
-`;
+const containerSx = (visible: boolean): SxProps<Theme> => ({
+  position: "fixed",
+  top: 50, // Below navbar
+  left: "50%",
+  transform: "translateX(-50%)",
+  zIndex: 1000,
+  display: "flex",
+  alignItems: "center",
+  gap: "12px",
+  p: "8px 16px",
+  bgcolor: "#fff",
+  border: "1px solid #d0d7de",
+  borderRadius: "6px",
+  boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
+  animation: `${visible ? slideIn : slideOut} 0.2s ease-out forwards`,
+  pointerEvents: visible ? "auto" : "none",
+});
+
+const messageSx: SxProps<Theme> = {
+  fontSize: 12,
+  color: "#1c2127",
+  whiteSpace: "nowrap",
+};
+
+const progressBarContainerSx: SxProps<Theme> = {
+  width: 120,
+  height: 4,
+  bgcolor: "#e1e4e8",
+  borderRadius: "2px",
+  overflow: "hidden",
+};
+
+const progressBarFillSx = (progress: number, indeterminate: boolean): SxProps<Theme> => ({
+  height: "100%",
+  bgcolor: "#2d72d2",
+  borderRadius: "2px",
+  transition: "width 0.2s ease-out",
+  width: indeterminate ? "50%" : `${progress}%`,
+  animation: indeterminate ? `${indeterminateAnimation} 1s ease-in-out infinite` : "none",
+});
 
 export const ProgressIndicator: React.FC = () => {
   const progress = useAppStore((state) => state.progress);
@@ -84,15 +87,19 @@ export const ProgressIndicator: React.FC = () => {
   const isIndeterminate = progress.progress < 0;
 
   return (
-    <Container $visible={progress.visible}>
-      <Message>{progress.message}</Message>
-      <ProgressBarContainer>
-        <ProgressBarFill $progress={progress.progress} $indeterminate={isIndeterminate} />
-      </ProgressBarContainer>
+    <Box sx={containerSx(progress.visible)}>
+      <Typography component="span" sx={messageSx}>
+        {progress.message}
+      </Typography>
+      <Box sx={progressBarContainerSx}>
+        <Box sx={progressBarFillSx(progress.progress, isIndeterminate)} />
+      </Box>
       {!isIndeterminate && (
-        <Message>{Math.round(progress.progress)}%</Message>
+        <Typography component="span" sx={messageSx}>
+          {Math.round(progress.progress)}%
+        </Typography>
       )}
-    </Container>
+    </Box>
   );
 };
 

@@ -1,101 +1,94 @@
 import React, { useState, useRef, useEffect } from "react";
-import styled from "styled-components";
+import Box from "@mui/material/Box";
+import type { SxProps, Theme } from "@mui/material/styles";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import { NodesIcon, RoomIcon, SourceIcon, ReceiverIcon } from "../icons";
 
-const HeaderContainer = styled.div<{ $expanded: boolean; $selected: boolean }>`
-  display: flex;
-  align-items: center;
-  padding: 4px 8px;
-  background-color: ${(props) =>
-    props.$selected ? "#cce5ff" :
-    props.$expanded ? "#e8ecef" : "transparent"};
-  border-left: ${(props) => (props.$selected ? "2px solid #2d72d2" : "2px solid transparent")};
-  cursor: pointer;
-  user-select: none;
+const headerContainerSx = (expanded: boolean, selected: boolean): SxProps<Theme> => ({
+  display: "flex",
+  alignItems: "center",
+  p: "4px 8px",
+  bgcolor: selected ? "#cce5ff" : expanded ? "#e8ecef" : "transparent",
+  borderLeft: selected ? "2px solid #2d72d2" : "2px solid transparent",
+  cursor: "pointer",
+  userSelect: "none",
+  "&:hover": {
+    bgcolor: selected ? "#b3d7ff" : "#e8ecef",
+  },
+});
 
-  &:hover {
-    background-color: ${(props) => props.$selected ? "#b3d7ff" : "#e8ecef"};
-  }
-`;
+const expandIconSx: SxProps<Theme> = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: 16,
+  height: 16,
+  mr: "4px",
+  color: "#5c6670",
+  "& svg": {
+    fontSize: 16,
+  },
+};
 
-const ExpandIcon = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 16px;
-  height: 16px;
-  margin-right: 4px;
-  color: #5c6670;
+const iconContainerSx: SxProps<Theme> = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: 16,
+  height: 16,
+  mr: "6px",
+  color: "#5c6670",
+  "& svg": {
+    fontSize: 14,
+  },
+};
 
-  svg {
-    font-size: 16px;
-  }
-`;
+const titleSx: SxProps<Theme> = {
+  flex: 1,
+  fontSize: 12,
+  fontWeight: 500,
+  color: "#1c2127",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+};
 
-const IconContainer = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 16px;
-  height: 16px;
-  margin-right: 6px;
-  color: #5c6670;
+const titleInputSx: SxProps<Theme> = {
+  flex: 1,
+  fontSize: 12,
+  fontWeight: 500,
+  color: "#1c2127",
+  border: "1px solid #2d72d2",
+  borderRadius: "2px",
+  p: "0 4px",
+  outline: "none",
+  bgcolor: "white",
+  minWidth: 0,
+};
 
-  svg {
-    font-size: 14px;
-  }
-`;
-
-const Title = styled.div`
-  flex: 1;
-  font-size: 12px;
-  font-weight: 500;
-  color: #1c2127;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-`;
-
-const TitleInput = styled.input`
-  flex: 1;
-  font-size: 12px;
-  font-weight: 500;
-  color: #1c2127;
-  border: 1px solid #2d72d2;
-  border-radius: 2px;
-  padding: 0 4px;
-  outline: none;
-  background: white;
-  min-width: 0;
-`;
-
-const VisibilityButton = styled.div<{ $visible: boolean }>`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  border-radius: 3px;
-  color: ${(props) => (props.$visible ? "#8c959f" : "#d0d7de")};
-  opacity: ${(props) => (props.$visible ? 0 : 1)};
-
-  svg {
-    font-size: 14px;
-  }
-
-  ${HeaderContainer}:hover & {
-    opacity: 1;
-  }
-
-  &:hover {
-    background-color: #d0d7de;
-    color: #1c2127;
-  }
-`;
+const visibilityButtonSx = (visible: boolean): SxProps<Theme> => ({
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: 18,
+  height: 18,
+  borderRadius: "3px",
+  color: visible ? "#8c959f" : "#d0d7de",
+  opacity: visible ? 0 : 1,
+  "& svg": {
+    fontSize: 14,
+  },
+  ".MuiBox-root:hover > &": {
+    opacity: 1,
+  },
+  "&:hover": {
+    bgcolor: "#d0d7de",
+    color: "#1c2127",
+  },
+});
 
 /**
  * Maps object kind to its icon component
@@ -198,34 +191,37 @@ export default function ObjectCardHeader({
   };
 
   return (
-    <HeaderContainer
-      $expanded={expanded}
-      $selected={selected}
+    <Box
+      sx={headerContainerSx(expanded, selected)}
       onClick={handleHeaderClick}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
-      <ExpandIcon onClick={handleExpandClick}>
+      <Box sx={expandIconSx} onClick={handleExpandClick}>
         {expanded ? <ExpandMoreIcon /> : <ChevronRightIcon />}
-      </ExpandIcon>
-      <IconContainer>
+      </Box>
+      <Box sx={iconContainerSx}>
         <Icon />
-      </IconContainer>
+      </Box>
       {isEditing ? (
-        <TitleInput
+        <Box
+          component="input"
           ref={inputRef}
           value={editValue}
           onChange={handleInputChange}
           onBlur={handleInputBlur}
           onKeyDown={handleInputKeyDown}
           onClick={handleInputClick}
+          sx={titleInputSx}
         />
       ) : (
-        <Title onDoubleClick={handleTitleDoubleClick}>{name}</Title>
+        <Box sx={titleSx} onDoubleClick={handleTitleDoubleClick}>
+          {name}
+        </Box>
       )}
-      <VisibilityButton $visible={visible} onClick={handleVisibilityClick}>
+      <Box sx={visibilityButtonSx(visible)} onClick={handleVisibilityClick}>
         {visible ? <VisibilityIcon /> : <VisibilityOffIcon />}
-      </VisibilityButton>
-    </HeaderContainer>
+      </Box>
+    </Box>
   );
 }

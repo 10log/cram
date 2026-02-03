@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useMemo, useEffect, lazy, Suspense } from "react";
-import styled from "styled-components";
+import Box from "@mui/material/Box";
+import type { SxProps, Theme } from "@mui/material/styles";
 import { useSolver, removeSolver } from "../../store/solver-store";
 import { emit, on } from "../../messenger";
 import SolverCardHeader from "./SolverCardHeader";
@@ -13,18 +14,18 @@ const EnergyDecayTab = lazy(() => import("../parameter-config/EnergyDecayTab"));
 const ARTTab = lazy(() => import("../parameter-config/ARTTab"));
 const BeamTraceTab = lazy(() => import("../parameter-config/BeamTraceTab"));
 
-const CardContainer = styled.div`
-  border-bottom: 1px solid #e1e4e8;
-`;
+const cardContainerSx: SxProps<Theme> = {
+  borderBottom: "1px solid #e1e4e8",
+};
 
-const CardContent = styled.div<{ $expanded: boolean }>`
-  display: ${(props) => (props.$expanded ? "block" : "none")};
-  padding-left: 20px;
-`;
+const cardContentSx = (expanded: boolean): SxProps<Theme> => ({
+  display: expanded ? "block" : "none",
+  pl: "20px",
+});
 
-const ParameterSection = styled.div`
-  padding: 4px 0;
-`;
+const parameterSectionSx: SxProps<Theme> = {
+  py: "4px",
+};
 
 /**
  * Maps solver kind to its parameter configuration component
@@ -135,7 +136,7 @@ export default function SolverCard({ uuid, defaultExpanded = false }: SolverCard
   const ParameterComponent = SolverComponentMap.get(solver.kind);
 
   return (
-    <CardContainer>
+    <Box sx={cardContainerSx}>
       <SolverCardHeader
         name={solver.name}
         kind={solver.kind}
@@ -147,15 +148,15 @@ export default function SolverCard({ uuid, defaultExpanded = false }: SolverCard
         onClear={supportsClear ? handleClear : undefined}
         onDelete={handleDelete}
       />
-      <CardContent $expanded={expanded}>
+      <Box sx={cardContentSx(expanded)}>
         {ParameterComponent && (
-          <ParameterSection>
+          <Box sx={parameterSectionSx}>
             <Suspense fallback={<div style={{ padding: '8px', color: '#666' }}>Loading...</div>}>
               <ParameterComponent uuid={uuid} />
             </Suspense>
-          </ParameterSection>
+          </Box>
         )}
-      </CardContent>
-    </CardContainer>
+      </Box>
+    </Box>
   );
 }

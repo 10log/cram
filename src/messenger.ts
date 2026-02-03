@@ -85,10 +85,11 @@ export default class Messenger{
                 on: new Set(),
                 after: new Set()
             };
-        } 
+        }
         this.events[event].before.add(callback);
         return (() => {
-            this.events[event].before.delete(callback);
+            // Guard: only delete if event still exists (may have been cleared)
+            this.events[event]?.before.delete(callback);
         }) as () => void;
     }
     on<T extends keyof EventTypes>(event: T, callback: (e: EventTypes[T]) => void) {
@@ -98,10 +99,11 @@ export default class Messenger{
                 on: new Set(),
                 after: new Set()
             };
-        } 
+        }
         this.events[event].on.add(callback);
         return (() => {
-            this.events[event].on.delete(callback);
+            // Guard: only delete if event still exists (may have been cleared)
+            this.events[event]?.on.delete(callback);
         }) as () => void;
     }
     after<T extends keyof EventTypes>(event: T, callback: (e: EventTypes[T]) => void) {
@@ -111,10 +113,11 @@ export default class Messenger{
                 on: new Set(),
                 after: new Set()
             };
-        } 
+        }
         this.events[event].after.add(callback);
         return (() => {
-            this.events[event].after.delete(callback);
+            // Guard: only delete if event still exists (may have been cleared)
+            this.events[event]?.after.delete(callback);
         }) as () => void;
     }
 

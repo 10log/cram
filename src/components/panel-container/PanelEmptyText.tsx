@@ -1,11 +1,16 @@
-import styled from 'styled-components';
+import Box from "@mui/material/Box";
+import type { SxProps, Theme } from "@mui/material/styles";
 
-export const PanelEmptyText = styled.div`
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: #b4b8bb;
-`;
+const panelEmptyTextSx: SxProps<Theme> = {
+  height: "100%",
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  color: "#b4b8bb",
+};
+
+export function PanelEmptyText({ children }: { children?: React.ReactNode }) {
+  return <Box sx={panelEmptyTextSx}>{children}</Box>;
+}
 
 export default PanelEmptyText;

@@ -238,9 +238,6 @@ export const useNavBarStore = create<NavBarStore>((set) => ({
   setOpenMenu: (openMenu: number|null) => set({openMenu})
 }));
 
-export default useAppStore;
-
-
 export function NavBarComponent() {
   const {openMenu, setOpenMenu} = useNavBarStore();
 
@@ -272,3 +269,5 @@ export function NavBarComponent() {
     </Navbar>
   );
 }
+
+export default NavBarComponent;

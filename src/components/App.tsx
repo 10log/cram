@@ -28,7 +28,6 @@ import AutoCalculateProgress from "./AutoCalculateProgress";
 import {ResultsPanel} from './ResultsPanel';
 import { MaterialSearch } from "./MaterialSearch";
 import EditorContainer from "./EditorContainer";
-import { finishedLoading } from "../index";
 
 // Note: AppToaster removed - was unused and caused React 18 deprecation warning
 // If toasts are needed in the future, use MUI Snackbar or similar
@@ -40,6 +39,8 @@ export interface AppProps {
   leftPanelInitialSize: number;
   /** Whether to show the navigation bar (default: true) */
   showNavBar?: boolean;
+  /** Callback called after component mounts (used by standalone to load initial project) */
+  onMount?: () => void;
 }
 
 type AppState = {
@@ -79,8 +80,8 @@ export default class App extends React.Component<AppProps, AppState> {
   componentDidMount() {
     this.canvas.current && messenger.postMessage("APP_MOUNTED", this.canvas.current);
 
-    // Call finishedLoading after component mounts (proper React 18 lifecycle)
-    finishedLoading();
+    // Call onMount callback if provided (standalone uses this to load initial project)
+    this.props.onMount?.();
     let lastPanelSize = 50;
     if(this.editorResultSplitterRef.current){
       //@ts-ignore

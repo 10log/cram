@@ -12,12 +12,12 @@ import { useContainer } from '../../../store';
 import { useSolverProperty } from '../SolverComponents';
 
 // Mock the stores
-jest.mock('../../../store', () => ({
-  useContainer: jest.fn(),
+vi.mock('../../../store', () => ({
+  useContainer: vi.fn(),
 }));
 
-jest.mock('../SolverComponents', () => ({
-  useSolverProperty: jest.fn(),
+vi.mock('../SolverComponents', () => ({
+  useSolverProperty: vi.fn(),
 }));
 
 const mockUseContainer = useContainer as jest.MockedFunction<typeof useContainer>;
@@ -27,7 +27,7 @@ describe('SourceReceiverMatrix', () => {
   const defaultUuid = 'solver-123';
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('Empty States', () => {
@@ -37,7 +37,7 @@ describe('SourceReceiverMatrix', () => {
         if (selector.toString().includes('version')) return 0;
         return {};
       });
-      mockUseSolverProperty.mockReturnValue([[], jest.fn()]);
+      mockUseSolverProperty.mockReturnValue([[], vi.fn()]);
 
       render(<SourceReceiverMatrix uuid={defaultUuid} />);
       expect(screen.getByText('Add sources and receivers to configure pairs')).toBeInTheDocument();
@@ -50,7 +50,7 @@ describe('SourceReceiverMatrix', () => {
           'rec-1': { uuid: 'rec-1', name: 'Receiver 1', kind: 'receiver' },
         };
       });
-      mockUseSolverProperty.mockReturnValue([[], jest.fn()]);
+      mockUseSolverProperty.mockReturnValue([[], vi.fn()]);
 
       render(<SourceReceiverMatrix uuid={defaultUuid} />);
       expect(screen.getByText('Add sources to configure pairs')).toBeInTheDocument();
@@ -63,7 +63,7 @@ describe('SourceReceiverMatrix', () => {
           'src-1': { uuid: 'src-1', name: 'Source 1', kind: 'source' },
         };
       });
-      mockUseSolverProperty.mockReturnValue([[], jest.fn()]);
+      mockUseSolverProperty.mockReturnValue([[], vi.fn()]);
 
       render(<SourceReceiverMatrix uuid={defaultUuid} />);
       expect(screen.getByText('Add receivers to configure pairs')).toBeInTheDocument();
@@ -86,7 +86,7 @@ describe('SourceReceiverMatrix', () => {
     });
 
     it('renders source names as row headers', () => {
-      mockUseSolverProperty.mockReturnValue([[], jest.fn()]);
+      mockUseSolverProperty.mockReturnValue([[], vi.fn()]);
 
       render(<SourceReceiverMatrix uuid={defaultUuid} />);
       expect(screen.getByText('Source 1')).toBeInTheDocument();
@@ -94,7 +94,7 @@ describe('SourceReceiverMatrix', () => {
     });
 
     it('renders receiver names as column headers', () => {
-      mockUseSolverProperty.mockReturnValue([[], jest.fn()]);
+      mockUseSolverProperty.mockReturnValue([[], vi.fn()]);
 
       render(<SourceReceiverMatrix uuid={defaultUuid} />);
       // Receivers appear twice - once in header and once as title attribute
@@ -103,14 +103,14 @@ describe('SourceReceiverMatrix', () => {
     });
 
     it('renders corner cell with label', () => {
-      mockUseSolverProperty.mockReturnValue([[], jest.fn()]);
+      mockUseSolverProperty.mockReturnValue([[], vi.fn()]);
 
       render(<SourceReceiverMatrix uuid={defaultUuid} />);
       expect(screen.getByText('Src \\ Rec')).toBeInTheDocument();
     });
 
     it('renders checkboxes for each source-receiver pair', () => {
-      mockUseSolverProperty.mockReturnValue([[], jest.fn()]);
+      mockUseSolverProperty.mockReturnValue([[], vi.fn()]);
 
       render(<SourceReceiverMatrix uuid={defaultUuid} />);
       const checkboxes = screen.getAllByRole('checkbox');
@@ -119,7 +119,7 @@ describe('SourceReceiverMatrix', () => {
     });
 
     it('checkboxes are unchecked when pair is not selected', () => {
-      mockUseSolverProperty.mockReturnValue([[], jest.fn()]);
+      mockUseSolverProperty.mockReturnValue([[], vi.fn()]);
 
       render(<SourceReceiverMatrix uuid={defaultUuid} />);
       const checkboxes = screen.getAllByRole('checkbox');
@@ -130,8 +130,8 @@ describe('SourceReceiverMatrix', () => {
 
     it('checkboxes are checked when pair is selected', () => {
       mockUseSolverProperty
-        .mockReturnValueOnce([['src-1'], jest.fn()]) // sourceIDs
-        .mockReturnValueOnce([['rec-1'], jest.fn()]); // receiverIDs
+        .mockReturnValueOnce([['src-1'], vi.fn()]) // sourceIDs
+        .mockReturnValueOnce([['rec-1'], vi.fn()]); // receiverIDs
 
       render(<SourceReceiverMatrix uuid={defaultUuid} />);
       const checkboxes = screen.getAllByRole('checkbox');
@@ -151,7 +151,7 @@ describe('SourceReceiverMatrix', () => {
         if (selector.toString().includes('version')) return 0;
         return mockContainers;
       });
-      mockUseSolverProperty.mockReturnValue([[], jest.fn()]);
+      mockUseSolverProperty.mockReturnValue([[], vi.fn()]);
     });
 
     it('applies disabled styling when disabled prop is true', () => {
@@ -176,7 +176,7 @@ describe('SourceReceiverMatrix', () => {
     });
 
     it('uses default RAYTRACER_SET_PROPERTY event type', () => {
-      mockUseSolverProperty.mockReturnValue([[], jest.fn()]);
+      mockUseSolverProperty.mockReturnValue([[], vi.fn()]);
 
       render(<SourceReceiverMatrix uuid={defaultUuid} />);
 
@@ -189,7 +189,7 @@ describe('SourceReceiverMatrix', () => {
     });
 
     it('uses custom event type when provided', () => {
-      mockUseSolverProperty.mockReturnValue([[], jest.fn()]);
+      mockUseSolverProperty.mockReturnValue([[], vi.fn()]);
 
       render(<SourceReceiverMatrix uuid={defaultUuid} eventType="IMAGESOURCE_SET_PROPERTY" />);
 
@@ -216,8 +216,8 @@ describe('SourceReceiverMatrix', () => {
     });
 
     it('calls setSourceIDs and setReceiverIDs when checking a pair', () => {
-      const setSourceIDs = jest.fn();
-      const setReceiverIDs = jest.fn();
+      const setSourceIDs = vi.fn();
+      const setReceiverIDs = vi.fn();
 
       mockUseSolverProperty
         .mockReturnValueOnce([[], setSourceIDs])
@@ -233,7 +233,7 @@ describe('SourceReceiverMatrix', () => {
     });
 
     it('has title attribute showing source-receiver pair', () => {
-      mockUseSolverProperty.mockReturnValue([[], jest.fn()]);
+      mockUseSolverProperty.mockReturnValue([[], vi.fn()]);
 
       render(<SourceReceiverMatrix uuid={defaultUuid} />);
 

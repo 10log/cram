@@ -22,7 +22,7 @@ import linearRegression, { LinearRegressionResult } from "../../common/linear-re
 import { BVH } from "./bvh/BVH";
 import { renderer } from "../../render/renderer";
 import { addSolver, callSolverMethod, removeSolver, setSolverProperty, useContainer, useSolver } from "../../store";
-import { ResultKind } from "../../store/result-store";
+import { ResultKind, useResult } from "../../store/result-store";
 import {cramangle2threejsangle} from "../../common/dir-angle-conversions";
 import { audioEngine } from "../../audio-engine/audio-engine";
 import observe, { Observable } from "../../common/observable";
@@ -1008,7 +1008,6 @@ class RayTracer extends Solver {
 
     const containers = useContainer.getState().containers;
     const sampleRate = audioEngine.sampleRate;
-    const { useResult } = require("../../store/result-store");
 
     // Count total pairs to calculate progress
     const pairs: Array<{ sourceId: string; receiverId: string; paths: RayPath[] }> = [];
@@ -1240,7 +1239,6 @@ class RayTracer extends Solver {
   }
 
   clearImpulseResponseResults() {
-    const { useResult } = require("../../store/result-store");
     const results = useResult.getState().results;
     // Find any impulse response results from this raytracer and remove them
     Object.keys(results).forEach((key) => {
