@@ -1,17 +1,15 @@
 /**
- * CRAMEditor - Embeddable React component for CRAM acoustic simulation
+ * CRAMCanvas - Standalone 3D canvas component for CRAM
  *
- * This component provides a clean API for embedding CRAM in a parent application.
- * It handles initialization, lifecycle management, and exposes an imperative API
- * for programmatic control.
+ * This component renders just the 3D WebGL canvas without any panels.
+ * Use with ObjectsPanel and SolversPanel for a custom layout.
  */
 
 import React, { useEffect, useRef, useImperativeHandle, forwardRef, useCallback } from 'react';
+import Box from '@mui/material/Box';
+import type { SxProps, Theme } from '@mui/material/styles';
 import type { CRAMEditorProps, CRAMEditorRef, SolverType } from './types';
 import type { SaveState } from '../store/io';
-
-// Components
-import App from '../components/App';
 
 // Messenger and events
 import { emit, messenger } from '../messenger';
@@ -27,6 +25,25 @@ import { layout as defaultLayout } from '../default-storage';
 
 // Storage utility for namespaced localStorage
 import storage, { setStoragePrefix } from './storage';
+
+// Import dialogs and progress indicators
+import ImportDialog from '../components/ImportDialog';
+import SaveDialog from '../components/SaveDialog';
+import ProgressIndicator from '../components/ProgressIndicator';
+import AutoCalculateProgress from '../components/AutoCalculateProgress';
+import { MaterialSearch } from '../components/MaterialSearch';
+
+// Import CSS
+import '../css';
+import '../components/App.css';
+
+const canvasContainerSx: SxProps<Theme> = {
+  position: 'relative',
+  width: '100%',
+  height: '100%',
+  userSelect: 'none',
+  overflow: 'hidden',
+};
 
 /**
  * Get layout from localStorage with the configured prefix
@@ -44,24 +61,25 @@ function getLayout() {
 }
 
 /**
- * CRAMEditor component - the main embeddable CRAM editor
+ * CRAMCanvas component - the 3D canvas without any panels
  */
-export const CRAMEditor = forwardRef<CRAMEditorRef, CRAMEditorProps>(
-  function CRAMEditor(props, ref) {
+export const CRAMCanvas = forwardRef<CRAMEditorRef, CRAMEditorProps>(
+  function CRAMCanvas(props, ref) {
     const {
       initialProject,
       onSave,
       onProjectChange,
       onError,
       storagePrefix = 'cram',
-      showNavBar = true,
-      fixedPanelWidth,
     } = props;
 
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const canvasOverlayRef = useRef<HTMLDivElement>(null);
+    const orientationOverlayRef = useRef<HTMLDivElement>(null);
+    const responseOverlayRef = useRef<HTMLDivElement>(null);
     const initializedRef = useRef(false);
 
     // Set storage prefix on mount (before reading layout)
-    // This must happen synchronously before any localStorage reads
     setStoragePrefix(storagePrefix);
     const layoutRef = useRef(getLayout());
 
@@ -71,7 +89,6 @@ export const CRAMEditor = forwardRef<CRAMEditorRef, CRAMEditorProps>(
 
       const unsubscribe = useAppStore.subscribe((state, prevState) => {
         if (state.hasUnsavedChanges && !prevState.hasUnsavedChanges) {
-          // Project became dirty - get current state and notify
           try {
             const currentState = getSaveState();
             onProjectChange(currentState);
@@ -91,37 +108,36 @@ export const CRAMEditor = forwardRef<CRAMEditorRef, CRAMEditorProps>(
       }
     }, [initialProject]);
 
-    // Mark as initialized after mount and handle cleanup on unmount
+    // Initialize canvas and handle cleanup
     useEffect(() => {
+      if (canvasRef.current) {
+        messenger.postMessage('APP_MOUNTED', canvasRef.current);
+      }
       initializedRef.current = true;
 
-      // Cleanup function - runs when component unmounts
       return () => {
-        console.log('[CRAMEditor] Unmounting - cleaning up resources...');
+        console.log('[CRAMCanvas] Unmounting - cleaning up resources...');
         initializedRef.current = false;
 
-        // Dispose renderer (WebGL context, event listeners, Three.js resources)
         try {
           renderer.dispose();
         } catch (e) {
-          console.warn('[CRAMEditor] Error disposing renderer:', e);
+          console.warn('[CRAMCanvas] Error disposing renderer:', e);
         }
 
-        // Clear messenger handlers
         try {
           messenger.clear();
         } catch (e) {
-          console.warn('[CRAMEditor] Error clearing messenger:', e);
+          console.warn('[CRAMCanvas] Error clearing messenger:', e);
         }
 
-        // Reset all Zustand stores
         try {
           resetAllStores();
         } catch (e) {
-          console.warn('[CRAMEditor] Error resetting stores:', e);
+          console.warn('[CRAMCanvas] Error resetting stores:', e);
         }
 
-        console.log('[CRAMEditor] Cleanup complete');
+        console.log('[CRAMCanvas] Cleanup complete');
       };
     }, []);
 
@@ -144,7 +160,6 @@ export const CRAMEditor = forwardRef<CRAMEditorRef, CRAMEditorProps>(
 
     // Imperative handle for parent component control
     useImperativeHandle(ref, () => ({
-      // Project operations
       newProject: () => {
         emit('NEW', undefined);
       },
@@ -163,7 +178,6 @@ export const CRAMEditor = forwardRef<CRAMEditorRef, CRAMEditorProps>(
         return new Promise((resolve, reject) => {
           try {
             messenger.postMessage('IMPORT_FILE', [file]);
-            // Give import time to process
             setTimeout(resolve, 100);
           } catch (e) {
             reject(e);
@@ -171,7 +185,6 @@ export const CRAMEditor = forwardRef<CRAMEditorRef, CRAMEditorProps>(
         });
       },
 
-      // Scene operations
       addSource: () => {
         messenger.postMessage('SHOULD_ADD_SOURCE');
       },
@@ -201,7 +214,6 @@ export const CRAMEditor = forwardRef<CRAMEditorRef, CRAMEditorProps>(
         }
       },
 
-      // Edit operations
       undo: () => {
         messenger.postMessage('UNDO');
       },
@@ -210,23 +222,27 @@ export const CRAMEditor = forwardRef<CRAMEditorRef, CRAMEditorProps>(
         messenger.postMessage('REDO');
       },
 
-      // View operations
       toggleResultsPanel: () => {
         emit('TOGGLE_RESULTS_PANEL', undefined);
       },
     }), [getSaveState, onSave]);
 
-    // Render the App component with layout props
-    // showNavBar is passed down to conditionally render the navbar
-    // fixedPanelWidth switches from resizable splitter to fixed flex layout
     return (
-      <App
-        {...layoutRef.current}
-        showNavBar={showNavBar}
-        fixedPanelWidth={fixedPanelWidth}
-      />
+      <>
+        <ProgressIndicator />
+        <AutoCalculateProgress />
+        <MaterialSearch />
+        <ImportDialog />
+        <SaveDialog />
+        <Box sx={canvasContainerSx}>
+          <div id="response-overlay" className="response_overlay response_overlay-hidden" ref={responseOverlayRef} />
+          <div id="canvas_overlay" ref={canvasOverlayRef} />
+          <div id="orientation-overlay" ref={orientationOverlayRef} />
+          <canvas id="renderer-canvas" ref={canvasRef} />
+        </Box>
+      </>
     );
   }
 );
 
-export default CRAMEditor;
+export default CRAMCanvas;

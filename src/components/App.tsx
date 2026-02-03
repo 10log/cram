@@ -39,6 +39,8 @@ export interface AppProps {
   leftPanelInitialSize: number;
   /** Whether to show the navigation bar (default: true) */
   showNavBar?: boolean;
+  /** Fixed width for the right panel in pixels. When set, uses flex layout instead of resizable splitter */
+  fixedPanelWidth?: number;
   /** Callback called after component mounts (used by standalone to load initial project) */
   onMount?: () => void;
 }
@@ -132,8 +134,44 @@ export default class App extends React.Component<AppProps, AppState> {
           </EditorContainer>
     )
 
-    const { showNavBar = true } = this.props;
+    const { showNavBar = true, fixedPanelWidth } = this.props;
 
+    // Fixed-width layout mode (for embedding)
+    if (fixedPanelWidth) {
+      return (
+        <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+          {showNavBar && <NavBarComponent />}
+          <ProgressIndicator />
+          <AutoCalculateProgress />
+          <MaterialSearch />
+          <ImportDialog />
+          <SaveDialog />
+
+          {/* Main flex container for canvas and properties panel */}
+          <div style={{ display: 'flex', width: '100%', height: '100%' }}>
+            {/* Canvas area - flexible width */}
+            <div style={{ flex: 1, minWidth: 0, height: '100%', position: 'relative' }}>
+              {Editor}
+            </div>
+
+            {/* Properties panel - fixed width */}
+            <div style={{
+              width: fixedPanelWidth,
+              flexShrink: 0,
+              height: '100%',
+              overflowY: 'auto',
+              background: '#fff',
+              borderLeft: '1px solid #e0e0e0',
+            }}>
+              <ObjectCardList />
+              <SolverCardList />
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Default resizable splitter layout
     return (
       <div>
         {showNavBar && <NavBarComponent />}
