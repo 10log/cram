@@ -648,7 +648,7 @@ export function PropertiesPanel() {
           <Accordion defaultExpanded disableGutters sx={accordionSx}>
             <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={accordionSummarySx}>
               <Typography variant="subtitle2" sx={{ fontWeight: 600, fontSize: "0.75rem" }}>
-                {selectedObject ? `${selectedObject.kind} Properties` : selectedSolver ? `${selectedSolver.kind} Settings` : "Renderer Settings"}
+                {selectedObject ? `${selectedObject.name || selectedObject.kind} Properties` : selectedSolver ? `${selectedSolver.kind} Settings` : "Renderer Settings"}
               </Typography>
             </AccordionSummary>
             <AccordionDetails sx={{ p: 0 }}>

@@ -7966,11 +7966,10 @@ const gt = {
   materials: {
     selected: new D.MeshLambertMaterial({
       fog: !1,
-      color: new D.Color(11786239),
-      // emissiveIntensity: 2,
-      // emissive: new THREE.Color(1, 1, 0),
+      color: new D.Color(16776960),
+      // Yellow for selected surfaces
       transparent: !0,
-      opacity: 0.5,
+      opacity: 0.6,
       side: D.DoubleSide,
       reflectivity: 0.15,
       depthWrite: !0,
@@ -8671,11 +8670,11 @@ async function Ut(t, e, r) {
   return a(e, r);
 }
 ar("ray-tracer", async (t, e) => {
-  const { default: r } = await import("./index-BSDhWH6E.mjs");
+  const { default: r } = await import("./index-B9egiZBJ.mjs");
   return new r(e);
 });
 ar("image-source", async (t, e) => {
-  const { ImageSourceSolver: r } = await import("./index-Djl81pJf.mjs"), a = {
+  const { ImageSourceSolver: r } = await import("./index-pmmfScST.mjs"), a = {
     name: "Image Source",
     roomID: "",
     sourceIDs: [],
@@ -8690,23 +8689,23 @@ ar("image-source", async (t, e) => {
   return new r(a);
 });
 ar("rt60", async (t, e) => {
-  const { default: r } = await import("./index-CzIsQmQx.mjs");
+  const { default: r } = await import("./index-BI4fGl3Y.mjs");
   return new r();
 });
 ar("energydecay", async (t, e) => {
-  const { default: r } = await import("./energy-decay-CqWquCvx.mjs");
+  const { default: r } = await import("./energy-decay-BXJcc_OZ.mjs");
   return new r();
 });
 ar("fdtd-2d", async (t, e) => {
-  const { default: r } = await import("./index-CP_NHYh1.mjs");
+  const { default: r } = await import("./index-ROYiXPnr.mjs");
   return new r();
 });
 ar("beam-trace", async (t, e) => {
-  const { BeamTraceSolver: r } = await import("./index-Dr_3vhrC.mjs");
+  const { BeamTraceSolver: r } = await import("./index-CE0U-M4X.mjs");
   return new r();
 });
 ar("art", async (t, e) => {
-  const { ART: r } = await import("./art-NbVkvvqD.mjs");
+  const { ART: r } = await import("./art-m-wHCkhy.mjs");
   return new r();
 });
 class X5 extends Ql {
@@ -17134,7 +17133,7 @@ function _4() {
     L && /* @__PURE__ */ X(h0, { children: [
       /* @__PURE__ */ l(Lt, {}),
       /* @__PURE__ */ X(Un, { defaultExpanded: !0, disableGutters: !0, sx: yi, children: [
-        /* @__PURE__ */ l(zn, { expandIcon: /* @__PURE__ */ l(Y0, {}), sx: Si, children: /* @__PURE__ */ l($e, { variant: "subtitle2", sx: { fontWeight: 600, fontSize: "0.75rem" }, children: m ? `${m.kind} Properties` : S ? `${S.kind} Settings` : "Renderer Settings" }) }),
+        /* @__PURE__ */ l(zn, { expandIcon: /* @__PURE__ */ l(Y0, {}), sx: Si, children: /* @__PURE__ */ l($e, { variant: "subtitle2", sx: { fontWeight: 600, fontSize: "0.75rem" }, children: m ? `${m.name || m.kind} Properties` : S ? `${S.kind} Settings` : "Renderer Settings" }) }),
         /* @__PURE__ */ l(jn, { sx: { p: 0 }, children: /* @__PURE__ */ l(Q, { sx: V4, children: p() }) })
       ] })
     ] })
@@ -20637,4 +20636,4 @@ export {
   Qn as y,
   kA as z
 };
-//# sourceMappingURL=index-Bd2qDRpc.mjs.map
+//# sourceMappingURL=index-BUlpYGJ0.mjs.map
