@@ -1,6 +1,8 @@
 .material_drawer-grid{
   display: grid;
   grid-template-columns: 1fr 2fr;
+  background-color: #fff;
+  height: 100%;
 }
 
 .material_drawer-container{
