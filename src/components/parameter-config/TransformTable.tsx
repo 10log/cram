@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import Box from "@mui/material/Box";
 import type { SxProps, Theme } from "@mui/material/styles";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -109,23 +109,45 @@ interface TransformInputProps {
 }
 
 const TransformInput = ({ uuid, property, event }: TransformInputProps) => {
+  const inputRef = useRef<HTMLInputElement>(null);
   const value = useContainer((state) => {
     void state.version;
     return (state.containers[uuid] as Container)[property] as number;
   });
 
+  // Store latest values in refs so the wheel handler always has current values
+  const valueRef = useRef(value);
+  const uuidRef = useRef(uuid);
+  const propertyRef = useRef(property);
+  const eventRef = useRef(event);
+
+  // Keep refs in sync
+  valueRef.current = value;
+  uuidRef.current = uuid;
+  propertyRef.current = property;
+  eventRef.current = event;
+
+  // Use non-passive wheel listener to allow preventDefault
+  useEffect(() => {
+    const input = inputRef.current;
+    if (!input) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const delta = e.deltaY < 0 ? 1 : -1;
+      const newValue = valueRef.current + delta;
+      if (!Number.isNaN(newValue)) {
+        // @ts-ignore - property is valid for all container types
+        emit(eventRef.current, { uuid: uuidRef.current, property: propertyRef.current, value: newValue });
+      }
+    };
+
+    input.addEventListener("wheel", handleWheel, { passive: false });
+    return () => input.removeEventListener("wheel", handleWheel);
+  }, []);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.currentTarget.valueAsNumber;
-    if (!Number.isNaN(newValue)) {
-      // @ts-ignore - property is valid for all container types
-      emit(event, { uuid, property, value: newValue });
-    }
-  };
-
-  const handleWheel = (e: React.WheelEvent<HTMLInputElement>) => {
-    e.preventDefault();
-    const delta = e.deltaY < 0 ? 1 : -1;
-    const newValue = value + delta;
     if (!Number.isNaN(newValue)) {
       // @ts-ignore - property is valid for all container types
       emit(event, { uuid, property, value: newValue });
@@ -136,9 +158,9 @@ const TransformInput = ({ uuid, property, event }: TransformInputProps) => {
     <Box
       component="input"
       type="number"
+      ref={inputRef}
       value={value}
       onChange={handleChange}
-      onWheel={handleWheel}
       step={1}
       sx={styledInputSx}
     />
