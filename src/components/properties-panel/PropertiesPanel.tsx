@@ -58,6 +58,7 @@ import EnergyDecayTab from "../parameter-config/EnergyDecayTab";
 import BeamTraceTab from "../parameter-config/BeamTraceTab";
 import FDTD_2DTab from "../parameter-config/FDTD_2DTab";
 import ARTTab from "../parameter-config/ARTTab";
+import RendererTab from "../parameter-config/RendererTab";
 
 // ============================================================================
 // ANIMATIONS
@@ -416,13 +417,7 @@ export function PropertiesPanel() {
     }
 
     if (showRenderer) {
-      return (
-        <Box sx={{ p: 1 }}>
-          <Typography variant="body2" color="text.secondary">
-            Renderer settings coming soon
-          </Typography>
-        </Box>
-      );
+      return <RendererTab />;
     }
 
     return null;
