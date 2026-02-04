@@ -57,10 +57,6 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.28.4",
-    "@blueprintjs/core": "^6.4.1",
-    "@blueprintjs/icons": "^6.3.2",
-    "@blueprintjs/select": "^6.0.10",
-    "@blueprintjs/table": "^6.0.10",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^7.3.6",
@@ -116,12 +112,12 @@
     "react-dom": "^18.0.0"
   },
   "devDependencies": {
-    "@jscad/modeling": "^2.12.6",
     "@babel/core": "^7.28.5",
     "@babel/eslint-parser": "^7.28.5",
     "@babel/preset-env": "^7.28.5",
     "@babel/preset-react": "^7.28.5",
     "@babel/preset-typescript": "^7.28.5",
+    "@jscad/modeling": "^2.12.6",
     "@playwright/test": "^1.57.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.1",
@@ -200,5 +196,8 @@
         }
       ]
     }
+  },
+  "optionalDependencies": {
+    "@rollup/rollup-win32-x64-msvc": "^4.57.1"
   }
 }

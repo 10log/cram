@@ -8,12 +8,3 @@ button, input, optgroup, select, textarea {
   line-height: 1.15;
   margin: 0;
 }
-.bp3-tag{
-  padding: 1px 3px;
-}
-.bp3-menu-item{
-  padding: 0px 7px;
-}
-.bp3-button{
-  min-height: unset;
-}
