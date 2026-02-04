@@ -126,6 +126,27 @@ export function registerMessageHandlers(
     return ed;
   });
 
+  msg.addMessageHandler("SHOULD_ADD_BEAMTRACE", async (_acc, ..._args) => {
+    const bt = await createSolver("beam-trace", cram);
+    cram.state.solvers[bt.uuid] = bt;
+    emit("ADD_BEAMTRACE", bt);
+    return bt;
+  });
+
+  msg.addMessageHandler("SHOULD_ADD_FDTD_2D", async (_acc, ..._args) => {
+    const fdtd = await createSolver("fdtd-2d", cram);
+    cram.state.solvers[fdtd.uuid] = fdtd;
+    emit("ADD_FDTD_2D", fdtd);
+    return fdtd;
+  });
+
+  msg.addMessageHandler("SHOULD_ADD_ART", async (_acc, ..._args) => {
+    const art = await createSolver("art", cram);
+    cram.state.solvers[art.uuid] = art;
+    emit("ADD_ART", art);
+    return art;
+  });
+
   msg.addMessageHandler("RAYTRACER_CALCULATE_RESPONSE", (acc, id, frequencies) => {
     const solver = cram.state.solvers[id];
     if (solver?.kind === "ray-tracer" && "calculateReflectionLoss" in solver) {
@@ -732,10 +753,18 @@ export function registerMessageHandlers(
     const file = props.file;
     const json = props.json;
     const version = (json.meta && json.meta.version) || "0.0.0";
-    console.log(version);
-    const { gte } = require("semver");
-    if (gte(version, "0.2.1")) {
-      console.log(json);
+
+    // Simple semver gte check (browser-compatible, replaces require("semver"))
+    const semverGte = (v1: string, v2: string): boolean => {
+      const parse = (v: string) => v.split('.').map(n => parseInt(n, 10) || 0);
+      const [a1, a2, a3] = parse(v1);
+      const [b1, b2, b3] = parse(v2);
+      if (a1 !== b1) return a1 > b1;
+      if (a2 !== b2) return a2 > b2;
+      return a3 >= b3;
+    };
+
+    if (semverGte(version, "0.2.1")) {
       msg.postMessage("RESTORE_CONTAINERS", json.containers);
       msg.postMessage("RESTORE_SOLVERS", json.solvers);
       msg.postMessage("SET_PROJECT_NAME", json.meta.name);

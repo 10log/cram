@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect, Suspense } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import Box from "@mui/material/Box";
 import type { SxProps, Theme } from "@mui/material/styles";
 import { useSolver, removeSolver } from "../../store/solver-store";
@@ -151,9 +151,7 @@ export default function SolverCard({ uuid, defaultExpanded = false }: SolverCard
       <Box sx={cardContentSx(expanded)}>
         {ParameterComponent && (
           <Box sx={parameterSectionSx}>
-            <Suspense fallback={<div style={{ padding: '8px', color: '#666' }}>Loading...</div>}>
-              <ParameterComponent uuid={uuid} />
-            </Suspense>
+            <ParameterComponent uuid={uuid} />
           </Box>
         )}
       </Box>

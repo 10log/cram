@@ -6,8 +6,6 @@ import "@blueprintjs/core/lib/css/blueprint.css";
 import "./blueprint-icons-no-fonts.css";
 
 import "./global.css";
-
-import "./split-container.css";
 import "./styles.css";
 
 import "./tree.css";
