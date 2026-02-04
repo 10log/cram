@@ -333,8 +333,11 @@ export function PropertiesPanel() {
   const [selectedSolverId, setSelectedSolverId] = useState<string | null>(null);
   const [showRenderer, setShowRenderer] = useState(false);
 
-  // Store data
-  const containers = useContainer(useShallow((state) => state.containers));
+  // Store data - include version to trigger re-render on container property changes
+  const { containers, version } = useContainer(useShallow((state) => ({
+    containers: state.containers,
+    version: state.version
+  })));
   const solversData = useSolver((state) => state.solvers);
   const autoCalculate = useAppStore((state) => state.autoCalculate);
   const progressVisible = useAppStore((state) => state.progress.visible);
@@ -369,7 +372,7 @@ export function PropertiesPanel() {
     });
 
     return result;
-  }, [containers]);
+  }, [containers, version]);
 
   // Solver list
   const solverList = useMemo(() => {
