@@ -1,6 +1,9 @@
 import { create } from 'zustand';
-import { produce } from 'immer';
+import { produce, enableMapSet } from 'immer';
 import * as THREE from 'three';
+
+// Enable Immer's MapSet plugin for Set/Map support in store
+enableMapSet();
 import { KeyValuePair } from "../common/key-value-pair";
 import Container from "../objects/container";
 import { AllowedNames, omit, reach } from '../common/helpers';
