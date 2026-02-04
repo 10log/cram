@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 import Box from "@mui/material/Box";
 import type { SxProps, Theme } from "@mui/material/styles";
 
@@ -42,19 +42,41 @@ interface Props {
 }
 
 export const PropertyRowNumberInput = ({ value, onChange, step = 1, min, max }: Props) => {
-  const handleWheel = useCallback(
-    (e: React.WheelEvent<HTMLInputElement>) => {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Store latest values in refs so the wheel handler always has current values
+  const valueRef = useRef(value);
+  const stepRef = useRef(step);
+  const minRef = useRef(min);
+  const maxRef = useRef(max);
+  const onChangeRef = useRef(onChange);
+
+  // Keep refs in sync
+  valueRef.current = value;
+  stepRef.current = step;
+  minRef.current = min;
+  maxRef.current = max;
+  onChangeRef.current = onChange;
+
+  // Use non-passive wheel listener to allow preventDefault
+  useEffect(() => {
+    const input = inputRef.current;
+    if (!input) return;
+
+    const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
-      const delta = e.deltaY < 0 ? step : -step;
-      let newValue = value + delta;
-      if (min !== undefined) newValue = Math.max(min, newValue);
-      if (max !== undefined) newValue = Math.min(max, newValue);
+      const delta = e.deltaY < 0 ? stepRef.current : -stepRef.current;
+      let newValue = valueRef.current + delta;
+      if (minRef.current !== undefined) newValue = Math.max(minRef.current, newValue);
+      if (maxRef.current !== undefined) newValue = Math.min(maxRef.current, newValue);
       if (!Number.isNaN(newValue)) {
-        onChange({ value: newValue });
+        onChangeRef.current({ value: newValue });
       }
-    },
-    [value, step, min, max, onChange]
-  );
+    };
+
+    input.addEventListener("wheel", handleWheel, { passive: false });
+    return () => input.removeEventListener("wheel", handleWheel);
+  }, []);
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -70,8 +92,8 @@ export const PropertyRowNumberInput = ({ value, onChange, step = 1, min, max }: 
     <Box
       component="input"
       type="number"
+      ref={inputRef}
       onChange={handleChange}
-      onWheel={handleWheel}
       value={value}
       step={step}
       min={min}
