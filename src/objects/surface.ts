@@ -32,7 +32,7 @@ const defaults = {
   materials: {
     selected: new THREE.MeshLambertMaterial({
       fog: false,
-      color: new THREE.Color(0xffff00), // Yellow for selected surfaces
+      color: new THREE.Color(0x4fc3f7), // Light blue for selected surfaces
       transparent: true,
       opacity: 0.6,
       side: THREE.DoubleSide,
