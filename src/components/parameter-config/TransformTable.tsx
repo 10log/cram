@@ -191,34 +191,34 @@ export default function TransformTable({ uuid, event }: TransformTableProps) {
       </Box>
       <Collapse in={open}>
         <Box component="table" sx={tableSx}>
-          <thead>
+          <Box component="thead">
             <Box component="tr" sx={headerRowSx}>
-              <th></th>
-              <th>X</th>
-              <th>Y</th>
-              <th>Z</th>
+              <Box component="th" />
+              <Box component="th">X</Box>
+              <Box component="th">Y</Box>
+              <Box component="th">Z</Box>
             </Box>
-          </thead>
-          <tbody>
+          </Box>
+          <Box component="tbody">
             <Box component="tr" sx={dataRowSx}>
-              <td>Position</td>
-              <td><TransformInput uuid={uuid} property="x" event={event} /></td>
-              <td><TransformInput uuid={uuid} property="y" event={event} /></td>
-              <td><TransformInput uuid={uuid} property="z" event={event} /></td>
-            </Box>
-            <Box component="tr" sx={dataRowSx}>
-              <td>Scale</td>
-              <td><TransformInput uuid={uuid} property="scalex" event={event} /></td>
-              <td><TransformInput uuid={uuid} property="scaley" event={event} /></td>
-              <td><TransformInput uuid={uuid} property="scalez" event={event} /></td>
+              <Box component="td">Position</Box>
+              <Box component="td"><TransformInput uuid={uuid} property="x" event={event} /></Box>
+              <Box component="td"><TransformInput uuid={uuid} property="y" event={event} /></Box>
+              <Box component="td"><TransformInput uuid={uuid} property="z" event={event} /></Box>
             </Box>
             <Box component="tr" sx={dataRowSx}>
-              <td>Rotation</td>
-              <td><TransformInput uuid={uuid} property="rotationx" event={event} /></td>
-              <td><TransformInput uuid={uuid} property="rotationy" event={event} /></td>
-              <td><TransformInput uuid={uuid} property="rotationz" event={event} /></td>
+              <Box component="td">Scale</Box>
+              <Box component="td"><TransformInput uuid={uuid} property="scalex" event={event} /></Box>
+              <Box component="td"><TransformInput uuid={uuid} property="scaley" event={event} /></Box>
+              <Box component="td"><TransformInput uuid={uuid} property="scalez" event={event} /></Box>
             </Box>
-          </tbody>
+            <Box component="tr" sx={dataRowSx}>
+              <Box component="td">Rotation</Box>
+              <Box component="td"><TransformInput uuid={uuid} property="rotationx" event={event} /></Box>
+              <Box component="td"><TransformInput uuid={uuid} property="rotationy" event={event} /></Box>
+              <Box component="td"><TransformInput uuid={uuid} property="rotationz" event={event} /></Box>
+            </Box>
+          </Box>
         </Box>
       </Collapse>
     </Box>

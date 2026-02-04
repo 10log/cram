@@ -24,6 +24,7 @@ import AutoCalculateProgress from "./AutoCalculateProgress";
 import {ResultsPanel} from './ResultsPanel';
 import { MaterialSearch } from "./MaterialSearch";
 import EditorContainer from "./EditorContainer";
+import { renderer } from "../render/renderer";
 
 // Note: AppToaster removed - was unused and caused React 18 deprecation warning
 // If toasts are needed in the future, use MUI Snackbar or similar
@@ -60,6 +61,7 @@ export default class App extends React.Component<AppProps, AppState> {
   bottomPanelSize = this.props.bottomPanelInitialSize;
   rightPanelSize = this.props.rightPanelInitialSize;
   leftPanelSize = this.props.leftPanelInitialSize;
+  resizeObserver: ResizeObserver | null = null;
 
   constructor(props: AppProps) {
     super(props);
@@ -83,6 +85,16 @@ export default class App extends React.Component<AppProps, AppState> {
     // Call onMount callback if provided (standalone uses this to load initial project)
     this.props.onMount?.();
 
+    // Set up ResizeObserver to handle container size changes (e.g., sidebar collapse)
+    const container = this.canvas.current?.parentElement;
+    if (container) {
+      this.resizeObserver = new ResizeObserver(() => {
+        renderer.checkresize();
+        renderer.needsToRender = true;
+      });
+      this.resizeObserver.observe(container);
+    }
+
     on("TOGGLE_RESULTS_PANEL", (open) => {
       this.setState(prev => ({
         resultsPanelOpen: typeof open === 'boolean' ? open : !prev.resultsPanelOpen
@@ -91,6 +103,13 @@ export default class App extends React.Component<AppProps, AppState> {
         emit("RENDERER_SHOULD_ANIMATE", false);
       });
     });
+  }
+
+  componentWillUnmount() {
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+      this.resizeObserver = null;
+    }
   }
 
   saveLayout() {

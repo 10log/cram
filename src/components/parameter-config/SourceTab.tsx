@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useRef } from "react";
+import Button from "@mui/material/Button";
 import Source, { DirectivityHandler, SignalSourceOptions } from "../../objects/source";
 import { useContainer } from "../../store";
 import PropertyRow from "./property-row/PropertyRow";
@@ -59,6 +60,24 @@ const FDTDConfig =({ uuid }: { uuid: string }) => {
 
 const CLFConfig = ({uuid}: {uuid: string}) => {
   const [open, toggle] = useToggle(true);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const reader = new FileReader();
+
+    reader.addEventListener('loadend', () => {
+      const filecontents = reader.result as string;
+      const clf = new CLFParser(filecontents);
+      const clf_results = clf.parse();
+      const source = useContainer.getState().containers[uuid] as Source;
+      source.directivityHandler = new DirectivityHandler(1, clf_results);
+    });
+
+    if (e.target?.files?.[0]) {
+      reader.readAsText(e.target.files[0]);
+    }
+  };
+
   return (
     <PropertyRowFolder label="CLF Config" open={open} onOpenClose={toggle}>
       <PropertySelect
@@ -75,72 +94,25 @@ const CLFConfig = ({uuid}: {uuid: string}) => {
         <PropertyRowLabel label="CLF Data" tooltip="Import CLF directivity text files"/>
         <div>
           <input
-          type = "file"
-          id = "clfinput"
-          accept = ".tab"
-          onChange={(e) => {
-              console.log(e.target.files);
-              const reader = new FileReader();
-
-              reader.addEventListener('loadend', (_loadEndEvent) => {
-                  let filecontents:string = reader.result as string;
-                  let clf = new CLFParser(filecontents);
-                  let clf_results = clf.parse();
-                  const source = useContainer.getState().containers[uuid] as Source;
-                  source.directivityHandler = new DirectivityHandler(1,clf_results);
-
-
-                  // display CLF parser object (debugging)
-                  console.log(clf);
-                  // display CLF parser results (debugging)
-                  console.log(clf_results);
-              });
-
-              reader.readAsText(e.target!.files![0]);
-
-            }
-          }
+            ref={fileInputRef}
+            type="file"
+            accept=".tab"
+            onChange={handleFileChange}
+            style={{ display: 'none' }}
           />
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={() => fileInputRef.current?.click()}
+            sx={{ fontSize: '0.75rem', textTransform: 'none' }}
+          >
+            Import CLF
+          </Button>
         </div>
       </PropertyRow>
     </PropertyRowFolder>
-  )
+  );
 }
-
-// const StyleProperties = ({ uuid }: { uuid: string }) => {
-//   const [open, toggle] = useToggle(true);
-//   return (
-//     <PropertyRowFolder label="Style Properties" open={open} onOpenClose={toggle}>
-//       <PropertyNumberInput
-//         uuid={uuid}
-//         label="Point Size"
-//         property="pointSize"
-//         tooltip="Sets the size of each interection point"
-//       />
-//       <PropertyCheckboxInput
-//         uuid={uuid}
-//         label="Rays Visible"
-//         property="raysVisible"
-//         tooltip="Toggles the visibility of the rays"
-//       />
-//       <PropertyCheckboxInput
-//         uuid={uuid}
-//         label="Points Visible"
-//         property="pointsVisible"
-//         tooltip="Toggles the visibility of the intersection points"
-//       />
-//     </PropertyRowFolder>
-//   );
-// };
-// const ContainerControls = ({ uuid }: { uuid: string }) => {
-//   const [open, toggle] = useToggle(true);
-//   return (
-//     <PropertyRowFolder label="Container Controls" open={open} onOpenClose={toggle}>
-//       <PropertyCheckboxInput uuid={uuid} label="Running" property="isRunning" tooltip="Starts/stops the raytracer" />
-//       <PropertyButton event="RAYTRACER_CLEAR_RAYS" args={uuid} label="Clear Rays" tooltip="Clears all of the rays" />
-//     </PropertyRowFolder>
-//   );
-// };
 
 export const SourceTab = ({ uuid }: { uuid: string }) => {
   return (

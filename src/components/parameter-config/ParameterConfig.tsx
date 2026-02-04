@@ -1,7 +1,9 @@
-// @ts-nocheck
 import React, {useEffect, useMemo, useState} from 'react';
 import {on} from '../../messenger';
-import { Tabs, Tab, Box, Typography } from "@mui/material";
+import Tabs from "@mui/material/Tabs";
+import Tab from "@mui/material/Tab";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
 import type { SxProps, Theme } from "@mui/material/styles";
 
 import './ParameterConfig.css';
@@ -18,6 +20,7 @@ import ReceiverTab from './ReceiverTab';
 import SurfaceTab from './SurfaceTab';
 import ARTTab from './ARTTab';
 import BeamTraceTab from './BeamTraceTab';
+import type { Container } from '../../objects';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -47,7 +50,10 @@ export interface ParameterConfigState {
   tabNames: string[];
 }
 
-const SolverComponentMap = new Map<string, ({ uuid }) => JSX.Element>([
+type TabComponentProps = { uuid: string };
+type TabComponent = React.ComponentType<TabComponentProps>;
+
+const SolverComponentMap = new Map<string, TabComponent>([
   ["image-source", ImageSourceTab],
   ["ray-tracer", RayTracerTab],
   ["rt60", RT60Tab],
@@ -57,14 +63,14 @@ const SolverComponentMap = new Map<string, ({ uuid }) => JSX.Element>([
   ["beam-trace", BeamTraceTab]
 ]);
 
-const ObjectComponentMap = new Map<string, ({ uuid }) => JSX.Element>([
+const ObjectComponentMap = new Map<string, TabComponent>([
   ["room", RoomTab],
   ["source", SourceTab],
   ["receiver", ReceiverTab],
   ["surface", SurfaceTab],
 ]);
 
-const SolverOptionTitle = ({ uuid }) => {
+const SolverOptionTitle = ({ uuid }: { uuid: string }) => {
   const name = useSolver((state) => state.solvers[uuid].name);
   return (
     <option value={uuid}>{name}</option>
@@ -104,7 +110,7 @@ export const SolversTab = () => {
 };
 
 
-const ObjectOptionTitle = ({ uuid }) => {
+const ObjectOptionTitle = ({ uuid }: { uuid: string }) => {
   const name = useContainer((state) => state.containers[uuid].name);
   return (
     <option value={uuid}>{name}</option>
@@ -128,13 +134,13 @@ export const ObjectsTab = () => {
     return on("NEW", () => _setIndex(0));
   }, []);
   useEffect(() => {
-    return on("SET_SELECTION", (e) => {
-      setSelectedObjectId(e[0].uuid);
+    return on("SET_SELECTION", (containers: Container[]) => {
+      setSelectedObjectId(containers[0].uuid);
     });
   }, []);
   useEffect(() => {
-    return on("APPEND_SELECTION", (e) => {
-      setSelectedObjectId(e[e.length - 1].uuid);
+    return on("APPEND_SELECTION", (containers: Container[]) => {
+      setSelectedObjectId(containers[containers.length - 1].uuid);
     });
   }, []);
   const validSelection = selectedObjectId && objects.has(selectedObjectId);
