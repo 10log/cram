@@ -1,35 +1,30 @@
 import React, { useCallback, useEffect, useRef } from "react";
-import Box from "@mui/material/Box";
+import TextField from "@mui/material/TextField";
 import type { SxProps, Theme } from "@mui/material/styles";
 
-const styledInputSx: SxProps<Theme> = {
-  ml: "0.5em",
-  mr: "0.5em",
-  outline: "none",
-  border: "none",
-  borderRadius: "2px",
-  bgcolor: "rgba(246, 248, 250, 0.75)",
-  p: "0 10px",
-  verticalAlign: "middle",
-  color: "#182026",
-  transition: "box-shadow 0.05s cubic-bezier(0.4, 1, 0.75, 0.9)",
-  appearance: "none",
-  // Hide spin buttons
-  "&::-webkit-outer-spin-button, &::-webkit-inner-spin-button": {
-    WebkitAppearance: "none",
-    m: 0,
+const numberInputSx: SxProps<Theme> = {
+  ml: 1,
+  mr: 1,
+  "& .MuiInputBase-root": {
+    fontSize: "0.75rem",
+    height: 24,
   },
-  MozAppearance: "textfield",
-  "&:hover": {
-    outline: "none",
-    boxShadow:
-      "0 0 0 0 rgba(19,124,189,0), 0 0 0 0 rgba(19,124,189,0), inset 0 0 0 1px rgba(16,22,26,.15), inset 0 1px 1px rgba(16,22,26,.2)",
-    bgcolor: "rgba(246, 248, 250, 1.0)",
+  "& .MuiInputBase-input": {
+    py: 0.5,
+    px: 1,
+    textAlign: "center",
+    // Hide spin buttons
+    "&::-webkit-outer-spin-button, &::-webkit-inner-spin-button": {
+      WebkitAppearance: "none",
+      m: 0,
+    },
+    MozAppearance: "textfield",
   },
-  "&:focus": {
-    boxShadow:
-      "0 0 0 0 rgba(19,124,189,0), 0 0 0 0 rgba(19,124,189,0), inset 0 0 0 1px rgba(16,22,26,.15), inset 0 1px 1px rgba(16,22,26,.2)",
-    bgcolor: "rgba(246, 248, 250, 0.75)",
+  "& .MuiOutlinedInput-notchedOutline": {
+    borderColor: "divider",
+  },
+  "&:hover .MuiOutlinedInput-notchedOutline": {
+    borderColor: "primary.main",
   },
 };
 
@@ -89,21 +84,23 @@ export const PropertyRowNumberInput = ({ value, onChange, step = 1, min, max }: 
   );
 
   return (
-    <Box
-      component="input"
+    <TextField
+      inputRef={inputRef}
       type="number"
-      ref={inputRef}
-      onChange={handleChange}
+      size="small"
+      variant="outlined"
       value={value}
-      step={step}
-      min={min}
-      max={max}
-      sx={styledInputSx}
+      onChange={handleChange}
+      slotProps={{
+        htmlInput: {
+          step,
+          min,
+          max,
+        },
+      }}
+      sx={numberInputSx}
     />
   );
 };
 
-// Export for reuse in other components
-export const StyledInput = ({ ...props }: React.InputHTMLAttributes<HTMLInputElement>) => (
-  <Box component="input" sx={styledInputSx} {...props} />
-);
+export default PropertyRowNumberInput;

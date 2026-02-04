@@ -1,6 +1,6 @@
-import { l as B, u as k, r as T, n as X, E as D, o as j, q as N, x as z } from "./index-DfMHAABu.mjs";
+import { l as B, u as k, r as T, n as X, E as D, o as j, q as N, x as z } from "./index-SdxqgSpQ.mjs";
 import { NearestFilter as y, ShaderMaterial as U, WebGLRenderTarget as A, FloatType as L, RGBAFormat as F, DataTexture as Y, ClampToEdgeWrapping as V, PlaneGeometry as P, MeshBasicMaterial as G, MeshLambertMaterial as O, DoubleSide as M, Mesh as W, UniformsUtils as q, UniformsLib as p, Color as K, Vector2 as E, UnsignedByteType as J } from "three";
-import { S as Q } from "./solver-CiVXkLtn.mjs";
+import { S as Q } from "./solver-PU-y3HWT.mjs";
 class Z {
   /**
    * Constructs a new GPU computation renderer.
@@ -820,4 +820,4 @@ export {
   C as FDTD_2D_Defaults,
   oe as default
 };
-//# sourceMappingURL=index-BoKQxnZ8.mjs.map
+//# sourceMappingURL=index-Cd3PB1oS.mjs.map

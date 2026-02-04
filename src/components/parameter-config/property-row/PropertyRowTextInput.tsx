@@ -1,29 +1,23 @@
 import React from "react";
-import Box from "@mui/material/Box";
+import TextField from "@mui/material/TextField";
 import type { SxProps, Theme } from "@mui/material/styles";
 
-const styledTextInputSx: SxProps<Theme> = {
-  ml: "0.5em",
-  mr: "0.5em",
-  outline: "none",
-  border: "none",
-  borderRadius: "2px",
-  bgcolor: "rgba(246, 248, 250, 0.75)",
-  p: "0 10px",
-  verticalAlign: "middle",
-  color: "#182026",
-  transition: "box-shadow 0.05s cubic-bezier(0.4, 1, 0.75, 0.9)",
-  appearance: "none",
-  "&:hover": {
-    outline: "none",
-    boxShadow:
-      "0 0 0 0 rgba(19,124,189,0), 0 0 0 0 rgba(19,124,189,0), inset 0 0 0 1px rgba(16,22,26,.15), inset 0 1px 1px rgba(16,22,26,.2)",
-    bgcolor: "rgba(246, 248, 250, 1.0)",
+const textInputSx: SxProps<Theme> = {
+  ml: 1,
+  mr: 1,
+  "& .MuiInputBase-root": {
+    fontSize: "0.75rem",
+    height: 24,
   },
-  "&:focus": {
-    boxShadow:
-      "0 0 0 0 rgba(19,124,189,0), 0 0 0 0 rgba(19,124,189,0), inset 0 0 0 1px rgba(16,22,26,.15), inset 0 1px 1px rgba(16,22,26,.2)",
-    bgcolor: "rgba(246, 248, 250, 0.75)",
+  "& .MuiInputBase-input": {
+    py: 0.5,
+    px: 1,
+  },
+  "& .MuiOutlinedInput-notchedOutline": {
+    borderColor: "divider",
+  },
+  "&:hover .MuiOutlinedInput-notchedOutline": {
+    borderColor: "primary.main",
   },
 };
 
@@ -33,11 +27,14 @@ interface Props {
 }
 
 export const PropertyRowTextInput = ({ value, onChange }: Props) => (
-  <Box
-    component="input"
+  <TextField
     type="text"
-    onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange({ value: e.currentTarget.value })}
+    size="small"
+    variant="outlined"
     value={value}
-    sx={styledTextInputSx}
+    onChange={(e) => onChange({ value: e.currentTarget.value })}
+    sx={textInputSx}
   />
 );
+
+export default PropertyRowTextInput;
