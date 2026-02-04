@@ -1,8 +1,5 @@
 import React from "react";
-import SplitterLayout from "react-splitter-layout-react-v18";
 import ImportDialog from "./ImportDialog";
-// import ObjectView from "./object-view/ObjectView";
-// import ConstructionsView from "./ConstructionsView";
 import PanelContainer from "./panel-container/PanelContainer";
 import { emit, messenger, on } from "../messenger";
 import storage from "../lib/storage";
@@ -39,7 +36,7 @@ export interface AppProps {
   leftPanelInitialSize: number;
   /** Whether to show the navigation bar (default: true) */
   showNavBar?: boolean;
-  /** Fixed width for the right panel in pixels. When set, uses flex layout instead of resizable splitter */
+  /** Fixed width for the right panel in pixels (default: uses stored layout preference) */
   fixedPanelWidth?: number;
   /** Callback called after component mounts (used by standalone to load initial project) */
   onMount?: () => void;
@@ -47,8 +44,11 @@ export interface AppProps {
 
 type AppState = {
   stats: Stat[];
+  resultsPanelOpen: boolean;
 };
 
+/** Height of results panel when open */
+const RESULTS_PANEL_HEIGHT = 250;
 
 export default class App extends React.Component<AppProps, AppState> {
   state: AppState;
@@ -61,20 +61,19 @@ export default class App extends React.Component<AppProps, AppState> {
   bottomPanelSize = this.props.bottomPanelInitialSize;
   rightPanelSize = this.props.rightPanelInitialSize;
   leftPanelSize = this.props.leftPanelInitialSize;
-  editorResultSplitterRef: React.RefObject<SplitterLayout>;
+
   constructor(props: AppProps) {
     super(props);
     this.state = {
       stats: [] as Stat[],
+      resultsPanelOpen: false,
     };
 
     this.canvas = React.createRef<HTMLCanvasElement>();
     this.responseOverlay = React.createRef<HTMLDivElement>();
-    //this.clfViewerOverlay = React.createRef<HTMLDivElement>();
     this.canvasOverlay = React.createRef<HTMLDivElement>();
     this.orientationOverlay = React.createRef<HTMLDivElement>();
     this.statsCanvas = React.createRef<HTMLCanvasElement>();
-    this.editorResultSplitterRef = React.createRef<SplitterLayout>();
     this.saveLayout = this.saveLayout.bind(this);
   }
 
@@ -84,34 +83,15 @@ export default class App extends React.Component<AppProps, AppState> {
 
     // Call onMount callback if provided (standalone uses this to load initial project)
     this.props.onMount?.();
-    let lastPanelSize = 50;
-    if(this.editorResultSplitterRef.current){
-      //@ts-ignore
-      lastPanelSize = this.editorResultSplitterRef.current.state.secondaryPaneSize || 50;
-    }
-    const openPanel = () => {
-      if(lastPanelSize === 0){
-        lastPanelSize = 50;
-      }
-      this.editorResultSplitterRef.current!.setState({ secondaryPaneSize: lastPanelSize }, () => emit("RENDERER_SHOULD_ANIMATE", false));
-    }
-    const closePanel = () => {
-      //@ts-ignore
-      lastPanelSize = this.editorResultSplitterRef.current!.state.secondaryPaneSize;
-      this.editorResultSplitterRef.current!.setState({ secondaryPaneSize: 0 }, () => emit("RENDERER_SHOULD_ANIMATE", false));
-    }
 
     on("TOGGLE_RESULTS_PANEL", (open) => {
-      if(this.editorResultSplitterRef.current){
-        emit("RENDERER_SHOULD_ANIMATE", true);
-        //@ts-ignore
-        if(this.editorResultSplitterRef.current.state.secondaryPaneSize === 0 || open){
-          openPanel();
-        } else {
-          closePanel();
-        }
-      }
-    })
+      this.setState(prev => ({
+        resultsPanelOpen: typeof open === 'boolean' ? open : !prev.resultsPanelOpen
+      }), () => {
+        // Notify renderer that layout changed
+        emit("RENDERER_SHOULD_ANIMATE", false);
+      });
+    });
   }
 
   saveLayout() {
@@ -125,106 +105,82 @@ export default class App extends React.Component<AppProps, AppState> {
   }
 
   render() {
-    const Editor = (
-        <EditorContainer>
-              <div id="response-overlay" className={"response_overlay response_overlay-hidden"} ref={this.responseOverlay} />
-              <div id="canvas_overlay" ref={this.canvasOverlay}/>
-              <div id="orientation-overlay" ref={this.orientationOverlay}/>
-              <canvas id="renderer-canvas" ref={this.canvas} />
-          </EditorContainer>
-    )
-
     const { showNavBar = true, fixedPanelWidth } = this.props;
+    const { resultsPanelOpen } = this.state;
 
-    // Fixed-width layout mode (for embedding)
-    if (fixedPanelWidth) {
-      return (
-        <div style={{ width: '100%', height: '100%', position: 'relative' }}>
-          {showNavBar && <NavBarComponent />}
-          <ProgressIndicator />
-          <AutoCalculateProgress />
-          <MaterialSearch />
-          <ImportDialog />
-          <SaveDialog />
+    // Use fixedPanelWidth if provided, otherwise use stored rightPanelSize
+    const rightPanelWidth = fixedPanelWidth ?? this.rightPanelSize;
 
-          {/* Main flex container for canvas and properties panel */}
-          <div style={{ display: 'flex', width: '100%', height: '100%' }}>
-            {/* Canvas area - flexible width */}
-            <div style={{ flex: 1, minWidth: 0, height: '100%', position: 'relative' }}>
-              {Editor}
-            </div>
+    const Editor = (
+      <EditorContainer>
+        <div id="response-overlay" className={"response_overlay response_overlay-hidden"} ref={this.responseOverlay} />
+        <div id="canvas_overlay" ref={this.canvasOverlay}/>
+        <div id="orientation-overlay" ref={this.orientationOverlay}/>
+        <canvas id="renderer-canvas" ref={this.canvas} />
+      </EditorContainer>
+    );
 
-            {/* Properties panel - fixed width */}
-            <div style={{
-              width: fixedPanelWidth,
-              flexShrink: 0,
-              height: '100%',
-              overflowY: 'auto',
-              background: '#fff',
-              borderLeft: '1px solid #e0e0e0',
-            }}>
-              <ObjectCardList />
-              <SolverCardList />
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    // Default resizable splitter layout
     return (
-      <div>
+      <div style={{ width: '100%', height: '100%', position: 'relative' }}>
         {showNavBar && <NavBarComponent />}
         <ProgressIndicator />
         <AutoCalculateProgress />
-        {/* <SettingsDrawer /> */}
-
-
         <MaterialSearch />
-
-
         <ImportDialog />
         <SaveDialog />
-      {/* center and right */}
-      <SplitterLayout
-            secondaryMinSize={0}
-            primaryMinSize={50}
-            customClassName={"modified-splitter-layout"}
-            secondaryInitialSize={this.props.rightPanelInitialSize}
-            primaryIndex={0}
-            onDragStart={() => {
-              emit("RENDERER_SHOULD_ANIMATE", true);
-            }}
-            onDragEnd={() => {
-              emit("RENDERER_SHOULD_ANIMATE", false);
-              this.saveLayout();
-            }}
-            onSecondaryPaneSizeChange={(value: number) => {
-              this.rightPanelSize = value;
-              // this.setState({ rightPanelSize: value });
-            }}
-          >
-            <SplitterLayout
-              vertical
-              percentage
-              secondaryInitialSize={0}
-              onDragStart={() => {emit("RENDERER_SHOULD_ANIMATE", true);}}
-              onDragEnd={() => {emit("RENDERER_SHOULD_ANIMATE", false);}}
-              ref={this.editorResultSplitterRef}
-            >
+
+        {/* Main flex container for canvas and properties panel */}
+        <div style={{ display: 'flex', width: '100%', height: '100%' }}>
+          {/* Canvas area - flexible width */}
+          <div style={{
+            flex: 1,
+            minWidth: 0,
+            height: '100%',
+            position: 'relative',
+          }}>
+            {/* Editor container - shrinks when results panel is open */}
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: resultsPanelOpen ? RESULTS_PANEL_HEIGHT : 0,
+              transition: 'bottom 0.2s ease',
+            }}>
               {Editor}
+            </div>
+
+            {/* Results panel - absolute positioned at bottom */}
+            <div style={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: resultsPanelOpen ? RESULTS_PANEL_HEIGHT : 0,
+              overflow: 'hidden',
+              transition: 'height 0.2s ease',
+              background: '#fff',
+              borderTop: resultsPanelOpen ? '1px solid #e0e0e0' : 'none',
+            }}>
               <PanelContainer>
                 <ResultsPanel />
               </PanelContainer>
-            </SplitterLayout>
+            </div>
+          </div>
 
-            <PanelContainer className="panel full">
-              <div style={{ height: '100%', overflowY: 'auto' }}>
-                <ObjectCardList />
-                <SolverCardList />
-              </div>
-            </PanelContainer>
-          </SplitterLayout>
+          {/* Properties panel - fixed width */}
+          <div style={{
+            width: rightPanelWidth,
+            flexShrink: 0,
+            height: '100%',
+            overflowY: 'auto',
+            background: '#fff',
+            borderLeft: '1px solid #e0e0e0',
+          }}>
+            <ObjectCardList />
+            <SolverCardList />
+          </div>
+        </div>
       </div>
     );
   }

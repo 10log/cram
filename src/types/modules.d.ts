@@ -1,25 +1,5 @@
 // Type declarations for modules without types
 
-declare module 'react-splitter-layout-react-v18' {
-  import { Component, ReactNode } from 'react';
-
-  export interface SplitterLayoutProps {
-    children?: ReactNode;
-    customClassName?: string;
-    vertical?: boolean;
-    percentage?: boolean;
-    primaryIndex?: number;
-    primaryMinSize?: number;
-    secondaryMinSize?: number;
-    secondaryInitialSize?: number;
-    onDragStart?: () => void;
-    onDragEnd?: () => void;
-    onSecondaryPaneSizeChange?: (size: number) => void;
-  }
-
-  export default class SplitterLayout extends Component<SplitterLayoutProps> {}
-}
-
 declare module 'complex' {
   export default class Complex {
     real: number;

@@ -72,13 +72,10 @@ export default defineConfig(({ command, mode }) => {
             'react-is',
             'hoist-non-react-statics',
             'prop-types',
-            // Externalize splitter layout to use consuming app's React
-            'react-splitter-layout-react-v18',
-            '@mui/material',
-            '@mui/icons-material',
-            '@mui/x-tree-view',
-            '@emotion/react',
-            '@emotion/styled',
+            // Use regex to match all @mui subpath imports (e.g., @mui/material/Box)
+            /^@mui\/material/,
+            /^@mui\/icons-material/,
+            /^@mui\/x-tree-view/,
             // Note: jscad-modeling-bundle.js is imported in modeling/v2.ts
             'zustand',
             'styled-components',
@@ -88,20 +85,20 @@ export default defineConfig(({ command, mode }) => {
             '@blueprintjs/select',
             '@blueprintjs/table',
             // Externalize charting/visualization libs (large)
+            // Use regex to match all subpath imports
             'plotly.js',
             'react-plotly.js',
             'd3',
-            '@visx/axis',
-            '@visx/gradient',
-            '@visx/grid',
-            '@visx/group',
-            '@visx/legend',
-            '@visx/responsive',
-            '@visx/scale',
-            '@visx/shape',
-            '@visx/zoom',
+            /^@visx\/axis/,
+            /^@visx\/gradient/,
+            /^@visx\/grid/,
+            /^@visx\/group/,
+            /^@visx\/legend/,
+            /^@visx\/responsive/,
+            /^@visx\/scale/,
+            /^@visx\/shape/,
+            /^@visx\/zoom/,
             // Externalize other heavy deps
-            'immer',
             'chroma-js',
             'lodash',
             // Externalize three.js (consuming app provides it)

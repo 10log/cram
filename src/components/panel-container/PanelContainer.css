@@ -20,10 +20,6 @@
 } */
 
 
-
-.modified-splitter-layout {
-    height: calc(100% - var(--main-nav_bar__height));
-}
 .panel-content-nomargin{
   margin: 0;
 }

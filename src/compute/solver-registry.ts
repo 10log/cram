@@ -85,3 +85,8 @@ registerSolverFactory("beam-trace", async (_cram, _props) => {
   const { BeamTraceSolver } = await import("./beam-trace");
   return new BeamTraceSolver();
 });
+
+registerSolverFactory("art", async (_cram, _props) => {
+  const { ART } = await import("./radiance/art");
+  return new ART();
+});

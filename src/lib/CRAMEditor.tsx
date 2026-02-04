@@ -156,7 +156,7 @@ export const CRAMEditor = forwardRef<CRAMEditorRef, CRAMEditorProps>(
       },
 
       load: (state: SaveState) => {
-        emit('RESTORE', { json: state });
+        messenger.postMessage('RESTORE', { json: state });
       },
 
       importFile: async (file: File): Promise<void> => {
@@ -181,23 +181,20 @@ export const CRAMEditor = forwardRef<CRAMEditorRef, CRAMEditorProps>(
       },
 
       addSolver: (type: SolverType) => {
-        const solverEvents: Record<SolverType, string> = {
+        // All solvers now use messenger.postMessage with consistent naming
+        const solverMessages: Record<SolverType, string> = {
           'raytracer': 'SHOULD_ADD_RAYTRACER',
           'image-source': 'SHOULD_ADD_IMAGE_SOURCE',
           'beam-trace': 'SHOULD_ADD_BEAMTRACE',
-          'fdtd-2d': 'ADD_FDTD_2D',
+          'fdtd-2d': 'SHOULD_ADD_FDTD_2D',
           'rt60': 'SHOULD_ADD_RT60',
           'energy-decay': 'SHOULD_ADD_ENERGYDECAY',
-          'art': 'ADD_ART',
+          'art': 'SHOULD_ADD_ART',
         };
 
-        const eventName = solverEvents[type];
-        if (eventName) {
-          if (eventName.startsWith('SHOULD_')) {
-            messenger.postMessage(eventName);
-          } else {
-            emit(eventName as keyof EventTypes, undefined);
-          }
+        const message = solverMessages[type];
+        if (message) {
+          messenger.postMessage(message);
         }
       },
 
@@ -218,7 +215,7 @@ export const CRAMEditor = forwardRef<CRAMEditorRef, CRAMEditorProps>(
 
     // Render the App component with layout props
     // showNavBar is passed down to conditionally render the navbar
-    // fixedPanelWidth switches from resizable splitter to fixed flex layout
+    // fixedPanelWidth overrides the stored right panel width
     return (
       <App
         {...layoutRef.current}

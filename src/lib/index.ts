@@ -62,3 +62,6 @@ export type {
   SolverType,
   SaveState,
 } from './types';
+
+// Example projects for demo/testing
+export { examples } from '../examples';
