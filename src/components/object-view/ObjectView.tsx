@@ -69,35 +69,32 @@ const MapChildren = memo(function MapChildren(props: MapChildrenProps) {
   const label = <TreeItemLabel {...{ label: genericLabel, meta }} />;
   const roomLabel = <TreeItemLabel icon={<RoomIcon fontSize="inherit" />} {...{ label: genericLabel, meta }} />;
 
-  const ContextMenuSharedProps = {
-    handleMenuItemClick: (e) => {
-      if (e.target.textContent) {
-        switch (e.target.textContent) {
-          case "Delete": {
-            const newExpanded = new Set(expanded);
-            container.traverse((object: Container) => {
-              if(newExpanded.has(object.uuid)){
-                newExpanded.delete(object.uuid);
-              }
-            });
-            emit("DESELECT_ALL_OBJECTS");
-            setExpanded([...newExpanded]);
-            const toDelete = [] as string[];
-            container.traverse((object: Container) => {
-              if(object["kind"] && ["surface", "source", "receiver", "room"].includes(object["kind"])){
-                toDelete.push(object.uuid);
-              }
-            });
-            emit("REMOVE_CONTAINERS", toDelete);
-          } break;
-          case "Log to Console": console.log(container); break;
-          default: break;
-        }
+  const handleMenuItemClick = (e) => {
+    if (e.target.textContent) {
+      switch (e.target.textContent) {
+        case "Delete": {
+          const newExpanded = new Set(expanded);
+          container.traverse((object: Container) => {
+            if(newExpanded.has(object.uuid)){
+              newExpanded.delete(object.uuid);
+            }
+          });
+          emit("DESELECT_ALL_OBJECTS");
+          setExpanded([...newExpanded]);
+          const toDelete = [] as string[];
+          container.traverse((object: Container) => {
+            if(object["kind"] && ["surface", "source", "receiver", "room"].includes(object["kind"])){
+              toDelete.push(object.uuid);
+            }
+          });
+          emit("REMOVE_CONTAINERS", toDelete);
+        } break;
+        case "Log to Console": console.log(container); break;
+        default: break;
       }
-    },
-    key: key + "context-menu",
-    items: ["Delete", "Log to Console"]
+    }
   };
+  const menuItems = ["Delete", "Log to Console"];
   const onKeyDown = (e) => {
     e.preventDefault();
   };
@@ -117,44 +114,48 @@ const MapChildren = memo(function MapChildren(props: MapChildrenProps) {
   switch (container["kind"]) {
     case "surface":
          return (
-          <ContextMenu {...ContextMenuSharedProps}>
+          <ContextMenu key={key + "context-menu"} handleMenuItemClick={handleMenuItemClick} items={menuItems}>
             <TreeItem
               label={surfaceLabel}
               slotProps={{ content: selectableContentProps }}
-              {...{ draggable, key, itemId }}
+              draggable={draggable}
+              itemId={itemId}
             />
           </ContextMenu>
         )
 
     case "source":
       return (
-        <ContextMenu {...ContextMenuSharedProps}>
+        <ContextMenu key={key + "context-menu"} handleMenuItemClick={handleMenuItemClick} items={menuItems}>
           <TreeItem
             label={sourceLabel}
             slotProps={{ content: selectableContentProps }}
-            {...{ draggable, key, itemId }}
+            draggable={draggable}
+            itemId={itemId}
           />
         </ContextMenu>
       );
     case "receiver":
       return (
-        <ContextMenu {...ContextMenuSharedProps}>
+        <ContextMenu key={key + "context-menu"} handleMenuItemClick={handleMenuItemClick} items={menuItems}>
           <TreeItem
             label={receiverLabel}
             slotProps={{ content: selectableContentProps }}
-            {...{ draggable, key, itemId }}
+            draggable={draggable}
+            itemId={itemId}
           />
         </ContextMenu>
       );
 
     case "room":
         return (
-          <ContextMenu {...ContextMenuSharedProps}>
+          <ContextMenu key={key + "context-menu"} handleMenuItemClick={handleMenuItemClick} items={menuItems}>
             <TreeItem
               label={roomLabel}
               slots={{ collapseIcon: ExpandMoreIcon, expandIcon: ChevronRightIcon }}
               onKeyDown={onKeyDown}
-              {...{ draggable, key, itemId }}
+              draggable={draggable}
+              itemId={itemId}
             >
               {(container.children.filter(x => x instanceof Container && x.parent?.uuid === container.uuid) as Container[]).map((x) => (
                 <MapChildren
@@ -170,12 +171,13 @@ const MapChildren = memo(function MapChildren(props: MapChildrenProps) {
         );
 
     case "container":
-        return <ContextMenu {...ContextMenuSharedProps}>
+        return <ContextMenu key={key + "context-menu"} handleMenuItemClick={handleMenuItemClick} items={menuItems}>
         <TreeItem
           label={label}
           slots={{ collapseIcon: ExpandMoreIcon, expandIcon: ChevronRightIcon }}
           onKeyDown={onKeyDown}
-          {...{ draggable, key, itemId }}
+          draggable={draggable}
+          itemId={itemId}
         >{
           (container.children.filter(x=>x instanceof Container && x.parent?.uuid === container.uuid) as Container[]).map((x) => (
           <MapChildren
