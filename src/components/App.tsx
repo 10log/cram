@@ -9,8 +9,7 @@ import "./App.css";
 
 
 import { Stat } from "./parameter-config/Stats";
-import { SolverCardList } from "./solver-cards";
-import { ObjectCardList } from "./object-cards";
+import { PropertiesPanel } from "./properties-panel";
 
 
 
@@ -173,12 +172,11 @@ export default class App extends React.Component<AppProps, AppState> {
             width: rightPanelWidth,
             flexShrink: 0,
             height: '100%',
-            overflowY: 'auto',
+            overflow: 'hidden',
             background: '#fff',
             borderLeft: '1px solid #e0e0e0',
           }}>
-            <ObjectCardList />
-            <SolverCardList />
+            <PropertiesPanel />
           </div>
         </div>
       </div>
