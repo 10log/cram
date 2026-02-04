@@ -6,8 +6,9 @@ const propertyRowContainerSx: SxProps<Theme> = {
   display: "grid",
   gridTemplateColumns: "3fr 8fr 2fr",
   userSelect: "none",
-  fontSize: "9pt",
-  mb: "0.125em",
+  fontSize: "0.75rem", // MUI caption size (12px)
+  mb: 0.5,
+  alignItems: "center",
   "&:last-child": {
     mb: 0,
   },

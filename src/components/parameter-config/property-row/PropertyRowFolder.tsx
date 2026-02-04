@@ -1,33 +1,37 @@
 import React from "react";
 import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import Collapse from "@mui/material/Collapse";
 import type { SxProps, Theme } from "@mui/material/styles";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import Label from "../../label/Label";
 
 const propertyRowFolderLabelSx: SxProps<Theme> = {
+  display: "flex",
+  alignItems: "center",
+  gap: 0.5,
+  py: 0.5,
+  cursor: "pointer",
+  userSelect: "none",
   "&:hover": {
-    bgcolor: "#eaeef1",
-    cursor: "pointer",
-    userSelect: "none",
+    bgcolor: "action.hover",
   },
 };
 
 const propertyRowFolderContainerSx: SxProps<Theme> = {
-  "--transition-time": "50ms",
-  "--folder-contents-shadow-top": "inset 0px 15px 10px -15px rgba(221, 226, 230, 0.5)",
-  "--folder-contents-shadow-bottom": "inset 0px -15px 10px -15px rgba(221, 226, 230, 0.5)",
-  "--transition-function": "cubic-bezier(0.25, 0.1, 0.25, 1)",
-  pb: "0.25em",
+  pb: 0.5,
 };
 
-const propertyRowFolderContentsSx = (open: boolean): SxProps<Theme> => ({
-  height: open ? "max-content" : 0,
-  pt: open ? "0.5em" : 0,
-  pb: open ? "0.5em" : 0,
-  overflow: "hidden",
-  transition: "all 50ms cubic-bezier(0.25, 0.1, 0.25, 1)",
-});
+const propertyRowFolderContentsSx: SxProps<Theme> = {
+  pt: 0.5,
+  pb: 0.5,
+};
+
+const folderLabelTextSx: SxProps<Theme> = {
+  fontSize: "0.75rem",
+  fontWeight: 500,
+  color: "text.primary",
+};
 
 export interface PropertyRowFolderProps {
   label: string;
@@ -41,14 +45,16 @@ export default function PropertyRowFolder(props: PropertyRowFolderProps) {
   return (
     <Box sx={propertyRowFolderContainerSx}>
       <Box sx={propertyRowFolderLabelSx} onClick={() => props.onOpenClose(props.id)}>
-        <span style={{ verticalAlign: "middle" }}>
-          {props.open ? <ExpandMoreIcon fontSize="inherit" /> : <ChevronRightIcon fontSize="inherit" />}
-        </span>
-        <Label hasTooltip={false} style={{ display: "inline-block" }}>
-          {props.label}
-        </Label>
+        {props.open ? (
+          <ExpandMoreIcon sx={{ fontSize: 16, color: "text.secondary" }} />
+        ) : (
+          <ChevronRightIcon sx={{ fontSize: 16, color: "text.secondary" }} />
+        )}
+        <Typography sx={folderLabelTextSx}>{props.label}</Typography>
       </Box>
-      <Box sx={propertyRowFolderContentsSx(props.open)}>{props.children}</Box>
+      <Collapse in={props.open}>
+        <Box sx={propertyRowFolderContentsSx}>{props.children}</Box>
+      </Collapse>
     </Box>
   );
 }

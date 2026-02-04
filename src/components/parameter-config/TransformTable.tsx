@@ -1,9 +1,11 @@
 import React, { useEffect, useRef } from "react";
 import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import Collapse from "@mui/material/Collapse";
+import TextField from "@mui/material/TextField";
 import type { SxProps, Theme } from "@mui/material/styles";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import Label from "../label/Label";
 import { emit } from "../../messenger";
 import { useContainer } from "../../store";
 import Container from "../../objects/container";
@@ -21,39 +23,40 @@ type TransformProperty =
   | "rotationx" | "rotationy" | "rotationz";
 
 const folderContainerSx: SxProps<Theme> = {
-  "--transition-time": "50ms",
-  "--transition-function": "cubic-bezier(0.25, 0.1, 0.25, 1)",
-  pb: "0.25em",
+  pb: 0.5,
 };
 
 const folderLabelSx: SxProps<Theme> = {
+  display: "flex",
+  alignItems: "center",
+  gap: 0.5,
+  py: 0.5,
+  cursor: "pointer",
+  userSelect: "none",
   "&:hover": {
-    bgcolor: "#eaeef1",
-    cursor: "pointer",
-    userSelect: "none",
+    bgcolor: "action.hover",
   },
 };
 
-const folderContentsSx = (open: boolean): SxProps<Theme> => ({
-  height: open ? "max-content" : 0,
-  pt: open ? "0.5em" : 0,
-  pb: open ? "0.5em" : 0,
-  overflow: "hidden",
-  transition: "all 50ms cubic-bezier(0.25, 0.1, 0.25, 1)",
-});
+const folderLabelTextSx: SxProps<Theme> = {
+  fontSize: "0.75rem",
+  fontWeight: 500,
+  color: "text.primary",
+};
 
 const tableSx: SxProps<Theme> = {
   width: "100%",
   borderCollapse: "collapse",
-  fontSize: 12,
+  fontSize: "0.75rem",
 };
 
 const headerRowSx: SxProps<Theme> = {
   "& th": {
     p: "2px 4px",
     fontWeight: 500,
-    color: "#5c6670",
+    color: "text.secondary",
     textAlign: "center",
+    fontSize: "0.75rem",
   },
   "& th:first-of-type": {
     width: 60,
@@ -65,40 +68,36 @@ const headerRowSx: SxProps<Theme> = {
 const dataRowSx: SxProps<Theme> = {
   "& td": {
     p: "2px 4px",
+    fontSize: "0.75rem",
   },
   "& td:first-of-type": {
     fontWeight: 500,
-    color: "#1c2127",
+    color: "text.primary",
     pl: 1,
   },
 };
 
-const styledInputSx: SxProps<Theme> = {
+const cellInputSx: SxProps<Theme> = {
   width: "100%",
-  textAlign: "center",
-  outline: "none",
-  border: "none",
-  borderRadius: "2px",
-  bgcolor: "rgba(246, 248, 250, 0.75)",
-  p: "2px 4px",
-  color: "#182026",
-  transition: "box-shadow 0.05s cubic-bezier(0.4, 1, 0.75, 0.9)",
-  appearance: "none",
-  "&::-webkit-outer-spin-button, &::-webkit-inner-spin-button": {
-    WebkitAppearance: "none",
-    m: 0,
+  "& .MuiInputBase-root": {
+    fontSize: "0.75rem",
+    height: 24,
   },
-  MozAppearance: "textfield",
-  "&:hover": {
-    outline: "none",
-    boxShadow:
-      "0 0 0 0 rgba(19, 124, 189, 0), 0 0 0 0 rgba(19, 124, 189, 0), inset 0 0 0 1px rgba(16, 22, 26, 0.15), inset 0 1px 1px rgba(16, 22, 26, 0.2)",
-    bgcolor: "rgba(246, 248, 250, 1)",
+  "& .MuiInputBase-input": {
+    py: 0.5,
+    px: 1,
+    textAlign: "center",
+    "&::-webkit-outer-spin-button, &::-webkit-inner-spin-button": {
+      WebkitAppearance: "none",
+      m: 0,
+    },
+    MozAppearance: "textfield",
   },
-  "&:focus": {
-    boxShadow:
-      "0 0 0 0 rgba(19, 124, 189, 0), 0 0 0 0 rgba(19, 124, 189, 0), inset 0 0 0 1px rgba(16, 22, 26, 0.15), inset 0 1px 1px rgba(16, 22, 26, 0.2)",
-    bgcolor: "rgba(246, 248, 250, 0.75)",
+  "& .MuiOutlinedInput-notchedOutline": {
+    borderColor: "divider",
+  },
+  "&:hover .MuiOutlinedInput-notchedOutline": {
+    borderColor: "primary.main",
   },
 };
 
@@ -155,14 +154,19 @@ const TransformInput = ({ uuid, property, event }: TransformInputProps) => {
   };
 
   return (
-    <Box
-      component="input"
+    <TextField
+      inputRef={inputRef}
       type="number"
-      ref={inputRef}
+      size="small"
+      variant="outlined"
       value={value}
       onChange={handleChange}
-      step={1}
-      sx={styledInputSx}
+      slotProps={{
+        htmlInput: {
+          step: 1,
+        },
+      }}
+      sx={cellInputSx}
     />
   );
 };
@@ -178,14 +182,14 @@ export default function TransformTable({ uuid, event }: TransformTableProps) {
   return (
     <Box sx={folderContainerSx}>
       <Box sx={folderLabelSx} onClick={toggle}>
-        <span style={{ verticalAlign: "middle" }}>
-          {open ? <ExpandMoreIcon fontSize="inherit" /> : <ChevronRightIcon fontSize="inherit" />}
-        </span>
-        <Label hasTooltip={false} style={{ display: "inline-block" }}>
-          Transform
-        </Label>
+        {open ? (
+          <ExpandMoreIcon sx={{ fontSize: 16, color: "text.secondary" }} />
+        ) : (
+          <ChevronRightIcon sx={{ fontSize: 16, color: "text.secondary" }} />
+        )}
+        <Typography sx={folderLabelTextSx}>Transform</Typography>
       </Box>
-      <Box sx={folderContentsSx(open)}>
+      <Collapse in={open}>
         <Box component="table" sx={tableSx}>
           <thead>
             <Box component="tr" sx={headerRowSx}>
@@ -216,7 +220,7 @@ export default function TransformTable({ uuid, event }: TransformTableProps) {
             </Box>
           </tbody>
         </Box>
-      </Box>
+      </Collapse>
     </Box>
   );
 }
