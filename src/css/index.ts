@@ -1,9 +1,5 @@
 
 import "normalize.css";
-// Blueprint CSS kept for NavBarComponent (excluded from MUI migration per plan)
-import "@blueprintjs/core/lib/css/blueprint.css";
-// Note: Using custom icons CSS without font-face declarations since we use SVG icons
-import "./blueprint-icons-no-fonts.css";
 
 import "./global.css";
 import "./styles.css";

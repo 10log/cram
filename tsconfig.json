@@ -30,7 +30,6 @@
       "@types/semver",
       "@types/d3",
       "@types/plotly.js",
-      "@types/styled-components",
       "@types/zip.js"
     ],
 
