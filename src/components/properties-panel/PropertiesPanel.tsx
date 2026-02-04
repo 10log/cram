@@ -120,6 +120,27 @@ const categoryHeaderSx: SxProps<Theme> = {
   borderColor: "divider",
 };
 
+// Scrollable container for long lists (surfaces, etc.)
+const scrollableListSx: SxProps<Theme> = {
+  maxHeight: 200,
+  overflowY: "auto",
+  overflowX: "hidden",
+  // Subtle scrollbar styling
+  "&::-webkit-scrollbar": {
+    width: 6,
+  },
+  "&::-webkit-scrollbar-track": {
+    bgcolor: "action.hover",
+  },
+  "&::-webkit-scrollbar-thumb": {
+    bgcolor: "action.disabled",
+    borderRadius: 3,
+    "&:hover": {
+      bgcolor: "action.active",
+    },
+  },
+};
+
 const emptyStateSx: SxProps<Theme> = {
   py: 3,
   px: 2,
@@ -179,14 +200,18 @@ interface ObjectItemProps {
   onSelect: () => void;
   onToggleVisibility: () => void;
   onDelete: () => void;
+  onHover?: () => void;
+  onUnhover?: () => void;
 }
 
-function ObjectItem({ uuid, name, type, visible, selected, onSelect, onToggleVisibility, onDelete }: ObjectItemProps) {
+function ObjectItem({ uuid, name, type, visible, selected, onSelect, onToggleVisibility, onDelete, onHover, onUnhover }: ObjectItemProps) {
   return (
     <ListItem
       disablePadding
       sx={listItemSx}
       selected={selected}
+      onMouseEnter={onHover}
+      onMouseLeave={onUnhover}
       secondaryAction={
         <Box sx={{ display: "flex", gap: 0.25 }}>
           <IconButton size="small" onClick={onToggleVisibility} sx={{ p: 0.25 }}>
@@ -364,7 +389,12 @@ export function PropertiesPanel() {
     setSelectedSolverId(null);
     setShowRenderer(false);
     postMessage("SELECT_OBJECT", uuid);
-  }, []);
+    // Also emit SET_SELECTION for 3D highlighting
+    const container = containers[uuid];
+    if (container) {
+      emit("SET_SELECTION", [container]);
+    }
+  }, [containers]);
 
   const handleToggleVisibility = useCallback((uuid: string) => {
     emit("TOGGLE_CONTAINER_VISIBLE", uuid);
@@ -400,6 +430,15 @@ export function PropertiesPanel() {
     e.stopPropagation();
     emit("SET_AUTO_CALCULATE", !autoCalculate);
   }, [autoCalculate]);
+
+  // Surface hover handlers - highlight surface on 3D model
+  const handleSurfaceHover = useCallback((uuid: string) => {
+    emit("SURFACE_HOVER", uuid);
+  }, []);
+
+  const handleSurfaceUnhover = useCallback((uuid: string) => {
+    emit("SURFACE_UNHOVER", uuid);
+  }, []);
 
   // Get selected item details
   const selectedObject = selectedObjectId ? containers[selectedObjectId] : null;
@@ -528,7 +567,7 @@ export function PropertiesPanel() {
                 </>
               )}
 
-              {/* Surfaces */}
+              {/* Surfaces - scrollable when list is long, with hover highlighting */}
               {objectsByKind.surfaces.length > 0 && (
                 <>
                   <ListItem sx={categoryHeaderSx}>
@@ -536,19 +575,23 @@ export function PropertiesPanel() {
                       SURFACES ({objectsByKind.surfaces.length})
                     </Typography>
                   </ListItem>
-                  {objectsByKind.surfaces.map((obj) => (
-                    <ObjectItem
-                      key={obj.uuid}
-                      uuid={obj.uuid}
-                      name={obj.name}
-                      type="surface"
-                      visible={obj.visible}
-                      selected={selectedObjectId === obj.uuid}
-                      onSelect={() => handleSelectObject(obj.uuid)}
-                      onToggleVisibility={() => handleToggleVisibility(obj.uuid)}
-                      onDelete={() => handleDeleteObject(obj.uuid)}
-                    />
-                  ))}
+                  <Box sx={scrollableListSx}>
+                    {objectsByKind.surfaces.map((obj) => (
+                      <ObjectItem
+                        key={obj.uuid}
+                        uuid={obj.uuid}
+                        name={obj.name}
+                        type="surface"
+                        visible={obj.visible}
+                        selected={selectedObjectId === obj.uuid}
+                        onSelect={() => handleSelectObject(obj.uuid)}
+                        onToggleVisibility={() => handleToggleVisibility(obj.uuid)}
+                        onDelete={() => handleDeleteObject(obj.uuid)}
+                        onHover={() => handleSurfaceHover(obj.uuid)}
+                        onUnhover={() => handleSurfaceUnhover(obj.uuid)}
+                      />
+                    ))}
+                  </Box>
                 </>
               )}
             </List>

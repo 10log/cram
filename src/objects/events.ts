@@ -79,6 +79,7 @@ on("SET_SELECTION", (containers) => {
     })
   });
   hotkeys.setScope("EDITOR");
+  emit("RENDER", undefined);
 });
 
 on("APPEND_SELECTION", (containers) => {
@@ -89,6 +90,7 @@ on("APPEND_SELECTION", (containers) => {
       state.selectedObjects.add(container);
     })
   });
+  emit("RENDER", undefined);
 });
 
 }
