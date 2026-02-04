@@ -8,6 +8,7 @@
 import { messenger } from '../messenger';
 import { renderer } from '../render/renderer';
 import { registerMessageHandlers } from './registerHandlers';
+import registerAllEvents from '../events';
 import { Searcher } from 'fast-fuzzy';
 import browserReport from '../common/browser-report';
 
@@ -112,5 +113,8 @@ export const cram: Cram = {
 
 // Register all message handlers
 registerMessageHandlers(cram, messenger);
+
+// Register object/solver events (SET_SELECTION, TOGGLE_CONTAINER_VISIBLE, etc.)
+registerAllEvents();
 
 console.log('[CRAM] Library mode initialized');

@@ -70,14 +70,21 @@ on("DESELECT_ALL_OBJECTS", () => {
 
 
 
-on("SET_SELECTION", (containers) => {
+on("SET_SELECTION", (containerList) => {
   useContainer.getState().set(state => {
+    // Deselect all previously selected objects
     for(const container of state.selectedObjects) container.deselect();
     state.selectedObjects.clear();
-    containers.forEach(container=>{
-      container.select();
-      state.selectedObjects.add(container);
-    })
+    // Select new objects - use store references to ensure same instance
+    containerList.forEach(container => {
+      const storeContainer = state.containers[container.uuid];
+      if (storeContainer) {
+        storeContainer.select();
+        state.selectedObjects.add(storeContainer);
+      }
+    });
+    // Increment version to trigger UI re-render
+    state.version++;
   });
   hotkeys.setScope("EDITOR");
   emit("RENDER", undefined);
@@ -99,6 +106,8 @@ on("TOGGLE_CONTAINER_VISIBLE", (uuid) => {
     const container = state.containers[uuid];
     if (container) {
       container.visible = !container.visible;
+      // Increment version to trigger UI re-render
+      state.version++;
     }
   });
   emit("RENDER", undefined);

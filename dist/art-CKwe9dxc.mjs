@@ -1,5 +1,5 @@
-import { v as i, T as u, r as n, u as m, o as t, d as c, c as d, s as l } from "./index-BUlpYGJ0.mjs";
-import { S as h } from "./solver-CGbHwF0B.mjs";
+import { v as i, T as u, r as n, u as m, o as t, d, c as l, s as c } from "./index-DkkzJUCf.mjs";
+import { S as h } from "./solver-DESZD1zU.mjs";
 import { Mesh as f } from "three";
 const o = {
   name: "Acoustic Radiance Transfer"
@@ -30,10 +30,11 @@ class p extends h {
     return m.getState().getRooms();
   }
 }
-t("ADD_ART", c(p));
-t("REMOVE_ART", d);
-t("ART_SET_PROPERTY", l);
+t("ADD_ART", d(p));
+t("REMOVE_ART", l);
+t("ART_SET_PROPERTY", c);
 export {
-  p as ART
+  p as ART,
+  p as default
 };
-//# sourceMappingURL=art-m-wHCkhy.mjs.map
+//# sourceMappingURL=art-CKwe9dxc.mjs.map
