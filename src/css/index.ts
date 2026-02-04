@@ -10,7 +10,6 @@ import "../components/panel-container/PanelContainer.css";
 import "./drop-zone.css";
 import "./number-input.css";
 import "./text-input.css";
-import "./tree-item-label.css";
 import "./float-button.css";
 import "./settings.css";
 import "./parameter-config.css";

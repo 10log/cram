@@ -9,14 +9,11 @@ import properCase from "../../common/proper-case";
 import Container from "../../objects/container";
 import ContextMenu from "../ContextMenu";
 import { NodesIcon, RoomIcon, SourceIcon, ReceiverIcon } from "../icons";
-import "./ObjectView.css";
 import { emit, on } from "../../messenger";
 import { useContainer } from "../../store";
 import { pickProps } from "../../common/helpers";
 import { useShallow } from "zustand/react/shallow";
-
-
-
+import type { SxProps, Theme } from "@mui/material/styles";
 
 type ClickEvent = React.MouseEvent<HTMLElement, MouseEvent>;
 
@@ -27,16 +24,50 @@ export interface MapChildrenProps {
   setExpanded: (value: React.SetStateAction<string[]>) => void;
 }
 
+// Extracted sx constants for TreeView styling
+const TREE_VIEW_SX: SxProps<Theme> = {
+  flexGrow: 1,
+  '& .MuiTreeItem-content': {
+    py: 0.25,
+  },
+  '& .MuiTreeItem-content.Mui-selected': {
+    bgcolor: 'transparent',
+  },
+  '& .MuiTreeItem-content.Mui-selected:hover': {
+    bgcolor: 'transparent',
+  },
+  '& .MuiTreeItem-content.Mui-selected.Mui-focused': {
+    bgcolor: 'transparent',
+  },
+  '& .MuiTreeItem-content.Mui-focused': {
+    bgcolor: 'transparent',
+  },
+  '& .MuiTreeItem-content:hover': {
+    bgcolor: 'action.hover',
+  },
+  '& .MuiTreeItem-iconContainer': {
+    width: 'auto',
+  },
+  '& .MuiTreeItem-group': {
+    ml: 1.75,
+  },
+} as const;
+
+const SELECTED_CONTENT_SX: SxProps<Theme> = {
+  bgcolor: 'action.selected',
+  borderRadius: 0.5,
+} as const;
+
 const MapChildren = memo(function MapChildren(props: MapChildrenProps) {
   const { container, expanded, setExpanded, parent } = props;
   const [selected, setSelected] = useState(container.selected);
   const [name, setName] = useState(container.name);
-  const className = selected ? "container-selected" : "";
   const draggable = true;
   const key = container.uuid;
   const itemId = container.uuid;
   const meta = properCase(container["kind"]);
   const genericLabel = name || "untitled";
+
   const onClick = useCallback((e: ClickEvent) => {
     if (container["kind"] !== "room") {
       emit(e.shiftKey ? "APPEND_SELECTION" : "SET_SELECTION", [container]);
@@ -66,8 +97,8 @@ const MapChildren = memo(function MapChildren(props: MapChildrenProps) {
     });
   }, [container.uuid, event]);
 
-  const label = <TreeItemLabel {...{ label: genericLabel, meta }} />;
-  const roomLabel = <TreeItemLabel icon={<RoomIcon fontSize="inherit" />} {...{ label: genericLabel, meta }} />;
+  const label = <TreeItemLabel label={genericLabel} meta={meta} />;
+  const roomLabel = <TreeItemLabel icon={<RoomIcon fontSize="inherit" />} label={genericLabel} meta={meta} />;
 
   const handleMenuItemClick = (e) => {
     if (e.target.textContent) {
@@ -75,7 +106,7 @@ const MapChildren = memo(function MapChildren(props: MapChildrenProps) {
         case "Delete": {
           const newExpanded = new Set(expanded);
           container.traverse((object: Container) => {
-            if(newExpanded.has(object.uuid)){
+            if (newExpanded.has(object.uuid)) {
               newExpanded.delete(object.uuid);
             }
           });
@@ -83,7 +114,7 @@ const MapChildren = memo(function MapChildren(props: MapChildrenProps) {
           setExpanded([...newExpanded]);
           const toDelete = [] as string[];
           container.traverse((object: Container) => {
-            if(object["kind"] && ["surface", "source", "receiver", "room"].includes(object["kind"])){
+            if (object["kind"] && ["surface", "source", "receiver", "room"].includes(object["kind"])) {
               toDelete.push(object.uuid);
             }
           });
@@ -99,30 +130,33 @@ const MapChildren = memo(function MapChildren(props: MapChildrenProps) {
     e.preventDefault();
   };
 
-  if(container.parent?.uuid !== parent){
+  if (container.parent?.uuid !== parent) {
     return <></>;
   }
 
   // Create labels with icons for leaf items
-  const surfaceLabel = <TreeItemLabel icon={<NodesIcon fontSize="inherit" />} {...{ label: genericLabel, meta }} />;
-  const sourceLabel = <TreeItemLabel icon={<SourceIcon fontSize="inherit" />} {...{ label: genericLabel, meta }} />;
-  const receiverLabel = <TreeItemLabel icon={<ReceiverIcon fontSize="inherit" />} {...{ label: genericLabel, meta }} />;
+  const surfaceLabel = <TreeItemLabel icon={<NodesIcon fontSize="inherit" />} label={genericLabel} meta={meta} />;
+  const sourceLabel = <TreeItemLabel icon={<SourceIcon fontSize="inherit" />} label={genericLabel} meta={meta} />;
+  const receiverLabel = <TreeItemLabel icon={<ReceiverIcon fontSize="inherit" />} label={genericLabel} meta={meta} />;
 
-  // slotProps for selectable leaf items (surface, source, receiver)
-  const selectableContentProps = { className, onClick };
+  // slotProps for selectable leaf items - apply selected styling via sx
+  const selectableContentProps = {
+    onClick,
+    sx: selected ? SELECTED_CONTENT_SX : undefined,
+  };
 
   switch (container["kind"]) {
     case "surface":
-         return (
-          <ContextMenu key={key + "context-menu"} handleMenuItemClick={handleMenuItemClick} items={menuItems}>
-            <TreeItem
-              label={surfaceLabel}
-              slotProps={{ content: selectableContentProps }}
-              draggable={draggable}
-              itemId={itemId}
-            />
-          </ContextMenu>
-        )
+      return (
+        <ContextMenu key={key + "context-menu"} handleMenuItemClick={handleMenuItemClick} items={menuItems}>
+          <TreeItem
+            label={surfaceLabel}
+            slotProps={{ content: selectableContentProps }}
+            draggable={draggable}
+            itemId={itemId}
+          />
+        </ContextMenu>
+      );
 
     case "source":
       return (
@@ -148,73 +182,82 @@ const MapChildren = memo(function MapChildren(props: MapChildrenProps) {
       );
 
     case "room":
-        return (
-          <ContextMenu key={key + "context-menu"} handleMenuItemClick={handleMenuItemClick} items={menuItems}>
-            <TreeItem
-              label={roomLabel}
-              slots={{ collapseIcon: ExpandMoreIcon, expandIcon: ChevronRightIcon }}
-              onKeyDown={onKeyDown}
-              draggable={draggable}
-              itemId={itemId}
-            >
-              {(container.children.filter(x => x instanceof Container && x.parent?.uuid === container.uuid) as Container[]).map((x) => (
-                <MapChildren
-                  parent={container.uuid}
-                  container={x}
-                  expanded={expanded}
-                  setExpanded={setExpanded}
-                  key={x.uuid + "-map-children"}
-                />
-              ))}
-            </TreeItem>
-          </ContextMenu>
-        );
+      return (
+        <ContextMenu key={key + "context-menu"} handleMenuItemClick={handleMenuItemClick} items={menuItems}>
+          <TreeItem
+            label={roomLabel}
+            slots={{ collapseIcon: ExpandMoreIcon, expandIcon: ChevronRightIcon }}
+            onKeyDown={onKeyDown}
+            draggable={draggable}
+            itemId={itemId}
+          >
+            {(container.children.filter(x => x instanceof Container && x.parent?.uuid === container.uuid) as Container[]).map((x) => (
+              <MapChildren
+                parent={container.uuid}
+                container={x}
+                expanded={expanded}
+                setExpanded={setExpanded}
+                key={x.uuid + "-map-children"}
+              />
+            ))}
+          </TreeItem>
+        </ContextMenu>
+      );
 
     case "container":
-        return <ContextMenu key={key + "context-menu"} handleMenuItemClick={handleMenuItemClick} items={menuItems}>
-        <TreeItem
-          label={label}
-          slots={{ collapseIcon: ExpandMoreIcon, expandIcon: ChevronRightIcon }}
-          onKeyDown={onKeyDown}
-          draggable={draggable}
-          itemId={itemId}
-        >{
-          (container.children.filter(x=>x instanceof Container && x.parent?.uuid === container.uuid) as Container[]).map((x) => (
-          <MapChildren
-            parent={container.uuid}
-            container={x}
-            expanded={expanded}
-            setExpanded={setExpanded}
-            key={x.uuid + "-map-children"}
-          />
-        ))}            </TreeItem>
+      return (
+        <ContextMenu key={key + "context-menu"} handleMenuItemClick={handleMenuItemClick} items={menuItems}>
+          <TreeItem
+            label={label}
+            slots={{ collapseIcon: ExpandMoreIcon, expandIcon: ChevronRightIcon }}
+            onKeyDown={onKeyDown}
+            draggable={draggable}
+            itemId={itemId}
+          >
+            {(container.children.filter(x => x instanceof Container && x.parent?.uuid === container.uuid) as Container[]).map((x) => (
+              <MapChildren
+                parent={container.uuid}
+                container={x}
+                expanded={expanded}
+                setExpanded={setExpanded}
+                key={x.uuid + "-map-children"}
+              />
+            ))}
+          </TreeItem>
         </ContextMenu>
-    default: return <></>;
+      );
+    default:
+      return <></>;
   }
 });
 
 export default function ObjectView() {
-  const {containers, getWorkspace} = useContainer(useShallow(state=>pickProps(["containers", "getWorkspace"], state)));
+  const { containers, getWorkspace } = useContainer(useShallow(state => pickProps(["containers", "getWorkspace"], state)));
   const [expanded, setExpanded] = useState(["containers"]);
 
-  const ContainerLabelStyle = {
-    fontWeight: 400,
-    color: Object.keys(containers).length === 0 ? "#ced9e0" : "#182026"
-  };
-
-  const label = <TreeItemLabel label={<div style={ContainerLabelStyle}>Objects</div>} />;
+  const isEmpty = Object.keys(containers).length === 0;
+  const label = (
+    <TreeItemLabel
+      label={
+        <span style={{ fontWeight: 400, color: isEmpty ? 'var(--mui-palette-text-disabled)' : 'var(--mui-palette-text-primary)' }}>
+          Objects
+        </span>
+      }
+    />
+  );
   const keys = Object.keys(containers);
   const workspace = getWorkspace();
 
-  if(!workspace){
-    return <></>
+  if (!workspace) {
+    return <></>;
   }
+
   return (
     <SimpleTreeView
       expandedItems={expanded}
       onExpandedItemsChange={(event, itemIds) => setExpanded(itemIds)}
       disableSelection
-      className="tree-view-root"
+      sx={TREE_VIEW_SX}
     >
       <TreeItem
         label={label}

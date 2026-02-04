@@ -7,7 +7,7 @@ import { jsxs as U, jsx as c, Fragment as A0 } from "react/jsx-runtime";
 import * as $0 from "react";
 import j0, { useState as be, forwardRef as cs, useContext as k2, useRef as $e, useEffect as We, useCallback as Te, useReducer as us, memo as wn, useMemo as H0, Children as ic, cloneElement as Ua, useId as I2, useImperativeHandle as sc } from "react";
 import { Dialog as oc, DialogTitle as lc, DialogContent as cc, TableContainer as T2, Paper as F2, Table as B2, TableHead as H2, TableRow as so, TableCell as Ht, TableBody as D2, DialogActions as uc, Button as nn, TextField as q2, Menu as O2, Divider as R2, MenuItem as L2, SvgIcon as dc } from "@mui/material";
-import Q from "@mui/material/Box";
+import J from "@mui/material/Box";
 import ri from "@mui/material/Accordion";
 import ai from "@mui/material/AccordionSummary";
 import ni from "@mui/material/AccordionDetails";
@@ -207,7 +207,7 @@ const Pe = new Cd(), $ = Pe.emit.bind(Pe);
 Pe.before.bind(Pe);
 const ae = Pe.on.bind(Pe), Tr = Pe.after.bind(Pe), gs = Pe.postMessage.bind(Pe);
 Pe.addMessageHandler.bind(Pe);
-const ZA = Pe.removeMessageHandler.bind(Pe);
+const nb = Pe.removeMessageHandler.bind(Pe);
 class si {
   name;
   fg;
@@ -769,7 +769,7 @@ var br = function(t, e) {
     TOUCH_PAN: 4,
     TOUCH_DOLLY_PAN: 5,
     TOUCH_DOLLY_ROTATE: 6
-  }, o = s.NONE, u = 1e-6, l = new no(), d = new no(), v = 1, T = new Ae(), E = !1, P = new y0(), f = new y0(), h = new y0(), x = new y0(), q = new y0(), R = new y0(), O = new y0(), X = new y0(), C = new y0();
+  }, o = s.NONE, u = 1e-6, l = new no(), d = new no(), v = 1, T = new Ae(), E = !1, P = new y0(), f = new y0(), g = new y0(), x = new y0(), D = new y0(), q = new y0(), O = new y0(), X = new y0(), C = new y0();
   function F() {
     return 2 * Math.PI / 60 / 60 * r.autoRotateSpeed;
   }
@@ -779,10 +779,10 @@ var br = function(t, e) {
   function S(j) {
     d.theta -= j;
   }
-  function g(j) {
+  function h(j) {
     d.phi -= j;
   }
-  var D = (function() {
+  var R = (function() {
     var j = new Ae();
     return function(s0, p0) {
       j.setFromMatrixColumn(p0, 0), j.multiplyScalar(-s0), T.add(j);
@@ -800,8 +800,8 @@ var br = function(t, e) {
         var Pa = r.object.position;
         j.copy(Pa).sub(r.target);
         var Ft = j.length();
-        Ft *= Math.tan(r.object.fov / 2 * Math.PI / 180), D(2 * s0 * Ft / At.clientHeight, r.object.matrix), M(2 * p0 * Ft / At.clientHeight, r.object.matrix);
-      } else r.object.isOrthographicCamera ? (D(s0 * (r.object.right - r.object.left) / r.object.zoom / At.clientWidth, r.object.matrix), M(p0 * (r.object.top - r.object.bottom) / r.object.zoom / At.clientHeight, r.object.matrix)) : (console.warn("WARNING: OrbitControls.js encountered an unknown camera type - pan disabled."), r.enablePan = !1);
+        Ft *= Math.tan(r.object.fov / 2 * Math.PI / 180), R(2 * s0 * Ft / At.clientHeight, r.object.matrix), M(2 * p0 * Ft / At.clientHeight, r.object.matrix);
+      } else r.object.isOrthographicCamera ? (R(s0 * (r.object.right - r.object.left) / r.object.zoom / At.clientWidth, r.object.matrix), M(p0 * (r.object.top - r.object.bottom) / r.object.zoom / At.clientHeight, r.object.matrix)) : (console.warn("WARNING: OrbitControls.js encountered an unknown camera type - pan disabled."), r.enablePan = !1);
     };
   })();
   function _(j) {
@@ -820,15 +820,15 @@ var br = function(t, e) {
     x.set(j.clientX, j.clientY);
   }
   function K(j) {
-    f.set(j.clientX, j.clientY), h.subVectors(f, P).multiplyScalar(r.rotateSpeed);
+    f.set(j.clientX, j.clientY), g.subVectors(f, P).multiplyScalar(r.rotateSpeed);
     var je = r.domElement;
-    S(2 * Math.PI * h.x / je.clientHeight), g(2 * Math.PI * h.y / je.clientHeight), P.copy(f), r.update();
+    S(2 * Math.PI * g.x / je.clientHeight), h(2 * Math.PI * g.y / je.clientHeight), P.copy(f), r.update();
   }
   function ce(j) {
     X.set(j.clientX, j.clientY), C.subVectors(X, O), C.y > 0 ? _(p()) : C.y < 0 && te(p()), O.copy(X), r.update();
   }
   function me(j) {
-    q.set(j.clientX, j.clientY), R.subVectors(q, x).multiplyScalar(r.panSpeed), W(R.x, R.y), x.copy(q), r.update();
+    D.set(j.clientX, j.clientY), q.subVectors(D, x).multiplyScalar(r.panSpeed), W(q.x, q.y), x.copy(D), r.update();
   }
   function ge(j) {
     j.deltaY < 0 ? te(p()) : j.deltaY > 0 && _(p()), r.update();
@@ -884,18 +884,18 @@ var br = function(t, e) {
       var je = 0.5 * (j.touches[0].pageX + j.touches[1].pageX), s0 = 0.5 * (j.touches[0].pageY + j.touches[1].pageY);
       f.set(je, s0);
     }
-    h.subVectors(f, P).multiplyScalar(r.rotateSpeed);
+    g.subVectors(f, P).multiplyScalar(r.rotateSpeed);
     var p0 = r.domElement;
-    S(2 * Math.PI * h.x / p0.clientHeight), g(2 * Math.PI * h.y / p0.clientHeight), P.copy(f);
+    S(2 * Math.PI * g.x / p0.clientHeight), h(2 * Math.PI * g.y / p0.clientHeight), P.copy(f);
   }
   function w(j) {
     if (j.touches.length === 1)
-      q.set(j.touches[0].pageX, j.touches[0].pageY);
+      D.set(j.touches[0].pageX, j.touches[0].pageY);
     else {
       var je = 0.5 * (j.touches[0].pageX + j.touches[1].pageX), s0 = 0.5 * (j.touches[0].pageY + j.touches[1].pageY);
-      q.set(je, s0);
+      D.set(je, s0);
     }
-    R.subVectors(q, x).multiplyScalar(r.panSpeed), W(R.x, R.y), x.copy(q);
+    q.subVectors(D, x).multiplyScalar(r.panSpeed), W(q.x, q.y), x.copy(D);
   }
   function L(j) {
     var je = j.touches[0].pageX - j.touches[1].pageX, s0 = j.touches[0].pageY - j.touches[1].pageY, p0 = Math.sqrt(je * je + s0 * s0);
@@ -904,7 +904,7 @@ var br = function(t, e) {
   function N(j) {
     r.enableZoom && L(j), r.enablePan && w(j);
   }
-  function J(j) {
+  function Q(j) {
     r.enableZoom && L(j), r.enableRotate && m(j);
   }
   function ee(j) {
@@ -1030,7 +1030,7 @@ var br = function(t, e) {
           break;
         case s.TOUCH_DOLLY_ROTATE:
           if (r.enableZoom === !1 && r.enableRotate === !1) return;
-          J(j), r.update();
+          Q(j), r.update();
           break;
         default:
           o = s.NONE;
@@ -1072,20 +1072,20 @@ class Dd extends A2 {
     const i = new Xd();
     this._plane = i, a.add(i);
     const s = this;
-    function o(R, O) {
+    function o(q, O) {
       let X = O;
-      Object.defineProperty(s, R, {
+      Object.defineProperty(s, q, {
         get: function() {
           return X !== void 0 ? X : O;
         },
         set: function(C) {
-          X !== C && (X = C, i[R] = C, n[R] = C, s.dispatchEvent({ type: R + "-changed", value: C }), s.dispatchEvent(oi));
+          X !== C && (X = C, i[q] = C, n[q] = C, s.dispatchEvent({ type: q + "-changed", value: C }), s.dispatchEvent(oi));
         }
-      }), s[R] = O, i[R] = O, n[R] = O;
+      }), s[q] = O, i[q] = O, n[q] = O;
     }
     o("camera", e), o("object", void 0), o("allAssociatedObjects", void 0), o("enabled", !0), o("axis", null), o("mode", "translate"), o("translationSnap", null), o("rotationSnap", null), o("scaleSnap", null), o("space", "world"), o("size", 1), o("dragging", !1), o("showX", !0), o("showY", !0), o("showZ", !0), o("minX", -1 / 0), o("maxX", 1 / 0), o("minY", -1 / 0), o("maxY", 1 / 0), o("minZ", -1 / 0), o("maxZ", 1 / 0);
-    const u = new Ae(), l = new Ae(), d = new z0(), v = new z0(), T = new Ae(), E = new z0(), P = new Ae(), f = new Ae(), h = new Ae(), x = 0, q = new Ae();
-    o("worldPosition", u), o("worldPositionStart", l), o("worldQuaternion", d), o("worldQuaternionStart", v), o("cameraPosition", T), o("cameraQuaternion", E), o("pointStart", P), o("pointEnd", f), o("rotationAxis", h), o("rotationAngle", x), o("eye", q), this._offset = new Ae(), this._startNorm = new Ae(), this._endNorm = new Ae(), this._cameraScale = new Ae(), this._parentPosition = new Ae(), this._parentQuaternion = new z0(), this._parentQuaternionInv = new z0(), this._parentScale = new Ae(), this._worldScaleStart = new Ae(), this._worldQuaternionInv = new z0(), this._worldScale = new Ae(), this._positionStart = new Ae(), this._quaternionStart = new z0(), this._scaleStart = new Ae(), this._getPointer = qd.bind(this), this._onPointerDown = Rd.bind(this), this._onPointerHover = Od.bind(this), this._onPointerMove = Ld.bind(this), this._onPointerUp = Md.bind(this), r !== null && this.connect(r);
+    const u = new Ae(), l = new Ae(), d = new z0(), v = new z0(), T = new Ae(), E = new z0(), P = new Ae(), f = new Ae(), g = new Ae(), x = 0, D = new Ae();
+    o("worldPosition", u), o("worldPositionStart", l), o("worldQuaternion", d), o("worldQuaternionStart", v), o("cameraPosition", T), o("cameraQuaternion", E), o("pointStart", P), o("pointEnd", f), o("rotationAxis", g), o("rotationAngle", x), o("eye", D), this._offset = new Ae(), this._startNorm = new Ae(), this._endNorm = new Ae(), this._cameraScale = new Ae(), this._parentPosition = new Ae(), this._parentQuaternion = new z0(), this._parentQuaternionInv = new z0(), this._parentScale = new Ae(), this._worldScaleStart = new Ae(), this._worldQuaternionInv = new z0(), this._worldScale = new Ae(), this._positionStart = new Ae(), this._quaternionStart = new z0(), this._scaleStart = new Ae(), this._getPointer = qd.bind(this), this._onPointerDown = Rd.bind(this), this._onPointerHover = Od.bind(this), this._onPointerMove = Ld.bind(this), this._onPointerUp = Md.bind(this), r !== null && this.connect(r);
   }
   connect(e) {
     super.connect(e), this.domElement.addEventListener("pointerdown", this._onPointerDown), this.domElement.addEventListener("pointermove", this._onPointerHover), this.domElement.addEventListener("pointerup", this._onPointerUp), this.domElement.style.touchAction = "none";
@@ -1354,13 +1354,13 @@ class Wd extends Ui {
     };
     const f = new L0(0, 0.04, 0.1, 12);
     f.translate(0, 0.05, 0);
-    const h = new q0(0.08, 0.08, 0.08);
-    h.translate(0, 0.04, 0);
+    const g = new q0(0.08, 0.08, 0.08);
+    g.translate(0, 0.04, 0);
     const x = new ht();
     x.setAttribute("position", new B0([0, 0, 0, 1, 0, 0], 3));
-    const q = new L0(75e-4, 75e-4, 0.5, 3);
-    q.translate(0, 0.25, 0);
-    function R(te, z) {
+    const D = new L0(75e-4, 75e-4, 0.5, 3);
+    D.translate(0, 0.25, 0);
+    function q(te, z) {
       const se = new Ir(te, 75e-4, 3, 64, z * Math.PI * 2);
       return se.rotateY(Math.PI / 2), se.rotateX(Math.PI / 2), se;
     }
@@ -1372,17 +1372,17 @@ class Wd extends Ui {
       X: [
         [new fe(f, i), [0.5, 0, 0], [0, 0, -Math.PI / 2]],
         [new fe(f, i), [-0.5, 0, 0], [0, 0, Math.PI / 2]],
-        [new fe(q, i), [0, 0, 0], [0, 0, -Math.PI / 2]]
+        [new fe(D, i), [0, 0, 0], [0, 0, -Math.PI / 2]]
       ],
       Y: [
         [new fe(f, s), [0, 0.5, 0]],
         [new fe(f, s), [0, -0.5, 0], [Math.PI, 0, 0]],
-        [new fe(q, s)]
+        [new fe(D, s)]
       ],
       Z: [
         [new fe(f, o), [0, 0, 0.5], [Math.PI / 2, 0, 0]],
         [new fe(f, o), [0, 0, -0.5], [-Math.PI / 2, 0, 0]],
-        [new fe(q, o), null, [Math.PI / 2, 0, 0]]
+        [new fe(D, o), null, [Math.PI / 2, 0, 0]]
       ],
       XYZ: [
         [new fe(new Ea(0.1, 0), v), [0, 0, 0]]
@@ -1442,25 +1442,25 @@ class Wd extends Ui {
       ]
     }, p = {
       XYZE: [
-        [new fe(R(0.5, 1), P), null, [0, Math.PI / 2, 0]]
+        [new fe(q(0.5, 1), P), null, [0, Math.PI / 2, 0]]
       ],
       X: [
-        [new fe(R(0.5, 0.5), i)]
+        [new fe(q(0.5, 0.5), i)]
       ],
       Y: [
-        [new fe(R(0.5, 0.5), s), null, [0, 0, -Math.PI / 2]]
+        [new fe(q(0.5, 0.5), s), null, [0, 0, -Math.PI / 2]]
       ],
       Z: [
-        [new fe(R(0.5, 0.5), o), null, [0, Math.PI / 2, 0]]
+        [new fe(q(0.5, 0.5), o), null, [0, Math.PI / 2, 0]]
       ],
       E: [
-        [new fe(R(0.75, 1), T), null, [0, Math.PI / 2, 0]]
+        [new fe(q(0.75, 1), T), null, [0, Math.PI / 2, 0]]
       ]
     }, S = {
       AXIS: [
         [new Bt(x, n), [-1e3, 0, 0], null, [1e6, 1, 1], "helper"]
       ]
-    }, g = {
+    }, h = {
       XYZE: [
         [new fe(new b2(0.25, 10, 8), a)]
       ],
@@ -1476,21 +1476,21 @@ class Wd extends Ui {
       E: [
         [new fe(new Ir(0.75, 0.1, 2, 24), a)]
       ]
-    }, D = {
+    }, R = {
       X: [
-        [new fe(h, i), [0.5, 0, 0], [0, 0, -Math.PI / 2]],
-        [new fe(q, i), [0, 0, 0], [0, 0, -Math.PI / 2]],
-        [new fe(h, i), [-0.5, 0, 0], [0, 0, Math.PI / 2]]
+        [new fe(g, i), [0.5, 0, 0], [0, 0, -Math.PI / 2]],
+        [new fe(D, i), [0, 0, 0], [0, 0, -Math.PI / 2]],
+        [new fe(g, i), [-0.5, 0, 0], [0, 0, Math.PI / 2]]
       ],
       Y: [
-        [new fe(h, s), [0, 0.5, 0]],
-        [new fe(q, s)],
-        [new fe(h, s), [0, -0.5, 0], [0, 0, Math.PI]]
+        [new fe(g, s), [0, 0.5, 0]],
+        [new fe(D, s)],
+        [new fe(g, s), [0, -0.5, 0], [0, 0, Math.PI]]
       ],
       Z: [
-        [new fe(h, o), [0, 0, 0.5], [Math.PI / 2, 0, 0]],
-        [new fe(q, o), [0, 0, 0], [Math.PI / 2, 0, 0]],
-        [new fe(h, o), [0, 0, -0.5], [-Math.PI / 2, 0, 0]]
+        [new fe(g, o), [0, 0, 0.5], [Math.PI / 2, 0, 0]],
+        [new fe(D, o), [0, 0, 0], [Math.PI / 2, 0, 0]],
+        [new fe(g, o), [0, 0, -0.5], [-Math.PI / 2, 0, 0]]
       ],
       XY: [
         [new fe(new q0(0.15, 0.15, 0.01), d), [0.15, 0.15, 0]]
@@ -1551,7 +1551,7 @@ class Wd extends Ui {
         }
       return z;
     }
-    this.gizmo = {}, this.picker = {}, this.helper = {}, this.add(this.gizmo.translate = _(X)), this.add(this.gizmo.rotate = _(p)), this.add(this.gizmo.scale = _(D)), this.add(this.picker.translate = _(C)), this.add(this.picker.rotate = _(g)), this.add(this.picker.scale = _(M)), this.add(this.helper.translate = _(F)), this.add(this.helper.rotate = _(S)), this.add(this.helper.scale = _(W)), this.picker.translate.visible = !1, this.picker.rotate.visible = !1, this.picker.scale.visible = !1;
+    this.gizmo = {}, this.picker = {}, this.helper = {}, this.add(this.gizmo.translate = _(X)), this.add(this.gizmo.rotate = _(p)), this.add(this.gizmo.scale = _(R)), this.add(this.picker.translate = _(C)), this.add(this.picker.rotate = _(h)), this.add(this.picker.scale = _(M)), this.add(this.helper.translate = _(F)), this.add(this.helper.rotate = _(S)), this.add(this.helper.scale = _(W)), this.picker.translate.visible = !1, this.picker.rotate.visible = !1, this.picker.scale.visible = !1;
   }
   // updateMatrixWorld will update transformations and appearance of individual handles
   updateMatrixWorld(e) {
@@ -2620,7 +2620,7 @@ function yf() {
         (function(i, s, o, u, l, d, v, T, E) {
           var P = r("crypto");
           function f(C, F) {
-            F = q(C, F);
+            F = D(C, F);
             var p;
             return (p = F.algorithm !== "passthrough" ? P.createHash(F.algorithm) : new X()).write === void 0 && (p.write = p.update, p.end = p.update), O(F, p).dispatch(C), p.update || p.end(""), p.digest ? p.digest(F.encoding === "buffer" ? void 0 : F.encoding) : (C = p.read(), F.encoding !== "buffer" ? C.toString(F.encoding) : C);
           }
@@ -2633,100 +2633,100 @@ function yf() {
           }, n.keysMD5 = function(C) {
             return f(C, { algorithm: "md5", encoding: "hex", excludeValues: !0 });
           };
-          var h = P.getHashes ? P.getHashes().slice() : ["sha1", "md5"], x = (h.push("passthrough"), ["buffer", "hex", "binary", "base64"]);
-          function q(C, F) {
+          var g = P.getHashes ? P.getHashes().slice() : ["sha1", "md5"], x = (g.push("passthrough"), ["buffer", "hex", "binary", "base64"]);
+          function D(C, F) {
             var p = {};
             if (p.algorithm = (F = F || {}).algorithm || "sha1", p.encoding = F.encoding || "hex", p.excludeValues = !!F.excludeValues, p.algorithm = p.algorithm.toLowerCase(), p.encoding = p.encoding.toLowerCase(), p.ignoreUnknown = F.ignoreUnknown === !0, p.respectType = F.respectType !== !1, p.respectFunctionNames = F.respectFunctionNames !== !1, p.respectFunctionProperties = F.respectFunctionProperties !== !1, p.unorderedArrays = F.unorderedArrays === !0, p.unorderedSets = F.unorderedSets !== !1, p.unorderedObjects = F.unorderedObjects !== !1, p.replacer = F.replacer || void 0, p.excludeKeys = F.excludeKeys || void 0, C === void 0) throw new Error("Object argument required.");
-            for (var S = 0; S < h.length; ++S) h[S].toLowerCase() === p.algorithm.toLowerCase() && (p.algorithm = h[S]);
-            if (h.indexOf(p.algorithm) === -1) throw new Error('Algorithm "' + p.algorithm + '"  not supported. supported values: ' + h.join(", "));
+            for (var S = 0; S < g.length; ++S) g[S].toLowerCase() === p.algorithm.toLowerCase() && (p.algorithm = g[S]);
+            if (g.indexOf(p.algorithm) === -1) throw new Error('Algorithm "' + p.algorithm + '"  not supported. supported values: ' + g.join(", "));
             if (x.indexOf(p.encoding) === -1 && p.algorithm !== "passthrough") throw new Error('Encoding "' + p.encoding + '"  not supported. supported values: ' + x.join(", "));
             return p;
           }
-          function R(C) {
+          function q(C) {
             if (typeof C == "function") return /^function\s+\w*\s*\(\s*\)\s*{\s+\[native code\]\s+}$/i.exec(Function.prototype.toString.call(C)) != null;
           }
           function O(C, F, p) {
             p = p || [];
-            function S(g) {
-              return F.update ? F.update(g, "utf8") : F.write(g, "utf8");
+            function S(h) {
+              return F.update ? F.update(h, "utf8") : F.write(h, "utf8");
             }
-            return { dispatch: function(g) {
-              return this["_" + ((g = C.replacer ? C.replacer(g) : g) === null ? "null" : typeof g)](g);
-            }, _object: function(g) {
-              var D, M = Object.prototype.toString.call(g), W = /\[object (.*)\]/i.exec(M);
-              if (W = (W = W ? W[1] : "unknown:[" + M + "]").toLowerCase(), 0 <= (M = p.indexOf(g))) return this.dispatch("[CIRCULAR:" + M + "]");
-              if (p.push(g), o !== void 0 && o.isBuffer && o.isBuffer(g)) return S("buffer:"), S(g);
-              if (W === "object" || W === "function" || W === "asyncfunction") return M = Object.keys(g), C.unorderedObjects && (M = M.sort()), C.respectType === !1 || R(g) || M.splice(0, 0, "prototype", "__proto__", "constructor"), C.excludeKeys && (M = M.filter(function(_) {
+            return { dispatch: function(h) {
+              return this["_" + ((h = C.replacer ? C.replacer(h) : h) === null ? "null" : typeof h)](h);
+            }, _object: function(h) {
+              var R, M = Object.prototype.toString.call(h), W = /\[object (.*)\]/i.exec(M);
+              if (W = (W = W ? W[1] : "unknown:[" + M + "]").toLowerCase(), 0 <= (M = p.indexOf(h))) return this.dispatch("[CIRCULAR:" + M + "]");
+              if (p.push(h), o !== void 0 && o.isBuffer && o.isBuffer(h)) return S("buffer:"), S(h);
+              if (W === "object" || W === "function" || W === "asyncfunction") return M = Object.keys(h), C.unorderedObjects && (M = M.sort()), C.respectType === !1 || q(h) || M.splice(0, 0, "prototype", "__proto__", "constructor"), C.excludeKeys && (M = M.filter(function(_) {
                 return !C.excludeKeys(_);
-              })), S("object:" + M.length + ":"), D = this, M.forEach(function(_) {
-                D.dispatch(_), S(":"), C.excludeValues || D.dispatch(g[_]), S(",");
+              })), S("object:" + M.length + ":"), R = this, M.forEach(function(_) {
+                R.dispatch(_), S(":"), C.excludeValues || R.dispatch(h[_]), S(",");
               });
               if (!this["_" + W]) {
                 if (C.ignoreUnknown) return S("[" + W + "]");
                 throw new Error('Unknown object type "' + W + '"');
               }
-              this["_" + W](g);
-            }, _array: function(g, _) {
+              this["_" + W](h);
+            }, _array: function(h, _) {
               _ = _ !== void 0 ? _ : C.unorderedArrays !== !1;
               var M = this;
-              if (S("array:" + g.length + ":"), !_ || g.length <= 1) return g.forEach(function(te) {
+              if (S("array:" + h.length + ":"), !_ || h.length <= 1) return h.forEach(function(te) {
                 return M.dispatch(te);
               });
-              var W = [], _ = g.map(function(te) {
+              var W = [], _ = h.map(function(te) {
                 var z = new X(), se = p.slice();
                 return O(C, z, se).dispatch(te), W = W.concat(se.slice(p.length)), z.read().toString();
               });
               return p = p.concat(W), _.sort(), this._array(_, !1);
-            }, _date: function(g) {
-              return S("date:" + g.toJSON());
-            }, _symbol: function(g) {
-              return S("symbol:" + g.toString());
-            }, _error: function(g) {
-              return S("error:" + g.toString());
-            }, _boolean: function(g) {
-              return S("bool:" + g.toString());
-            }, _string: function(g) {
-              S("string:" + g.length + ":"), S(g.toString());
-            }, _function: function(g) {
-              S("fn:"), R(g) ? this.dispatch("[native]") : this.dispatch(g.toString()), C.respectFunctionNames !== !1 && this.dispatch("function-name:" + String(g.name)), C.respectFunctionProperties && this._object(g);
-            }, _number: function(g) {
-              return S("number:" + g.toString());
-            }, _xml: function(g) {
-              return S("xml:" + g.toString());
+            }, _date: function(h) {
+              return S("date:" + h.toJSON());
+            }, _symbol: function(h) {
+              return S("symbol:" + h.toString());
+            }, _error: function(h) {
+              return S("error:" + h.toString());
+            }, _boolean: function(h) {
+              return S("bool:" + h.toString());
+            }, _string: function(h) {
+              S("string:" + h.length + ":"), S(h.toString());
+            }, _function: function(h) {
+              S("fn:"), q(h) ? this.dispatch("[native]") : this.dispatch(h.toString()), C.respectFunctionNames !== !1 && this.dispatch("function-name:" + String(h.name)), C.respectFunctionProperties && this._object(h);
+            }, _number: function(h) {
+              return S("number:" + h.toString());
+            }, _xml: function(h) {
+              return S("xml:" + h.toString());
             }, _null: function() {
               return S("Null");
             }, _undefined: function() {
               return S("Undefined");
-            }, _regexp: function(g) {
-              return S("regex:" + g.toString());
-            }, _uint8array: function(g) {
-              return S("uint8array:"), this.dispatch(Array.prototype.slice.call(g));
-            }, _uint8clampedarray: function(g) {
-              return S("uint8clampedarray:"), this.dispatch(Array.prototype.slice.call(g));
-            }, _int8array: function(g) {
-              return S("int8array:"), this.dispatch(Array.prototype.slice.call(g));
-            }, _uint16array: function(g) {
-              return S("uint16array:"), this.dispatch(Array.prototype.slice.call(g));
-            }, _int16array: function(g) {
-              return S("int16array:"), this.dispatch(Array.prototype.slice.call(g));
-            }, _uint32array: function(g) {
-              return S("uint32array:"), this.dispatch(Array.prototype.slice.call(g));
-            }, _int32array: function(g) {
-              return S("int32array:"), this.dispatch(Array.prototype.slice.call(g));
-            }, _float32array: function(g) {
-              return S("float32array:"), this.dispatch(Array.prototype.slice.call(g));
-            }, _float64array: function(g) {
-              return S("float64array:"), this.dispatch(Array.prototype.slice.call(g));
-            }, _arraybuffer: function(g) {
-              return S("arraybuffer:"), this.dispatch(new Uint8Array(g));
-            }, _url: function(g) {
-              return S("url:" + g.toString());
-            }, _map: function(g) {
-              return S("map:"), g = Array.from(g), this._array(g, C.unorderedSets !== !1);
-            }, _set: function(g) {
-              return S("set:"), g = Array.from(g), this._array(g, C.unorderedSets !== !1);
-            }, _file: function(g) {
-              return S("file:"), this.dispatch([g.name, g.size, g.type, g.lastModfied]);
+            }, _regexp: function(h) {
+              return S("regex:" + h.toString());
+            }, _uint8array: function(h) {
+              return S("uint8array:"), this.dispatch(Array.prototype.slice.call(h));
+            }, _uint8clampedarray: function(h) {
+              return S("uint8clampedarray:"), this.dispatch(Array.prototype.slice.call(h));
+            }, _int8array: function(h) {
+              return S("int8array:"), this.dispatch(Array.prototype.slice.call(h));
+            }, _uint16array: function(h) {
+              return S("uint16array:"), this.dispatch(Array.prototype.slice.call(h));
+            }, _int16array: function(h) {
+              return S("int16array:"), this.dispatch(Array.prototype.slice.call(h));
+            }, _uint32array: function(h) {
+              return S("uint32array:"), this.dispatch(Array.prototype.slice.call(h));
+            }, _int32array: function(h) {
+              return S("int32array:"), this.dispatch(Array.prototype.slice.call(h));
+            }, _float32array: function(h) {
+              return S("float32array:"), this.dispatch(Array.prototype.slice.call(h));
+            }, _float64array: function(h) {
+              return S("float64array:"), this.dispatch(Array.prototype.slice.call(h));
+            }, _arraybuffer: function(h) {
+              return S("arraybuffer:"), this.dispatch(new Uint8Array(h));
+            }, _url: function(h) {
+              return S("url:" + h.toString());
+            }, _map: function(h) {
+              return S("map:"), h = Array.from(h), this._array(h, C.unorderedSets !== !1);
+            }, _set: function(h) {
+              return S("set:"), h = Array.from(h), this._array(h, C.unorderedSets !== !1);
+            }, _file: function(h) {
+              return S("file:"), this.dispatch([h.name, h.size, h.type, h.lastModfied]);
             }, _blob: function() {
               if (C.ignoreUnknown) return S("[blob]");
               throw Error(`Hashing Blob objects is currently not supported
@@ -2735,8 +2735,8 @@ Use "options.replacer" or "options.ignoreUnknown"
 `);
             }, _domwindow: function() {
               return S("domwindow");
-            }, _bigint: function(g) {
-              return S("bigint:" + g.toString());
+            }, _bigint: function(h) {
+              return S("bigint:" + h.toString());
             }, _process: function() {
               return S("process");
             }, _timer: function() {
@@ -2783,88 +2783,88 @@ Use "options.replacer" or "options.ignoreUnknown"
             } };
           }
           n.writeToStream = function(C, F, p) {
-            return p === void 0 && (p = F, F = {}), O(F = q(C, F), p).dispatch(C);
+            return p === void 0 && (p = F, F = {}), O(F = D(C, F), p).dispatch(C);
           };
         }).call(this, r("lYpoI2"), typeof self < "u" ? self : typeof window < "u" ? window : {}, r("buffer").Buffer, arguments[3], arguments[4], arguments[5], arguments[6], "/fake_9a5aa49d.js", "/");
       }, { buffer: 3, crypto: 5, lYpoI2: 11 }], 2: [function(r, a, n) {
         (function(i, s, o, u, l, d, v, T, E) {
           (function(P) {
-            var f = typeof Uint8Array < "u" ? Uint8Array : Array, h = 43, x = 47, q = 48, R = 97, O = 65, X = 45, C = 95;
+            var f = typeof Uint8Array < "u" ? Uint8Array : Array, g = 43, x = 47, D = 48, q = 97, O = 65, X = 45, C = 95;
             function F(p) {
-              return p = p.charCodeAt(0), p === h || p === X ? 62 : p === x || p === C ? 63 : p < q ? -1 : p < q + 10 ? p - q + 26 + 26 : p < O + 26 ? p - O : p < R + 26 ? p - R + 26 : void 0;
+              return p = p.charCodeAt(0), p === g || p === X ? 62 : p === x || p === C ? 63 : p < D ? -1 : p < D + 10 ? p - D + 26 + 26 : p < O + 26 ? p - O : p < q + 26 ? p - q + 26 : void 0;
             }
             P.toByteArray = function(p) {
-              var S, g;
+              var S, h;
               if (0 < p.length % 4) throw new Error("Invalid string. Length must be a multiple of 4");
-              var D = p.length, D = p.charAt(D - 2) === "=" ? 2 : p.charAt(D - 1) === "=" ? 1 : 0, M = new f(3 * p.length / 4 - D), W = 0 < D ? p.length - 4 : p.length, _ = 0;
+              var R = p.length, R = p.charAt(R - 2) === "=" ? 2 : p.charAt(R - 1) === "=" ? 1 : 0, M = new f(3 * p.length / 4 - R), W = 0 < R ? p.length - 4 : p.length, _ = 0;
               function te(z) {
                 M[_++] = z;
               }
-              for (S = 0; S < W; S += 4, 0) te((16711680 & (g = F(p.charAt(S)) << 18 | F(p.charAt(S + 1)) << 12 | F(p.charAt(S + 2)) << 6 | F(p.charAt(S + 3)))) >> 16), te((65280 & g) >> 8), te(255 & g);
-              return D == 2 ? te(255 & (g = F(p.charAt(S)) << 2 | F(p.charAt(S + 1)) >> 4)) : D == 1 && (te((g = F(p.charAt(S)) << 10 | F(p.charAt(S + 1)) << 4 | F(p.charAt(S + 2)) >> 2) >> 8 & 255), te(255 & g)), M;
+              for (S = 0; S < W; S += 4, 0) te((16711680 & (h = F(p.charAt(S)) << 18 | F(p.charAt(S + 1)) << 12 | F(p.charAt(S + 2)) << 6 | F(p.charAt(S + 3)))) >> 16), te((65280 & h) >> 8), te(255 & h);
+              return R == 2 ? te(255 & (h = F(p.charAt(S)) << 2 | F(p.charAt(S + 1)) >> 4)) : R == 1 && (te((h = F(p.charAt(S)) << 10 | F(p.charAt(S + 1)) << 4 | F(p.charAt(S + 2)) >> 2) >> 8 & 255), te(255 & h)), M;
             }, P.fromByteArray = function(p) {
-              var S, g, D, M, W = p.length % 3, _ = "";
+              var S, h, R, M, W = p.length % 3, _ = "";
               function te(z) {
                 return "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/".charAt(z);
               }
-              for (S = 0, D = p.length - W; S < D; S += 3) g = (p[S] << 16) + (p[S + 1] << 8) + p[S + 2], _ += te((M = g) >> 18 & 63) + te(M >> 12 & 63) + te(M >> 6 & 63) + te(63 & M);
+              for (S = 0, R = p.length - W; S < R; S += 3) h = (p[S] << 16) + (p[S + 1] << 8) + p[S + 2], _ += te((M = h) >> 18 & 63) + te(M >> 12 & 63) + te(M >> 6 & 63) + te(63 & M);
               switch (W) {
                 case 1:
-                  _ = (_ += te((g = p[p.length - 1]) >> 2)) + te(g << 4 & 63) + "==";
+                  _ = (_ += te((h = p[p.length - 1]) >> 2)) + te(h << 4 & 63) + "==";
                   break;
                 case 2:
-                  _ = (_ = (_ += te((g = (p[p.length - 2] << 8) + p[p.length - 1]) >> 10)) + te(g >> 4 & 63)) + te(g << 2 & 63) + "=";
+                  _ = (_ = (_ += te((h = (p[p.length - 2] << 8) + p[p.length - 1]) >> 10)) + te(h >> 4 & 63)) + te(h << 2 & 63) + "=";
               }
               return _;
             };
           })(n === void 0 ? this.base64js = {} : n);
         }).call(this, r("lYpoI2"), typeof self < "u" ? self : typeof window < "u" ? window : {}, r("buffer").Buffer, arguments[3], arguments[4], arguments[5], arguments[6], "/node_modules/gulp-browserify/node_modules/base64-js/lib/b64.js", "/node_modules/gulp-browserify/node_modules/base64-js/lib");
       }, { buffer: 3, lYpoI2: 11 }], 3: [function(r, a, n) {
-        (function(i, s, h, u, l, d, v, T, E) {
+        (function(i, s, g, u, l, d, v, T, E) {
           var P = r("base64-js"), f = r("ieee754");
-          function h(m, w, L) {
-            if (!(this instanceof h)) return new h(m, w, L);
-            var N, J, ee, de, ve = typeof m;
+          function g(m, w, L) {
+            if (!(this instanceof g)) return new g(m, w, L);
+            var N, Q, ee, de, ve = typeof m;
             if (w === "base64" && ve == "string") for (m = (de = m).trim ? de.trim() : de.replace(/^\s+|\s+$/g, ""); m.length % 4 != 0; ) m += "=";
             if (ve == "number") N = ue(m);
-            else if (ve == "string") N = h.byteLength(m, w);
+            else if (ve == "string") N = g.byteLength(m, w);
             else {
               if (ve != "object") throw new Error("First argument needs to be a number, array or string.");
               N = ue(m.length);
             }
-            if (h._useTypedArrays ? J = h._augment(new Uint8Array(N)) : ((J = this).length = N, J._isBuffer = !0), h._useTypedArrays && typeof m.byteLength == "number") J._set(m);
-            else if (K(de = m) || h.isBuffer(de) || de && typeof de == "object" && typeof de.length == "number") for (ee = 0; ee < N; ee++) h.isBuffer(m) ? J[ee] = m.readUInt8(ee) : J[ee] = m[ee];
-            else if (ve == "string") J.write(m, 0, w);
-            else if (ve == "number" && !h._useTypedArrays && !L) for (ee = 0; ee < N; ee++) J[ee] = 0;
-            return J;
+            if (g._useTypedArrays ? Q = g._augment(new Uint8Array(N)) : ((Q = this).length = N, Q._isBuffer = !0), g._useTypedArrays && typeof m.byteLength == "number") Q._set(m);
+            else if (K(de = m) || g.isBuffer(de) || de && typeof de == "object" && typeof de.length == "number") for (ee = 0; ee < N; ee++) g.isBuffer(m) ? Q[ee] = m.readUInt8(ee) : Q[ee] = m[ee];
+            else if (ve == "string") Q.write(m, 0, w);
+            else if (ve == "number" && !g._useTypedArrays && !L) for (ee = 0; ee < N; ee++) Q[ee] = 0;
+            return Q;
           }
           function x(m, w, L, N) {
-            return h._charsWritten = xe((function(J) {
-              for (var ee = [], de = 0; de < J.length; de++) ee.push(255 & J.charCodeAt(de));
+            return g._charsWritten = xe((function(Q) {
+              for (var ee = [], de = 0; de < Q.length; de++) ee.push(255 & Q.charCodeAt(de));
               return ee;
             })(w), m, L, N);
           }
-          function q(m, w, L, N) {
-            return h._charsWritten = xe((function(J) {
-              for (var ee, de, ve = [], ke = 0; ke < J.length; ke++) de = J.charCodeAt(ke), ee = de >> 8, de = de % 256, ve.push(de), ve.push(ee);
+          function D(m, w, L, N) {
+            return g._charsWritten = xe((function(Q) {
+              for (var ee, de, ve = [], ke = 0; ke < Q.length; ke++) de = Q.charCodeAt(ke), ee = de >> 8, de = de % 256, ve.push(de), ve.push(ee);
               return ve;
             })(w), m, L, N);
           }
-          function R(m, w, L) {
+          function q(m, w, L) {
             var N = "";
             L = Math.min(m.length, L);
-            for (var J = w; J < L; J++) N += String.fromCharCode(m[J]);
+            for (var Q = w; Q < L; Q++) N += String.fromCharCode(m[Q]);
             return N;
           }
           function O(m, w, L, ee) {
             ee || (Y(typeof L == "boolean", "missing or invalid endian"), Y(w != null, "missing offset"), Y(w + 1 < m.length, "Trying to read beyond buffer length"));
-            var J, ee = m.length;
-            if (!(ee <= w)) return L ? (J = m[w], w + 1 < ee && (J |= m[w + 1] << 8)) : (J = m[w] << 8, w + 1 < ee && (J |= m[w + 1])), J;
+            var Q, ee = m.length;
+            if (!(ee <= w)) return L ? (Q = m[w], w + 1 < ee && (Q |= m[w + 1] << 8)) : (Q = m[w] << 8, w + 1 < ee && (Q |= m[w + 1])), Q;
           }
           function X(m, w, L, ee) {
             ee || (Y(typeof L == "boolean", "missing or invalid endian"), Y(w != null, "missing offset"), Y(w + 3 < m.length, "Trying to read beyond buffer length"));
-            var J, ee = m.length;
-            if (!(ee <= w)) return L ? (w + 2 < ee && (J = m[w + 2] << 16), w + 1 < ee && (J |= m[w + 1] << 8), J |= m[w], w + 3 < ee && (J += m[w + 3] << 24 >>> 0)) : (w + 1 < ee && (J = m[w + 1] << 16), w + 2 < ee && (J |= m[w + 2] << 8), w + 3 < ee && (J |= m[w + 3]), J += m[w] << 24 >>> 0), J;
+            var Q, ee = m.length;
+            if (!(ee <= w)) return L ? (w + 2 < ee && (Q = m[w + 2] << 16), w + 1 < ee && (Q |= m[w + 1] << 8), Q |= m[w], w + 3 < ee && (Q += m[w + 3] << 24 >>> 0)) : (w + 1 < ee && (Q = m[w + 1] << 16), w + 2 < ee && (Q |= m[w + 2] << 8), w + 3 < ee && (Q |= m[w + 3]), Q += m[w] << 24 >>> 0), Q;
           }
           function C(m, w, L, N) {
             if (N || (Y(typeof L == "boolean", "missing or invalid endian"), Y(w != null, "missing offset"), Y(w + 1 < m.length, "Trying to read beyond buffer length")), !(m.length <= w)) return N = O(m, w, L, !0), 32768 & N ? -1 * (65535 - N + 1) : N;
@@ -2878,25 +2878,25 @@ Use "options.replacer" or "options.ignoreUnknown"
           function S(m, w, L, N) {
             return N || (Y(typeof L == "boolean", "missing or invalid endian"), Y(w + 7 < m.length, "Trying to read beyond buffer length")), f.read(m, w, L, 52, 8);
           }
-          function g(m, w, L, N, J) {
-            if (J || (Y(w != null, "missing value"), Y(typeof N == "boolean", "missing or invalid endian"), Y(L != null, "missing offset"), Y(L + 1 < m.length, "trying to write beyond buffer length"), G(w, 65535)), J = m.length, !(J <= L)) for (var ee = 0, de = Math.min(J - L, 2); ee < de; ee++) m[L + ee] = (w & 255 << 8 * (N ? ee : 1 - ee)) >>> 8 * (N ? ee : 1 - ee);
+          function h(m, w, L, N, Q) {
+            if (Q || (Y(w != null, "missing value"), Y(typeof N == "boolean", "missing or invalid endian"), Y(L != null, "missing offset"), Y(L + 1 < m.length, "trying to write beyond buffer length"), G(w, 65535)), Q = m.length, !(Q <= L)) for (var ee = 0, de = Math.min(Q - L, 2); ee < de; ee++) m[L + ee] = (w & 255 << 8 * (N ? ee : 1 - ee)) >>> 8 * (N ? ee : 1 - ee);
           }
-          function D(m, w, L, N, J) {
-            if (J || (Y(w != null, "missing value"), Y(typeof N == "boolean", "missing or invalid endian"), Y(L != null, "missing offset"), Y(L + 3 < m.length, "trying to write beyond buffer length"), G(w, 4294967295)), J = m.length, !(J <= L)) for (var ee = 0, de = Math.min(J - L, 4); ee < de; ee++) m[L + ee] = w >>> 8 * (N ? ee : 3 - ee) & 255;
+          function R(m, w, L, N, Q) {
+            if (Q || (Y(w != null, "missing value"), Y(typeof N == "boolean", "missing or invalid endian"), Y(L != null, "missing offset"), Y(L + 3 < m.length, "trying to write beyond buffer length"), G(w, 4294967295)), Q = m.length, !(Q <= L)) for (var ee = 0, de = Math.min(Q - L, 4); ee < de; ee++) m[L + ee] = w >>> 8 * (N ? ee : 3 - ee) & 255;
           }
-          function M(m, w, L, N, J) {
-            J || (Y(w != null, "missing value"), Y(typeof N == "boolean", "missing or invalid endian"), Y(L != null, "missing offset"), Y(L + 1 < m.length, "Trying to write beyond buffer length"), Z(w, 32767, -32768)), m.length <= L || g(m, 0 <= w ? w : 65535 + w + 1, L, N, J);
+          function M(m, w, L, N, Q) {
+            Q || (Y(w != null, "missing value"), Y(typeof N == "boolean", "missing or invalid endian"), Y(L != null, "missing offset"), Y(L + 1 < m.length, "Trying to write beyond buffer length"), Z(w, 32767, -32768)), m.length <= L || h(m, 0 <= w ? w : 65535 + w + 1, L, N, Q);
           }
-          function W(m, w, L, N, J) {
-            J || (Y(w != null, "missing value"), Y(typeof N == "boolean", "missing or invalid endian"), Y(L != null, "missing offset"), Y(L + 3 < m.length, "Trying to write beyond buffer length"), Z(w, 2147483647, -2147483648)), m.length <= L || D(m, 0 <= w ? w : 4294967295 + w + 1, L, N, J);
+          function W(m, w, L, N, Q) {
+            Q || (Y(w != null, "missing value"), Y(typeof N == "boolean", "missing or invalid endian"), Y(L != null, "missing offset"), Y(L + 3 < m.length, "Trying to write beyond buffer length"), Z(w, 2147483647, -2147483648)), m.length <= L || R(m, 0 <= w ? w : 4294967295 + w + 1, L, N, Q);
           }
-          function _(m, w, L, N, J) {
-            J || (Y(w != null, "missing value"), Y(typeof N == "boolean", "missing or invalid endian"), Y(L != null, "missing offset"), Y(L + 3 < m.length, "Trying to write beyond buffer length"), ie(w, 34028234663852886e22, -34028234663852886e22)), m.length <= L || f.write(m, w, L, N, 23, 4);
+          function _(m, w, L, N, Q) {
+            Q || (Y(w != null, "missing value"), Y(typeof N == "boolean", "missing or invalid endian"), Y(L != null, "missing offset"), Y(L + 3 < m.length, "Trying to write beyond buffer length"), ie(w, 34028234663852886e22, -34028234663852886e22)), m.length <= L || f.write(m, w, L, N, 23, 4);
           }
-          function te(m, w, L, N, J) {
-            J || (Y(w != null, "missing value"), Y(typeof N == "boolean", "missing or invalid endian"), Y(L != null, "missing offset"), Y(L + 7 < m.length, "Trying to write beyond buffer length"), ie(w, 17976931348623157e292, -17976931348623157e292)), m.length <= L || f.write(m, w, L, N, 52, 8);
+          function te(m, w, L, N, Q) {
+            Q || (Y(w != null, "missing value"), Y(typeof N == "boolean", "missing or invalid endian"), Y(L != null, "missing offset"), Y(L + 7 < m.length, "Trying to write beyond buffer length"), ie(w, 17976931348623157e292, -17976931348623157e292)), m.length <= L || f.write(m, w, L, N, 52, 8);
           }
-          n.Buffer = h, n.SlowBuffer = h, n.INSPECT_MAX_BYTES = 50, h.poolSize = 8192, h._useTypedArrays = (function() {
+          n.Buffer = g, n.SlowBuffer = g, n.INSPECT_MAX_BYTES = 50, g.poolSize = 8192, g._useTypedArrays = (function() {
             try {
               var m = new ArrayBuffer(0), w = new Uint8Array(m);
               return w.foo = function() {
@@ -2905,7 +2905,7 @@ Use "options.replacer" or "options.ignoreUnknown"
             } catch {
               return !1;
             }
-          })(), h.isEncoding = function(m) {
+          })(), g.isEncoding = function(m) {
             switch (String(m).toLowerCase()) {
               case "hex":
               case "utf8":
@@ -2922,9 +2922,9 @@ Use "options.replacer" or "options.ignoreUnknown"
               default:
                 return !1;
             }
-          }, h.isBuffer = function(m) {
+          }, g.isBuffer = function(m) {
             return !(m == null || !m._isBuffer);
-          }, h.byteLength = function(m, w) {
+          }, g.byteLength = function(m, w) {
             var L;
             switch (m += "", w || "utf8") {
               case "hex":
@@ -2952,22 +2952,22 @@ Use "options.replacer" or "options.ignoreUnknown"
                 throw new Error("Unknown encoding");
             }
             return L;
-          }, h.concat = function(m, w) {
+          }, g.concat = function(m, w) {
             if (Y(K(m), `Usage: Buffer.concat(list, [totalLength])
-list should be an Array.`), m.length === 0) return new h(0);
+list should be an Array.`), m.length === 0) return new g(0);
             if (m.length === 1) return m[0];
-            if (typeof w != "number") for (J = w = 0; J < m.length; J++) w += m[J].length;
-            for (var L = new h(w), N = 0, J = 0; J < m.length; J++) {
-              var ee = m[J];
+            if (typeof w != "number") for (Q = w = 0; Q < m.length; Q++) w += m[Q].length;
+            for (var L = new g(w), N = 0, Q = 0; Q < m.length; Q++) {
+              var ee = m[Q];
               ee.copy(L, N), N += ee.length;
             }
             return L;
-          }, h.prototype.write = function(m, w, L, N) {
+          }, g.prototype.write = function(m, w, L, N) {
             isFinite(w) ? isFinite(L) || (N = L, L = void 0) : (ke = N, N = w, w = L, L = ke), w = Number(w) || 0;
-            var J, ee, de, ve, ke = this.length - w;
+            var Q, ee, de, ve, ke = this.length - w;
             switch ((!L || ke < (L = Number(L))) && (L = ke), N = String(N || "utf8").toLowerCase()) {
               case "hex":
-                J = (function(Xe, Ue, ze, u0) {
+                Q = (function(Xe, Ue, ze, u0) {
                   ze = Number(ze) || 0;
                   var n0 = Xe.length - ze;
                   (!u0 || n0 < (u0 = Number(u0))) && (u0 = n0), Y((n0 = Ue.length) % 2 == 0, "Invalid hex string"), n0 / 2 < u0 && (u0 = n0 / 2);
@@ -2975,32 +2975,32 @@ list should be an Array.`), m.length === 0) return new h(0);
                     var je = parseInt(Ue.substr(2 * j, 2), 16);
                     Y(!isNaN(je), "Invalid hex string"), Xe[ze + j] = je;
                   }
-                  return h._charsWritten = 2 * j, j;
+                  return g._charsWritten = 2 * j, j;
                 })(this, m, w, L);
                 break;
               case "utf8":
               case "utf-8":
-                ee = this, de = w, ve = L, J = h._charsWritten = xe(me(m), ee, de, ve);
+                ee = this, de = w, ve = L, Q = g._charsWritten = xe(me(m), ee, de, ve);
                 break;
               case "ascii":
               case "binary":
-                J = x(this, m, w, L);
+                Q = x(this, m, w, L);
                 break;
               case "base64":
-                ee = this, de = w, ve = L, J = h._charsWritten = xe(ge(m), ee, de, ve);
+                ee = this, de = w, ve = L, Q = g._charsWritten = xe(ge(m), ee, de, ve);
                 break;
               case "ucs2":
               case "ucs-2":
               case "utf16le":
               case "utf-16le":
-                J = q(this, m, w, L);
+                Q = D(this, m, w, L);
                 break;
               default:
                 throw new Error("Unknown encoding");
             }
-            return J;
-          }, h.prototype.toString = function(m, w, L) {
-            var N, J, ee, de, ve = this;
+            return Q;
+          }, g.prototype.toString = function(m, w, L) {
+            var N, Q, ee, de, ve = this;
             if (m = String(m || "utf8").toLowerCase(), w = Number(w) || 0, (L = L !== void 0 ? Number(L) : ve.length) === w) return "";
             switch (m) {
               case "hex":
@@ -3022,10 +3022,10 @@ list should be an Array.`), m.length === 0) return new h(0);
                 break;
               case "ascii":
               case "binary":
-                N = R(ve, w, L);
+                N = q(ve, w, L);
                 break;
               case "base64":
-                J = ve, de = L, N = (ee = w) === 0 && de === J.length ? P.fromByteArray(J) : P.fromByteArray(J.slice(ee, de));
+                Q = ve, de = L, N = (ee = w) === 0 && de === Q.length ? P.fromByteArray(Q) : P.fromByteArray(Q.slice(ee, de));
                 break;
               case "ucs2":
               case "ucs-2":
@@ -3040,98 +3040,98 @@ list should be an Array.`), m.length === 0) return new h(0);
                 throw new Error("Unknown encoding");
             }
             return N;
-          }, h.prototype.toJSON = function() {
+          }, g.prototype.toJSON = function() {
             return { type: "Buffer", data: Array.prototype.slice.call(this._arr || this, 0) };
-          }, h.prototype.copy = function(m, w, L, N) {
+          }, g.prototype.copy = function(m, w, L, N) {
             if (w = w || 0, (N = N || N === 0 ? N : this.length) !== (L = L || 0) && m.length !== 0 && this.length !== 0) {
               Y(L <= N, "sourceEnd < sourceStart"), Y(0 <= w && w < m.length, "targetStart out of bounds"), Y(0 <= L && L < this.length, "sourceStart out of bounds"), Y(0 <= N && N <= this.length, "sourceEnd out of bounds"), N > this.length && (N = this.length);
-              var J = (N = m.length - w < N - L ? m.length - w + L : N) - L;
-              if (J < 100 || !h._useTypedArrays) for (var ee = 0; ee < J; ee++) m[ee + w] = this[ee + L];
-              else m._set(this.subarray(L, L + J), w);
+              var Q = (N = m.length - w < N - L ? m.length - w + L : N) - L;
+              if (Q < 100 || !g._useTypedArrays) for (var ee = 0; ee < Q; ee++) m[ee + w] = this[ee + L];
+              else m._set(this.subarray(L, L + Q), w);
             }
-          }, h.prototype.slice = function(m, w) {
+          }, g.prototype.slice = function(m, w) {
             var L = this.length;
-            if (m = se(m, L, 0), w = se(w, L, L), h._useTypedArrays) return h._augment(this.subarray(m, w));
-            for (var N = w - m, J = new h(N, void 0, !0), ee = 0; ee < N; ee++) J[ee] = this[ee + m];
-            return J;
-          }, h.prototype.get = function(m) {
+            if (m = se(m, L, 0), w = se(w, L, L), g._useTypedArrays) return g._augment(this.subarray(m, w));
+            for (var N = w - m, Q = new g(N, void 0, !0), ee = 0; ee < N; ee++) Q[ee] = this[ee + m];
+            return Q;
+          }, g.prototype.get = function(m) {
             return console.log(".get() is deprecated. Access using array indexes instead."), this.readUInt8(m);
-          }, h.prototype.set = function(m, w) {
+          }, g.prototype.set = function(m, w) {
             return console.log(".set() is deprecated. Access using array indexes instead."), this.writeUInt8(m, w);
-          }, h.prototype.readUInt8 = function(m, w) {
+          }, g.prototype.readUInt8 = function(m, w) {
             if (w || (Y(m != null, "missing offset"), Y(m < this.length, "Trying to read beyond buffer length")), !(m >= this.length)) return this[m];
-          }, h.prototype.readUInt16LE = function(m, w) {
+          }, g.prototype.readUInt16LE = function(m, w) {
             return O(this, m, !0, w);
-          }, h.prototype.readUInt16BE = function(m, w) {
+          }, g.prototype.readUInt16BE = function(m, w) {
             return O(this, m, !1, w);
-          }, h.prototype.readUInt32LE = function(m, w) {
+          }, g.prototype.readUInt32LE = function(m, w) {
             return X(this, m, !0, w);
-          }, h.prototype.readUInt32BE = function(m, w) {
+          }, g.prototype.readUInt32BE = function(m, w) {
             return X(this, m, !1, w);
-          }, h.prototype.readInt8 = function(m, w) {
+          }, g.prototype.readInt8 = function(m, w) {
             if (w || (Y(m != null, "missing offset"), Y(m < this.length, "Trying to read beyond buffer length")), !(m >= this.length)) return 128 & this[m] ? -1 * (255 - this[m] + 1) : this[m];
-          }, h.prototype.readInt16LE = function(m, w) {
+          }, g.prototype.readInt16LE = function(m, w) {
             return C(this, m, !0, w);
-          }, h.prototype.readInt16BE = function(m, w) {
+          }, g.prototype.readInt16BE = function(m, w) {
             return C(this, m, !1, w);
-          }, h.prototype.readInt32LE = function(m, w) {
+          }, g.prototype.readInt32LE = function(m, w) {
             return F(this, m, !0, w);
-          }, h.prototype.readInt32BE = function(m, w) {
+          }, g.prototype.readInt32BE = function(m, w) {
             return F(this, m, !1, w);
-          }, h.prototype.readFloatLE = function(m, w) {
+          }, g.prototype.readFloatLE = function(m, w) {
             return p(this, m, !0, w);
-          }, h.prototype.readFloatBE = function(m, w) {
+          }, g.prototype.readFloatBE = function(m, w) {
             return p(this, m, !1, w);
-          }, h.prototype.readDoubleLE = function(m, w) {
+          }, g.prototype.readDoubleLE = function(m, w) {
             return S(this, m, !0, w);
-          }, h.prototype.readDoubleBE = function(m, w) {
+          }, g.prototype.readDoubleBE = function(m, w) {
             return S(this, m, !1, w);
-          }, h.prototype.writeUInt8 = function(m, w, L) {
+          }, g.prototype.writeUInt8 = function(m, w, L) {
             L || (Y(m != null, "missing value"), Y(w != null, "missing offset"), Y(w < this.length, "trying to write beyond buffer length"), G(m, 255)), w >= this.length || (this[w] = m);
-          }, h.prototype.writeUInt16LE = function(m, w, L) {
-            g(this, m, w, !0, L);
-          }, h.prototype.writeUInt16BE = function(m, w, L) {
-            g(this, m, w, !1, L);
-          }, h.prototype.writeUInt32LE = function(m, w, L) {
-            D(this, m, w, !0, L);
-          }, h.prototype.writeUInt32BE = function(m, w, L) {
-            D(this, m, w, !1, L);
-          }, h.prototype.writeInt8 = function(m, w, L) {
+          }, g.prototype.writeUInt16LE = function(m, w, L) {
+            h(this, m, w, !0, L);
+          }, g.prototype.writeUInt16BE = function(m, w, L) {
+            h(this, m, w, !1, L);
+          }, g.prototype.writeUInt32LE = function(m, w, L) {
+            R(this, m, w, !0, L);
+          }, g.prototype.writeUInt32BE = function(m, w, L) {
+            R(this, m, w, !1, L);
+          }, g.prototype.writeInt8 = function(m, w, L) {
             L || (Y(m != null, "missing value"), Y(w != null, "missing offset"), Y(w < this.length, "Trying to write beyond buffer length"), Z(m, 127, -128)), w >= this.length || (0 <= m ? this.writeUInt8(m, w, L) : this.writeUInt8(255 + m + 1, w, L));
-          }, h.prototype.writeInt16LE = function(m, w, L) {
+          }, g.prototype.writeInt16LE = function(m, w, L) {
             M(this, m, w, !0, L);
-          }, h.prototype.writeInt16BE = function(m, w, L) {
+          }, g.prototype.writeInt16BE = function(m, w, L) {
             M(this, m, w, !1, L);
-          }, h.prototype.writeInt32LE = function(m, w, L) {
+          }, g.prototype.writeInt32LE = function(m, w, L) {
             W(this, m, w, !0, L);
-          }, h.prototype.writeInt32BE = function(m, w, L) {
+          }, g.prototype.writeInt32BE = function(m, w, L) {
             W(this, m, w, !1, L);
-          }, h.prototype.writeFloatLE = function(m, w, L) {
+          }, g.prototype.writeFloatLE = function(m, w, L) {
             _(this, m, w, !0, L);
-          }, h.prototype.writeFloatBE = function(m, w, L) {
+          }, g.prototype.writeFloatBE = function(m, w, L) {
             _(this, m, w, !1, L);
-          }, h.prototype.writeDoubleLE = function(m, w, L) {
+          }, g.prototype.writeDoubleLE = function(m, w, L) {
             te(this, m, w, !0, L);
-          }, h.prototype.writeDoubleBE = function(m, w, L) {
+          }, g.prototype.writeDoubleBE = function(m, w, L) {
             te(this, m, w, !1, L);
-          }, h.prototype.fill = function(m, w, L) {
+          }, g.prototype.fill = function(m, w, L) {
             if (w = w || 0, L = L || this.length, Y(typeof (m = typeof (m = m || 0) == "string" ? m.charCodeAt(0) : m) == "number" && !isNaN(m), "value is not a number"), Y(w <= L, "end < start"), L !== w && this.length !== 0) {
               Y(0 <= w && w < this.length, "start out of bounds"), Y(0 <= L && L <= this.length, "end out of bounds");
               for (var N = w; N < L; N++) this[N] = m;
             }
-          }, h.prototype.inspect = function() {
+          }, g.prototype.inspect = function() {
             for (var m = [], w = this.length, L = 0; L < w; L++) if (m[L] = ce(this[L]), L === n.INSPECT_MAX_BYTES) {
               m[L + 1] = "...";
               break;
             }
             return "<Buffer " + m.join(" ") + ">";
-          }, h.prototype.toArrayBuffer = function() {
+          }, g.prototype.toArrayBuffer = function() {
             if (typeof Uint8Array > "u") throw new Error("Buffer.toArrayBuffer not supported in this browser");
-            if (h._useTypedArrays) return new h(this).buffer;
+            if (g._useTypedArrays) return new g(this).buffer;
             for (var m = new Uint8Array(this.length), w = 0, L = m.length; w < L; w += 1) m[w] = this[w];
             return m.buffer;
           };
-          var z = h.prototype;
+          var z = g.prototype;
           function se(m, w, L) {
             return typeof m != "number" ? L : w <= (m = ~~m) ? w : 0 <= m || 0 <= (m += w) ? m : 0;
           }
@@ -3150,7 +3150,7 @@ list should be an Array.`), m.length === 0) return new h(0);
             for (var w = [], L = 0; L < m.length; L++) {
               var N = m.charCodeAt(L);
               if (N <= 127) w.push(m.charCodeAt(L));
-              else for (var J = L, ee = (55296 <= N && N <= 57343 && L++, encodeURIComponent(m.slice(J, L + 1)).substr(1).split("%")), de = 0; de < ee.length; de++) w.push(parseInt(ee[de], 16));
+              else for (var Q = L, ee = (55296 <= N && N <= 57343 && L++, encodeURIComponent(m.slice(Q, L + 1)).substr(1).split("%")), de = 0; de < ee.length; de++) w.push(parseInt(ee[de], 16));
             }
             return w;
           }
@@ -3158,8 +3158,8 @@ list should be an Array.`), m.length === 0) return new h(0);
             return P.toByteArray(m);
           }
           function xe(m, w, L, N) {
-            for (var J = 0; J < N && !(J + L >= w.length || J >= m.length); J++) w[J + L] = m[J];
-            return J;
+            for (var Q = 0; Q < N && !(Q + L >= w.length || Q >= m.length); Q++) w[Q + L] = m[Q];
+            return Q;
           }
           function pe(m) {
             try {
@@ -3180,56 +3180,56 @@ list should be an Array.`), m.length === 0) return new h(0);
           function Y(m, w) {
             if (!m) throw new Error(w || "Failed assertion");
           }
-          h._augment = function(m) {
+          g._augment = function(m) {
             return m._isBuffer = !0, m._get = m.get, m._set = m.set, m.get = z.get, m.set = z.set, m.write = z.write, m.toString = z.toString, m.toLocaleString = z.toString, m.toJSON = z.toJSON, m.copy = z.copy, m.slice = z.slice, m.readUInt8 = z.readUInt8, m.readUInt16LE = z.readUInt16LE, m.readUInt16BE = z.readUInt16BE, m.readUInt32LE = z.readUInt32LE, m.readUInt32BE = z.readUInt32BE, m.readInt8 = z.readInt8, m.readInt16LE = z.readInt16LE, m.readInt16BE = z.readInt16BE, m.readInt32LE = z.readInt32LE, m.readInt32BE = z.readInt32BE, m.readFloatLE = z.readFloatLE, m.readFloatBE = z.readFloatBE, m.readDoubleLE = z.readDoubleLE, m.readDoubleBE = z.readDoubleBE, m.writeUInt8 = z.writeUInt8, m.writeUInt16LE = z.writeUInt16LE, m.writeUInt16BE = z.writeUInt16BE, m.writeUInt32LE = z.writeUInt32LE, m.writeUInt32BE = z.writeUInt32BE, m.writeInt8 = z.writeInt8, m.writeInt16LE = z.writeInt16LE, m.writeInt16BE = z.writeInt16BE, m.writeInt32LE = z.writeInt32LE, m.writeInt32BE = z.writeInt32BE, m.writeFloatLE = z.writeFloatLE, m.writeFloatBE = z.writeFloatBE, m.writeDoubleLE = z.writeDoubleLE, m.writeDoubleBE = z.writeDoubleBE, m.fill = z.fill, m.inspect = z.inspect, m.toArrayBuffer = z.toArrayBuffer, m;
           };
         }).call(this, r("lYpoI2"), typeof self < "u" ? self : typeof window < "u" ? window : {}, r("buffer").Buffer, arguments[3], arguments[4], arguments[5], arguments[6], "/node_modules/gulp-browserify/node_modules/buffer/index.js", "/node_modules/gulp-browserify/node_modules/buffer");
       }, { "base64-js": 2, buffer: 3, ieee754: 10, lYpoI2: 11 }], 4: [function(r, a, n) {
         (function(i, s, P, u, l, d, v, T, E) {
-          var P = r("buffer").Buffer, f = 4, h = new P(f);
-          h.fill(0), a.exports = { hash: function(x, q, R, O) {
-            for (var X = q((function(g, D) {
-              g.length % f != 0 && (M = g.length + (f - g.length % f), g = P.concat([g, h], M));
-              for (var M, W = [], _ = D ? g.readInt32BE : g.readInt32LE, te = 0; te < g.length; te += f) W.push(_.call(g, te));
+          var P = r("buffer").Buffer, f = 4, g = new P(f);
+          g.fill(0), a.exports = { hash: function(x, D, q, O) {
+            for (var X = D((function(h, R) {
+              h.length % f != 0 && (M = h.length + (f - h.length % f), h = P.concat([h, g], M));
+              for (var M, W = [], _ = R ? h.readInt32BE : h.readInt32LE, te = 0; te < h.length; te += f) W.push(_.call(h, te));
               return W;
-            })(x = P.isBuffer(x) ? x : new P(x), O), 8 * x.length), q = O, C = new P(R), F = q ? C.writeInt32BE : C.writeInt32LE, p = 0; p < X.length; p++) F.call(C, X[p], 4 * p, !0);
+            })(x = P.isBuffer(x) ? x : new P(x), O), 8 * x.length), D = O, C = new P(q), F = D ? C.writeInt32BE : C.writeInt32LE, p = 0; p < X.length; p++) F.call(C, X[p], 4 * p, !0);
             return C;
           } };
         }).call(this, r("lYpoI2"), typeof self < "u" ? self : typeof window < "u" ? window : {}, r("buffer").Buffer, arguments[3], arguments[4], arguments[5], arguments[6], "/node_modules/gulp-browserify/node_modules/crypto-browserify/helpers.js", "/node_modules/gulp-browserify/node_modules/crypto-browserify");
       }, { buffer: 3, lYpoI2: 11 }], 5: [function(r, a, n) {
         (function(i, s, P, u, l, d, v, T, E) {
-          var P = r("buffer").Buffer, f = r("./sha"), h = r("./sha256"), x = r("./rng"), q = { sha1: f, sha256: h, md5: r("./md5") }, R = 64, O = new P(R);
-          function X(g, D) {
-            var M = q[g = g || "sha1"], W = [];
-            return M || C("algorithm:", g, "is not yet supported"), { update: function(_) {
+          var P = r("buffer").Buffer, f = r("./sha"), g = r("./sha256"), x = r("./rng"), D = { sha1: f, sha256: g, md5: r("./md5") }, q = 64, O = new P(q);
+          function X(h, R) {
+            var M = D[h = h || "sha1"], W = [];
+            return M || C("algorithm:", h, "is not yet supported"), { update: function(_) {
               return P.isBuffer(_) || (_ = new P(_)), W.push(_), _.length, this;
             }, digest: function(_) {
-              var te = P.concat(W), te = D ? (function(z, se, ue) {
-                P.isBuffer(se) || (se = new P(se)), P.isBuffer(ue) || (ue = new P(ue)), se.length > R ? se = z(se) : se.length < R && (se = P.concat([se, O], R));
-                for (var K = new P(R), ce = new P(R), me = 0; me < R; me++) K[me] = 54 ^ se[me], ce[me] = 92 ^ se[me];
+              var te = P.concat(W), te = R ? (function(z, se, ue) {
+                P.isBuffer(se) || (se = new P(se)), P.isBuffer(ue) || (ue = new P(ue)), se.length > q ? se = z(se) : se.length < q && (se = P.concat([se, O], q));
+                for (var K = new P(q), ce = new P(q), me = 0; me < q; me++) K[me] = 54 ^ se[me], ce[me] = 92 ^ se[me];
                 return ue = z(P.concat([K, ue])), z(P.concat([ce, ue]));
-              })(M, D, te) : M(te);
+              })(M, R, te) : M(te);
               return W = null, _ ? te.toString(_) : te;
             } };
           }
           function C() {
-            var g = [].slice.call(arguments).join(" ");
-            throw new Error([g, "we accept pull requests", "http://github.com/dominictarr/crypto-browserify"].join(`
+            var h = [].slice.call(arguments).join(" ");
+            throw new Error([h, "we accept pull requests", "http://github.com/dominictarr/crypto-browserify"].join(`
 `));
           }
-          O.fill(0), n.createHash = function(g) {
-            return X(g);
-          }, n.createHmac = X, n.randomBytes = function(g, D) {
-            if (!D || !D.call) return new P(x(g));
+          O.fill(0), n.createHash = function(h) {
+            return X(h);
+          }, n.createHmac = X, n.randomBytes = function(h, R) {
+            if (!R || !R.call) return new P(x(h));
             try {
-              D.call(this, void 0, new P(x(g)));
+              R.call(this, void 0, new P(x(h)));
             } catch (M) {
-              D(M);
+              R(M);
             }
           };
-          var F, p = ["createCredentials", "createCipher", "createCipheriv", "createDecipher", "createDecipheriv", "createSign", "createVerify", "createDiffieHellman", "pbkdf2"], S = function(g) {
-            n[g] = function() {
-              C("sorry,", g, "is not implemented yet");
+          var F, p = ["createCredentials", "createCipher", "createCipheriv", "createDecipher", "createDecipheriv", "createSign", "createVerify", "createDiffieHellman", "pbkdf2"], S = function(h) {
+            n[h] = function() {
+              C("sorry,", h, "is not implemented yet");
             };
           };
           for (F in p) S(p[F]);
@@ -3239,26 +3239,26 @@ list should be an Array.`), m.length === 0) return new h(0);
           var P = r("./helpers");
           function f(C, F) {
             C[F >> 5] |= 128 << F % 32, C[14 + (F + 64 >>> 9 << 4)] = F;
-            for (var p = 1732584193, S = -271733879, g = -1732584194, D = 271733878, M = 0; M < C.length; M += 16) {
-              var W = p, _ = S, te = g, z = D, p = x(p, S, g, D, C[M + 0], 7, -680876936), D = x(D, p, S, g, C[M + 1], 12, -389564586), g = x(g, D, p, S, C[M + 2], 17, 606105819), S = x(S, g, D, p, C[M + 3], 22, -1044525330);
-              p = x(p, S, g, D, C[M + 4], 7, -176418897), D = x(D, p, S, g, C[M + 5], 12, 1200080426), g = x(g, D, p, S, C[M + 6], 17, -1473231341), S = x(S, g, D, p, C[M + 7], 22, -45705983), p = x(p, S, g, D, C[M + 8], 7, 1770035416), D = x(D, p, S, g, C[M + 9], 12, -1958414417), g = x(g, D, p, S, C[M + 10], 17, -42063), S = x(S, g, D, p, C[M + 11], 22, -1990404162), p = x(p, S, g, D, C[M + 12], 7, 1804603682), D = x(D, p, S, g, C[M + 13], 12, -40341101), g = x(g, D, p, S, C[M + 14], 17, -1502002290), p = q(p, S = x(S, g, D, p, C[M + 15], 22, 1236535329), g, D, C[M + 1], 5, -165796510), D = q(D, p, S, g, C[M + 6], 9, -1069501632), g = q(g, D, p, S, C[M + 11], 14, 643717713), S = q(S, g, D, p, C[M + 0], 20, -373897302), p = q(p, S, g, D, C[M + 5], 5, -701558691), D = q(D, p, S, g, C[M + 10], 9, 38016083), g = q(g, D, p, S, C[M + 15], 14, -660478335), S = q(S, g, D, p, C[M + 4], 20, -405537848), p = q(p, S, g, D, C[M + 9], 5, 568446438), D = q(D, p, S, g, C[M + 14], 9, -1019803690), g = q(g, D, p, S, C[M + 3], 14, -187363961), S = q(S, g, D, p, C[M + 8], 20, 1163531501), p = q(p, S, g, D, C[M + 13], 5, -1444681467), D = q(D, p, S, g, C[M + 2], 9, -51403784), g = q(g, D, p, S, C[M + 7], 14, 1735328473), p = R(p, S = q(S, g, D, p, C[M + 12], 20, -1926607734), g, D, C[M + 5], 4, -378558), D = R(D, p, S, g, C[M + 8], 11, -2022574463), g = R(g, D, p, S, C[M + 11], 16, 1839030562), S = R(S, g, D, p, C[M + 14], 23, -35309556), p = R(p, S, g, D, C[M + 1], 4, -1530992060), D = R(D, p, S, g, C[M + 4], 11, 1272893353), g = R(g, D, p, S, C[M + 7], 16, -155497632), S = R(S, g, D, p, C[M + 10], 23, -1094730640), p = R(p, S, g, D, C[M + 13], 4, 681279174), D = R(D, p, S, g, C[M + 0], 11, -358537222), g = R(g, D, p, S, C[M + 3], 16, -722521979), S = R(S, g, D, p, C[M + 6], 23, 76029189), p = R(p, S, g, D, C[M + 9], 4, -640364487), D = R(D, p, S, g, C[M + 12], 11, -421815835), g = R(g, D, p, S, C[M + 15], 16, 530742520), p = O(p, S = R(S, g, D, p, C[M + 2], 23, -995338651), g, D, C[M + 0], 6, -198630844), D = O(D, p, S, g, C[M + 7], 10, 1126891415), g = O(g, D, p, S, C[M + 14], 15, -1416354905), S = O(S, g, D, p, C[M + 5], 21, -57434055), p = O(p, S, g, D, C[M + 12], 6, 1700485571), D = O(D, p, S, g, C[M + 3], 10, -1894986606), g = O(g, D, p, S, C[M + 10], 15, -1051523), S = O(S, g, D, p, C[M + 1], 21, -2054922799), p = O(p, S, g, D, C[M + 8], 6, 1873313359), D = O(D, p, S, g, C[M + 15], 10, -30611744), g = O(g, D, p, S, C[M + 6], 15, -1560198380), S = O(S, g, D, p, C[M + 13], 21, 1309151649), p = O(p, S, g, D, C[M + 4], 6, -145523070), D = O(D, p, S, g, C[M + 11], 10, -1120210379), g = O(g, D, p, S, C[M + 2], 15, 718787259), S = O(S, g, D, p, C[M + 9], 21, -343485551), p = X(p, W), S = X(S, _), g = X(g, te), D = X(D, z);
+            for (var p = 1732584193, S = -271733879, h = -1732584194, R = 271733878, M = 0; M < C.length; M += 16) {
+              var W = p, _ = S, te = h, z = R, p = x(p, S, h, R, C[M + 0], 7, -680876936), R = x(R, p, S, h, C[M + 1], 12, -389564586), h = x(h, R, p, S, C[M + 2], 17, 606105819), S = x(S, h, R, p, C[M + 3], 22, -1044525330);
+              p = x(p, S, h, R, C[M + 4], 7, -176418897), R = x(R, p, S, h, C[M + 5], 12, 1200080426), h = x(h, R, p, S, C[M + 6], 17, -1473231341), S = x(S, h, R, p, C[M + 7], 22, -45705983), p = x(p, S, h, R, C[M + 8], 7, 1770035416), R = x(R, p, S, h, C[M + 9], 12, -1958414417), h = x(h, R, p, S, C[M + 10], 17, -42063), S = x(S, h, R, p, C[M + 11], 22, -1990404162), p = x(p, S, h, R, C[M + 12], 7, 1804603682), R = x(R, p, S, h, C[M + 13], 12, -40341101), h = x(h, R, p, S, C[M + 14], 17, -1502002290), p = D(p, S = x(S, h, R, p, C[M + 15], 22, 1236535329), h, R, C[M + 1], 5, -165796510), R = D(R, p, S, h, C[M + 6], 9, -1069501632), h = D(h, R, p, S, C[M + 11], 14, 643717713), S = D(S, h, R, p, C[M + 0], 20, -373897302), p = D(p, S, h, R, C[M + 5], 5, -701558691), R = D(R, p, S, h, C[M + 10], 9, 38016083), h = D(h, R, p, S, C[M + 15], 14, -660478335), S = D(S, h, R, p, C[M + 4], 20, -405537848), p = D(p, S, h, R, C[M + 9], 5, 568446438), R = D(R, p, S, h, C[M + 14], 9, -1019803690), h = D(h, R, p, S, C[M + 3], 14, -187363961), S = D(S, h, R, p, C[M + 8], 20, 1163531501), p = D(p, S, h, R, C[M + 13], 5, -1444681467), R = D(R, p, S, h, C[M + 2], 9, -51403784), h = D(h, R, p, S, C[M + 7], 14, 1735328473), p = q(p, S = D(S, h, R, p, C[M + 12], 20, -1926607734), h, R, C[M + 5], 4, -378558), R = q(R, p, S, h, C[M + 8], 11, -2022574463), h = q(h, R, p, S, C[M + 11], 16, 1839030562), S = q(S, h, R, p, C[M + 14], 23, -35309556), p = q(p, S, h, R, C[M + 1], 4, -1530992060), R = q(R, p, S, h, C[M + 4], 11, 1272893353), h = q(h, R, p, S, C[M + 7], 16, -155497632), S = q(S, h, R, p, C[M + 10], 23, -1094730640), p = q(p, S, h, R, C[M + 13], 4, 681279174), R = q(R, p, S, h, C[M + 0], 11, -358537222), h = q(h, R, p, S, C[M + 3], 16, -722521979), S = q(S, h, R, p, C[M + 6], 23, 76029189), p = q(p, S, h, R, C[M + 9], 4, -640364487), R = q(R, p, S, h, C[M + 12], 11, -421815835), h = q(h, R, p, S, C[M + 15], 16, 530742520), p = O(p, S = q(S, h, R, p, C[M + 2], 23, -995338651), h, R, C[M + 0], 6, -198630844), R = O(R, p, S, h, C[M + 7], 10, 1126891415), h = O(h, R, p, S, C[M + 14], 15, -1416354905), S = O(S, h, R, p, C[M + 5], 21, -57434055), p = O(p, S, h, R, C[M + 12], 6, 1700485571), R = O(R, p, S, h, C[M + 3], 10, -1894986606), h = O(h, R, p, S, C[M + 10], 15, -1051523), S = O(S, h, R, p, C[M + 1], 21, -2054922799), p = O(p, S, h, R, C[M + 8], 6, 1873313359), R = O(R, p, S, h, C[M + 15], 10, -30611744), h = O(h, R, p, S, C[M + 6], 15, -1560198380), S = O(S, h, R, p, C[M + 13], 21, 1309151649), p = O(p, S, h, R, C[M + 4], 6, -145523070), R = O(R, p, S, h, C[M + 11], 10, -1120210379), h = O(h, R, p, S, C[M + 2], 15, 718787259), S = O(S, h, R, p, C[M + 9], 21, -343485551), p = X(p, W), S = X(S, _), h = X(h, te), R = X(R, z);
             }
-            return Array(p, S, g, D);
+            return Array(p, S, h, R);
           }
-          function h(C, F, p, S, g, D) {
-            return X((F = X(X(F, C), X(S, D))) << g | F >>> 32 - g, p);
+          function g(C, F, p, S, h, R) {
+            return X((F = X(X(F, C), X(S, R))) << h | F >>> 32 - h, p);
           }
-          function x(C, F, p, S, g, D, M) {
-            return h(F & p | ~F & S, C, F, g, D, M);
+          function x(C, F, p, S, h, R, M) {
+            return g(F & p | ~F & S, C, F, h, R, M);
           }
-          function q(C, F, p, S, g, D, M) {
-            return h(F & S | p & ~S, C, F, g, D, M);
+          function D(C, F, p, S, h, R, M) {
+            return g(F & S | p & ~S, C, F, h, R, M);
           }
-          function R(C, F, p, S, g, D, M) {
-            return h(F ^ p ^ S, C, F, g, D, M);
+          function q(C, F, p, S, h, R, M) {
+            return g(F ^ p ^ S, C, F, h, R, M);
           }
-          function O(C, F, p, S, g, D, M) {
-            return h(p ^ (F | ~S), C, F, g, D, M);
+          function O(C, F, p, S, h, R, M) {
+            return g(p ^ (F | ~S), C, F, h, R, M);
           }
           function X(C, F) {
             var p = (65535 & C) + (65535 & F);
@@ -3271,97 +3271,97 @@ list should be an Array.`), m.length === 0) return new h(0);
       }, { "./helpers": 4, buffer: 3, lYpoI2: 11 }], 7: [function(r, a, n) {
         (function(i, s, o, u, l, d, v, T, E) {
           a.exports = function(P) {
-            for (var f, h = new Array(P), x = 0; x < P; x++) (3 & x) == 0 && (f = 4294967296 * Math.random()), h[x] = f >>> ((3 & x) << 3) & 255;
-            return h;
+            for (var f, g = new Array(P), x = 0; x < P; x++) (3 & x) == 0 && (f = 4294967296 * Math.random()), g[x] = f >>> ((3 & x) << 3) & 255;
+            return g;
           };
         }).call(this, r("lYpoI2"), typeof self < "u" ? self : typeof window < "u" ? window : {}, r("buffer").Buffer, arguments[3], arguments[4], arguments[5], arguments[6], "/node_modules/gulp-browserify/node_modules/crypto-browserify/rng.js", "/node_modules/gulp-browserify/node_modules/crypto-browserify");
       }, { buffer: 3, lYpoI2: 11 }], 8: [function(r, a, n) {
         (function(i, s, o, u, l, d, v, T, E) {
           var P = r("./helpers");
-          function f(q, R) {
-            q[R >> 5] |= 128 << 24 - R % 32, q[15 + (R + 64 >> 9 << 4)] = R;
-            for (var O, X, C, F = Array(80), p = 1732584193, S = -271733879, g = -1732584194, D = 271733878, M = -1009589776, W = 0; W < q.length; W += 16) {
-              for (var _ = p, te = S, z = g, se = D, ue = M, K = 0; K < 80; K++) {
-                F[K] = K < 16 ? q[W + K] : x(F[K - 3] ^ F[K - 8] ^ F[K - 14] ^ F[K - 16], 1);
-                var ce = h(h(x(p, 5), (ce = S, X = g, C = D, (O = K) < 20 ? ce & X | ~ce & C : !(O < 40) && O < 60 ? ce & X | ce & C | X & C : ce ^ X ^ C)), h(h(M, F[K]), (O = K) < 20 ? 1518500249 : O < 40 ? 1859775393 : O < 60 ? -1894007588 : -899497514)), M = D, D = g, g = x(S, 30), S = p, p = ce;
+          function f(D, q) {
+            D[q >> 5] |= 128 << 24 - q % 32, D[15 + (q + 64 >> 9 << 4)] = q;
+            for (var O, X, C, F = Array(80), p = 1732584193, S = -271733879, h = -1732584194, R = 271733878, M = -1009589776, W = 0; W < D.length; W += 16) {
+              for (var _ = p, te = S, z = h, se = R, ue = M, K = 0; K < 80; K++) {
+                F[K] = K < 16 ? D[W + K] : x(F[K - 3] ^ F[K - 8] ^ F[K - 14] ^ F[K - 16], 1);
+                var ce = g(g(x(p, 5), (ce = S, X = h, C = R, (O = K) < 20 ? ce & X | ~ce & C : !(O < 40) && O < 60 ? ce & X | ce & C | X & C : ce ^ X ^ C)), g(g(M, F[K]), (O = K) < 20 ? 1518500249 : O < 40 ? 1859775393 : O < 60 ? -1894007588 : -899497514)), M = R, R = h, h = x(S, 30), S = p, p = ce;
               }
-              p = h(p, _), S = h(S, te), g = h(g, z), D = h(D, se), M = h(M, ue);
+              p = g(p, _), S = g(S, te), h = g(h, z), R = g(R, se), M = g(M, ue);
             }
-            return Array(p, S, g, D, M);
+            return Array(p, S, h, R, M);
           }
-          function h(q, R) {
-            var O = (65535 & q) + (65535 & R);
-            return (q >> 16) + (R >> 16) + (O >> 16) << 16 | 65535 & O;
+          function g(D, q) {
+            var O = (65535 & D) + (65535 & q);
+            return (D >> 16) + (q >> 16) + (O >> 16) << 16 | 65535 & O;
           }
-          function x(q, R) {
-            return q << R | q >>> 32 - R;
+          function x(D, q) {
+            return D << q | D >>> 32 - q;
           }
-          a.exports = function(q) {
-            return P.hash(q, f, 20, !0);
+          a.exports = function(D) {
+            return P.hash(D, f, 20, !0);
           };
         }).call(this, r("lYpoI2"), typeof self < "u" ? self : typeof window < "u" ? window : {}, r("buffer").Buffer, arguments[3], arguments[4], arguments[5], arguments[6], "/node_modules/gulp-browserify/node_modules/crypto-browserify/sha.js", "/node_modules/gulp-browserify/node_modules/crypto-browserify");
       }, { "./helpers": 4, buffer: 3, lYpoI2: 11 }], 9: [function(r, a, n) {
         (function(i, s, o, u, l, d, v, T, E) {
-          function P(R, O) {
-            var X = (65535 & R) + (65535 & O);
-            return (R >> 16) + (O >> 16) + (X >> 16) << 16 | 65535 & X;
+          function P(q, O) {
+            var X = (65535 & q) + (65535 & O);
+            return (q >> 16) + (O >> 16) + (X >> 16) << 16 | 65535 & X;
           }
-          function f(R, O) {
+          function f(q, O) {
             var X, C = new Array(1116352408, 1899447441, 3049323471, 3921009573, 961987163, 1508970993, 2453635748, 2870763221, 3624381080, 310598401, 607225278, 1426881987, 1925078388, 2162078206, 2614888103, 3248222580, 3835390401, 4022224774, 264347078, 604807628, 770255983, 1249150122, 1555081692, 1996064986, 2554220882, 2821834349, 2952996808, 3210313671, 3336571891, 3584528711, 113926993, 338241895, 666307205, 773529912, 1294757372, 1396182291, 1695183700, 1986661051, 2177026350, 2456956037, 2730485921, 2820302411, 3259730800, 3345764771, 3516065817, 3600352804, 4094571909, 275423344, 430227734, 506948616, 659060556, 883997877, 958139571, 1322822218, 1537002063, 1747873779, 1955562222, 2024104815, 2227730452, 2361852424, 2428436474, 2756734187, 3204031479, 3329325298), F = new Array(1779033703, 3144134277, 1013904242, 2773480762, 1359893119, 2600822924, 528734635, 1541459225), p = new Array(64);
-            R[O >> 5] |= 128 << 24 - O % 32, R[15 + (O + 64 >> 9 << 4)] = O;
-            for (var S, g, D = 0; D < R.length; D += 16) {
-              for (var M = F[0], W = F[1], _ = F[2], te = F[3], z = F[4], se = F[5], ue = F[6], K = F[7], ce = 0; ce < 64; ce++) p[ce] = ce < 16 ? R[ce + D] : P(P(P((g = p[ce - 2], x(g, 17) ^ x(g, 19) ^ q(g, 10)), p[ce - 7]), (g = p[ce - 15], x(g, 7) ^ x(g, 18) ^ q(g, 3))), p[ce - 16]), X = P(P(P(P(K, x(g = z, 6) ^ x(g, 11) ^ x(g, 25)), z & se ^ ~z & ue), C[ce]), p[ce]), S = P(x(S = M, 2) ^ x(S, 13) ^ x(S, 22), M & W ^ M & _ ^ W & _), K = ue, ue = se, se = z, z = P(te, X), te = _, _ = W, W = M, M = P(X, S);
+            q[O >> 5] |= 128 << 24 - O % 32, q[15 + (O + 64 >> 9 << 4)] = O;
+            for (var S, h, R = 0; R < q.length; R += 16) {
+              for (var M = F[0], W = F[1], _ = F[2], te = F[3], z = F[4], se = F[5], ue = F[6], K = F[7], ce = 0; ce < 64; ce++) p[ce] = ce < 16 ? q[ce + R] : P(P(P((h = p[ce - 2], x(h, 17) ^ x(h, 19) ^ D(h, 10)), p[ce - 7]), (h = p[ce - 15], x(h, 7) ^ x(h, 18) ^ D(h, 3))), p[ce - 16]), X = P(P(P(P(K, x(h = z, 6) ^ x(h, 11) ^ x(h, 25)), z & se ^ ~z & ue), C[ce]), p[ce]), S = P(x(S = M, 2) ^ x(S, 13) ^ x(S, 22), M & W ^ M & _ ^ W & _), K = ue, ue = se, se = z, z = P(te, X), te = _, _ = W, W = M, M = P(X, S);
               F[0] = P(M, F[0]), F[1] = P(W, F[1]), F[2] = P(_, F[2]), F[3] = P(te, F[3]), F[4] = P(z, F[4]), F[5] = P(se, F[5]), F[6] = P(ue, F[6]), F[7] = P(K, F[7]);
             }
             return F;
           }
-          var h = r("./helpers"), x = function(R, O) {
-            return R >>> O | R << 32 - O;
-          }, q = function(R, O) {
-            return R >>> O;
+          var g = r("./helpers"), x = function(q, O) {
+            return q >>> O | q << 32 - O;
+          }, D = function(q, O) {
+            return q >>> O;
           };
-          a.exports = function(R) {
-            return h.hash(R, f, 32, !0);
+          a.exports = function(q) {
+            return g.hash(q, f, 32, !0);
           };
         }).call(this, r("lYpoI2"), typeof self < "u" ? self : typeof window < "u" ? window : {}, r("buffer").Buffer, arguments[3], arguments[4], arguments[5], arguments[6], "/node_modules/gulp-browserify/node_modules/crypto-browserify/sha256.js", "/node_modules/gulp-browserify/node_modules/crypto-browserify");
       }, { "./helpers": 4, buffer: 3, lYpoI2: 11 }], 10: [function(r, a, n) {
         (function(i, s, o, u, l, d, v, T, E) {
-          n.read = function(P, f, h, x, D) {
-            var R, O, X = 8 * D - x - 1, C = (1 << X) - 1, F = C >> 1, p = -7, S = h ? D - 1 : 0, g = h ? -1 : 1, D = P[f + S];
-            for (S += g, R = D & (1 << -p) - 1, D >>= -p, p += X; 0 < p; R = 256 * R + P[f + S], S += g, p -= 8) ;
-            for (O = R & (1 << -p) - 1, R >>= -p, p += x; 0 < p; O = 256 * O + P[f + S], S += g, p -= 8) ;
-            if (R === 0) R = 1 - F;
+          n.read = function(P, f, g, x, R) {
+            var q, O, X = 8 * R - x - 1, C = (1 << X) - 1, F = C >> 1, p = -7, S = g ? R - 1 : 0, h = g ? -1 : 1, R = P[f + S];
+            for (S += h, q = R & (1 << -p) - 1, R >>= -p, p += X; 0 < p; q = 256 * q + P[f + S], S += h, p -= 8) ;
+            for (O = q & (1 << -p) - 1, q >>= -p, p += x; 0 < p; O = 256 * O + P[f + S], S += h, p -= 8) ;
+            if (q === 0) q = 1 - F;
             else {
-              if (R === C) return O ? NaN : 1 / 0 * (D ? -1 : 1);
-              O += Math.pow(2, x), R -= F;
+              if (q === C) return O ? NaN : 1 / 0 * (R ? -1 : 1);
+              O += Math.pow(2, x), q -= F;
             }
-            return (D ? -1 : 1) * O * Math.pow(2, R - x);
-          }, n.write = function(P, f, h, x, q, M) {
-            var O, X, C = 8 * M - q - 1, F = (1 << C) - 1, p = F >> 1, S = q === 23 ? Math.pow(2, -24) - Math.pow(2, -77) : 0, g = x ? 0 : M - 1, D = x ? 1 : -1, M = f < 0 || f === 0 && 1 / f < 0 ? 1 : 0;
-            for (f = Math.abs(f), isNaN(f) || f === 1 / 0 ? (X = isNaN(f) ? 1 : 0, O = F) : (O = Math.floor(Math.log(f) / Math.LN2), f * (x = Math.pow(2, -O)) < 1 && (O--, x *= 2), 2 <= (f += 1 <= O + p ? S / x : S * Math.pow(2, 1 - p)) * x && (O++, x /= 2), F <= O + p ? (X = 0, O = F) : 1 <= O + p ? (X = (f * x - 1) * Math.pow(2, q), O += p) : (X = f * Math.pow(2, p - 1) * Math.pow(2, q), O = 0)); 8 <= q; P[h + g] = 255 & X, g += D, X /= 256, q -= 8) ;
-            for (O = O << q | X, C += q; 0 < C; P[h + g] = 255 & O, g += D, O /= 256, C -= 8) ;
-            P[h + g - D] |= 128 * M;
+            return (R ? -1 : 1) * O * Math.pow(2, q - x);
+          }, n.write = function(P, f, g, x, D, M) {
+            var O, X, C = 8 * M - D - 1, F = (1 << C) - 1, p = F >> 1, S = D === 23 ? Math.pow(2, -24) - Math.pow(2, -77) : 0, h = x ? 0 : M - 1, R = x ? 1 : -1, M = f < 0 || f === 0 && 1 / f < 0 ? 1 : 0;
+            for (f = Math.abs(f), isNaN(f) || f === 1 / 0 ? (X = isNaN(f) ? 1 : 0, O = F) : (O = Math.floor(Math.log(f) / Math.LN2), f * (x = Math.pow(2, -O)) < 1 && (O--, x *= 2), 2 <= (f += 1 <= O + p ? S / x : S * Math.pow(2, 1 - p)) * x && (O++, x /= 2), F <= O + p ? (X = 0, O = F) : 1 <= O + p ? (X = (f * x - 1) * Math.pow(2, D), O += p) : (X = f * Math.pow(2, p - 1) * Math.pow(2, D), O = 0)); 8 <= D; P[g + h] = 255 & X, h += R, X /= 256, D -= 8) ;
+            for (O = O << D | X, C += D; 0 < C; P[g + h] = 255 & O, h += R, O /= 256, C -= 8) ;
+            P[g + h - R] |= 128 * M;
           };
         }).call(this, r("lYpoI2"), typeof self < "u" ? self : typeof window < "u" ? window : {}, r("buffer").Buffer, arguments[3], arguments[4], arguments[5], arguments[6], "/node_modules/gulp-browserify/node_modules/ieee754/index.js", "/node_modules/gulp-browserify/node_modules/ieee754");
       }, { buffer: 3, lYpoI2: 11 }], 11: [function(r, a, n) {
         (function(i, s, o, u, l, d, v, T, E) {
-          var P, f, h;
+          var P, f, g;
           function x() {
           }
-          (i = a.exports = {}).nextTick = (f = typeof window < "u" && window.setImmediate, h = typeof window < "u" && window.postMessage && window.addEventListener, f ? function(q) {
-            return window.setImmediate(q);
-          } : h ? (P = [], window.addEventListener("message", function(q) {
-            var R = q.source;
-            R !== window && R !== null || q.data !== "process-tick" || (q.stopPropagation(), 0 < P.length && P.shift()());
-          }, !0), function(q) {
-            P.push(q), window.postMessage("process-tick", "*");
-          }) : function(q) {
-            setTimeout(q, 0);
-          }), i.title = "browser", i.browser = !0, i.env = {}, i.argv = [], i.on = x, i.addListener = x, i.once = x, i.off = x, i.removeListener = x, i.removeAllListeners = x, i.emit = x, i.binding = function(q) {
+          (i = a.exports = {}).nextTick = (f = typeof window < "u" && window.setImmediate, g = typeof window < "u" && window.postMessage && window.addEventListener, f ? function(D) {
+            return window.setImmediate(D);
+          } : g ? (P = [], window.addEventListener("message", function(D) {
+            var q = D.source;
+            q !== window && q !== null || D.data !== "process-tick" || (D.stopPropagation(), 0 < P.length && P.shift()());
+          }, !0), function(D) {
+            P.push(D), window.postMessage("process-tick", "*");
+          }) : function(D) {
+            setTimeout(D, 0);
+          }), i.title = "browser", i.browser = !0, i.env = {}, i.argv = [], i.on = x, i.addListener = x, i.once = x, i.off = x, i.removeListener = x, i.removeAllListeners = x, i.emit = x, i.binding = function(D) {
             throw new Error("process.binding is not supported");
           }, i.cwd = function() {
             return "/";
-          }, i.chdir = function(q) {
+          }, i.chdir = function(D) {
             throw new Error("process.chdir is not supported");
           };
         }).call(this, r("lYpoI2"), typeof self < "u" ? self : typeof window < "u" ? window : {}, r("buffer").Buffer, arguments[3], arguments[4], arguments[5], arguments[6], "/node_modules/gulp-browserify/node_modules/process/browser.js", "/node_modules/gulp-browserify/node_modules/process");
@@ -3884,76 +3884,76 @@ function Uf() {
     1,
     15
   ]), v = new r(), T = new Uint8Array(320);
-  function E(p, S, g, D) {
+  function E(p, S, h, R) {
     var M, W;
-    for (M = 0; M < g; ++M) p[M] = 0;
-    for (M = 0; M < 30 - g; ++M) p[M + g] = M / g | 0;
-    for (W = D, M = 0; M < 30; ++M)
+    for (M = 0; M < h; ++M) p[M] = 0;
+    for (M = 0; M < 30 - h; ++M) p[M + h] = M / h | 0;
+    for (W = R, M = 0; M < 30; ++M)
       S[M] = W, W += 1 << p[M];
   }
   function P(p, S) {
-    var g;
-    for (g = 0; g < 7; ++g) p.table[g] = 0;
-    for (p.table[7] = 24, p.table[8] = 152, p.table[9] = 112, g = 0; g < 24; ++g) p.trans[g] = 256 + g;
-    for (g = 0; g < 144; ++g) p.trans[24 + g] = g;
-    for (g = 0; g < 8; ++g) p.trans[168 + g] = 280 + g;
-    for (g = 0; g < 112; ++g) p.trans[176 + g] = 144 + g;
-    for (g = 0; g < 5; ++g) S.table[g] = 0;
-    for (S.table[5] = 32, g = 0; g < 32; ++g) S.trans[g] = g;
+    var h;
+    for (h = 0; h < 7; ++h) p.table[h] = 0;
+    for (p.table[7] = 24, p.table[8] = 152, p.table[9] = 112, h = 0; h < 24; ++h) p.trans[h] = 256 + h;
+    for (h = 0; h < 144; ++h) p.trans[24 + h] = h;
+    for (h = 0; h < 8; ++h) p.trans[168 + h] = 280 + h;
+    for (h = 0; h < 112; ++h) p.trans[176 + h] = 144 + h;
+    for (h = 0; h < 5; ++h) S.table[h] = 0;
+    for (S.table[5] = 32, h = 0; h < 32; ++h) S.trans[h] = h;
   }
   var f = new Uint16Array(16);
-  function h(p, S, g, D) {
+  function g(p, S, h, R) {
     var M, W;
     for (M = 0; M < 16; ++M) p.table[M] = 0;
-    for (M = 0; M < D; ++M) p.table[S[g + M]]++;
+    for (M = 0; M < R; ++M) p.table[S[h + M]]++;
     for (p.table[0] = 0, W = 0, M = 0; M < 16; ++M)
       f[M] = W, W += p.table[M];
-    for (M = 0; M < D; ++M)
-      S[g + M] && (p.trans[f[S[g + M]]++] = M);
+    for (M = 0; M < R; ++M)
+      S[h + M] && (p.trans[f[S[h + M]]++] = M);
   }
   function x(p) {
     p.bitcount-- || (p.tag = p.source[p.sourceIndex++], p.bitcount = 7);
     var S = p.tag & 1;
     return p.tag >>>= 1, S;
   }
-  function q(p, S, g) {
+  function D(p, S, h) {
     if (!S)
-      return g;
+      return h;
     for (; p.bitcount < 24; )
       p.tag |= p.source[p.sourceIndex++] << p.bitcount, p.bitcount += 8;
-    var D = p.tag & 65535 >>> 16 - S;
-    return p.tag >>>= S, p.bitcount -= S, D + g;
+    var R = p.tag & 65535 >>> 16 - S;
+    return p.tag >>>= S, p.bitcount -= S, R + h;
   }
-  function R(p, S) {
+  function q(p, S) {
     for (; p.bitcount < 24; )
       p.tag |= p.source[p.sourceIndex++] << p.bitcount, p.bitcount += 8;
-    var g = 0, D = 0, M = 0, W = p.tag;
+    var h = 0, R = 0, M = 0, W = p.tag;
     do
-      D = 2 * D + (W & 1), W >>>= 1, ++M, g += S.table[M], D -= S.table[M];
-    while (D >= 0);
-    return p.tag = W, p.bitcount -= M, S.trans[g + D];
+      R = 2 * R + (W & 1), W >>>= 1, ++M, h += S.table[M], R -= S.table[M];
+    while (R >= 0);
+    return p.tag = W, p.bitcount -= M, S.trans[h + R];
   }
-  function O(p, S, g) {
-    var D, M, W, _, te, z;
-    for (D = q(p, 5, 257), M = q(p, 5, 1), W = q(p, 4, 4), _ = 0; _ < 19; ++_) T[_] = 0;
+  function O(p, S, h) {
+    var R, M, W, _, te, z;
+    for (R = D(p, 5, 257), M = D(p, 5, 1), W = D(p, 4, 4), _ = 0; _ < 19; ++_) T[_] = 0;
     for (_ = 0; _ < W; ++_) {
-      var se = q(p, 3, 0);
+      var se = D(p, 3, 0);
       T[d[_]] = se;
     }
-    for (h(v, T, 0, 19), te = 0; te < D + M; ) {
-      var ue = R(p, v);
+    for (g(v, T, 0, 19), te = 0; te < R + M; ) {
+      var ue = q(p, v);
       switch (ue) {
         case 16:
           var K = T[te - 1];
-          for (z = q(p, 2, 3); z; --z)
+          for (z = D(p, 2, 3); z; --z)
             T[te++] = K;
           break;
         case 17:
-          for (z = q(p, 3, 3); z; --z)
+          for (z = D(p, 3, 3); z; --z)
             T[te++] = 0;
           break;
         case 18:
-          for (z = q(p, 7, 11); z; --z)
+          for (z = D(p, 7, 11); z; --z)
             T[te++] = 0;
           break;
         default:
@@ -3961,51 +3961,51 @@ function Uf() {
           break;
       }
     }
-    h(S, T, 0, D), h(g, T, D, M);
+    g(S, T, 0, R), g(h, T, R, M);
   }
-  function X(p, S, g) {
+  function X(p, S, h) {
     for (; ; ) {
-      var D = R(p, S);
-      if (D === 256)
+      var R = q(p, S);
+      if (R === 256)
         return t;
-      if (D < 256)
-        p.dest[p.destLen++] = D;
+      if (R < 256)
+        p.dest[p.destLen++] = R;
       else {
         var M, W, _, te;
-        for (D -= 257, M = q(p, s[D], o[D]), W = R(p, g), _ = p.destLen - q(p, u[W], l[W]), te = _; te < _ + M; ++te)
+        for (R -= 257, M = D(p, s[R], o[R]), W = q(p, h), _ = p.destLen - D(p, u[W], l[W]), te = _; te < _ + M; ++te)
           p.dest[p.destLen++] = p.dest[te];
       }
     }
   }
   function C(p) {
-    for (var S, g, D; p.bitcount > 8; )
+    for (var S, h, R; p.bitcount > 8; )
       p.sourceIndex--, p.bitcount -= 8;
-    if (S = p.source[p.sourceIndex + 1], S = 256 * S + p.source[p.sourceIndex], g = p.source[p.sourceIndex + 3], g = 256 * g + p.source[p.sourceIndex + 2], S !== (~g & 65535))
+    if (S = p.source[p.sourceIndex + 1], S = 256 * S + p.source[p.sourceIndex], h = p.source[p.sourceIndex + 3], h = 256 * h + p.source[p.sourceIndex + 2], S !== (~h & 65535))
       return e;
-    for (p.sourceIndex += 4, D = S; D; --D)
+    for (p.sourceIndex += 4, R = S; R; --R)
       p.dest[p.destLen++] = p.source[p.sourceIndex++];
     return p.bitcount = 0, t;
   }
   function F(p, S) {
-    var g = new a(p, S), D, M, W;
+    var h = new a(p, S), R, M, W;
     do {
-      switch (D = x(g), M = q(g, 2, 0), M) {
+      switch (R = x(h), M = D(h, 2, 0), M) {
         case 0:
-          W = C(g);
+          W = C(h);
           break;
         case 1:
-          W = X(g, n, i);
+          W = X(h, n, i);
           break;
         case 2:
-          O(g, g.ltree, g.dtree), W = X(g, g.ltree, g.dtree);
+          O(h, h.ltree, h.dtree), W = X(h, h.ltree, h.dtree);
           break;
         default:
           W = e;
       }
       if (W !== t)
         throw new Error("Data error");
-    } while (!D);
-    return g.destLen < g.dest.length ? typeof g.dest.slice == "function" ? g.dest.slice(0, g.destLen) : g.dest.subarray(0, g.destLen) : g.dest;
+    } while (!R);
+    return h.destLen < h.dest.length ? typeof h.dest.slice == "function" ? h.dest.slice(0, h.destLen) : h.dest.subarray(0, h.destLen) : h.dest;
   }
   return P(n, i), E(s, o, 4, 3), E(u, l, 2, 1), s[28] = 0, o[28] = 258, bi = F, bi;
 }
@@ -4031,8 +4031,8 @@ var yi, Ro;
 function jf() {
   if (Ro) return yi;
   Ro = 1;
-  const t = Uf(), { swap32LE: e } = zf(), r = 11, a = 5, n = r - a, i = 65536 >> r, o = (1 << n) - 1, u = 2, d = (1 << a) - 1, v = 65536 >> a, T = 1024 >> a, h = v + T + 32, x = 1 << u;
-  class q {
+  const t = Uf(), { swap32LE: e } = zf(), r = 11, a = 5, n = r - a, i = 65536 >> r, o = (1 << n) - 1, u = 2, d = (1 << a) - 1, v = 65536 >> a, T = 1024 >> a, g = v + T + 32, x = 1 << u;
+  class D {
     constructor(O) {
       const X = typeof O.readUInt32BE == "function" && typeof O.slice == "function";
       if (X || O instanceof Uint8Array) {
@@ -4049,10 +4049,10 @@ function jf() {
     }
     get(O) {
       let X;
-      return O < 0 || O > 1114111 ? this.errorValue : O < 55296 || O > 56319 && O <= 65535 ? (X = (this.data[O >> a] << u) + (O & d), this.data[X]) : O <= 65535 ? (X = (this.data[v + (O - 55296 >> a)] << u) + (O & d), this.data[X]) : O < this.highStart ? (X = this.data[h - i + (O >> r)], X = this.data[X + (O >> a & o)], X = (X << u) + (O & d), this.data[X]) : this.data[this.data.length - x];
+      return O < 0 || O > 1114111 ? this.errorValue : O < 55296 || O > 56319 && O <= 65535 ? (X = (this.data[O >> a] << u) + (O & d), this.data[X]) : O <= 65535 ? (X = (this.data[v + (O - 55296 >> a)] << u) + (O & d), this.data[X]) : O < this.highStart ? (X = this.data[g - i + (O >> r)], X = this.data[X + (O >> a & o)], X = (X << u) + (O & d), this.data[X]) : this.data[this.data.length - x];
     }
   }
-  return yi = q, yi;
+  return yi = D, yi;
 }
 var Ga = { exports: {} }, Vf = Ga.exports, Lo;
 function Gf() {
@@ -4080,7 +4080,7 @@ function Gf() {
           Z = ie << 16 | Y << 8 | m, w += u[Z >> 18 & 63] + u[Z >> 12 & 63] + u[Z >> 6 & 63] + u[Z & 63];
         }
         return L ? w.slice(0, L - 3) + "===".substring(L) : w;
-      }, h = typeof btoa == "function" ? function(G) {
+      }, g = typeof btoa == "function" ? function(G) {
         return btoa(G);
       } : n ? function(G) {
         return Buffer.from(G, "binary").toString("base64");
@@ -4089,10 +4089,10 @@ function Gf() {
       } : function(G) {
         for (var Z = 4096, ie = [], Y = 0, m = G.length; Y < m; Y += Z)
           ie.push(v.apply(null, G.subarray(Y, Y + Z)));
-        return h(ie.join(""));
-      }, q = function(G, Z) {
+        return g(ie.join(""));
+      }, D = function(G, Z) {
         return Z === void 0 && (Z = !1), Z ? E(x(G)) : x(G);
-      }, R = function(G) {
+      }, q = function(G) {
         if (G.length < 2) {
           var Z = G.charCodeAt(0);
           return Z < 128 ? G : Z < 2048 ? v(192 | Z >>> 6) + v(128 | Z & 63) : v(224 | Z >>> 12 & 15) + v(128 | Z >>> 6 & 63) + v(128 | Z & 63);
@@ -4101,18 +4101,18 @@ function Gf() {
           return v(240 | Z >>> 18 & 7) + v(128 | Z >>> 12 & 63) + v(128 | Z >>> 6 & 63) + v(128 | Z & 63);
         }
       }, O = /[\uD800-\uDBFF][\uDC00-\uDFFFF]|[^\x00-\x7F]/g, X = function(G) {
-        return G.replace(O, R);
+        return G.replace(O, q);
       }, C = n ? function(G) {
         return Buffer.from(G, "utf8").toString("base64");
       } : s ? function(G) {
         return x(s.encode(G));
       } : function(G) {
-        return h(X(G));
+        return g(X(G));
       }, F = function(G, Z) {
         return Z === void 0 && (Z = !1), Z ? E(C(G)) : C(G);
       }, p = function(G) {
         return F(G, !0);
-      }, S = /[\xC0-\xDF][\x80-\xBF]|[\xE0-\xEF][\x80-\xBF]{2}|[\xF0-\xF7][\x80-\xBF]{3}/g, g = function(G) {
+      }, S = /[\xC0-\xDF][\x80-\xBF]|[\xE0-\xEF][\x80-\xBF]{2}|[\xF0-\xF7][\x80-\xBF]{3}/g, h = function(G) {
         switch (G.length) {
           case 4:
             var Z = (7 & G.charCodeAt(0)) << 18 | (63 & G.charCodeAt(1)) << 12 | (63 & G.charCodeAt(2)) << 6 | 63 & G.charCodeAt(3), ie = Z - 65536;
@@ -4122,8 +4122,8 @@ function Gf() {
           default:
             return v((31 & G.charCodeAt(0)) << 6 | 63 & G.charCodeAt(1));
         }
-      }, D = function(G) {
-        return G.replace(S, g);
+      }, R = function(G) {
+        return G.replace(S, h);
       }, M = function(G) {
         if (G = G.replace(/\s+/g, ""), !d.test(G))
           throw new TypeError("malformed base64.");
@@ -4148,7 +4148,7 @@ function Gf() {
       } : i ? function(G) {
         return i.decode(_(G));
       } : function(G) {
-        return D(W(G));
+        return R(W(G));
       }, se = function(G) {
         return P(G.replace(/[-_]/g, function(Z) {
           return Z == "-" ? "+" : "/";
@@ -4187,11 +4187,11 @@ function Gf() {
           return Object.defineProperty(Uint8Array.prototype, Z, ce(ie));
         };
         G("toBase64", function(Z) {
-          return q(this, Z);
+          return D(this, Z);
         }), G("toBase64URI", function() {
-          return q(this, !0);
+          return D(this, !0);
         }), G("toBase64URL", function() {
-          return q(this, !0);
+          return D(this, !0);
         });
       }, xe = function() {
         me(), ge();
@@ -4200,7 +4200,7 @@ function Gf() {
         VERSION: a,
         atob: W,
         atobPolyfill: M,
-        btoa: h,
+        btoa: g,
         btoaPolyfill: f,
         fromBase64: ue,
         toBase64: F,
@@ -4208,10 +4208,10 @@ function Gf() {
         encodeURI: p,
         encodeURL: p,
         utob: X,
-        btou: D,
+        btou: R,
         decode: ue,
         isValid: K,
-        fromUint8Array: q,
+        fromUint8Array: D,
         toUint8Array: te,
         extendString: me,
         extendUint8Array: ge,
@@ -4234,52 +4234,52 @@ function Yf() {
   function d(v, T, E) {
     const P = T.length;
     for (let f = E; f + 1 < P; f++) {
-      const h = T[f + 0], x = T[f + 1];
+      const g = T[f + 0], x = T[f + 1];
       switch (v.gb9c) {
         case 0:
-          l(h, t.InCB_Consonant) && (v.gb9c = 1);
+          l(g, t.InCB_Consonant) && (v.gb9c = 1);
           break;
         case 1:
-          l(h, t.InCB_Extend) ? v.gb9c = 1 : l(h, t.InCB_Linker) ? v.gb9c = 2 : v.gb9c = l(h, t.InCB_Consonant) ? 1 : 0;
+          l(g, t.InCB_Extend) ? v.gb9c = 1 : l(g, t.InCB_Linker) ? v.gb9c = 2 : v.gb9c = l(g, t.InCB_Consonant) ? 1 : 0;
           break;
         case 2:
-          l(h, t.InCB_Extend | t.InCB_Linker) ? v.gb9c = 2 : v.gb9c = l(h, t.InCB_Consonant) ? 1 : 0;
+          l(g, t.InCB_Extend | t.InCB_Linker) ? v.gb9c = 2 : v.gb9c = l(g, t.InCB_Consonant) ? 1 : 0;
           break;
       }
       switch (v.gb11) {
         case 0:
-          l(h, t.Extended_Pictographic) && (v.gb11 = 1);
+          l(g, t.Extended_Pictographic) && (v.gb11 = 1);
           break;
         case 1:
-          l(h, t.Extend) ? v.gb11 = 1 : l(h, t.ZWJ) ? v.gb11 = 2 : v.gb11 = l(h, t.Extended_Pictographic) ? 1 : 0;
+          l(g, t.Extend) ? v.gb11 = 1 : l(g, t.ZWJ) ? v.gb11 = 2 : v.gb11 = l(g, t.Extended_Pictographic) ? 1 : 0;
           break;
         case 2:
-          v.gb11 = l(h, t.Extended_Pictographic) ? 1 : 0;
+          v.gb11 = l(g, t.Extended_Pictographic) ? 1 : 0;
           break;
       }
       switch (v.gb12) {
         case 0:
-          l(h, t.Regional_Indicator) ? v.gb12 = 1 : v.gb12 = -1;
+          l(g, t.Regional_Indicator) ? v.gb12 = 1 : v.gb12 = -1;
           break;
         case 1:
-          l(h, t.Regional_Indicator) ? v.gb12 = 0 : v.gb12 = -1;
+          l(g, t.Regional_Indicator) ? v.gb12 = 0 : v.gb12 = -1;
           break;
       }
       switch (v.gb13) {
         case 0:
-          l(h, t.Regional_Indicator) || (v.gb13 = 1);
+          l(g, t.Regional_Indicator) || (v.gb13 = 1);
           break;
         case 1:
-          l(h, t.Regional_Indicator) ? v.gb13 = 2 : v.gb13 = 1;
+          l(g, t.Regional_Indicator) ? v.gb13 = 2 : v.gb13 = 1;
           break;
         case 2:
           v.gb13 = 1;
           break;
       }
-      if (!(l(h, t.CR) && l(x, t.LF))) {
-        if (l(h, t.Control | t.CR | t.LF) || l(x, t.Control | t.CR | t.LF))
+      if (!(l(g, t.CR) && l(x, t.LF))) {
+        if (l(g, t.Control | t.CR | t.LF) || l(x, t.Control | t.CR | t.LF))
           return f + 1 - E;
-        if (!(l(h, t.L) && l(x, t.L | t.V | t.LV | t.LVT)) && !(l(h, t.LV | t.V) && l(x, t.V | t.T)) && !(l(h, t.LVT | t.T) && l(x, t.T)) && !l(x, t.Extend | t.ZWJ) && !l(x, t.SpacingMark) && !l(h, t.Prepend) && !(l(x, t.InCB_Consonant) && v.gb9c === 2) && !(l(x, t.Extended_Pictographic) && v.gb11 === 2) && !(l(x, t.Regional_Indicator) && v.gb12 === 1) && !(l(x, t.Regional_Indicator) && v.gb13 === 2))
+        if (!(l(g, t.L) && l(x, t.L | t.V | t.LV | t.LVT)) && !(l(g, t.LV | t.V) && l(x, t.V | t.T)) && !(l(g, t.LVT | t.T) && l(x, t.T)) && !l(x, t.Extend | t.ZWJ) && !l(x, t.SpacingMark) && !l(g, t.Prepend) && !(l(x, t.InCB_Consonant) && v.gb9c === 2) && !(l(x, t.Extended_Pictographic) && v.gb11 === 2) && !(l(x, t.Regional_Indicator) && v.gb12 === 1) && !(l(x, t.Regional_Indicator) && v.gb13 === 2))
           return f + 1 - E;
       }
     }
@@ -4288,18 +4288,18 @@ function Yf() {
   return Si = function(T) {
     const E = [], P = [0], f = [];
     for (let x = 0; x < T.length; ) {
-      const q = T.codePointAt(x);
-      f.push(s.get(q) | o.get(q) | u.get(q)), x += q > 65535 ? 2 : 1, P.push(x);
+      const D = T.codePointAt(x);
+      f.push(s.get(D) | o.get(D) | u.get(D)), x += D > 65535 ? 2 : 1, P.push(x);
     }
-    const h = {
+    const g = {
       gb9c: 0,
       gb11: 0,
       gb12: 0,
       gb13: 0
     };
     for (let x = 0; x < f.length; ) {
-      const q = d(h, f, x), R = P[x], O = P[x + q];
-      E.push(T.slice(R, O)), x += q;
+      const D = d(g, f, x), q = P[x], O = P[x + D];
+      E.push(T.slice(q, O)), x += D;
     }
     return E;
   }, Si;
@@ -4482,18 +4482,18 @@ function m3(t, e, r, a, n, i, s) {
     const [l, d, v, T, E] = o.pop();
     u[d - 1] = v, r.score(e, u, a, d - 1);
     const P = d, f = a[a.length - 1][P];
-    let h = T, x = E;
-    if (r.shouldUpdateScore(f, E) && (h = P, x = f), l.candidates.length > 0) {
-      const q = r.getLength(e.length, d), R = 1 - x / q;
-      if (R >= s.threshold) {
-        const O = Uc(a, h), X = Math.abs(d - e.length);
+    let g = T, x = E;
+    if (r.shouldUpdateScore(f, E) && (g = P, x = f), l.candidates.length > 0) {
+      const D = r.getLength(e.length, d), q = 1 - x / D;
+      if (q >= s.threshold) {
+        const O = Uc(a, g), X = Math.abs(d - e.length);
         for (const C of l.candidates)
-          Gc(n, i, C, R, O, X, r.compareItems);
+          Gc(n, i, C, q, O, X, r.compareItems);
       }
     }
-    for (const q in l.children) {
-      const R = l.children[q];
-      r.shouldContinue(R, d, e, s.threshold, x, f) && o.push([R, d + 1, q, h, x]);
+    for (const D in l.children) {
+      const q = l.children[D];
+      r.shouldContinue(q, d, e, s.threshold, x, f) && o.push([q, d + 1, D, g, x]);
     }
   }
 }
@@ -4741,7 +4741,7 @@ const y3 = () => {
   version: 0,
   keys: () => Object.keys(e().solvers),
   set: (r) => t(ar(r))
-})), $A = (t) => (e) => {
+})), ib = (t) => (e) => {
   const r = e || new t();
   a0.getState().set((a) => {
     a.solvers[r.uuid] = r;
@@ -4750,12 +4750,12 @@ const y3 = () => {
   a0.getState().set((e) => {
     e.solvers = Sa([t], e.solvers);
   }), $("MARK_DIRTY", void 0);
-}, eb = ({ uuid: t, property: e, value: r }) => {
+}, sb = ({ uuid: t, property: e, value: r }) => {
   const a = a0.getState().solvers[t];
   a && (a[e] = r), a0.getState().set((n) => {
     n.version++;
   }), $("MARK_DIRTY", void 0);
-}, tb = ({ uuid: t, method: e, args: r, isAsync: a }) => {
+}, ob = ({ uuid: t, method: e, args: r, isAsync: a }) => {
   try {
     const n = a0.getState().solvers[t], i = n[e].bind(n);
     a ? i(r).catch(console.error) : i(r);
@@ -4830,15 +4830,15 @@ function x3() {
         if (T = T || open("", "_blank"), T && (T.document.title = T.document.body.innerText = "downloading..."), typeof l == "string") return a(l, d, v);
         var E = l.type === "application/octet-stream", P = /constructor/i.test(s.HTMLElement) || s.safari, f = /CriOS\/[\d]+/.test(navigator.userAgent);
         if ((f || E && P || o) && typeof FileReader < "u") {
-          var h = new FileReader();
-          h.onloadend = function() {
-            var R = h.result;
-            R = f ? R : R.replace(/^data:[^;]*;/, "data:attachment/file;"), T ? T.location.href = R : location = R, T = null;
-          }, h.readAsDataURL(l);
+          var g = new FileReader();
+          g.onloadend = function() {
+            var q = g.result;
+            q = f ? q : q.replace(/^data:[^;]*;/, "data:attachment/file;"), T ? T.location.href = q : location = q, T = null;
+          }, g.readAsDataURL(l);
         } else {
-          var x = s.URL || s.webkitURL, q = x.createObjectURL(l);
-          T ? T.location = q : location.href = q, T = null, setTimeout(function() {
-            x.revokeObjectURL(q);
+          var x = s.URL || s.webkitURL, D = x.createObjectURL(l);
+          T ? T.location = D : location.href = D, T = null, setTimeout(function() {
+            x.revokeObjectURL(D);
           }, 4e4);
         }
       });
@@ -5050,11 +5050,11 @@ Pr.load(q3, () => $("RENDER"));
 class Go extends rc {
   constructor(e = 10, r = 10, a = 4473924, n = 8947848, i) {
     const s = new Ct(a), o = new Ct(n), u = r / 2, l = e / r, d = e / 2, v = [], T = [];
-    for (let f = 0, h = 0, x = -d; f <= r; f++, x += l)
+    for (let f = 0, g = 0, x = -d; f <= r; f++, x += l)
       if (i(f)) {
         v.push(-d, x, 0, d, x, 0), v.push(x, -d, 0, x, d, 0);
-        const q = f === u ? s : o;
-        q.toArray(T, h), h += 3, q.toArray(T, h), h += 3, q.toArray(T, h), h += 3, q.toArray(T, h), h += 3;
+        const D = f === u ? s : o;
+        D.toArray(T, g), g += 3, D.toArray(T, g), g += 3, D.toArray(T, g), g += 3, D.toArray(T, g), g += 3;
       }
     const E = new ht();
     E.name = "grid-helper-geometry", E.setAttribute("position", new B0(v, 3)), E.setAttribute("color", new B0(T, 3));
@@ -5283,8 +5283,8 @@ class Zc {
       const v = [];
       for (let T = 0; T < s.length; T++) {
         U3(this.pickPosition, s[T].point.clone().project(this.camera)) < z3 && v.push(T);
-        const P = s[T].object, f = P.parent, h = f?.parent;
-        P.isTransformControlsRoot || P.isTransformControlsGizmo || P.isTransformControlsPlane || f?.isTransformControlsRoot || f?.isTransformControlsGizmo || P && f && h && (h.type === "TransformControlsGizmo" || h.isTransformControlsRoot) ? (l = !0, d = T) : P && f && f.kind && f.kind.match(/source|receiver/gi) && (o = !0, u = T);
+        const P = s[T].object, f = P.parent, g = f?.parent;
+        P.isTransformControlsRoot || P.isTransformControlsGizmo || P.isTransformControlsPlane || f?.isTransformControlsRoot || f?.isTransformControlsGizmo || P && f && g && (g.type === "TransformControlsGizmo" || g.isTransformControlsRoot) ? (l = !0, d = T) : P && f && f.kind && f.kind.match(/source|receiver/gi) && (o = !0, u = T);
       }
       return l ? {
         clickedOnTransformControl: l,
@@ -5534,19 +5534,19 @@ function Q3(t, e, r, a, n) {
   let o, u, l, d, v, T, E, P;
   if (i.o) {
     const f = i._cachedOutline || (i._cachedOutline = i.o.split(" "));
-    for (let h = 0, x = f.length; h < x; )
-      switch (f[h++]) {
+    for (let g = 0, x = f.length; g < x; )
+      switch (f[g++]) {
         case "m":
-          o = f[h++] * e + r, u = f[h++] * e + a, s.moveTo(o, u);
+          o = f[g++] * e + r, u = f[g++] * e + a, s.moveTo(o, u);
           break;
         case "l":
-          o = f[h++] * e + r, u = f[h++] * e + a, s.lineTo(o, u);
+          o = f[g++] * e + r, u = f[g++] * e + a, s.lineTo(o, u);
           break;
         case "q":
-          l = f[h++] * e + r, d = f[h++] * e + a, v = f[h++] * e + r, T = f[h++] * e + a, s.quadraticCurveTo(v, T, l, d);
+          l = f[g++] * e + r, d = f[g++] * e + a, v = f[g++] * e + r, T = f[g++] * e + a, s.quadraticCurveTo(v, T, l, d);
           break;
         case "b":
-          l = f[h++] * e + r, d = f[h++] * e + a, v = f[h++] * e + r, T = f[h++] * e + a, E = f[h++] * e + r, P = f[h++] * e + a, s.bezierCurveTo(v, T, E, P, l, d);
+          l = f[g++] * e + r, d = f[g++] * e + a, v = f[g++] * e + r, T = f[g++] * e + a, E = f[g++] * e + r, P = f[g++] * e + a, s.bezierCurveTo(v, T, E, P, l, d);
           break;
       }
   }
@@ -5737,14 +5737,14 @@ class f5 {
       canvas: n
     }), this.renderer.setPixelRatio(window.devicePixelRatio), this.renderer.setSize(this.width, this.height), this.pickHelper = new Zc(this.scene, this.camera, this.renderer.domElement), this._hoveredPlane = void 0, this.renderer.domElement.addEventListener("mousemove", (x) => {
       this.setPickPosition(x, this.renderer.domElement), this.raycaster.setFromCamera(this.pickPosition, this.camera);
-      const q = this.raycaster.intersectObjects([this.cube], !0);
-      q.length ? this.hoveredPlane = q[0].object : this.hoveredPlane = void 0, this.shouldRender = !0;
+      const D = this.raycaster.intersectObjects([this.cube], !0);
+      D.length ? this.hoveredPlane = D[0].object : this.hoveredPlane = void 0, this.shouldRender = !0;
     }), this.renderer.domElement.addEventListener("mousedown", (x) => {
       if (this.hoveredPlane) {
-        const q = e1[this.hoveredPlane.name];
-        q && this.clickListeners.forEach((R) => {
-          R({
-            target: q
+        const D = e1[this.hoveredPlane.name];
+        D && this.clickListeners.forEach((q) => {
+          q({
+            target: D
           });
         });
       }
@@ -5758,27 +5758,27 @@ class f5 {
     }, this.element.appendChild(this.helperArrows.top), this.element.appendChild(this.helperArrows.bottom), this.element.appendChild(this.helperArrows.left), this.element.appendChild(this.helperArrows.right), this.element.appendChild(this.helperArrows.rotateLeft), this.element.appendChild(this.helperArrows.rotateRight);
     const E = (x) => {
       if (this.hoveredPlane = void 0, x.target) {
-        const q = x.target.querySelector("path");
-        q && q.setAttribute("fill", "#BFDEFD");
+        const D = x.target.querySelector("path");
+        D && D.setAttribute("fill", "#BFDEFD");
       }
       this.shouldRender = !0;
     }, P = (x) => {
       if (x.target) {
-        const q = x.target.querySelector("path");
-        q && q.setAttribute("fill", "#ffffff");
+        const D = x.target.querySelector("path");
+        D && D.setAttribute("fill", "#ffffff");
       }
     }, f = (x) => {
-      this.clickListeners.forEach((q) => q({ target: x }));
-    }, h = (x) => {
+      this.clickListeners.forEach((D) => D({ target: x }));
+    }, g = (x) => {
       if (x.target) {
-        let q = x.target.parentElement;
-        for (; q.tagName !== "DIV"; )
-          q = q.parentElement;
-        const R = q;
+        let D = x.target.parentElement;
+        for (; D.tagName !== "DIV"; )
+          D = D.parentElement;
+        const q = D;
         if (this.axis !== "none")
           switch (this.axis) {
             case "top":
-              switch (R.id) {
+              switch (q.id) {
                 case "helper-arrow-top":
                   f(
                     "back"
@@ -5818,7 +5818,7 @@ class f5 {
               }
               break;
             case "bottom":
-              switch (R.id) {
+              switch (q.id) {
                 case "helper-arrow-top":
                   f(
                     "front"
@@ -5858,7 +5858,7 @@ class f5 {
               }
               break;
             case "right":
-              switch (R.id) {
+              switch (q.id) {
                 case "helper-arrow-top":
                   f(
                     "top-from-right"
@@ -5886,7 +5886,7 @@ class f5 {
               }
               break;
             case "left":
-              switch (R.id) {
+              switch (q.id) {
                 case "helper-arrow-top":
                   f(
                     "top-from-left"
@@ -5914,7 +5914,7 @@ class f5 {
               }
               break;
             case "front":
-              switch (R.id) {
+              switch (q.id) {
                 case "helper-arrow-top":
                   f(
                     "top"
@@ -5942,7 +5942,7 @@ class f5 {
               }
               break;
             case "back":
-              switch (R.id) {
+              switch (q.id) {
                 case "helper-arrow-top":
                   f(
                     "top-from-back"
@@ -5970,7 +5970,7 @@ class f5 {
               }
               break;
             case "top-from-back":
-              switch (R.id) {
+              switch (q.id) {
                 case "helper-arrow-top":
                   f(
                     "front"
@@ -6010,7 +6010,7 @@ class f5 {
               }
               break;
             case "top-from-front":
-              switch (R.id) {
+              switch (q.id) {
                 case "helper-arrow-top":
                   f(
                     "back"
@@ -6050,7 +6050,7 @@ class f5 {
               }
               break;
             case "top-from-left":
-              switch (R.id) {
+              switch (q.id) {
                 case "helper-arrow-top":
                   f(
                     "right"
@@ -6090,7 +6090,7 @@ class f5 {
               }
               break;
             case "top-from-right":
-              switch (R.id) {
+              switch (q.id) {
                 case "helper-arrow-top":
                   f(
                     "left"
@@ -6130,7 +6130,7 @@ class f5 {
               }
               break;
             case "bottom-from-back":
-              switch (R.id) {
+              switch (q.id) {
                 case "helper-arrow-top":
                   f(
                     "back"
@@ -6170,7 +6170,7 @@ class f5 {
               }
               break;
             case "bottom-from-front":
-              switch (R.id) {
+              switch (q.id) {
                 case "helper-arrow-top":
                   f(
                     "front"
@@ -6210,7 +6210,7 @@ class f5 {
               }
               break;
             case "bottom-from-left":
-              switch (R.id) {
+              switch (q.id) {
                 case "helper-arrow-top":
                   f(
                     "left"
@@ -6250,7 +6250,7 @@ class f5 {
               }
               break;
             case "bottom-from-right":
-              switch (R.id) {
+              switch (q.id) {
                 case "helper-arrow-top":
                   f(
                     "right"
@@ -6295,7 +6295,7 @@ class f5 {
           }
       }
     };
-    this.helperArrows.top.setAttribute("id", "helper-arrow-top"), this.helperArrows.top.setAttribute("class", "helper-arrow"), this.helperArrows.top.innerHTML = Ha, this.helperArrows.top.addEventListener("mouseenter", E), this.helperArrows.top.addEventListener("mouseleave", P), this.helperArrows.top.addEventListener("mousedown", h), this.helperArrows.bottom.setAttribute("id", "helper-arrow-bottom"), this.helperArrows.bottom.setAttribute("class", "helper-arrow"), this.helperArrows.bottom.innerHTML = Ha, this.helperArrows.bottom.addEventListener("mouseenter", E), this.helperArrows.bottom.addEventListener("mouseleave", P), this.helperArrows.bottom.addEventListener("mousedown", h), this.helperArrows.left.setAttribute("id", "helper-arrow-left"), this.helperArrows.left.setAttribute("class", "helper-arrow"), this.helperArrows.left.innerHTML = Ha, this.helperArrows.left.addEventListener("mouseenter", E), this.helperArrows.left.addEventListener("mouseleave", P), this.helperArrows.left.addEventListener("mousedown", h), this.helperArrows.right.setAttribute("id", "helper-arrow-right"), this.helperArrows.right.setAttribute("class", "helper-arrow"), this.helperArrows.right.innerHTML = Ha, this.helperArrows.right.addEventListener("mouseenter", E), this.helperArrows.right.addEventListener("mouseleave", P), this.helperArrows.right.addEventListener("mousedown", h), this.helperArrows.rotateLeft.setAttribute("id", "helper-arrow-rotate-left"), this.helperArrows.rotateLeft.setAttribute("class", "helper-arrow"), this.helperArrows.rotateLeft.innerHTML = `<img src="${c5}"/>`, this.helperArrows.rotateLeft.addEventListener("mouseenter", E), this.helperArrows.rotateLeft.addEventListener("mouseleave", P), this.helperArrows.rotateLeft.addEventListener("mousedown", h), this.helperArrows.rotateRight.setAttribute("id", "helper-arrow-rotate-right"), this.helperArrows.rotateRight.setAttribute("class", "helper-arrow"), this.helperArrows.rotateRight.innerHTML = `<img src="${u5}"/>`, this.helperArrows.rotateRight.addEventListener("mouseenter", E), this.helperArrows.rotateRight.addEventListener("mouseleave", P), this.helperArrows.rotateRight.addEventListener("mousedown", h), this.hideHelperArrows(), this.axis = r && r.axis || "none", this.shouldRender = !0;
+    this.helperArrows.top.setAttribute("id", "helper-arrow-top"), this.helperArrows.top.setAttribute("class", "helper-arrow"), this.helperArrows.top.innerHTML = Ha, this.helperArrows.top.addEventListener("mouseenter", E), this.helperArrows.top.addEventListener("mouseleave", P), this.helperArrows.top.addEventListener("mousedown", g), this.helperArrows.bottom.setAttribute("id", "helper-arrow-bottom"), this.helperArrows.bottom.setAttribute("class", "helper-arrow"), this.helperArrows.bottom.innerHTML = Ha, this.helperArrows.bottom.addEventListener("mouseenter", E), this.helperArrows.bottom.addEventListener("mouseleave", P), this.helperArrows.bottom.addEventListener("mousedown", g), this.helperArrows.left.setAttribute("id", "helper-arrow-left"), this.helperArrows.left.setAttribute("class", "helper-arrow"), this.helperArrows.left.innerHTML = Ha, this.helperArrows.left.addEventListener("mouseenter", E), this.helperArrows.left.addEventListener("mouseleave", P), this.helperArrows.left.addEventListener("mousedown", g), this.helperArrows.right.setAttribute("id", "helper-arrow-right"), this.helperArrows.right.setAttribute("class", "helper-arrow"), this.helperArrows.right.innerHTML = Ha, this.helperArrows.right.addEventListener("mouseenter", E), this.helperArrows.right.addEventListener("mouseleave", P), this.helperArrows.right.addEventListener("mousedown", g), this.helperArrows.rotateLeft.setAttribute("id", "helper-arrow-rotate-left"), this.helperArrows.rotateLeft.setAttribute("class", "helper-arrow"), this.helperArrows.rotateLeft.innerHTML = `<img src="${c5}"/>`, this.helperArrows.rotateLeft.addEventListener("mouseenter", E), this.helperArrows.rotateLeft.addEventListener("mouseleave", P), this.helperArrows.rotateLeft.addEventListener("mousedown", g), this.helperArrows.rotateRight.setAttribute("id", "helper-arrow-rotate-right"), this.helperArrows.rotateRight.setAttribute("class", "helper-arrow"), this.helperArrows.rotateRight.innerHTML = `<img src="${u5}"/>`, this.helperArrows.rotateRight.addEventListener("mouseenter", E), this.helperArrows.rotateRight.addEventListener("mouseleave", P), this.helperArrows.rotateRight.addEventListener("mousedown", g), this.hideHelperArrows(), this.axis = r && r.axis || "none", this.shouldRender = !0;
   }
   setCameraTransforms(e, r) {
     this.camera.quaternion.copy(r), this.camera.position.set(e.x, e.y, e.z), this.pointLight.position.set(e.x, e.y, e.z), this.camera.updateProjectionMatrix();
@@ -6723,19 +6723,19 @@ class w5 {
       if (!(!E.target.object || !(E.target.object instanceof t0))) {
         const P = E.target.allAssociatedObjects;
         if (!P) return;
-        const f = /* @__PURE__ */ new Map(), h = /* @__PURE__ */ new Map();
+        const f = /* @__PURE__ */ new Map(), g = /* @__PURE__ */ new Map();
         for (let x = 0; x < P.length; x++)
-          f.set(P[x].uuid, Object.assign({}, P[x].userData.lastSave)), h.set(P[x].uuid, Object.assign({}, P[x].save()));
+          f.set(P[x].uuid, Object.assign({}, P[x].userData.lastSave)), g.set(P[x].uuid, Object.assign({}, P[x].save()));
         Ja({
           category: "OBJECT_TRANSFORM",
           objectId: E.target.object.uuid,
           recallFunction: (x) => {
             if (x === "UNDO")
-              for (let q = 0; q < P.length; q++)
-                P[q].restore(f.get(P[q].uuid));
+              for (let D = 0; D < P.length; D++)
+                P[D].restore(f.get(P[D].uuid));
             else if (x === "REDO")
-              for (let q = 0; q < P.length; q++)
-                P[q].restore(h.get(P[q].uuid));
+              for (let D = 0; D < P.length; D++)
+                P[D].restore(g.get(P[D].uuid));
           }
         });
       }
@@ -6747,16 +6747,16 @@ class w5 {
     }), this.transformControls.addEventListener("change", (E) => {
       const f = E.target.allAssociatedObjects;
       if (typeof f < "u") {
-        const h = f[0] && f[0].position, x = f[0] && f[0].userData.lastSave, q = x && new H.Vector3().fromArray(x.position);
-        if (h && q) {
-          const R = new H.Vector3().copy(h).sub(q);
+        const g = f[0] && f[0].position, x = f[0] && f[0].userData.lastSave, D = x && new H.Vector3().fromArray(x.position);
+        if (g && D) {
+          const q = new H.Vector3().copy(g).sub(D);
           for (let O = 0; O < f.length; O++)
             f[O].position.set(
-              f[O].userData.lastSave.position[0] + R.x,
-              f[O].userData.lastSave.position[1] + R.y,
-              f[O].userData.lastSave.position[2] + R.z
+              f[O].userData.lastSave.position[0] + q.x,
+              f[O].userData.lastSave.position[1] + q.y,
+              f[O].userData.lastSave.position[2] + q.z
             );
-          this.overlays.transform.setValues(R.x, R.y, R.z);
+          this.overlays.transform.setValues(q.x, q.y, q.z);
         }
       }
     }), this.currentlyMovingObjects = !1, this.pickHelper = new Zc(this.scene, this._camera, this.renderer.domElement), this.fog = new H.FogExp2(r, 0.015), this.scene.fog = this.fog, this.composer = new Bd(this.renderer), this.renderPass = new Hd(this.scene, this._camera), this.composer.addPass(this.renderPass), this.settingHandlers = {}, this.settingHandlers.lightHelpersVisible = (E) => {
@@ -6768,18 +6768,18 @@ class w5 {
     }), Pe.addMessageHandler("RENDERER_SHOULD_CHANGE_FOG_COLOR", (E, ...P) => {
       this.fogColor = P[0], this.needsToRender = !0;
     }), Pe.addMessageHandler("SHOULD_REMOVE_CONTAINER", (E, ...P) => {
-      const f = P[0], h = this.scene.getObjectByProperty("uuid", f);
-      h && h.parent && h.parent.remove(h), this.needsToRender = !0;
+      const f = P[0], g = this.scene.getObjectByProperty("uuid", f);
+      g && g.parent && g.parent.remove(g), this.needsToRender = !0;
     }), Pe.addMessageHandler("LOOK_ALONG_AXIS", (E, ...P) => {
       const f = P[0];
       if (!Qo[f]) {
         console.warn("invalid args");
         return;
       }
-      const h = this.camera.position.distanceTo(this.controls.target), x = 125, q = this.controls.target.clone(), R = gr.linear, O = () => {
-        this.controls.target.set(q.x, q.y, q.z), this.orientationControl.axis = f, this.storeCameraState(), this.needsToRender = !0;
-      }, X = this.controls.target.clone().add(Qo[f].clone().multiplyScalar(h)), C = d5[f].clone();
-      this.smoothCameraToQuat({ position: X, target: q, duration: x, onFinish: O, easingFunction: R, quat: C }), this.needsToRender = !0;
+      const g = this.camera.position.distanceTo(this.controls.target), x = 125, D = this.controls.target.clone(), q = gr.linear, O = () => {
+        this.controls.target.set(D.x, D.y, D.z), this.orientationControl.axis = f, this.storeCameraState(), this.needsToRender = !0;
+      }, X = this.controls.target.clone().add(Qo[f].clone().multiplyScalar(g)), C = d5[f].clone();
+      this.smoothCameraToQuat({ position: X, target: D, duration: x, onFinish: O, easingFunction: q, quat: C }), this.needsToRender = !0;
     }), Pe.addMessageHandler("TOGGLE_RENDERER_STATS_VISIBLE", () => {
       this.stats.hidden ? this.stats.unhide() : this.stats.hide();
     }), Pe.addMessageHandler("GET_RENDERER_STATS_VISIBLE", () => !this.stats.hidden), this.addCleanupListener(window, "mouseup", (E) => {
@@ -6956,7 +6956,7 @@ class w5 {
       this.camera.position.set(v.x, v.y, v.z), this.camera.quaternion.copy(E);
       const P = new H.Vector3();
       this.camera.getWorldDirection(P);
-      const f = P.multiplyScalar(n), h = this.camera.position.clone().add(f), x = this.camera.position.clone().sub(h).normalize().multiplyScalar(this.orientationControl.cameraDistance);
+      const f = P.multiplyScalar(n), g = this.camera.position.clone().add(f), x = this.camera.position.clone().sub(g).normalize().multiplyScalar(this.orientationControl.cameraDistance);
       this.orientationControl.setCameraTransforms(x, this.camera.quaternion), l === 1 && (this.smoothingCamera = !1, e.onFinish && e.onFinish(o), this.storeCameraState());
     }, o.start();
   }
@@ -7170,7 +7170,7 @@ const Ko = [
   12500,
   16e3,
   2e4
-], rb = [
+], lb = [
   8,
   16,
   31.5,
@@ -7183,7 +7183,7 @@ const Ko = [
   4e3,
   8e3,
   16e3
-], ab = [
+], cb = [
   {
     Lower: 11,
     Center: 16,
@@ -7246,7 +7246,7 @@ function Mn(t, e) {
 const t1 = {
   value: 2e-5
 };
-function nb(t) {
+function ub(t) {
   return Mn((e) => 20 * Math.log10(e / t1.value), t);
 }
 function Qa(t) {
@@ -7255,7 +7255,7 @@ function Qa(t) {
 function P5(t, e = 400) {
   return Mn((r) => r ** 2 / e, t);
 }
-function ib(t, e = 400) {
+function db(t, e = 400) {
   return Mn((r) => Math.sqrt(r * e), t);
 }
 var Pi, Zo;
@@ -7700,12 +7700,12 @@ class T5 {
           phi: o,
           theta: v,
           directivity: this.dirDataList[T].directivity[o / i][v / i]
-        }, h = {
+        }, g = {
           phi: o,
           theta: d,
           directivity: this.dirDataList[T].directivity[o / i][d / i]
         };
-        return console.log(E), console.log(P), console.log(f), console.log(h), Qa(E5(a, n, E, P, f, h) + this.sensitivity[T] + e);
+        return console.log(E), console.log(P), console.log(f), console.log(g), Qa(E5(a, n, E, P, f, g) + this.sensitivity[T] + e);
       default:
         return Qa(this.sensitivity[0] + e);
     }
@@ -8115,19 +8115,19 @@ const M5 = {
   poly3: M5
 }, { primitives: ot } = Q0;
 ot.cuboid, ot.ellipse, ot.arc, ot.ellipsoid, ot.geodesicSphere, ot.roundedCuboid, ot.roundedCylinder, ot.roundedRectangle, ot.star, ot.line;
-const { booleans: sb } = Q0, { transforms: N5 } = Q0;
+const { booleans: fb } = Q0, { transforms: N5 } = Q0;
 N5.align;
 const { measurements: Z0 } = Q0;
 Z0.measureArea, Z0.measureBoundingBox, Z0.measureBoundingSphere, Z0.measureCenter, Z0.measureCenterOfMass, Z0.measureDimensions, Z0.measureVolume, Z0.measureAggregateArea, Z0.measureAggregateVolume, Z0.measureAggregateBoundingBox, Z0.measureEpsilon;
 const { extrusions: Ei } = Q0;
 Ei.extrudeRectangular, Ei.extrudeFromSlices, Ei.extrudeHelical;
-const { expansions: ob } = Q0, { hulls: lb } = Q0, { text: il } = Q0;
+const { expansions: mb } = Q0, { hulls: pb } = Q0, { text: il } = Q0;
 il.vectorText, il.vectorChar;
 const { colors: Ot } = Q0;
 Ot.colorize, Ot.colorNameToRgb, Ot.hexToRgb, Ot.hslToRgb, Ot.hsvToRgb, Ot.rgbToHex, Ot.rgbToHsl, Ot.rgbToHsv;
 const { utils: sl } = Q0;
 sl.degToRad, sl.radToDeg;
-const { plane: cb, vec3: ub } = a1, { poly3: db } = n1, Rr = {
+const { plane: hb, vec3: gb } = a1, { poly3: Ab } = n1, Rr = {
   geometry: n1,
   math: a1
 };
@@ -8301,10 +8301,10 @@ class Pt extends t0 {
     }), this.center.divideScalar(n), this.selectedMaterial = bt.materials.selected, this.normalMaterial = bt.materials.mesh, this.normalColor = new H.Color(11184810);
     const i = {};
     this.triangles.forEach((E, P) => {
-      const f = this._triangles[P].getNormal(new H.Vector3()).toArray().map((h) => $c(h, 5));
-      for (let h = 0; h < 3; h++) {
-        const x = [E[h], E[(h + 1) % 3]], q = JSON.stringify([x.sort(), f]);
-        i[q] ? i[q].keep = !1 : i[q] = {
+      const f = this._triangles[P].getNormal(new H.Vector3()).toArray().map((g) => $c(g, 5));
+      for (let g = 0; g < 3; g++) {
+        const x = [E[g], E[(g + 1) % 3]], D = JSON.stringify([x.sort(), f]);
+        i[D] ? i[D].keep = !1 : i[D] = {
           keep: !0,
           line: x,
           triangle_normal: f,
@@ -8533,33 +8533,33 @@ class Y5 {
     if (e.isGeometry === !0)
       return console.error("THREE.TessellateModifier no longer supports Geometry. Use BufferGeometry instead."), e;
     e.index !== null && (e = e.toNonIndexed());
-    const r = this.maxIterations, a = this.maxEdgeLength * this.maxEdgeLength, n = new Ae(), i = new Ae(), s = new Ae(), o = new Ae(), u = [n, i, s, o], l = new Ae(), d = new Ae(), v = new Ae(), T = new Ae(), E = [l, d, v, T], P = new Ct(), f = new Ct(), h = new Ct(), x = new Ct(), q = [P, f, h, x], R = new y0(), O = new y0(), X = new y0(), C = new y0(), F = [R, O, X, C], p = new y0(), S = new y0(), g = new y0(), D = new y0(), M = [p, S, g, D], W = e.attributes, _ = W.normal !== void 0, te = W.color !== void 0, z = W.uv !== void 0, se = W.uv2 !== void 0;
+    const r = this.maxIterations, a = this.maxEdgeLength * this.maxEdgeLength, n = new Ae(), i = new Ae(), s = new Ae(), o = new Ae(), u = [n, i, s, o], l = new Ae(), d = new Ae(), v = new Ae(), T = new Ae(), E = [l, d, v, T], P = new Ct(), f = new Ct(), g = new Ct(), x = new Ct(), D = [P, f, g, x], q = new y0(), O = new y0(), X = new y0(), C = new y0(), F = [q, O, X, C], p = new y0(), S = new y0(), h = new y0(), R = new y0(), M = [p, S, h, R], W = e.attributes, _ = W.normal !== void 0, te = W.color !== void 0, z = W.uv !== void 0, se = W.uv2 !== void 0;
     let ue = Array.from(W.position.array), K = _ ? Array.from(W.normal.array) : null, ce = te ? Array.from(W.color.array) : null, me = z ? Array.from(W.uv.array) : null, ge = se ? Array.from(W.uv2.array) : null, xe = ue, pe = K, G = ce, Z = me, ie = ge, Y = 0, m = !0;
-    function w(N, J, ee) {
-      const de = u[N], ve = u[J], ke = u[ee];
+    function w(N, Q, ee) {
+      const de = u[N], ve = u[Q], ke = u[ee];
       if (xe.push(de.x, de.y, de.z), xe.push(ve.x, ve.y, ve.z), xe.push(ke.x, ke.y, ke.z), _) {
-        const Xe = E[N], Ue = E[J], ze = E[ee];
+        const Xe = E[N], Ue = E[Q], ze = E[ee];
         pe.push(Xe.x, Xe.y, Xe.z), pe.push(Ue.x, Ue.y, Ue.z), pe.push(ze.x, ze.y, ze.z);
       }
       if (te) {
-        const Xe = q[N], Ue = q[J], ze = q[ee];
+        const Xe = D[N], Ue = D[Q], ze = D[ee];
         G.push(Xe.x, Xe.y, Xe.z), G.push(Ue.x, Ue.y, Ue.z), G.push(ze.x, ze.y, ze.z);
       }
       if (z) {
-        const Xe = F[N], Ue = F[J], ze = F[ee];
+        const Xe = F[N], Ue = F[Q], ze = F[ee];
         Z.push(Xe.x, Xe.y), Z.push(Ue.x, Ue.y), Z.push(ze.x, ze.y);
       }
       if (se) {
-        const Xe = M[N], Ue = M[J], ze = M[ee];
+        const Xe = M[N], Ue = M[Q], ze = M[ee];
         ie.push(Xe.x, Xe.y), ie.push(Ue.x, Ue.y), ie.push(ze.x, ze.y);
       }
     }
     for (; m && Y < r; ) {
       Y++, m = !1, ue = xe, xe = [], _ && (K = pe, pe = []), te && (ce = G, G = []), z && (me = Z, Z = []), se && (ge = ie, ie = []);
-      for (let N = 0, J = 0, ee = ue.length; N < ee; N += 9, J += 6) {
-        n.fromArray(ue, N + 0), i.fromArray(ue, N + 3), s.fromArray(ue, N + 6), _ && (l.fromArray(K, N + 0), d.fromArray(K, N + 3), v.fromArray(K, N + 6)), te && (P.fromArray(ce, N + 0), f.fromArray(ce, N + 3), h.fromArray(ce, N + 6)), z && (R.fromArray(me, J + 0), O.fromArray(me, J + 2), X.fromArray(me, J + 4)), se && (p.fromArray(ge, J + 0), S.fromArray(ge, J + 2), g.fromArray(ge, J + 4));
+      for (let N = 0, Q = 0, ee = ue.length; N < ee; N += 9, Q += 6) {
+        n.fromArray(ue, N + 0), i.fromArray(ue, N + 3), s.fromArray(ue, N + 6), _ && (l.fromArray(K, N + 0), d.fromArray(K, N + 3), v.fromArray(K, N + 6)), te && (P.fromArray(ce, N + 0), f.fromArray(ce, N + 3), g.fromArray(ce, N + 6)), z && (q.fromArray(me, Q + 0), O.fromArray(me, Q + 2), X.fromArray(me, Q + 4)), se && (p.fromArray(ge, Q + 0), S.fromArray(ge, Q + 2), h.fromArray(ge, Q + 4));
         const de = n.distanceToSquared(i), ve = i.distanceToSquared(s), ke = n.distanceToSquared(s);
-        de > a || ve > a || ke > a ? (m = !0, de >= ve && de >= ke ? (o.lerpVectors(n, i, 0.5), _ && T.lerpVectors(l, d, 0.5), te && x.lerpColors(P, f, 0.5), z && C.lerpVectors(R, O, 0.5), se && D.lerpVectors(p, S, 0.5), w(0, 3, 2), w(3, 1, 2)) : ve >= de && ve >= ke ? (o.lerpVectors(i, s, 0.5), _ && T.lerpVectors(d, v, 0.5), te && x.lerpColors(f, h, 0.5), z && C.lerpVectors(O, X, 0.5), se && D.lerpVectors(S, g, 0.5), w(0, 1, 3), w(3, 2, 0)) : (o.lerpVectors(n, s, 0.5), _ && T.lerpVectors(l, v, 0.5), te && x.lerpColors(P, h, 0.5), z && C.lerpVectors(R, X, 0.5), se && D.lerpVectors(p, g, 0.5), w(0, 1, 3), w(3, 1, 2))) : w(0, 1, 2);
+        de > a || ve > a || ke > a ? (m = !0, de >= ve && de >= ke ? (o.lerpVectors(n, i, 0.5), _ && T.lerpVectors(l, d, 0.5), te && x.lerpColors(P, f, 0.5), z && C.lerpVectors(q, O, 0.5), se && R.lerpVectors(p, S, 0.5), w(0, 3, 2), w(3, 1, 2)) : ve >= de && ve >= ke ? (o.lerpVectors(i, s, 0.5), _ && T.lerpVectors(d, v, 0.5), te && x.lerpColors(f, g, 0.5), z && C.lerpVectors(O, X, 0.5), se && R.lerpVectors(S, h, 0.5), w(0, 1, 3), w(3, 2, 0)) : (o.lerpVectors(n, s, 0.5), _ && T.lerpVectors(l, v, 0.5), te && x.lerpColors(P, g, 0.5), z && C.lerpVectors(q, X, 0.5), se && R.lerpVectors(p, h, 0.5), w(0, 1, 3), w(3, 1, 2))) : w(0, 1, 2);
       }
     }
     const L = new ht();
@@ -8709,7 +8709,7 @@ class $t extends t0 {
 ae("ADD_ROOM", qn($t));
 ae("REMOVE_ROOM", On);
 ae("ROOM_SET_PROPERTY", Rn);
-const fb = () => Cs("room"), { min: J5, max: Q5 } = Math;
+const bb = () => Cs("room"), { min: J5, max: Q5 } = Math;
 class _5 extends t0 {
   boundingBox;
   volume;
@@ -8735,16 +8735,16 @@ class _5 extends t0 {
     T.setIndex(o);
     const E = new H.Float32BufferAttribute(l, 3);
     E.setUsage(H.DynamicDrawUsage), T.setAttribute("position", E), T.setAttribute("normal", new H.Float32BufferAttribute(d, 3)), T.setAttribute("color", new H.Float32BufferAttribute(v, 3));
-    const P = /* @__PURE__ */ new Set(), f = (X) => `${J5(...X)}${Q5(...X)}`, h = df(P);
+    const P = /* @__PURE__ */ new Set(), f = (X) => `${J5(...X)}${Q5(...X)}`, g = df(P);
     for (let X = 0; X < o.length / 3; X++) {
       const C = o[X * 3 + 0], F = o[X * 3 + 1], p = o[X * 3 + 2];
       [
         [C, F],
         [F, p],
         [p, C]
-      ].forEach((g) => {
-        const D = f(g);
-        h(D) && u.push(...g);
+      ].forEach((h) => {
+        const R = f(h);
+        g(R) && u.push(...h);
       });
     }
     T.addGroup(0, 72, 1);
@@ -8758,16 +8758,16 @@ class _5 extends t0 {
       // color: new THREE.Color(0xaaaaaa),
       depthWrite: !0,
       depthTest: !1
-    }), q = new H.MeshPhongMaterial({
+    }), D = new H.MeshPhongMaterial({
       color: 11184810,
       specular: 16777215,
       shininess: 250,
       side: H.DoubleSide,
       vertexColors: !0
-    }), R = new H.BufferGeometry();
-    this.mesh = new H.Mesh(T, [x, q]), this.add(this.mesh), R.setIndex(u), R.setAttribute("position", E);
+    }), q = new H.BufferGeometry();
+    this.mesh = new H.Mesh(T, [x, D]), this.add(this.mesh), q.setIndex(u), q.setAttribute("position", E);
     const O = new H.LineBasicMaterial({ color: 16777215, transparent: !0 });
-    this.add(new H.LineSegments(R, O)), this.mesh.geometry.computeBoundingBox(), this.mesh.geometry.computeBoundingSphere();
+    this.add(new H.LineSegments(q, O)), this.mesh.geometry.computeBoundingBox(), this.mesh.geometry.computeBoundingSphere();
   }
   get vertexBuffer() {
     return this.mesh.geometry.getAttribute("position");
@@ -8867,11 +8867,11 @@ async function Vt(t, e, r) {
   return a(e, r);
 }
 ir("ray-tracer", async (t, e) => {
-  const { default: r } = await import("./index-Q-rYyfjR.mjs");
+  const { default: r } = await import("./index-ZrtLwXAa.mjs");
   return new r(e);
 });
 ir("image-source", async (t, e) => {
-  const { ImageSourceSolver: r } = await import("./index-Cs4UYON8.mjs"), a = {
+  const { ImageSourceSolver: r } = await import("./index-DLa-IZBU.mjs"), a = {
     name: "Image Source",
     roomID: "",
     sourceIDs: [],
@@ -8886,23 +8886,23 @@ ir("image-source", async (t, e) => {
   return new r(a);
 });
 ir("rt60", async (t, e) => {
-  const { default: r } = await import("./index-DFWkiNCd.mjs");
+  const { default: r } = await import("./index-CZBieble.mjs");
   return new r();
 });
 ir("energydecay", async (t, e) => {
-  const { default: r } = await import("./energy-decay-DpH6Aejq.mjs");
+  const { default: r } = await import("./energy-decay-r7oIPmtN.mjs");
   return new r();
 });
 ir("fdtd-2d", async (t, e) => {
-  const { default: r } = await import("./index-D9weDONb.mjs");
+  const { default: r } = await import("./index-DZgl-Asv.mjs");
   return new r();
 });
 ir("beam-trace", async (t, e) => {
-  const { BeamTraceSolver: r } = await import("./index-DKHWaA-U.mjs");
+  const { BeamTraceSolver: r } = await import("./index-BHk_m6F7.mjs");
   return new r();
 });
 ir("art", async (t, e) => {
-  const { ART: r } = await import("./art-BW800nHQ.mjs");
+  const { ART: r } = await import("./art-DBt8nuuI.mjs");
   return new r();
 });
 class $5 extends ac {
@@ -8956,44 +8956,44 @@ class $5 extends ac {
     }
     function n(l) {
       const d = new DataView(l), v = d.getUint32(80, !0);
-      let T, E, P, f = !1, h, x, q, R, O;
-      for (let D = 0; D < 70; D++)
-        d.getUint32(D, !1) == 1129270351 && d.getUint8(D + 4) == 82 && d.getUint8(D + 5) == 61 && (f = !0, h = new Float32Array(v * 3 * 3), x = d.getUint8(D + 6) / 255, q = d.getUint8(D + 7) / 255, R = d.getUint8(D + 8) / 255, O = d.getUint8(D + 9) / 255);
-      const X = 84, C = 50, F = new ht(), p = new Float32Array(v * 3 * 3), S = new Float32Array(v * 3 * 3), g = new Ct();
-      for (let D = 0; D < v; D++) {
-        const M = X + D * C, W = d.getFloat32(M, !0), _ = d.getFloat32(M + 4, !0), te = d.getFloat32(M + 8, !0);
+      let T, E, P, f = !1, g, x, D, q, O;
+      for (let R = 0; R < 70; R++)
+        d.getUint32(R, !1) == 1129270351 && d.getUint8(R + 4) == 82 && d.getUint8(R + 5) == 61 && (f = !0, g = new Float32Array(v * 3 * 3), x = d.getUint8(R + 6) / 255, D = d.getUint8(R + 7) / 255, q = d.getUint8(R + 8) / 255, O = d.getUint8(R + 9) / 255);
+      const X = 84, C = 50, F = new ht(), p = new Float32Array(v * 3 * 3), S = new Float32Array(v * 3 * 3), h = new Ct();
+      for (let R = 0; R < v; R++) {
+        const M = X + R * C, W = d.getFloat32(M, !0), _ = d.getFloat32(M + 4, !0), te = d.getFloat32(M + 8, !0);
         if (f) {
           const z = d.getUint16(M + 48, !0);
-          (z & 32768) === 0 ? (T = (z & 31) / 31, E = (z >> 5 & 31) / 31, P = (z >> 10 & 31) / 31) : (T = x, E = q, P = R);
+          (z & 32768) === 0 ? (T = (z & 31) / 31, E = (z >> 5 & 31) / 31, P = (z >> 10 & 31) / 31) : (T = x, E = D, P = q);
         }
         for (let z = 1; z <= 3; z++) {
-          const se = M + z * 12, ue = D * 3 * 3 + (z - 1) * 3;
-          p[ue] = d.getFloat32(se, !0), p[ue + 1] = d.getFloat32(se + 4, !0), p[ue + 2] = d.getFloat32(se + 8, !0), S[ue] = W, S[ue + 1] = _, S[ue + 2] = te, f && (g.setRGB(T, E, P, C2), h[ue] = g.r, h[ue + 1] = g.g, h[ue + 2] = g.b);
+          const se = M + z * 12, ue = R * 3 * 3 + (z - 1) * 3;
+          p[ue] = d.getFloat32(se, !0), p[ue + 1] = d.getFloat32(se + 4, !0), p[ue + 2] = d.getFloat32(se + 8, !0), S[ue] = W, S[ue + 1] = _, S[ue + 2] = te, f && (h.setRGB(T, E, P, C2), g[ue] = h.r, g[ue + 1] = h.g, g[ue + 2] = h.b);
         }
       }
-      return F.setAttribute("position", new Xa(p, 3)), F.setAttribute("normal", new Xa(S, 3)), f && (F.setAttribute("color", new Xa(h, 3)), F.hasColors = !0, F.alpha = O), F;
+      return F.setAttribute("position", new Xa(p, 3)), F.setAttribute("normal", new Xa(S, 3)), f && (F.setAttribute("color", new Xa(g, 3)), F.hasColors = !0, F.alpha = O), F;
     }
     function i(l) {
       const d = new ht(), v = /solid([\s\S]*?)endsolid/g, T = /facet([\s\S]*?)endfacet/g, E = /solid\s(.+)/;
       let P = 0;
-      const f = /[\s]+([+-]?(?:\d*)(?:\.\d*)?(?:[eE][+-]?\d+)?)/.source, h = new RegExp("vertex" + f + f + f, "g"), x = new RegExp("normal" + f + f + f, "g"), q = [], R = [], O = [], X = new Ae();
+      const f = /[\s]+([+-]?(?:\d*)(?:\.\d*)?(?:[eE][+-]?\d+)?)/.source, g = new RegExp("vertex" + f + f + f, "g"), x = new RegExp("normal" + f + f + f, "g"), D = [], q = [], O = [], X = new Ae();
       let C, F = 0, p = 0, S = 0;
       for (; (C = v.exec(l)) !== null; ) {
         p = S;
-        const g = C[0], D = (C = E.exec(g)) !== null ? C[1] : "";
-        for (O.push(D); (C = T.exec(g)) !== null; ) {
+        const h = C[0], R = (C = E.exec(h)) !== null ? C[1] : "";
+        for (O.push(R); (C = T.exec(h)) !== null; ) {
           let _ = 0, te = 0;
           const z = C[0];
           for (; (C = x.exec(z)) !== null; )
             X.x = parseFloat(C[1]), X.y = parseFloat(C[2]), X.z = parseFloat(C[3]), te++;
-          for (; (C = h.exec(z)) !== null; )
-            q.push(parseFloat(C[1]), parseFloat(C[2]), parseFloat(C[3])), R.push(X.x, X.y, X.z), _++, S++;
+          for (; (C = g.exec(z)) !== null; )
+            D.push(parseFloat(C[1]), parseFloat(C[2]), parseFloat(C[3])), q.push(X.x, X.y, X.z), _++, S++;
           te !== 1 && console.error("THREE.STLLoader: Something isn't right with the normal of face number " + P), _ !== 3 && console.error("THREE.STLLoader: Something isn't right with the vertices of face number " + P), P++;
         }
         const M = p, W = S - p;
         d.userData.groupNames = O, d.addGroup(M, W, F), F++;
       }
-      return d.setAttribute("position", new B0(q, 3)), d.setAttribute("normal", new B0(R, 3)), d;
+      return d.setAttribute("position", new B0(D, 3)), d.setAttribute("normal", new B0(q, 3)), d;
     }
     function s(l) {
       return typeof l != "string" ? new TextDecoder().decode(l) : l;
@@ -9596,7 +9596,7 @@ class cl extends H.Loader {
       }
       (K.width <= 0 || K.height <= 0) && console.error("THREE.TGALoader: Invalid image size."), K.pixel_size !== 8 && K.pixel_size !== 16 && K.pixel_size !== 24 && K.pixel_size !== 32 && console.error('THREE.TGALoader: Invalid pixel size "%s".', K.pixel_size);
     }
-    function h(K, ce, me, ge, xe) {
+    function g(K, ce, me, ge, xe) {
       let pe, G;
       const Z = me.pixel_size >> 3, ie = me.width * me.height * Z;
       if (ce && (G = xe.subarray(ge, ge += me.colormap_length * (me.colormap_size >> 3))), K) {
@@ -9625,23 +9625,23 @@ class cl extends H.Loader {
     function x(K, ce, me, ge, xe, pe, G, Z, ie) {
       const Y = ie;
       let m, w = 0, L, N;
-      const J = g.width;
+      const Q = h.width;
       for (N = ce; N !== ge; N += me)
         for (L = xe; L !== G; L += pe, w++)
-          m = Z[w], K[(L + J * N) * 4 + 3] = 255, K[(L + J * N) * 4 + 2] = Y[m * 3 + 0], K[(L + J * N) * 4 + 1] = Y[m * 3 + 1], K[(L + J * N) * 4 + 0] = Y[m * 3 + 2];
+          m = Z[w], K[(L + Q * N) * 4 + 3] = 255, K[(L + Q * N) * 4 + 2] = Y[m * 3 + 0], K[(L + Q * N) * 4 + 1] = Y[m * 3 + 1], K[(L + Q * N) * 4 + 0] = Y[m * 3 + 2];
       return K;
     }
-    function q(K, ce, me, ge, xe, pe, G, Z) {
+    function D(K, ce, me, ge, xe, pe, G, Z) {
       let ie, Y = 0, m, w;
-      const L = g.width;
+      const L = h.width;
       for (w = ce; w !== ge; w += me)
         for (m = xe; m !== G; m += pe, Y += 2)
           ie = Z[Y + 0] + (Z[Y + 1] << 8), K[(m + L * w) * 4 + 0] = (ie & 31744) >> 7, K[(m + L * w) * 4 + 1] = (ie & 992) >> 2, K[(m + L * w) * 4 + 2] = (ie & 31) >> 3, K[(m + L * w) * 4 + 3] = ie & 32768 ? 0 : 255;
       return K;
     }
-    function R(K, ce, me, ge, xe, pe, G, Z) {
+    function q(K, ce, me, ge, xe, pe, G, Z) {
       let ie = 0, Y, m;
-      const w = g.width;
+      const w = h.width;
       for (m = ce; m !== ge; m += me)
         for (Y = xe; Y !== G; Y += pe, ie += 3)
           K[(Y + w * m) * 4 + 3] = 255, K[(Y + w * m) * 4 + 2] = Z[ie + 0], K[(Y + w * m) * 4 + 1] = Z[ie + 1], K[(Y + w * m) * 4 + 0] = Z[ie + 2];
@@ -9649,7 +9649,7 @@ class cl extends H.Loader {
     }
     function O(K, ce, me, ge, xe, pe, G, Z) {
       let ie = 0, Y, m;
-      const w = g.width;
+      const w = h.width;
       for (m = ce; m !== ge; m += me)
         for (Y = xe; Y !== G; Y += pe, ie += 4)
           K[(Y + w * m) * 4 + 2] = Z[ie + 0], K[(Y + w * m) * 4 + 1] = Z[ie + 1], K[(Y + w * m) * 4 + 0] = Z[ie + 2], K[(Y + w * m) * 4 + 3] = Z[ie + 3];
@@ -9657,7 +9657,7 @@ class cl extends H.Loader {
     }
     function X(K, ce, me, ge, xe, pe, G, Z) {
       let ie, Y = 0, m, w;
-      const L = g.width;
+      const L = h.width;
       for (w = ce; w !== ge; w += me)
         for (m = xe; m !== G; m += pe, Y++)
           ie = Z[Y], K[(m + L * w) * 4 + 0] = ie, K[(m + L * w) * 4 + 1] = ie, K[(m + L * w) * 4 + 2] = ie, K[(m + L * w) * 4 + 3] = 255;
@@ -9665,7 +9665,7 @@ class cl extends H.Loader {
     }
     function C(K, ce, me, ge, xe, pe, G, Z) {
       let ie = 0, Y, m;
-      const w = g.width;
+      const w = h.width;
       for (m = ce; m !== ge; m += me)
         for (Y = xe; Y !== G; Y += pe, ie += 2)
           K[(Y + w * m) * 4 + 0] = Z[ie + 0], K[(Y + w * m) * 4 + 1] = Z[ie + 0], K[(Y + w * m) * 4 + 2] = Z[ie + 0], K[(Y + w * m) * 4 + 3] = Z[ie + 1];
@@ -9673,7 +9673,7 @@ class cl extends H.Loader {
     }
     function F(K, ce, me, ge, xe) {
       let pe, G, Z, ie, Y, m;
-      switch ((g.flags & 48) >> 4) {
+      switch ((h.flags & 48) >> 4) {
         default:
         case 2:
           pe = 0, Z = 1, Y = ce, G = 0, ie = 1, m = me;
@@ -9689,7 +9689,7 @@ class cl extends H.Loader {
           break;
       }
       if (W)
-        switch (g.pixel_size) {
+        switch (h.pixel_size) {
           case 8:
             X(K, G, ie, m, pe, Z, Y, ge);
             break;
@@ -9701,15 +9701,15 @@ class cl extends H.Loader {
             break;
         }
       else
-        switch (g.pixel_size) {
+        switch (h.pixel_size) {
           case 8:
             x(K, G, ie, m, pe, Z, Y, ge, xe);
             break;
           case 16:
-            q(K, G, ie, m, pe, Z, Y, ge);
+            D(K, G, ie, m, pe, Z, Y, ge);
             break;
           case 24:
-            R(K, G, ie, m, pe, Z, Y, ge);
+            q(K, G, ie, m, pe, Z, Y, ge);
             break;
           case 32:
             O(K, G, ie, m, pe, Z, Y, ge);
@@ -9723,7 +9723,7 @@ class cl extends H.Loader {
     e.byteLength < 19 && console.error("THREE.TGALoader: Not enough data to contain header.");
     const p = new Uint8Array(e);
     let S = 0;
-    const g = {
+    const h = {
       id_length: p[S++],
       colormap_type: p[S++],
       image_type: p[S++],
@@ -9736,31 +9736,31 @@ class cl extends H.Loader {
       pixel_size: p[S++],
       flags: p[S++]
     };
-    f(g), g.id_length + S > e.byteLength && console.error("THREE.TGALoader: No data."), S += g.id_length;
-    let D = !1, M = !1, W = !1;
-    switch (g.image_type) {
+    f(h), h.id_length + S > e.byteLength && console.error("THREE.TGALoader: No data."), S += h.id_length;
+    let R = !1, M = !1, W = !1;
+    switch (h.image_type) {
       case 9:
-        D = !0, M = !0;
+        R = !0, M = !0;
         break;
       case 1:
         M = !0;
         break;
       case 10:
-        D = !0;
+        R = !0;
         break;
       case 2:
         break;
       case 11:
-        D = !0, W = !0;
+        R = !0, W = !0;
         break;
       case 3:
         W = !0;
         break;
     }
-    const _ = typeof OffscreenCanvas < "u", te = _ ? new OffscreenCanvas(g.width, g.height) : document.createElement("canvas");
-    te.width = g.width, te.height = g.height;
-    const z = te.getContext("2d"), se = z.createImageData(g.width, g.height), ue = h(D, M, g, S, p);
-    return F(se.data, g.width, g.height, ue.pixel_data, ue.palettes), z.putImageData(se, 0, 0), _ ? te.transferToImageBitmap() : te;
+    const _ = typeof OffscreenCanvas < "u", te = _ ? new OffscreenCanvas(h.width, h.height) : document.createElement("canvas");
+    te.width = h.width, te.height = h.height;
+    const z = te.getContext("2d"), se = z.createImageData(h.width, h.height), ue = g(R, M, h, S, p);
+    return F(se.data, h.width, h.height, ue.pixel_data, ue.palettes), z.putImageData(se, 0, 0), _ ? te.transferToImageBitmap() : te;
   }
 }
 class U9 extends H.Loader {
@@ -9832,7 +9832,7 @@ class U9 extends H.Loader {
     function f(A, b) {
       return A.build !== void 0 || (A.build = b(A)), A.build;
     }
-    function h(A) {
+    function g(A) {
       for (var b = {
         sources: {},
         samplers: {},
@@ -9849,7 +9849,7 @@ class U9 extends H.Loader {
               V = I.getAttribute("id"), b.samplers[V] = x(I);
               break;
             case "channel":
-              V = I.getAttribute("target"), b.channels[V] = q(I);
+              V = I.getAttribute("target"), b.channels[V] = D(I);
               break;
             default:
               console.log(I);
@@ -9873,7 +9873,7 @@ class U9 extends H.Loader {
       }
       return b;
     }
-    function q(A) {
+    function D(A) {
       var b = {}, k = A.getAttribute("target"), B = k.split("/"), I = B.shift(), V = B.shift(), re = V.indexOf("(") !== -1, ne = V.indexOf(".") !== -1;
       if (ne)
         B = V.split("."), V = B.shift(), b.member = B.shift();
@@ -9886,17 +9886,17 @@ class U9 extends H.Loader {
       }
       return b.id = I, b.sid = V, b.arraySyntax = re, b.memberSyntax = ne, b.sampler = o(A.getAttribute("source")), b;
     }
-    function R(A) {
+    function q(A) {
       var b = [], k = A.channels, B = A.samplers, I = A.sources;
       for (var V in k)
         if (k.hasOwnProperty(V)) {
           var re = k[V], ne = B[re.sampler], le = ne.inputs.INPUT, Ce = ne.inputs.OUTPUT, oe = I[le], ye = I[Ce], _e = X(re, oe, ye);
-          g(_e, b);
+          h(_e, b);
         }
       return b;
     }
     function O(A) {
-      return f(we.animations[A], R);
+      return f(we.animations[A], q);
     }
     function X(A, b, k) {
       var B = we.nodes[A.id], I = cr(B.id), V = B.transforms[A.sid], re = B.matrix.clone().transpose(), ne, le, Ce, oe, ye, _e, Ie = {};
@@ -9932,21 +9932,21 @@ class U9 extends H.Loader {
         k.push({ time: parseFloat(B), value: A[B] });
       k.sort(V);
       for (var I = 0; I < 16; I++)
-        D(k, I, b.elements[I]);
+        R(k, I, b.elements[I]);
       return k;
       function V(re, ne) {
         return re.time - ne.time;
       }
     }
     var F = new H.Vector3(), p = new H.Vector3(), S = new H.Quaternion();
-    function g(A, b) {
+    function h(A, b) {
       for (var k = A.keyframes, B = A.name, I = [], V = [], re = [], ne = [], le = 0, Ce = k.length; le < Ce; le++) {
         var oe = k[le], ye = oe.time, _e = oe.value;
         U0.fromArray(_e).transpose(), U0.decompose(F, S, p), I.push(ye), V.push(F.x, F.y, F.z), re.push(S.x, S.y, S.z, S.w), ne.push(p.x, p.y, p.z);
       }
       return V.length > 0 && b.push(new H.VectorKeyframeTrack(B + ".position", I, V)), re.length > 0 && b.push(new H.QuaternionKeyframeTrack(B + ".quaternion", I, re)), ne.length > 0 && b.push(new H.VectorKeyframeTrack(B + ".scale", I, ne)), b;
     }
-    function D(A, b, k) {
+    function R(A, b, k) {
       var B, I = !0, V, re;
       for (V = 0, re = A.length; V < re; V++)
         B = A[V], B.value[b] === void 0 ? B.value[b] = null : I = !1;
@@ -10193,7 +10193,7 @@ class U9 extends H.Loader {
               b.surfaces[k] = N(V);
               break;
             case "sampler2D":
-              b.samplers[k] = J(V);
+              b.samplers[k] = Q(V);
               break;
           }
       }
@@ -10210,7 +10210,7 @@ class U9 extends H.Loader {
       }
       return b;
     }
-    function J(A) {
+    function Q(A) {
       for (var b = {}, k = 0, B = A.childNodes.length; k < B; k++) {
         var I = A.childNodes[k];
         if (I.nodeType === 1)
@@ -11465,7 +11465,7 @@ class U9 extends H.Loader {
       physicsModels: {},
       kinematicsScenes: {}
     };
-    E(b0, "library_animations", "animation", h), E(b0, "library_animation_clips", "animation_clip", z), E(b0, "library_controllers", "controller", K), E(b0, "library_images", "image", Z), E(b0, "library_effects", "effect", m), E(b0, "library_materials", "material", je), E(b0, "library_cameras", "camera", Pa), E(b0, "library_lights", "light", Pu), E(b0, "library_geometries", "geometry", Iu), E(b0, "library_nodes", "node", Qn), E(b0, "library_visual_scenes", "visual_scene", t2), E(b0, "library_kinematics_models", "kinematics_model", qu), E(b0, "library_physics_models", "physics_model", Xu), E(b0, "scene", "instance_kinematics_scene", ju), P(we.animations, R), P(we.clips, se), P(we.controllers, xe), P(we.images, ie), P(we.effects, n0), P(we.materials, p0), P(we.cameras, Ws), P(we.lights, Xs), P(we.geometries, Us), P(we.visualScenes, _s), n2(), Ju();
+    E(b0, "library_animations", "animation", g), E(b0, "library_animation_clips", "animation_clip", z), E(b0, "library_controllers", "controller", K), E(b0, "library_images", "image", Z), E(b0, "library_effects", "effect", m), E(b0, "library_materials", "material", je), E(b0, "library_cameras", "camera", Pa), E(b0, "library_lights", "light", Pu), E(b0, "library_geometries", "geometry", Iu), E(b0, "library_nodes", "node", Qn), E(b0, "library_visual_scenes", "visual_scene", t2), E(b0, "library_kinematics_models", "kinematics_model", qu), E(b0, "library_physics_models", "physics_model", Xu), E(b0, "scene", "instance_kinematics_scene", ju), P(we.animations, q), P(we.clips, se), P(we.controllers, xe), P(we.images, ie), P(we.effects, n0), P(we.materials, p0), P(we.cameras, Ws), P(we.lights, Xs), P(we.geometries, Us), P(we.visualScenes, _s), n2(), Ju();
     var ei = a2(a(b0, "scene")[0]);
     return eo.upAxis === "Z_UP" && ei.quaternion.setFromEuler(new H.Euler(-Math.PI / 2, 0, 0)), ei.scale.multiplyScalar(eo.unit), {
       animations: $n,
@@ -12644,8 +12644,8 @@ function m6() {
         "warn",
         "error"
       ], i = {}, s = null;
-      function o(f, h) {
-        var x = f[h];
+      function o(f, g) {
+        var x = f[g];
         if (typeof x.bind == "function")
           return x.bind(f);
         try {
@@ -12663,9 +12663,9 @@ function m6() {
         return f === "debug" && (f = "log"), typeof console === r ? !1 : f === "trace" && a ? u : console[f] !== void 0 ? o(console, f) : console.log !== void 0 ? o(console, "log") : e;
       }
       function d() {
-        for (var f = this.getLevel(), h = 0; h < n.length; h++) {
-          var x = n[h];
-          this[x] = h < f ? e : this.methodFactory(x, f, this.name);
+        for (var f = this.getLevel(), g = 0; g < n.length; g++) {
+          var x = n[g];
+          this[x] = g < f ? e : this.methodFactory(x, f, this.name);
         }
         if (this.log = this.debug, typeof console === r && f < this.levels.SILENT)
           return "No console available for logging";
@@ -12675,14 +12675,14 @@ function m6() {
           typeof console !== r && (d.call(this), this[f].apply(this, arguments));
         };
       }
-      function T(f, h, x) {
+      function T(f, g, x) {
         return l(f) || v.apply(this, arguments);
       }
-      function E(f, h) {
-        var x = this, q, R, O, X = "loglevel";
+      function E(f, g) {
+        var x = this, D, q, O, X = "loglevel";
         typeof f == "string" ? X += ":" + f : typeof f == "symbol" && (X = void 0);
-        function C(D) {
-          var M = (n[D] || "silent").toUpperCase();
+        function C(R) {
+          var M = (n[R] || "silent").toUpperCase();
           if (!(typeof window === r || !X)) {
             try {
               window.localStorage[X] = M;
@@ -12696,21 +12696,21 @@ function m6() {
           }
         }
         function F() {
-          var D;
+          var R;
           if (!(typeof window === r || !X)) {
             try {
-              D = window.localStorage[X];
+              R = window.localStorage[X];
             } catch {
             }
-            if (typeof D === r)
+            if (typeof R === r)
               try {
                 var M = window.document.cookie, W = encodeURIComponent(X), _ = M.indexOf(W + "=");
-                _ !== -1 && (D = /^([^;]+)/.exec(
+                _ !== -1 && (R = /^([^;]+)/.exec(
                   M.slice(_ + W.length + 1)
                 )[1]);
               } catch {
               }
-            return x.levels[D] === void 0 && (D = void 0), D;
+            return x.levels[R] === void 0 && (R = void 0), R;
           }
         }
         function p() {
@@ -12725,11 +12725,11 @@ function m6() {
             }
           }
         }
-        function S(D) {
-          var M = D;
+        function S(R) {
+          var M = R;
           if (typeof M == "string" && x.levels[M.toUpperCase()] !== void 0 && (M = x.levels[M.toUpperCase()]), typeof M == "number" && M >= 0 && M <= x.levels.SILENT)
             return M;
-          throw new TypeError("log.setLevel() called with invalid level: " + D);
+          throw new TypeError("log.setLevel() called with invalid level: " + R);
         }
         x.name = f, x.levels = {
           TRACE: 0,
@@ -12738,34 +12738,34 @@ function m6() {
           WARN: 3,
           ERROR: 4,
           SILENT: 5
-        }, x.methodFactory = h || T, x.getLevel = function() {
-          return O ?? R ?? q;
-        }, x.setLevel = function(D, M) {
-          return O = S(D), M !== !1 && C(O), d.call(x);
-        }, x.setDefaultLevel = function(D) {
-          R = S(D), F() || x.setLevel(D, !1);
+        }, x.methodFactory = g || T, x.getLevel = function() {
+          return O ?? q ?? D;
+        }, x.setLevel = function(R, M) {
+          return O = S(R), M !== !1 && C(O), d.call(x);
+        }, x.setDefaultLevel = function(R) {
+          q = S(R), F() || x.setLevel(R, !1);
         }, x.resetLevel = function() {
           O = null, p(), d.call(x);
-        }, x.enableAll = function(D) {
-          x.setLevel(x.levels.TRACE, D);
-        }, x.disableAll = function(D) {
-          x.setLevel(x.levels.SILENT, D);
+        }, x.enableAll = function(R) {
+          x.setLevel(x.levels.TRACE, R);
+        }, x.disableAll = function(R) {
+          x.setLevel(x.levels.SILENT, R);
         }, x.rebuild = function() {
-          if (s !== x && (q = S(s.getLevel())), d.call(x), s === x)
-            for (var D in i)
-              i[D].rebuild();
-        }, q = S(
+          if (s !== x && (D = S(s.getLevel())), d.call(x), s === x)
+            for (var R in i)
+              i[R].rebuild();
+        }, D = S(
           s ? s.getLevel() : "WARN"
         );
-        var g = F();
-        g != null && (O = S(g)), d.call(x);
+        var h = F();
+        h != null && (O = S(h)), d.call(x);
       }
-      s = new E(), s.getLogger = function(h) {
-        if (typeof h != "symbol" && typeof h != "string" || h === "")
+      s = new E(), s.getLogger = function(g) {
+        if (typeof g != "symbol" && typeof g != "string" || g === "")
           throw new TypeError("You must supply a name when creating a logger.");
-        var x = i[h];
-        return x || (x = i[h] = new E(
-          h,
+        var x = i[g];
+        return x || (x = i[g] = new E(
+          g,
           s.methodFactory
         )), x;
       };
@@ -12829,7 +12829,7 @@ class h6 {
             console.error("Unexpected code %s after 0:SECTION", o1(o)), o = i.next();
             continue;
           }
-          o.value === "HEADER" ? (Re.debug("> HEADER"), r.header = l(), Re.debug("<")) : o.value === "BLOCKS" ? (Re.debug("> BLOCKS"), r.blocks = d(), Re.debug("<")) : o.value === "ENTITIES" ? (Re.debug("> ENTITIES"), r.entities = R(!1), Re.debug("<")) : o.value === "TABLES" ? (Re.debug("> TABLES"), r.tables = T(), Re.debug("<")) : o.value === "EOF" ? Re.debug("EOF") : Re.warn("Skipping section '%s'", o.value);
+          o.value === "HEADER" ? (Re.debug("> HEADER"), r.header = l(), Re.debug("<")) : o.value === "BLOCKS" ? (Re.debug("> BLOCKS"), r.blocks = d(), Re.debug("<")) : o.value === "ENTITIES" ? (Re.debug("> ENTITIES"), r.entities = q(!1), Re.debug("<")) : o.value === "TABLES" ? (Re.debug("> TABLES"), r.tables = T(), Re.debug("<")) : o.value === "EOF" ? Re.debug("EOF") : Re.warn("Skipping section '%s'", o.value);
         } else
           o = i.next();
     }
@@ -12893,7 +12893,7 @@ class h6 {
           case 0:
             if (o.value == "ENDBLK")
               break;
-            C.entities = R(!0);
+            C.entities = q(!0);
             break;
           default:
             Gt(o), o = i.next();
@@ -12908,12 +12908,12 @@ class h6 {
     function T() {
       const C = {};
       for (o = i.next(); o.value !== "EOF" && !lt(o, 0, "ENDSEC"); )
-        lt(o, 0, "TABLE") ? (o = i.next(), q[o.value] ? (Re.debug(o.value + " Table {"), C[q[o.value].tableName] = P(o), Re.debug("}")) : Re.debug("Unhandled Table " + o.value)) : o = i.next();
+        lt(o, 0, "TABLE") ? (o = i.next(), D[o.value] ? (Re.debug(o.value + " Table {"), C[D[o.value].tableName] = P(o), Re.debug("}")) : Re.debug("Unhandled Table " + o.value)) : o = i.next();
       return o = i.next(), C;
     }
     const E = "ENDTAB";
     function P(C) {
-      const F = q[C.value], p = {};
+      const F = D[C.value], p = {};
       let S = 0;
       for (o = i.next(); !lt(o, 0, E); )
         switch (o.code) {
@@ -12935,15 +12935,15 @@ class h6 {
           default:
             Gt(o), o = i.next();
         }
-      const g = p[F.tableRecordsProperty];
-      if (g) {
-        let D = (() => {
-          if (g.constructor === Array)
-            return g.length;
-          if (typeof g == "object")
-            return Object.keys(g).length;
+      const h = p[F.tableRecordsProperty];
+      if (h) {
+        let R = (() => {
+          if (h.constructor === Array)
+            return h.length;
+          if (typeof h == "object")
+            return Object.keys(h).length;
         })();
-        S !== D && Re.warn("Parsed " + D + " " + F.dxfSymbolName + "'s but expected " + S);
+        S !== R && Re.warn("Parsed " + R + " " + F.dxfSymbolName + "'s but expected " + S);
       }
       return o = i.next(), p;
     }
@@ -13039,7 +13039,7 @@ class h6 {
         }
       return Re.debug("}"), C.push(F), C;
     }
-    function h() {
+    function g() {
       const C = {};
       let F = {}, p = 0, S;
       for (Re.debug("LType {"), o = i.next(); !lt(o, 0, "ENDTAB"); )
@@ -13090,7 +13090,7 @@ class h6 {
         }
       return Re.debug("}"), C[p] = F, C;
     }
-    const q = {
+    const D = {
       VPORT: {
         tableRecordsProperty: "viewPorts",
         tableName: "viewPort",
@@ -13101,7 +13101,7 @@ class h6 {
         tableRecordsProperty: "lineTypes",
         tableName: "lineType",
         dxfSymbolName: "LTYPE",
-        parseTableRecords: h
+        parseTableRecords: g
       },
       LAYER: {
         tableRecordsProperty: "layers",
@@ -13110,7 +13110,7 @@ class h6 {
         parseTableRecords: x
       }
     };
-    function R(C) {
+    function q(C) {
       const F = [], p = C ? "ENDBLK" : "ENDSEC";
       for (C || (o = i.next()); ; )
         if (o.code === 0) {
@@ -13119,8 +13119,8 @@ class h6 {
           const S = s._entityHandlers[o.value];
           if (S != null) {
             Re.debug(o.value + " {");
-            const g = S.parseEntity(i, o);
-            o = i.lastReadGroup, Re.debug("}"), X(g), F.push(g);
+            const h = S.parseEntity(i, o);
+            o = i.lastReadGroup, Re.debug("}"), X(h), F.push(h);
           } else {
             Re.warn("Unhandled entity " + o.value), o = i.next();
             continue;
@@ -13168,7 +13168,7 @@ function b6(t) {
     n.has(u) || n.set(u, new t0(u));
     const l = [], d = [];
     s.vertices.forEach((f) => {
-      f.faceA ? d.push([f.faceA, f.faceB, f.faceC].map(Math.abs).map((h) => h - 1)) : l.push([f.x, f.y, f.z]);
+      f.faceA ? d.push([f.faceA, f.faceB, f.faceC].map(Math.abs).map((g) => g - 1)) : l.push([f.x, f.y, f.z]);
     });
     let v = d.flat().reverse().map((f) => l[f]).flat();
     const T = A6(v);
@@ -13205,8 +13205,8 @@ function S6(t) {
       E.vertices.forEach((P) => {
         const f = a[P.vertexIndex - 1];
         f && l.push(f.x, f.y, f.z);
-        const h = n[P.vertexNormalIndex - 1];
-        h && d.push(h.x, h.y, h.z);
+        const g = n[P.vertexNormalIndex - 1];
+        g && d.push(g.x, g.y, g.z);
         const x = i[P.textureCoordsIndex - 1];
         x && v.push(x.u, x.v, x.w);
       });
@@ -13972,8 +13972,8 @@ function P6(t, e = Pe) {
   }), r.addMessageHandler("RESTORE", (a, ...n) => {
     const i = n && n[0], s = i.file, o = i.json, u = o.meta && o.meta.version || "0.0.0";
     ((d, v) => {
-      const T = (R) => R.split(".").map((O) => parseInt(O, 10) || 0), [E, P, f] = T(d), [h, x, q] = T(v);
-      return E !== h ? E > h : P !== x ? P > x : f >= q;
+      const T = (q) => q.split(".").map((O) => parseInt(O, 10) || 0), [E, P, f] = T(d), [g, x, D] = T(v);
+      return E !== g ? E > g : P !== x ? P > x : f >= D;
     })(u, "0.2.1") ? (r.postMessage("RESTORE_CONTAINERS", o.containers), r.postMessage("RESTORE_SOLVERS", o.solvers), r.postMessage("SET_PROJECT_NAME", o.meta.name)) : (r.postMessage("RESTORE_CONTAINERS", o), r.postMessage("SET_PROJECT_NAME", s.name.replace(".json", "")));
   }), console.log("[registerMessageHandlers] Registered all message handlers");
 }
@@ -14029,23 +14029,23 @@ function x6() {
 async function E6(t, e) {
   switch (t) {
     case "ray-tracer": {
-      const { default: r } = await import("./index-Q-rYyfjR.mjs");
+      const { default: r } = await import("./index-ZrtLwXAa.mjs");
       return new r(e).restore(e);
     }
     case "rt60": {
-      const { default: r } = await import("./index-DFWkiNCd.mjs");
+      const { default: r } = await import("./index-CZBieble.mjs");
       return new r().restore(e);
     }
     case "art": {
-      const { default: r } = await import("./art-BW800nHQ.mjs");
+      const { default: r } = await import("./art-DBt8nuuI.mjs");
       return new r(e).restore(e);
     }
     case "image-source": {
-      const { default: r } = await import("./index-Cs4UYON8.mjs");
+      const { default: r } = await import("./index-DLa-IZBU.mjs");
       return new r(e).restore(e);
     }
     case "beam-trace": {
-      const { BeamTraceSolver: r } = await import("./index-DKHWaA-U.mjs");
+      const { BeamTraceSolver: r } = await import("./index-BHk_m6F7.mjs");
       return new r().restore(e);
     }
     default:
@@ -14053,7 +14053,7 @@ async function E6(t, e) {
   }
 }
 function k6() {
-  import("./events-C_N9i5Qx.mjs").then((t) => t.default()), ae("LOG_SOLVER", (t) => {
+  import("./events-CFpOL3c4.mjs").then((t) => t.default()), ae("LOG_SOLVER", (t) => {
     console.log(a0.getState().solvers[t]);
   }), ae("REMOVE_SOLVERS", (t) => {
     const e = a0.getState().solvers, r = typeof t == "string" ? [t] : t;
@@ -14739,19 +14739,19 @@ function nm(t) {
   return b1($a("", null, null, null, [""], t = A1(t), 0, [0], t));
 }
 function $a(t, e, r, a, n, i, s, o, u) {
-  for (var l = 0, d = 0, v = s, T = 0, E = 0, P = 0, f = 1, h = 1, x = 1, q = 0, R = "", O = n, X = i, C = a, F = R; h; )
-    switch (P = q, q = G0()) {
+  for (var l = 0, d = 0, v = s, T = 0, E = 0, P = 0, f = 1, g = 1, x = 1, D = 0, q = "", O = n, X = i, C = a, F = q; g; )
+    switch (P = D, D = G0()) {
       // (
       case 40:
         if (P != 108 && P0(F, v - 1) == 58) {
-          rs(F += Je(Za(q), "&", "&\f"), "&\f") != -1 && (x = -1);
+          rs(F += Je(Za(D), "&", "&\f"), "&\f") != -1 && (x = -1);
           break;
         }
       // " ' [
       case 34:
       case 39:
       case 91:
-        F += Za(q);
+        F += Za(D);
         break;
       // \t \n \r \s
       case 9:
@@ -14782,11 +14782,11 @@ function $a(t, e, r, a, n, i, s, o, u) {
       case 125 * f:
       case 59:
       case 0:
-        switch (q) {
+        switch (D) {
           // \0 }
           case 0:
           case 125:
-            h = 0;
+            g = 0;
           // ;
           case 59 + d:
             x == -1 && (F = Je(F, /\f/g, "")), E > 0 && ut(F) - v && Oa(E > 32 ? pl(F + ";", a, r, v - 1) : pl(Je(F, " ", "") + ";", a, r, v - 2), u);
@@ -14796,7 +14796,7 @@ function $a(t, e, r, a, n, i, s, o, u) {
             F += ";";
           // { rule/at-rule
           default:
-            if (Oa(C = ml(F, e, r, l, d, n, o, R, O = [], X = [], v), i), q === 123)
+            if (Oa(C = ml(F, e, r, l, d, n, o, q, O = [], X = [], v), i), D === 123)
               if (d === 0)
                 $a(F, e, C, C, O, i, v, o, X);
               else
@@ -14806,25 +14806,25 @@ function $a(t, e, r, a, n, i, s, o, u) {
                   case 108:
                   case 109:
                   case 115:
-                    $a(t, C, C, a && Oa(ml(t, C, C, 0, 0, n, o, R, n, O = [], v), X), n, X, v, o, a ? O : X);
+                    $a(t, C, C, a && Oa(ml(t, C, C, 0, 0, n, o, q, n, O = [], v), X), n, X, v, o, a ? O : X);
                     break;
                   default:
                     $a(F, C, C, C, [""], X, 0, o, X);
                 }
         }
-        l = d = E = 0, f = x = 1, R = F = "", v = s;
+        l = d = E = 0, f = x = 1, q = F = "", v = s;
         break;
       // :
       case 58:
         v = 1 + ut(F), E = P;
       default:
         if (f < 1) {
-          if (q == 123)
+          if (D == 123)
             --f;
-          else if (q == 125 && f++ == 0 && $6() == 125)
+          else if (D == 125 && f++ == 0 && $6() == 125)
             continue;
         }
-        switch (F += Nn(q), q * f) {
+        switch (F += Nn(D), D * f) {
           // &
           case 38:
             x = d > 0 ? 1 : (F += "\f", -1);
@@ -14835,7 +14835,7 @@ function $a(t, e, r, a, n, i, s, o, u) {
             break;
           // @
           case 64:
-            mt() === 45 && (F += Za(G0())), T = mt(), d = v = ut(R = F += am(Ka())), q++;
+            mt() === 45 && (F += Za(G0())), T = mt(), d = v = ut(q = F += am(Ka())), D++;
             break;
           // -
           case 45:
@@ -14845,9 +14845,9 @@ function $a(t, e, r, a, n, i, s, o, u) {
   return i;
 }
 function ml(t, e, r, a, n, i, s, o, u, l, d) {
-  for (var v = n - 1, T = n === 0 ? i : [""], E = Is(T), P = 0, f = 0, h = 0; P < a; ++P)
-    for (var x = 0, q = ma(t, v + 1, v = Y6(f = s[P])), R = t; x < E; ++x)
-      (R = h1(f > 0 ? T[x] + " " + q : Je(q, /&\f/g, T[x]))) && (u[h++] = R);
+  for (var v = n - 1, T = n === 0 ? i : [""], E = Is(T), P = 0, f = 0, g = 0; P < a; ++P)
+    for (var x = 0, D = ma(t, v + 1, v = Y6(f = s[P])), q = t; x < E; ++x)
+      (q = h1(f > 0 ? T[x] + " " + D : Je(D, /&\f/g, T[x]))) && (u[g++] = q);
   return Xn(t, e, r, n === 0 ? Es : o, u, l, d);
 }
 function im(t, e, r) {
@@ -15122,8 +15122,8 @@ var hm = function(e, r, a, n) {
   if (r === "css") {
     var a = document.querySelectorAll("style[data-emotion]:not([data-s])");
     Array.prototype.forEach.call(a, function(f) {
-      var h = f.getAttribute("data-emotion");
-      h.indexOf(" ") !== -1 && (document.head.appendChild(f), f.setAttribute("data-s", ""));
+      var g = f.getAttribute("data-emotion");
+      g.indexOf(" ") !== -1 && (document.head.appendChild(f), f.setAttribute("data-s", ""));
     });
   }
   var n = e.stylisPlugins || gm, i = {}, s, o = [];
@@ -15132,8 +15132,8 @@ var hm = function(e, r, a, n) {
     // means that the style elements we're looking at are only Emotion 11 server-rendered style elements
     document.querySelectorAll('style[data-emotion^="' + r + ' "]'),
     function(f) {
-      for (var h = f.getAttribute("data-emotion").split(" "), x = 1; x < h.length; x++)
-        i[h[x]] = !0;
+      for (var g = f.getAttribute("data-emotion").split(" "), x = 1; x < g.length; x++)
+        i[g[x]] = !0;
       o.push(f);
     }
   );
@@ -15141,11 +15141,11 @@ var hm = function(e, r, a, n) {
   {
     var d, v = [sm, lm(function(f) {
       d.insert(f);
-    })], T = om(l.concat(n, v)), E = function(h) {
-      return Ar(nm(h), T);
+    })], T = om(l.concat(n, v)), E = function(g) {
+      return Ar(nm(g), T);
     };
-    u = function(h, x, q, R) {
-      d = q, E(h ? h + "{" + x.styles + "}" : x.styles), R && (P.inserted[x.name] = !0);
+    u = function(g, x, D, q) {
+      d = D, E(g ? g + "{" + x.styles + "}" : x.styles), q && (P.inserted[x.name] = !0);
     };
   }
   var P = {
@@ -15469,7 +15469,7 @@ const Rm = {
   }
 };
 function Ke(t) {
-  return /* @__PURE__ */ c(Q, { sx: Rm, children: t.children });
+  return /* @__PURE__ */ c(J, { sx: Rm, children: t.children });
 }
 const Lm = {
   display: "flex",
@@ -15492,12 +15492,12 @@ const Lm = {
   color: "text.primary"
 };
 function Ne(t) {
-  return /* @__PURE__ */ U(Q, { sx: Mm, children: [
-    /* @__PURE__ */ U(Q, { sx: Lm, onClick: () => t.onOpenClose(t.id), children: [
+  return /* @__PURE__ */ U(J, { sx: Mm, children: [
+    /* @__PURE__ */ U(J, { sx: Lm, onClick: () => t.onOpenClose(t.id), children: [
       t.open ? /* @__PURE__ */ c(J0, { sx: { fontSize: 16, color: "text.secondary" } }) : /* @__PURE__ */ c(Et, { sx: { fontSize: 16, color: "text.secondary" } }),
       /* @__PURE__ */ c(Fe, { sx: Wm, children: t.label })
     ] }),
-    /* @__PURE__ */ c(bc, { in: t.open, children: /* @__PURE__ */ c(Q, { sx: Nm, children: t.children }) })
+    /* @__PURE__ */ c(bc, { in: t.open, children: /* @__PURE__ */ c(J, { sx: Nm, children: t.children }) })
   ] });
 }
 const yl = {
@@ -15513,7 +15513,7 @@ const yl = {
 };
 function Ze({ label: t, tooltip: e, hasToolTip: r }) {
   const a = /* @__PURE__ */ c(Fe, { component: "span", sx: Xm, children: t });
-  return r && e ? /* @__PURE__ */ c(Q, { sx: yl, children: /* @__PURE__ */ c(ds, { title: e, placement: "left", arrow: !0, enterDelay: 500, children: a }) }) : /* @__PURE__ */ c(Q, { sx: yl, children: a });
+  return r && e ? /* @__PURE__ */ c(J, { sx: yl, children: /* @__PURE__ */ c(ds, { title: e, placement: "left", arrow: !0, enterDelay: 500, children: a }) }) : /* @__PURE__ */ c(J, { sx: yl, children: a });
 }
 const Um = {
   ml: "0.5em",
@@ -15589,8 +15589,8 @@ const Um = {
     const E = (P) => {
       P.preventDefault();
       const f = P.deltaY < 0 ? o.current : -o.current;
-      let h = s.current + f;
-      u.current !== void 0 && (h = Math.max(u.current, h)), l.current !== void 0 && (h = Math.min(l.current, h)), Number.isNaN(h) || d.current({ value: h });
+      let g = s.current + f;
+      u.current !== void 0 && (g = Math.max(u.current, g)), l.current !== void 0 && (g = Math.min(l.current, g)), Number.isNaN(g) || d.current({ value: g });
     };
     return T.addEventListener("wheel", E, { passive: !1 }), () => T.removeEventListener("wheel", E);
   }, []);
@@ -15656,8 +15656,8 @@ const Um = {
     const E = (P) => {
       P.preventDefault();
       const f = P.deltaY < 0 ? o.current : -o.current;
-      let h = s.current + f;
-      u.current !== void 0 && (h = Math.max(u.current, h)), l.current !== void 0 && (h = Math.min(l.current, h)), Number.isNaN(h) || d.current({ value: h });
+      let g = s.current + f;
+      u.current !== void 0 && (g = Math.max(u.current, g)), l.current !== void 0 && (g = Math.min(l.current, g)), Number.isNaN(g) || d.current({ value: g });
     };
     return T.addEventListener("wheel", E, { passive: !1 }), () => T.removeEventListener("wheel", E);
   }, []);
@@ -15669,7 +15669,7 @@ const Um = {
     [e]
   );
   return /* @__PURE__ */ c(
-    Q,
+    J,
     {
       component: "input",
       type: "number",
@@ -15743,7 +15743,7 @@ const Nr = (t, e) => ({ uuid: r, property: a, options: n }) => {
   minHeight: 24
 };
 function et({ label: t, onClick: e, disabled: r }) {
-  return /* @__PURE__ */ c(Q, { sx: Qm, children: /* @__PURE__ */ c(
+  return /* @__PURE__ */ c(J, { sx: Qm, children: /* @__PURE__ */ c(
     Ut,
     {
       variant: "outlined",
@@ -15865,36 +15865,36 @@ const I1 = ({
 };
 function zn({ uuid: t, event: e }) {
   const [r, a] = Qe(!0);
-  return /* @__PURE__ */ U(Q, { sx: Km, children: [
-    /* @__PURE__ */ U(Q, { sx: Zm, onClick: a, children: [
+  return /* @__PURE__ */ U(J, { sx: Km, children: [
+    /* @__PURE__ */ U(J, { sx: Zm, onClick: a, children: [
       r ? /* @__PURE__ */ c(J0, { sx: { fontSize: 16, color: "text.secondary" } }) : /* @__PURE__ */ c(Et, { sx: { fontSize: 16, color: "text.secondary" } }),
       /* @__PURE__ */ c(Fe, { sx: $m, children: "Transform" })
     ] }),
-    /* @__PURE__ */ c(bc, { in: r, children: /* @__PURE__ */ U(Q, { component: "table", sx: e4, children: [
-      /* @__PURE__ */ c(Q, { component: "thead", children: /* @__PURE__ */ U(Q, { component: "tr", sx: t4, children: [
-        /* @__PURE__ */ c(Q, { component: "th" }),
-        /* @__PURE__ */ c(Q, { component: "th", children: "X" }),
-        /* @__PURE__ */ c(Q, { component: "th", children: "Y" }),
-        /* @__PURE__ */ c(Q, { component: "th", children: "Z" })
+    /* @__PURE__ */ c(bc, { in: r, children: /* @__PURE__ */ U(J, { component: "table", sx: e4, children: [
+      /* @__PURE__ */ c(J, { component: "thead", children: /* @__PURE__ */ U(J, { component: "tr", sx: t4, children: [
+        /* @__PURE__ */ c(J, { component: "th" }),
+        /* @__PURE__ */ c(J, { component: "th", children: "X" }),
+        /* @__PURE__ */ c(J, { component: "th", children: "Y" }),
+        /* @__PURE__ */ c(J, { component: "th", children: "Z" })
       ] }) }),
-      /* @__PURE__ */ U(Q, { component: "tbody", children: [
-        /* @__PURE__ */ U(Q, { component: "tr", sx: Fi, children: [
-          /* @__PURE__ */ c(Q, { component: "td", children: "Position" }),
-          /* @__PURE__ */ c(Q, { component: "td", children: /* @__PURE__ */ c(vt, { uuid: t, property: "x", event: e }) }),
-          /* @__PURE__ */ c(Q, { component: "td", children: /* @__PURE__ */ c(vt, { uuid: t, property: "y", event: e }) }),
-          /* @__PURE__ */ c(Q, { component: "td", children: /* @__PURE__ */ c(vt, { uuid: t, property: "z", event: e }) })
+      /* @__PURE__ */ U(J, { component: "tbody", children: [
+        /* @__PURE__ */ U(J, { component: "tr", sx: Fi, children: [
+          /* @__PURE__ */ c(J, { component: "td", children: "Position" }),
+          /* @__PURE__ */ c(J, { component: "td", children: /* @__PURE__ */ c(vt, { uuid: t, property: "x", event: e }) }),
+          /* @__PURE__ */ c(J, { component: "td", children: /* @__PURE__ */ c(vt, { uuid: t, property: "y", event: e }) }),
+          /* @__PURE__ */ c(J, { component: "td", children: /* @__PURE__ */ c(vt, { uuid: t, property: "z", event: e }) })
         ] }),
-        /* @__PURE__ */ U(Q, { component: "tr", sx: Fi, children: [
-          /* @__PURE__ */ c(Q, { component: "td", children: "Scale" }),
-          /* @__PURE__ */ c(Q, { component: "td", children: /* @__PURE__ */ c(vt, { uuid: t, property: "scalex", event: e }) }),
-          /* @__PURE__ */ c(Q, { component: "td", children: /* @__PURE__ */ c(vt, { uuid: t, property: "scaley", event: e }) }),
-          /* @__PURE__ */ c(Q, { component: "td", children: /* @__PURE__ */ c(vt, { uuid: t, property: "scalez", event: e }) })
+        /* @__PURE__ */ U(J, { component: "tr", sx: Fi, children: [
+          /* @__PURE__ */ c(J, { component: "td", children: "Scale" }),
+          /* @__PURE__ */ c(J, { component: "td", children: /* @__PURE__ */ c(vt, { uuid: t, property: "scalex", event: e }) }),
+          /* @__PURE__ */ c(J, { component: "td", children: /* @__PURE__ */ c(vt, { uuid: t, property: "scaley", event: e }) }),
+          /* @__PURE__ */ c(J, { component: "td", children: /* @__PURE__ */ c(vt, { uuid: t, property: "scalez", event: e }) })
         ] }),
-        /* @__PURE__ */ U(Q, { component: "tr", sx: Fi, children: [
-          /* @__PURE__ */ c(Q, { component: "td", children: "Rotation" }),
-          /* @__PURE__ */ c(Q, { component: "td", children: /* @__PURE__ */ c(vt, { uuid: t, property: "rotationx", event: e }) }),
-          /* @__PURE__ */ c(Q, { component: "td", children: /* @__PURE__ */ c(vt, { uuid: t, property: "rotationy", event: e }) }),
-          /* @__PURE__ */ c(Q, { component: "td", children: /* @__PURE__ */ c(vt, { uuid: t, property: "rotationz", event: e }) })
+        /* @__PURE__ */ U(J, { component: "tr", sx: Fi, children: [
+          /* @__PURE__ */ c(J, { component: "td", children: "Rotation" }),
+          /* @__PURE__ */ c(J, { component: "td", children: /* @__PURE__ */ c(vt, { uuid: t, property: "rotationx", event: e }) }),
+          /* @__PURE__ */ c(J, { component: "td", children: /* @__PURE__ */ c(vt, { uuid: t, property: "rotationy", event: e }) }),
+          /* @__PURE__ */ c(J, { component: "td", children: /* @__PURE__ */ c(vt, { uuid: t, property: "rotationz", event: e }) })
         ] })
       ] })
     ] }) })
@@ -16083,30 +16083,30 @@ const Bi = (t, e) => ({ uuid: r, property: a, label: n, tooltip: i, elementProps
     t,
     "receiverIDs",
     r
-  ), v = o || [], T = l || [], E = Te((f, h) => v.includes(f) && T.includes(h), [v, T]), P = Te((f, h, x) => {
+  ), v = o || [], T = l || [], E = Te((f, g) => v.includes(f) && T.includes(g), [v, T]), P = Te((f, g, x) => {
     if (x) {
-      const q = v.includes(f) ? v : [...v, f], R = T.includes(h) ? T : [...T, h];
-      q !== v && u({ value: q }), R !== T && d({ value: R });
+      const D = v.includes(f) ? v : [...v, f], q = T.includes(g) ? T : [...T, g];
+      D !== v && u({ value: D }), q !== T && d({ value: q });
     } else
-      T.length === 1 && u({ value: v.filter((q) => q !== f) }), v.length === 1 && d({ value: T.filter((q) => q !== h) });
+      T.length === 1 && u({ value: v.filter((D) => D !== f) }), v.length === 1 && d({ value: T.filter((D) => D !== g) });
   }, [v, T, u, d]);
-  return i.length === 0 && s.length === 0 ? /* @__PURE__ */ c(Fe, { sx: Hi, children: "Add sources and receivers to configure pairs" }) : i.length === 0 ? /* @__PURE__ */ c(Fe, { sx: Hi, children: "Add sources to configure pairs" }) : s.length === 0 ? /* @__PURE__ */ c(Fe, { sx: Hi, children: "Add receivers to configure pairs" }) : /* @__PURE__ */ c(Q, { sx: g4(e), children: /* @__PURE__ */ U(Q, { component: "table", sx: A4, children: [
+  return i.length === 0 && s.length === 0 ? /* @__PURE__ */ c(Fe, { sx: Hi, children: "Add sources and receivers to configure pairs" }) : i.length === 0 ? /* @__PURE__ */ c(Fe, { sx: Hi, children: "Add sources to configure pairs" }) : s.length === 0 ? /* @__PURE__ */ c(Fe, { sx: Hi, children: "Add receivers to configure pairs" }) : /* @__PURE__ */ c(J, { sx: g4(e), children: /* @__PURE__ */ U(J, { component: "table", sx: A4, children: [
     /* @__PURE__ */ c("thead", { children: /* @__PURE__ */ U("tr", { children: [
-      /* @__PURE__ */ c(Q, { component: "th", sx: S4, children: "Src \\ Rec" }),
-      s.map((f) => /* @__PURE__ */ c(Q, { component: "th", sx: b4, title: f.name, children: f.name }, f.uuid))
+      /* @__PURE__ */ c(J, { component: "th", sx: S4, children: "Src \\ Rec" }),
+      s.map((f) => /* @__PURE__ */ c(J, { component: "th", sx: b4, title: f.name, children: f.name }, f.uuid))
     ] }) }),
     /* @__PURE__ */ c("tbody", { children: i.map((f) => /* @__PURE__ */ U("tr", { children: [
-      /* @__PURE__ */ c(Q, { component: "td", sx: v4, title: f.name, children: f.name }),
-      s.map((h) => /* @__PURE__ */ c(Q, { component: "td", sx: y4, children: /* @__PURE__ */ c(
+      /* @__PURE__ */ c(J, { component: "td", sx: v4, title: f.name, children: f.name }),
+      s.map((g) => /* @__PURE__ */ c(J, { component: "td", sx: y4, children: /* @__PURE__ */ c(
         vc,
         {
-          checked: E(f.uuid, h.uuid),
-          onChange: (x) => P(f.uuid, h.uuid, x.target.checked),
-          title: `${f.name} → ${h.name}`,
+          checked: E(f.uuid, g.uuid),
+          onChange: (x) => P(f.uuid, g.uuid, x.target.checked),
+          title: `${f.name} → ${g.name}`,
           sx: C4,
           size: "small"
         }
-      ) }, `${f.uuid}-${h.uuid}`))
+      ) }, `${f.uuid}-${g.uuid}`))
     ] }, f.uuid)) })
   ] }) });
 }), { PropertyTextInput: w4, PropertyNumberInput: en, PropertyCheckboxInput: ga } = jn(
@@ -16634,25 +16634,25 @@ function Jr({
   ), f = Te(() => {
     const X = Di(d - i, a, n);
     v(X), r({ id: t, value: X });
-  }, [t, d, i, a, n, r]), h = Te(() => {
+  }, [t, d, i, a, n, r]), g = Te(() => {
     const X = Di(d + i, a, n);
     v(X), r({ id: t, value: X });
   }, [t, d, i, a, n, r]), x = Te((X) => {
     const C = X.currentTarget.value;
     v(Number(C === "." ? "0." : C));
-  }, []), q = Te(() => {
+  }, []), D = Te(() => {
     E(!1);
     const X = Di(Number(d.toFixed(l)), a, n);
     v(X), r({ id: t, value: X });
-  }, [t, d, l, a, n, r]), R = Te(
+  }, [t, d, l, a, n, r]), q = Te(
     (X) => {
       X.key === "Enter" ? X.target.blur() : X.key === "Escape" && (v(e), X.target.blur());
     },
     [e]
   ), O = /* @__PURE__ */ c(Fe, { sx: Z4, children: s });
-  return /* @__PURE__ */ U(Q, { sx: _4, children: [
-    /* @__PURE__ */ c(Q, { sx: K4, children: u && o ? /* @__PURE__ */ c(ds, { title: o, placement: "left", arrow: !0, enterDelay: 500, children: O }) : O }),
-    /* @__PURE__ */ U(Q, { sx: $4, children: [
+  return /* @__PURE__ */ U(J, { sx: _4, children: [
+    /* @__PURE__ */ c(J, { sx: K4, children: u && o ? /* @__PURE__ */ c(ds, { title: o, placement: "left", arrow: !0, enterDelay: 500, children: O }) : O }),
+    /* @__PURE__ */ U(J, { sx: $4, children: [
       /* @__PURE__ */ c(Nt, { size: "small", onClick: f, sx: wl, children: /* @__PURE__ */ c(z2, {}) }),
       /* @__PURE__ */ c(
         X2,
@@ -16666,7 +16666,7 @@ function Jr({
           sx: ep
         }
       ),
-      /* @__PURE__ */ c(Nt, { size: "small", onClick: h, sx: wl, children: /* @__PURE__ */ c(U2, {}) })
+      /* @__PURE__ */ c(Nt, { size: "small", onClick: g, sx: wl, children: /* @__PURE__ */ c(U2, {}) })
     ] }),
     /* @__PURE__ */ c(
       ba,
@@ -16678,9 +16678,9 @@ function Jr({
         onFocus: () => {
           v(e), E(!0);
         },
-        onBlur: q,
+        onBlur: D,
         onChange: x,
-        onKeyDown: R,
+        onKeyDown: q,
         slotProps: {
           htmlInput: {
             min: a,
@@ -16711,15 +16711,15 @@ const Pl = {
   fontSize: "0.75rem",
   py: 0.5
 }, M1 = ({ uuid: t }) => {
-  const e = I5(), r = F5(), a = a0((z) => z.solvers[t]), [n, i] = be(a.uniforms.colorBrightness.value), [s, o] = be(a.mesh.scale.z), [u, l] = be(a.heightmapVariable.material.uniforms.damping.value), [d, v] = be(a.numPasses), [T, E] = be(a.running), [P, f] = be(a.recording), [h, x] = be(a.getWireframeVisible()), [q, R] = be(!1), [O, X] = be(!1), [C, F] = be(!1), [p, S] = be(a.sourceKeys), g = e.filter((z) => !a.sources[z.uuid]), [D, M] = be(!1), [W, _] = be(a.receiverKeys), te = r.filter((z) => !a.receiverKeys[z.uuid]);
+  const e = I5(), r = F5(), a = a0((z) => z.solvers[t]), [n, i] = be(a.uniforms.colorBrightness.value), [s, o] = be(a.mesh.scale.z), [u, l] = be(a.heightmapVariable.material.uniforms.damping.value), [d, v] = be(a.numPasses), [T, E] = be(a.running), [P, f] = be(a.recording), [g, x] = be(a.getWireframeVisible()), [D, q] = be(!1), [O, X] = be(!1), [C, F] = be(!1), [p, S] = be(a.sourceKeys), h = e.filter((z) => !a.sources[z.uuid]), [R, M] = be(!1), [W, _] = be(a.receiverKeys), te = r.filter((z) => !a.receiverKeys[z.uuid]);
   return /* @__PURE__ */ U("div", { children: [
     /* @__PURE__ */ U(
       Ne,
       {
         id: "view",
         label: "View",
-        open: q,
-        onOpenClose: () => R(!q),
+        open: D,
+        onOpenClose: () => q(!D),
         children: [
           /* @__PURE__ */ c(
             Jr,
@@ -16732,7 +16732,7 @@ const Pl = {
               max: 40,
               step: 0.1,
               value: n,
-              hasToolTip: q,
+              hasToolTip: D,
               onChange: (z) => {
                 a.uniforms.colorBrightness.value = z.value, i(z.value);
               }
@@ -16748,7 +16748,7 @@ const Pl = {
               min: 0,
               max: 1,
               step: 1e-3,
-              hasToolTip: q,
+              hasToolTip: D,
               value: s,
               onChange: (z) => {
                 a.mesh.scale.setZ(z.value === 0 ? 1e-3 : z.value), o(z.value);
@@ -16756,14 +16756,14 @@ const Pl = {
             }
           ),
           /* @__PURE__ */ U(Ke, { children: [
-            /* @__PURE__ */ c(Ze, { hasToolTip: q, label: "Wireframe", tooltip: "Display mesh as wirefame" }),
+            /* @__PURE__ */ c(Ze, { hasToolTip: D, label: "Wireframe", tooltip: "Display mesh as wirefame" }),
             /* @__PURE__ */ c(
               Xt,
               {
                 onChange: (z) => {
                   a.setWireframeVisible(z.value), x(z.value);
                 },
-                value: h
+                value: g
               }
             )
           ] })
@@ -16838,7 +16838,7 @@ const Pl = {
                 sx: Pl,
                 children: [
                   /* @__PURE__ */ c(wt, { value: "", disabled: !0, sx: Ra, children: "Select Source" }),
-                  g.map((z) => /* @__PURE__ */ c(wt, { value: z.uuid, sx: Ra, children: z.name }, z.uuid))
+                  h.map((z) => /* @__PURE__ */ c(wt, { value: z.uuid, sx: Ra, children: z.name }, z.uuid))
                 ]
               }
             )
@@ -16869,11 +16869,11 @@ const Pl = {
       {
         id: "sim-receivers",
         label: "Receivers",
-        open: D,
-        onOpenClose: () => M(!D),
+        open: R,
+        onOpenClose: () => M(!R),
         children: [
           /* @__PURE__ */ U(Ke, { children: [
-            /* @__PURE__ */ c(Ze, { hasToolTip: D, label: "Receiver", tooltip: "All available receivers" }),
+            /* @__PURE__ */ c(Ze, { hasToolTip: R, label: "Receiver", tooltip: "All available receivers" }),
             /* @__PURE__ */ U(
               ji,
               {
@@ -16941,7 +16941,7 @@ const Pl = {
   return H0(() => Object.values(t).filter((e) => e.kind === "room").length, [t]);
 }, ap = () => {
   const t = N1();
-  return t === 0 ? /* @__PURE__ */ c(Q, { sx: { px: 1, py: 0.5 }, children: /* @__PURE__ */ c(Fe, { variant: "caption", color: "text.secondary", children: "No rooms available. Import a model first." }) }) : /* @__PURE__ */ c(Q, { sx: { px: 1, py: 0.5 }, children: /* @__PURE__ */ U(Fe, { variant: "caption", color: "text.secondary", children: [
+  return t === 0 ? /* @__PURE__ */ c(J, { sx: { px: 1, py: 0.5 }, children: /* @__PURE__ */ c(Fe, { variant: "caption", color: "text.secondary", children: "No rooms available. Import a model first." }) }) : /* @__PURE__ */ c(J, { sx: { px: 1, py: 0.5 }, children: /* @__PURE__ */ U(Fe, { variant: "caption", color: "text.secondary", children: [
     t,
     " room",
     t !== 1 ? "s" : "",
@@ -17229,7 +17229,7 @@ function Na({ uuid: t, name: e, type: r, visible: a, selected: n, onSelect: i, o
       selected: n,
       onMouseEnter: u,
       onMouseLeave: l,
-      secondaryAction: /* @__PURE__ */ U(Q, { sx: { display: "flex", gap: 0.25 }, children: [
+      secondaryAction: /* @__PURE__ */ U(J, { sx: { display: "flex", gap: 0.25 }, children: [
         /* @__PURE__ */ c(Nt, { size: "small", onClick: s, sx: { p: 0.25 }, children: a ? /* @__PURE__ */ c(fc, { sx: { fontSize: 16 } }) : /* @__PURE__ */ c(mc, { sx: { fontSize: 16 } }) }),
         /* @__PURE__ */ c(Nt, { size: "small", onClick: o, sx: { p: 0.25 }, children: /* @__PURE__ */ c(fs, { sx: { fontSize: 16 } }) })
       ] }),
@@ -17253,7 +17253,7 @@ function hp({ uuid: t, name: e, type: r, selected: a, onSelect: n, onRun: i, onD
       disablePadding: !0,
       sx: Hs,
       selected: a,
-      secondaryAction: /* @__PURE__ */ U(Q, { sx: { display: "flex", gap: 0.25 }, children: [
+      secondaryAction: /* @__PURE__ */ U(J, { sx: { display: "flex", gap: 0.25 }, children: [
         /* @__PURE__ */ c(Nt, { size: "small", onClick: i, color: "primary", sx: { p: 0.25 }, children: /* @__PURE__ */ c(pc, { sx: { fontSize: 16 } }) }),
         /* @__PURE__ */ c(Nt, { size: "small", onClick: s, sx: { p: 0.25 }, children: /* @__PURE__ */ c(fs, { sx: { fontSize: 16 } }) })
       ] }),
@@ -17331,13 +17331,13 @@ function bp() {
     e(W), a(null), i(!1), gs("SELECT_OBJECT", W);
     const _ = s[W];
     _ && $("SET_SELECTION", [_]);
-  }, [s]), h = Te((W) => {
+  }, [s]), g = Te((W) => {
     $("TOGGLE_CONTAINER_VISIBLE", W);
   }, []), x = Te((W) => {
     $("REMOVE_CONTAINER", W), t === W && e(null);
-  }, [t]), q = Te((W) => {
+  }, [t]), D = Te((W) => {
     a(W), e(null), i(!1);
-  }, []), R = Te((W) => {
+  }, []), q = Te((W) => {
     $("RUN_SOLVER", W);
   }, []), O = Te((W) => {
     $("REMOVE_SOLVER", W), r === W && a(null);
@@ -17349,7 +17349,7 @@ function bp() {
     $("SURFACE_HOVER", W);
   }, []), p = Te((W) => {
     $("SURFACE_UNHOVER", W);
-  }, []), S = t ? s[t] : null, g = r ? u[r] : null, D = () => {
+  }, []), S = t ? s[t] : null, h = r ? u[r] : null, R = () => {
     if (S)
       switch (S.kind) {
         case "source":
@@ -17363,22 +17363,22 @@ function bp() {
         default:
           return /* @__PURE__ */ c(Fe, { variant: "body2", color: "text.secondary", children: "Unknown object type" });
       }
-    if (g) {
-      const W = Ap[g.kind];
+    if (h) {
+      const W = Ap[h.kind];
       return W ? /* @__PURE__ */ c(W, { uuid: r }) : /* @__PURE__ */ U(Fe, { variant: "body2", color: "text.secondary", children: [
         "Unknown solver type: ",
-        g.kind
+        h.kind
       ] });
     }
     return n ? /* @__PURE__ */ c(X1, {}) : null;
-  }, M = S || g || n;
-  return /* @__PURE__ */ U(Q, { sx: up, children: [
+  }, M = S || h || n;
+  return /* @__PURE__ */ U(J, { sx: up, children: [
     /* @__PURE__ */ U(ri, { defaultExpanded: !0, disableGutters: !0, sx: qi, children: [
       /* @__PURE__ */ U(ai, { expandIcon: /* @__PURE__ */ c(J0, {}), sx: Oi, children: [
         /* @__PURE__ */ c(Fe, { variant: "subtitle2", sx: { fontWeight: 600, fontSize: "0.75rem" }, children: "Objects" }),
         /* @__PURE__ */ c(oo, { label: E, size: "small", sx: { height: 18, fontSize: "0.625rem" } })
       ] }),
-      /* @__PURE__ */ c(ni, { sx: xl, children: E === 0 ? /* @__PURE__ */ c(Q, { sx: fp, children: /* @__PURE__ */ c(Fe, { variant: "body2", color: "text.secondary", fontSize: "0.75rem", children: "No objects. Import a model or add from menu." }) }) : /* @__PURE__ */ U(zi, { dense: !0, disablePadding: !0, children: [
+      /* @__PURE__ */ c(ni, { sx: xl, children: E === 0 ? /* @__PURE__ */ c(J, { sx: fp, children: /* @__PURE__ */ c(Fe, { variant: "body2", color: "text.secondary", fontSize: "0.75rem", children: "No objects. Import a model or add from menu." }) }) : /* @__PURE__ */ U(zi, { dense: !0, disablePadding: !0, children: [
         v.rooms.length > 0 && /* @__PURE__ */ U(A0, { children: [
           /* @__PURE__ */ c(_t, { sx: Ma, children: /* @__PURE__ */ U(Fe, { variant: "caption", color: "text.secondary", fontWeight: 600, children: [
             "ROOMS (",
@@ -17394,7 +17394,7 @@ function bp() {
               visible: W.visible,
               selected: t === W.uuid,
               onSelect: () => f(W.uuid),
-              onToggleVisibility: () => h(W.uuid),
+              onToggleVisibility: () => g(W.uuid),
               onDelete: () => x(W.uuid)
             },
             W.uuid
@@ -17415,7 +17415,7 @@ function bp() {
               visible: W.visible,
               selected: t === W.uuid,
               onSelect: () => f(W.uuid),
-              onToggleVisibility: () => h(W.uuid),
+              onToggleVisibility: () => g(W.uuid),
               onDelete: () => x(W.uuid)
             },
             W.uuid
@@ -17436,7 +17436,7 @@ function bp() {
               visible: W.visible,
               selected: t === W.uuid,
               onSelect: () => f(W.uuid),
-              onToggleVisibility: () => h(W.uuid),
+              onToggleVisibility: () => g(W.uuid),
               onDelete: () => x(W.uuid)
             },
             W.uuid
@@ -17448,7 +17448,7 @@ function bp() {
             v.surfaces.length,
             ")"
           ] }) }),
-          /* @__PURE__ */ c(Q, { sx: dp, children: v.surfaces.map((W) => /* @__PURE__ */ c(
+          /* @__PURE__ */ c(J, { sx: dp, children: v.surfaces.map((W) => /* @__PURE__ */ c(
             Na,
             {
               uuid: W.uuid,
@@ -17457,7 +17457,7 @@ function bp() {
               visible: W.visible,
               selected: t === W.uuid,
               onSelect: () => f(W.uuid),
-              onToggleVisibility: () => h(W.uuid),
+              onToggleVisibility: () => g(W.uuid),
               onDelete: () => x(W.uuid),
               onHover: () => F(W.uuid),
               onUnhover: () => p(W.uuid)
@@ -17473,7 +17473,7 @@ function bp() {
         /* @__PURE__ */ c(Fe, { variant: "subtitle2", sx: { fontWeight: 600, fontSize: "0.75rem" }, children: "Solvers" }),
         /* @__PURE__ */ c(oo, { label: P, size: "small", sx: { height: 18, fontSize: "0.625rem" } }),
         /* @__PURE__ */ c(ds, { title: l ? "Auto-calculate ON" : "Auto-calculate OFF", children: /* @__PURE__ */ c(
-          Q,
+          J,
           {
             component: "span",
             role: "button",
@@ -17495,8 +17495,8 @@ function bp() {
             name: W.name,
             type: W.type,
             selected: r === W.uuid,
-            onSelect: () => q(W.uuid),
-            onRun: () => R(W.uuid),
+            onSelect: () => D(W.uuid),
+            onRun: () => q(W.uuid),
             onDelete: () => O(W.uuid)
           },
           W.uuid
@@ -17513,8 +17513,8 @@ function bp() {
     M && /* @__PURE__ */ U(A0, { children: [
       /* @__PURE__ */ c(xt, {}),
       /* @__PURE__ */ U(ri, { defaultExpanded: !0, disableGutters: !0, sx: qi, children: [
-        /* @__PURE__ */ c(ai, { expandIcon: /* @__PURE__ */ c(J0, {}), sx: Oi, children: /* @__PURE__ */ c(Fe, { variant: "subtitle2", sx: { fontWeight: 600, fontSize: "0.75rem" }, children: S ? `${S.name || S.kind} Properties` : g ? `${g.kind} Settings` : "Renderer Settings" }) }),
-        /* @__PURE__ */ c(ni, { sx: { p: 0 }, children: /* @__PURE__ */ c(Q, { sx: mp, children: D() }) })
+        /* @__PURE__ */ c(ai, { expandIcon: /* @__PURE__ */ c(J0, {}), sx: Oi, children: /* @__PURE__ */ c(Fe, { variant: "subtitle2", sx: { fontWeight: 600, fontSize: "0.75rem" }, children: S ? `${S.name || S.kind} Properties` : h ? `${h.kind} Settings` : "Renderer Settings" }) }),
+        /* @__PURE__ */ c(ni, { sx: { p: 0 }, children: /* @__PURE__ */ c(J, { sx: mp, children: R() }) })
       ] })
     ] })
   ] });
@@ -17568,9 +17568,9 @@ const U1 = () => {
 };
 function z1(t) {
   const e = t.hotkey.join("");
-  return /* @__PURE__ */ U(Q, { sx: vp, children: [
+  return /* @__PURE__ */ U(J, { sx: vp, children: [
     /* @__PURE__ */ c("div", { children: t.text }),
-    /* @__PURE__ */ c(Q, { sx: yp, children: t.hotkey.map((r, a) => /* @__PURE__ */ c(Q, { component: "span", sx: Sp, children: r }, e + t.text + String(a))) })
+    /* @__PURE__ */ c(J, { sx: yp, children: t.hotkey.map((r, a) => /* @__PURE__ */ c(J, { component: "span", sx: Sp, children: r }, e + t.text + String(a))) })
   ] });
 }
 const Y0 = {
@@ -17866,7 +17866,7 @@ function kp() {
 const Ip = () => {
   const t = Ve((e) => e.projectName);
   return /* @__PURE__ */ c(
-    Q,
+    J,
     {
       className: "main-nav_bar-projectname_text",
       sx: {
@@ -17906,8 +17906,8 @@ const Ip = () => {
 };
 function Hp() {
   return /* @__PURE__ */ c(j2, { position: "static", sx: Tp, children: /* @__PURE__ */ U(V2, { disableGutters: !0, sx: Fp, children: [
-    /* @__PURE__ */ U(Q, { sx: El, children: [
-      /* @__PURE__ */ c(Q, { sx: Bp, children: "cram" }),
+    /* @__PURE__ */ U(J, { sx: El, children: [
+      /* @__PURE__ */ c(J, { sx: Bp, children: "cram" }),
       /* @__PURE__ */ c(xt, { orientation: "vertical", flexItem: !0, sx: { mx: 1 } }),
       /* @__PURE__ */ U(G2, { variant: "text", size: "small", children: [
         /* @__PURE__ */ c(Cp, {}),
@@ -17919,7 +17919,7 @@ function Hp() {
       ] })
     ] }),
     /* @__PURE__ */ c(Ip, {}),
-    /* @__PURE__ */ c(Q, { sx: { ...El, justifyContent: "flex-end" }, children: /* @__PURE__ */ c(
+    /* @__PURE__ */ c(J, { sx: { ...El, justifyContent: "flex-end" }, children: /* @__PURE__ */ c(
       Nt,
       {
         size: "small",
@@ -17994,9 +17994,9 @@ const Dp = Tt`
   if (!t.visible)
     return null;
   const e = t.progress < 0;
-  return /* @__PURE__ */ U(Q, { sx: Rp(t.visible), children: [
+  return /* @__PURE__ */ U(J, { sx: Rp(t.visible), children: [
     /* @__PURE__ */ c(Fe, { component: "span", sx: kl, children: t.message }),
-    /* @__PURE__ */ c(Q, { sx: Lp, children: /* @__PURE__ */ c(Q, { sx: Mp(t.progress, e) }) }),
+    /* @__PURE__ */ c(J, { sx: Lp, children: /* @__PURE__ */ c(J, { sx: Mp(t.progress, e) }) }),
     !e && /* @__PURE__ */ U(Fe, { component: "span", sx: kl, children: [
       Math.round(t.progress),
       "%"
@@ -18062,8 +18062,8 @@ const Dp = Tt`
     return () => {
       r(), a();
     };
-  }, []), t.visible ? /* @__PURE__ */ U(Q, { sx: Up(t.visible), children: [
-    /* @__PURE__ */ c(Q, { sx: zp }),
+  }, []), t.visible ? /* @__PURE__ */ U(J, { sx: Up(t.visible), children: [
+    /* @__PURE__ */ c(J, { sx: zp }),
     /* @__PURE__ */ c(Fe, { component: "span", sx: { color: "#1c2127", whiteSpace: "nowrap" }, children: t.message }),
     t.solverCount > 1 && /* @__PURE__ */ U(Fe, { component: "span", sx: { color: "#5c7080", fontSize: 11 }, children: [
       "(",
@@ -18162,55 +18162,55 @@ const _p = { className: "react-tabs", focus: !1 }, Kp = { children: G1 }, Zp = (
   yc(Kp, t, "prop", "UncontrolledTabs");
   let e = $e([]), r = $e([]);
   const a = $e();
-  function n(R, O) {
-    if (R < 0 || R >= l()) return;
+  function n(q, O) {
+    if (q < 0 || q >= l()) return;
     const { onSelect: X, selectedIndex: C } = t;
-    X(R, C, O);
+    X(q, C, O);
   }
-  function i(R) {
+  function i(q) {
     const O = l();
-    for (let X = R + 1; X < O; X++)
+    for (let X = q + 1; X < O; X++)
       if (!Yt(d(X)))
         return X;
-    for (let X = 0; X < R; X++)
+    for (let X = 0; X < q; X++)
       if (!Yt(d(X)))
         return X;
-    return R;
+    return q;
   }
-  function s(R) {
-    let O = R;
+  function s(q) {
+    let O = q;
     for (; O--; )
       if (!Yt(d(O)))
         return O;
-    for (O = l(); O-- > R; )
+    for (O = l(); O-- > q; )
       if (!Yt(d(O)))
         return O;
-    return R;
+    return q;
   }
   function o() {
-    const R = l();
-    for (let O = 0; O < R; O++)
+    const q = l();
+    for (let O = 0; O < q; O++)
       if (!Yt(d(O)))
         return O;
     return null;
   }
   function u() {
-    let R = l();
-    for (; R--; )
-      if (!Yt(d(R)))
-        return R;
+    let q = l();
+    for (; q--; )
+      if (!Yt(d(q)))
+        return q;
     return null;
   }
   function l() {
-    const { children: R } = t;
-    return J1(R);
+    const { children: q } = t;
+    return J1(q);
   }
-  function d(R) {
-    return e.current[`tabs-${R}`];
+  function d(q) {
+    return e.current[`tabs-${q}`];
   }
   function v() {
-    let R = 0;
-    const { children: O, disabledTabClassName: X, focus: C, forceRenderTabPanel: F, selectedIndex: p, selectedTabClassName: S, selectedTabPanelClassName: g, environment: D } = t;
+    let q = 0;
+    const { children: O, disabledTabClassName: X, focus: C, forceRenderTabPanel: F, selectedIndex: p, selectedTabClassName: S, selectedTabPanelClassName: h, environment: R } = t;
     r.current = r.current || [];
     let M = r.current.length - l();
     const W = I2();
@@ -18220,8 +18220,8 @@ const _p = { className: "react-tabs", focus: !1 }, Kp = { children: G1 }, Zp = (
       let te = _;
       if (Vn(_)) {
         let z = 0, se = !1;
-        yn == null && Qp(D);
-        const ue = D || (typeof window < "u" ? window : void 0);
+        yn == null && Qp(R);
+        const ue = R || (typeof window < "u" ? window : void 0);
         yn && ue && (se = j0.Children.toArray(_.props.children).filter(wa).some((K, ce) => ue.document.activeElement === d(ce))), te = Ua(_, { children: os(_.props.children, (K) => {
           const ce = `tabs-${z}`, me = p === z, ge = { tabRef: (xe) => {
             e.current[ce] = xe;
@@ -18229,35 +18229,35 @@ const _p = { className: "react-tabs", focus: !1 }, Kp = { children: G1 }, Zp = (
           return S && (ge.selectedClassName = S), X && (ge.disabledClassName = X), z++, Ua(K, ge);
         }) });
       } else if (Gn(_)) {
-        const z = { id: r.current[R], selected: p === R };
-        F && (z.forceRender = F), g && (z.selectedClassName = g), R++, te = Ua(_, z);
+        const z = { id: r.current[q], selected: p === q };
+        F && (z.forceRender = F), h && (z.selectedClassName = h), q++, te = Ua(_, z);
       }
       return te;
     });
   }
-  function T(R) {
+  function T(q) {
     const { direction: O, disableUpDownKeys: X, disableLeftRightKeys: C } = t;
-    if (P(R.target)) {
+    if (P(q.target)) {
       let { selectedIndex: F } = t, p = !1, S = !1;
-      (R.code === "Space" || R.keyCode === 32 || R.code === "Enter" || R.keyCode === 13) && (p = !0, S = !1, E(R)), !C && (R.keyCode === 37 || R.code === "ArrowLeft") || !X && (R.keyCode === 38 || R.code === "ArrowUp") ? (O === "rtl" ? F = i(F) : F = s(F), p = !0, S = !0) : !C && (R.keyCode === 39 || R.code === "ArrowRight") || !X && (R.keyCode === 40 || R.code === "ArrowDown") ? (O === "rtl" ? F = s(F) : F = i(F), p = !0, S = !0) : R.keyCode === 35 || R.code === "End" ? (F = u(), p = !0, S = !0) : (R.keyCode === 36 || R.code === "Home") && (F = o(), p = !0, S = !0), p && R.preventDefault(), S && n(F, R);
+      (q.code === "Space" || q.keyCode === 32 || q.code === "Enter" || q.keyCode === 13) && (p = !0, S = !1, E(q)), !C && (q.keyCode === 37 || q.code === "ArrowLeft") || !X && (q.keyCode === 38 || q.code === "ArrowUp") ? (O === "rtl" ? F = i(F) : F = s(F), p = !0, S = !0) : !C && (q.keyCode === 39 || q.code === "ArrowRight") || !X && (q.keyCode === 40 || q.code === "ArrowDown") ? (O === "rtl" ? F = s(F) : F = i(F), p = !0, S = !0) : q.keyCode === 35 || q.code === "End" ? (F = u(), p = !0, S = !0) : (q.keyCode === 36 || q.code === "Home") && (F = o(), p = !0, S = !0), p && q.preventDefault(), S && n(F, q);
     }
   }
-  function E(R) {
-    let O = R.target;
+  function E(q) {
+    let O = q.target;
     do
       if (P(O)) {
         if (Yt(O))
           return;
         const X = [].slice.call(O.parentNode.children).filter(Il).indexOf(O);
-        n(X, R);
+        n(X, q);
         return;
       }
     while ((O = O.parentNode) != null);
   }
-  function P(R) {
-    if (!Il(R))
+  function P(q) {
+    if (!Il(q))
       return !1;
-    let O = R.parentElement;
+    let O = q.parentElement;
     do {
       if (O === a.current) return !0;
       if (O.getAttribute("data-rttabs")) break;
@@ -18265,9 +18265,9 @@ const _p = { className: "react-tabs", focus: !1 }, Kp = { children: G1 }, Zp = (
     } while (O);
     return !1;
   }
-  const f = Object.assign({}, _p, t), { className: h, domRef: x } = f, q = Jp(f, Yp);
-  return j0.createElement("div", Object.assign({}, q, { className: Yn(h), onClick: E, onKeyDown: T, ref: (R) => {
-    a.current = R, x && x(R);
+  const f = Object.assign({}, _p, t), { className: g, domRef: x } = f, D = Jp(f, Yp);
+  return j0.createElement("div", Object.assign({}, D, { className: Yn(g), onClick: E, onKeyDown: T, ref: (q) => {
+    a.current = q, x && x(q);
   }, "data-rttabs": !0 }), v());
 };
 var $p = {};
@@ -18293,14 +18293,14 @@ const r8 = 0, tn = 1, a8 = { children: G1, onSelect: Vp, selectedIndex: Gp }, n8
     const f = J1(r);
     We(() => {
       if (v != null) {
-        const h = Math.max(0, f - 1);
-        T(Math.min(v, h));
+        const g = Math.max(0, f - 1);
+        T(Math.min(v, g));
       }
     }, [f]);
   }
   i8(o, d);
-  const E = (f, h, x) => {
-    typeof s == "function" && s(f, h, x) === !1 || (i && l(!0), d === tn && T(f));
+  const E = (f, g, x) => {
+    typeof s == "function" && s(f, g, x) === !1 || (i && l(!0), d === tn && T(f));
   };
   let P = Object.assign({}, t, o);
   return P.focus = u, P.onSelect = E, v != null && (P.selectedIndex = v), delete P.defaultFocus, delete P.defaultIndex, delete P.focusTabOnClick, j0.createElement(Zp, P, r);
@@ -18543,7 +18543,7 @@ function Xr(t, e, r) {
   return { y: t, m: e, d: r, H: 0, M: 0, S: 0, L: 0 };
 }
 function F8(t) {
-  var e = t.dateTime, r = t.date, a = t.time, n = t.periods, i = t.days, s = t.shortDays, o = t.months, u = t.shortMonths, l = Ur(n), d = zr(n), v = Ur(i), T = zr(i), E = Ur(s), P = zr(s), f = Ur(o), h = zr(o), x = Ur(u), q = zr(u), R = {
+  var e = t.dateTime, r = t.date, a = t.time, n = t.periods, i = t.days, s = t.shortDays, o = t.months, u = t.shortMonths, l = Ur(n), d = zr(n), v = Ur(i), T = zr(i), E = Ur(s), P = zr(s), f = Ur(o), g = zr(o), x = Ur(u), D = zr(u), q = {
     a: se,
     A: ue,
     b: K,
@@ -18610,8 +18610,8 @@ function F8(t) {
     Z: T7,
     "%": Wl
   }, X = {
-    a: g,
-    A: D,
+    a: h,
+    A: R,
     b: M,
     B: W,
     c: _,
@@ -18643,19 +18643,19 @@ function F8(t) {
     Z: N8,
     "%": Y8
   };
-  R.x = C(r, R), R.X = C(a, R), R.c = C(e, R), O.x = C(r, O), O.X = C(a, O), O.c = C(e, O);
+  q.x = C(r, q), q.X = C(a, q), q.c = C(e, q), O.x = C(r, O), O.X = C(a, O), O.c = C(e, O);
   function C(m, w) {
     return function(L) {
-      var N = [], J = -1, ee = 0, de = m.length, ve, ke, Xe;
-      for (L instanceof Date || (L = /* @__PURE__ */ new Date(+L)); ++J < de; )
-        m.charCodeAt(J) === 37 && (N.push(m.slice(ee, J)), (ke = Dl[ve = m.charAt(++J)]) != null ? ve = m.charAt(++J) : ke = ve === "e" ? " " : "0", (Xe = w[ve]) && (ve = Xe(L, ke)), N.push(ve), ee = J + 1);
-      return N.push(m.slice(ee, J)), N.join("");
+      var N = [], Q = -1, ee = 0, de = m.length, ve, ke, Xe;
+      for (L instanceof Date || (L = /* @__PURE__ */ new Date(+L)); ++Q < de; )
+        m.charCodeAt(Q) === 37 && (N.push(m.slice(ee, Q)), (ke = Dl[ve = m.charAt(++Q)]) != null ? ve = m.charAt(++Q) : ke = ve === "e" ? " " : "0", (Xe = w[ve]) && (ve = Xe(L, ke)), N.push(ve), ee = Q + 1);
+      return N.push(m.slice(ee, Q)), N.join("");
     };
   }
   function F(m, w) {
     return function(L) {
-      var N = Xr(1900, void 0, 1), J = p(N, m, L += "", 0), ee, de;
-      if (J != L.length) return null;
+      var N = Xr(1900, void 0, 1), Q = p(N, m, L += "", 0), ee, de;
+      if (Q != L.length) return null;
       if ("Q" in N) return new Date(N.Q);
       if ("s" in N) return new Date(N.s * 1e3 + ("L" in N ? N.L : 0));
       if (w && !("Z" in N) && (N.Z = 0), "p" in N && (N.H = N.H % 12 + N.p * 12), N.m === void 0 && (N.m = "q" in N ? N.q : 0), "V" in N) {
@@ -18666,10 +18666,10 @@ function F8(t) {
     };
   }
   function p(m, w, L, N) {
-    for (var J = 0, ee = w.length, de = L.length, ve, ke; J < ee; ) {
+    for (var Q = 0, ee = w.length, de = L.length, ve, ke; Q < ee; ) {
       if (N >= de) return -1;
-      if (ve = w.charCodeAt(J++), ve === 37) {
-        if (ve = w.charAt(J++), ke = X[ve in Dl ? w.charAt(J++) : ve], !ke || (N = ke(m, L, N)) < 0) return -1;
+      if (ve = w.charCodeAt(Q++), ve === 37) {
+        if (ve = w.charAt(Q++), ke = X[ve in Dl ? w.charAt(Q++) : ve], !ke || (N = ke(m, L, N)) < 0) return -1;
       } else if (ve != L.charCodeAt(N++))
         return -1;
     }
@@ -18679,21 +18679,21 @@ function F8(t) {
     var N = l.exec(w.slice(L));
     return N ? (m.p = d.get(N[0].toLowerCase()), L + N[0].length) : -1;
   }
-  function g(m, w, L) {
+  function h(m, w, L) {
     var N = E.exec(w.slice(L));
     return N ? (m.w = P.get(N[0].toLowerCase()), L + N[0].length) : -1;
   }
-  function D(m, w, L) {
+  function R(m, w, L) {
     var N = v.exec(w.slice(L));
     return N ? (m.w = T.get(N[0].toLowerCase()), L + N[0].length) : -1;
   }
   function M(m, w, L) {
     var N = x.exec(w.slice(L));
-    return N ? (m.m = q.get(N[0].toLowerCase()), L + N[0].length) : -1;
+    return N ? (m.m = D.get(N[0].toLowerCase()), L + N[0].length) : -1;
   }
   function W(m, w, L) {
     var N = f.exec(w.slice(L));
-    return N ? (m.m = h.get(N[0].toLowerCase()), L + N[0].length) : -1;
+    return N ? (m.m = g.get(N[0].toLowerCase()), L + N[0].length) : -1;
   }
   function _(m, w, L) {
     return p(m, e, w, L);
@@ -18742,7 +18742,7 @@ function F8(t) {
   }
   return {
     format: function(m) {
-      var w = C(m += "", R);
+      var w = C(m += "", q);
       return w.toString = function() {
         return m;
       }, w;
@@ -19039,11 +19039,11 @@ const zl = (t) => t.time, Xi = (t) => t.pressure[0], uu = (t, e) => [...Array(e 
   const [t, e] = be(0);
   return [t, () => e(t + 1)];
 }, R7 = ({ uuid: t, width: e = 400, height: r = 200, events: a = !1, plotOrders: n, solverKind: i }) => {
-  const { info: s, data: o, from: u } = D0(E0((q) => W0(["info", "data", "from"], q.results[t])));
+  const { info: s, data: o, from: u } = D0(E0((D) => W0(["info", "data", "from"], D.results[t])));
   O7();
-  const [l, d] = be(o), v = H0(() => !l || !n ? l : l.filter((q) => n.includes(q.order)), [l, n]);
-  We(() => ae("UPDATE_RESULT", (q) => {
-    q.uuid === t && d(q.result.data);
+  const [l, d] = be(o), v = H0(() => !l || !n ? l : l.filter((D) => n.includes(D.order)), [l, n]);
+  We(() => ae("UPDATE_RESULT", (D) => {
+    D.uuid === t && d(D.result.data);
   }), [t]);
   const T = 60, E = e - T, P = r - T, f = H0(
     () => aa({
@@ -19051,7 +19051,7 @@ const zl = (t) => t.time, Xi = (t) => t.pressure[0], uu = (t, e) => [...Array(e 
       domain: [0, l && l.length > 0 ? Math.max(...l.map(zl)) : 1]
     }),
     [E, l]
-  ), h = H0(
+  ), g = H0(
     () => aa({
       range: [P, 0],
       domain: l && l.length > 0 ? [Math.min(...l.map(Xi)) * 0.75, Math.max(...l.map(Xi))] : [0, 1]
@@ -19069,14 +19069,14 @@ const zl = (t) => t.time, Xi = (t) => t.pressure[0], uu = (t, e) => [...Array(e 
       Cc,
       {
         xScale: f,
-        yScale: h,
+        yScale: g,
         width: E,
         height: P,
         left: T
       }
     ),
-    /* @__PURE__ */ c(sn, { children: v.map((q) => {
-      const R = zl(q), O = P - h(Xi(q)), X = f(R) + T, C = P - O;
+    /* @__PURE__ */ c(sn, { children: v.map((D) => {
+      const q = zl(D), O = P - g(Xi(D)), X = f(q) + T, C = P - O;
       return /* @__PURE__ */ c(
         Y2,
         {
@@ -19084,39 +19084,39 @@ const zl = (t) => t.time, Xi = (t) => t.pressure[0], uu = (t, e) => [...Array(e 
           y: C,
           width: 3,
           height: O,
-          fill: x(q.order),
+          fill: x(D.order),
           className: "test-bar-class",
           onMouseOver: () => {
           },
           onClick: () => {
             if (!a) return;
             const F = a0.getState().solvers[u];
-            F && "toggleRayPathHighlight" in F && F.toggleRayPathHighlight(q.uuid);
+            F && "toggleRayPathHighlight" in F && F.toggleRayPathHighlight(D.uuid);
           }
         },
-        `bar-${q.arrival}`
+        `bar-${D.arrival}`
       );
     }) }),
     /* @__PURE__ */ c(ps, { scale: f, top: P, left: T, label: "Time (s)" }),
-    /* @__PURE__ */ c(hs, { scale: h, left: T, label: "Sound Pressure Level (dB re: 20uPa)" })
+    /* @__PURE__ */ c(hs, { scale: g, left: T, label: "Sound Pressure Level (dB re: 20uPa)" })
   ] });
 }, L7 = ({ uuid: t, width: e = 400, height: r = 300, events: a = !1 }) => {
-  const { name: n, info: i, from: s } = D0(E0((h) => W0(["name", "info", "from"], h.results[t]))), o = a0((h) => h.solvers[s]), u = o?.plotOrders ?? [], l = o?.frequencies ?? [125, 250, 500, 1e3, 2e3, 4e3, 8e3], d = o?.kind, [v, T] = be(u), [E, P] = be(i.maxOrder);
-  We(() => ae("UPDATE_RESULT", (h) => {
-    if (h.uuid === t) {
-      const x = h.result.info.maxOrder;
+  const { name: n, info: i, from: s } = D0(E0((g) => W0(["name", "info", "from"], g.results[t]))), o = a0((g) => g.solvers[s]), u = o?.plotOrders ?? [], l = o?.frequencies ?? [125, 250, 500, 1e3, 2e3, 4e3, 8e3], d = o?.kind, [v, T] = be(u), [E, P] = be(i.maxOrder);
+  We(() => ae("UPDATE_RESULT", (g) => {
+    if (g.uuid === t) {
+      const x = g.result.info.maxOrder;
       P(x);
-      const q = Array.from({ length: x + 1 }, (R, O) => O);
-      T(q);
+      const D = Array.from({ length: x + 1 }, (q, O) => O);
+      T(D);
     }
   }), [t]), We(() => {
-    const h = ae("IMAGESOURCE_SET_PROPERTY", (q) => {
-      q.uuid === s && q.property === "plotOrders" && T(q.value);
-    }), x = ae("BEAMTRACE_SET_PROPERTY", (q) => {
-      q.uuid === s && q.property === "plotOrders" && T(q.value);
+    const g = ae("IMAGESOURCE_SET_PROPERTY", (D) => {
+      D.uuid === s && D.property === "plotOrders" && T(D.value);
+    }), x = ae("BEAMTRACE_SET_PROPERTY", (D) => {
+      D.uuid === s && D.property === "plotOrders" && T(D.value);
     });
     return () => {
-      h(), x();
+      g(), x();
     };
   }, [s]);
   const f = H0(
@@ -19126,12 +19126,12 @@ const zl = (t) => t.time, Xi = (t) => t.pressure[0], uu = (t, e) => [...Array(e 
     ),
     [E]
   );
-  return e < 10 ? null : /* @__PURE__ */ U(Q, { sx: jl, children: [
+  return e < 10 ? null : /* @__PURE__ */ U(J, { sx: jl, children: [
     /* @__PURE__ */ c(Fe, { sx: Vl, children: n }),
-    /* @__PURE__ */ U(Q, { sx: H7, children: [
-      /* @__PURE__ */ c(Q, { sx: q7, children: /* @__PURE__ */ c(wc, { debounceTime: 10, children: ({ width: h }) => /* @__PURE__ */ c(R7, { width: h, height: r, uuid: t, events: a, plotOrders: v, solverKind: d }) }) }),
-      /* @__PURE__ */ U(Q, { sx: jl, children: [
-        /* @__PURE__ */ c(Pc, { scale: f, labelFormat: (h) => `Order ${h}`, children: (h) => /* @__PURE__ */ c(Q, { sx: Gl, children: h.map((x, q) => /* @__PURE__ */ U(
+    /* @__PURE__ */ U(J, { sx: H7, children: [
+      /* @__PURE__ */ c(J, { sx: q7, children: /* @__PURE__ */ c(wc, { debounceTime: 10, children: ({ width: g }) => /* @__PURE__ */ c(R7, { width: g, height: r, uuid: t, events: a, plotOrders: v, solverKind: d }) }) }),
+      /* @__PURE__ */ U(J, { sx: jl, children: [
+        /* @__PURE__ */ c(Pc, { scale: f, labelFormat: (g) => `Order ${g}`, children: (g) => /* @__PURE__ */ c(J, { sx: Gl, children: g.map((x, D) => /* @__PURE__ */ U(
           co,
           {
             margin: "0 5px",
@@ -19144,19 +19144,19 @@ const zl = (t) => t.time, Xi = (t) => t.pressure[0], uu = (t, e) => [...Array(e 
                 Xt,
                 {
                   value: v.includes(x.datum),
-                  onChange: (R) => {
-                    const O = R.value ? cf([...v, x.datum]) : v.reduce((C, F) => F === x.datum ? C : [...C, F], []);
+                  onChange: (q) => {
+                    const O = q.value ? cf([...v, x.datum]) : v.reduce((C, F) => F === x.datum ? C : [...C, F], []);
                     $(d === "beam-trace" ? "BEAMTRACE_SET_PROPERTY" : "IMAGESOURCE_SET_PROPERTY", { uuid: s, property: "plotOrders", value: O });
                   }
                 }
               )
             ]
           },
-          `legend-quantile-${q}`
+          `legend-quantile-${D}`
         )) }) }),
-        /* @__PURE__ */ U(Q, { sx: D7, children: [
+        /* @__PURE__ */ U(J, { sx: D7, children: [
           /* @__PURE__ */ c(Fe, { sx: Vl, children: /* @__PURE__ */ c("b", { children: "Octave Band (Hz)" }) }),
-          /* @__PURE__ */ c(Q, { sx: Gl, children: l.map((h) => /* @__PURE__ */ U(
+          /* @__PURE__ */ c(J, { sx: Gl, children: l.map((g) => /* @__PURE__ */ U(
             co,
             {
               margin: "0 5px",
@@ -19166,21 +19166,21 @@ const zl = (t) => t.time, Xi = (t) => t.pressure[0], uu = (t, e) => [...Array(e 
                 /* @__PURE__ */ c(
                   Ze,
                   {
-                    label: h.toString()
+                    label: g.toString()
                   }
                 ),
                 /* @__PURE__ */ c(
                   Xt,
                   {
-                    value: h === i.frequency[0],
+                    value: g === i.frequency[0],
                     onChange: (x) => {
-                      $(d === "beam-trace" ? "BEAMTRACE_SET_PROPERTY" : "IMAGESOURCE_SET_PROPERTY", { uuid: s, property: "plotFrequency", value: h });
+                      $(d === "beam-trace" ? "BEAMTRACE_SET_PROPERTY" : "IMAGESOURCE_SET_PROPERTY", { uuid: s, property: "plotFrequency", value: g });
                     }
                   }
                 )
               ]
             },
-            `freq-control-${h}`
+            `freq-control-${g}`
           )) })
         ] })
       ] })
@@ -19212,22 +19212,22 @@ const Yl = (t) => t.frequency.toString(), Jl = {
   height: r = 300,
   events: a = !1
 }) => {
-  const { data: n } = D0(E0((h) => W0(["data"], h.results[t])));
+  const { data: n } = D0(E0((g) => W0(["data"], g.results[t])));
   X7();
-  const [i, s] = be(n), o = Object.keys(i[0]).filter((h) => h !== "frequency"), u = lo({
+  const [i, s] = be(n), o = Object.keys(i[0]).filter((g) => g !== "frequency"), u = lo({
     domain: i.map(Yl),
     padding: 0.2
   }), l = lo({
     domain: o,
     padding: 0.1
   }), d = aa({
-    domain: [0, Math.round(Math.max(...i.map((h) => Math.max(...o.map((x) => Number(h[x]))))) * 1.5 * 10) / 10]
+    domain: [0, Math.round(Math.max(...i.map((g) => Math.max(...o.map((x) => Number(g[x]))))) * 1.5 * 10) / 10]
   }), v = Sc({
     domain: o,
     range: [fu, mu, pu]
   });
-  We(() => ae("UPDATE_RESULT", (h) => {
-    h.uuid === t && s(h.result.data);
+  We(() => ae("UPDATE_RESULT", (g) => {
+    g.uuid === t && s(g.result.data);
   }), [t]);
   const T = 60, E = 30, P = e - T, f = r - E;
   return u.rangeRound([0, P]), l.rangeRound([0, u.bandwidth()]), d.range([f, 0]), console.log(i), e < 10 ? null : /* @__PURE__ */ U("svg", { width: e, height: r, children: [
@@ -19251,22 +19251,22 @@ const Yl = (t) => t.frequency.toString(), Jl = {
         x1Scale: l,
         yScale: d,
         color: v,
-        children: (h) => h.map((x) => /* @__PURE__ */ c(sn, { left: x.x0, children: x.bars.map((q) => /* @__PURE__ */ c(
+        children: (g) => g.map((x) => /* @__PURE__ */ c(sn, { left: x.x0, children: x.bars.map((D) => /* @__PURE__ */ c(
           "rect",
           {
-            x: q.x,
-            y: q.y,
+            x: D.x,
+            y: D.y,
             width: 15,
-            height: q.height,
-            fill: q.color,
+            height: D.height,
+            fill: D.color,
             rx: 4,
             onClick: () => {
               if (!a) return;
-              const { key: R, value: O } = q;
-              alert(JSON.stringify({ key: R, value: O }));
+              const { key: q, value: O } = D;
+              alert(JSON.stringify({ key: q, value: O }));
             }
           },
-          `bar-group-bar-${x.index}-${q.index}-${q.value}-${q.key}`
+          `bar-group-bar-${x.index}-${D.index}-${D.value}-${D.key}`
         )) }, `bar-group-${x.index}-${x.x0}`))
       }
     ) }),
@@ -19324,11 +19324,11 @@ const Yl = (t) => t.frequency.toString(), Jl = {
         return "error";
     }
   }
-  return e < 10 ? null : /* @__PURE__ */ U(Q, { sx: Jl, children: [
+  return e < 10 ? null : /* @__PURE__ */ U(J, { sx: Jl, children: [
     /* @__PURE__ */ c(Fe, { sx: M7, children: "Statistical RT60 Results" }),
-    /* @__PURE__ */ U(Q, { sx: N7, children: [
-      /* @__PURE__ */ c(Q, { sx: W7, children: /* @__PURE__ */ c(U7, { width: e, height: r, uuid: t, events: a }) }),
-      /* @__PURE__ */ c(Q, { sx: Jl, children: /* @__PURE__ */ c(Pc, { scale: s, labelFormat: (u) => o(u) }) })
+    /* @__PURE__ */ U(J, { sx: N7, children: [
+      /* @__PURE__ */ c(J, { sx: W7, children: /* @__PURE__ */ c(U7, { width: e, height: r, uuid: t, events: a }) }),
+      /* @__PURE__ */ c(J, { sx: Jl, children: /* @__PURE__ */ c(Pc, { scale: s, labelFormat: (u) => o(u) }) })
     ] })
   ] });
 }, j7 = {
@@ -19410,11 +19410,11 @@ const Yl = (t) => t.frequency.toString(), Jl = {
       (s) => W0(["name", "info"], s.results[t])
     )
   );
-  return e < 10 ? null : /* @__PURE__ */ U(Q, { sx: j7, children: [
+  return e < 10 ? null : /* @__PURE__ */ U(J, { sx: j7, children: [
     /* @__PURE__ */ c(Fe, { sx: V7, children: n }),
-    /* @__PURE__ */ U(Q, { sx: G7, children: [
-      /* @__PURE__ */ c(Q, { sx: Y7, children: /* @__PURE__ */ c(wc, { debounceTime: 10, children: ({ width: s }) => /* @__PURE__ */ c(_7, { width: s, height: r, uuid: t, events: a }) }) }),
-      /* @__PURE__ */ U(Q, { sx: J7, children: [
+    /* @__PURE__ */ U(J, { sx: G7, children: [
+      /* @__PURE__ */ c(J, { sx: Y7, children: /* @__PURE__ */ c(wc, { debounceTime: 10, children: ({ width: s }) => /* @__PURE__ */ c(_7, { width: s, height: r, uuid: t, events: a }) }) }),
+      /* @__PURE__ */ U(J, { sx: J7, children: [
         /* @__PURE__ */ U("div", { children: [
           /* @__PURE__ */ c("b", { children: "Source:" }),
           " ",
@@ -19442,7 +19442,7 @@ const Yl = (t) => t.frequency.toString(), Jl = {
   color: "#b4b8bb"
 };
 function $7({ children: t }) {
-  return /* @__PURE__ */ c(Q, { sx: Z7, children: t });
+  return /* @__PURE__ */ c(J, { sx: Z7, children: t });
 }
 const eh = wn(({ uuid: t }) => {
   const e = D0((r) => r.results[t].name);
@@ -19499,17 +19499,44 @@ function nh(t) {
     return `${_l(t[String(r)])} ${Math.round(n)}%`;
   }).join(",")})`;
 }
+const ih = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  width: "100%"
+}, sh = {
+  display: "flex",
+  alignItems: "center",
+  fontSize: "0.75rem",
+  fontWeight: 400,
+  color: "text.primary"
+}, oh = {
+  display: "flex",
+  alignItems: "center",
+  mr: 0.5,
+  ml: -0.25,
+  "& .MuiSvgIcon-root": {
+    fontSize: "14px"
+  }
+}, lh = {
+  fontSize: "0.75rem",
+  fontWeight: 300,
+  fontStyle: "italic",
+  color: "text.secondary",
+  ml: 1,
+  textTransform: "capitalize"
+};
 function pr(t) {
   const e = {};
-  return t.onClick && (e.onClick = t.onClick), /* @__PURE__ */ c("div", { className: "tree-item-label-container", ...e, children: /* @__PURE__ */ U("div", { className: "tree-item-label-label", children: [
-    t.icon && /* @__PURE__ */ U("div", { className: "tree-item-label-icon", children: [
-      " ",
-      t.icon || ""
+  return t.onClick && (e.onClick = t.onClick), /* @__PURE__ */ U(J, { sx: ih, ...e, children: [
+    /* @__PURE__ */ U(J, { sx: sh, children: [
+      t.icon && /* @__PURE__ */ c(J, { sx: oh, children: t.icon }),
+      typeof t.label == "string" ? /* @__PURE__ */ c(Fe, { variant: "body2", sx: { fontSize: "inherit", fontWeight: "inherit" }, children: t.label }) : t.label
     ] }),
-    t.label
-  ] }) });
+    t.meta && /* @__PURE__ */ c(Fe, { variant: "caption", sx: lh, children: t.meta })
+  ] });
 }
-function ih(t) {
+function ch(t) {
   return t.replace(/\w\S*/g, function(e) {
     return e.charAt(0).toUpperCase() + e.substr(1).toLowerCase();
   });
@@ -19574,136 +19601,167 @@ function gu(t) {
 function Au(t) {
   return /* @__PURE__ */ c(od, { ...t });
 }
-const sh = wn(function t(e) {
-  const { container: r, expanded: a, setExpanded: n, parent: i } = e, [s, o] = be(r.selected), [u, l] = be(r.name), d = s ? "container-selected" : "", v = !0, T = r.uuid, E = r.uuid, P = ih(r.kind), f = u || "untitled", h = Te((D) => {
-    r.kind !== "room" && $(D.shiftKey ? "APPEND_SELECTION" : "SET_SELECTION", [r]);
+const uh = {
+  flexGrow: 1,
+  "& .MuiTreeItem-content": {
+    py: 0.25
+  },
+  "& .MuiTreeItem-content.Mui-selected": {
+    bgcolor: "transparent"
+  },
+  "& .MuiTreeItem-content.Mui-selected:hover": {
+    bgcolor: "transparent"
+  },
+  "& .MuiTreeItem-content.Mui-selected.Mui-focused": {
+    bgcolor: "transparent"
+  },
+  "& .MuiTreeItem-content.Mui-focused": {
+    bgcolor: "transparent"
+  },
+  "& .MuiTreeItem-content:hover": {
+    bgcolor: "action.hover"
+  },
+  "& .MuiTreeItem-iconContainer": {
+    width: "auto"
+  },
+  "& .MuiTreeItem-group": {
+    ml: 1.75
+  }
+}, dh = {
+  bgcolor: "action.selected",
+  borderRadius: 0.5
+}, fh = wn(function t(e) {
+  const { container: r, expanded: a, setExpanded: n, parent: i } = e, [s, o] = be(r.selected), [u, l] = be(r.name), d = !0, v = r.uuid, T = r.uuid, E = ch(r.kind), P = u || "untitled", f = Te((h) => {
+    r.kind !== "room" && $(h.shiftKey ? "APPEND_SELECTION" : "SET_SELECTION", [r]);
   }, [r]);
-  We(() => ae("APPEND_SELECTION", (D) => {
-    D.includes(r) && o(!0);
-  }), [r]), We(() => ae("SET_SELECTION", (D) => {
-    o(D.includes(r));
+  We(() => ae("APPEND_SELECTION", (h) => {
+    h.includes(r) && o(!0);
+  }), [r]), We(() => ae("SET_SELECTION", (h) => {
+    o(h.includes(r));
   }), [r]);
-  const x = `${r.kind.toUpperCase()}_SET_PROPERTY`;
-  We(() => ae(x, ({ uuid: D, property: M, value: W }) => {
-    D === r.uuid && M === "name" && l(W);
-  }), [r.uuid, x]);
-  const q = /* @__PURE__ */ c(pr, { label: f, meta: P }), R = /* @__PURE__ */ c(pr, { icon: /* @__PURE__ */ c(hu, { fontSize: "inherit" }), label: f, meta: P }), O = (D) => {
-    if (D.target.textContent)
-      switch (D.target.textContent) {
+  const g = `${r.kind.toUpperCase()}_SET_PROPERTY`;
+  We(() => ae(g, ({ uuid: h, property: R, value: M }) => {
+    h === r.uuid && R === "name" && l(M);
+  }), [r.uuid, g]);
+  const x = /* @__PURE__ */ c(pr, { label: P, meta: E }), D = /* @__PURE__ */ c(pr, { icon: /* @__PURE__ */ c(hu, { fontSize: "inherit" }), label: P, meta: E }), q = (h) => {
+    if (h.target.textContent)
+      switch (h.target.textContent) {
         case "Delete":
           {
-            const M = new Set(a);
-            r.traverse((_) => {
-              M.has(_.uuid) && M.delete(_.uuid);
-            }), $("DESELECT_ALL_OBJECTS"), n([...M]);
-            const W = [];
-            r.traverse((_) => {
-              _.kind && ["surface", "source", "receiver", "room"].includes(_.kind) && W.push(_.uuid);
-            }), $("REMOVE_CONTAINERS", W);
+            const R = new Set(a);
+            r.traverse((W) => {
+              R.has(W.uuid) && R.delete(W.uuid);
+            }), $("DESELECT_ALL_OBJECTS"), n([...R]);
+            const M = [];
+            r.traverse((W) => {
+              W.kind && ["surface", "source", "receiver", "room"].includes(W.kind) && M.push(W.uuid);
+            }), $("REMOVE_CONTAINERS", M);
           }
           break;
         case "Log to Console":
           console.log(r);
           break;
       }
-  }, X = ["Delete", "Log to Console"], C = (D) => {
-    D.preventDefault();
+  }, O = ["Delete", "Log to Console"], X = (h) => {
+    h.preventDefault();
   };
   if (r.parent?.uuid !== i)
     return /* @__PURE__ */ c(A0, {});
-  const F = /* @__PURE__ */ c(pr, { icon: /* @__PURE__ */ c(Ns, { fontSize: "inherit" }), label: f, meta: P }), p = /* @__PURE__ */ c(pr, { icon: /* @__PURE__ */ c(gu, { fontSize: "inherit" }), label: f, meta: P }), S = /* @__PURE__ */ c(pr, { icon: /* @__PURE__ */ c(Au, { fontSize: "inherit" }), label: f, meta: P }), g = { className: d, onClick: h };
+  const C = /* @__PURE__ */ c(pr, { icon: /* @__PURE__ */ c(Ns, { fontSize: "inherit" }), label: P, meta: E }), F = /* @__PURE__ */ c(pr, { icon: /* @__PURE__ */ c(gu, { fontSize: "inherit" }), label: P, meta: E }), p = /* @__PURE__ */ c(pr, { icon: /* @__PURE__ */ c(Au, { fontSize: "inherit" }), label: P, meta: E }), S = {
+    onClick: f,
+    sx: s ? dh : void 0
+  };
   switch (r.kind) {
     case "surface":
-      return /* @__PURE__ */ c(jr, { handleMenuItemClick: O, items: X, children: /* @__PURE__ */ c(
+      return /* @__PURE__ */ c(jr, { handleMenuItemClick: q, items: O, children: /* @__PURE__ */ c(
+        mr,
+        {
+          label: C,
+          slotProps: { content: S },
+          draggable: d,
+          itemId: T
+        }
+      ) }, v + "context-menu");
+    case "source":
+      return /* @__PURE__ */ c(jr, { handleMenuItemClick: q, items: O, children: /* @__PURE__ */ c(
         mr,
         {
           label: F,
-          slotProps: { content: g },
-          draggable: v,
-          itemId: E
+          slotProps: { content: S },
+          draggable: d,
+          itemId: T
         }
-      ) }, T + "context-menu");
-    case "source":
-      return /* @__PURE__ */ c(jr, { handleMenuItemClick: O, items: X, children: /* @__PURE__ */ c(
+      ) }, v + "context-menu");
+    case "receiver":
+      return /* @__PURE__ */ c(jr, { handleMenuItemClick: q, items: O, children: /* @__PURE__ */ c(
         mr,
         {
           label: p,
-          slotProps: { content: g },
-          draggable: v,
-          itemId: E
+          slotProps: { content: S },
+          draggable: d,
+          itemId: T
         }
-      ) }, T + "context-menu");
-    case "receiver":
-      return /* @__PURE__ */ c(jr, { handleMenuItemClick: O, items: X, children: /* @__PURE__ */ c(
-        mr,
-        {
-          label: S,
-          slotProps: { content: g },
-          draggable: v,
-          itemId: E
-        }
-      ) }, T + "context-menu");
+      ) }, v + "context-menu");
     case "room":
-      return /* @__PURE__ */ c(jr, { handleMenuItemClick: O, items: X, children: /* @__PURE__ */ c(
+      return /* @__PURE__ */ c(jr, { handleMenuItemClick: q, items: O, children: /* @__PURE__ */ c(
         mr,
         {
-          label: R,
+          label: D,
           slots: { collapseIcon: J0, expandIcon: Et },
-          onKeyDown: C,
-          draggable: v,
-          itemId: E,
-          children: r.children.filter((D) => D instanceof t0 && D.parent?.uuid === r.uuid).map((D) => /* @__PURE__ */ c(
+          onKeyDown: X,
+          draggable: d,
+          itemId: T,
+          children: r.children.filter((h) => h instanceof t0 && h.parent?.uuid === r.uuid).map((h) => /* @__PURE__ */ c(
             t,
             {
               parent: r.uuid,
-              container: D,
+              container: h,
               expanded: a,
               setExpanded: n
             },
-            D.uuid + "-map-children"
+            h.uuid + "-map-children"
           ))
         }
-      ) }, T + "context-menu");
+      ) }, v + "context-menu");
     case "container":
-      return /* @__PURE__ */ c(jr, { handleMenuItemClick: O, items: X, children: /* @__PURE__ */ U(
+      return /* @__PURE__ */ c(jr, { handleMenuItemClick: q, items: O, children: /* @__PURE__ */ c(
         mr,
         {
-          label: q,
+          label: x,
           slots: { collapseIcon: J0, expandIcon: Et },
-          onKeyDown: C,
-          draggable: v,
-          itemId: E,
-          children: [
-            r.children.filter((D) => D instanceof t0 && D.parent?.uuid === r.uuid).map((D) => /* @__PURE__ */ c(
-              t,
-              {
-                parent: r.uuid,
-                container: D,
-                expanded: a,
-                setExpanded: n
-              },
-              D.uuid + "-map-children"
-            )),
-            "            "
-          ]
+          onKeyDown: X,
+          draggable: d,
+          itemId: T,
+          children: r.children.filter((h) => h instanceof t0 && h.parent?.uuid === r.uuid).map((h) => /* @__PURE__ */ c(
+            t,
+            {
+              parent: r.uuid,
+              container: h,
+              expanded: a,
+              setExpanded: n
+            },
+            h.uuid + "-map-children"
+          ))
         }
-      ) }, T + "context-menu");
+      ) }, v + "context-menu");
     default:
       return /* @__PURE__ */ c(A0, {});
   }
 });
-function oh() {
-  const { containers: t, getWorkspace: e } = Be(E0((u) => W0(["containers", "getWorkspace"], u))), [r, a] = be(["containers"]), n = {
-    fontWeight: 400,
-    color: Object.keys(t).length === 0 ? "#ced9e0" : "#182026"
-  }, i = /* @__PURE__ */ c(pr, { label: /* @__PURE__ */ c("div", { style: n, children: "Objects" }) }), s = Object.keys(t), o = e();
+function mh() {
+  const { containers: t, getWorkspace: e } = Be(E0((u) => W0(["containers", "getWorkspace"], u))), [r, a] = be(["containers"]), n = Object.keys(t).length === 0, i = /* @__PURE__ */ c(
+    pr,
+    {
+      label: /* @__PURE__ */ c("span", { style: { fontWeight: 400, color: n ? "var(--mui-palette-text-disabled)" : "var(--mui-palette-text-primary)" }, children: "Objects" })
+    }
+  ), s = Object.keys(t), o = e();
   return o ? /* @__PURE__ */ c(
     nd,
     {
       expandedItems: r,
       onExpandedItemsChange: (u, l) => a(l),
       disableSelection: !0,
-      className: "tree-view-root",
+      sx: uh,
       children: /* @__PURE__ */ c(
         mr,
         {
@@ -19714,7 +19772,7 @@ function oh() {
           },
           itemId: "containers",
           children: s.map((u) => /* @__PURE__ */ c(
-            sh,
+            fh,
             {
               parent: o ? o.uuid : "",
               container: t[u],
@@ -19728,7 +19786,7 @@ function oh() {
     }
   ) : /* @__PURE__ */ c(A0, {});
 }
-const lh = (t, e) => t < e ? t : e, bu = {
+const ph = (t, e) => t < e ? t : e, bu = {
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
@@ -19738,20 +19796,20 @@ const lh = (t, e) => t < e ? t : e, bu = {
   "&:hover": {
     bgcolor: "action.hover"
   }
-}, ch = {
+}, hh = {
   ...bu,
   bgcolor: "primary.light",
   "&:hover": {
     bgcolor: "primary.light"
   }
-}, uh = {
+}, gh = {
   width: 100,
   height: 16,
   borderRadius: 0.5
-}, dh = {
+}, Ah = {
   textAlign: "center",
   px: 0.5
-}, fh = ({ item: t }) => {
+}, bh = ({ item: t }) => {
   const { set: e, selectedMaterial: r } = nr(E0((i) => W0(["set", "selectedMaterial"], i))), a = r === t.uuid;
   return /* @__PURE__ */ U(
     Pn,
@@ -19760,33 +19818,33 @@ const lh = (t, e) => t < e ? t : e, bu = {
         i.selectedMaterial = t.uuid;
       }),
       selected: a,
-      sx: a ? ch : bu,
+      sx: a ? hh : bu,
       children: [
         /* @__PURE__ */ c(Fe, { variant: "body2", sx: { fontSize: "0.75rem", flex: 1 }, children: t.material }),
-        /* @__PURE__ */ c(Q, { sx: { ...uh, background: nh(t.absorption) } })
+        /* @__PURE__ */ c(J, { sx: { ...gh, background: nh(t.absorption) } })
       ]
     }
   );
-}, mh = ({ absorption: t }) => {
+}, vh = ({ absorption: t }) => {
   const e = Object.keys(t);
-  return /* @__PURE__ */ c(Q, { sx: { display: "flex", gap: 0.5, my: 1 }, children: e.map((r) => /* @__PURE__ */ U(Q, { sx: dh, children: [
+  return /* @__PURE__ */ c(J, { sx: { display: "flex", gap: 0.5, my: 1 }, children: e.map((r) => /* @__PURE__ */ U(J, { sx: Ah, children: [
     /* @__PURE__ */ U(Fe, { variant: "caption", color: "text.secondary", sx: { display: "block" }, children: [
       r,
       "Hz"
     ] }),
     /* @__PURE__ */ c(Fe, { variant: "body2", sx: { fontWeight: 500 }, children: t[r] })
   ] }, `${r}-${t[r]}`)) });
-}, ph = () => {
+}, yh = () => {
   const t = nr((e) => e.materials.get(e.selectedMaterial));
-  return t ? /* @__PURE__ */ U(Q, { sx: { mt: 2 }, children: [
+  return t ? /* @__PURE__ */ U(J, { sx: { mt: 2 }, children: [
     /* @__PURE__ */ c(Fe, { variant: "subtitle1", sx: { fontWeight: 600 }, children: t.name }),
-    /* @__PURE__ */ U(Q, { sx: { display: "flex", justifyContent: "space-between", alignItems: "center" }, children: [
+    /* @__PURE__ */ U(J, { sx: { display: "flex", justifyContent: "space-between", alignItems: "center" }, children: [
       /* @__PURE__ */ c(Fe, { variant: "body2", children: t.material }),
       /* @__PURE__ */ c(Fe, { variant: "caption", color: "text.secondary", children: t.uuid })
     ] }),
-    /* @__PURE__ */ c(mh, { absorption: t.absorption })
+    /* @__PURE__ */ c(vh, { absorption: t.absorption })
   ] }) : /* @__PURE__ */ c(Fe, { variant: "body2", color: "text.secondary", sx: { py: 2 }, children: "Nothing Selected" });
-}, hh = () => {
+}, Sh = () => {
   const { bufferLength: t, query: e, search: r } = nr(E0((n) => W0(["bufferLength", "query", "search"], n))), a = H0(() => r(e), [e, r]);
   return /* @__PURE__ */ c(
     zi,
@@ -19801,12 +19859,12 @@ const lh = (t, e) => t < e ? t : e, bu = {
         boxShadow: "inset 0 0 8px rgba(0,0,0,0.1)",
         p: 0
       },
-      children: a.slice(0, lh(t, a.length)).map((n) => /* @__PURE__ */ c(fh, { item: n }, `item-${n.uuid}`))
+      children: a.slice(0, ph(t, a.length)).map((n) => /* @__PURE__ */ c(bh, { item: n }, `item-${n.uuid}`))
     }
   );
-}, gh = () => {
+}, Ch = () => {
   const t = Be((a) => a.selectedObjects), e = H0(() => [...t].filter((a) => a.kind === "surface"), [t]), r = nr((a) => a.materials.get(a.selectedMaterial));
-  return /* @__PURE__ */ c(Q, { sx: { mt: 2 }, children: /* @__PURE__ */ c(
+  return /* @__PURE__ */ c(J, { sx: { mt: 2 }, children: /* @__PURE__ */ c(
     Ut,
     {
       variant: "contained",
@@ -19842,7 +19900,7 @@ const lh = (t, e) => t < e ? t : e, bu = {
         }
       },
       children: [
-        /* @__PURE__ */ U(Q, { sx: {
+        /* @__PURE__ */ U(J, { sx: {
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
@@ -19853,20 +19911,20 @@ const lh = (t, e) => t < e ? t : e, bu = {
           /* @__PURE__ */ c(Fe, { variant: "h6", children: "Material Selection" }),
           /* @__PURE__ */ c(Nt, { onClick: i, size: "small", children: /* @__PURE__ */ c(rd, {}) })
         ] }),
-        /* @__PURE__ */ U(Q, { sx: {
+        /* @__PURE__ */ U(J, { sx: {
           display: "grid",
           gridTemplateColumns: "1fr 2fr",
           flex: 1,
           overflow: "hidden",
           bgcolor: "background.paper"
         }, children: [
-          /* @__PURE__ */ c(Q, { sx: {
+          /* @__PURE__ */ c(J, { sx: {
             overflow: "auto",
             p: 2,
             borderRight: 1,
             borderColor: "divider"
-          }, children: /* @__PURE__ */ c(oh, {}) }),
-          /* @__PURE__ */ U(Q, { sx: {
+          }, children: /* @__PURE__ */ c(mh, {}) }),
+          /* @__PURE__ */ U(J, { sx: {
             overflow: "auto",
             p: 2,
             display: "flex",
@@ -19886,7 +19944,7 @@ const lh = (t, e) => t < e ? t : e, bu = {
                 }
               }
             ),
-            /* @__PURE__ */ c(hh, {}),
+            /* @__PURE__ */ c(Sh, {}),
             /* @__PURE__ */ c(
               ed,
               {
@@ -19900,23 +19958,23 @@ const lh = (t, e) => t < e ? t : e, bu = {
               }
             ),
             /* @__PURE__ */ c(xt, { sx: { my: 2 } }),
-            /* @__PURE__ */ c(ph, {}),
-            /* @__PURE__ */ c(gh, {})
+            /* @__PURE__ */ c(yh, {}),
+            /* @__PURE__ */ c(Ch, {})
           ] })
         ] })
       ]
     }
   );
-}, Ah = {
+}, wh = {
   height: "100%",
   width: "100%",
   userSelect: "none"
 };
-function bh({ children: t }) {
-  return /* @__PURE__ */ c(Q, { id: "editor-container", sx: Ah, children: t });
+function Ph({ children: t }) {
+  return /* @__PURE__ */ c(J, { id: "editor-container", sx: wh, children: t });
 }
 const Kl = 250;
-class vh extends j0.Component {
+class xh extends j0.Component {
   state;
   canvas;
   canvasOverlay;
@@ -19960,7 +20018,7 @@ class vh extends j0.Component {
     Lt.setItem("layout", JSON.stringify(e));
   }
   render() {
-    const { showNavBar: e = !0, fixedPanelWidth: r } = this.props, { resultsPanelOpen: a } = this.state, n = r ?? this.rightPanelSize, i = /* @__PURE__ */ U(bh, { children: [
+    const { showNavBar: e = !0, fixedPanelWidth: r } = this.props, { resultsPanelOpen: a } = this.state, n = r ?? this.rightPanelSize, i = /* @__PURE__ */ U(Ph, { children: [
       /* @__PURE__ */ c("div", { id: "response-overlay", className: "response_overlay response_overlay-hidden", ref: this.responseOverlay }),
       /* @__PURE__ */ c("div", { id: "canvas_overlay", ref: this.canvasOverlay }),
       /* @__PURE__ */ c("div", { id: "orientation-overlay", ref: this.orientationOverlay }),
@@ -20012,7 +20070,7 @@ class vh extends j0.Component {
     ] });
   }
 }
-function yh() {
+function Eh() {
   try {
     const t = Lt.getItem("layout");
     if (t)
@@ -20022,7 +20080,7 @@ function yh() {
   }
   return JSON.parse(ws);
 }
-const mb = cs(
+const vb = cs(
   function(e, r) {
     const {
       initialProject: a,
@@ -20034,14 +20092,14 @@ const mb = cs(
       fixedPanelWidth: l
     } = e, d = $e(!1);
     Ps(o);
-    const v = $e(yh());
+    const v = $e(Eh());
     We(() => i ? Ve.subscribe((P, f) => {
       if (P.hasUnsavedChanges && !f.hasUnsavedChanges)
         try {
-          const h = T();
-          i(h);
-        } catch (h) {
-          s?.(h);
+          const g = T();
+          i(g);
+        } catch (g) {
+          s?.(g);
         }
     }) : void 0, [i, s]), We(() => {
       a && d.current && $("RESTORE", { json: a });
@@ -20065,10 +20123,10 @@ const mb = cs(
       console.log("[CRAMEditor] Cleanup complete");
     }), []);
     const T = Te(() => {
-      const E = Pe.postMessage("SAVE_CONTAINERS")[0] || [], P = Pe.postMessage("SAVE_SOLVERS")[0] || [], { projectName: f, version: h } = Ve.getState();
+      const E = Pe.postMessage("SAVE_CONTAINERS")[0] || [], P = Pe.postMessage("SAVE_SOLVERS")[0] || [], { projectName: f, version: g } = Ve.getState();
       return {
         meta: {
-          version: h,
+          version: g,
           name: f,
           timestamp: (/* @__PURE__ */ new Date()).toISOString()
         },
@@ -20091,8 +20149,8 @@ const mb = cs(
       importFile: async (E) => new Promise((P, f) => {
         try {
           Pe.postMessage("IMPORT_FILE", [E]), setTimeout(P, 100);
-        } catch (h) {
-          f(h);
+        } catch (g) {
+          f(g);
         }
       }),
       // Scene operations
@@ -20126,7 +20184,7 @@ const mb = cs(
         $("TOGGLE_RESULTS_PANEL", void 0);
       }
     }), [T, n]), /* @__PURE__ */ c(
-      vh,
+      xh,
       {
         ...v.current,
         showNavBar: u,
@@ -20134,14 +20192,14 @@ const mb = cs(
       }
     );
   }
-), Sh = {
+), kh = {
   position: "relative",
   width: "100%",
   height: "100%",
   userSelect: "none",
   overflow: "hidden"
 };
-function Ch() {
+function Ih() {
   try {
     const t = Lt.getItem("layout");
     if (t)
@@ -20151,7 +20209,7 @@ function Ch() {
   }
   return JSON.parse(ws);
 }
-const pb = cs(
+const yb = cs(
   function(e, r) {
     const {
       initialProject: a,
@@ -20160,8 +20218,8 @@ const pb = cs(
       onError: s,
       storagePrefix: o = "cram"
     } = e, u = $e(null), l = $e(null), d = $e(null), v = $e(null), T = $e(!1);
-    Ps(o), $e(Ch()), We(() => i ? Ve.subscribe((f, h) => {
-      if (f.hasUnsavedChanges && !h.hasUnsavedChanges)
+    Ps(o), $e(Ih()), We(() => i ? Ve.subscribe((f, g) => {
+      if (f.hasUnsavedChanges && !g.hasUnsavedChanges)
         try {
           const x = E();
           i(x);
@@ -20173,11 +20231,11 @@ const pb = cs(
     }, [a]), We(() => {
       u.current && Pe.postMessage("APP_MOUNTED", u.current), T.current = !0;
       const f = u.current?.parentElement;
-      let h = null;
-      return f && (h = new ResizeObserver(() => {
+      let g = null;
+      return f && (g = new ResizeObserver(() => {
         Se.checkresize(), Se.needsToRender = !0;
-      }), h.observe(f)), () => {
-        console.log("[CRAMCanvas] Unmounting - cleaning up resources..."), T.current = !1, h && h.disconnect();
+      }), g.observe(f)), () => {
+        console.log("[CRAMCanvas] Unmounting - cleaning up resources..."), T.current = !1, g && g.disconnect();
         try {
           Se.dispose();
         } catch (x) {
@@ -20197,11 +20255,11 @@ const pb = cs(
       };
     }, []);
     const E = Te(() => {
-      const P = Pe.postMessage("SAVE_CONTAINERS")[0] || [], f = Pe.postMessage("SAVE_SOLVERS")[0] || [], { projectName: h, version: x } = Ve.getState();
+      const P = Pe.postMessage("SAVE_CONTAINERS")[0] || [], f = Pe.postMessage("SAVE_SOLVERS")[0] || [], { projectName: g, version: x } = Ve.getState();
       return {
         meta: {
           version: x,
-          name: h,
+          name: g,
           timestamp: (/* @__PURE__ */ new Date()).toISOString()
         },
         containers: P,
@@ -20219,11 +20277,11 @@ const pb = cs(
       load: (P) => {
         $("RESTORE", { json: P });
       },
-      importFile: async (P) => new Promise((f, h) => {
+      importFile: async (P) => new Promise((f, g) => {
         try {
           Pe.postMessage("IMPORT_FILE", [P]), setTimeout(f, 100);
         } catch (x) {
-          h(x);
+          g(x);
         }
       }),
       addSource: () => {
@@ -20233,7 +20291,7 @@ const pb = cs(
         Pe.postMessage("SHOULD_ADD_RECEIVER");
       },
       addSolver: (P) => {
-        const h = {
+        const g = {
           raytracer: "SHOULD_ADD_RAYTRACER",
           "image-source": "SHOULD_ADD_IMAGE_SOURCE",
           "beam-trace": "SHOULD_ADD_BEAMTRACE",
@@ -20242,7 +20300,7 @@ const pb = cs(
           "energy-decay": "SHOULD_ADD_ENERGYDECAY",
           art: "ADD_ART"
         }[P];
-        h && (h.startsWith("SHOULD_") ? Pe.postMessage(h) : $(h, void 0));
+        g && (g.startsWith("SHOULD_") ? Pe.postMessage(g) : $(g, void 0));
       },
       undo: () => {
         Pe.postMessage("UNDO");
@@ -20259,7 +20317,7 @@ const pb = cs(
       /* @__PURE__ */ c(vu, {}),
       /* @__PURE__ */ c(f1, {}),
       /* @__PURE__ */ c(U1, {}),
-      /* @__PURE__ */ U(Q, { sx: Sh, children: [
+      /* @__PURE__ */ U(J, { sx: kh, children: [
         /* @__PURE__ */ c("div", { id: "response-overlay", className: "response_overlay response_overlay-hidden", ref: v }),
         /* @__PURE__ */ c("div", { id: "canvas_overlay", ref: l }),
         /* @__PURE__ */ c("div", { id: "orientation-overlay", ref: d }),
@@ -20267,7 +20325,7 @@ const pb = cs(
       ] })
     ] });
   }
-), wh = (t, e) => ({
+), Th = (t, e) => ({
   display: "flex",
   alignItems: "center",
   p: "4px 8px",
@@ -20278,7 +20336,7 @@ const pb = cs(
   "&:hover": {
     bgcolor: e ? "#b3d7ff" : "#e8ecef"
   }
-}), Ph = {
+}), Fh = {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -20289,7 +20347,7 @@ const pb = cs(
   "& svg": {
     fontSize: 16
   }
-}, xh = {
+}, Bh = {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -20300,7 +20358,7 @@ const pb = cs(
   "& svg": {
     fontSize: 14
   }
-}, Eh = {
+}, Hh = {
   flex: 1,
   fontSize: 12,
   fontWeight: 500,
@@ -20308,7 +20366,7 @@ const pb = cs(
   overflow: "hidden",
   textOverflow: "ellipsis",
   whiteSpace: "nowrap"
-}, kh = {
+}, Dh = {
   flex: 1,
   fontSize: 12,
   fontWeight: 500,
@@ -20319,7 +20377,7 @@ const pb = cs(
   outline: "none",
   bgcolor: "white",
   minWidth: 0
-}, Ih = (t) => ({
+}, qh = (t) => ({
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -20338,13 +20396,13 @@ const pb = cs(
     bgcolor: "#d0d7de",
     color: "#1c2127"
   }
-}), Th = {
+}), Oh = {
   room: hu,
   source: gu,
   receiver: Au,
   surface: Ns
 };
-function Fh({
+function Rh({
   name: t,
   kind: e,
   expanded: r,
@@ -20357,7 +20415,7 @@ function Fh({
   onMouseEnter: l,
   onMouseLeave: d
 }) {
-  const [v, T] = be(!1), [E, P] = be(t), f = $e(null), h = Th[e] || Ns;
+  const [v, T] = be(!1), [E, P] = be(t), f = $e(null), g = Oh[e] || Ns;
   We(() => {
     P(t);
   }, [t]), We(() => {
@@ -20365,9 +20423,9 @@ function Fh({
   }, [v]);
   const x = (S) => {
     v || s(S);
-  }, q = (S) => {
+  }, D = (S) => {
     S.stopPropagation(), i();
-  }, R = (S) => {
+  }, q = (S) => {
     S.stopPropagation(), o();
   }, O = (S) => {
     S.stopPropagation(), T(!0);
@@ -20381,17 +20439,17 @@ function Fh({
     S.stopPropagation();
   };
   return /* @__PURE__ */ U(
-    Q,
+    J,
     {
-      sx: wh(r, a),
+      sx: Th(r, a),
       onClick: x,
       onMouseEnter: l,
       onMouseLeave: d,
       children: [
-        /* @__PURE__ */ c(Q, { sx: Ph, onClick: q, children: r ? /* @__PURE__ */ c(J0, {}) : /* @__PURE__ */ c(Et, {}) }),
-        /* @__PURE__ */ c(Q, { sx: xh, children: /* @__PURE__ */ c(h, {}) }),
+        /* @__PURE__ */ c(J, { sx: Fh, onClick: D, children: r ? /* @__PURE__ */ c(J0, {}) : /* @__PURE__ */ c(Et, {}) }),
+        /* @__PURE__ */ c(J, { sx: Bh, children: /* @__PURE__ */ c(g, {}) }),
         v ? /* @__PURE__ */ c(
-          Q,
+          J,
           {
             component: "input",
             ref: f,
@@ -20400,24 +20458,24 @@ function Fh({
             onBlur: C,
             onKeyDown: F,
             onClick: p,
-            sx: kh
+            sx: Dh
           }
-        ) : /* @__PURE__ */ c(Q, { sx: Eh, onDoubleClick: O, children: t }),
-        /* @__PURE__ */ c(Q, { sx: Ih(n), onClick: R, children: n ? /* @__PURE__ */ c(fc, {}) : /* @__PURE__ */ c(mc, {}) })
+        ) : /* @__PURE__ */ c(J, { sx: Hh, onDoubleClick: O, children: t }),
+        /* @__PURE__ */ c(J, { sx: qh(n), onClick: q, children: n ? /* @__PURE__ */ c(fc, {}) : /* @__PURE__ */ c(mc, {}) })
       ]
     }
   );
 }
-const Bh = {
+const Lh = {
   borderBottom: "1px solid #e1e4e8"
-}, Hh = (t) => ({
+}, Mh = (t) => ({
   display: t ? "block" : "none",
   pl: "20px"
-}), Dh = {
+}), Nh = {
   py: "4px"
-}, qh = {
+}, Wh = {
   borderTop: "1px solid #e1e4e8"
-}, Oh = /* @__PURE__ */ new Map([
+}, Xh = /* @__PURE__ */ new Map([
   ["room", B1],
   ["source", T1],
   ["receiver", F1],
@@ -20435,9 +20493,9 @@ function rn({ uuid: t, defaultExpanded: e = !1, isChild: r = !1 }) {
       });
   }, [t, v?.kind]), We(() => {
     const C = ae("SET_SELECTION", (S) => {
-      s(S.some((g) => g.uuid === t));
+      s(S.some((h) => h.uuid === t));
     }), F = ae("APPEND_SELECTION", (S) => {
-      S.some((g) => g.uuid === t) && s(!0);
+      S.some((h) => h.uuid === t) && s(!0);
     }), p = ae("DESELECT_ALL_OBJECTS", () => {
       s(!1);
     });
@@ -20449,16 +20507,16 @@ function rn({ uuid: t, defaultExpanded: e = !1, isChild: r = !1 }) {
     n((C) => !C);
   }, []), f = Te((C) => {
     v && $(C.shiftKey ? "APPEND_SELECTION" : "SET_SELECTION", [v]);
-  }, [v]), h = Te(() => {
+  }, [v]), g = Te(() => {
     v?.kind === "surface" && $("SURFACE_HOVER", t);
   }, [v?.kind, t]), x = Te(() => {
     v?.kind === "surface" && $("SURFACE_UNHOVER", t);
-  }, [v?.kind, t]), q = Te(() => {
+  }, [v?.kind, t]), D = Te(() => {
     if (v) {
       const C = `${v.kind.toUpperCase()}_SET_PROPERTY`;
       $(C, { uuid: t, property: "visible", value: !l }), d(!l);
     }
-  }, [v, t, l]), R = Te((C) => {
+  }, [v, t, l]), q = Te((C) => {
     if (v) {
       const F = `${v.kind.toUpperCase()}_SET_PROPERTY`;
       $(F, { uuid: t, property: "name", value: C }), u(C);
@@ -20466,10 +20524,10 @@ function rn({ uuid: t, defaultExpanded: e = !1, isChild: r = !1 }) {
   }, [v, t]);
   if (!v)
     return null;
-  const O = v.kind || "object", X = Oh.get(O);
-  return /* @__PURE__ */ U(Q, { sx: Bh, children: [
+  const O = v.kind || "object", X = Xh.get(O);
+  return /* @__PURE__ */ U(J, { sx: Lh, children: [
     /* @__PURE__ */ c(
-      Fh,
+      Rh,
       {
         name: o,
         kind: O,
@@ -20478,21 +20536,21 @@ function rn({ uuid: t, defaultExpanded: e = !1, isChild: r = !1 }) {
         visible: l,
         onToggle: P,
         onSelect: f,
-        onVisibilityToggle: q,
-        onNameChange: R,
-        onMouseEnter: h,
+        onVisibilityToggle: D,
+        onNameChange: q,
+        onMouseEnter: g,
         onMouseLeave: x
       }
     ),
-    /* @__PURE__ */ U(Q, { sx: Hh(a), children: [
-      X && /* @__PURE__ */ c(Q, { sx: Dh, children: /* @__PURE__ */ c(X, { uuid: t }) }),
-      E.length > 0 && /* @__PURE__ */ c(Q, { sx: qh, children: E.map((C) => /* @__PURE__ */ c(rn, { uuid: C, isChild: !0 }, C)) })
+    /* @__PURE__ */ U(J, { sx: Mh(a), children: [
+      X && /* @__PURE__ */ c(J, { sx: Nh, children: /* @__PURE__ */ c(X, { uuid: t }) }),
+      E.length > 0 && /* @__PURE__ */ c(J, { sx: Wh, children: E.map((C) => /* @__PURE__ */ c(rn, { uuid: C, isChild: !0 }, C)) })
     ] })
   ] });
 }
-const Rh = {
+const Uh = {
   overflowY: "auto"
-}, Lh = (t) => ({
+}, zh = (t) => ({
   display: "flex",
   alignItems: "center",
   p: "4px 8px",
@@ -20503,7 +20561,7 @@ const Rh = {
   "&:hover": {
     bgcolor: "#e8ecef"
   }
-}), Mh = {
+}), jh = {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -20514,7 +20572,7 @@ const Rh = {
   "& svg": {
     fontSize: 16
   }
-}, Nh = {
+}, Vh = {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -20525,12 +20583,12 @@ const Rh = {
   "& svg": {
     fontSize: 14
   }
-}, Wh = {
+}, Gh = {
   flex: 1,
   fontSize: 12,
   fontWeight: 500,
   color: "#1c2127"
-}, Xh = {
+}, Yh = {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -20542,16 +20600,16 @@ const Rh = {
   fontSize: 10,
   fontWeight: 600,
   color: "white"
-}, Uh = (t) => ({
+}, Jh = (t) => ({
   display: t ? "block" : "none",
   pl: "20px"
-}), zh = {
+}), Qh = {
   p: "24px 16px",
   textAlign: "center",
   color: "#8c959f",
   fontSize: 13
 };
-function hb() {
+function Sb() {
   const [t, e] = be(!0), r = Be(E0((i) => i.containers)), a = H0(() => {
     const i = {
       rooms: [],
@@ -20572,24 +20630,24 @@ function hb() {
       }
     }), i;
   }, [r]), n = a.rooms.length + a.sources.length + a.receivers.length;
-  return /* @__PURE__ */ U(Q, { sx: Rh, children: [
-    /* @__PURE__ */ U(Q, { sx: Lh(t), onClick: () => e(!t), children: [
-      /* @__PURE__ */ c(Q, { sx: Mh, children: t ? /* @__PURE__ */ c(J0, {}) : /* @__PURE__ */ c(Et, {}) }),
-      /* @__PURE__ */ c(Q, { sx: Nh, children: /* @__PURE__ */ c(ld, {}) }),
-      /* @__PURE__ */ c(Fe, { sx: Wh, children: "Objects" }),
-      n > 0 && /* @__PURE__ */ c(Q, { sx: Xh, children: n })
+  return /* @__PURE__ */ U(J, { sx: Uh, children: [
+    /* @__PURE__ */ U(J, { sx: zh(t), onClick: () => e(!t), children: [
+      /* @__PURE__ */ c(J, { sx: jh, children: t ? /* @__PURE__ */ c(J0, {}) : /* @__PURE__ */ c(Et, {}) }),
+      /* @__PURE__ */ c(J, { sx: Vh, children: /* @__PURE__ */ c(ld, {}) }),
+      /* @__PURE__ */ c(Fe, { sx: Gh, children: "Objects" }),
+      n > 0 && /* @__PURE__ */ c(J, { sx: Yh, children: n })
     ] }),
-    /* @__PURE__ */ c(Q, { sx: Uh(t), children: n === 0 ? /* @__PURE__ */ c(Fe, { sx: zh, children: "No objects yet. Import a model or add objects from the menu." }) : /* @__PURE__ */ U(A0, { children: [
+    /* @__PURE__ */ c(J, { sx: Jh(t), children: n === 0 ? /* @__PURE__ */ c(Fe, { sx: Qh, children: "No objects yet. Import a model or add objects from the menu." }) : /* @__PURE__ */ U(A0, { children: [
       a.rooms.map((i) => /* @__PURE__ */ c(rn, { uuid: i }, i)),
       a.sources.map((i) => /* @__PURE__ */ c(rn, { uuid: i }, i)),
       a.receivers.map((i) => /* @__PURE__ */ c(rn, { uuid: i }, i))
     ] }) })
   ] });
 }
-const jh = Tt`
+const _h = Tt`
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
-`, Vh = (t) => ({
+`, Kh = (t) => ({
   display: "flex",
   alignItems: "center",
   p: "4px 8px",
@@ -20602,7 +20660,7 @@ const jh = Tt`
   "&:hover .menu-button": {
     opacity: 1
   }
-}), Gh = {
+}), Zh = {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -20613,7 +20671,7 @@ const jh = Tt`
   "& svg": {
     fontSize: 16
   }
-}, Yh = {
+}, $h = {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -20624,7 +20682,7 @@ const jh = Tt`
   "& svg": {
     fontSize: 14
   }
-}, Jh = {
+}, eg = {
   flex: 1,
   fontSize: 12,
   fontWeight: 500,
@@ -20632,7 +20690,7 @@ const jh = Tt`
   overflow: "hidden",
   textOverflow: "ellipsis",
   whiteSpace: "nowrap"
-}, Qh = {
+}, tg = {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -20665,13 +20723,13 @@ const jh = Tt`
   pointerEvents: t ? "none" : "auto",
   "& svg": {
     fontSize: 14,
-    animation: e ? `${jh} 1s linear infinite` : "none"
+    animation: e ? `${_h} 1s linear infinite` : "none"
   },
   "&:hover": {
     bgcolor: t ? "transparent" : "#d0d7de",
     color: t ? "#c0c0c0" : "#1c2127"
   }
-}), _h = {
+}), rg = {
   "ray-tracer": xc,
   "image-source": dd,
   "fdtd-2d": fd,
@@ -20693,25 +20751,25 @@ function yu({
   onDelete: u,
   onDuplicate: l
 }) {
-  const d = _h[e] || xc, [v, T] = be(null), E = !!v, P = (O) => {
+  const d = rg[e] || xc, [v, T] = be(null), E = !!v, P = (O) => {
     O.stopPropagation(), s?.();
   }, f = (O) => {
     O.stopPropagation(), o?.();
-  }, h = (O) => {
+  }, g = (O) => {
     O.stopPropagation(), T(O.currentTarget);
   }, x = () => {
     T(null);
-  }, q = () => {
+  }, D = () => {
     x(), l?.();
-  }, R = () => {
+  }, q = () => {
     x(), u?.();
   };
-  return /* @__PURE__ */ U(Q, { sx: Vh(r), onClick: i, children: [
-    /* @__PURE__ */ c(Q, { sx: Gh, children: r ? /* @__PURE__ */ c(J0, {}) : /* @__PURE__ */ c(Et, {}) }),
-    /* @__PURE__ */ c(Q, { sx: Yh, children: /* @__PURE__ */ c(d, {}) }),
-    /* @__PURE__ */ c(Q, { sx: Jh, children: t }),
+  return /* @__PURE__ */ U(J, { sx: Kh(r), onClick: i, children: [
+    /* @__PURE__ */ c(J, { sx: Zh, children: r ? /* @__PURE__ */ c(J0, {}) : /* @__PURE__ */ c(Et, {}) }),
+    /* @__PURE__ */ c(J, { sx: $h, children: /* @__PURE__ */ c(d, {}) }),
+    /* @__PURE__ */ c(J, { sx: eg, children: t }),
     s && /* @__PURE__ */ c(
-      Q,
+      J,
       {
         sx: Zl(!a || n, n),
         onClick: P,
@@ -20720,7 +20778,7 @@ function yu({
       }
     ),
     o && /* @__PURE__ */ c(
-      Q,
+      J,
       {
         sx: Zl(n, !1),
         onClick: f,
@@ -20730,13 +20788,13 @@ function yu({
     ),
     (u || l) && /* @__PURE__ */ U(A0, { children: [
       /* @__PURE__ */ c(
-        Q,
+        J,
         {
           component: "button",
           type: "button",
           className: "menu-button",
-          sx: Qh,
-          onClick: h,
+          sx: tg,
+          onClick: g,
           children: /* @__PURE__ */ c(cd, {})
         }
       ),
@@ -20755,11 +20813,11 @@ function yu({
             horizontal: "right"
           },
           children: [
-            l && /* @__PURE__ */ U(wt, { onClick: q, children: [
+            l && /* @__PURE__ */ U(wt, { onClick: D, children: [
               /* @__PURE__ */ c(ta, { children: /* @__PURE__ */ c(hd, { fontSize: "small" }) }),
               /* @__PURE__ */ c(ra, { children: "Duplicate" })
             ] }),
-            u && /* @__PURE__ */ U(wt, { onClick: R, sx: { color: "error.main" }, children: [
+            u && /* @__PURE__ */ U(wt, { onClick: q, sx: { color: "error.main" }, children: [
               /* @__PURE__ */ c(ta, { children: /* @__PURE__ */ c(fs, { fontSize: "small", color: "error" }) }),
               /* @__PURE__ */ c(ra, { children: "Delete" })
             ] })
@@ -20769,14 +20827,14 @@ function yu({
     ] })
   ] });
 }
-const Kh = {
+const ag = {
   borderBottom: "1px solid #e1e4e8"
-}, Zh = (t) => ({
+}, ng = (t) => ({
   display: t ? "block" : "none",
   pl: "20px"
-}), $h = {
+}), ig = {
   py: "4px"
-}, eg = /* @__PURE__ */ new Map([
+}, sg = /* @__PURE__ */ new Map([
   ["image-source", q1],
   ["ray-tracer", D1],
   ["rt60", O1],
@@ -20785,7 +20843,7 @@ const Kh = {
   ["art", W1],
   ["beam-trace", L1]
 ]);
-function tg({ uuid: t, defaultExpanded: e = !1 }) {
+function og({ uuid: t, defaultExpanded: e = !1 }) {
   const [r, a] = be(e), [n, i] = be(!1), s = a0((f) => f.solvers[t]), o = Te(() => {
     a((f) => !f);
   }, []), u = Te(() => {
@@ -20795,11 +20853,11 @@ function tg({ uuid: t, defaultExpanded: e = !1 }) {
     if (s && s.kind === "beamtrace") {
       const f = ae("BEAMTRACE_CALCULATE", (x) => {
         x === t && i(!0);
-      }), h = ae("BEAMTRACE_CALCULATE_COMPLETE", (x) => {
+      }), g = ae("BEAMTRACE_CALCULATE_COMPLETE", (x) => {
         x === t && i(!1);
       });
       return () => {
-        f(), h();
+        f(), g();
       };
     }
   }, [s, t]);
@@ -20845,8 +20903,8 @@ function tg({ uuid: t, defaultExpanded: e = !1 }) {
   }, [s, t]);
   if (!s)
     return null;
-  const T = ["beamtrace", "image-source", "ray-tracer"].includes(s.kind), E = ["beamtrace", "image-source", "ray-tracer"].includes(s.kind), P = eg.get(s.kind);
-  return /* @__PURE__ */ U(Q, { sx: Kh, children: [
+  const T = ["beamtrace", "image-source", "ray-tracer"].includes(s.kind), E = ["beamtrace", "image-source", "ray-tracer"].includes(s.kind), P = sg.get(s.kind);
+  return /* @__PURE__ */ U(J, { sx: ag, children: [
     /* @__PURE__ */ c(
       yu,
       {
@@ -20861,22 +20919,22 @@ function tg({ uuid: t, defaultExpanded: e = !1 }) {
         onDelete: u
       }
     ),
-    /* @__PURE__ */ c(Q, { sx: Zh(r), children: P && /* @__PURE__ */ c(Q, { sx: $h, children: /* @__PURE__ */ c(P, { uuid: t }) }) })
+    /* @__PURE__ */ c(J, { sx: ng(r), children: P && /* @__PURE__ */ c(J, { sx: ig, children: /* @__PURE__ */ c(P, { uuid: t }) }) })
   ] });
 }
-const rg = {
+const lg = {
   borderBottom: "1px solid #e1e4e8"
-}, ag = (t) => ({
+}, cg = (t) => ({
   display: t ? "block" : "none",
   pl: "20px"
-}), ng = {
+}), ug = {
   py: "4px"
 };
-function ig({ defaultExpanded: t = !1 }) {
+function dg({ defaultExpanded: t = !1 }) {
   const [e, r] = be(t), a = Te(() => {
     r((n) => !n);
   }, []);
-  return /* @__PURE__ */ U(Q, { sx: rg, children: [
+  return /* @__PURE__ */ U(J, { sx: lg, children: [
     /* @__PURE__ */ c(
       yu,
       {
@@ -20886,15 +20944,15 @@ function ig({ defaultExpanded: t = !1 }) {
         onToggle: a
       }
     ),
-    /* @__PURE__ */ c(Q, { sx: ag(e), children: /* @__PURE__ */ c(Q, { sx: ng, children: /* @__PURE__ */ c(X1, {}) }) })
+    /* @__PURE__ */ c(J, { sx: cg(e), children: /* @__PURE__ */ c(J, { sx: ug, children: /* @__PURE__ */ c(X1, {}) }) })
   ] });
 }
-const sg = Tt`
+const fg = Tt`
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
-`, og = {
+`, mg = {
   overflowY: "auto"
-}, lg = (t) => ({
+}, pg = (t) => ({
   display: "flex",
   alignItems: "center",
   p: "4px 8px",
@@ -20905,7 +20963,7 @@ const sg = Tt`
   "&:hover": {
     bgcolor: "#e8ecef"
   }
-}), cg = {
+}), hg = {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -20916,7 +20974,7 @@ const sg = Tt`
   "& svg": {
     fontSize: 16
   }
-}, ug = {
+}, gg = {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -20927,12 +20985,12 @@ const sg = Tt`
   "& svg": {
     fontSize: 14
   }
-}, dg = {
+}, Ag = {
   flex: 1,
   fontSize: 12,
   fontWeight: 500,
   color: "#1c2127"
-}, fg = {
+}, bg = {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -20944,7 +21002,7 @@ const sg = Tt`
   fontSize: 10,
   fontWeight: 600,
   color: "white"
-}, mg = (t, e) => ({
+}, vg = (t, e) => ({
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -20963,108 +21021,108 @@ const sg = Tt`
   },
   "& svg": {
     fontSize: 16,
-    animation: e ? `${sg} 1s linear infinite` : "none"
+    animation: e ? `${fg} 1s linear infinite` : "none"
   }
-}), pg = (t) => ({
+}), yg = (t) => ({
   display: t ? "block" : "none",
   pl: "20px"
-}), hg = {
+}), Sg = {
   p: "16px",
   textAlign: "center",
   color: "#8c959f",
   fontSize: 12
 };
-function gb() {
+function Cb() {
   const [t, e] = be(!0), r = a0((u) => u.solvers), a = Ve((u) => u.autoCalculate), n = Ve((u) => u.progress.visible), i = H0(() => Object.keys(r), [r]), s = i.length + 1, o = (u) => {
     u.stopPropagation(), $("SET_AUTO_CALCULATE", !a);
   };
-  return /* @__PURE__ */ U(Q, { sx: og, children: [
-    /* @__PURE__ */ U(Q, { sx: lg(t), onClick: () => e(!t), children: [
-      /* @__PURE__ */ c(Q, { sx: cg, children: t ? /* @__PURE__ */ c(J0, {}) : /* @__PURE__ */ c(Et, {}) }),
-      /* @__PURE__ */ c(Q, { sx: ug, children: /* @__PURE__ */ c(gd, {}) }),
-      /* @__PURE__ */ c(Q, { sx: dg, children: "Solvers" }),
-      /* @__PURE__ */ c(Q, { sx: fg, children: s }),
+  return /* @__PURE__ */ U(J, { sx: mg, children: [
+    /* @__PURE__ */ U(J, { sx: pg(t), onClick: () => e(!t), children: [
+      /* @__PURE__ */ c(J, { sx: hg, children: t ? /* @__PURE__ */ c(J0, {}) : /* @__PURE__ */ c(Et, {}) }),
+      /* @__PURE__ */ c(J, { sx: gg, children: /* @__PURE__ */ c(gd, {}) }),
+      /* @__PURE__ */ c(J, { sx: Ag, children: "Solvers" }),
+      /* @__PURE__ */ c(J, { sx: bg, children: s }),
       /* @__PURE__ */ c(
-        Q,
+        J,
         {
           component: "button",
-          sx: mg(a, a && n),
+          sx: vg(a, a && n),
           onClick: o,
           title: a ? "Auto-calculate enabled" : "Auto-calculate disabled",
           children: /* @__PURE__ */ c(Ac, {})
         }
       )
     ] }),
-    /* @__PURE__ */ U(Q, { sx: pg(t), children: [
-      i.length > 0 ? i.map((u) => /* @__PURE__ */ c(tg, { uuid: u }, u)) : /* @__PURE__ */ c(Q, { sx: hg, children: "No solvers yet. Add one from the menu." }),
-      /* @__PURE__ */ c(ig, {})
+    /* @__PURE__ */ U(J, { sx: yg(t), children: [
+      i.length > 0 ? i.map((u) => /* @__PURE__ */ c(og, { uuid: u }, u)) : /* @__PURE__ */ c(J, { sx: Sg, children: "No solvers yet. Add one from the menu." }),
+      /* @__PURE__ */ c(dg, {})
     ] })
   ] });
 }
-const gg = { version: "0.2.1", name: "shoebox", timestamp: "2021-03-26T08:06:59.213Z" }, Ag = /* @__PURE__ */ JSON.parse(`[{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Floors","Various"],"manufacturer":"","name":"Wood Floor","material":"Wood floor","absorption":{"63":0.06,"125":0.15,"250":0.11,"500":0.1,"1000":0.07,"2000":0.06,"4000":0.07,"8000":0.07},"nrc":0.09,"source":"Egan","description":"","uuid":"1PgJwgIAqHwMj99A"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"339B4C51-51C8-4B05-9AB2-74391E210FB3","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[-6,0,2.8299999237060547,0,4,2.8299999237060547,-6,4,2.8299999237060547,-6,0,2.8299999237060547,0,0,2.8299999237060547,0,4,2.8299999237060547],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[0.875,0.5,0,0.625,0.75,0,0.625,0.5,0,0.875,0.5,0,0.875,0.75,0,0.625,0.75,0],"normalized":false}},"boundingSphere":{"center":[-3,2,2.8299999237060547],"radius":3.605551275463989}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"floor","position":[0,0,-2.8299999237060547],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"1857F829-AB09-4DB5-A538-87CE6FACCF4C"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 2 layers 5/8in on studs 16inoc w/batt","absorption":{"63":0.06,"125":0.28,"250":0.12,"500":0.1,"1000":0.07,"2000":0.13,"4000":0.09,"8000":0.09},"nrc":0.11,"source":"Egan","description":"","uuid":"xmzQfq6zBKEec4TS"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"A2093E5B-D6EB-4503-B287-9EE173014B5B","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[0,4,2.8299999237060547,0,0,0,0,4,0,0,4,2.8299999237060547,0,0,2.8299999237060547,0,0,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[0.625,0.75,0,0.375,1,0,0.375,0.75,0,0.625,0.75,0,0.625,1,0,0.375,1,0],"normalized":false}},"boundingSphere":{"center":[0,2,1.4149999618530273],"radius":2.4499438548758765}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"wall4","position":[-6,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"6641528A-B8AF-4BDB-B627-14AA1401EDFB"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 2 layers 5/8in on studs 16inoc w/batt","absorption":{"63":0.06,"125":0.28,"250":0.12,"500":0.1,"1000":0.07,"2000":0.13,"4000":0.09,"8000":0.09},"nrc":0.11,"source":"Egan","description":"","uuid":"xmzQfq6zBKEec4TS"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"DDF1FD55-2407-429C-92D8-AFE0E1FE9F0C","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[-6,4,2.8299999237060547,0,4,0,-6,4,0,-6,4,2.8299999237060547,0,4,2.8299999237060547,0,4,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[0.625,0.5,0,0.375,0.75,0,0.375,0.5,0,0.625,0.5,0,0.625,0.75,0,0.375,0.75,0],"normalized":false}},"boundingSphere":{"center":[-3,4,1.4149999618530273],"radius":3.31696018849248}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"wall3","position":[0,-4,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"F925EC4C-7AEA-48FC-9363-EB79CA106FE0"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 2 layers 5/8in on studs 16inoc w/batt","absorption":{"63":0.06,"125":0.28,"250":0.12,"500":0.1,"1000":0.07,"2000":0.13,"4000":0.09,"8000":0.09},"nrc":0.11,"source":"Egan","description":"","uuid":"xmzQfq6zBKEec4TS"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"8DD060AB-9B56-40E9-9296-EE0BD5719908","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[-6,0,2.8299999237060547,-6,4,0,-6,0,0,-6,0,2.8299999237060547,-6,4,2.8299999237060547,-6,4,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[0.625,0.25,0,0.375,0.5,0,0.375,0.25,0,0.625,0.25,0,0.625,0.5,0,0.375,0.5,0],"normalized":false}},"boundingSphere":{"center":[-6,2,1.4149999618530273],"radius":2.4499438548758765}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"wall2","position":[6,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"535C0DEC-3940-4954-B272-ECC1B6CB224E"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 2 layers 5/8in on studs 16inoc w/batt","absorption":{"63":0.06,"125":0.28,"250":0.12,"500":0.1,"1000":0.07,"2000":0.13,"4000":0.09,"8000":0.09},"nrc":0.11,"source":"Egan","description":"","uuid":"xmzQfq6zBKEec4TS"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"6946BD37-4367-44C7-B79C-53238F129BA3","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[0,0,2.8299999237060547,-6,0,0,0,0,0,0,0,2.8299999237060547,-6,0,2.8299999237060547,-6,0,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[0.625,0,0,0.375,0.25,0,0.375,0,0,0.625,0,0,0.625,0.25,0,0.375,0.25,0],"normalized":false}},"boundingSphere":{"center":[-3,0,1.4149999618530273],"radius":3.31696018849248}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"wall1","position":[0,4,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"23DCFCDB-53AA-473A-A23C-BEB0FE4A85F5"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Ceiling"," Ceiling Systems"],"manufacturer":"","name":"Dampa Linar 100 Ceiling System","material":"Dampa Linar 100 Ceiling System","absorption":{"63":0.34,"125":0.48,"250":0.67,"500":0.69,"1000":0.61,"2000":0.46,"4000":0.49,"8000":0.52},"nrc":0.61,"source":"SH","description":"","uuid":"s9OvPvd4RDogxQn7"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"B8A7A35C-D863-4A13-86CB-07EC6D6F9249","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[-6,4,0,0,0,0,-6,0,0,-6,4,0,0,4,0,0,0,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[0.375,0.5,0,0.125,0.75,0,0.125,0.5,0,0.375,0.5,0,0.375,0.75,0,0.125,0.75,0],"normalized":false}},"boundingSphere":{"center":[-3,2,0],"radius":3.605551275463989}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"ceil","position":[0,0,2.8299999237060547],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"BB39378A-EA8B-4FC0-9BA9-EB845F9F41F4"},{"surfaces":[{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Floors","Various"],"manufacturer":"","name":"Wood Floor","material":"Wood floor","absorption":{"63":0.06,"125":0.15,"250":0.11,"500":0.1,"1000":0.07,"2000":0.06,"4000":0.07,"8000":0.07},"nrc":0.09,"source":"Egan","description":"","uuid":"1PgJwgIAqHwMj99A"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"339B4C51-51C8-4B05-9AB2-74391E210FB3","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[-6,0,2.8299999237060547,0,4,2.8299999237060547,-6,4,2.8299999237060547,-6,0,2.8299999237060547,0,0,2.8299999237060547,0,4,2.8299999237060547],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[0.875,0.5,0,0.625,0.75,0,0.625,0.5,0,0.875,0.5,0,0.875,0.75,0,0.625,0.75,0],"normalized":false}},"boundingSphere":{"center":[-3,2,2.8299999237060547],"radius":3.605551275463989}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"floor","position":[0,0,-2.8299999237060547],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"1857F829-AB09-4DB5-A538-87CE6FACCF4C"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 2 layers 5/8in on studs 16inoc w/batt","absorption":{"63":0.06,"125":0.28,"250":0.12,"500":0.1,"1000":0.07,"2000":0.13,"4000":0.09,"8000":0.09},"nrc":0.11,"source":"Egan","description":"","uuid":"xmzQfq6zBKEec4TS"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"A2093E5B-D6EB-4503-B287-9EE173014B5B","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[0,4,2.8299999237060547,0,0,0,0,4,0,0,4,2.8299999237060547,0,0,2.8299999237060547,0,0,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[0.625,0.75,0,0.375,1,0,0.375,0.75,0,0.625,0.75,0,0.625,1,0,0.375,1,0],"normalized":false}},"boundingSphere":{"center":[0,2,1.4149999618530273],"radius":2.4499438548758765}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"wall4","position":[-6,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"6641528A-B8AF-4BDB-B627-14AA1401EDFB"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 2 layers 5/8in on studs 16inoc w/batt","absorption":{"63":0.06,"125":0.28,"250":0.12,"500":0.1,"1000":0.07,"2000":0.13,"4000":0.09,"8000":0.09},"nrc":0.11,"source":"Egan","description":"","uuid":"xmzQfq6zBKEec4TS"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"DDF1FD55-2407-429C-92D8-AFE0E1FE9F0C","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[-6,4,2.8299999237060547,0,4,0,-6,4,0,-6,4,2.8299999237060547,0,4,2.8299999237060547,0,4,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[0.625,0.5,0,0.375,0.75,0,0.375,0.5,0,0.625,0.5,0,0.625,0.75,0,0.375,0.75,0],"normalized":false}},"boundingSphere":{"center":[-3,4,1.4149999618530273],"radius":3.31696018849248}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"wall3","position":[0,-4,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"F925EC4C-7AEA-48FC-9363-EB79CA106FE0"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 2 layers 5/8in on studs 16inoc w/batt","absorption":{"63":0.06,"125":0.28,"250":0.12,"500":0.1,"1000":0.07,"2000":0.13,"4000":0.09,"8000":0.09},"nrc":0.11,"source":"Egan","description":"","uuid":"xmzQfq6zBKEec4TS"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"8DD060AB-9B56-40E9-9296-EE0BD5719908","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[-6,0,2.8299999237060547,-6,4,0,-6,0,0,-6,0,2.8299999237060547,-6,4,2.8299999237060547,-6,4,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[0.625,0.25,0,0.375,0.5,0,0.375,0.25,0,0.625,0.25,0,0.625,0.5,0,0.375,0.5,0],"normalized":false}},"boundingSphere":{"center":[-6,2,1.4149999618530273],"radius":2.4499438548758765}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"wall2","position":[6,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"535C0DEC-3940-4954-B272-ECC1B6CB224E"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 2 layers 5/8in on studs 16inoc w/batt","absorption":{"63":0.06,"125":0.28,"250":0.12,"500":0.1,"1000":0.07,"2000":0.13,"4000":0.09,"8000":0.09},"nrc":0.11,"source":"Egan","description":"","uuid":"xmzQfq6zBKEec4TS"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"6946BD37-4367-44C7-B79C-53238F129BA3","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[0,0,2.8299999237060547,-6,0,0,0,0,0,0,0,2.8299999237060547,-6,0,2.8299999237060547,-6,0,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[0.625,0,0,0.375,0.25,0,0.375,0,0,0.625,0,0,0.625,0.25,0,0.375,0.25,0],"normalized":false}},"boundingSphere":{"center":[-3,0,1.4149999618530273],"radius":3.31696018849248}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"wall1","position":[0,4,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"23DCFCDB-53AA-473A-A23C-BEB0FE4A85F5"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Ceiling"," Ceiling Systems"],"manufacturer":"","name":"Dampa Linar 100 Ceiling System","material":"Dampa Linar 100 Ceiling System","absorption":{"63":0.34,"125":0.48,"250":0.67,"500":0.69,"1000":0.61,"2000":0.46,"4000":0.49,"8000":0.52},"nrc":0.61,"source":"SH","description":"","uuid":"s9OvPvd4RDogxQn7"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"B8A7A35C-D863-4A13-86CB-07EC6D6F9249","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[-6,4,0,0,0,0,-6,0,0,-6,4,0,0,4,0,0,0,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[0.375,0.5,0,0.125,0.75,0,0.125,0.5,0,0.375,0.5,0,0.375,0.75,0,0.125,0.75,0],"normalized":false}},"boundingSphere":{"center":[-3,2,0],"radius":3.605551275463989}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"ceil","position":[0,0,2.8299999237060547],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"BB39378A-EA8B-4FC0-9BA9-EB845F9F41F4"}],"kind":"room","name":"new room","uuid":"0D3FE423-FA7C-40E7-B701-CF78A6A401CC","units":2,"originalFileData":"# Blender v2.91.0 OBJ File: ''\\n# www.blender.org\\nmtllib shoebox.mtl\\no Cube.001_Cube.002\\nv 0.000000 0.000000 2.830000\\nv -6.000000 0.000000 2.830000\\nv 0.000000 4.000000 2.830000\\nv -6.000000 4.000000 2.830000\\nvt 0.875000 0.500000\\nvt 0.625000 0.750000\\nvt 0.625000 0.500000\\nvt 0.875000 0.750000\\nvn 0.0000 0.0000 1.0000\\nusemtl None\\ns off\\nf 2/1/1 3/2/1 4/3/1\\nf 2/1/1 1/4/1 3/2/1\\no Cube.002_Cube.003\\nv 0.000000 0.000000 0.000000\\nv 0.000000 0.000000 2.830000\\nv 0.000000 4.000000 0.000000\\nv 0.000000 4.000000 2.830000\\nvt 0.625000 0.750000\\nvt 0.375000 1.000000\\nvt 0.375000 0.750000\\nvt 0.625000 1.000000\\nvn 1.0000 0.0000 0.0000\\nusemtl None\\ns off\\nf 8/5/2 5/6/2 7/7/2\\nf 8/5/2 6/8/2 5/6/2\\no Cube.003_Cube.004\\nv 0.000000 4.000000 0.000000\\nv 0.000000 4.000000 2.830000\\nv -6.000000 4.000000 0.000000\\nv -6.000000 4.000000 2.830000\\nvt 0.625000 0.500000\\nvt 0.375000 0.750000\\nvt 0.375000 0.500000\\nvt 0.625000 0.750000\\nvn 0.0000 1.0000 0.0000\\nusemtl None\\ns off\\nf 12/9/3 9/10/3 11/11/3\\nf 12/9/3 10/12/3 9/10/3\\no Cube.004_Cube.005\\nv -6.000000 0.000000 0.000000\\nv -6.000000 0.000000 2.830000\\nv -6.000000 4.000000 0.000000\\nv -6.000000 4.000000 2.830000\\nvt 0.625000 0.250000\\nvt 0.375000 0.500000\\nvt 0.375000 0.250000\\nvt 0.625000 0.500000\\nvn -1.0000 0.0000 0.0000\\nusemtl None\\ns off\\nf 14/13/4 15/14/4 13/15/4\\nf 14/13/4 16/16/4 15/14/4\\no Cube.005_Cube.006\\nv 0.000000 0.000000 0.000000\\nv 0.000000 0.000000 2.830000\\nv -6.000000 0.000000 0.000000\\nv -6.000000 0.000000 2.830000\\nvt 0.625000 0.000000\\nvt 0.375000 0.250000\\nvt 0.375000 0.000000\\nvt 0.625000 0.250000\\nvn 0.0000 -1.0000 0.0000\\nusemtl None\\ns off\\nf 18/17/5 19/18/5 17/19/5\\nf 18/17/5 20/20/5 19/18/5\\no Cube.006_Cube.007\\nv 0.000000 0.000000 0.000000\\nv -6.000000 0.000000 0.000000\\nv 0.000000 4.000000 0.000000\\nv -6.000000 4.000000 0.000000\\nvt 0.375000 0.500000\\nvt 0.125000 0.750000\\nvt 0.125000 0.500000\\nvt 0.375000 0.750000\\nvn 0.0000 0.0000 -1.0000\\nusemtl None\\ns off\\nf 24/21/6 21/22/6 22/23/6\\nf 24/21/6 23/24/6 21/22/6\\n","originalFileName":"shoebox.obj","visible":true,"position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1]},{"kind":"source","name":"new source","visible":true,"position":[-1.58,1.42,1.73],"scale":[1,1,1],"rotation":[0,0,0,"XYZ"],"color":13958322,"uuid":"7D40D118-D86D-4823-8392-9D7A36381742"},{"kind":"receiver","name":"new receiver","visible":true,"position":[-4.43,2.52,1.21],"scale":[1,1,1],"rotation":[0,0,0,"XYZ"],"color":14511983,"uuid":"6C6C6EB3-B060-40A0-BF0F-A3F3D9D03B3E"}]`), bg = [{ name: "Ray Tracer", kind: "ray-tracer", uuid: "f77ccadb-0652-4919-8171-6ec70e16a390", roomID: "0D3FE423-FA7C-40E7-B701-CF78A6A401CC", sourceIDs: ["7D40D118-D86D-4823-8392-9D7A36381742"], surfaceIDs: ["1857F829-AB09-4DB5-A538-87CE6FACCF4C", "6641528A-B8AF-4BDB-B627-14AA1401EDFB", "F925EC4C-7AEA-48FC-9363-EB79CA106FE0", "535C0DEC-3940-4954-B272-ECC1B6CB224E", "23DCFCDB-53AA-473A-A23C-BEB0FE4A85F5", "BB39378A-EA8B-4FC0-9BA9-EB845F9F41F4"], receiverIDs: ["6C6C6EB3-B060-40A0-BF0F-A3F3D9D03B3E"], updateInterval: 5, passes: 1e3, pointSize: 2, reflectionOrder: 50, runningWithoutReceivers: !1, raysVisible: !0, pointsVisible: !0, invertedDrawStyle: !1, plotStyle: { mode: "lines" }, paths: {} }], vg = {
-  meta: gg,
-  containers: Ag,
-  solvers: bg
-}, yg = { version: "0.2.1", name: "concord", timestamp: "2021-03-23T00:10:21.760Z" }, Sg = /* @__PURE__ */ JSON.parse('[{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 2+2 @ 5/8in on 3-5/8in studs","absorption":{"63":0.04,"125":0.15,"250":0.08,"500":0.06,"1000":0.05,"2000":0.05,"4000":0.04,"8000":0.04},"nrc":0.06,"source":"wjhw?","description":"","uuid":"I1esImsQrKZl0AAw"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"3C4CDBD3-E04D-45F6-ABAE-D910EE0BCC11","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[12.430130004882812,2.3483328819274902,4.876800060272217,12.430130004882812,5.575300216674805,4.876800060272217,12.430130004882812,5.575300216674805,0,12.430130004882812,5.575300216674805,0,12.430130004882812,0,0,12.430130004882812,0,2.9337000846862793,12.430130004882812,0,2.9337000846862793,12.430130004882812,2.3483328819274902,4.876800060272217,12.430130004882812,5.575300216674805,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[12.430130004882812,2.7876501083374023,2.4384000301361084],"radius":3.7036182083850524}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"right1","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"59F599B3-6554-4999-A93C-597E4B5275C1"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 2+2 @ 5/8in on 3-5/8in studs","absorption":{"63":0.04,"125":0.15,"250":0.08,"500":0.06,"1000":0.05,"2000":0.05,"4000":0.04,"8000":0.04},"nrc":0.06,"source":"wjhw?","description":"","uuid":"I1esImsQrKZl0AAw"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"BD80155E-DA08-4122-A819-D7C873E060D0","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[6.215065002441406,5.575300216674805,4.876800060272217,12.430130004882812,5.575300216674805,0,12.430130004882812,5.575300216674805,4.876800060272217,6.215065002441406,5.575300216674805,4.876800060272217,6.215065002441406,5.575300216674805,0,12.430130004882812,5.575300216674805,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[9.32259750366211,5.575300216674805,2.4384000301361084],"radius":3.950006702919727}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"back1","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"FDDD16D3-6E8D-4B4B-B4A1-D622E9D6D31D"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Drapery","Drapery"],"manufacturer":"","name":"Fiberglass Fabric Curtain","material":"Fiberglass fabric curtain, 8.5 oz/sq yd (50% fullness) Egan","absorption":{"63":0.03,"125":0.09,"250":0.32,"500":0.68,"1000":0.83,"2000":0.39,"4000":0.76,"8000":0.99},"nrc":0.56,"source":"SH","description":"","uuid":"3sUxVxHXIi9Gc6Zi"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"2E5E970F-6DFD-4269-A688-FD15AE36512B","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[6.215065002441406,10.855531692504883,0,6.215065002441406,5.575300216674805,4.876800060272217,6.215065002441406,10.855531692504883,4.876800060272217,6.215065002441406,10.855531692504883,0,6.215065002441406,5.575300216674805,0,6.215065002441406,5.575300216674805,4.876800060272217],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[6.215065002441406,8.215415954589844,2.4384000301361084],"radius":3.593884502394929}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"right2","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"EA9AA1BF-BA53-4D0E-ACB0-95E7291666FC"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 1 layer 5/8in on studs 16inoc w/batt","absorption":{"63":0.07,"125":0.55,"250":0.14,"500":0.08,"1000":0.04,"2000":0.12,"4000":0.11,"8000":0.11},"nrc":0.1,"source":"Egan","description":"","uuid":"th2PuWU5EhCsaon3"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"29275BAA-EC84-4AF7-868A-E05EA60BD17A","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[0,10.855531692504883,0,6.215065002441406,10.855531692504883,4.876800060272217,0,10.855531692504883,4.876800060272217,0,10.855531692504883,0,6.215065002441406,10.855531692504883,0,6.215065002441406,10.855531692504883,4.876800060272217],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[3.107532501220703,10.855531692504883,2.4384000301361084],"radius":3.950006702919727}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"back2","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"8C87C786-5188-48F7-BFD4-946EF78D1E65"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 2+2 @ 5/8in on 3-5/8in studs","absorption":{"63":0.04,"125":0.15,"250":0.08,"500":0.06,"1000":0.05,"2000":0.05,"4000":0.04,"8000":0.04},"nrc":0.06,"source":"wjhw?","description":"","uuid":"I1esImsQrKZl0AAw"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"F08D41DC-1461-412C-A97D-BF65AFA8EE1E","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[0,2.3483328819274902,4.876800060272217,0,0,0,0,10.855531692504883,0,0,10.855531692504883,0,0,10.855531692504883,4.876800060272217,0,2.3483328819274902,4.876800060272217,0,2.3483328819274902,4.876800060272217,0,0,2.9337000846862793,0,0,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[0,5.427765846252441,2.4384000301361084],"radius":5.950330813384434}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"left","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"ED91F1C5-D2D0-42A0-8686-4B46303256FE"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Diffusion","Diffusion Products"],"manufacturer":"","name":"Diffuse Signature Wood (1\\" Standoff Sides Open)","material":"Diffuse Signature Wood (1\\" Standoff Sides Open)","absorption":{"63":0,"125":0,"250":0.02,"500":0.06,"1000":0.16,"2000":0.13,"4000":0.15,"8000":0.17},"nrc":0.09,"source":"SH","description":"","uuid":"tgGAnP5OCLWlPFF4"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"088EC67F-85BA-4323-BB08-C0213F5F6CA2","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[12.430130004882812,0,0,0,0,2.9337000846862793,12.430130004882812,0,2.9337000846862793,12.430130004882812,0,0,0,0,0,0,0,2.9337000846862793],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[6.215065002441406,0,1.4668500423431396],"radius":6.3858188223041585}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"front","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"0AECC234-8C09-4D6B-AA82-DC0A99B42F2D"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Ceiling"," Ceiling Systems"],"manufacturer":"","name":"Barrisol Stretched Ceiling Over 3\\" Fiberglass","material":"Barrisol Stretched Ceiling over 3\\" fiberglass","absorption":{"63":0.18,"125":0.26,"250":0.58,"500":0.57,"1000":0.43,"2000":0.36,"4000":0.36,"8000":0.36},"nrc":0.49,"source":"SH","description":"","uuid":"Wz4CjrpqIYGba8G0"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"95B298C8-96A1-41A1-9A71-D7C446A0AB46","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[12.430130004882812,0,2.9337000846862793,0,2.3483328819274902,4.876800060272217,12.430130004882812,2.3483328819274902,4.876800060272217,12.430130004882812,0,2.9337000846862793,0,0,2.9337000846862793,0,2.3483328819274902,4.876800060272217],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0.637499988079071,-0.7705000042915344,0,0.637499988079071,-0.7705000042915344,0,0.637499988079071,-0.7705000042915344,0,0.637499988079071,-0.7705000042915344,0,0.637499988079071,-0.7705000042915344,0,0.637499988079071,-0.7705000042915344],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[6.215065002441406,1.1741664409637451,3.905250072479248],"radius":6.399188166825382}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"slope","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"ABA66075-FD1A-4820-B591-66EE2A92CFDB"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Ceiling"," Ceiling Systems"],"manufacturer":"","name":"Dampa Linar 100 Ceiling System","material":"Dampa Linar 100 Ceiling System","absorption":{"63":0.34,"125":0.48,"250":0.67,"500":0.69,"1000":0.61,"2000":0.46,"4000":0.49,"8000":0.52},"nrc":0.61,"source":"SH","description":"","uuid":"s9OvPvd4RDogxQn7"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"333C7898-A815-420A-89D6-3D96BB178242","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[12.430130004882812,2.3483328819274902,4.876800060272217,6.215065002441406,5.575300216674805,4.876800060272217,12.430130004882812,5.575300216674805,4.876800060272217,6.215065002441406,5.575300216674805,4.876800060272217,0,10.855531692504883,4.876800060272217,6.215065002441406,10.855531692504883,4.876800060272217,12.430130004882812,2.3483328819274902,4.876800060272217,0,2.3483328819274902,4.876800060272217,6.215065002441406,5.575300216674805,4.876800060272217,6.215065002441406,5.575300216674805,4.876800060272217,0,2.3483328819274902,4.876800060272217,0,10.855531692504883,4.876800060272217],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[6.215065002441406,6.6019322872161865,4.876800060272217],"radius":7.531277506853956}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"ceil","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"522A95C7-E134-4D1C-92DD-8672102F06E6"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Floors","Various"],"manufacturer":"","name":"Wood Floor","material":"Wood floor","absorption":{"63":0.06,"125":0.15,"250":0.11,"500":0.1,"1000":0.07,"2000":0.06,"4000":0.07,"8000":0.07},"nrc":0.09,"source":"Egan","description":"","uuid":"1PgJwgIAqHwMj99A"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"203BF944-7E6E-4539-B678-F2064CCC8619","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[6.215065002441406,5.575300216674805,0,12.430130004882812,0,0,12.430130004882812,5.575300216674805,0,6.215065002441406,5.575300216674805,0,0,10.855531692504883,0,0,0,0,6.215065002441406,5.575300216674805,0,0,0,0,12.430130004882812,0,0,6.215065002441406,5.575300216674805,0,6.215065002441406,10.855531692504883,0,0,10.855531692504883,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[6.215065002441406,5.427765846252441,0],"radius":8.25152562053324}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"floor","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"34B96D2E-706E-45E8-91D2-0F8FF35AA11E"},{"surfaces":[{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 2+2 @ 5/8in on 3-5/8in studs","absorption":{"63":0.04,"125":0.15,"250":0.08,"500":0.06,"1000":0.05,"2000":0.05,"4000":0.04,"8000":0.04},"nrc":0.06,"source":"wjhw?","description":"","uuid":"I1esImsQrKZl0AAw"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"3C4CDBD3-E04D-45F6-ABAE-D910EE0BCC11","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[12.430130004882812,2.3483328819274902,4.876800060272217,12.430130004882812,5.575300216674805,4.876800060272217,12.430130004882812,5.575300216674805,0,12.430130004882812,5.575300216674805,0,12.430130004882812,0,0,12.430130004882812,0,2.9337000846862793,12.430130004882812,0,2.9337000846862793,12.430130004882812,2.3483328819274902,4.876800060272217,12.430130004882812,5.575300216674805,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[12.430130004882812,2.7876501083374023,2.4384000301361084],"radius":3.7036182083850524}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"right1","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"59F599B3-6554-4999-A93C-597E4B5275C1"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 2+2 @ 5/8in on 3-5/8in studs","absorption":{"63":0.04,"125":0.15,"250":0.08,"500":0.06,"1000":0.05,"2000":0.05,"4000":0.04,"8000":0.04},"nrc":0.06,"source":"wjhw?","description":"","uuid":"I1esImsQrKZl0AAw"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"BD80155E-DA08-4122-A819-D7C873E060D0","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[6.215065002441406,5.575300216674805,4.876800060272217,12.430130004882812,5.575300216674805,0,12.430130004882812,5.575300216674805,4.876800060272217,6.215065002441406,5.575300216674805,4.876800060272217,6.215065002441406,5.575300216674805,0,12.430130004882812,5.575300216674805,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[9.32259750366211,5.575300216674805,2.4384000301361084],"radius":3.950006702919727}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"back1","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"FDDD16D3-6E8D-4B4B-B4A1-D622E9D6D31D"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Drapery","Drapery"],"manufacturer":"","name":"Fiberglass Fabric Curtain","material":"Fiberglass fabric curtain, 8.5 oz/sq yd (50% fullness) Egan","absorption":{"63":0.03,"125":0.09,"250":0.32,"500":0.68,"1000":0.83,"2000":0.39,"4000":0.76,"8000":0.99},"nrc":0.56,"source":"SH","description":"","uuid":"3sUxVxHXIi9Gc6Zi"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"2E5E970F-6DFD-4269-A688-FD15AE36512B","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[6.215065002441406,10.855531692504883,0,6.215065002441406,5.575300216674805,4.876800060272217,6.215065002441406,10.855531692504883,4.876800060272217,6.215065002441406,10.855531692504883,0,6.215065002441406,5.575300216674805,0,6.215065002441406,5.575300216674805,4.876800060272217],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[6.215065002441406,8.215415954589844,2.4384000301361084],"radius":3.593884502394929}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"right2","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"EA9AA1BF-BA53-4D0E-ACB0-95E7291666FC"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 1 layer 5/8in on studs 16inoc w/batt","absorption":{"63":0.07,"125":0.55,"250":0.14,"500":0.08,"1000":0.04,"2000":0.12,"4000":0.11,"8000":0.11},"nrc":0.1,"source":"Egan","description":"","uuid":"th2PuWU5EhCsaon3"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"29275BAA-EC84-4AF7-868A-E05EA60BD17A","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[0,10.855531692504883,0,6.215065002441406,10.855531692504883,4.876800060272217,0,10.855531692504883,4.876800060272217,0,10.855531692504883,0,6.215065002441406,10.855531692504883,0,6.215065002441406,10.855531692504883,4.876800060272217],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[3.107532501220703,10.855531692504883,2.4384000301361084],"radius":3.950006702919727}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"back2","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"8C87C786-5188-48F7-BFD4-946EF78D1E65"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 2+2 @ 5/8in on 3-5/8in studs","absorption":{"63":0.04,"125":0.15,"250":0.08,"500":0.06,"1000":0.05,"2000":0.05,"4000":0.04,"8000":0.04},"nrc":0.06,"source":"wjhw?","description":"","uuid":"I1esImsQrKZl0AAw"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"F08D41DC-1461-412C-A97D-BF65AFA8EE1E","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[0,2.3483328819274902,4.876800060272217,0,0,0,0,10.855531692504883,0,0,10.855531692504883,0,0,10.855531692504883,4.876800060272217,0,2.3483328819274902,4.876800060272217,0,2.3483328819274902,4.876800060272217,0,0,2.9337000846862793,0,0,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[0,5.427765846252441,2.4384000301361084],"radius":5.950330813384434}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"left","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"ED91F1C5-D2D0-42A0-8686-4B46303256FE"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Diffusion","Diffusion Products"],"manufacturer":"","name":"Diffuse Signature Wood (1\\" Standoff Sides Open)","material":"Diffuse Signature Wood (1\\" Standoff Sides Open)","absorption":{"63":0,"125":0,"250":0.02,"500":0.06,"1000":0.16,"2000":0.13,"4000":0.15,"8000":0.17},"nrc":0.09,"source":"SH","description":"","uuid":"tgGAnP5OCLWlPFF4"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"088EC67F-85BA-4323-BB08-C0213F5F6CA2","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[12.430130004882812,0,0,0,0,2.9337000846862793,12.430130004882812,0,2.9337000846862793,12.430130004882812,0,0,0,0,0,0,0,2.9337000846862793],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[6.215065002441406,0,1.4668500423431396],"radius":6.3858188223041585}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"front","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"0AECC234-8C09-4D6B-AA82-DC0A99B42F2D"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Ceiling"," Ceiling Systems"],"manufacturer":"","name":"Barrisol Stretched Ceiling Over 3\\" Fiberglass","material":"Barrisol Stretched Ceiling over 3\\" fiberglass","absorption":{"63":0.18,"125":0.26,"250":0.58,"500":0.57,"1000":0.43,"2000":0.36,"4000":0.36,"8000":0.36},"nrc":0.49,"source":"SH","description":"","uuid":"Wz4CjrpqIYGba8G0"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"95B298C8-96A1-41A1-9A71-D7C446A0AB46","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[12.430130004882812,0,2.9337000846862793,0,2.3483328819274902,4.876800060272217,12.430130004882812,2.3483328819274902,4.876800060272217,12.430130004882812,0,2.9337000846862793,0,0,2.9337000846862793,0,2.3483328819274902,4.876800060272217],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0.637499988079071,-0.7705000042915344,0,0.637499988079071,-0.7705000042915344,0,0.637499988079071,-0.7705000042915344,0,0.637499988079071,-0.7705000042915344,0,0.637499988079071,-0.7705000042915344,0,0.637499988079071,-0.7705000042915344],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[6.215065002441406,1.1741664409637451,3.905250072479248],"radius":6.399188166825382}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"slope","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"ABA66075-FD1A-4820-B591-66EE2A92CFDB"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Ceiling"," Ceiling Systems"],"manufacturer":"","name":"Dampa Linar 100 Ceiling System","material":"Dampa Linar 100 Ceiling System","absorption":{"63":0.34,"125":0.48,"250":0.67,"500":0.69,"1000":0.61,"2000":0.46,"4000":0.49,"8000":0.52},"nrc":0.61,"source":"SH","description":"","uuid":"s9OvPvd4RDogxQn7"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"333C7898-A815-420A-89D6-3D96BB178242","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[12.430130004882812,2.3483328819274902,4.876800060272217,6.215065002441406,5.575300216674805,4.876800060272217,12.430130004882812,5.575300216674805,4.876800060272217,6.215065002441406,5.575300216674805,4.876800060272217,0,10.855531692504883,4.876800060272217,6.215065002441406,10.855531692504883,4.876800060272217,12.430130004882812,2.3483328819274902,4.876800060272217,0,2.3483328819274902,4.876800060272217,6.215065002441406,5.575300216674805,4.876800060272217,6.215065002441406,5.575300216674805,4.876800060272217,0,2.3483328819274902,4.876800060272217,0,10.855531692504883,4.876800060272217],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[6.215065002441406,6.6019322872161865,4.876800060272217],"radius":7.531277506853956}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"ceil","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"522A95C7-E134-4D1C-92DD-8672102F06E6"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Floors","Various"],"manufacturer":"","name":"Wood Floor","material":"Wood floor","absorption":{"63":0.06,"125":0.15,"250":0.11,"500":0.1,"1000":0.07,"2000":0.06,"4000":0.07,"8000":0.07},"nrc":0.09,"source":"Egan","description":"","uuid":"1PgJwgIAqHwMj99A"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"203BF944-7E6E-4539-B678-F2064CCC8619","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[6.215065002441406,5.575300216674805,0,12.430130004882812,0,0,12.430130004882812,5.575300216674805,0,6.215065002441406,5.575300216674805,0,0,10.855531692504883,0,0,0,0,6.215065002441406,5.575300216674805,0,0,0,0,12.430130004882812,0,0,6.215065002441406,5.575300216674805,0,6.215065002441406,10.855531692504883,0,0,10.855531692504883,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[6.215065002441406,5.427765846252441,0],"radius":8.25152562053324}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"floor","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"34B96D2E-706E-45E8-91D2-0F8FF35AA11E"}],"kind":"room","name":"new room","uuid":"77F26146-94CF-46F8-870D-BB5A41C9D802","units":2,"originalFileData":"","originalFileName":"","visible":true,"position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1]},{"kind":"source","name":"new source","visible":true,"position":[3.7,9.9,1],"scale":[1,1,1],"rotation":[0,0,0,"XYZ"],"color":10668418,"uuid":"2825008E-9269-4453-BB81-2290852E5A81"},{"kind":"receiver","name":"new receiver","visible":true,"position":[10.8,3.8000000000000003,1.2000000000000002],"scale":[1,1,1],"rotation":[0,0,0,"XYZ"],"color":14511983,"uuid":"3198FEAC-8F9F-4362-8FB8-ADE61D8A708A"}]'), Cg = [{ name: "Ray Tracer", kind: "ray-tracer", uuid: "1d67c7f8-9c6f-43db-9b20-01b3c6f2feab", roomID: "77F26146-94CF-46F8-870D-BB5A41C9D802", sourceIDs: ["2825008E-9269-4453-BB81-2290852E5A81"], surfaceIDs: ["59F599B3-6554-4999-A93C-597E4B5275C1", "FDDD16D3-6E8D-4B4B-B4A1-D622E9D6D31D", "EA9AA1BF-BA53-4D0E-ACB0-95E7291666FC", "8C87C786-5188-48F7-BFD4-946EF78D1E65", "ED91F1C5-D2D0-42A0-8686-4B46303256FE", "0AECC234-8C09-4D6B-AA82-DC0A99B42F2D", "ABA66075-FD1A-4820-B591-66EE2A92CFDB", "522A95C7-E134-4D1C-92DD-8672102F06E6", "34B96D2E-706E-45E8-91D2-0F8FF35AA11E"], receiverIDs: ["3198FEAC-8F9F-4362-8FB8-ADE61D8A708A"], updateInterval: 5, passes: 500, pointSize: 2, reflectionOrder: 500, runningWithoutReceivers: !1, raysVisible: !0, pointsVisible: !0, invertedDrawStyle: !1, plotStyle: { mode: "lines" }, paths: {} }], wg = {
-  meta: yg,
-  containers: Sg,
-  solvers: Cg
-}, Pg = { version: "0.2.1", name: "auditorium", timestamp: "2021-04-29T11:59:27.330Z" }, xg = /* @__PURE__ */ JSON.parse(`[{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Floors","Wood"],"manufacturer":"","name":"Wood Stage Floor (T&G)","material":"Wood Stage Floor (T&G), 2 layers 1/2in, on joists","absorption":{"63":0.04,"125":0.1,"250":0.07,"500":0.06,"1000":0.06,"2000":0.06,"4000":0.06,"8000":0.06},"nrc":0.06,"source":"Beranek (JASA '98)","description":"","uuid":"ZdwcxUjnCaTijM8d"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"400B3C98-438F-414E-9A39-2D5BAC219DC3","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[3.6396543979644775,14.278063774108887,-0.6776000261306763,3.6396543979644775,14.278063774108887,0,3.6396543979644775,-0.7260642051696777,-0.6776000261306763,3.6396543979644775,-0.7260642051696777,0,3.6396543979644775,-0.7260642051696777,-0.6776000261306763,3.6396543979644775,14.278063774108887,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0],"normalized":false}},"boundingSphere":{"center":[3.6396543979644775,6.7759997844696045,-0.33880001306533813],"radius":7.509710350838808}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-0","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"684C19AC-22BD-45FE-898C-C5166936CDDD"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Floors","Wood"],"manufacturer":"","name":"Wood Stage Floor (T&G)","material":"Wood Stage Floor (T&G), 2 layers 1/2in, on joists","absorption":{"63":0.04,"125":0.1,"250":0.07,"500":0.06,"1000":0.06,"2000":0.06,"4000":0.06,"8000":0.06},"nrc":0.06,"source":"Beranek (JASA '98)","description":"","uuid":"ZdwcxUjnCaTijM8d"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"E97F47E2-3237-4B92-A531-B8C3A9AF9885","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[3.6396543979644775,-0.7260642051696777,0,3.6396543979644775,14.278063774108887,0,3.388000011444092,-1.3552000522613525,0,3.6396543979644775,14.278063774108887,0,3.388000011444092,14.90719985961914,0,3.388000011444092,-1.3552000522613525,0,3.388000011444092,-1.3552000522613525,0,3.388000011444092,14.90719985961914,0,0,0,0,0,13.552000045776367,0,0,0,0,3.388000011444092,14.90719985961914,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1],"normalized":false}},"boundingSphere":{"center":[1.8198271989822388,6.775999903678894,0],"radius":8.28103729572734}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-16","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"019734C7-A913-4997-AF56-4127C064DCBC"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Tectum","material":"Tectum, 1in, against solid backing","absorption":{"63":0,"125":0.06,"250":0.13,"500":0.24,"1000":0.45,"2000":0.82,"4000":0.64,"8000":0.64},"nrc":0.41,"source":"Tectum Company","description":"","uuid":"W2wCsvqJV0a1RMGw"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"AA8A615E-B0F8-4810-9B76-E960FD96910E","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[25.27349090576172,0,8.243200302124023,25.27349090576172,0,0.5723999738693237,23.240692138671875,-4.500878810882568,8.243200302124023,23.240692138671875,-4.500878810882568,0.5723999738693237,23.240692138671875,-4.500878810882568,8.243200302124023,25.27349090576172,0,0.5723999738693237],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.9113596677780151,0.4116109311580658,0,-0.9113596677780151,0.4116109311580658,0,-0.9113596677780151,0.4116109311580658,0,-0.9113596677780151,0.4116109311580658,0,-0.9113596677780151,0.4116109311580658,0,-0.9113596677780151,0.4116109311580658,0],"normalized":false}},"boundingSphere":{"center":[24.257091522216797,-2.250439405441284,4.407800137996674],"radius":4.561561097192662}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-1","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"C4C1198C-8ECF-4945-8DBE-BECEBD6261D4"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Tectum","material":"Tectum, 1in, against solid backing","absorption":{"63":0,"125":0.06,"250":0.13,"500":0.24,"1000":0.45,"2000":0.82,"4000":0.64,"8000":0.64},"nrc":0.41,"source":"Tectum Company","description":"","uuid":"W2wCsvqJV0a1RMGw"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"592E5C4E-1FF7-4AAE-8332-3EA1AF4A7B58","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[25.27349090576172,13.552000045776367,8.243200302124023,25.27349090576172,13.552000045776367,0.5723999738693237,25.951091766357422,6.776000022888184,8.243200302124023,25.951091766357422,6.776000022888184,0.5723999738693237,25.951091766357422,6.776000022888184,8.243200302124023,25.27349090576172,13.552000045776367,0.5723999738693237],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.9950371980667114,-0.09950384497642517,0,-0.9950371980667114,-0.09950384497642517,0,-0.9950371980667114,-0.09950384497642517,0,-0.9950371980667114,-0.09950384497642517,0,-0.9950371980667114,-0.09950384497642517,0,-0.9950371980667114,-0.09950384497642517,0],"normalized":false}},"boundingSphere":{"center":[25.61229133605957,10.164000034332275,4.407800137996674],"radius":5.128705901892141}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-2","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"BC98D1A7-A671-4D2C-A9B9-243FC24E6272"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Tectum","material":"Tectum, 1in, against solid backing","absorption":{"63":0,"125":0.06,"250":0.13,"500":0.24,"1000":0.45,"2000":0.82,"4000":0.64,"8000":0.64},"nrc":0.41,"source":"Tectum Company","description":"","uuid":"W2wCsvqJV0a1RMGw"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"86233816-C227-485D-BCFB-3495AB27841E","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[25.951091766357422,6.776000022888184,8.243200302124023,25.951091766357422,6.776000022888184,0.5723999738693237,25.27349090576172,0,8.243200302124023,25.27349090576172,0,0.5723999738693237,25.27349090576172,0,8.243200302124023,25.951091766357422,6.776000022888184,0.5723999738693237],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.9950371980667114,0.09950384497642517,0,-0.9950371980667114,0.09950384497642517,0,-0.9950371980667114,0.09950384497642517,0,-0.9950371980667114,0.09950384497642517,0,-0.9950371980667114,0.09950384497642517,0,-0.9950371980667114,0.09950384497642517,0],"normalized":false}},"boundingSphere":{"center":[25.61229133605957,3.388000011444092,4.407800137996674],"radius":5.128705901892141}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-5","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"002B910B-36C7-478E-BF82-44A5E5827359"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Tectum","material":"Tectum, 1in, against solid backing","absorption":{"63":0,"125":0.06,"250":0.13,"500":0.24,"1000":0.45,"2000":0.82,"4000":0.64,"8000":0.64},"nrc":0.41,"source":"Tectum Company","description":"","uuid":"W2wCsvqJV0a1RMGw"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"75B764E2-FFE8-476A-9917-7C248BD99988","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[23.240692138671875,18.052879333496094,8.243200302124023,23.240692138671875,18.052879333496094,0.5723999738693237,25.27349090576172,13.552000045776367,8.243200302124023,25.27349090576172,13.552000045776367,0.5723999738693237,25.27349090576172,13.552000045776367,8.243200302124023,23.240692138671875,18.052879333496094,0.5723999738693237],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.9113596677780151,-0.411610871553421,0,-0.9113596677780151,-0.411610871553421,0,-0.9113596677780151,-0.411610871553421,0,-0.9113596677780151,-0.411610871553421,0,-0.9113596677780151,-0.411610871553421,0,-0.9113596677780151,-0.411610871553421,0],"normalized":false}},"boundingSphere":{"center":[24.257091522216797,15.80243968963623,4.407800137996674],"radius":4.561561214816119}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-13","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"150F4026-17E8-4FA2-947C-7CCE8766672F"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["People","Various"],"manufacturer":"","name":"Audience In Upholstered Seats","material":"Audience in upholstered seats","absorption":{"63":0,"125":0.18,"250":0.4,"500":0.46,"1000":0.46,"2000":0.51,"4000":0.46,"8000":0.46},"nrc":0.46,"source":"Hann Tucker","description":"","uuid":"QFCVbDYrU5uWvhK2"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"538BB9A3-68A2-425A-B70F-CD45E476386D","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[25.951091766357422,6.776000022888184,0.5723999738693237,25.27349090576172,13.552000045776367,0.5723999738693237,25.27349090576172,0,0.5723999738693237,25.27349090576172,13.552000045776367,0.5723999738693237,23.240692138671875,18.052879333496094,0.5723999738693237,25.27349090576172,0,0.5723999738693237,23.240692138671875,-4.500878810882568,0.5723999738693237,25.27349090576172,0,0.5723999738693237,23.240692138671875,18.052879333496094,0.5723999738693237],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1],"normalized":false}},"boundingSphere":{"center":[24.59589195251465,6.776000261306763,0.5723999738693237],"radius":11.358017791156218}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-3","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"95922F62-13C2-4C06-A997-99B18DE92370"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["People","Various"],"manufacturer":"","name":"Audience In Upholstered Seats","material":"Audience in upholstered seats","absorption":{"63":0,"125":0.18,"250":0.4,"500":0.46,"1000":0.46,"2000":0.51,"4000":0.46,"8000":0.46},"nrc":0.46,"source":"Hann Tucker","description":"","uuid":"QFCVbDYrU5uWvhK2"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"EE864F8C-261F-4F61-B437-8B57B0567E6E","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[13.076691627502441,-4.500878810882568,0.07240000367164612,13.076691627502441,18.052879333496094,0.07240000367164612,3.6396543979644775,-0.7260642051696777,-0.6776000261306763,3.6396543979644775,14.278063774108887,-0.6776000261306763,3.6396543979644775,-0.7260642051696777,-0.6776000261306763,13.076691627502441,18.052879333496094,0.07240000367164612],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.07922429591417313,0,0.9968568086624146,-0.07922429591417313,0,0.9968568086624146,-0.07922429591417313,0,0.9968568086624146,-0.07922429591417313,0,0.9968568086624146,-0.07922429591417313,0,0.9968568086624146,-0.07922429591417313,0,0.9968568086624146],"normalized":false}},"boundingSphere":{"center":[8.35817301273346,6.776000261306763,-0.3026000112295151],"radius":12.230005909151432}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-17","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"12438BB0-6F74-48E6-A9BE-B8223FBBB05B"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["People","Various"],"manufacturer":"","name":"Audience In Upholstered Seats","material":"Audience in upholstered seats","absorption":{"63":0,"125":0.18,"250":0.4,"500":0.46,"1000":0.46,"2000":0.51,"4000":0.46,"8000":0.46},"nrc":0.46,"source":"Hann Tucker","description":"","uuid":"QFCVbDYrU5uWvhK2"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"4ED29942-85B9-4630-A710-A701DC4A2A5F","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[23.240692138671875,-4.500878810882568,0.5723999738693237,23.240692138671875,18.052879333496094,0.5723999738693237,13.076691627502441,-4.500878810882568,0.07240000367164612,13.076691627502441,18.052879333496094,0.07240000367164612,13.076691627502441,-4.500878810882568,0.07240000367164612,23.240692138671875,18.052879333496094,0.5723999738693237],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.04913381114602089,0,0.9987922310829163,-0.04913381114602089,0,0.9987922310829163,-0.04913381114602089,0,0.9987922310829163,-0.04913381114602089,0,0.9987922310829163,-0.04913381114602089,0,0.9987922310829163,-0.04913381114602089,0,0.9987922310829163],"normalized":false}},"boundingSphere":{"center":[18.158691883087158,6.776000261306763,0.3223999887704849],"radius":12.37162997341475}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-18","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"B35F8F84-7DE4-4AE4-ABD1-08F6856713D0"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"99A4D26C-5E26-4692-8C0D-CF185378CFA0","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[13.076691627502441,-4.500878810882568,7.493199825286865,13.076691627502441,-4.500878810882568,0.07240000367164612,3.6396543979644775,-0.7260642051696777,4.743199825286865,3.6396543979644775,-0.7260642051696777,4.743199825286865,13.076691627502441,-4.500878810882568,0.07240000367164612,3.6396543979644775,-0.7260642051696777,0,3.6396543979644775,-0.7260642051696777,-0.6776000261306763,3.6396543979644775,-0.7260642051696777,0,13.076691627502441,-4.500878810882568,0.07240000367164612],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0],"normalized":false}},"boundingSphere":{"center":[8.35817301273346,-2.613471508026123,3.4077998995780945],"radius":6.5205227396105645}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-4","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"5BCC2696-DB53-4AD8-8DD7-65A838026F6C"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"6689D2A1-9B38-489C-9B43-42D02F03C7DB","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[15.076691627502441,18.052879333496094,8.243200302124023,13.076691627502441,18.052879333496094,7.493199825286865,23.240692138671875,18.052879333496094,8.243200302124023,23.240692138671875,18.052879333496094,8.243200302124023,13.076691627502441,18.052879333496094,7.493199825286865,23.240692138671875,18.052879333496094,0.5723999738693237,13.076691627502441,18.052879333496094,0.07240000367164612,23.240692138671875,18.052879333496094,0.5723999738693237,13.076691627502441,18.052879333496094,7.493199825286865],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0],"normalized":false}},"boundingSphere":{"center":[18.158691883087158,18.052879333496094,4.157800152897835],"radius":6.520523060081951}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-6","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"E89777FF-93D0-456E-97D0-9CDD4961BB17"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"DA4B11D6-24CC-472A-98D1-3E106C740E0C","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[13.076691627502441,18.052879333496094,7.493199825286865,3.6396543979644775,14.278063774108887,4.743199825286865,13.076691627502441,18.052879333496094,0.07240000367164612,3.6396543979644775,14.278063774108887,4.743199825286865,3.6396543979644775,14.278063774108887,0,13.076691627502441,18.052879333496094,0.07240000367164612,3.6396543979644775,14.278063774108887,-0.6776000261306763,13.076691627502441,18.052879333496094,0.07240000367164612,3.6396543979644775,14.278063774108887,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0],"normalized":false}},"boundingSphere":{"center":[8.35817301273346,16.16547155380249,3.4077998995780945],"radius":6.520522877634167}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-10","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"5612A937-9C2D-46F5-B75A-6C996F10815B"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"5081D021-FEB7-41F7-91CD-DE1EF838C595","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[15.076691627502441,-4.500878810882568,8.243200302124023,23.240692138671875,-4.500878810882568,8.243200302124023,13.076691627502441,-4.500878810882568,7.493199825286865,23.240692138671875,-4.500878810882568,8.243200302124023,23.240692138671875,-4.500878810882568,0.5723999738693237,13.076691627502441,-4.500878810882568,7.493199825286865,13.076691627502441,-4.500878810882568,0.07240000367164612,13.076691627502441,-4.500878810882568,7.493199825286865,23.240692138671875,-4.500878810882568,0.5723999738693237],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0],"normalized":false}},"boundingSphere":{"center":[18.158691883087158,-4.500878810882568,4.157800152897835],"radius":6.520523060081951}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-19","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"EAC1B97E-7C9F-4455-86E5-6688C117C43D"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"1ED2615E-F9E7-477F-8751-E38570B227C2","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[25.951091766357422,6.776000022888184,8.243200302124023,25.27349090576172,0,8.243200302124023,25.27349090576172,13.552000045776367,8.243200302124023,25.27349090576172,13.552000045776367,8.243200302124023,25.27349090576172,0,8.243200302124023,23.240692138671875,18.052879333496094,8.243200302124023,25.27349090576172,0,8.243200302124023,23.240692138671875,-4.500878810882568,8.243200302124023,23.240692138671875,18.052879333496094,8.243200302124023,23.240692138671875,18.052879333496094,8.243200302124023,23.240692138671875,-4.500878810882568,8.243200302124023,15.076691627502441,18.052879333496094,8.243200302124023,15.076691627502441,-4.500878810882568,8.243200302124023,15.076691627502441,18.052879333496094,8.243200302124023,23.240692138671875,-4.500878810882568,8.243200302124023],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1],"normalized":false}},"boundingSphere":{"center":[20.51389169692993,6.776000261306763,8.243200302124023],"radius":12.519231054811794}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-7","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"ACC14F91-9609-4D98-BD92-DE179F50F4DF"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Concrete Block"],"manufacturer":"","name":"Cmu","material":"CMU, painted","absorption":{"63":0.03,"125":0.1,"250":0.05,"500":0.06,"1000":0.07,"2000":0.09,"4000":0.08,"8000":0.08},"nrc":0.07,"source":"wjhw?","description":"","uuid":"ByswUBFezm3zBKiE"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"447AAFC5-9DAB-428B-BFF8-90CE2859CED1","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[0,0,4.743199825286865,3.388000011444092,-1.3552000522613525,4.743199825286865,0,0,0,3.388000011444092,-1.3552000522613525,0,0,0,0,3.388000011444092,-1.3552000522613525,4.743199825286865],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0.3713906705379486,0.9284766912460327,0,0.3713906705379486,0.9284766912460327,0,0.3713906705379486,0.9284766912460327,0,0.3713906705379486,0.9284766912460327,0,0.3713906705379486,0.9284766912460327,0,0.3713906705379486,0.9284766912460327,0],"normalized":false}},"boundingSphere":{"center":[1.694000005722046,-0.6776000261306763,2.3715999126434326],"radius":2.9922005214304943}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-8","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"8C2E6B59-4406-46AA-BFFC-0DD3A540CC2B"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Concrete Block"],"manufacturer":"","name":"Cmu","material":"CMU, painted","absorption":{"63":0.03,"125":0.1,"250":0.05,"500":0.06,"1000":0.07,"2000":0.09,"4000":0.08,"8000":0.08},"nrc":0.07,"source":"wjhw?","description":"","uuid":"ByswUBFezm3zBKiE"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"CE7D1DD2-4D3C-4974-9990-04CB566F3914","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[3.388000011444092,14.90719985961914,4.743199825286865,0,13.552000045776367,4.743199825286865,3.388000011444092,14.90719985961914,0,0,13.552000045776367,0,3.388000011444092,14.90719985961914,0,0,13.552000045776367,4.743199825286865],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0.37139061093330383,-0.9284766912460327,0,0.37139061093330383,-0.9284766912460327,0,0.37139061093330383,-0.9284766912460327,0,0.37139061093330383,-0.9284766912460327,0,0.37139061093330383,-0.9284766912460327,0,0.37139061093330383,-0.9284766912460327,0],"normalized":false}},"boundingSphere":{"center":[1.694000005722046,14.229599952697754,2.3715999126434326],"radius":2.9922004944349068}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-9","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"23667DCD-801B-4519-AE5D-D24386E78799"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Concrete Block"],"manufacturer":"","name":"Cmu","material":"CMU, painted","absorption":{"63":0.03,"125":0.1,"250":0.05,"500":0.06,"1000":0.07,"2000":0.09,"4000":0.08,"8000":0.08},"nrc":0.07,"source":"wjhw?","description":"","uuid":"ByswUBFezm3zBKiE"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"AC13C7F5-F22B-4EB1-ABF2-19323297501A","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[3.6396543979644775,-0.7260642051696777,4.743199825286865,3.6396543979644775,-0.7260642051696777,0,3.388000011444092,-1.3552000522613525,4.743199825286865,3.388000011444092,-1.3552000522613525,0,3.388000011444092,-1.3552000522613525,4.743199825286865,3.6396543979644775,-0.7260642051696777,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.9284766912460327,0.3713907301425934,0,-0.9284766912460327,0.3713907301425934,0,-0.9284766912460327,0.3713907301425934,0,-0.9284766912460327,0.3713907301425934,0,-0.9284766912460327,0.3713907301425934,0,-0.9284766912460327,0.3713907301425934,0],"normalized":false}},"boundingSphere":{"center":[3.5138272047042847,-1.0406321287155151,2.3715999126434326],"radius":2.395677692582626}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-11","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"09FB51AD-73E9-480E-A3E5-6932C31787DE"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Concrete Block"],"manufacturer":"","name":"Cmu","material":"CMU, painted","absorption":{"63":0.03,"125":0.1,"250":0.05,"500":0.06,"1000":0.07,"2000":0.09,"4000":0.08,"8000":0.08},"nrc":0.07,"source":"wjhw?","description":"","uuid":"ByswUBFezm3zBKiE"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"0C7929BE-458F-413B-BC92-D7FBF0D28AB8","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[3.388000011444092,14.90719985961914,4.743199825286865,3.388000011444092,14.90719985961914,0,3.6396543979644775,14.278063774108887,4.743199825286865,3.6396543979644775,14.278063774108887,0,3.6396543979644775,14.278063774108887,4.743199825286865,3.388000011444092,14.90719985961914,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.9284766912460327,-0.37139061093330383,0,-0.9284766912460327,-0.37139061093330383,0,-0.9284766912460327,-0.37139061093330383,0,-0.9284766912460327,-0.37139061093330383,0,-0.9284766912460327,-0.37139061093330383,0,-0.9284766912460327,-0.37139061093330383,0],"normalized":false}},"boundingSphere":{"center":[3.5138272047042847,14.592631816864014,2.3715999126434326],"radius":2.395677708235577}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-12","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"94111689-BEE4-4E6E-98FA-8CEBFC57DE7B"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Concrete Block"],"manufacturer":"","name":"Cmu","material":"CMU, painted","absorption":{"63":0.03,"125":0.1,"250":0.05,"500":0.06,"1000":0.07,"2000":0.09,"4000":0.08,"8000":0.08},"nrc":0.07,"source":"wjhw?","description":"","uuid":"ByswUBFezm3zBKiE"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"41B752A6-4A0A-4F6E-9EB0-B5E799D8D9C4","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[0,13.552000045776367,0,0,13.552000045776367,4.743199825286865,0,0,0,0,0,4.743199825286865,0,0,0,0,13.552000045776367,4.743199825286865],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0],"normalized":false}},"boundingSphere":{"center":[0,6.776000022888184,2.3715999126434326],"radius":7.179043282766235}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-15","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"DF5D8BCC-C7BF-41EC-994B-09CCCD4D67C7"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"899F381E-5921-4775-9F58-92044872FF55","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[3.6396543979644775,14.278063774108887,4.743199825286865,3.6396543979644775,-0.7260642051696777,4.743199825286865,3.388000011444092,14.90719985961914,4.743199825286865,3.6396543979644775,-0.7260642051696777,4.743199825286865,3.388000011444092,-1.3552000522613525,4.743199825286865,3.388000011444092,14.90719985961914,4.743199825286865,3.388000011444092,14.90719985961914,4.743199825286865,3.388000011444092,-1.3552000522613525,4.743199825286865,0,13.552000045776367,4.743199825286865,0,0,4.743199825286865,0,13.552000045776367,4.743199825286865,3.388000011444092,-1.3552000522613525,4.743199825286865],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1],"normalized":false}},"boundingSphere":{"center":[1.8198271989822388,6.775999903678894,4.743199825286865],"radius":8.28103729572734}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-14","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"E8C1CCA5-3787-4C6B-8A87-2F6B6C1709B6"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"57731404-5792-4623-B964-263A68EFD1AD","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[15.076691627502441,18.052879333496094,8.243200302124023,15.076691627502441,-4.500878810882568,8.243200302124023,13.076691627502441,18.052879333496094,7.493199825286865,13.076691627502441,-4.500878810882568,7.493199825286865,13.076691627502441,18.052879333496094,7.493199825286865,15.076691627502441,-4.500878810882568,8.243200302124023],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0.3511236310005188,0,-0.9363291263580322,0.3511236310005188,0,-0.9363291263580322,0.3511236310005188,0,-0.9363291263580322,0.3511236310005188,0,-0.9363291263580322,0.3511236310005188,0,-0.9363291263580322,0.3511236310005188,0,-0.9363291263580322],"normalized":false}},"boundingSphere":{"center":[14.076691627502441,6.776000261306763,7.868200063705444],"radius":11.327339793066848}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-20","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"871ED5D3-5913-47D3-8585-D6C3BDB05F4E"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"8B8AAEEE-9E0B-486F-837A-74A372F11975","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[13.076691627502441,18.052879333496094,7.493199825286865,13.076691627502441,-4.500878810882568,7.493199825286865,3.6396543979644775,14.278063774108887,4.743199825286865,3.6396543979644775,-0.7260642051696777,4.743199825286865,3.6396543979644775,14.278063774108887,4.743199825286865,13.076691627502441,-4.500878810882568,7.493199825286865],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0.2797684967517853,0,-0.9600675106048584,0.2797684967517853,0,-0.9600675106048584,0.2797684967517853,0,-0.9600675106048584,0.2797684967517853,0,-0.9600675106048584,0.2797684967517853,0,-0.9600675106048584,0.2797684967517853,0,-0.9600675106048584],"normalized":false}},"boundingSphere":{"center":[8.35817301273346,6.776000261306763,6.118199825286865],"radius":12.3013432001023}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-21","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"258494C4-8017-4C71-A8CA-32E17274FEA9"},{"surfaces":[{"kind":"container","visible":true,"name":"STAGE_FLOOR","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"C25652F3-D7EC-42DE-82CA-1A4CCCE37874","children":[{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Floors","Wood"],"manufacturer":"","name":"Wood Stage Floor (T&G)","material":"Wood Stage Floor (T&G), 2 layers 1/2in, on joists","absorption":{"63":0.04,"125":0.1,"250":0.07,"500":0.06,"1000":0.06,"2000":0.06,"4000":0.06,"8000":0.06},"nrc":0.06,"source":"Beranek (JASA '98)","description":"","uuid":"ZdwcxUjnCaTijM8d"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"400B3C98-438F-414E-9A39-2D5BAC219DC3","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[3.6396543979644775,14.278063774108887,-0.6776000261306763,3.6396543979644775,14.278063774108887,0,3.6396543979644775,-0.7260642051696777,-0.6776000261306763,3.6396543979644775,-0.7260642051696777,0,3.6396543979644775,-0.7260642051696777,-0.6776000261306763,3.6396543979644775,14.278063774108887,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0],"normalized":false}},"boundingSphere":{"center":[3.6396543979644775,6.7759997844696045,-0.33880001306533813],"radius":7.509710350838808}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-0","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"684C19AC-22BD-45FE-898C-C5166936CDDD"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Floors","Wood"],"manufacturer":"","name":"Wood Stage Floor (T&G)","material":"Wood Stage Floor (T&G), 2 layers 1/2in, on joists","absorption":{"63":0.04,"125":0.1,"250":0.07,"500":0.06,"1000":0.06,"2000":0.06,"4000":0.06,"8000":0.06},"nrc":0.06,"source":"Beranek (JASA '98)","description":"","uuid":"ZdwcxUjnCaTijM8d"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"E97F47E2-3237-4B92-A531-B8C3A9AF9885","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[3.6396543979644775,-0.7260642051696777,0,3.6396543979644775,14.278063774108887,0,3.388000011444092,-1.3552000522613525,0,3.6396543979644775,14.278063774108887,0,3.388000011444092,14.90719985961914,0,3.388000011444092,-1.3552000522613525,0,3.388000011444092,-1.3552000522613525,0,3.388000011444092,14.90719985961914,0,0,0,0,0,13.552000045776367,0,0,0,0,3.388000011444092,14.90719985961914,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1],"normalized":false}},"boundingSphere":{"center":[1.8198271989822388,6.775999903678894,0],"radius":8.28103729572734}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-16","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"019734C7-A913-4997-AF56-4127C064DCBC"}]},{"kind":"container","visible":true,"name":"BACK_WALL","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"50EAB1A6-F698-4B51-943F-6B1DB50A9316","children":[{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Tectum","material":"Tectum, 1in, against solid backing","absorption":{"63":0,"125":0.06,"250":0.13,"500":0.24,"1000":0.45,"2000":0.82,"4000":0.64,"8000":0.64},"nrc":0.41,"source":"Tectum Company","description":"","uuid":"W2wCsvqJV0a1RMGw"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"AA8A615E-B0F8-4810-9B76-E960FD96910E","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[25.27349090576172,0,8.243200302124023,25.27349090576172,0,0.5723999738693237,23.240692138671875,-4.500878810882568,8.243200302124023,23.240692138671875,-4.500878810882568,0.5723999738693237,23.240692138671875,-4.500878810882568,8.243200302124023,25.27349090576172,0,0.5723999738693237],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.9113596677780151,0.4116109311580658,0,-0.9113596677780151,0.4116109311580658,0,-0.9113596677780151,0.4116109311580658,0,-0.9113596677780151,0.4116109311580658,0,-0.9113596677780151,0.4116109311580658,0,-0.9113596677780151,0.4116109311580658,0],"normalized":false}},"boundingSphere":{"center":[24.257091522216797,-2.250439405441284,4.407800137996674],"radius":4.561561097192662}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-1","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"C4C1198C-8ECF-4945-8DBE-BECEBD6261D4"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Tectum","material":"Tectum, 1in, against solid backing","absorption":{"63":0,"125":0.06,"250":0.13,"500":0.24,"1000":0.45,"2000":0.82,"4000":0.64,"8000":0.64},"nrc":0.41,"source":"Tectum Company","description":"","uuid":"W2wCsvqJV0a1RMGw"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"592E5C4E-1FF7-4AAE-8332-3EA1AF4A7B58","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[25.27349090576172,13.552000045776367,8.243200302124023,25.27349090576172,13.552000045776367,0.5723999738693237,25.951091766357422,6.776000022888184,8.243200302124023,25.951091766357422,6.776000022888184,0.5723999738693237,25.951091766357422,6.776000022888184,8.243200302124023,25.27349090576172,13.552000045776367,0.5723999738693237],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.9950371980667114,-0.09950384497642517,0,-0.9950371980667114,-0.09950384497642517,0,-0.9950371980667114,-0.09950384497642517,0,-0.9950371980667114,-0.09950384497642517,0,-0.9950371980667114,-0.09950384497642517,0,-0.9950371980667114,-0.09950384497642517,0],"normalized":false}},"boundingSphere":{"center":[25.61229133605957,10.164000034332275,4.407800137996674],"radius":5.128705901892141}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-2","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"BC98D1A7-A671-4D2C-A9B9-243FC24E6272"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Tectum","material":"Tectum, 1in, against solid backing","absorption":{"63":0,"125":0.06,"250":0.13,"500":0.24,"1000":0.45,"2000":0.82,"4000":0.64,"8000":0.64},"nrc":0.41,"source":"Tectum Company","description":"","uuid":"W2wCsvqJV0a1RMGw"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"86233816-C227-485D-BCFB-3495AB27841E","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[25.951091766357422,6.776000022888184,8.243200302124023,25.951091766357422,6.776000022888184,0.5723999738693237,25.27349090576172,0,8.243200302124023,25.27349090576172,0,0.5723999738693237,25.27349090576172,0,8.243200302124023,25.951091766357422,6.776000022888184,0.5723999738693237],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.9950371980667114,0.09950384497642517,0,-0.9950371980667114,0.09950384497642517,0,-0.9950371980667114,0.09950384497642517,0,-0.9950371980667114,0.09950384497642517,0,-0.9950371980667114,0.09950384497642517,0,-0.9950371980667114,0.09950384497642517,0],"normalized":false}},"boundingSphere":{"center":[25.61229133605957,3.388000011444092,4.407800137996674],"radius":5.128705901892141}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-5","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"002B910B-36C7-478E-BF82-44A5E5827359"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Tectum","material":"Tectum, 1in, against solid backing","absorption":{"63":0,"125":0.06,"250":0.13,"500":0.24,"1000":0.45,"2000":0.82,"4000":0.64,"8000":0.64},"nrc":0.41,"source":"Tectum Company","description":"","uuid":"W2wCsvqJV0a1RMGw"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"75B764E2-FFE8-476A-9917-7C248BD99988","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[23.240692138671875,18.052879333496094,8.243200302124023,23.240692138671875,18.052879333496094,0.5723999738693237,25.27349090576172,13.552000045776367,8.243200302124023,25.27349090576172,13.552000045776367,0.5723999738693237,25.27349090576172,13.552000045776367,8.243200302124023,23.240692138671875,18.052879333496094,0.5723999738693237],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.9113596677780151,-0.411610871553421,0,-0.9113596677780151,-0.411610871553421,0,-0.9113596677780151,-0.411610871553421,0,-0.9113596677780151,-0.411610871553421,0,-0.9113596677780151,-0.411610871553421,0,-0.9113596677780151,-0.411610871553421,0],"normalized":false}},"boundingSphere":{"center":[24.257091522216797,15.80243968963623,4.407800137996674],"radius":4.561561214816119}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-13","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"150F4026-17E8-4FA2-947C-7CCE8766672F"}]},{"kind":"container","visible":true,"name":"FLOOR","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"22B49FEC-509E-4278-A6EE-C8C7E484A4CD","children":[{"kind":"surface","visible":true,"acousticMaterial":{"tags":["People","Various"],"manufacturer":"","name":"Audience In Upholstered Seats","material":"Audience in upholstered seats","absorption":{"63":0,"125":0.18,"250":0.4,"500":0.46,"1000":0.46,"2000":0.51,"4000":0.46,"8000":0.46},"nrc":0.46,"source":"Hann Tucker","description":"","uuid":"QFCVbDYrU5uWvhK2"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"538BB9A3-68A2-425A-B70F-CD45E476386D","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[25.951091766357422,6.776000022888184,0.5723999738693237,25.27349090576172,13.552000045776367,0.5723999738693237,25.27349090576172,0,0.5723999738693237,25.27349090576172,13.552000045776367,0.5723999738693237,23.240692138671875,18.052879333496094,0.5723999738693237,25.27349090576172,0,0.5723999738693237,23.240692138671875,-4.500878810882568,0.5723999738693237,25.27349090576172,0,0.5723999738693237,23.240692138671875,18.052879333496094,0.5723999738693237],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1],"normalized":false}},"boundingSphere":{"center":[24.59589195251465,6.776000261306763,0.5723999738693237],"radius":11.358017791156218}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-3","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"95922F62-13C2-4C06-A997-99B18DE92370"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["People","Various"],"manufacturer":"","name":"Audience In Upholstered Seats","material":"Audience in upholstered seats","absorption":{"63":0,"125":0.18,"250":0.4,"500":0.46,"1000":0.46,"2000":0.51,"4000":0.46,"8000":0.46},"nrc":0.46,"source":"Hann Tucker","description":"","uuid":"QFCVbDYrU5uWvhK2"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"EE864F8C-261F-4F61-B437-8B57B0567E6E","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[13.076691627502441,-4.500878810882568,0.07240000367164612,13.076691627502441,18.052879333496094,0.07240000367164612,3.6396543979644775,-0.7260642051696777,-0.6776000261306763,3.6396543979644775,14.278063774108887,-0.6776000261306763,3.6396543979644775,-0.7260642051696777,-0.6776000261306763,13.076691627502441,18.052879333496094,0.07240000367164612],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.07922429591417313,0,0.9968568086624146,-0.07922429591417313,0,0.9968568086624146,-0.07922429591417313,0,0.9968568086624146,-0.07922429591417313,0,0.9968568086624146,-0.07922429591417313,0,0.9968568086624146,-0.07922429591417313,0,0.9968568086624146],"normalized":false}},"boundingSphere":{"center":[8.35817301273346,6.776000261306763,-0.3026000112295151],"radius":12.230005909151432}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-17","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"12438BB0-6F74-48E6-A9BE-B8223FBBB05B"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["People","Various"],"manufacturer":"","name":"Audience In Upholstered Seats","material":"Audience in upholstered seats","absorption":{"63":0,"125":0.18,"250":0.4,"500":0.46,"1000":0.46,"2000":0.51,"4000":0.46,"8000":0.46},"nrc":0.46,"source":"Hann Tucker","description":"","uuid":"QFCVbDYrU5uWvhK2"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"4ED29942-85B9-4630-A710-A701DC4A2A5F","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[23.240692138671875,-4.500878810882568,0.5723999738693237,23.240692138671875,18.052879333496094,0.5723999738693237,13.076691627502441,-4.500878810882568,0.07240000367164612,13.076691627502441,18.052879333496094,0.07240000367164612,13.076691627502441,-4.500878810882568,0.07240000367164612,23.240692138671875,18.052879333496094,0.5723999738693237],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.04913381114602089,0,0.9987922310829163,-0.04913381114602089,0,0.9987922310829163,-0.04913381114602089,0,0.9987922310829163,-0.04913381114602089,0,0.9987922310829163,-0.04913381114602089,0,0.9987922310829163,-0.04913381114602089,0,0.9987922310829163],"normalized":false}},"boundingSphere":{"center":[18.158691883087158,6.776000261306763,0.3223999887704849],"radius":12.37162997341475}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-18","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"B35F8F84-7DE4-4AE4-ABD1-08F6856713D0"}]},{"kind":"container","visible":true,"name":"SIDE_WALLS","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"6FD07351-E2A3-48B5-A97E-4CF1292754D1","children":[{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"99A4D26C-5E26-4692-8C0D-CF185378CFA0","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[13.076691627502441,-4.500878810882568,7.493199825286865,13.076691627502441,-4.500878810882568,0.07240000367164612,3.6396543979644775,-0.7260642051696777,4.743199825286865,3.6396543979644775,-0.7260642051696777,4.743199825286865,13.076691627502441,-4.500878810882568,0.07240000367164612,3.6396543979644775,-0.7260642051696777,0,3.6396543979644775,-0.7260642051696777,-0.6776000261306763,3.6396543979644775,-0.7260642051696777,0,13.076691627502441,-4.500878810882568,0.07240000367164612],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0],"normalized":false}},"boundingSphere":{"center":[8.35817301273346,-2.613471508026123,3.4077998995780945],"radius":6.5205227396105645}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-4","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"5BCC2696-DB53-4AD8-8DD7-65A838026F6C"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"6689D2A1-9B38-489C-9B43-42D02F03C7DB","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[15.076691627502441,18.052879333496094,8.243200302124023,13.076691627502441,18.052879333496094,7.493199825286865,23.240692138671875,18.052879333496094,8.243200302124023,23.240692138671875,18.052879333496094,8.243200302124023,13.076691627502441,18.052879333496094,7.493199825286865,23.240692138671875,18.052879333496094,0.5723999738693237,13.076691627502441,18.052879333496094,0.07240000367164612,23.240692138671875,18.052879333496094,0.5723999738693237,13.076691627502441,18.052879333496094,7.493199825286865],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0],"normalized":false}},"boundingSphere":{"center":[18.158691883087158,18.052879333496094,4.157800152897835],"radius":6.520523060081951}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-6","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"E89777FF-93D0-456E-97D0-9CDD4961BB17"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"DA4B11D6-24CC-472A-98D1-3E106C740E0C","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[13.076691627502441,18.052879333496094,7.493199825286865,3.6396543979644775,14.278063774108887,4.743199825286865,13.076691627502441,18.052879333496094,0.07240000367164612,3.6396543979644775,14.278063774108887,4.743199825286865,3.6396543979644775,14.278063774108887,0,13.076691627502441,18.052879333496094,0.07240000367164612,3.6396543979644775,14.278063774108887,-0.6776000261306763,13.076691627502441,18.052879333496094,0.07240000367164612,3.6396543979644775,14.278063774108887,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0],"normalized":false}},"boundingSphere":{"center":[8.35817301273346,16.16547155380249,3.4077998995780945],"radius":6.520522877634167}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-10","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"5612A937-9C2D-46F5-B75A-6C996F10815B"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"5081D021-FEB7-41F7-91CD-DE1EF838C595","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[15.076691627502441,-4.500878810882568,8.243200302124023,23.240692138671875,-4.500878810882568,8.243200302124023,13.076691627502441,-4.500878810882568,7.493199825286865,23.240692138671875,-4.500878810882568,8.243200302124023,23.240692138671875,-4.500878810882568,0.5723999738693237,13.076691627502441,-4.500878810882568,7.493199825286865,13.076691627502441,-4.500878810882568,0.07240000367164612,13.076691627502441,-4.500878810882568,7.493199825286865,23.240692138671875,-4.500878810882568,0.5723999738693237],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0],"normalized":false}},"boundingSphere":{"center":[18.158691883087158,-4.500878810882568,4.157800152897835],"radius":6.520523060081951}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-19","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"EAC1B97E-7C9F-4455-86E5-6688C117C43D"}]},{"kind":"container","visible":true,"name":"FLAT_CEILING","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"2CFEC12E-3B4B-4FF6-A980-F48C4DFF00DD","children":[{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"1ED2615E-F9E7-477F-8751-E38570B227C2","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[25.951091766357422,6.776000022888184,8.243200302124023,25.27349090576172,0,8.243200302124023,25.27349090576172,13.552000045776367,8.243200302124023,25.27349090576172,13.552000045776367,8.243200302124023,25.27349090576172,0,8.243200302124023,23.240692138671875,18.052879333496094,8.243200302124023,25.27349090576172,0,8.243200302124023,23.240692138671875,-4.500878810882568,8.243200302124023,23.240692138671875,18.052879333496094,8.243200302124023,23.240692138671875,18.052879333496094,8.243200302124023,23.240692138671875,-4.500878810882568,8.243200302124023,15.076691627502441,18.052879333496094,8.243200302124023,15.076691627502441,-4.500878810882568,8.243200302124023,15.076691627502441,18.052879333496094,8.243200302124023,23.240692138671875,-4.500878810882568,8.243200302124023],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1],"normalized":false}},"boundingSphere":{"center":[20.51389169692993,6.776000261306763,8.243200302124023],"radius":12.519231054811794}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-7","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"ACC14F91-9609-4D98-BD92-DE179F50F4DF"}]},{"kind":"container","visible":true,"name":"STAGE_WALLS","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"744E318D-EC60-406E-880D-596711954480","children":[{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Concrete Block"],"manufacturer":"","name":"Cmu","material":"CMU, painted","absorption":{"63":0.03,"125":0.1,"250":0.05,"500":0.06,"1000":0.07,"2000":0.09,"4000":0.08,"8000":0.08},"nrc":0.07,"source":"wjhw?","description":"","uuid":"ByswUBFezm3zBKiE"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"447AAFC5-9DAB-428B-BFF8-90CE2859CED1","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[0,0,4.743199825286865,3.388000011444092,-1.3552000522613525,4.743199825286865,0,0,0,3.388000011444092,-1.3552000522613525,0,0,0,0,3.388000011444092,-1.3552000522613525,4.743199825286865],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0.3713906705379486,0.9284766912460327,0,0.3713906705379486,0.9284766912460327,0,0.3713906705379486,0.9284766912460327,0,0.3713906705379486,0.9284766912460327,0,0.3713906705379486,0.9284766912460327,0,0.3713906705379486,0.9284766912460327,0],"normalized":false}},"boundingSphere":{"center":[1.694000005722046,-0.6776000261306763,2.3715999126434326],"radius":2.9922005214304943}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-8","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"8C2E6B59-4406-46AA-BFFC-0DD3A540CC2B"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Concrete Block"],"manufacturer":"","name":"Cmu","material":"CMU, painted","absorption":{"63":0.03,"125":0.1,"250":0.05,"500":0.06,"1000":0.07,"2000":0.09,"4000":0.08,"8000":0.08},"nrc":0.07,"source":"wjhw?","description":"","uuid":"ByswUBFezm3zBKiE"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"CE7D1DD2-4D3C-4974-9990-04CB566F3914","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[3.388000011444092,14.90719985961914,4.743199825286865,0,13.552000045776367,4.743199825286865,3.388000011444092,14.90719985961914,0,0,13.552000045776367,0,3.388000011444092,14.90719985961914,0,0,13.552000045776367,4.743199825286865],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0.37139061093330383,-0.9284766912460327,0,0.37139061093330383,-0.9284766912460327,0,0.37139061093330383,-0.9284766912460327,0,0.37139061093330383,-0.9284766912460327,0,0.37139061093330383,-0.9284766912460327,0,0.37139061093330383,-0.9284766912460327,0],"normalized":false}},"boundingSphere":{"center":[1.694000005722046,14.229599952697754,2.3715999126434326],"radius":2.9922004944349068}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-9","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"23667DCD-801B-4519-AE5D-D24386E78799"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Concrete Block"],"manufacturer":"","name":"Cmu","material":"CMU, painted","absorption":{"63":0.03,"125":0.1,"250":0.05,"500":0.06,"1000":0.07,"2000":0.09,"4000":0.08,"8000":0.08},"nrc":0.07,"source":"wjhw?","description":"","uuid":"ByswUBFezm3zBKiE"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"AC13C7F5-F22B-4EB1-ABF2-19323297501A","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[3.6396543979644775,-0.7260642051696777,4.743199825286865,3.6396543979644775,-0.7260642051696777,0,3.388000011444092,-1.3552000522613525,4.743199825286865,3.388000011444092,-1.3552000522613525,0,3.388000011444092,-1.3552000522613525,4.743199825286865,3.6396543979644775,-0.7260642051696777,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.9284766912460327,0.3713907301425934,0,-0.9284766912460327,0.3713907301425934,0,-0.9284766912460327,0.3713907301425934,0,-0.9284766912460327,0.3713907301425934,0,-0.9284766912460327,0.3713907301425934,0,-0.9284766912460327,0.3713907301425934,0],"normalized":false}},"boundingSphere":{"center":[3.5138272047042847,-1.0406321287155151,2.3715999126434326],"radius":2.395677692582626}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-11","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"09FB51AD-73E9-480E-A3E5-6932C31787DE"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Concrete Block"],"manufacturer":"","name":"Cmu","material":"CMU, painted","absorption":{"63":0.03,"125":0.1,"250":0.05,"500":0.06,"1000":0.07,"2000":0.09,"4000":0.08,"8000":0.08},"nrc":0.07,"source":"wjhw?","description":"","uuid":"ByswUBFezm3zBKiE"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"0C7929BE-458F-413B-BC92-D7FBF0D28AB8","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[3.388000011444092,14.90719985961914,4.743199825286865,3.388000011444092,14.90719985961914,0,3.6396543979644775,14.278063774108887,4.743199825286865,3.6396543979644775,14.278063774108887,0,3.6396543979644775,14.278063774108887,4.743199825286865,3.388000011444092,14.90719985961914,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.9284766912460327,-0.37139061093330383,0,-0.9284766912460327,-0.37139061093330383,0,-0.9284766912460327,-0.37139061093330383,0,-0.9284766912460327,-0.37139061093330383,0,-0.9284766912460327,-0.37139061093330383,0,-0.9284766912460327,-0.37139061093330383,0],"normalized":false}},"boundingSphere":{"center":[3.5138272047042847,14.592631816864014,2.3715999126434326],"radius":2.395677708235577}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-12","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"94111689-BEE4-4E6E-98FA-8CEBFC57DE7B"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Concrete Block"],"manufacturer":"","name":"Cmu","material":"CMU, painted","absorption":{"63":0.03,"125":0.1,"250":0.05,"500":0.06,"1000":0.07,"2000":0.09,"4000":0.08,"8000":0.08},"nrc":0.07,"source":"wjhw?","description":"","uuid":"ByswUBFezm3zBKiE"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"41B752A6-4A0A-4F6E-9EB0-B5E799D8D9C4","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[0,13.552000045776367,0,0,13.552000045776367,4.743199825286865,0,0,0,0,0,4.743199825286865,0,0,0,0,13.552000045776367,4.743199825286865],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0],"normalized":false}},"boundingSphere":{"center":[0,6.776000022888184,2.3715999126434326],"radius":7.179043282766235}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-15","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"DF5D8BCC-C7BF-41EC-994B-09CCCD4D67C7"}]},{"kind":"container","visible":true,"name":"STAGE_CEILING","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"94B92F44-E01B-40A3-B783-CD1CF3AA2BC6","children":[{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"899F381E-5921-4775-9F58-92044872FF55","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[3.6396543979644775,14.278063774108887,4.743199825286865,3.6396543979644775,-0.7260642051696777,4.743199825286865,3.388000011444092,14.90719985961914,4.743199825286865,3.6396543979644775,-0.7260642051696777,4.743199825286865,3.388000011444092,-1.3552000522613525,4.743199825286865,3.388000011444092,14.90719985961914,4.743199825286865,3.388000011444092,14.90719985961914,4.743199825286865,3.388000011444092,-1.3552000522613525,4.743199825286865,0,13.552000045776367,4.743199825286865,0,0,4.743199825286865,0,13.552000045776367,4.743199825286865,3.388000011444092,-1.3552000522613525,4.743199825286865],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1],"normalized":false}},"boundingSphere":{"center":[1.8198271989822388,6.775999903678894,4.743199825286865],"radius":8.28103729572734}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-14","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"E8C1CCA5-3787-4C6B-8A87-2F6B6C1709B6"}]},{"kind":"container","visible":true,"name":"SLOPED_CEILING","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"E6294A9E-6F2C-4828-B186-788F0352FA0C","children":[{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"57731404-5792-4623-B964-263A68EFD1AD","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[15.076691627502441,18.052879333496094,8.243200302124023,15.076691627502441,-4.500878810882568,8.243200302124023,13.076691627502441,18.052879333496094,7.493199825286865,13.076691627502441,-4.500878810882568,7.493199825286865,13.076691627502441,18.052879333496094,7.493199825286865,15.076691627502441,-4.500878810882568,8.243200302124023],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0.3511236310005188,0,-0.9363291263580322,0.3511236310005188,0,-0.9363291263580322,0.3511236310005188,0,-0.9363291263580322,0.3511236310005188,0,-0.9363291263580322,0.3511236310005188,0,-0.9363291263580322,0.3511236310005188,0,-0.9363291263580322],"normalized":false}},"boundingSphere":{"center":[14.076691627502441,6.776000261306763,7.868200063705444],"radius":11.327339793066848}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-20","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"871ED5D3-5913-47D3-8585-D6C3BDB05F4E"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"8B8AAEEE-9E0B-486F-837A-74A372F11975","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[13.076691627502441,18.052879333496094,7.493199825286865,13.076691627502441,-4.500878810882568,7.493199825286865,3.6396543979644775,14.278063774108887,4.743199825286865,3.6396543979644775,-0.7260642051696777,4.743199825286865,3.6396543979644775,14.278063774108887,4.743199825286865,13.076691627502441,-4.500878810882568,7.493199825286865],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0.2797684967517853,0,-0.9600675106048584,0.2797684967517853,0,-0.9600675106048584,0.2797684967517853,0,-0.9600675106048584,0.2797684967517853,0,-0.9600675106048584,0.2797684967517853,0,-0.9600675106048584,0.2797684967517853,0,-0.9600675106048584],"normalized":false}},"boundingSphere":{"center":[8.35817301273346,6.776000261306763,6.118199825286865],"radius":12.3013432001023}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-21","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"258494C4-8017-4C71-A8CA-32E17274FEA9"}]}],"kind":"room","name":"new room","uuid":"2822163E-C892-4474-A3AB-BCD8210F2C3D","units":2,"originalFileData":"","originalFileName":"","visible":true,"position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1]}]`), Eg = [], kg = {
-  meta: Pg,
-  containers: xg,
-  solvers: Eg
+const Cg = { version: "0.2.1", name: "shoebox", timestamp: "2021-03-26T08:06:59.213Z" }, wg = /* @__PURE__ */ JSON.parse(`[{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Floors","Various"],"manufacturer":"","name":"Wood Floor","material":"Wood floor","absorption":{"63":0.06,"125":0.15,"250":0.11,"500":0.1,"1000":0.07,"2000":0.06,"4000":0.07,"8000":0.07},"nrc":0.09,"source":"Egan","description":"","uuid":"1PgJwgIAqHwMj99A"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"339B4C51-51C8-4B05-9AB2-74391E210FB3","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[-6,0,2.8299999237060547,0,4,2.8299999237060547,-6,4,2.8299999237060547,-6,0,2.8299999237060547,0,0,2.8299999237060547,0,4,2.8299999237060547],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[0.875,0.5,0,0.625,0.75,0,0.625,0.5,0,0.875,0.5,0,0.875,0.75,0,0.625,0.75,0],"normalized":false}},"boundingSphere":{"center":[-3,2,2.8299999237060547],"radius":3.605551275463989}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"floor","position":[0,0,-2.8299999237060547],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"1857F829-AB09-4DB5-A538-87CE6FACCF4C"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 2 layers 5/8in on studs 16inoc w/batt","absorption":{"63":0.06,"125":0.28,"250":0.12,"500":0.1,"1000":0.07,"2000":0.13,"4000":0.09,"8000":0.09},"nrc":0.11,"source":"Egan","description":"","uuid":"xmzQfq6zBKEec4TS"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"A2093E5B-D6EB-4503-B287-9EE173014B5B","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[0,4,2.8299999237060547,0,0,0,0,4,0,0,4,2.8299999237060547,0,0,2.8299999237060547,0,0,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[0.625,0.75,0,0.375,1,0,0.375,0.75,0,0.625,0.75,0,0.625,1,0,0.375,1,0],"normalized":false}},"boundingSphere":{"center":[0,2,1.4149999618530273],"radius":2.4499438548758765}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"wall4","position":[-6,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"6641528A-B8AF-4BDB-B627-14AA1401EDFB"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 2 layers 5/8in on studs 16inoc w/batt","absorption":{"63":0.06,"125":0.28,"250":0.12,"500":0.1,"1000":0.07,"2000":0.13,"4000":0.09,"8000":0.09},"nrc":0.11,"source":"Egan","description":"","uuid":"xmzQfq6zBKEec4TS"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"DDF1FD55-2407-429C-92D8-AFE0E1FE9F0C","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[-6,4,2.8299999237060547,0,4,0,-6,4,0,-6,4,2.8299999237060547,0,4,2.8299999237060547,0,4,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[0.625,0.5,0,0.375,0.75,0,0.375,0.5,0,0.625,0.5,0,0.625,0.75,0,0.375,0.75,0],"normalized":false}},"boundingSphere":{"center":[-3,4,1.4149999618530273],"radius":3.31696018849248}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"wall3","position":[0,-4,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"F925EC4C-7AEA-48FC-9363-EB79CA106FE0"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 2 layers 5/8in on studs 16inoc w/batt","absorption":{"63":0.06,"125":0.28,"250":0.12,"500":0.1,"1000":0.07,"2000":0.13,"4000":0.09,"8000":0.09},"nrc":0.11,"source":"Egan","description":"","uuid":"xmzQfq6zBKEec4TS"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"8DD060AB-9B56-40E9-9296-EE0BD5719908","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[-6,0,2.8299999237060547,-6,4,0,-6,0,0,-6,0,2.8299999237060547,-6,4,2.8299999237060547,-6,4,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[0.625,0.25,0,0.375,0.5,0,0.375,0.25,0,0.625,0.25,0,0.625,0.5,0,0.375,0.5,0],"normalized":false}},"boundingSphere":{"center":[-6,2,1.4149999618530273],"radius":2.4499438548758765}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"wall2","position":[6,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"535C0DEC-3940-4954-B272-ECC1B6CB224E"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 2 layers 5/8in on studs 16inoc w/batt","absorption":{"63":0.06,"125":0.28,"250":0.12,"500":0.1,"1000":0.07,"2000":0.13,"4000":0.09,"8000":0.09},"nrc":0.11,"source":"Egan","description":"","uuid":"xmzQfq6zBKEec4TS"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"6946BD37-4367-44C7-B79C-53238F129BA3","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[0,0,2.8299999237060547,-6,0,0,0,0,0,0,0,2.8299999237060547,-6,0,2.8299999237060547,-6,0,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[0.625,0,0,0.375,0.25,0,0.375,0,0,0.625,0,0,0.625,0.25,0,0.375,0.25,0],"normalized":false}},"boundingSphere":{"center":[-3,0,1.4149999618530273],"radius":3.31696018849248}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"wall1","position":[0,4,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"23DCFCDB-53AA-473A-A23C-BEB0FE4A85F5"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Ceiling"," Ceiling Systems"],"manufacturer":"","name":"Dampa Linar 100 Ceiling System","material":"Dampa Linar 100 Ceiling System","absorption":{"63":0.34,"125":0.48,"250":0.67,"500":0.69,"1000":0.61,"2000":0.46,"4000":0.49,"8000":0.52},"nrc":0.61,"source":"SH","description":"","uuid":"s9OvPvd4RDogxQn7"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"B8A7A35C-D863-4A13-86CB-07EC6D6F9249","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[-6,4,0,0,0,0,-6,0,0,-6,4,0,0,4,0,0,0,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[0.375,0.5,0,0.125,0.75,0,0.125,0.5,0,0.375,0.5,0,0.375,0.75,0,0.125,0.75,0],"normalized":false}},"boundingSphere":{"center":[-3,2,0],"radius":3.605551275463989}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"ceil","position":[0,0,2.8299999237060547],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"BB39378A-EA8B-4FC0-9BA9-EB845F9F41F4"},{"surfaces":[{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Floors","Various"],"manufacturer":"","name":"Wood Floor","material":"Wood floor","absorption":{"63":0.06,"125":0.15,"250":0.11,"500":0.1,"1000":0.07,"2000":0.06,"4000":0.07,"8000":0.07},"nrc":0.09,"source":"Egan","description":"","uuid":"1PgJwgIAqHwMj99A"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"339B4C51-51C8-4B05-9AB2-74391E210FB3","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[-6,0,2.8299999237060547,0,4,2.8299999237060547,-6,4,2.8299999237060547,-6,0,2.8299999237060547,0,0,2.8299999237060547,0,4,2.8299999237060547],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[0.875,0.5,0,0.625,0.75,0,0.625,0.5,0,0.875,0.5,0,0.875,0.75,0,0.625,0.75,0],"normalized":false}},"boundingSphere":{"center":[-3,2,2.8299999237060547],"radius":3.605551275463989}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"floor","position":[0,0,-2.8299999237060547],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"1857F829-AB09-4DB5-A538-87CE6FACCF4C"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 2 layers 5/8in on studs 16inoc w/batt","absorption":{"63":0.06,"125":0.28,"250":0.12,"500":0.1,"1000":0.07,"2000":0.13,"4000":0.09,"8000":0.09},"nrc":0.11,"source":"Egan","description":"","uuid":"xmzQfq6zBKEec4TS"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"A2093E5B-D6EB-4503-B287-9EE173014B5B","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[0,4,2.8299999237060547,0,0,0,0,4,0,0,4,2.8299999237060547,0,0,2.8299999237060547,0,0,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[0.625,0.75,0,0.375,1,0,0.375,0.75,0,0.625,0.75,0,0.625,1,0,0.375,1,0],"normalized":false}},"boundingSphere":{"center":[0,2,1.4149999618530273],"radius":2.4499438548758765}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"wall4","position":[-6,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"6641528A-B8AF-4BDB-B627-14AA1401EDFB"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 2 layers 5/8in on studs 16inoc w/batt","absorption":{"63":0.06,"125":0.28,"250":0.12,"500":0.1,"1000":0.07,"2000":0.13,"4000":0.09,"8000":0.09},"nrc":0.11,"source":"Egan","description":"","uuid":"xmzQfq6zBKEec4TS"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"DDF1FD55-2407-429C-92D8-AFE0E1FE9F0C","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[-6,4,2.8299999237060547,0,4,0,-6,4,0,-6,4,2.8299999237060547,0,4,2.8299999237060547,0,4,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[0.625,0.5,0,0.375,0.75,0,0.375,0.5,0,0.625,0.5,0,0.625,0.75,0,0.375,0.75,0],"normalized":false}},"boundingSphere":{"center":[-3,4,1.4149999618530273],"radius":3.31696018849248}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"wall3","position":[0,-4,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"F925EC4C-7AEA-48FC-9363-EB79CA106FE0"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 2 layers 5/8in on studs 16inoc w/batt","absorption":{"63":0.06,"125":0.28,"250":0.12,"500":0.1,"1000":0.07,"2000":0.13,"4000":0.09,"8000":0.09},"nrc":0.11,"source":"Egan","description":"","uuid":"xmzQfq6zBKEec4TS"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"8DD060AB-9B56-40E9-9296-EE0BD5719908","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[-6,0,2.8299999237060547,-6,4,0,-6,0,0,-6,0,2.8299999237060547,-6,4,2.8299999237060547,-6,4,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[0.625,0.25,0,0.375,0.5,0,0.375,0.25,0,0.625,0.25,0,0.625,0.5,0,0.375,0.5,0],"normalized":false}},"boundingSphere":{"center":[-6,2,1.4149999618530273],"radius":2.4499438548758765}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"wall2","position":[6,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"535C0DEC-3940-4954-B272-ECC1B6CB224E"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 2 layers 5/8in on studs 16inoc w/batt","absorption":{"63":0.06,"125":0.28,"250":0.12,"500":0.1,"1000":0.07,"2000":0.13,"4000":0.09,"8000":0.09},"nrc":0.11,"source":"Egan","description":"","uuid":"xmzQfq6zBKEec4TS"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"6946BD37-4367-44C7-B79C-53238F129BA3","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[0,0,2.8299999237060547,-6,0,0,0,0,0,0,0,2.8299999237060547,-6,0,2.8299999237060547,-6,0,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[0.625,0,0,0.375,0.25,0,0.375,0,0,0.625,0,0,0.625,0.25,0,0.375,0.25,0],"normalized":false}},"boundingSphere":{"center":[-3,0,1.4149999618530273],"radius":3.31696018849248}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"wall1","position":[0,4,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"23DCFCDB-53AA-473A-A23C-BEB0FE4A85F5"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Ceiling"," Ceiling Systems"],"manufacturer":"","name":"Dampa Linar 100 Ceiling System","material":"Dampa Linar 100 Ceiling System","absorption":{"63":0.34,"125":0.48,"250":0.67,"500":0.69,"1000":0.61,"2000":0.46,"4000":0.49,"8000":0.52},"nrc":0.61,"source":"SH","description":"","uuid":"s9OvPvd4RDogxQn7"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"B8A7A35C-D863-4A13-86CB-07EC6D6F9249","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[-6,4,0,0,0,0,-6,0,0,-6,4,0,0,4,0,0,0,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[0.375,0.5,0,0.125,0.75,0,0.125,0.5,0,0.375,0.5,0,0.375,0.75,0,0.125,0.75,0],"normalized":false}},"boundingSphere":{"center":[-3,2,0],"radius":3.605551275463989}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"ceil","position":[0,0,2.8299999237060547],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"BB39378A-EA8B-4FC0-9BA9-EB845F9F41F4"}],"kind":"room","name":"new room","uuid":"0D3FE423-FA7C-40E7-B701-CF78A6A401CC","units":2,"originalFileData":"# Blender v2.91.0 OBJ File: ''\\n# www.blender.org\\nmtllib shoebox.mtl\\no Cube.001_Cube.002\\nv 0.000000 0.000000 2.830000\\nv -6.000000 0.000000 2.830000\\nv 0.000000 4.000000 2.830000\\nv -6.000000 4.000000 2.830000\\nvt 0.875000 0.500000\\nvt 0.625000 0.750000\\nvt 0.625000 0.500000\\nvt 0.875000 0.750000\\nvn 0.0000 0.0000 1.0000\\nusemtl None\\ns off\\nf 2/1/1 3/2/1 4/3/1\\nf 2/1/1 1/4/1 3/2/1\\no Cube.002_Cube.003\\nv 0.000000 0.000000 0.000000\\nv 0.000000 0.000000 2.830000\\nv 0.000000 4.000000 0.000000\\nv 0.000000 4.000000 2.830000\\nvt 0.625000 0.750000\\nvt 0.375000 1.000000\\nvt 0.375000 0.750000\\nvt 0.625000 1.000000\\nvn 1.0000 0.0000 0.0000\\nusemtl None\\ns off\\nf 8/5/2 5/6/2 7/7/2\\nf 8/5/2 6/8/2 5/6/2\\no Cube.003_Cube.004\\nv 0.000000 4.000000 0.000000\\nv 0.000000 4.000000 2.830000\\nv -6.000000 4.000000 0.000000\\nv -6.000000 4.000000 2.830000\\nvt 0.625000 0.500000\\nvt 0.375000 0.750000\\nvt 0.375000 0.500000\\nvt 0.625000 0.750000\\nvn 0.0000 1.0000 0.0000\\nusemtl None\\ns off\\nf 12/9/3 9/10/3 11/11/3\\nf 12/9/3 10/12/3 9/10/3\\no Cube.004_Cube.005\\nv -6.000000 0.000000 0.000000\\nv -6.000000 0.000000 2.830000\\nv -6.000000 4.000000 0.000000\\nv -6.000000 4.000000 2.830000\\nvt 0.625000 0.250000\\nvt 0.375000 0.500000\\nvt 0.375000 0.250000\\nvt 0.625000 0.500000\\nvn -1.0000 0.0000 0.0000\\nusemtl None\\ns off\\nf 14/13/4 15/14/4 13/15/4\\nf 14/13/4 16/16/4 15/14/4\\no Cube.005_Cube.006\\nv 0.000000 0.000000 0.000000\\nv 0.000000 0.000000 2.830000\\nv -6.000000 0.000000 0.000000\\nv -6.000000 0.000000 2.830000\\nvt 0.625000 0.000000\\nvt 0.375000 0.250000\\nvt 0.375000 0.000000\\nvt 0.625000 0.250000\\nvn 0.0000 -1.0000 0.0000\\nusemtl None\\ns off\\nf 18/17/5 19/18/5 17/19/5\\nf 18/17/5 20/20/5 19/18/5\\no Cube.006_Cube.007\\nv 0.000000 0.000000 0.000000\\nv -6.000000 0.000000 0.000000\\nv 0.000000 4.000000 0.000000\\nv -6.000000 4.000000 0.000000\\nvt 0.375000 0.500000\\nvt 0.125000 0.750000\\nvt 0.125000 0.500000\\nvt 0.375000 0.750000\\nvn 0.0000 0.0000 -1.0000\\nusemtl None\\ns off\\nf 24/21/6 21/22/6 22/23/6\\nf 24/21/6 23/24/6 21/22/6\\n","originalFileName":"shoebox.obj","visible":true,"position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1]},{"kind":"source","name":"new source","visible":true,"position":[-1.58,1.42,1.73],"scale":[1,1,1],"rotation":[0,0,0,"XYZ"],"color":13958322,"uuid":"7D40D118-D86D-4823-8392-9D7A36381742"},{"kind":"receiver","name":"new receiver","visible":true,"position":[-4.43,2.52,1.21],"scale":[1,1,1],"rotation":[0,0,0,"XYZ"],"color":14511983,"uuid":"6C6C6EB3-B060-40A0-BF0F-A3F3D9D03B3E"}]`), Pg = [{ name: "Ray Tracer", kind: "ray-tracer", uuid: "f77ccadb-0652-4919-8171-6ec70e16a390", roomID: "0D3FE423-FA7C-40E7-B701-CF78A6A401CC", sourceIDs: ["7D40D118-D86D-4823-8392-9D7A36381742"], surfaceIDs: ["1857F829-AB09-4DB5-A538-87CE6FACCF4C", "6641528A-B8AF-4BDB-B627-14AA1401EDFB", "F925EC4C-7AEA-48FC-9363-EB79CA106FE0", "535C0DEC-3940-4954-B272-ECC1B6CB224E", "23DCFCDB-53AA-473A-A23C-BEB0FE4A85F5", "BB39378A-EA8B-4FC0-9BA9-EB845F9F41F4"], receiverIDs: ["6C6C6EB3-B060-40A0-BF0F-A3F3D9D03B3E"], updateInterval: 5, passes: 1e3, pointSize: 2, reflectionOrder: 50, runningWithoutReceivers: !1, raysVisible: !0, pointsVisible: !0, invertedDrawStyle: !1, plotStyle: { mode: "lines" }, paths: {} }], xg = {
+  meta: Cg,
+  containers: wg,
+  solvers: Pg
+}, Eg = { version: "0.2.1", name: "concord", timestamp: "2021-03-23T00:10:21.760Z" }, kg = /* @__PURE__ */ JSON.parse('[{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 2+2 @ 5/8in on 3-5/8in studs","absorption":{"63":0.04,"125":0.15,"250":0.08,"500":0.06,"1000":0.05,"2000":0.05,"4000":0.04,"8000":0.04},"nrc":0.06,"source":"wjhw?","description":"","uuid":"I1esImsQrKZl0AAw"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"3C4CDBD3-E04D-45F6-ABAE-D910EE0BCC11","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[12.430130004882812,2.3483328819274902,4.876800060272217,12.430130004882812,5.575300216674805,4.876800060272217,12.430130004882812,5.575300216674805,0,12.430130004882812,5.575300216674805,0,12.430130004882812,0,0,12.430130004882812,0,2.9337000846862793,12.430130004882812,0,2.9337000846862793,12.430130004882812,2.3483328819274902,4.876800060272217,12.430130004882812,5.575300216674805,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[12.430130004882812,2.7876501083374023,2.4384000301361084],"radius":3.7036182083850524}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"right1","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"59F599B3-6554-4999-A93C-597E4B5275C1"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 2+2 @ 5/8in on 3-5/8in studs","absorption":{"63":0.04,"125":0.15,"250":0.08,"500":0.06,"1000":0.05,"2000":0.05,"4000":0.04,"8000":0.04},"nrc":0.06,"source":"wjhw?","description":"","uuid":"I1esImsQrKZl0AAw"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"BD80155E-DA08-4122-A819-D7C873E060D0","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[6.215065002441406,5.575300216674805,4.876800060272217,12.430130004882812,5.575300216674805,0,12.430130004882812,5.575300216674805,4.876800060272217,6.215065002441406,5.575300216674805,4.876800060272217,6.215065002441406,5.575300216674805,0,12.430130004882812,5.575300216674805,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[9.32259750366211,5.575300216674805,2.4384000301361084],"radius":3.950006702919727}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"back1","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"FDDD16D3-6E8D-4B4B-B4A1-D622E9D6D31D"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Drapery","Drapery"],"manufacturer":"","name":"Fiberglass Fabric Curtain","material":"Fiberglass fabric curtain, 8.5 oz/sq yd (50% fullness) Egan","absorption":{"63":0.03,"125":0.09,"250":0.32,"500":0.68,"1000":0.83,"2000":0.39,"4000":0.76,"8000":0.99},"nrc":0.56,"source":"SH","description":"","uuid":"3sUxVxHXIi9Gc6Zi"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"2E5E970F-6DFD-4269-A688-FD15AE36512B","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[6.215065002441406,10.855531692504883,0,6.215065002441406,5.575300216674805,4.876800060272217,6.215065002441406,10.855531692504883,4.876800060272217,6.215065002441406,10.855531692504883,0,6.215065002441406,5.575300216674805,0,6.215065002441406,5.575300216674805,4.876800060272217],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[6.215065002441406,8.215415954589844,2.4384000301361084],"radius":3.593884502394929}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"right2","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"EA9AA1BF-BA53-4D0E-ACB0-95E7291666FC"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 1 layer 5/8in on studs 16inoc w/batt","absorption":{"63":0.07,"125":0.55,"250":0.14,"500":0.08,"1000":0.04,"2000":0.12,"4000":0.11,"8000":0.11},"nrc":0.1,"source":"Egan","description":"","uuid":"th2PuWU5EhCsaon3"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"29275BAA-EC84-4AF7-868A-E05EA60BD17A","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[0,10.855531692504883,0,6.215065002441406,10.855531692504883,4.876800060272217,0,10.855531692504883,4.876800060272217,0,10.855531692504883,0,6.215065002441406,10.855531692504883,0,6.215065002441406,10.855531692504883,4.876800060272217],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[3.107532501220703,10.855531692504883,2.4384000301361084],"radius":3.950006702919727}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"back2","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"8C87C786-5188-48F7-BFD4-946EF78D1E65"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 2+2 @ 5/8in on 3-5/8in studs","absorption":{"63":0.04,"125":0.15,"250":0.08,"500":0.06,"1000":0.05,"2000":0.05,"4000":0.04,"8000":0.04},"nrc":0.06,"source":"wjhw?","description":"","uuid":"I1esImsQrKZl0AAw"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"F08D41DC-1461-412C-A97D-BF65AFA8EE1E","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[0,2.3483328819274902,4.876800060272217,0,0,0,0,10.855531692504883,0,0,10.855531692504883,0,0,10.855531692504883,4.876800060272217,0,2.3483328819274902,4.876800060272217,0,2.3483328819274902,4.876800060272217,0,0,2.9337000846862793,0,0,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[0,5.427765846252441,2.4384000301361084],"radius":5.950330813384434}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"left","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"ED91F1C5-D2D0-42A0-8686-4B46303256FE"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Diffusion","Diffusion Products"],"manufacturer":"","name":"Diffuse Signature Wood (1\\" Standoff Sides Open)","material":"Diffuse Signature Wood (1\\" Standoff Sides Open)","absorption":{"63":0,"125":0,"250":0.02,"500":0.06,"1000":0.16,"2000":0.13,"4000":0.15,"8000":0.17},"nrc":0.09,"source":"SH","description":"","uuid":"tgGAnP5OCLWlPFF4"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"088EC67F-85BA-4323-BB08-C0213F5F6CA2","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[12.430130004882812,0,0,0,0,2.9337000846862793,12.430130004882812,0,2.9337000846862793,12.430130004882812,0,0,0,0,0,0,0,2.9337000846862793],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[6.215065002441406,0,1.4668500423431396],"radius":6.3858188223041585}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"front","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"0AECC234-8C09-4D6B-AA82-DC0A99B42F2D"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Ceiling"," Ceiling Systems"],"manufacturer":"","name":"Barrisol Stretched Ceiling Over 3\\" Fiberglass","material":"Barrisol Stretched Ceiling over 3\\" fiberglass","absorption":{"63":0.18,"125":0.26,"250":0.58,"500":0.57,"1000":0.43,"2000":0.36,"4000":0.36,"8000":0.36},"nrc":0.49,"source":"SH","description":"","uuid":"Wz4CjrpqIYGba8G0"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"95B298C8-96A1-41A1-9A71-D7C446A0AB46","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[12.430130004882812,0,2.9337000846862793,0,2.3483328819274902,4.876800060272217,12.430130004882812,2.3483328819274902,4.876800060272217,12.430130004882812,0,2.9337000846862793,0,0,2.9337000846862793,0,2.3483328819274902,4.876800060272217],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0.637499988079071,-0.7705000042915344,0,0.637499988079071,-0.7705000042915344,0,0.637499988079071,-0.7705000042915344,0,0.637499988079071,-0.7705000042915344,0,0.637499988079071,-0.7705000042915344,0,0.637499988079071,-0.7705000042915344],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[6.215065002441406,1.1741664409637451,3.905250072479248],"radius":6.399188166825382}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"slope","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"ABA66075-FD1A-4820-B591-66EE2A92CFDB"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Ceiling"," Ceiling Systems"],"manufacturer":"","name":"Dampa Linar 100 Ceiling System","material":"Dampa Linar 100 Ceiling System","absorption":{"63":0.34,"125":0.48,"250":0.67,"500":0.69,"1000":0.61,"2000":0.46,"4000":0.49,"8000":0.52},"nrc":0.61,"source":"SH","description":"","uuid":"s9OvPvd4RDogxQn7"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"333C7898-A815-420A-89D6-3D96BB178242","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[12.430130004882812,2.3483328819274902,4.876800060272217,6.215065002441406,5.575300216674805,4.876800060272217,12.430130004882812,5.575300216674805,4.876800060272217,6.215065002441406,5.575300216674805,4.876800060272217,0,10.855531692504883,4.876800060272217,6.215065002441406,10.855531692504883,4.876800060272217,12.430130004882812,2.3483328819274902,4.876800060272217,0,2.3483328819274902,4.876800060272217,6.215065002441406,5.575300216674805,4.876800060272217,6.215065002441406,5.575300216674805,4.876800060272217,0,2.3483328819274902,4.876800060272217,0,10.855531692504883,4.876800060272217],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[6.215065002441406,6.6019322872161865,4.876800060272217],"radius":7.531277506853956}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"ceil","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"522A95C7-E134-4D1C-92DD-8672102F06E6"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Floors","Various"],"manufacturer":"","name":"Wood Floor","material":"Wood floor","absorption":{"63":0.06,"125":0.15,"250":0.11,"500":0.1,"1000":0.07,"2000":0.06,"4000":0.07,"8000":0.07},"nrc":0.09,"source":"Egan","description":"","uuid":"1PgJwgIAqHwMj99A"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"203BF944-7E6E-4539-B678-F2064CCC8619","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[6.215065002441406,5.575300216674805,0,12.430130004882812,0,0,12.430130004882812,5.575300216674805,0,6.215065002441406,5.575300216674805,0,0,10.855531692504883,0,0,0,0,6.215065002441406,5.575300216674805,0,0,0,0,12.430130004882812,0,0,6.215065002441406,5.575300216674805,0,6.215065002441406,10.855531692504883,0,0,10.855531692504883,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[6.215065002441406,5.427765846252441,0],"radius":8.25152562053324}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"floor","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"34B96D2E-706E-45E8-91D2-0F8FF35AA11E"},{"surfaces":[{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 2+2 @ 5/8in on 3-5/8in studs","absorption":{"63":0.04,"125":0.15,"250":0.08,"500":0.06,"1000":0.05,"2000":0.05,"4000":0.04,"8000":0.04},"nrc":0.06,"source":"wjhw?","description":"","uuid":"I1esImsQrKZl0AAw"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"3C4CDBD3-E04D-45F6-ABAE-D910EE0BCC11","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[12.430130004882812,2.3483328819274902,4.876800060272217,12.430130004882812,5.575300216674805,4.876800060272217,12.430130004882812,5.575300216674805,0,12.430130004882812,5.575300216674805,0,12.430130004882812,0,0,12.430130004882812,0,2.9337000846862793,12.430130004882812,0,2.9337000846862793,12.430130004882812,2.3483328819274902,4.876800060272217,12.430130004882812,5.575300216674805,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[12.430130004882812,2.7876501083374023,2.4384000301361084],"radius":3.7036182083850524}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"right1","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"59F599B3-6554-4999-A93C-597E4B5275C1"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 2+2 @ 5/8in on 3-5/8in studs","absorption":{"63":0.04,"125":0.15,"250":0.08,"500":0.06,"1000":0.05,"2000":0.05,"4000":0.04,"8000":0.04},"nrc":0.06,"source":"wjhw?","description":"","uuid":"I1esImsQrKZl0AAw"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"BD80155E-DA08-4122-A819-D7C873E060D0","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[6.215065002441406,5.575300216674805,4.876800060272217,12.430130004882812,5.575300216674805,0,12.430130004882812,5.575300216674805,4.876800060272217,6.215065002441406,5.575300216674805,4.876800060272217,6.215065002441406,5.575300216674805,0,12.430130004882812,5.575300216674805,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[9.32259750366211,5.575300216674805,2.4384000301361084],"radius":3.950006702919727}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"back1","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"FDDD16D3-6E8D-4B4B-B4A1-D622E9D6D31D"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Drapery","Drapery"],"manufacturer":"","name":"Fiberglass Fabric Curtain","material":"Fiberglass fabric curtain, 8.5 oz/sq yd (50% fullness) Egan","absorption":{"63":0.03,"125":0.09,"250":0.32,"500":0.68,"1000":0.83,"2000":0.39,"4000":0.76,"8000":0.99},"nrc":0.56,"source":"SH","description":"","uuid":"3sUxVxHXIi9Gc6Zi"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"2E5E970F-6DFD-4269-A688-FD15AE36512B","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[6.215065002441406,10.855531692504883,0,6.215065002441406,5.575300216674805,4.876800060272217,6.215065002441406,10.855531692504883,4.876800060272217,6.215065002441406,10.855531692504883,0,6.215065002441406,5.575300216674805,0,6.215065002441406,5.575300216674805,4.876800060272217],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[6.215065002441406,8.215415954589844,2.4384000301361084],"radius":3.593884502394929}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"right2","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"EA9AA1BF-BA53-4D0E-ACB0-95E7291666FC"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 1 layer 5/8in on studs 16inoc w/batt","absorption":{"63":0.07,"125":0.55,"250":0.14,"500":0.08,"1000":0.04,"2000":0.12,"4000":0.11,"8000":0.11},"nrc":0.1,"source":"Egan","description":"","uuid":"th2PuWU5EhCsaon3"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"29275BAA-EC84-4AF7-868A-E05EA60BD17A","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[0,10.855531692504883,0,6.215065002441406,10.855531692504883,4.876800060272217,0,10.855531692504883,4.876800060272217,0,10.855531692504883,0,6.215065002441406,10.855531692504883,0,6.215065002441406,10.855531692504883,4.876800060272217],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[3.107532501220703,10.855531692504883,2.4384000301361084],"radius":3.950006702919727}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"back2","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"8C87C786-5188-48F7-BFD4-946EF78D1E65"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 2+2 @ 5/8in on 3-5/8in studs","absorption":{"63":0.04,"125":0.15,"250":0.08,"500":0.06,"1000":0.05,"2000":0.05,"4000":0.04,"8000":0.04},"nrc":0.06,"source":"wjhw?","description":"","uuid":"I1esImsQrKZl0AAw"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"F08D41DC-1461-412C-A97D-BF65AFA8EE1E","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[0,2.3483328819274902,4.876800060272217,0,0,0,0,10.855531692504883,0,0,10.855531692504883,0,0,10.855531692504883,4.876800060272217,0,2.3483328819274902,4.876800060272217,0,2.3483328819274902,4.876800060272217,0,0,2.9337000846862793,0,0,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[0,5.427765846252441,2.4384000301361084],"radius":5.950330813384434}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"left","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"ED91F1C5-D2D0-42A0-8686-4B46303256FE"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Diffusion","Diffusion Products"],"manufacturer":"","name":"Diffuse Signature Wood (1\\" Standoff Sides Open)","material":"Diffuse Signature Wood (1\\" Standoff Sides Open)","absorption":{"63":0,"125":0,"250":0.02,"500":0.06,"1000":0.16,"2000":0.13,"4000":0.15,"8000":0.17},"nrc":0.09,"source":"SH","description":"","uuid":"tgGAnP5OCLWlPFF4"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"088EC67F-85BA-4323-BB08-C0213F5F6CA2","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[12.430130004882812,0,0,0,0,2.9337000846862793,12.430130004882812,0,2.9337000846862793,12.430130004882812,0,0,0,0,0,0,0,2.9337000846862793],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[6.215065002441406,0,1.4668500423431396],"radius":6.3858188223041585}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"front","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"0AECC234-8C09-4D6B-AA82-DC0A99B42F2D"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Ceiling"," Ceiling Systems"],"manufacturer":"","name":"Barrisol Stretched Ceiling Over 3\\" Fiberglass","material":"Barrisol Stretched Ceiling over 3\\" fiberglass","absorption":{"63":0.18,"125":0.26,"250":0.58,"500":0.57,"1000":0.43,"2000":0.36,"4000":0.36,"8000":0.36},"nrc":0.49,"source":"SH","description":"","uuid":"Wz4CjrpqIYGba8G0"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"95B298C8-96A1-41A1-9A71-D7C446A0AB46","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[12.430130004882812,0,2.9337000846862793,0,2.3483328819274902,4.876800060272217,12.430130004882812,2.3483328819274902,4.876800060272217,12.430130004882812,0,2.9337000846862793,0,0,2.9337000846862793,0,2.3483328819274902,4.876800060272217],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0.637499988079071,-0.7705000042915344,0,0.637499988079071,-0.7705000042915344,0,0.637499988079071,-0.7705000042915344,0,0.637499988079071,-0.7705000042915344,0,0.637499988079071,-0.7705000042915344,0,0.637499988079071,-0.7705000042915344],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[6.215065002441406,1.1741664409637451,3.905250072479248],"radius":6.399188166825382}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"slope","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"ABA66075-FD1A-4820-B591-66EE2A92CFDB"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Ceiling"," Ceiling Systems"],"manufacturer":"","name":"Dampa Linar 100 Ceiling System","material":"Dampa Linar 100 Ceiling System","absorption":{"63":0.34,"125":0.48,"250":0.67,"500":0.69,"1000":0.61,"2000":0.46,"4000":0.49,"8000":0.52},"nrc":0.61,"source":"SH","description":"","uuid":"s9OvPvd4RDogxQn7"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"333C7898-A815-420A-89D6-3D96BB178242","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[12.430130004882812,2.3483328819274902,4.876800060272217,6.215065002441406,5.575300216674805,4.876800060272217,12.430130004882812,5.575300216674805,4.876800060272217,6.215065002441406,5.575300216674805,4.876800060272217,0,10.855531692504883,4.876800060272217,6.215065002441406,10.855531692504883,4.876800060272217,12.430130004882812,2.3483328819274902,4.876800060272217,0,2.3483328819274902,4.876800060272217,6.215065002441406,5.575300216674805,4.876800060272217,6.215065002441406,5.575300216674805,4.876800060272217,0,2.3483328819274902,4.876800060272217,0,10.855531692504883,4.876800060272217],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[6.215065002441406,6.6019322872161865,4.876800060272217],"radius":7.531277506853956}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"ceil","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"522A95C7-E134-4D1C-92DD-8672102F06E6"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Floors","Various"],"manufacturer":"","name":"Wood Floor","material":"Wood floor","absorption":{"63":0.06,"125":0.15,"250":0.11,"500":0.1,"1000":0.07,"2000":0.06,"4000":0.07,"8000":0.07},"nrc":0.09,"source":"Egan","description":"","uuid":"1PgJwgIAqHwMj99A"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"203BF944-7E6E-4539-B678-F2064CCC8619","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[6.215065002441406,5.575300216674805,0,12.430130004882812,0,0,12.430130004882812,5.575300216674805,0,6.215065002441406,5.575300216674805,0,0,10.855531692504883,0,0,0,0,6.215065002441406,5.575300216674805,0,0,0,0,12.430130004882812,0,0,6.215065002441406,5.575300216674805,0,6.215065002441406,10.855531692504883,0,0,10.855531692504883,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[6.215065002441406,5.427765846252441,0],"radius":8.25152562053324}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"floor","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"34B96D2E-706E-45E8-91D2-0F8FF35AA11E"}],"kind":"room","name":"new room","uuid":"77F26146-94CF-46F8-870D-BB5A41C9D802","units":2,"originalFileData":"","originalFileName":"","visible":true,"position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1]},{"kind":"source","name":"new source","visible":true,"position":[3.7,9.9,1],"scale":[1,1,1],"rotation":[0,0,0,"XYZ"],"color":10668418,"uuid":"2825008E-9269-4453-BB81-2290852E5A81"},{"kind":"receiver","name":"new receiver","visible":true,"position":[10.8,3.8000000000000003,1.2000000000000002],"scale":[1,1,1],"rotation":[0,0,0,"XYZ"],"color":14511983,"uuid":"3198FEAC-8F9F-4362-8FB8-ADE61D8A708A"}]'), Ig = [{ name: "Ray Tracer", kind: "ray-tracer", uuid: "1d67c7f8-9c6f-43db-9b20-01b3c6f2feab", roomID: "77F26146-94CF-46F8-870D-BB5A41C9D802", sourceIDs: ["2825008E-9269-4453-BB81-2290852E5A81"], surfaceIDs: ["59F599B3-6554-4999-A93C-597E4B5275C1", "FDDD16D3-6E8D-4B4B-B4A1-D622E9D6D31D", "EA9AA1BF-BA53-4D0E-ACB0-95E7291666FC", "8C87C786-5188-48F7-BFD4-946EF78D1E65", "ED91F1C5-D2D0-42A0-8686-4B46303256FE", "0AECC234-8C09-4D6B-AA82-DC0A99B42F2D", "ABA66075-FD1A-4820-B591-66EE2A92CFDB", "522A95C7-E134-4D1C-92DD-8672102F06E6", "34B96D2E-706E-45E8-91D2-0F8FF35AA11E"], receiverIDs: ["3198FEAC-8F9F-4362-8FB8-ADE61D8A708A"], updateInterval: 5, passes: 500, pointSize: 2, reflectionOrder: 500, runningWithoutReceivers: !1, raysVisible: !0, pointsVisible: !0, invertedDrawStyle: !1, plotStyle: { mode: "lines" }, paths: {} }], Tg = {
+  meta: Eg,
+  containers: kg,
+  solvers: Ig
+}, Fg = { version: "0.2.1", name: "auditorium", timestamp: "2021-04-29T11:59:27.330Z" }, Bg = /* @__PURE__ */ JSON.parse(`[{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Floors","Wood"],"manufacturer":"","name":"Wood Stage Floor (T&G)","material":"Wood Stage Floor (T&G), 2 layers 1/2in, on joists","absorption":{"63":0.04,"125":0.1,"250":0.07,"500":0.06,"1000":0.06,"2000":0.06,"4000":0.06,"8000":0.06},"nrc":0.06,"source":"Beranek (JASA '98)","description":"","uuid":"ZdwcxUjnCaTijM8d"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"400B3C98-438F-414E-9A39-2D5BAC219DC3","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[3.6396543979644775,14.278063774108887,-0.6776000261306763,3.6396543979644775,14.278063774108887,0,3.6396543979644775,-0.7260642051696777,-0.6776000261306763,3.6396543979644775,-0.7260642051696777,0,3.6396543979644775,-0.7260642051696777,-0.6776000261306763,3.6396543979644775,14.278063774108887,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0],"normalized":false}},"boundingSphere":{"center":[3.6396543979644775,6.7759997844696045,-0.33880001306533813],"radius":7.509710350838808}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-0","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"684C19AC-22BD-45FE-898C-C5166936CDDD"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Floors","Wood"],"manufacturer":"","name":"Wood Stage Floor (T&G)","material":"Wood Stage Floor (T&G), 2 layers 1/2in, on joists","absorption":{"63":0.04,"125":0.1,"250":0.07,"500":0.06,"1000":0.06,"2000":0.06,"4000":0.06,"8000":0.06},"nrc":0.06,"source":"Beranek (JASA '98)","description":"","uuid":"ZdwcxUjnCaTijM8d"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"E97F47E2-3237-4B92-A531-B8C3A9AF9885","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[3.6396543979644775,-0.7260642051696777,0,3.6396543979644775,14.278063774108887,0,3.388000011444092,-1.3552000522613525,0,3.6396543979644775,14.278063774108887,0,3.388000011444092,14.90719985961914,0,3.388000011444092,-1.3552000522613525,0,3.388000011444092,-1.3552000522613525,0,3.388000011444092,14.90719985961914,0,0,0,0,0,13.552000045776367,0,0,0,0,3.388000011444092,14.90719985961914,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1],"normalized":false}},"boundingSphere":{"center":[1.8198271989822388,6.775999903678894,0],"radius":8.28103729572734}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-16","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"019734C7-A913-4997-AF56-4127C064DCBC"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Tectum","material":"Tectum, 1in, against solid backing","absorption":{"63":0,"125":0.06,"250":0.13,"500":0.24,"1000":0.45,"2000":0.82,"4000":0.64,"8000":0.64},"nrc":0.41,"source":"Tectum Company","description":"","uuid":"W2wCsvqJV0a1RMGw"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"AA8A615E-B0F8-4810-9B76-E960FD96910E","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[25.27349090576172,0,8.243200302124023,25.27349090576172,0,0.5723999738693237,23.240692138671875,-4.500878810882568,8.243200302124023,23.240692138671875,-4.500878810882568,0.5723999738693237,23.240692138671875,-4.500878810882568,8.243200302124023,25.27349090576172,0,0.5723999738693237],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.9113596677780151,0.4116109311580658,0,-0.9113596677780151,0.4116109311580658,0,-0.9113596677780151,0.4116109311580658,0,-0.9113596677780151,0.4116109311580658,0,-0.9113596677780151,0.4116109311580658,0,-0.9113596677780151,0.4116109311580658,0],"normalized":false}},"boundingSphere":{"center":[24.257091522216797,-2.250439405441284,4.407800137996674],"radius":4.561561097192662}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-1","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"C4C1198C-8ECF-4945-8DBE-BECEBD6261D4"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Tectum","material":"Tectum, 1in, against solid backing","absorption":{"63":0,"125":0.06,"250":0.13,"500":0.24,"1000":0.45,"2000":0.82,"4000":0.64,"8000":0.64},"nrc":0.41,"source":"Tectum Company","description":"","uuid":"W2wCsvqJV0a1RMGw"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"592E5C4E-1FF7-4AAE-8332-3EA1AF4A7B58","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[25.27349090576172,13.552000045776367,8.243200302124023,25.27349090576172,13.552000045776367,0.5723999738693237,25.951091766357422,6.776000022888184,8.243200302124023,25.951091766357422,6.776000022888184,0.5723999738693237,25.951091766357422,6.776000022888184,8.243200302124023,25.27349090576172,13.552000045776367,0.5723999738693237],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.9950371980667114,-0.09950384497642517,0,-0.9950371980667114,-0.09950384497642517,0,-0.9950371980667114,-0.09950384497642517,0,-0.9950371980667114,-0.09950384497642517,0,-0.9950371980667114,-0.09950384497642517,0,-0.9950371980667114,-0.09950384497642517,0],"normalized":false}},"boundingSphere":{"center":[25.61229133605957,10.164000034332275,4.407800137996674],"radius":5.128705901892141}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-2","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"BC98D1A7-A671-4D2C-A9B9-243FC24E6272"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Tectum","material":"Tectum, 1in, against solid backing","absorption":{"63":0,"125":0.06,"250":0.13,"500":0.24,"1000":0.45,"2000":0.82,"4000":0.64,"8000":0.64},"nrc":0.41,"source":"Tectum Company","description":"","uuid":"W2wCsvqJV0a1RMGw"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"86233816-C227-485D-BCFB-3495AB27841E","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[25.951091766357422,6.776000022888184,8.243200302124023,25.951091766357422,6.776000022888184,0.5723999738693237,25.27349090576172,0,8.243200302124023,25.27349090576172,0,0.5723999738693237,25.27349090576172,0,8.243200302124023,25.951091766357422,6.776000022888184,0.5723999738693237],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.9950371980667114,0.09950384497642517,0,-0.9950371980667114,0.09950384497642517,0,-0.9950371980667114,0.09950384497642517,0,-0.9950371980667114,0.09950384497642517,0,-0.9950371980667114,0.09950384497642517,0,-0.9950371980667114,0.09950384497642517,0],"normalized":false}},"boundingSphere":{"center":[25.61229133605957,3.388000011444092,4.407800137996674],"radius":5.128705901892141}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-5","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"002B910B-36C7-478E-BF82-44A5E5827359"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Tectum","material":"Tectum, 1in, against solid backing","absorption":{"63":0,"125":0.06,"250":0.13,"500":0.24,"1000":0.45,"2000":0.82,"4000":0.64,"8000":0.64},"nrc":0.41,"source":"Tectum Company","description":"","uuid":"W2wCsvqJV0a1RMGw"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"75B764E2-FFE8-476A-9917-7C248BD99988","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[23.240692138671875,18.052879333496094,8.243200302124023,23.240692138671875,18.052879333496094,0.5723999738693237,25.27349090576172,13.552000045776367,8.243200302124023,25.27349090576172,13.552000045776367,0.5723999738693237,25.27349090576172,13.552000045776367,8.243200302124023,23.240692138671875,18.052879333496094,0.5723999738693237],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.9113596677780151,-0.411610871553421,0,-0.9113596677780151,-0.411610871553421,0,-0.9113596677780151,-0.411610871553421,0,-0.9113596677780151,-0.411610871553421,0,-0.9113596677780151,-0.411610871553421,0,-0.9113596677780151,-0.411610871553421,0],"normalized":false}},"boundingSphere":{"center":[24.257091522216797,15.80243968963623,4.407800137996674],"radius":4.561561214816119}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-13","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"150F4026-17E8-4FA2-947C-7CCE8766672F"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["People","Various"],"manufacturer":"","name":"Audience In Upholstered Seats","material":"Audience in upholstered seats","absorption":{"63":0,"125":0.18,"250":0.4,"500":0.46,"1000":0.46,"2000":0.51,"4000":0.46,"8000":0.46},"nrc":0.46,"source":"Hann Tucker","description":"","uuid":"QFCVbDYrU5uWvhK2"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"538BB9A3-68A2-425A-B70F-CD45E476386D","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[25.951091766357422,6.776000022888184,0.5723999738693237,25.27349090576172,13.552000045776367,0.5723999738693237,25.27349090576172,0,0.5723999738693237,25.27349090576172,13.552000045776367,0.5723999738693237,23.240692138671875,18.052879333496094,0.5723999738693237,25.27349090576172,0,0.5723999738693237,23.240692138671875,-4.500878810882568,0.5723999738693237,25.27349090576172,0,0.5723999738693237,23.240692138671875,18.052879333496094,0.5723999738693237],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1],"normalized":false}},"boundingSphere":{"center":[24.59589195251465,6.776000261306763,0.5723999738693237],"radius":11.358017791156218}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-3","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"95922F62-13C2-4C06-A997-99B18DE92370"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["People","Various"],"manufacturer":"","name":"Audience In Upholstered Seats","material":"Audience in upholstered seats","absorption":{"63":0,"125":0.18,"250":0.4,"500":0.46,"1000":0.46,"2000":0.51,"4000":0.46,"8000":0.46},"nrc":0.46,"source":"Hann Tucker","description":"","uuid":"QFCVbDYrU5uWvhK2"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"EE864F8C-261F-4F61-B437-8B57B0567E6E","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[13.076691627502441,-4.500878810882568,0.07240000367164612,13.076691627502441,18.052879333496094,0.07240000367164612,3.6396543979644775,-0.7260642051696777,-0.6776000261306763,3.6396543979644775,14.278063774108887,-0.6776000261306763,3.6396543979644775,-0.7260642051696777,-0.6776000261306763,13.076691627502441,18.052879333496094,0.07240000367164612],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.07922429591417313,0,0.9968568086624146,-0.07922429591417313,0,0.9968568086624146,-0.07922429591417313,0,0.9968568086624146,-0.07922429591417313,0,0.9968568086624146,-0.07922429591417313,0,0.9968568086624146,-0.07922429591417313,0,0.9968568086624146],"normalized":false}},"boundingSphere":{"center":[8.35817301273346,6.776000261306763,-0.3026000112295151],"radius":12.230005909151432}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-17","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"12438BB0-6F74-48E6-A9BE-B8223FBBB05B"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["People","Various"],"manufacturer":"","name":"Audience In Upholstered Seats","material":"Audience in upholstered seats","absorption":{"63":0,"125":0.18,"250":0.4,"500":0.46,"1000":0.46,"2000":0.51,"4000":0.46,"8000":0.46},"nrc":0.46,"source":"Hann Tucker","description":"","uuid":"QFCVbDYrU5uWvhK2"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"4ED29942-85B9-4630-A710-A701DC4A2A5F","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[23.240692138671875,-4.500878810882568,0.5723999738693237,23.240692138671875,18.052879333496094,0.5723999738693237,13.076691627502441,-4.500878810882568,0.07240000367164612,13.076691627502441,18.052879333496094,0.07240000367164612,13.076691627502441,-4.500878810882568,0.07240000367164612,23.240692138671875,18.052879333496094,0.5723999738693237],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.04913381114602089,0,0.9987922310829163,-0.04913381114602089,0,0.9987922310829163,-0.04913381114602089,0,0.9987922310829163,-0.04913381114602089,0,0.9987922310829163,-0.04913381114602089,0,0.9987922310829163,-0.04913381114602089,0,0.9987922310829163],"normalized":false}},"boundingSphere":{"center":[18.158691883087158,6.776000261306763,0.3223999887704849],"radius":12.37162997341475}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-18","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"B35F8F84-7DE4-4AE4-ABD1-08F6856713D0"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"99A4D26C-5E26-4692-8C0D-CF185378CFA0","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[13.076691627502441,-4.500878810882568,7.493199825286865,13.076691627502441,-4.500878810882568,0.07240000367164612,3.6396543979644775,-0.7260642051696777,4.743199825286865,3.6396543979644775,-0.7260642051696777,4.743199825286865,13.076691627502441,-4.500878810882568,0.07240000367164612,3.6396543979644775,-0.7260642051696777,0,3.6396543979644775,-0.7260642051696777,-0.6776000261306763,3.6396543979644775,-0.7260642051696777,0,13.076691627502441,-4.500878810882568,0.07240000367164612],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0],"normalized":false}},"boundingSphere":{"center":[8.35817301273346,-2.613471508026123,3.4077998995780945],"radius":6.5205227396105645}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-4","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"5BCC2696-DB53-4AD8-8DD7-65A838026F6C"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"6689D2A1-9B38-489C-9B43-42D02F03C7DB","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[15.076691627502441,18.052879333496094,8.243200302124023,13.076691627502441,18.052879333496094,7.493199825286865,23.240692138671875,18.052879333496094,8.243200302124023,23.240692138671875,18.052879333496094,8.243200302124023,13.076691627502441,18.052879333496094,7.493199825286865,23.240692138671875,18.052879333496094,0.5723999738693237,13.076691627502441,18.052879333496094,0.07240000367164612,23.240692138671875,18.052879333496094,0.5723999738693237,13.076691627502441,18.052879333496094,7.493199825286865],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0],"normalized":false}},"boundingSphere":{"center":[18.158691883087158,18.052879333496094,4.157800152897835],"radius":6.520523060081951}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-6","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"E89777FF-93D0-456E-97D0-9CDD4961BB17"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"DA4B11D6-24CC-472A-98D1-3E106C740E0C","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[13.076691627502441,18.052879333496094,7.493199825286865,3.6396543979644775,14.278063774108887,4.743199825286865,13.076691627502441,18.052879333496094,0.07240000367164612,3.6396543979644775,14.278063774108887,4.743199825286865,3.6396543979644775,14.278063774108887,0,13.076691627502441,18.052879333496094,0.07240000367164612,3.6396543979644775,14.278063774108887,-0.6776000261306763,13.076691627502441,18.052879333496094,0.07240000367164612,3.6396543979644775,14.278063774108887,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0],"normalized":false}},"boundingSphere":{"center":[8.35817301273346,16.16547155380249,3.4077998995780945],"radius":6.520522877634167}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-10","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"5612A937-9C2D-46F5-B75A-6C996F10815B"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"5081D021-FEB7-41F7-91CD-DE1EF838C595","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[15.076691627502441,-4.500878810882568,8.243200302124023,23.240692138671875,-4.500878810882568,8.243200302124023,13.076691627502441,-4.500878810882568,7.493199825286865,23.240692138671875,-4.500878810882568,8.243200302124023,23.240692138671875,-4.500878810882568,0.5723999738693237,13.076691627502441,-4.500878810882568,7.493199825286865,13.076691627502441,-4.500878810882568,0.07240000367164612,13.076691627502441,-4.500878810882568,7.493199825286865,23.240692138671875,-4.500878810882568,0.5723999738693237],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0],"normalized":false}},"boundingSphere":{"center":[18.158691883087158,-4.500878810882568,4.157800152897835],"radius":6.520523060081951}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-19","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"EAC1B97E-7C9F-4455-86E5-6688C117C43D"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"1ED2615E-F9E7-477F-8751-E38570B227C2","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[25.951091766357422,6.776000022888184,8.243200302124023,25.27349090576172,0,8.243200302124023,25.27349090576172,13.552000045776367,8.243200302124023,25.27349090576172,13.552000045776367,8.243200302124023,25.27349090576172,0,8.243200302124023,23.240692138671875,18.052879333496094,8.243200302124023,25.27349090576172,0,8.243200302124023,23.240692138671875,-4.500878810882568,8.243200302124023,23.240692138671875,18.052879333496094,8.243200302124023,23.240692138671875,18.052879333496094,8.243200302124023,23.240692138671875,-4.500878810882568,8.243200302124023,15.076691627502441,18.052879333496094,8.243200302124023,15.076691627502441,-4.500878810882568,8.243200302124023,15.076691627502441,18.052879333496094,8.243200302124023,23.240692138671875,-4.500878810882568,8.243200302124023],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1],"normalized":false}},"boundingSphere":{"center":[20.51389169692993,6.776000261306763,8.243200302124023],"radius":12.519231054811794}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-7","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"ACC14F91-9609-4D98-BD92-DE179F50F4DF"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Concrete Block"],"manufacturer":"","name":"Cmu","material":"CMU, painted","absorption":{"63":0.03,"125":0.1,"250":0.05,"500":0.06,"1000":0.07,"2000":0.09,"4000":0.08,"8000":0.08},"nrc":0.07,"source":"wjhw?","description":"","uuid":"ByswUBFezm3zBKiE"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"447AAFC5-9DAB-428B-BFF8-90CE2859CED1","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[0,0,4.743199825286865,3.388000011444092,-1.3552000522613525,4.743199825286865,0,0,0,3.388000011444092,-1.3552000522613525,0,0,0,0,3.388000011444092,-1.3552000522613525,4.743199825286865],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0.3713906705379486,0.9284766912460327,0,0.3713906705379486,0.9284766912460327,0,0.3713906705379486,0.9284766912460327,0,0.3713906705379486,0.9284766912460327,0,0.3713906705379486,0.9284766912460327,0,0.3713906705379486,0.9284766912460327,0],"normalized":false}},"boundingSphere":{"center":[1.694000005722046,-0.6776000261306763,2.3715999126434326],"radius":2.9922005214304943}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-8","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"8C2E6B59-4406-46AA-BFFC-0DD3A540CC2B"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Concrete Block"],"manufacturer":"","name":"Cmu","material":"CMU, painted","absorption":{"63":0.03,"125":0.1,"250":0.05,"500":0.06,"1000":0.07,"2000":0.09,"4000":0.08,"8000":0.08},"nrc":0.07,"source":"wjhw?","description":"","uuid":"ByswUBFezm3zBKiE"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"CE7D1DD2-4D3C-4974-9990-04CB566F3914","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[3.388000011444092,14.90719985961914,4.743199825286865,0,13.552000045776367,4.743199825286865,3.388000011444092,14.90719985961914,0,0,13.552000045776367,0,3.388000011444092,14.90719985961914,0,0,13.552000045776367,4.743199825286865],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0.37139061093330383,-0.9284766912460327,0,0.37139061093330383,-0.9284766912460327,0,0.37139061093330383,-0.9284766912460327,0,0.37139061093330383,-0.9284766912460327,0,0.37139061093330383,-0.9284766912460327,0,0.37139061093330383,-0.9284766912460327,0],"normalized":false}},"boundingSphere":{"center":[1.694000005722046,14.229599952697754,2.3715999126434326],"radius":2.9922004944349068}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-9","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"23667DCD-801B-4519-AE5D-D24386E78799"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Concrete Block"],"manufacturer":"","name":"Cmu","material":"CMU, painted","absorption":{"63":0.03,"125":0.1,"250":0.05,"500":0.06,"1000":0.07,"2000":0.09,"4000":0.08,"8000":0.08},"nrc":0.07,"source":"wjhw?","description":"","uuid":"ByswUBFezm3zBKiE"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"AC13C7F5-F22B-4EB1-ABF2-19323297501A","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[3.6396543979644775,-0.7260642051696777,4.743199825286865,3.6396543979644775,-0.7260642051696777,0,3.388000011444092,-1.3552000522613525,4.743199825286865,3.388000011444092,-1.3552000522613525,0,3.388000011444092,-1.3552000522613525,4.743199825286865,3.6396543979644775,-0.7260642051696777,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.9284766912460327,0.3713907301425934,0,-0.9284766912460327,0.3713907301425934,0,-0.9284766912460327,0.3713907301425934,0,-0.9284766912460327,0.3713907301425934,0,-0.9284766912460327,0.3713907301425934,0,-0.9284766912460327,0.3713907301425934,0],"normalized":false}},"boundingSphere":{"center":[3.5138272047042847,-1.0406321287155151,2.3715999126434326],"radius":2.395677692582626}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-11","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"09FB51AD-73E9-480E-A3E5-6932C31787DE"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Concrete Block"],"manufacturer":"","name":"Cmu","material":"CMU, painted","absorption":{"63":0.03,"125":0.1,"250":0.05,"500":0.06,"1000":0.07,"2000":0.09,"4000":0.08,"8000":0.08},"nrc":0.07,"source":"wjhw?","description":"","uuid":"ByswUBFezm3zBKiE"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"0C7929BE-458F-413B-BC92-D7FBF0D28AB8","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[3.388000011444092,14.90719985961914,4.743199825286865,3.388000011444092,14.90719985961914,0,3.6396543979644775,14.278063774108887,4.743199825286865,3.6396543979644775,14.278063774108887,0,3.6396543979644775,14.278063774108887,4.743199825286865,3.388000011444092,14.90719985961914,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.9284766912460327,-0.37139061093330383,0,-0.9284766912460327,-0.37139061093330383,0,-0.9284766912460327,-0.37139061093330383,0,-0.9284766912460327,-0.37139061093330383,0,-0.9284766912460327,-0.37139061093330383,0,-0.9284766912460327,-0.37139061093330383,0],"normalized":false}},"boundingSphere":{"center":[3.5138272047042847,14.592631816864014,2.3715999126434326],"radius":2.395677708235577}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-12","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"94111689-BEE4-4E6E-98FA-8CEBFC57DE7B"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Concrete Block"],"manufacturer":"","name":"Cmu","material":"CMU, painted","absorption":{"63":0.03,"125":0.1,"250":0.05,"500":0.06,"1000":0.07,"2000":0.09,"4000":0.08,"8000":0.08},"nrc":0.07,"source":"wjhw?","description":"","uuid":"ByswUBFezm3zBKiE"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"41B752A6-4A0A-4F6E-9EB0-B5E799D8D9C4","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[0,13.552000045776367,0,0,13.552000045776367,4.743199825286865,0,0,0,0,0,4.743199825286865,0,0,0,0,13.552000045776367,4.743199825286865],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0],"normalized":false}},"boundingSphere":{"center":[0,6.776000022888184,2.3715999126434326],"radius":7.179043282766235}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-15","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"DF5D8BCC-C7BF-41EC-994B-09CCCD4D67C7"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"899F381E-5921-4775-9F58-92044872FF55","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[3.6396543979644775,14.278063774108887,4.743199825286865,3.6396543979644775,-0.7260642051696777,4.743199825286865,3.388000011444092,14.90719985961914,4.743199825286865,3.6396543979644775,-0.7260642051696777,4.743199825286865,3.388000011444092,-1.3552000522613525,4.743199825286865,3.388000011444092,14.90719985961914,4.743199825286865,3.388000011444092,14.90719985961914,4.743199825286865,3.388000011444092,-1.3552000522613525,4.743199825286865,0,13.552000045776367,4.743199825286865,0,0,4.743199825286865,0,13.552000045776367,4.743199825286865,3.388000011444092,-1.3552000522613525,4.743199825286865],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1],"normalized":false}},"boundingSphere":{"center":[1.8198271989822388,6.775999903678894,4.743199825286865],"radius":8.28103729572734}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-14","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"E8C1CCA5-3787-4C6B-8A87-2F6B6C1709B6"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"57731404-5792-4623-B964-263A68EFD1AD","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[15.076691627502441,18.052879333496094,8.243200302124023,15.076691627502441,-4.500878810882568,8.243200302124023,13.076691627502441,18.052879333496094,7.493199825286865,13.076691627502441,-4.500878810882568,7.493199825286865,13.076691627502441,18.052879333496094,7.493199825286865,15.076691627502441,-4.500878810882568,8.243200302124023],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0.3511236310005188,0,-0.9363291263580322,0.3511236310005188,0,-0.9363291263580322,0.3511236310005188,0,-0.9363291263580322,0.3511236310005188,0,-0.9363291263580322,0.3511236310005188,0,-0.9363291263580322,0.3511236310005188,0,-0.9363291263580322],"normalized":false}},"boundingSphere":{"center":[14.076691627502441,6.776000261306763,7.868200063705444],"radius":11.327339793066848}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-20","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"871ED5D3-5913-47D3-8585-D6C3BDB05F4E"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"8B8AAEEE-9E0B-486F-837A-74A372F11975","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[13.076691627502441,18.052879333496094,7.493199825286865,13.076691627502441,-4.500878810882568,7.493199825286865,3.6396543979644775,14.278063774108887,4.743199825286865,3.6396543979644775,-0.7260642051696777,4.743199825286865,3.6396543979644775,14.278063774108887,4.743199825286865,13.076691627502441,-4.500878810882568,7.493199825286865],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0.2797684967517853,0,-0.9600675106048584,0.2797684967517853,0,-0.9600675106048584,0.2797684967517853,0,-0.9600675106048584,0.2797684967517853,0,-0.9600675106048584,0.2797684967517853,0,-0.9600675106048584,0.2797684967517853,0,-0.9600675106048584],"normalized":false}},"boundingSphere":{"center":[8.35817301273346,6.776000261306763,6.118199825286865],"radius":12.3013432001023}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-21","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"258494C4-8017-4C71-A8CA-32E17274FEA9"},{"surfaces":[{"kind":"container","visible":true,"name":"STAGE_FLOOR","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"C25652F3-D7EC-42DE-82CA-1A4CCCE37874","children":[{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Floors","Wood"],"manufacturer":"","name":"Wood Stage Floor (T&G)","material":"Wood Stage Floor (T&G), 2 layers 1/2in, on joists","absorption":{"63":0.04,"125":0.1,"250":0.07,"500":0.06,"1000":0.06,"2000":0.06,"4000":0.06,"8000":0.06},"nrc":0.06,"source":"Beranek (JASA '98)","description":"","uuid":"ZdwcxUjnCaTijM8d"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"400B3C98-438F-414E-9A39-2D5BAC219DC3","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[3.6396543979644775,14.278063774108887,-0.6776000261306763,3.6396543979644775,14.278063774108887,0,3.6396543979644775,-0.7260642051696777,-0.6776000261306763,3.6396543979644775,-0.7260642051696777,0,3.6396543979644775,-0.7260642051696777,-0.6776000261306763,3.6396543979644775,14.278063774108887,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0],"normalized":false}},"boundingSphere":{"center":[3.6396543979644775,6.7759997844696045,-0.33880001306533813],"radius":7.509710350838808}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-0","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"684C19AC-22BD-45FE-898C-C5166936CDDD"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Floors","Wood"],"manufacturer":"","name":"Wood Stage Floor (T&G)","material":"Wood Stage Floor (T&G), 2 layers 1/2in, on joists","absorption":{"63":0.04,"125":0.1,"250":0.07,"500":0.06,"1000":0.06,"2000":0.06,"4000":0.06,"8000":0.06},"nrc":0.06,"source":"Beranek (JASA '98)","description":"","uuid":"ZdwcxUjnCaTijM8d"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"E97F47E2-3237-4B92-A531-B8C3A9AF9885","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[3.6396543979644775,-0.7260642051696777,0,3.6396543979644775,14.278063774108887,0,3.388000011444092,-1.3552000522613525,0,3.6396543979644775,14.278063774108887,0,3.388000011444092,14.90719985961914,0,3.388000011444092,-1.3552000522613525,0,3.388000011444092,-1.3552000522613525,0,3.388000011444092,14.90719985961914,0,0,0,0,0,13.552000045776367,0,0,0,0,3.388000011444092,14.90719985961914,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1],"normalized":false}},"boundingSphere":{"center":[1.8198271989822388,6.775999903678894,0],"radius":8.28103729572734}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-16","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"019734C7-A913-4997-AF56-4127C064DCBC"}]},{"kind":"container","visible":true,"name":"BACK_WALL","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"50EAB1A6-F698-4B51-943F-6B1DB50A9316","children":[{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Tectum","material":"Tectum, 1in, against solid backing","absorption":{"63":0,"125":0.06,"250":0.13,"500":0.24,"1000":0.45,"2000":0.82,"4000":0.64,"8000":0.64},"nrc":0.41,"source":"Tectum Company","description":"","uuid":"W2wCsvqJV0a1RMGw"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"AA8A615E-B0F8-4810-9B76-E960FD96910E","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[25.27349090576172,0,8.243200302124023,25.27349090576172,0,0.5723999738693237,23.240692138671875,-4.500878810882568,8.243200302124023,23.240692138671875,-4.500878810882568,0.5723999738693237,23.240692138671875,-4.500878810882568,8.243200302124023,25.27349090576172,0,0.5723999738693237],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.9113596677780151,0.4116109311580658,0,-0.9113596677780151,0.4116109311580658,0,-0.9113596677780151,0.4116109311580658,0,-0.9113596677780151,0.4116109311580658,0,-0.9113596677780151,0.4116109311580658,0,-0.9113596677780151,0.4116109311580658,0],"normalized":false}},"boundingSphere":{"center":[24.257091522216797,-2.250439405441284,4.407800137996674],"radius":4.561561097192662}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-1","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"C4C1198C-8ECF-4945-8DBE-BECEBD6261D4"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Tectum","material":"Tectum, 1in, against solid backing","absorption":{"63":0,"125":0.06,"250":0.13,"500":0.24,"1000":0.45,"2000":0.82,"4000":0.64,"8000":0.64},"nrc":0.41,"source":"Tectum Company","description":"","uuid":"W2wCsvqJV0a1RMGw"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"592E5C4E-1FF7-4AAE-8332-3EA1AF4A7B58","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[25.27349090576172,13.552000045776367,8.243200302124023,25.27349090576172,13.552000045776367,0.5723999738693237,25.951091766357422,6.776000022888184,8.243200302124023,25.951091766357422,6.776000022888184,0.5723999738693237,25.951091766357422,6.776000022888184,8.243200302124023,25.27349090576172,13.552000045776367,0.5723999738693237],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.9950371980667114,-0.09950384497642517,0,-0.9950371980667114,-0.09950384497642517,0,-0.9950371980667114,-0.09950384497642517,0,-0.9950371980667114,-0.09950384497642517,0,-0.9950371980667114,-0.09950384497642517,0,-0.9950371980667114,-0.09950384497642517,0],"normalized":false}},"boundingSphere":{"center":[25.61229133605957,10.164000034332275,4.407800137996674],"radius":5.128705901892141}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-2","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"BC98D1A7-A671-4D2C-A9B9-243FC24E6272"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Tectum","material":"Tectum, 1in, against solid backing","absorption":{"63":0,"125":0.06,"250":0.13,"500":0.24,"1000":0.45,"2000":0.82,"4000":0.64,"8000":0.64},"nrc":0.41,"source":"Tectum Company","description":"","uuid":"W2wCsvqJV0a1RMGw"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"86233816-C227-485D-BCFB-3495AB27841E","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[25.951091766357422,6.776000022888184,8.243200302124023,25.951091766357422,6.776000022888184,0.5723999738693237,25.27349090576172,0,8.243200302124023,25.27349090576172,0,0.5723999738693237,25.27349090576172,0,8.243200302124023,25.951091766357422,6.776000022888184,0.5723999738693237],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.9950371980667114,0.09950384497642517,0,-0.9950371980667114,0.09950384497642517,0,-0.9950371980667114,0.09950384497642517,0,-0.9950371980667114,0.09950384497642517,0,-0.9950371980667114,0.09950384497642517,0,-0.9950371980667114,0.09950384497642517,0],"normalized":false}},"boundingSphere":{"center":[25.61229133605957,3.388000011444092,4.407800137996674],"radius":5.128705901892141}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-5","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"002B910B-36C7-478E-BF82-44A5E5827359"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Tectum","material":"Tectum, 1in, against solid backing","absorption":{"63":0,"125":0.06,"250":0.13,"500":0.24,"1000":0.45,"2000":0.82,"4000":0.64,"8000":0.64},"nrc":0.41,"source":"Tectum Company","description":"","uuid":"W2wCsvqJV0a1RMGw"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"75B764E2-FFE8-476A-9917-7C248BD99988","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[23.240692138671875,18.052879333496094,8.243200302124023,23.240692138671875,18.052879333496094,0.5723999738693237,25.27349090576172,13.552000045776367,8.243200302124023,25.27349090576172,13.552000045776367,0.5723999738693237,25.27349090576172,13.552000045776367,8.243200302124023,23.240692138671875,18.052879333496094,0.5723999738693237],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.9113596677780151,-0.411610871553421,0,-0.9113596677780151,-0.411610871553421,0,-0.9113596677780151,-0.411610871553421,0,-0.9113596677780151,-0.411610871553421,0,-0.9113596677780151,-0.411610871553421,0,-0.9113596677780151,-0.411610871553421,0],"normalized":false}},"boundingSphere":{"center":[24.257091522216797,15.80243968963623,4.407800137996674],"radius":4.561561214816119}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-13","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"150F4026-17E8-4FA2-947C-7CCE8766672F"}]},{"kind":"container","visible":true,"name":"FLOOR","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"22B49FEC-509E-4278-A6EE-C8C7E484A4CD","children":[{"kind":"surface","visible":true,"acousticMaterial":{"tags":["People","Various"],"manufacturer":"","name":"Audience In Upholstered Seats","material":"Audience in upholstered seats","absorption":{"63":0,"125":0.18,"250":0.4,"500":0.46,"1000":0.46,"2000":0.51,"4000":0.46,"8000":0.46},"nrc":0.46,"source":"Hann Tucker","description":"","uuid":"QFCVbDYrU5uWvhK2"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"538BB9A3-68A2-425A-B70F-CD45E476386D","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[25.951091766357422,6.776000022888184,0.5723999738693237,25.27349090576172,13.552000045776367,0.5723999738693237,25.27349090576172,0,0.5723999738693237,25.27349090576172,13.552000045776367,0.5723999738693237,23.240692138671875,18.052879333496094,0.5723999738693237,25.27349090576172,0,0.5723999738693237,23.240692138671875,-4.500878810882568,0.5723999738693237,25.27349090576172,0,0.5723999738693237,23.240692138671875,18.052879333496094,0.5723999738693237],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1],"normalized":false}},"boundingSphere":{"center":[24.59589195251465,6.776000261306763,0.5723999738693237],"radius":11.358017791156218}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-3","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"95922F62-13C2-4C06-A997-99B18DE92370"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["People","Various"],"manufacturer":"","name":"Audience In Upholstered Seats","material":"Audience in upholstered seats","absorption":{"63":0,"125":0.18,"250":0.4,"500":0.46,"1000":0.46,"2000":0.51,"4000":0.46,"8000":0.46},"nrc":0.46,"source":"Hann Tucker","description":"","uuid":"QFCVbDYrU5uWvhK2"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"EE864F8C-261F-4F61-B437-8B57B0567E6E","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[13.076691627502441,-4.500878810882568,0.07240000367164612,13.076691627502441,18.052879333496094,0.07240000367164612,3.6396543979644775,-0.7260642051696777,-0.6776000261306763,3.6396543979644775,14.278063774108887,-0.6776000261306763,3.6396543979644775,-0.7260642051696777,-0.6776000261306763,13.076691627502441,18.052879333496094,0.07240000367164612],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.07922429591417313,0,0.9968568086624146,-0.07922429591417313,0,0.9968568086624146,-0.07922429591417313,0,0.9968568086624146,-0.07922429591417313,0,0.9968568086624146,-0.07922429591417313,0,0.9968568086624146,-0.07922429591417313,0,0.9968568086624146],"normalized":false}},"boundingSphere":{"center":[8.35817301273346,6.776000261306763,-0.3026000112295151],"radius":12.230005909151432}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-17","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"12438BB0-6F74-48E6-A9BE-B8223FBBB05B"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["People","Various"],"manufacturer":"","name":"Audience In Upholstered Seats","material":"Audience in upholstered seats","absorption":{"63":0,"125":0.18,"250":0.4,"500":0.46,"1000":0.46,"2000":0.51,"4000":0.46,"8000":0.46},"nrc":0.46,"source":"Hann Tucker","description":"","uuid":"QFCVbDYrU5uWvhK2"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"4ED29942-85B9-4630-A710-A701DC4A2A5F","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[23.240692138671875,-4.500878810882568,0.5723999738693237,23.240692138671875,18.052879333496094,0.5723999738693237,13.076691627502441,-4.500878810882568,0.07240000367164612,13.076691627502441,18.052879333496094,0.07240000367164612,13.076691627502441,-4.500878810882568,0.07240000367164612,23.240692138671875,18.052879333496094,0.5723999738693237],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.04913381114602089,0,0.9987922310829163,-0.04913381114602089,0,0.9987922310829163,-0.04913381114602089,0,0.9987922310829163,-0.04913381114602089,0,0.9987922310829163,-0.04913381114602089,0,0.9987922310829163,-0.04913381114602089,0,0.9987922310829163],"normalized":false}},"boundingSphere":{"center":[18.158691883087158,6.776000261306763,0.3223999887704849],"radius":12.37162997341475}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-18","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"B35F8F84-7DE4-4AE4-ABD1-08F6856713D0"}]},{"kind":"container","visible":true,"name":"SIDE_WALLS","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"6FD07351-E2A3-48B5-A97E-4CF1292754D1","children":[{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"99A4D26C-5E26-4692-8C0D-CF185378CFA0","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[13.076691627502441,-4.500878810882568,7.493199825286865,13.076691627502441,-4.500878810882568,0.07240000367164612,3.6396543979644775,-0.7260642051696777,4.743199825286865,3.6396543979644775,-0.7260642051696777,4.743199825286865,13.076691627502441,-4.500878810882568,0.07240000367164612,3.6396543979644775,-0.7260642051696777,0,3.6396543979644775,-0.7260642051696777,-0.6776000261306763,3.6396543979644775,-0.7260642051696777,0,13.076691627502441,-4.500878810882568,0.07240000367164612],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0],"normalized":false}},"boundingSphere":{"center":[8.35817301273346,-2.613471508026123,3.4077998995780945],"radius":6.5205227396105645}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-4","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"5BCC2696-DB53-4AD8-8DD7-65A838026F6C"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"6689D2A1-9B38-489C-9B43-42D02F03C7DB","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[15.076691627502441,18.052879333496094,8.243200302124023,13.076691627502441,18.052879333496094,7.493199825286865,23.240692138671875,18.052879333496094,8.243200302124023,23.240692138671875,18.052879333496094,8.243200302124023,13.076691627502441,18.052879333496094,7.493199825286865,23.240692138671875,18.052879333496094,0.5723999738693237,13.076691627502441,18.052879333496094,0.07240000367164612,23.240692138671875,18.052879333496094,0.5723999738693237,13.076691627502441,18.052879333496094,7.493199825286865],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0],"normalized":false}},"boundingSphere":{"center":[18.158691883087158,18.052879333496094,4.157800152897835],"radius":6.520523060081951}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-6","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"E89777FF-93D0-456E-97D0-9CDD4961BB17"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"DA4B11D6-24CC-472A-98D1-3E106C740E0C","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[13.076691627502441,18.052879333496094,7.493199825286865,3.6396543979644775,14.278063774108887,4.743199825286865,13.076691627502441,18.052879333496094,0.07240000367164612,3.6396543979644775,14.278063774108887,4.743199825286865,3.6396543979644775,14.278063774108887,0,13.076691627502441,18.052879333496094,0.07240000367164612,3.6396543979644775,14.278063774108887,-0.6776000261306763,13.076691627502441,18.052879333496094,0.07240000367164612,3.6396543979644775,14.278063774108887,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0],"normalized":false}},"boundingSphere":{"center":[8.35817301273346,16.16547155380249,3.4077998995780945],"radius":6.520522877634167}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-10","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"5612A937-9C2D-46F5-B75A-6C996F10815B"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"5081D021-FEB7-41F7-91CD-DE1EF838C595","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[15.076691627502441,-4.500878810882568,8.243200302124023,23.240692138671875,-4.500878810882568,8.243200302124023,13.076691627502441,-4.500878810882568,7.493199825286865,23.240692138671875,-4.500878810882568,8.243200302124023,23.240692138671875,-4.500878810882568,0.5723999738693237,13.076691627502441,-4.500878810882568,7.493199825286865,13.076691627502441,-4.500878810882568,0.07240000367164612,13.076691627502441,-4.500878810882568,7.493199825286865,23.240692138671875,-4.500878810882568,0.5723999738693237],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0],"normalized":false}},"boundingSphere":{"center":[18.158691883087158,-4.500878810882568,4.157800152897835],"radius":6.520523060081951}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-19","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"EAC1B97E-7C9F-4455-86E5-6688C117C43D"}]},{"kind":"container","visible":true,"name":"FLAT_CEILING","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"2CFEC12E-3B4B-4FF6-A980-F48C4DFF00DD","children":[{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"1ED2615E-F9E7-477F-8751-E38570B227C2","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[25.951091766357422,6.776000022888184,8.243200302124023,25.27349090576172,0,8.243200302124023,25.27349090576172,13.552000045776367,8.243200302124023,25.27349090576172,13.552000045776367,8.243200302124023,25.27349090576172,0,8.243200302124023,23.240692138671875,18.052879333496094,8.243200302124023,25.27349090576172,0,8.243200302124023,23.240692138671875,-4.500878810882568,8.243200302124023,23.240692138671875,18.052879333496094,8.243200302124023,23.240692138671875,18.052879333496094,8.243200302124023,23.240692138671875,-4.500878810882568,8.243200302124023,15.076691627502441,18.052879333496094,8.243200302124023,15.076691627502441,-4.500878810882568,8.243200302124023,15.076691627502441,18.052879333496094,8.243200302124023,23.240692138671875,-4.500878810882568,8.243200302124023],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1],"normalized":false}},"boundingSphere":{"center":[20.51389169692993,6.776000261306763,8.243200302124023],"radius":12.519231054811794}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-7","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"ACC14F91-9609-4D98-BD92-DE179F50F4DF"}]},{"kind":"container","visible":true,"name":"STAGE_WALLS","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"744E318D-EC60-406E-880D-596711954480","children":[{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Concrete Block"],"manufacturer":"","name":"Cmu","material":"CMU, painted","absorption":{"63":0.03,"125":0.1,"250":0.05,"500":0.06,"1000":0.07,"2000":0.09,"4000":0.08,"8000":0.08},"nrc":0.07,"source":"wjhw?","description":"","uuid":"ByswUBFezm3zBKiE"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"447AAFC5-9DAB-428B-BFF8-90CE2859CED1","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[0,0,4.743199825286865,3.388000011444092,-1.3552000522613525,4.743199825286865,0,0,0,3.388000011444092,-1.3552000522613525,0,0,0,0,3.388000011444092,-1.3552000522613525,4.743199825286865],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0.3713906705379486,0.9284766912460327,0,0.3713906705379486,0.9284766912460327,0,0.3713906705379486,0.9284766912460327,0,0.3713906705379486,0.9284766912460327,0,0.3713906705379486,0.9284766912460327,0,0.3713906705379486,0.9284766912460327,0],"normalized":false}},"boundingSphere":{"center":[1.694000005722046,-0.6776000261306763,2.3715999126434326],"radius":2.9922005214304943}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-8","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"8C2E6B59-4406-46AA-BFFC-0DD3A540CC2B"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Concrete Block"],"manufacturer":"","name":"Cmu","material":"CMU, painted","absorption":{"63":0.03,"125":0.1,"250":0.05,"500":0.06,"1000":0.07,"2000":0.09,"4000":0.08,"8000":0.08},"nrc":0.07,"source":"wjhw?","description":"","uuid":"ByswUBFezm3zBKiE"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"CE7D1DD2-4D3C-4974-9990-04CB566F3914","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[3.388000011444092,14.90719985961914,4.743199825286865,0,13.552000045776367,4.743199825286865,3.388000011444092,14.90719985961914,0,0,13.552000045776367,0,3.388000011444092,14.90719985961914,0,0,13.552000045776367,4.743199825286865],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0.37139061093330383,-0.9284766912460327,0,0.37139061093330383,-0.9284766912460327,0,0.37139061093330383,-0.9284766912460327,0,0.37139061093330383,-0.9284766912460327,0,0.37139061093330383,-0.9284766912460327,0,0.37139061093330383,-0.9284766912460327,0],"normalized":false}},"boundingSphere":{"center":[1.694000005722046,14.229599952697754,2.3715999126434326],"radius":2.9922004944349068}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-9","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"23667DCD-801B-4519-AE5D-D24386E78799"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Concrete Block"],"manufacturer":"","name":"Cmu","material":"CMU, painted","absorption":{"63":0.03,"125":0.1,"250":0.05,"500":0.06,"1000":0.07,"2000":0.09,"4000":0.08,"8000":0.08},"nrc":0.07,"source":"wjhw?","description":"","uuid":"ByswUBFezm3zBKiE"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"AC13C7F5-F22B-4EB1-ABF2-19323297501A","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[3.6396543979644775,-0.7260642051696777,4.743199825286865,3.6396543979644775,-0.7260642051696777,0,3.388000011444092,-1.3552000522613525,4.743199825286865,3.388000011444092,-1.3552000522613525,0,3.388000011444092,-1.3552000522613525,4.743199825286865,3.6396543979644775,-0.7260642051696777,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.9284766912460327,0.3713907301425934,0,-0.9284766912460327,0.3713907301425934,0,-0.9284766912460327,0.3713907301425934,0,-0.9284766912460327,0.3713907301425934,0,-0.9284766912460327,0.3713907301425934,0,-0.9284766912460327,0.3713907301425934,0],"normalized":false}},"boundingSphere":{"center":[3.5138272047042847,-1.0406321287155151,2.3715999126434326],"radius":2.395677692582626}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-11","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"09FB51AD-73E9-480E-A3E5-6932C31787DE"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Concrete Block"],"manufacturer":"","name":"Cmu","material":"CMU, painted","absorption":{"63":0.03,"125":0.1,"250":0.05,"500":0.06,"1000":0.07,"2000":0.09,"4000":0.08,"8000":0.08},"nrc":0.07,"source":"wjhw?","description":"","uuid":"ByswUBFezm3zBKiE"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"0C7929BE-458F-413B-BC92-D7FBF0D28AB8","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[3.388000011444092,14.90719985961914,4.743199825286865,3.388000011444092,14.90719985961914,0,3.6396543979644775,14.278063774108887,4.743199825286865,3.6396543979644775,14.278063774108887,0,3.6396543979644775,14.278063774108887,4.743199825286865,3.388000011444092,14.90719985961914,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.9284766912460327,-0.37139061093330383,0,-0.9284766912460327,-0.37139061093330383,0,-0.9284766912460327,-0.37139061093330383,0,-0.9284766912460327,-0.37139061093330383,0,-0.9284766912460327,-0.37139061093330383,0,-0.9284766912460327,-0.37139061093330383,0],"normalized":false}},"boundingSphere":{"center":[3.5138272047042847,14.592631816864014,2.3715999126434326],"radius":2.395677708235577}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-12","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"94111689-BEE4-4E6E-98FA-8CEBFC57DE7B"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Concrete Block"],"manufacturer":"","name":"Cmu","material":"CMU, painted","absorption":{"63":0.03,"125":0.1,"250":0.05,"500":0.06,"1000":0.07,"2000":0.09,"4000":0.08,"8000":0.08},"nrc":0.07,"source":"wjhw?","description":"","uuid":"ByswUBFezm3zBKiE"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"41B752A6-4A0A-4F6E-9EB0-B5E799D8D9C4","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[0,13.552000045776367,0,0,13.552000045776367,4.743199825286865,0,0,0,0,0,4.743199825286865,0,0,0,0,13.552000045776367,4.743199825286865],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0],"normalized":false}},"boundingSphere":{"center":[0,6.776000022888184,2.3715999126434326],"radius":7.179043282766235}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-15","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"DF5D8BCC-C7BF-41EC-994B-09CCCD4D67C7"}]},{"kind":"container","visible":true,"name":"STAGE_CEILING","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"94B92F44-E01B-40A3-B783-CD1CF3AA2BC6","children":[{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"899F381E-5921-4775-9F58-92044872FF55","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[3.6396543979644775,14.278063774108887,4.743199825286865,3.6396543979644775,-0.7260642051696777,4.743199825286865,3.388000011444092,14.90719985961914,4.743199825286865,3.6396543979644775,-0.7260642051696777,4.743199825286865,3.388000011444092,-1.3552000522613525,4.743199825286865,3.388000011444092,14.90719985961914,4.743199825286865,3.388000011444092,14.90719985961914,4.743199825286865,3.388000011444092,-1.3552000522613525,4.743199825286865,0,13.552000045776367,4.743199825286865,0,0,4.743199825286865,0,13.552000045776367,4.743199825286865,3.388000011444092,-1.3552000522613525,4.743199825286865],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1],"normalized":false}},"boundingSphere":{"center":[1.8198271989822388,6.775999903678894,4.743199825286865],"radius":8.28103729572734}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-14","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"E8C1CCA5-3787-4C6B-8A87-2F6B6C1709B6"}]},{"kind":"container","visible":true,"name":"SLOPED_CEILING","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"E6294A9E-6F2C-4828-B186-788F0352FA0C","children":[{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"57731404-5792-4623-B964-263A68EFD1AD","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[15.076691627502441,18.052879333496094,8.243200302124023,15.076691627502441,-4.500878810882568,8.243200302124023,13.076691627502441,18.052879333496094,7.493199825286865,13.076691627502441,-4.500878810882568,7.493199825286865,13.076691627502441,18.052879333496094,7.493199825286865,15.076691627502441,-4.500878810882568,8.243200302124023],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0.3511236310005188,0,-0.9363291263580322,0.3511236310005188,0,-0.9363291263580322,0.3511236310005188,0,-0.9363291263580322,0.3511236310005188,0,-0.9363291263580322,0.3511236310005188,0,-0.9363291263580322,0.3511236310005188,0,-0.9363291263580322],"normalized":false}},"boundingSphere":{"center":[14.076691627502441,6.776000261306763,7.868200063705444],"radius":11.327339793066848}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-20","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"871ED5D3-5913-47D3-8585-D6C3BDB05F4E"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"8B8AAEEE-9E0B-486F-837A-74A372F11975","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[13.076691627502441,18.052879333496094,7.493199825286865,13.076691627502441,-4.500878810882568,7.493199825286865,3.6396543979644775,14.278063774108887,4.743199825286865,3.6396543979644775,-0.7260642051696777,4.743199825286865,3.6396543979644775,14.278063774108887,4.743199825286865,13.076691627502441,-4.500878810882568,7.493199825286865],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0.2797684967517853,0,-0.9600675106048584,0.2797684967517853,0,-0.9600675106048584,0.2797684967517853,0,-0.9600675106048584,0.2797684967517853,0,-0.9600675106048584,0.2797684967517853,0,-0.9600675106048584,0.2797684967517853,0,-0.9600675106048584],"normalized":false}},"boundingSphere":{"center":[8.35817301273346,6.776000261306763,6.118199825286865],"radius":12.3013432001023}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-21","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"258494C4-8017-4C71-A8CA-32E17274FEA9"}]}],"kind":"room","name":"new room","uuid":"2822163E-C892-4474-A3AB-BCD8210F2C3D","units":2,"originalFileData":"","originalFileName":"","visible":true,"position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1]}]`), Hg = [], Dg = {
+  meta: Fg,
+  containers: Bg,
+  solvers: Hg
 };
 ae("OPEN_EXAMPLE", (t) => {
   const { hasUnsavedChanges: e } = Ve.getState();
   if (e && !confirm("Open an example? Unsaved data will be lost."))
     return;
-  const r = Ig[t];
+  const r = qg[t];
   $("RESTORE", { json: r });
 });
-const Ig = {
-  shoebox: vg,
-  concord: wg,
-  auditorium: kg
+const qg = {
+  shoebox: xg,
+  concord: Tg,
+  auditorium: Dg
 };
 export {
-  mb as A,
-  gb as B,
-  pb as C,
-  Ig as D,
+  vb as A,
+  Cb as B,
+  yb as C,
+  qg as D,
   ft as E,
   Ss as F,
-  ib as I,
+  db as I,
   Qa as L,
-  hb as O,
-  nb as P,
+  Sb as O,
+  ub as P,
   v3 as R,
   Pt as S,
   Y5 as T,
   D0 as a,
   P5 as b,
   S3 as c,
-  $A as d,
+  ib as d,
   $ as e,
   a0 as f,
-  fb as g,
+  bb as g,
   ll as h,
   Ve as i,
   $c as j,
-  ab as k,
+  cb as k,
   Id as l,
   Pe as m,
   gs as n,
   ae as o,
   W0 as p,
-  ZA as q,
+  nb as q,
   Se as r,
-  eb as s,
+  sb as s,
   Ko as t,
   Be as u,
   Kt as v,
-  rb as w,
+  lb as w,
   $o as x,
   ci as y,
-  tb as z
+  ob as z
 };
-//# sourceMappingURL=index-Dtm47vRQ.mjs.map
+//# sourceMappingURL=index-B9bcsZYv.mjs.map
