@@ -16,6 +16,7 @@ declare global {
     DESELECT_ALL_OBJECTS: undefined;
     SET_SELECTION: Container[];
     APPEND_SELECTION: Container[];
+    TOGGLE_CONTAINER_VISIBLE: string;
   }
 }
 
@@ -89,6 +90,16 @@ on("APPEND_SELECTION", (containers) => {
       container.select();
       state.selectedObjects.add(container);
     })
+  });
+  emit("RENDER", undefined);
+});
+
+on("TOGGLE_CONTAINER_VISIBLE", (uuid) => {
+  useContainer.getState().set(state => {
+    const container = state.containers[uuid];
+    if (container) {
+      container.visible = !container.visible;
+    }
   });
   emit("RENDER", undefined);
 });
