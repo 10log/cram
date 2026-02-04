@@ -1,5 +1,8 @@
 // @ts-nocheck
 import React, { useState } from "react";
+import Select from "@mui/material/Select";
+import MenuItem from "@mui/material/MenuItem";
+import type { SxProps, Theme } from "@mui/material/styles";
 import FDTD_2D from "../../compute/2d-fdtd";
 import Slider, { SliderChangeEvent } from '../slider/Slider';
 import PropertyRow from "./property-row/PropertyRow";
@@ -10,6 +13,27 @@ import PropertyRowFolder from "./property-row/PropertyRowFolder";
 import { getSources } from "../../objects/source";
 import { getReceivers } from "../../objects/receiver";
 import { useSolver } from "../../store";
+
+const selectSx: SxProps<Theme> = {
+  fontSize: "0.75rem",
+  height: 24,
+  minWidth: 120,
+  "& .MuiSelect-select": {
+    py: 0.25,
+    px: 1,
+  },
+  "& .MuiOutlinedInput-notchedOutline": {
+    borderColor: "divider",
+  },
+  "&:hover .MuiOutlinedInput-notchedOutline": {
+    borderColor: "primary.main",
+  },
+};
+
+const menuItemSx: SxProps<Theme> = {
+  fontSize: "0.75rem",
+  py: 0.5,
+};
 
 
 
@@ -131,25 +155,24 @@ export const FDTD_2DTab = ({uuid}: {uuid: string}) => {
       >
         <PropertyRow>
           <PropertyRowLabel hasToolTip={sourcesFolderOpen} label="Source" tooltip="All available sources" />
-          <select
-            value={0}
-            name="sources"
+          <Select
+            size="small"
+            value=""
+            displayEmpty
             onChange={(e) => {
-              console.log(e.currentTarget.value);
-              const source = sources.filter((x) => x.uuid === e.currentTarget.value);
+              const source = sources.filter((x) => x.uuid === e.target.value);
               source[0] && solver.addSource(source[0]);
               setFDTDSourcesKeys(solver.sourceKeys);
             }}
+            sx={selectSx}
           >
-            <option value={0}>Select Source</option>
-            {notIncludedSources.map((src) => {
-              return (
-                <option key={src.uuid} value={src.uuid}>
-                  {src.name}
-                </option>
-              );
-            })}
-          </select>
+            <MenuItem value="" disabled sx={menuItemSx}>Select Source</MenuItem>
+            {notIncludedSources.map((src) => (
+              <MenuItem key={src.uuid} value={src.uuid} sx={menuItemSx}>
+                {src.name}
+              </MenuItem>
+            ))}
+          </Select>
         </PropertyRow>
         {FDTDsourceKeys.map((sourcekey) => {
           return (
@@ -177,25 +200,24 @@ export const FDTD_2DTab = ({uuid}: {uuid: string}) => {
       >
         <PropertyRow>
           <PropertyRowLabel hasToolTip={receiverFolderOpen} label="Receiver" tooltip="All available receivers" />
-          <select
-            value={0}
-            name="receivers"
+          <Select
+            size="small"
+            value=""
+            displayEmpty
             onChange={(e) => {
-              console.log(e.currentTarget.value);
-              const receiver = receivers.filter((x) => x.uuid === e.currentTarget.value);
+              const receiver = receivers.filter((x) => x.uuid === e.target.value);
               receiver[0] && solver.addReceiver(receiver[0]);
-              setFDTDSourcesKeys(solver.receiverKeys);
+              setFDTDreceiverKeys(solver.receiverKeys);
             }}
+            sx={selectSx}
           >
-            <option value={0}>Select Receiver</option>
-            {notIncludedReceiver.map((rec) => {
-              return (
-                <option key={rec.uuid} value={rec.uuid}>
-                  {rec.name}
-                </option>
-              );
-            })}
-          </select>
+            <MenuItem value="" disabled sx={menuItemSx}>Select Receiver</MenuItem>
+            {notIncludedReceiver.map((rec) => (
+              <MenuItem key={rec.uuid} value={rec.uuid} sx={menuItemSx}>
+                {rec.name}
+              </MenuItem>
+            ))}
+          </Select>
         </PropertyRow>
         {FDTDreceiverKeys.map((receiverkey) => {
           return (

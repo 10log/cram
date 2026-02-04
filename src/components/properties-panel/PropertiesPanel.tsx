@@ -40,6 +40,7 @@ import SensorsIcon from "@mui/icons-material/Sensors";
 import ViewInArIcon from "@mui/icons-material/ViewInAr";
 import AutorenewIcon from "@mui/icons-material/Autorenew";
 import SettingsIcon from "@mui/icons-material/Settings";
+import SquareIcon from "@mui/icons-material/Square";
 
 // Store hooks
 import { useContainer } from "../../store";
@@ -51,6 +52,7 @@ import { emit, postMessage } from "../../messenger";
 import SourceTab from "../parameter-config/SourceTab";
 import ReceiverTab from "../parameter-config/ReceiverTab";
 import RoomTab from "../parameter-config/RoomTab";
+import SurfaceTab from "../parameter-config/SurfaceTab";
 import RayTracerTab from "../parameter-config/RayTracerTab";
 import ImageSourceTab from "../parameter-config/image-source-tab/ImageSourceTab";
 import RT60Tab from "../parameter-config/RT60Tab";
@@ -88,7 +90,7 @@ const accordionSx: SxProps<Theme> = {
 const accordionSummarySx: SxProps<Theme> = {
   minHeight: 36,
   px: 1.5,
-  bgcolor: "grey.100",
+  bgcolor: "action.hover",
   "&.Mui-expanded": { minHeight: 36 },
   "& .MuiAccordionSummary-content": {
     my: 0,
@@ -113,7 +115,7 @@ const listItemSx: SxProps<Theme> = {
 const categoryHeaderSx: SxProps<Theme> = {
   py: 0.5,
   px: 1.5,
-  bgcolor: "grey.50",
+  bgcolor: "background.default",
   borderBottom: 1,
   borderColor: "divider",
 };
@@ -132,9 +134,14 @@ const propertiesContainerSx: SxProps<Theme> = {
 };
 
 const autoCalcButtonSx = (active: boolean, calculating: boolean): SxProps<Theme> => ({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
   width: 24,
   height: 24,
   ml: 0.5,
+  borderRadius: "50%",
+  cursor: "pointer",
   bgcolor: active ? "primary.main" : "transparent",
   color: active ? "primary.contrastText" : "text.secondary",
   "&:hover": {
@@ -154,6 +161,7 @@ const typeIcons: Record<string, React.ReactNode> = {
   room: <HomeIcon fontSize="small" />,
   source: <GraphicEqIcon fontSize="small" />,
   receiver: <SensorsIcon fontSize="small" />,
+  surface: <SquareIcon fontSize="small" />,
   solver: <ViewInArIcon fontSize="small" />,
   renderer: <SettingsIcon fontSize="small" />,
 };
@@ -312,6 +320,7 @@ export function PropertiesPanel() {
       rooms: [] as { uuid: string; name: string; visible: boolean }[],
       sources: [] as { uuid: string; name: string; visible: boolean }[],
       receivers: [] as { uuid: string; name: string; visible: boolean }[],
+      surfaces: [] as { uuid: string; name: string; visible: boolean }[],
     };
 
     Object.keys(containers).forEach((uuid) => {
@@ -328,6 +337,9 @@ export function PropertiesPanel() {
         case "receiver":
           result.receivers.push(item);
           break;
+        case "surface":
+          result.surfaces.push(item);
+          break;
       }
     });
 
@@ -343,7 +355,7 @@ export function PropertiesPanel() {
     }));
   }, [solversData]);
 
-  const objectCount = objectsByKind.rooms.length + objectsByKind.sources.length + objectsByKind.receivers.length;
+  const objectCount = objectsByKind.rooms.length + objectsByKind.sources.length + objectsByKind.receivers.length + objectsByKind.surfaces.length;
   const solverCount = solverList.length + 1; // +1 for renderer
 
   // Handlers
@@ -403,6 +415,8 @@ export function PropertiesPanel() {
           return <ReceiverTab uuid={selectedObjectId!} />;
         case "room":
           return <RoomTab uuid={selectedObjectId!} />;
+        case "surface":
+          return <SurfaceTab uuid={selectedObjectId!} />;
         default:
           return <Typography variant="body2" color="text.secondary">Unknown object type</Typography>;
       }
@@ -513,6 +527,30 @@ export function PropertiesPanel() {
                   ))}
                 </>
               )}
+
+              {/* Surfaces */}
+              {objectsByKind.surfaces.length > 0 && (
+                <>
+                  <ListItem sx={categoryHeaderSx}>
+                    <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                      SURFACES ({objectsByKind.surfaces.length})
+                    </Typography>
+                  </ListItem>
+                  {objectsByKind.surfaces.map((obj) => (
+                    <ObjectItem
+                      key={obj.uuid}
+                      uuid={obj.uuid}
+                      name={obj.name}
+                      type="surface"
+                      visible={obj.visible}
+                      selected={selectedObjectId === obj.uuid}
+                      onSelect={() => handleSelectObject(obj.uuid)}
+                      onToggleVisibility={() => handleToggleVisibility(obj.uuid)}
+                      onDelete={() => handleDeleteObject(obj.uuid)}
+                    />
+                  ))}
+                </>
+              )}
             </List>
           )}
         </AccordionDetails>
@@ -526,13 +564,16 @@ export function PropertiesPanel() {
           <Typography variant="subtitle2" sx={{ fontWeight: 600, fontSize: "0.75rem" }}>Solvers</Typography>
           <Chip label={solverCount} size="small" sx={{ height: 18, fontSize: "0.625rem" }} />
           <Tooltip title={autoCalculate ? "Auto-calculate ON" : "Auto-calculate OFF"}>
-            <IconButton
-              size="small"
+            <Box
+              component="span"
+              role="button"
+              tabIndex={0}
               onClick={handleAutoCalcToggle}
+              onKeyDown={(e: React.KeyboardEvent) => { if (e.key === "Enter" || e.key === " ") handleAutoCalcToggle(e as unknown as React.MouseEvent); }}
               sx={autoCalcButtonSx(autoCalculate, autoCalculate && progressVisible)}
             >
               <AutorenewIcon />
-            </IconButton>
+            </Box>
           </Tooltip>
         </AccordionSummary>
         <AccordionDetails sx={accordionDetailsSx}>

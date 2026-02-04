@@ -115,9 +115,28 @@ export const CRAMCanvas = forwardRef<CRAMEditorRef, CRAMEditorProps>(
       }
       initializedRef.current = true;
 
+      // Set up ResizeObserver to handle container size changes (e.g., sidebar collapse)
+      const canvas = canvasRef.current;
+      const container = canvas?.parentElement;
+      let resizeObserver: ResizeObserver | null = null;
+
+      if (container) {
+        resizeObserver = new ResizeObserver(() => {
+          // Trigger resize and re-render when container size changes
+          renderer.checkresize();
+          renderer.needsToRender = true;
+        });
+        resizeObserver.observe(container);
+      }
+
       return () => {
         console.log('[CRAMCanvas] Unmounting - cleaning up resources...');
         initializedRef.current = false;
+
+        // Clean up ResizeObserver
+        if (resizeObserver) {
+          resizeObserver.disconnect();
+        }
 
         try {
           renderer.dispose();
