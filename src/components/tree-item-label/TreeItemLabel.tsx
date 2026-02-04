@@ -12,39 +12,48 @@ export interface TreeItemLabelProps {
   onClick?: (e: ClickEvent) => void;
 }
 
-// Extracted sx constants
+// Match PropertiesPanel ListItemText styling
 const CONTAINER_SX: SxProps<Theme> = {
   display: 'flex',
-  justifyContent: 'space-between',
   alignItems: 'center',
   width: '100%',
-} as const;
-
-const LABEL_SX: SxProps<Theme> = {
-  display: 'flex',
-  alignItems: 'center',
-  fontSize: '0.75rem',
-  fontWeight: 400,
-  color: 'text.primary',
+  minHeight: 24,
 } as const;
 
 const ICON_SX: SxProps<Theme> = {
   display: 'flex',
   alignItems: 'center',
-  mr: 0.5,
-  ml: -0.25,
+  justifyContent: 'center',
+  minWidth: 28,
   '& .MuiSvgIcon-root': {
-    fontSize: '14px',
+    fontSize: 16,
   },
 } as const;
 
-const META_SX: SxProps<Theme> = {
+const TEXT_CONTAINER_SX: SxProps<Theme> = {
+  display: 'flex',
+  flexDirection: 'column',
+  minWidth: 0,
+  flex: 1,
+} as const;
+
+// Match PropertiesPanel: primaryTypographyProps={{ fontSize: "0.75rem" }}
+const PRIMARY_TEXT_SX: SxProps<Theme> = {
   fontSize: '0.75rem',
-  fontWeight: 300,
-  fontStyle: 'italic',
+  fontWeight: 400,
+  lineHeight: 1.4,
+  color: 'text.primary',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
+} as const;
+
+// Match PropertiesPanel: secondaryTypographyProps={{ fontSize: "0.625rem" }}
+const SECONDARY_TEXT_SX: SxProps<Theme> = {
+  fontSize: '0.625rem',
+  fontWeight: 400,
+  lineHeight: 1.4,
   color: 'text.secondary',
-  ml: 1,
-  textTransform: 'capitalize',
 } as const;
 
 export default function TreeItemLabel(props: TreeItemLabelProps) {
@@ -55,21 +64,21 @@ export default function TreeItemLabel(props: TreeItemLabelProps) {
 
   return (
     <Box sx={CONTAINER_SX} {...extraProps}>
-      <Box sx={LABEL_SX}>
-        {props.icon && <Box sx={ICON_SX}>{props.icon}</Box>}
+      {props.icon && <Box sx={ICON_SX}>{props.icon}</Box>}
+      <Box sx={TEXT_CONTAINER_SX}>
         {typeof props.label === 'string' ? (
-          <Typography variant="body2" sx={{ fontSize: 'inherit', fontWeight: 'inherit' }}>
+          <Typography component="span" sx={PRIMARY_TEXT_SX}>
             {props.label}
           </Typography>
         ) : (
           props.label
         )}
+        {props.meta && (
+          <Typography component="span" sx={SECONDARY_TEXT_SX}>
+            {props.meta}
+          </Typography>
+        )}
       </Box>
-      {props.meta && (
-        <Typography variant="caption" sx={META_SX}>
-          {props.meta}
-        </Typography>
-      )}
     </Box>
   );
 }
