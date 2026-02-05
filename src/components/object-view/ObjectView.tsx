@@ -5,7 +5,6 @@ import { TreeItem } from "@mui/x-tree-view/TreeItem";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import TreeItemLabel from "../tree-item-label/TreeItemLabel";
-import properCase from "../../common/proper-case";
 import Container from "../../objects/container";
 import ContextMenu from "../ContextMenu";
 import { NodesIcon, RoomIcon, SourceIcon, ReceiverIcon } from "../icons";
@@ -65,7 +64,6 @@ const MapChildren = memo(function MapChildren(props: MapChildrenProps) {
   const draggable = true;
   const key = container.uuid;
   const itemId = container.uuid;
-  const meta = properCase(container["kind"]);
   const genericLabel = name || "untitled";
 
   const onClick = useCallback((e: ClickEvent) => {
@@ -97,8 +95,8 @@ const MapChildren = memo(function MapChildren(props: MapChildrenProps) {
     });
   }, [container.uuid, event]);
 
-  const label = <TreeItemLabel label={genericLabel} meta={meta} />;
-  const roomLabel = <TreeItemLabel icon={<RoomIcon fontSize="inherit" />} label={genericLabel} meta={meta} />;
+  const label = <TreeItemLabel label={genericLabel} />;
+  const roomLabel = <TreeItemLabel icon={<RoomIcon fontSize="inherit" />} label={genericLabel} />;
 
   const handleMenuItemClick = (e) => {
     if (e.target.textContent) {
@@ -135,9 +133,9 @@ const MapChildren = memo(function MapChildren(props: MapChildrenProps) {
   }
 
   // Create labels with icons for leaf items
-  const surfaceLabel = <TreeItemLabel icon={<NodesIcon fontSize="inherit" />} label={genericLabel} meta={meta} />;
-  const sourceLabel = <TreeItemLabel icon={<SourceIcon fontSize="inherit" />} label={genericLabel} meta={meta} />;
-  const receiverLabel = <TreeItemLabel icon={<ReceiverIcon fontSize="inherit" />} label={genericLabel} meta={meta} />;
+  const surfaceLabel = <TreeItemLabel icon={<NodesIcon fontSize="inherit" />} label={genericLabel} />;
+  const sourceLabel = <TreeItemLabel icon={<SourceIcon fontSize="inherit" />} label={genericLabel} />;
+  const receiverLabel = <TreeItemLabel icon={<ReceiverIcon fontSize="inherit" />} label={genericLabel} />;
 
   // slotProps for selectable leaf items - apply selected styling via sx
   const selectableContentProps = {

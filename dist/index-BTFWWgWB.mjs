@@ -207,7 +207,7 @@ const Pe = new Cd(), $ = Pe.emit.bind(Pe);
 Pe.before.bind(Pe);
 const ae = Pe.on.bind(Pe), Tr = Pe.after.bind(Pe), gs = Pe.postMessage.bind(Pe);
 Pe.addMessageHandler.bind(Pe);
-const ib = Pe.removeMessageHandler.bind(Pe);
+const nb = Pe.removeMessageHandler.bind(Pe);
 class si {
   name;
   fg;
@@ -769,7 +769,7 @@ var br = function(t, e) {
     TOUCH_PAN: 4,
     TOUCH_DOLLY_PAN: 5,
     TOUCH_DOLLY_ROTATE: 6
-  }, o = s.NONE, u = 1e-6, l = new no(), d = new no(), v = 1, T = new Ae(), E = !1, P = new y0(), f = new y0(), g = new y0(), x = new y0(), D = new y0(), q = new y0(), O = new y0(), X = new y0(), C = new y0();
+  }, o = s.NONE, u = 1e-6, l = new no(), d = new no(), v = 1, T = new Ae(), E = !1, x = new y0(), f = new y0(), g = new y0(), P = new y0(), D = new y0(), q = new y0(), O = new y0(), X = new y0(), C = new y0();
   function F() {
     return 2 * Math.PI / 60 / 60 * r.autoRotateSpeed;
   }
@@ -811,24 +811,24 @@ var br = function(t, e) {
     r.object.isPerspectiveCamera ? v *= j : r.object.isOrthographicCamera ? (r.object.zoom = Math.max(r.minZoom, Math.min(r.maxZoom, r.object.zoom / j)), r.object.updateProjectionMatrix(), E = !0) : (console.warn("WARNING: OrbitControls.js encountered an unknown camera type - dolly/zoom disabled."), r.enableZoom = !1);
   }
   function z(j) {
-    P.set(j.clientX, j.clientY);
+    x.set(j.clientX, j.clientY);
   }
   function se(j) {
     O.set(j.clientX, j.clientY);
   }
   function ue(j) {
-    x.set(j.clientX, j.clientY);
+    P.set(j.clientX, j.clientY);
   }
   function K(j) {
-    f.set(j.clientX, j.clientY), g.subVectors(f, P).multiplyScalar(r.rotateSpeed);
+    f.set(j.clientX, j.clientY), g.subVectors(f, x).multiplyScalar(r.rotateSpeed);
     var je = r.domElement;
-    S(2 * Math.PI * g.x / je.clientHeight), h(2 * Math.PI * g.y / je.clientHeight), P.copy(f), r.update();
+    S(2 * Math.PI * g.x / je.clientHeight), h(2 * Math.PI * g.y / je.clientHeight), x.copy(f), r.update();
   }
   function ce(j) {
     X.set(j.clientX, j.clientY), C.subVectors(X, O), C.y > 0 ? _(p()) : C.y < 0 && te(p()), O.copy(X), r.update();
   }
   function me(j) {
-    D.set(j.clientX, j.clientY), q.subVectors(D, x).multiplyScalar(r.panSpeed), W(q.x, q.y), x.copy(D), r.update();
+    D.set(j.clientX, j.clientY), q.subVectors(D, P).multiplyScalar(r.panSpeed), W(q.x, q.y), P.copy(D), r.update();
   }
   function ge(j) {
     j.deltaY < 0 ? te(p()) : j.deltaY > 0 && _(p()), r.update();
@@ -853,18 +853,18 @@ var br = function(t, e) {
   }
   function pe(j) {
     if (j.touches.length === 1)
-      P.set(j.touches[0].pageX, j.touches[0].pageY);
-    else {
-      var je = 0.5 * (j.touches[0].pageX + j.touches[1].pageX), s0 = 0.5 * (j.touches[0].pageY + j.touches[1].pageY);
-      P.set(je, s0);
-    }
-  }
-  function G(j) {
-    if (j.touches.length === 1)
       x.set(j.touches[0].pageX, j.touches[0].pageY);
     else {
       var je = 0.5 * (j.touches[0].pageX + j.touches[1].pageX), s0 = 0.5 * (j.touches[0].pageY + j.touches[1].pageY);
       x.set(je, s0);
+    }
+  }
+  function G(j) {
+    if (j.touches.length === 1)
+      P.set(j.touches[0].pageX, j.touches[0].pageY);
+    else {
+      var je = 0.5 * (j.touches[0].pageX + j.touches[1].pageX), s0 = 0.5 * (j.touches[0].pageY + j.touches[1].pageY);
+      P.set(je, s0);
     }
   }
   function Z(j) {
@@ -884,9 +884,9 @@ var br = function(t, e) {
       var je = 0.5 * (j.touches[0].pageX + j.touches[1].pageX), s0 = 0.5 * (j.touches[0].pageY + j.touches[1].pageY);
       f.set(je, s0);
     }
-    g.subVectors(f, P).multiplyScalar(r.rotateSpeed);
+    g.subVectors(f, x).multiplyScalar(r.rotateSpeed);
     var p0 = r.domElement;
-    S(2 * Math.PI * g.x / p0.clientHeight), h(2 * Math.PI * g.y / p0.clientHeight), P.copy(f);
+    S(2 * Math.PI * g.x / p0.clientHeight), h(2 * Math.PI * g.y / p0.clientHeight), x.copy(f);
   }
   function w(j) {
     if (j.touches.length === 1)
@@ -895,7 +895,7 @@ var br = function(t, e) {
       var je = 0.5 * (j.touches[0].pageX + j.touches[1].pageX), s0 = 0.5 * (j.touches[0].pageY + j.touches[1].pageY);
       D.set(je, s0);
     }
-    q.subVectors(D, x).multiplyScalar(r.panSpeed), W(q.x, q.y), x.copy(D);
+    q.subVectors(D, P).multiplyScalar(r.panSpeed), W(q.x, q.y), P.copy(D);
   }
   function L(j) {
     var je = j.touches[0].pageX - j.touches[1].pageX, s0 = j.touches[0].pageY - j.touches[1].pageY, p0 = Math.sqrt(je * je + s0 * s0);
@@ -1084,8 +1084,8 @@ class Dd extends A2 {
       }), s[q] = O, i[q] = O, n[q] = O;
     }
     o("camera", e), o("object", void 0), o("allAssociatedObjects", void 0), o("enabled", !0), o("axis", null), o("mode", "translate"), o("translationSnap", null), o("rotationSnap", null), o("scaleSnap", null), o("space", "world"), o("size", 1), o("dragging", !1), o("showX", !0), o("showY", !0), o("showZ", !0), o("minX", -1 / 0), o("maxX", 1 / 0), o("minY", -1 / 0), o("maxY", 1 / 0), o("minZ", -1 / 0), o("maxZ", 1 / 0);
-    const u = new Ae(), l = new Ae(), d = new z0(), v = new z0(), T = new Ae(), E = new z0(), P = new Ae(), f = new Ae(), g = new Ae(), x = 0, D = new Ae();
-    o("worldPosition", u), o("worldPositionStart", l), o("worldQuaternion", d), o("worldQuaternionStart", v), o("cameraPosition", T), o("cameraQuaternion", E), o("pointStart", P), o("pointEnd", f), o("rotationAxis", g), o("rotationAngle", x), o("eye", D), this._offset = new Ae(), this._startNorm = new Ae(), this._endNorm = new Ae(), this._cameraScale = new Ae(), this._parentPosition = new Ae(), this._parentQuaternion = new z0(), this._parentQuaternionInv = new z0(), this._parentScale = new Ae(), this._worldScaleStart = new Ae(), this._worldQuaternionInv = new z0(), this._worldScale = new Ae(), this._positionStart = new Ae(), this._quaternionStart = new z0(), this._scaleStart = new Ae(), this._getPointer = qd.bind(this), this._onPointerDown = Rd.bind(this), this._onPointerHover = Od.bind(this), this._onPointerMove = Ld.bind(this), this._onPointerUp = Md.bind(this), r !== null && this.connect(r);
+    const u = new Ae(), l = new Ae(), d = new z0(), v = new z0(), T = new Ae(), E = new z0(), x = new Ae(), f = new Ae(), g = new Ae(), P = 0, D = new Ae();
+    o("worldPosition", u), o("worldPositionStart", l), o("worldQuaternion", d), o("worldQuaternionStart", v), o("cameraPosition", T), o("cameraQuaternion", E), o("pointStart", x), o("pointEnd", f), o("rotationAxis", g), o("rotationAngle", P), o("eye", D), this._offset = new Ae(), this._startNorm = new Ae(), this._endNorm = new Ae(), this._cameraScale = new Ae(), this._parentPosition = new Ae(), this._parentQuaternion = new z0(), this._parentQuaternionInv = new z0(), this._parentScale = new Ae(), this._worldScaleStart = new Ae(), this._worldQuaternionInv = new z0(), this._worldScale = new Ae(), this._positionStart = new Ae(), this._quaternionStart = new z0(), this._scaleStart = new Ae(), this._getPointer = qd.bind(this), this._onPointerDown = Rd.bind(this), this._onPointerHover = Od.bind(this), this._onPointerMove = Ld.bind(this), this._onPointerUp = Md.bind(this), r !== null && this.connect(r);
   }
   connect(e) {
     super.connect(e), this.domElement.addEventListener("pointerdown", this._onPointerDown), this.domElement.addEventListener("pointermove", this._onPointerHover), this.domElement.addEventListener("pointerup", this._onPointerUp), this.domElement.style.touchAction = "none";
@@ -1341,8 +1341,8 @@ class Wd extends Ui {
     T.color.setHex(16776960), T.opacity = 0.25;
     const E = e.clone();
     E.color.setHex(16776960);
-    const P = e.clone();
-    P.color.setHex(7895160), this.materialLib = {
+    const x = e.clone();
+    x.color.setHex(7895160), this.materialLib = {
       xAxis: i,
       yAxis: s,
       zAxis: o,
@@ -1356,8 +1356,8 @@ class Wd extends Ui {
     f.translate(0, 0.05, 0);
     const g = new q0(0.08, 0.08, 0.08);
     g.translate(0, 0.04, 0);
-    const x = new ht();
-    x.setAttribute("position", new B0([0, 0, 0, 1, 0, 0], 3));
+    const P = new ht();
+    P.setAttribute("position", new B0([0, 0, 0, 1, 0, 0], 3));
     const D = new L0(75e-4, 75e-4, 0.5, 3);
     D.translate(0, 0.25, 0);
     function q(te, z) {
@@ -1432,17 +1432,17 @@ class Wd extends Ui {
         [new Bt(O(), n), null, null, null, "helper"]
       ],
       X: [
-        [new Bt(x, n), [-1e3, 0, 0], null, [1e6, 1, 1], "helper"]
+        [new Bt(P, n), [-1e3, 0, 0], null, [1e6, 1, 1], "helper"]
       ],
       Y: [
-        [new Bt(x, n), [0, -1e3, 0], [0, 0, Math.PI / 2], [1e6, 1, 1], "helper"]
+        [new Bt(P, n), [0, -1e3, 0], [0, 0, Math.PI / 2], [1e6, 1, 1], "helper"]
       ],
       Z: [
-        [new Bt(x, n), [0, 0, -1e3], [0, -Math.PI / 2, 0], [1e6, 1, 1], "helper"]
+        [new Bt(P, n), [0, 0, -1e3], [0, -Math.PI / 2, 0], [1e6, 1, 1], "helper"]
       ]
     }, p = {
       XYZE: [
-        [new fe(q(0.5, 1), P), null, [0, Math.PI / 2, 0]]
+        [new fe(q(0.5, 1), x), null, [0, Math.PI / 2, 0]]
       ],
       X: [
         [new fe(q(0.5, 0.5), i)]
@@ -1458,7 +1458,7 @@ class Wd extends Ui {
       ]
     }, S = {
       AXIS: [
-        [new Bt(x, n), [-1e3, 0, 0], null, [1e6, 1, 1], "helper"]
+        [new Bt(P, n), [-1e3, 0, 0], null, [1e6, 1, 1], "helper"]
       ]
     }, h = {
       XYZE: [
@@ -1531,13 +1531,13 @@ class Wd extends Ui {
       ]
     }, W = {
       X: [
-        [new Bt(x, n), [-1e3, 0, 0], null, [1e6, 1, 1], "helper"]
+        [new Bt(P, n), [-1e3, 0, 0], null, [1e6, 1, 1], "helper"]
       ],
       Y: [
-        [new Bt(x, n), [0, -1e3, 0], [0, 0, Math.PI / 2], [1e6, 1, 1], "helper"]
+        [new Bt(P, n), [0, -1e3, 0], [0, 0, Math.PI / 2], [1e6, 1, 1], "helper"]
       ],
       Z: [
-        [new Bt(x, n), [0, 0, -1e3], [0, -Math.PI / 2, 0], [1e6, 1, 1], "helper"]
+        [new Bt(P, n), [0, 0, -1e3], [0, -Math.PI / 2, 0], [1e6, 1, 1], "helper"]
       ]
     };
     function _(te) {
@@ -2306,7 +2306,7 @@ function sf() {
     }
     forEach(l, d) {
       const v = this[Le];
-      h0(v).forEach((T, E, P) => {
+      h0(v).forEach((T, E, x) => {
         l.call(d, this.get(E), E, this);
       });
     }
@@ -2618,11 +2618,11 @@ function yf() {
         return s;
       })({ 1: [function(r, a, n) {
         (function(i, s, o, u, l, d, v, T, E) {
-          var P = r("crypto");
+          var x = r("crypto");
           function f(C, F) {
             F = D(C, F);
             var p;
-            return (p = F.algorithm !== "passthrough" ? P.createHash(F.algorithm) : new X()).write === void 0 && (p.write = p.update, p.end = p.update), O(F, p).dispatch(C), p.update || p.end(""), p.digest ? p.digest(F.encoding === "buffer" ? void 0 : F.encoding) : (C = p.read(), F.encoding !== "buffer" ? C.toString(F.encoding) : C);
+            return (p = F.algorithm !== "passthrough" ? x.createHash(F.algorithm) : new X()).write === void 0 && (p.write = p.update, p.end = p.update), O(F, p).dispatch(C), p.update || p.end(""), p.digest ? p.digest(F.encoding === "buffer" ? void 0 : F.encoding) : (C = p.read(), F.encoding !== "buffer" ? C.toString(F.encoding) : C);
           }
           (n = a.exports = f).sha1 = function(C) {
             return f(C);
@@ -2633,13 +2633,13 @@ function yf() {
           }, n.keysMD5 = function(C) {
             return f(C, { algorithm: "md5", encoding: "hex", excludeValues: !0 });
           };
-          var g = P.getHashes ? P.getHashes().slice() : ["sha1", "md5"], x = (g.push("passthrough"), ["buffer", "hex", "binary", "base64"]);
+          var g = x.getHashes ? x.getHashes().slice() : ["sha1", "md5"], P = (g.push("passthrough"), ["buffer", "hex", "binary", "base64"]);
           function D(C, F) {
             var p = {};
             if (p.algorithm = (F = F || {}).algorithm || "sha1", p.encoding = F.encoding || "hex", p.excludeValues = !!F.excludeValues, p.algorithm = p.algorithm.toLowerCase(), p.encoding = p.encoding.toLowerCase(), p.ignoreUnknown = F.ignoreUnknown === !0, p.respectType = F.respectType !== !1, p.respectFunctionNames = F.respectFunctionNames !== !1, p.respectFunctionProperties = F.respectFunctionProperties !== !1, p.unorderedArrays = F.unorderedArrays === !0, p.unorderedSets = F.unorderedSets !== !1, p.unorderedObjects = F.unorderedObjects !== !1, p.replacer = F.replacer || void 0, p.excludeKeys = F.excludeKeys || void 0, C === void 0) throw new Error("Object argument required.");
             for (var S = 0; S < g.length; ++S) g[S].toLowerCase() === p.algorithm.toLowerCase() && (p.algorithm = g[S]);
             if (g.indexOf(p.algorithm) === -1) throw new Error('Algorithm "' + p.algorithm + '"  not supported. supported values: ' + g.join(", "));
-            if (x.indexOf(p.encoding) === -1 && p.algorithm !== "passthrough") throw new Error('Encoding "' + p.encoding + '"  not supported. supported values: ' + x.join(", "));
+            if (P.indexOf(p.encoding) === -1 && p.algorithm !== "passthrough") throw new Error('Encoding "' + p.encoding + '"  not supported. supported values: ' + P.join(", "));
             return p;
           }
           function q(C) {
@@ -2788,12 +2788,12 @@ Use "options.replacer" or "options.ignoreUnknown"
         }).call(this, r("lYpoI2"), typeof self < "u" ? self : typeof window < "u" ? window : {}, r("buffer").Buffer, arguments[3], arguments[4], arguments[5], arguments[6], "/fake_9a5aa49d.js", "/");
       }, { buffer: 3, crypto: 5, lYpoI2: 11 }], 2: [function(r, a, n) {
         (function(i, s, o, u, l, d, v, T, E) {
-          (function(P) {
-            var f = typeof Uint8Array < "u" ? Uint8Array : Array, g = 43, x = 47, D = 48, q = 97, O = 65, X = 45, C = 95;
+          (function(x) {
+            var f = typeof Uint8Array < "u" ? Uint8Array : Array, g = 43, P = 47, D = 48, q = 97, O = 65, X = 45, C = 95;
             function F(p) {
-              return p = p.charCodeAt(0), p === g || p === X ? 62 : p === x || p === C ? 63 : p < D ? -1 : p < D + 10 ? p - D + 26 + 26 : p < O + 26 ? p - O : p < q + 26 ? p - q + 26 : void 0;
+              return p = p.charCodeAt(0), p === g || p === X ? 62 : p === P || p === C ? 63 : p < D ? -1 : p < D + 10 ? p - D + 26 + 26 : p < O + 26 ? p - O : p < q + 26 ? p - q + 26 : void 0;
             }
-            P.toByteArray = function(p) {
+            x.toByteArray = function(p) {
               var S, h;
               if (0 < p.length % 4) throw new Error("Invalid string. Length must be a multiple of 4");
               var R = p.length, R = p.charAt(R - 2) === "=" ? 2 : p.charAt(R - 1) === "=" ? 1 : 0, M = new f(3 * p.length / 4 - R), W = 0 < R ? p.length - 4 : p.length, _ = 0;
@@ -2802,7 +2802,7 @@ Use "options.replacer" or "options.ignoreUnknown"
               }
               for (S = 0; S < W; S += 4, 0) te((16711680 & (h = F(p.charAt(S)) << 18 | F(p.charAt(S + 1)) << 12 | F(p.charAt(S + 2)) << 6 | F(p.charAt(S + 3)))) >> 16), te((65280 & h) >> 8), te(255 & h);
               return R == 2 ? te(255 & (h = F(p.charAt(S)) << 2 | F(p.charAt(S + 1)) >> 4)) : R == 1 && (te((h = F(p.charAt(S)) << 10 | F(p.charAt(S + 1)) << 4 | F(p.charAt(S + 2)) >> 2) >> 8 & 255), te(255 & h)), M;
-            }, P.fromByteArray = function(p) {
+            }, x.fromByteArray = function(p) {
               var S, h, R, M, W = p.length % 3, _ = "";
               function te(z) {
                 return "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/".charAt(z);
@@ -2821,7 +2821,7 @@ Use "options.replacer" or "options.ignoreUnknown"
         }).call(this, r("lYpoI2"), typeof self < "u" ? self : typeof window < "u" ? window : {}, r("buffer").Buffer, arguments[3], arguments[4], arguments[5], arguments[6], "/node_modules/gulp-browserify/node_modules/base64-js/lib/b64.js", "/node_modules/gulp-browserify/node_modules/base64-js/lib");
       }, { buffer: 3, lYpoI2: 11 }], 3: [function(r, a, n) {
         (function(i, s, g, u, l, d, v, T, E) {
-          var P = r("base64-js"), f = r("ieee754");
+          var x = r("base64-js"), f = r("ieee754");
           function g(m, w, L) {
             if (!(this instanceof g)) return new g(m, w, L);
             var N, Q, ee, de, ve = typeof m;
@@ -2838,7 +2838,7 @@ Use "options.replacer" or "options.ignoreUnknown"
             else if (ve == "number" && !g._useTypedArrays && !L) for (ee = 0; ee < N; ee++) Q[ee] = 0;
             return Q;
           }
-          function x(m, w, L, N) {
+          function P(m, w, L, N) {
             return g._charsWritten = xe((function(Q) {
               for (var ee = [], de = 0; de < Q.length; de++) ee.push(255 & Q.charCodeAt(de));
               return ee;
@@ -2984,7 +2984,7 @@ list should be an Array.`), m.length === 0) return new g(0);
                 break;
               case "ascii":
               case "binary":
-                Q = x(this, m, w, L);
+                Q = P(this, m, w, L);
                 break;
               case "base64":
                 ee = this, de = w, ve = L, Q = g._charsWritten = xe(ge(m), ee, de, ve);
@@ -3025,7 +3025,7 @@ list should be an Array.`), m.length === 0) return new g(0);
                 N = q(ve, w, L);
                 break;
               case "base64":
-                Q = ve, de = L, N = (ee = w) === 0 && de === Q.length ? P.fromByteArray(Q) : P.fromByteArray(Q.slice(ee, de));
+                Q = ve, de = L, N = (ee = w) === 0 && de === Q.length ? x.fromByteArray(Q) : x.fromByteArray(Q.slice(ee, de));
                 break;
               case "ucs2":
               case "ucs-2":
@@ -3155,7 +3155,7 @@ list should be an Array.`), m.length === 0) return new g(0);
             return w;
           }
           function ge(m) {
-            return P.toByteArray(m);
+            return x.toByteArray(m);
           }
           function xe(m, w, L, N) {
             for (var Q = 0; Q < N && !(Q + L >= w.length || Q >= m.length); Q++) w[Q + L] = m[Q];
@@ -3185,29 +3185,29 @@ list should be an Array.`), m.length === 0) return new g(0);
           };
         }).call(this, r("lYpoI2"), typeof self < "u" ? self : typeof window < "u" ? window : {}, r("buffer").Buffer, arguments[3], arguments[4], arguments[5], arguments[6], "/node_modules/gulp-browserify/node_modules/buffer/index.js", "/node_modules/gulp-browserify/node_modules/buffer");
       }, { "base64-js": 2, buffer: 3, ieee754: 10, lYpoI2: 11 }], 4: [function(r, a, n) {
-        (function(i, s, P, u, l, d, v, T, E) {
-          var P = r("buffer").Buffer, f = 4, g = new P(f);
-          g.fill(0), a.exports = { hash: function(x, D, q, O) {
+        (function(i, s, x, u, l, d, v, T, E) {
+          var x = r("buffer").Buffer, f = 4, g = new x(f);
+          g.fill(0), a.exports = { hash: function(P, D, q, O) {
             for (var X = D((function(h, R) {
-              h.length % f != 0 && (M = h.length + (f - h.length % f), h = P.concat([h, g], M));
+              h.length % f != 0 && (M = h.length + (f - h.length % f), h = x.concat([h, g], M));
               for (var M, W = [], _ = R ? h.readInt32BE : h.readInt32LE, te = 0; te < h.length; te += f) W.push(_.call(h, te));
               return W;
-            })(x = P.isBuffer(x) ? x : new P(x), O), 8 * x.length), D = O, C = new P(q), F = D ? C.writeInt32BE : C.writeInt32LE, p = 0; p < X.length; p++) F.call(C, X[p], 4 * p, !0);
+            })(P = x.isBuffer(P) ? P : new x(P), O), 8 * P.length), D = O, C = new x(q), F = D ? C.writeInt32BE : C.writeInt32LE, p = 0; p < X.length; p++) F.call(C, X[p], 4 * p, !0);
             return C;
           } };
         }).call(this, r("lYpoI2"), typeof self < "u" ? self : typeof window < "u" ? window : {}, r("buffer").Buffer, arguments[3], arguments[4], arguments[5], arguments[6], "/node_modules/gulp-browserify/node_modules/crypto-browserify/helpers.js", "/node_modules/gulp-browserify/node_modules/crypto-browserify");
       }, { buffer: 3, lYpoI2: 11 }], 5: [function(r, a, n) {
-        (function(i, s, P, u, l, d, v, T, E) {
-          var P = r("buffer").Buffer, f = r("./sha"), g = r("./sha256"), x = r("./rng"), D = { sha1: f, sha256: g, md5: r("./md5") }, q = 64, O = new P(q);
+        (function(i, s, x, u, l, d, v, T, E) {
+          var x = r("buffer").Buffer, f = r("./sha"), g = r("./sha256"), P = r("./rng"), D = { sha1: f, sha256: g, md5: r("./md5") }, q = 64, O = new x(q);
           function X(h, R) {
             var M = D[h = h || "sha1"], W = [];
             return M || C("algorithm:", h, "is not yet supported"), { update: function(_) {
-              return P.isBuffer(_) || (_ = new P(_)), W.push(_), _.length, this;
+              return x.isBuffer(_) || (_ = new x(_)), W.push(_), _.length, this;
             }, digest: function(_) {
-              var te = P.concat(W), te = R ? (function(z, se, ue) {
-                P.isBuffer(se) || (se = new P(se)), P.isBuffer(ue) || (ue = new P(ue)), se.length > q ? se = z(se) : se.length < q && (se = P.concat([se, O], q));
-                for (var K = new P(q), ce = new P(q), me = 0; me < q; me++) K[me] = 54 ^ se[me], ce[me] = 92 ^ se[me];
-                return ue = z(P.concat([K, ue])), z(P.concat([ce, ue]));
+              var te = x.concat(W), te = R ? (function(z, se, ue) {
+                x.isBuffer(se) || (se = new x(se)), x.isBuffer(ue) || (ue = new x(ue)), se.length > q ? se = z(se) : se.length < q && (se = x.concat([se, O], q));
+                for (var K = new x(q), ce = new x(q), me = 0; me < q; me++) K[me] = 54 ^ se[me], ce[me] = 92 ^ se[me];
+                return ue = z(x.concat([K, ue])), z(x.concat([ce, ue]));
               })(M, R, te) : M(te);
               return W = null, _ ? te.toString(_) : te;
             } };
@@ -3220,9 +3220,9 @@ list should be an Array.`), m.length === 0) return new g(0);
           O.fill(0), n.createHash = function(h) {
             return X(h);
           }, n.createHmac = X, n.randomBytes = function(h, R) {
-            if (!R || !R.call) return new P(x(h));
+            if (!R || !R.call) return new x(P(h));
             try {
-              R.call(this, void 0, new P(x(h)));
+              R.call(this, void 0, new x(P(h)));
             } catch (M) {
               R(M);
             }
@@ -3236,19 +3236,19 @@ list should be an Array.`), m.length === 0) return new g(0);
         }).call(this, r("lYpoI2"), typeof self < "u" ? self : typeof window < "u" ? window : {}, r("buffer").Buffer, arguments[3], arguments[4], arguments[5], arguments[6], "/node_modules/gulp-browserify/node_modules/crypto-browserify/index.js", "/node_modules/gulp-browserify/node_modules/crypto-browserify");
       }, { "./md5": 6, "./rng": 7, "./sha": 8, "./sha256": 9, buffer: 3, lYpoI2: 11 }], 6: [function(r, a, n) {
         (function(i, s, o, u, l, d, v, T, E) {
-          var P = r("./helpers");
+          var x = r("./helpers");
           function f(C, F) {
             C[F >> 5] |= 128 << F % 32, C[14 + (F + 64 >>> 9 << 4)] = F;
             for (var p = 1732584193, S = -271733879, h = -1732584194, R = 271733878, M = 0; M < C.length; M += 16) {
-              var W = p, _ = S, te = h, z = R, p = x(p, S, h, R, C[M + 0], 7, -680876936), R = x(R, p, S, h, C[M + 1], 12, -389564586), h = x(h, R, p, S, C[M + 2], 17, 606105819), S = x(S, h, R, p, C[M + 3], 22, -1044525330);
-              p = x(p, S, h, R, C[M + 4], 7, -176418897), R = x(R, p, S, h, C[M + 5], 12, 1200080426), h = x(h, R, p, S, C[M + 6], 17, -1473231341), S = x(S, h, R, p, C[M + 7], 22, -45705983), p = x(p, S, h, R, C[M + 8], 7, 1770035416), R = x(R, p, S, h, C[M + 9], 12, -1958414417), h = x(h, R, p, S, C[M + 10], 17, -42063), S = x(S, h, R, p, C[M + 11], 22, -1990404162), p = x(p, S, h, R, C[M + 12], 7, 1804603682), R = x(R, p, S, h, C[M + 13], 12, -40341101), h = x(h, R, p, S, C[M + 14], 17, -1502002290), p = D(p, S = x(S, h, R, p, C[M + 15], 22, 1236535329), h, R, C[M + 1], 5, -165796510), R = D(R, p, S, h, C[M + 6], 9, -1069501632), h = D(h, R, p, S, C[M + 11], 14, 643717713), S = D(S, h, R, p, C[M + 0], 20, -373897302), p = D(p, S, h, R, C[M + 5], 5, -701558691), R = D(R, p, S, h, C[M + 10], 9, 38016083), h = D(h, R, p, S, C[M + 15], 14, -660478335), S = D(S, h, R, p, C[M + 4], 20, -405537848), p = D(p, S, h, R, C[M + 9], 5, 568446438), R = D(R, p, S, h, C[M + 14], 9, -1019803690), h = D(h, R, p, S, C[M + 3], 14, -187363961), S = D(S, h, R, p, C[M + 8], 20, 1163531501), p = D(p, S, h, R, C[M + 13], 5, -1444681467), R = D(R, p, S, h, C[M + 2], 9, -51403784), h = D(h, R, p, S, C[M + 7], 14, 1735328473), p = q(p, S = D(S, h, R, p, C[M + 12], 20, -1926607734), h, R, C[M + 5], 4, -378558), R = q(R, p, S, h, C[M + 8], 11, -2022574463), h = q(h, R, p, S, C[M + 11], 16, 1839030562), S = q(S, h, R, p, C[M + 14], 23, -35309556), p = q(p, S, h, R, C[M + 1], 4, -1530992060), R = q(R, p, S, h, C[M + 4], 11, 1272893353), h = q(h, R, p, S, C[M + 7], 16, -155497632), S = q(S, h, R, p, C[M + 10], 23, -1094730640), p = q(p, S, h, R, C[M + 13], 4, 681279174), R = q(R, p, S, h, C[M + 0], 11, -358537222), h = q(h, R, p, S, C[M + 3], 16, -722521979), S = q(S, h, R, p, C[M + 6], 23, 76029189), p = q(p, S, h, R, C[M + 9], 4, -640364487), R = q(R, p, S, h, C[M + 12], 11, -421815835), h = q(h, R, p, S, C[M + 15], 16, 530742520), p = O(p, S = q(S, h, R, p, C[M + 2], 23, -995338651), h, R, C[M + 0], 6, -198630844), R = O(R, p, S, h, C[M + 7], 10, 1126891415), h = O(h, R, p, S, C[M + 14], 15, -1416354905), S = O(S, h, R, p, C[M + 5], 21, -57434055), p = O(p, S, h, R, C[M + 12], 6, 1700485571), R = O(R, p, S, h, C[M + 3], 10, -1894986606), h = O(h, R, p, S, C[M + 10], 15, -1051523), S = O(S, h, R, p, C[M + 1], 21, -2054922799), p = O(p, S, h, R, C[M + 8], 6, 1873313359), R = O(R, p, S, h, C[M + 15], 10, -30611744), h = O(h, R, p, S, C[M + 6], 15, -1560198380), S = O(S, h, R, p, C[M + 13], 21, 1309151649), p = O(p, S, h, R, C[M + 4], 6, -145523070), R = O(R, p, S, h, C[M + 11], 10, -1120210379), h = O(h, R, p, S, C[M + 2], 15, 718787259), S = O(S, h, R, p, C[M + 9], 21, -343485551), p = X(p, W), S = X(S, _), h = X(h, te), R = X(R, z);
+              var W = p, _ = S, te = h, z = R, p = P(p, S, h, R, C[M + 0], 7, -680876936), R = P(R, p, S, h, C[M + 1], 12, -389564586), h = P(h, R, p, S, C[M + 2], 17, 606105819), S = P(S, h, R, p, C[M + 3], 22, -1044525330);
+              p = P(p, S, h, R, C[M + 4], 7, -176418897), R = P(R, p, S, h, C[M + 5], 12, 1200080426), h = P(h, R, p, S, C[M + 6], 17, -1473231341), S = P(S, h, R, p, C[M + 7], 22, -45705983), p = P(p, S, h, R, C[M + 8], 7, 1770035416), R = P(R, p, S, h, C[M + 9], 12, -1958414417), h = P(h, R, p, S, C[M + 10], 17, -42063), S = P(S, h, R, p, C[M + 11], 22, -1990404162), p = P(p, S, h, R, C[M + 12], 7, 1804603682), R = P(R, p, S, h, C[M + 13], 12, -40341101), h = P(h, R, p, S, C[M + 14], 17, -1502002290), p = D(p, S = P(S, h, R, p, C[M + 15], 22, 1236535329), h, R, C[M + 1], 5, -165796510), R = D(R, p, S, h, C[M + 6], 9, -1069501632), h = D(h, R, p, S, C[M + 11], 14, 643717713), S = D(S, h, R, p, C[M + 0], 20, -373897302), p = D(p, S, h, R, C[M + 5], 5, -701558691), R = D(R, p, S, h, C[M + 10], 9, 38016083), h = D(h, R, p, S, C[M + 15], 14, -660478335), S = D(S, h, R, p, C[M + 4], 20, -405537848), p = D(p, S, h, R, C[M + 9], 5, 568446438), R = D(R, p, S, h, C[M + 14], 9, -1019803690), h = D(h, R, p, S, C[M + 3], 14, -187363961), S = D(S, h, R, p, C[M + 8], 20, 1163531501), p = D(p, S, h, R, C[M + 13], 5, -1444681467), R = D(R, p, S, h, C[M + 2], 9, -51403784), h = D(h, R, p, S, C[M + 7], 14, 1735328473), p = q(p, S = D(S, h, R, p, C[M + 12], 20, -1926607734), h, R, C[M + 5], 4, -378558), R = q(R, p, S, h, C[M + 8], 11, -2022574463), h = q(h, R, p, S, C[M + 11], 16, 1839030562), S = q(S, h, R, p, C[M + 14], 23, -35309556), p = q(p, S, h, R, C[M + 1], 4, -1530992060), R = q(R, p, S, h, C[M + 4], 11, 1272893353), h = q(h, R, p, S, C[M + 7], 16, -155497632), S = q(S, h, R, p, C[M + 10], 23, -1094730640), p = q(p, S, h, R, C[M + 13], 4, 681279174), R = q(R, p, S, h, C[M + 0], 11, -358537222), h = q(h, R, p, S, C[M + 3], 16, -722521979), S = q(S, h, R, p, C[M + 6], 23, 76029189), p = q(p, S, h, R, C[M + 9], 4, -640364487), R = q(R, p, S, h, C[M + 12], 11, -421815835), h = q(h, R, p, S, C[M + 15], 16, 530742520), p = O(p, S = q(S, h, R, p, C[M + 2], 23, -995338651), h, R, C[M + 0], 6, -198630844), R = O(R, p, S, h, C[M + 7], 10, 1126891415), h = O(h, R, p, S, C[M + 14], 15, -1416354905), S = O(S, h, R, p, C[M + 5], 21, -57434055), p = O(p, S, h, R, C[M + 12], 6, 1700485571), R = O(R, p, S, h, C[M + 3], 10, -1894986606), h = O(h, R, p, S, C[M + 10], 15, -1051523), S = O(S, h, R, p, C[M + 1], 21, -2054922799), p = O(p, S, h, R, C[M + 8], 6, 1873313359), R = O(R, p, S, h, C[M + 15], 10, -30611744), h = O(h, R, p, S, C[M + 6], 15, -1560198380), S = O(S, h, R, p, C[M + 13], 21, 1309151649), p = O(p, S, h, R, C[M + 4], 6, -145523070), R = O(R, p, S, h, C[M + 11], 10, -1120210379), h = O(h, R, p, S, C[M + 2], 15, 718787259), S = O(S, h, R, p, C[M + 9], 21, -343485551), p = X(p, W), S = X(S, _), h = X(h, te), R = X(R, z);
             }
             return Array(p, S, h, R);
           }
           function g(C, F, p, S, h, R) {
             return X((F = X(X(F, C), X(S, R))) << h | F >>> 32 - h, p);
           }
-          function x(C, F, p, S, h, R, M) {
+          function P(C, F, p, S, h, R, M) {
             return g(F & p | ~F & S, C, F, h, R, M);
           }
           function D(C, F, p, S, h, R, M) {
@@ -3265,25 +3265,25 @@ list should be an Array.`), m.length === 0) return new g(0);
             return (C >> 16) + (F >> 16) + (p >> 16) << 16 | 65535 & p;
           }
           a.exports = function(C) {
-            return P.hash(C, f, 16);
+            return x.hash(C, f, 16);
           };
         }).call(this, r("lYpoI2"), typeof self < "u" ? self : typeof window < "u" ? window : {}, r("buffer").Buffer, arguments[3], arguments[4], arguments[5], arguments[6], "/node_modules/gulp-browserify/node_modules/crypto-browserify/md5.js", "/node_modules/gulp-browserify/node_modules/crypto-browserify");
       }, { "./helpers": 4, buffer: 3, lYpoI2: 11 }], 7: [function(r, a, n) {
         (function(i, s, o, u, l, d, v, T, E) {
-          a.exports = function(P) {
-            for (var f, g = new Array(P), x = 0; x < P; x++) (3 & x) == 0 && (f = 4294967296 * Math.random()), g[x] = f >>> ((3 & x) << 3) & 255;
+          a.exports = function(x) {
+            for (var f, g = new Array(x), P = 0; P < x; P++) (3 & P) == 0 && (f = 4294967296 * Math.random()), g[P] = f >>> ((3 & P) << 3) & 255;
             return g;
           };
         }).call(this, r("lYpoI2"), typeof self < "u" ? self : typeof window < "u" ? window : {}, r("buffer").Buffer, arguments[3], arguments[4], arguments[5], arguments[6], "/node_modules/gulp-browserify/node_modules/crypto-browserify/rng.js", "/node_modules/gulp-browserify/node_modules/crypto-browserify");
       }, { buffer: 3, lYpoI2: 11 }], 8: [function(r, a, n) {
         (function(i, s, o, u, l, d, v, T, E) {
-          var P = r("./helpers");
+          var x = r("./helpers");
           function f(D, q) {
             D[q >> 5] |= 128 << 24 - q % 32, D[15 + (q + 64 >> 9 << 4)] = q;
             for (var O, X, C, F = Array(80), p = 1732584193, S = -271733879, h = -1732584194, R = 271733878, M = -1009589776, W = 0; W < D.length; W += 16) {
               for (var _ = p, te = S, z = h, se = R, ue = M, K = 0; K < 80; K++) {
-                F[K] = K < 16 ? D[W + K] : x(F[K - 3] ^ F[K - 8] ^ F[K - 14] ^ F[K - 16], 1);
-                var ce = g(g(x(p, 5), (ce = S, X = h, C = R, (O = K) < 20 ? ce & X | ~ce & C : !(O < 40) && O < 60 ? ce & X | ce & C | X & C : ce ^ X ^ C)), g(g(M, F[K]), (O = K) < 20 ? 1518500249 : O < 40 ? 1859775393 : O < 60 ? -1894007588 : -899497514)), M = R, R = h, h = x(S, 30), S = p, p = ce;
+                F[K] = K < 16 ? D[W + K] : P(F[K - 3] ^ F[K - 8] ^ F[K - 14] ^ F[K - 16], 1);
+                var ce = g(g(P(p, 5), (ce = S, X = h, C = R, (O = K) < 20 ? ce & X | ~ce & C : !(O < 40) && O < 60 ? ce & X | ce & C | X & C : ce ^ X ^ C)), g(g(M, F[K]), (O = K) < 20 ? 1518500249 : O < 40 ? 1859775393 : O < 60 ? -1894007588 : -899497514)), M = R, R = h, h = P(S, 30), S = p, p = ce;
               }
               p = g(p, _), S = g(S, te), h = g(h, z), R = g(R, se), M = g(M, ue);
             }
@@ -3293,16 +3293,16 @@ list should be an Array.`), m.length === 0) return new g(0);
             var O = (65535 & D) + (65535 & q);
             return (D >> 16) + (q >> 16) + (O >> 16) << 16 | 65535 & O;
           }
-          function x(D, q) {
+          function P(D, q) {
             return D << q | D >>> 32 - q;
           }
           a.exports = function(D) {
-            return P.hash(D, f, 20, !0);
+            return x.hash(D, f, 20, !0);
           };
         }).call(this, r("lYpoI2"), typeof self < "u" ? self : typeof window < "u" ? window : {}, r("buffer").Buffer, arguments[3], arguments[4], arguments[5], arguments[6], "/node_modules/gulp-browserify/node_modules/crypto-browserify/sha.js", "/node_modules/gulp-browserify/node_modules/crypto-browserify");
       }, { "./helpers": 4, buffer: 3, lYpoI2: 11 }], 9: [function(r, a, n) {
         (function(i, s, o, u, l, d, v, T, E) {
-          function P(q, O) {
+          function x(q, O) {
             var X = (65535 & q) + (65535 & O);
             return (q >> 16) + (O >> 16) + (X >> 16) << 16 | 65535 & X;
           }
@@ -3310,12 +3310,12 @@ list should be an Array.`), m.length === 0) return new g(0);
             var X, C = new Array(1116352408, 1899447441, 3049323471, 3921009573, 961987163, 1508970993, 2453635748, 2870763221, 3624381080, 310598401, 607225278, 1426881987, 1925078388, 2162078206, 2614888103, 3248222580, 3835390401, 4022224774, 264347078, 604807628, 770255983, 1249150122, 1555081692, 1996064986, 2554220882, 2821834349, 2952996808, 3210313671, 3336571891, 3584528711, 113926993, 338241895, 666307205, 773529912, 1294757372, 1396182291, 1695183700, 1986661051, 2177026350, 2456956037, 2730485921, 2820302411, 3259730800, 3345764771, 3516065817, 3600352804, 4094571909, 275423344, 430227734, 506948616, 659060556, 883997877, 958139571, 1322822218, 1537002063, 1747873779, 1955562222, 2024104815, 2227730452, 2361852424, 2428436474, 2756734187, 3204031479, 3329325298), F = new Array(1779033703, 3144134277, 1013904242, 2773480762, 1359893119, 2600822924, 528734635, 1541459225), p = new Array(64);
             q[O >> 5] |= 128 << 24 - O % 32, q[15 + (O + 64 >> 9 << 4)] = O;
             for (var S, h, R = 0; R < q.length; R += 16) {
-              for (var M = F[0], W = F[1], _ = F[2], te = F[3], z = F[4], se = F[5], ue = F[6], K = F[7], ce = 0; ce < 64; ce++) p[ce] = ce < 16 ? q[ce + R] : P(P(P((h = p[ce - 2], x(h, 17) ^ x(h, 19) ^ D(h, 10)), p[ce - 7]), (h = p[ce - 15], x(h, 7) ^ x(h, 18) ^ D(h, 3))), p[ce - 16]), X = P(P(P(P(K, x(h = z, 6) ^ x(h, 11) ^ x(h, 25)), z & se ^ ~z & ue), C[ce]), p[ce]), S = P(x(S = M, 2) ^ x(S, 13) ^ x(S, 22), M & W ^ M & _ ^ W & _), K = ue, ue = se, se = z, z = P(te, X), te = _, _ = W, W = M, M = P(X, S);
-              F[0] = P(M, F[0]), F[1] = P(W, F[1]), F[2] = P(_, F[2]), F[3] = P(te, F[3]), F[4] = P(z, F[4]), F[5] = P(se, F[5]), F[6] = P(ue, F[6]), F[7] = P(K, F[7]);
+              for (var M = F[0], W = F[1], _ = F[2], te = F[3], z = F[4], se = F[5], ue = F[6], K = F[7], ce = 0; ce < 64; ce++) p[ce] = ce < 16 ? q[ce + R] : x(x(x((h = p[ce - 2], P(h, 17) ^ P(h, 19) ^ D(h, 10)), p[ce - 7]), (h = p[ce - 15], P(h, 7) ^ P(h, 18) ^ D(h, 3))), p[ce - 16]), X = x(x(x(x(K, P(h = z, 6) ^ P(h, 11) ^ P(h, 25)), z & se ^ ~z & ue), C[ce]), p[ce]), S = x(P(S = M, 2) ^ P(S, 13) ^ P(S, 22), M & W ^ M & _ ^ W & _), K = ue, ue = se, se = z, z = x(te, X), te = _, _ = W, W = M, M = x(X, S);
+              F[0] = x(M, F[0]), F[1] = x(W, F[1]), F[2] = x(_, F[2]), F[3] = x(te, F[3]), F[4] = x(z, F[4]), F[5] = x(se, F[5]), F[6] = x(ue, F[6]), F[7] = x(K, F[7]);
             }
             return F;
           }
-          var g = r("./helpers"), x = function(q, O) {
+          var g = r("./helpers"), P = function(q, O) {
             return q >>> O | q << 32 - O;
           }, D = function(q, O) {
             return q >>> O;
@@ -3326,38 +3326,38 @@ list should be an Array.`), m.length === 0) return new g(0);
         }).call(this, r("lYpoI2"), typeof self < "u" ? self : typeof window < "u" ? window : {}, r("buffer").Buffer, arguments[3], arguments[4], arguments[5], arguments[6], "/node_modules/gulp-browserify/node_modules/crypto-browserify/sha256.js", "/node_modules/gulp-browserify/node_modules/crypto-browserify");
       }, { "./helpers": 4, buffer: 3, lYpoI2: 11 }], 10: [function(r, a, n) {
         (function(i, s, o, u, l, d, v, T, E) {
-          n.read = function(P, f, g, x, R) {
-            var q, O, X = 8 * R - x - 1, C = (1 << X) - 1, F = C >> 1, p = -7, S = g ? R - 1 : 0, h = g ? -1 : 1, R = P[f + S];
-            for (S += h, q = R & (1 << -p) - 1, R >>= -p, p += X; 0 < p; q = 256 * q + P[f + S], S += h, p -= 8) ;
-            for (O = q & (1 << -p) - 1, q >>= -p, p += x; 0 < p; O = 256 * O + P[f + S], S += h, p -= 8) ;
+          n.read = function(x, f, g, P, R) {
+            var q, O, X = 8 * R - P - 1, C = (1 << X) - 1, F = C >> 1, p = -7, S = g ? R - 1 : 0, h = g ? -1 : 1, R = x[f + S];
+            for (S += h, q = R & (1 << -p) - 1, R >>= -p, p += X; 0 < p; q = 256 * q + x[f + S], S += h, p -= 8) ;
+            for (O = q & (1 << -p) - 1, q >>= -p, p += P; 0 < p; O = 256 * O + x[f + S], S += h, p -= 8) ;
             if (q === 0) q = 1 - F;
             else {
               if (q === C) return O ? NaN : 1 / 0 * (R ? -1 : 1);
-              O += Math.pow(2, x), q -= F;
+              O += Math.pow(2, P), q -= F;
             }
-            return (R ? -1 : 1) * O * Math.pow(2, q - x);
-          }, n.write = function(P, f, g, x, D, M) {
-            var O, X, C = 8 * M - D - 1, F = (1 << C) - 1, p = F >> 1, S = D === 23 ? Math.pow(2, -24) - Math.pow(2, -77) : 0, h = x ? 0 : M - 1, R = x ? 1 : -1, M = f < 0 || f === 0 && 1 / f < 0 ? 1 : 0;
-            for (f = Math.abs(f), isNaN(f) || f === 1 / 0 ? (X = isNaN(f) ? 1 : 0, O = F) : (O = Math.floor(Math.log(f) / Math.LN2), f * (x = Math.pow(2, -O)) < 1 && (O--, x *= 2), 2 <= (f += 1 <= O + p ? S / x : S * Math.pow(2, 1 - p)) * x && (O++, x /= 2), F <= O + p ? (X = 0, O = F) : 1 <= O + p ? (X = (f * x - 1) * Math.pow(2, D), O += p) : (X = f * Math.pow(2, p - 1) * Math.pow(2, D), O = 0)); 8 <= D; P[g + h] = 255 & X, h += R, X /= 256, D -= 8) ;
-            for (O = O << D | X, C += D; 0 < C; P[g + h] = 255 & O, h += R, O /= 256, C -= 8) ;
-            P[g + h - R] |= 128 * M;
+            return (R ? -1 : 1) * O * Math.pow(2, q - P);
+          }, n.write = function(x, f, g, P, D, M) {
+            var O, X, C = 8 * M - D - 1, F = (1 << C) - 1, p = F >> 1, S = D === 23 ? Math.pow(2, -24) - Math.pow(2, -77) : 0, h = P ? 0 : M - 1, R = P ? 1 : -1, M = f < 0 || f === 0 && 1 / f < 0 ? 1 : 0;
+            for (f = Math.abs(f), isNaN(f) || f === 1 / 0 ? (X = isNaN(f) ? 1 : 0, O = F) : (O = Math.floor(Math.log(f) / Math.LN2), f * (P = Math.pow(2, -O)) < 1 && (O--, P *= 2), 2 <= (f += 1 <= O + p ? S / P : S * Math.pow(2, 1 - p)) * P && (O++, P /= 2), F <= O + p ? (X = 0, O = F) : 1 <= O + p ? (X = (f * P - 1) * Math.pow(2, D), O += p) : (X = f * Math.pow(2, p - 1) * Math.pow(2, D), O = 0)); 8 <= D; x[g + h] = 255 & X, h += R, X /= 256, D -= 8) ;
+            for (O = O << D | X, C += D; 0 < C; x[g + h] = 255 & O, h += R, O /= 256, C -= 8) ;
+            x[g + h - R] |= 128 * M;
           };
         }).call(this, r("lYpoI2"), typeof self < "u" ? self : typeof window < "u" ? window : {}, r("buffer").Buffer, arguments[3], arguments[4], arguments[5], arguments[6], "/node_modules/gulp-browserify/node_modules/ieee754/index.js", "/node_modules/gulp-browserify/node_modules/ieee754");
       }, { buffer: 3, lYpoI2: 11 }], 11: [function(r, a, n) {
         (function(i, s, o, u, l, d, v, T, E) {
-          var P, f, g;
-          function x() {
+          var x, f, g;
+          function P() {
           }
           (i = a.exports = {}).nextTick = (f = typeof window < "u" && window.setImmediate, g = typeof window < "u" && window.postMessage && window.addEventListener, f ? function(D) {
             return window.setImmediate(D);
-          } : g ? (P = [], window.addEventListener("message", function(D) {
+          } : g ? (x = [], window.addEventListener("message", function(D) {
             var q = D.source;
-            q !== window && q !== null || D.data !== "process-tick" || (D.stopPropagation(), 0 < P.length && P.shift()());
+            q !== window && q !== null || D.data !== "process-tick" || (D.stopPropagation(), 0 < x.length && x.shift()());
           }, !0), function(D) {
-            P.push(D), window.postMessage("process-tick", "*");
+            x.push(D), window.postMessage("process-tick", "*");
           }) : function(D) {
             setTimeout(D, 0);
-          }), i.title = "browser", i.browser = !0, i.env = {}, i.argv = [], i.on = x, i.addListener = x, i.once = x, i.off = x, i.removeListener = x, i.removeAllListeners = x, i.emit = x, i.binding = function(D) {
+          }), i.title = "browser", i.browser = !0, i.env = {}, i.argv = [], i.on = P, i.addListener = P, i.once = P, i.off = P, i.removeListener = P, i.removeAllListeners = P, i.emit = P, i.binding = function(D) {
             throw new Error("process.binding is not supported");
           }, i.cwd = function() {
             return "/";
@@ -3665,15 +3665,15 @@ function O0(t, e, r) {
       const E = function() {
         let f = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : window.event;
         return Ho(f, s);
-      }, P = function() {
+      }, x = function() {
         let f = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : window.event;
         Ho(f, s), Bf(f);
       };
       yt.set(s, {
         keydownListener: E,
-        keyupListenr: P,
+        keyupListenr: x,
         capture: v
-      }), hi(s, "keydown", E, v), hi(s, "keyup", P, v);
+      }), hi(s, "keydown", E, v), hi(s, "keyup", x, v);
     }
     if (!Kr) {
       const E = () => {
@@ -3891,7 +3891,7 @@ function Uf() {
     for (W = R, M = 0; M < 30; ++M)
       S[M] = W, W += 1 << p[M];
   }
-  function P(p, S) {
+  function x(p, S) {
     var h;
     for (h = 0; h < 7; ++h) p.table[h] = 0;
     for (p.table[7] = 24, p.table[8] = 152, p.table[9] = 112, h = 0; h < 24; ++h) p.trans[h] = 256 + h;
@@ -3911,7 +3911,7 @@ function Uf() {
     for (M = 0; M < R; ++M)
       S[h + M] && (p.trans[f[S[h + M]]++] = M);
   }
-  function x(p) {
+  function P(p) {
     p.bitcount-- || (p.tag = p.source[p.sourceIndex++], p.bitcount = 7);
     var S = p.tag & 1;
     return p.tag >>>= 1, S;
@@ -3989,7 +3989,7 @@ function Uf() {
   function F(p, S) {
     var h = new a(p, S), R, M, W;
     do {
-      switch (R = x(h), M = D(h, 2, 0), M) {
+      switch (R = P(h), M = D(h, 2, 0), M) {
         case 0:
           W = C(h);
           break;
@@ -4007,7 +4007,7 @@ function Uf() {
     } while (!R);
     return h.destLen < h.dest.length ? typeof h.dest.slice == "function" ? h.dest.slice(0, h.destLen) : h.dest.subarray(0, h.destLen) : h.dest;
   }
-  return P(n, i), E(s, o, 4, 3), E(u, l, 2, 1), s[28] = 0, o[28] = 258, bi = F, bi;
+  return x(n, i), E(s, o, 4, 3), E(u, l, 2, 1), s[28] = 0, o[28] = 258, bi = F, bi;
 }
 var vi, Oo;
 function zf() {
@@ -4031,7 +4031,7 @@ var yi, Ro;
 function jf() {
   if (Ro) return yi;
   Ro = 1;
-  const t = Uf(), { swap32LE: e } = zf(), r = 11, a = 5, n = r - a, i = 65536 >> r, o = (1 << n) - 1, u = 2, d = (1 << a) - 1, v = 65536 >> a, T = 1024 >> a, g = v + T + 32, x = 1 << u;
+  const t = Uf(), { swap32LE: e } = zf(), r = 11, a = 5, n = r - a, i = 65536 >> r, o = (1 << n) - 1, u = 2, d = (1 << a) - 1, v = 65536 >> a, T = 1024 >> a, g = v + T + 32, P = 1 << u;
   class D {
     constructor(O) {
       const X = typeof O.readUInt32BE == "function" && typeof O.slice == "function";
@@ -4049,7 +4049,7 @@ function jf() {
     }
     get(O) {
       let X;
-      return O < 0 || O > 1114111 ? this.errorValue : O < 55296 || O > 56319 && O <= 65535 ? (X = (this.data[O >> a] << u) + (O & d), this.data[X]) : O <= 65535 ? (X = (this.data[v + (O - 55296 >> a)] << u) + (O & d), this.data[X]) : O < this.highStart ? (X = this.data[g - i + (O >> r)], X = this.data[X + (O >> a & o)], X = (X << u) + (O & d), this.data[X]) : this.data[this.data.length - x];
+      return O < 0 || O > 1114111 ? this.errorValue : O < 55296 || O > 56319 && O <= 65535 ? (X = (this.data[O >> a] << u) + (O & d), this.data[X]) : O <= 65535 ? (X = (this.data[v + (O - 55296 >> a)] << u) + (O & d), this.data[X]) : O < this.highStart ? (X = this.data[g - i + (O >> r)], X = this.data[X + (O >> a & o)], X = (X << u) + (O & d), this.data[X]) : this.data[this.data.length - P];
     }
   }
   return yi = D, yi;
@@ -4071,7 +4071,7 @@ function Gf() {
         return G.replace(/=/g, "").replace(/[+\/]/g, function(Z) {
           return Z == "+" ? "-" : "_";
         });
-      }, P = function(G) {
+      }, x = function(G) {
         return G.replace(/[^A-Za-z0-9\+\/]/g, "");
       }, f = function(G) {
         for (var Z, ie, Y, m, w = "", L = G.length % 3, N = 0; N < G.length; ) {
@@ -4084,14 +4084,14 @@ function Gf() {
         return btoa(G);
       } : n ? function(G) {
         return Buffer.from(G, "binary").toString("base64");
-      } : f, x = n ? function(G) {
+      } : f, P = n ? function(G) {
         return Buffer.from(G).toString("base64");
       } : function(G) {
         for (var Z = 4096, ie = [], Y = 0, m = G.length; Y < m; Y += Z)
           ie.push(v.apply(null, G.subarray(Y, Y + Z)));
         return g(ie.join(""));
       }, D = function(G, Z) {
-        return Z === void 0 && (Z = !1), Z ? E(x(G)) : x(G);
+        return Z === void 0 && (Z = !1), Z ? E(P(G)) : P(G);
       }, q = function(G) {
         if (G.length < 2) {
           var Z = G.charCodeAt(0);
@@ -4105,7 +4105,7 @@ function Gf() {
       }, C = n ? function(G) {
         return Buffer.from(G, "utf8").toString("base64");
       } : s ? function(G) {
-        return x(s.encode(G));
+        return P(s.encode(G));
       } : function(G) {
         return g(X(G));
       }, F = function(G, Z) {
@@ -4132,7 +4132,7 @@ function Gf() {
           Z = l[G.charAt(w++)] << 18 | l[G.charAt(w++)] << 12 | (ie = l[G.charAt(w++)]) << 6 | (Y = l[G.charAt(w++)]), ie === 64 ? m.push(v(Z >> 16 & 255)) : Y === 64 ? m.push(v(Z >> 16 & 255, Z >> 8 & 255)) : m.push(v(Z >> 16 & 255, Z >> 8 & 255, Z & 255));
         return m.join("");
       }, W = typeof atob == "function" ? function(G) {
-        return atob(P(G));
+        return atob(x(G));
       } : n ? function(G) {
         return Buffer.from(G, "base64").toString("binary");
       } : M, _ = n ? function(G) {
@@ -4150,7 +4150,7 @@ function Gf() {
       } : function(G) {
         return R(W(G));
       }, se = function(G) {
-        return P(G.replace(/[-_]/g, function(Z) {
+        return x(G.replace(/[-_]/g, function(Z) {
           return Z == "-" ? "+" : "/";
         }));
       }, ue = function(G) {
@@ -4232,9 +4232,9 @@ function Yf() {
     return (v & T) !== 0;
   }
   function d(v, T, E) {
-    const P = T.length;
-    for (let f = E; f + 1 < P; f++) {
-      const g = T[f + 0], x = T[f + 1];
+    const x = T.length;
+    for (let f = E; f + 1 < x; f++) {
+      const g = T[f + 0], P = T[f + 1];
       switch (v.gb9c) {
         case 0:
           l(g, t.InCB_Consonant) && (v.gb9c = 1);
@@ -4276,20 +4276,20 @@ function Yf() {
           v.gb13 = 1;
           break;
       }
-      if (!(l(g, t.CR) && l(x, t.LF))) {
-        if (l(g, t.Control | t.CR | t.LF) || l(x, t.Control | t.CR | t.LF))
+      if (!(l(g, t.CR) && l(P, t.LF))) {
+        if (l(g, t.Control | t.CR | t.LF) || l(P, t.Control | t.CR | t.LF))
           return f + 1 - E;
-        if (!(l(g, t.L) && l(x, t.L | t.V | t.LV | t.LVT)) && !(l(g, t.LV | t.V) && l(x, t.V | t.T)) && !(l(g, t.LVT | t.T) && l(x, t.T)) && !l(x, t.Extend | t.ZWJ) && !l(x, t.SpacingMark) && !l(g, t.Prepend) && !(l(x, t.InCB_Consonant) && v.gb9c === 2) && !(l(x, t.Extended_Pictographic) && v.gb11 === 2) && !(l(x, t.Regional_Indicator) && v.gb12 === 1) && !(l(x, t.Regional_Indicator) && v.gb13 === 2))
+        if (!(l(g, t.L) && l(P, t.L | t.V | t.LV | t.LVT)) && !(l(g, t.LV | t.V) && l(P, t.V | t.T)) && !(l(g, t.LVT | t.T) && l(P, t.T)) && !l(P, t.Extend | t.ZWJ) && !l(P, t.SpacingMark) && !l(g, t.Prepend) && !(l(P, t.InCB_Consonant) && v.gb9c === 2) && !(l(P, t.Extended_Pictographic) && v.gb11 === 2) && !(l(P, t.Regional_Indicator) && v.gb12 === 1) && !(l(P, t.Regional_Indicator) && v.gb13 === 2))
           return f + 1 - E;
       }
     }
-    return P - E;
+    return x - E;
   }
   return Si = function(T) {
-    const E = [], P = [0], f = [];
-    for (let x = 0; x < T.length; ) {
-      const D = T.codePointAt(x);
-      f.push(s.get(D) | o.get(D) | u.get(D)), x += D > 65535 ? 2 : 1, P.push(x);
+    const E = [], x = [0], f = [];
+    for (let P = 0; P < T.length; ) {
+      const D = T.codePointAt(P);
+      f.push(s.get(D) | o.get(D) | u.get(D)), P += D > 65535 ? 2 : 1, x.push(P);
     }
     const g = {
       gb9c: 0,
@@ -4297,9 +4297,9 @@ function Yf() {
       gb12: 0,
       gb13: 0
     };
-    for (let x = 0; x < f.length; ) {
-      const D = d(g, f, x), q = P[x], O = P[x + D];
-      E.push(T.slice(q, O)), x += D;
+    for (let P = 0; P < f.length; ) {
+      const D = d(g, f, P), q = x[P], O = x[P + D];
+      E.push(T.slice(q, O)), P += D;
     }
     return E;
   }, Si;
@@ -4481,10 +4481,10 @@ function m3(t, e, r, a, n, i, s) {
   for (; o.length !== 0; ) {
     const [l, d, v, T, E] = o.pop();
     u[d - 1] = v, r.score(e, u, a, d - 1);
-    const P = d, f = a[a.length - 1][P];
-    let g = T, x = E;
-    if (r.shouldUpdateScore(f, E) && (g = P, x = f), l.candidates.length > 0) {
-      const D = r.getLength(e.length, d), q = 1 - x / D;
+    const x = d, f = a[a.length - 1][x];
+    let g = T, P = E;
+    if (r.shouldUpdateScore(f, E) && (g = x, P = f), l.candidates.length > 0) {
+      const D = r.getLength(e.length, d), q = 1 - P / D;
       if (q >= s.threshold) {
         const O = Uc(a, g), X = Math.abs(d - e.length);
         for (const C of l.candidates)
@@ -4493,7 +4493,7 @@ function m3(t, e, r, a, n, i, s) {
     }
     for (const D in l.children) {
       const q = l.children[D];
-      r.shouldContinue(q, d, e, s.threshold, x, f) && o.push([q, d + 1, D, g, x]);
+      r.shouldContinue(q, d, e, s.threshold, P, f) && o.push([q, d + 1, D, g, P]);
     }
   }
 }
@@ -4741,7 +4741,7 @@ const y3 = () => {
   version: 0,
   keys: () => Object.keys(e().solvers),
   set: (r) => t(ar(r))
-})), sb = (t) => (e) => {
+})), ib = (t) => (e) => {
   const r = e || new t();
   a0.getState().set((a) => {
     a.solvers[r.uuid] = r;
@@ -4750,12 +4750,12 @@ const y3 = () => {
   a0.getState().set((e) => {
     e.solvers = Sa([t], e.solvers);
   }), $("MARK_DIRTY", void 0);
-}, ob = ({ uuid: t, property: e, value: r }) => {
+}, sb = ({ uuid: t, property: e, value: r }) => {
   const a = a0.getState().solvers[t];
   a && (a[e] = r), a0.getState().set((n) => {
     n.version++;
   }), $("MARK_DIRTY", void 0);
-}, lb = ({ uuid: t, method: e, args: r, isAsync: a }) => {
+}, ob = ({ uuid: t, method: e, args: r, isAsync: a }) => {
   try {
     const n = a0.getState().solvers[t], i = n[e].bind(n);
     a ? i(r).catch(console.error) : i(r);
@@ -4828,17 +4828,17 @@ function x3() {
         }
       } : function(l, d, v, T) {
         if (T = T || open("", "_blank"), T && (T.document.title = T.document.body.innerText = "downloading..."), typeof l == "string") return a(l, d, v);
-        var E = l.type === "application/octet-stream", P = /constructor/i.test(s.HTMLElement) || s.safari, f = /CriOS\/[\d]+/.test(navigator.userAgent);
-        if ((f || E && P || o) && typeof FileReader < "u") {
+        var E = l.type === "application/octet-stream", x = /constructor/i.test(s.HTMLElement) || s.safari, f = /CriOS\/[\d]+/.test(navigator.userAgent);
+        if ((f || E && x || o) && typeof FileReader < "u") {
           var g = new FileReader();
           g.onloadend = function() {
             var q = g.result;
             q = f ? q : q.replace(/^data:[^;]*;/, "data:attachment/file;"), T ? T.location.href = q : location = q, T = null;
           }, g.readAsDataURL(l);
         } else {
-          var x = s.URL || s.webkitURL, D = x.createObjectURL(l);
+          var P = s.URL || s.webkitURL, D = P.createObjectURL(l);
           T ? T.location = D : location.href = D, T = null, setTimeout(function() {
-            x.revokeObjectURL(D);
+            P.revokeObjectURL(D);
           }, 4e4);
         }
       });
@@ -5050,19 +5050,19 @@ Pr.load(q3, () => $("RENDER"));
 class Go extends rc {
   constructor(e = 10, r = 10, a = 4473924, n = 8947848, i) {
     const s = new Ct(a), o = new Ct(n), u = r / 2, l = e / r, d = e / 2, v = [], T = [];
-    for (let f = 0, g = 0, x = -d; f <= r; f++, x += l)
+    for (let f = 0, g = 0, P = -d; f <= r; f++, P += l)
       if (i(f)) {
-        v.push(-d, x, 0, d, x, 0), v.push(x, -d, 0, x, d, 0);
+        v.push(-d, P, 0, d, P, 0), v.push(P, -d, 0, P, d, 0);
         const D = f === u ? s : o;
         D.toArray(T, g), g += 3, D.toArray(T, g), g += 3, D.toArray(T, g), g += 3, D.toArray(T, g), g += 3;
       }
     const E = new ht();
     E.name = "grid-helper-geometry", E.setAttribute("position", new B0(v, 3)), E.setAttribute("color", new B0(T, 3));
-    const P = new ls({
+    const x = new ls({
       vertexColors: !0,
       name: "grid-helper-material"
     });
-    super(E, P);
+    super(E, x);
   }
   copy(e) {
     return super.copy(e), this.geometry.copy(e.geometry), this.material.copy(e.material), this;
@@ -5088,9 +5088,9 @@ class R3 extends t0 {
       opacity: 0.025,
       name: "grid-checkered-material"
     }), v = new H.Mesh(l, d);
-    this.gridHelper = new Go(a, s, o, u, (P) => P % i !== 0), this.gridHelper.renderOrder = -1;
+    this.gridHelper = new Go(a, s, o, u, (x) => x % i !== 0), this.gridHelper.renderOrder = -1;
     const T = this.gridHelper.material;
-    T.fog = !0, T.transparent = !0, T.opacity = 0.1, T.color.setRGB(0, 0, 0), this.add(this.gridHelper), this.majorGridHelper = new Go(a, s, o, u, (P) => P % i === 0 && P !== s / 2), this.majorGridHelper.renderOrder = -0.5;
+    T.fog = !0, T.transparent = !0, T.opacity = 0.1, T.color.setRGB(0, 0, 0), this.add(this.gridHelper), this.majorGridHelper = new Go(a, s, o, u, (x) => x % i === 0 && x !== s / 2), this.majorGridHelper.renderOrder = -0.5;
     const E = this.majorGridHelper.material;
     E.fog = !0, E.transparent = !0, E.opacity = 0.2, E.color.setRGB(0, 0, 0), this.add(this.majorGridHelper), this.add(v);
   }
@@ -5283,8 +5283,8 @@ class Zc {
       const v = [];
       for (let T = 0; T < s.length; T++) {
         U3(this.pickPosition, s[T].point.clone().project(this.camera)) < z3 && v.push(T);
-        const P = s[T].object, f = P.parent, g = f?.parent;
-        P.isTransformControlsRoot || P.isTransformControlsGizmo || P.isTransformControlsPlane || f?.isTransformControlsRoot || f?.isTransformControlsGizmo || P && f && g && (g.type === "TransformControlsGizmo" || g.isTransformControlsRoot) ? (l = !0, d = T) : P && f && f.kind && f.kind.match(/source|receiver/gi) && (o = !0, u = T);
+        const x = s[T].object, f = x.parent, g = f?.parent;
+        x.isTransformControlsRoot || x.isTransformControlsGizmo || x.isTransformControlsPlane || f?.isTransformControlsRoot || f?.isTransformControlsGizmo || x && f && g && (g.type === "TransformControlsGizmo" || g.isTransformControlsRoot) ? (l = !0, d = T) : x && f && f.kind && f.kind.match(/source|receiver/gi) && (o = !0, u = T);
       }
       return l ? {
         clickedOnTransformControl: l,
@@ -5531,10 +5531,10 @@ function Q3(t, e, r, a, n) {
     return;
   }
   const s = new y2();
-  let o, u, l, d, v, T, E, P;
+  let o, u, l, d, v, T, E, x;
   if (i.o) {
     const f = i._cachedOutline || (i._cachedOutline = i.o.split(" "));
-    for (let g = 0, x = f.length; g < x; )
+    for (let g = 0, P = f.length; g < P; )
       switch (f[g++]) {
         case "m":
           o = f[g++] * e + r, u = f[g++] * e + a, s.moveTo(o, u);
@@ -5546,7 +5546,7 @@ function Q3(t, e, r, a, n) {
           l = f[g++] * e + r, d = f[g++] * e + a, v = f[g++] * e + r, T = f[g++] * e + a, s.quadraticCurveTo(v, T, l, d);
           break;
         case "b":
-          l = f[g++] * e + r, d = f[g++] * e + a, v = f[g++] * e + r, T = f[g++] * e + a, E = f[g++] * e + r, P = f[g++] * e + a, s.bezierCurveTo(v, T, E, P, l, d);
+          l = f[g++] * e + r, d = f[g++] * e + a, v = f[g++] * e + r, T = f[g++] * e + a, E = f[g++] * e + r, x = f[g++] * e + a, s.bezierCurveTo(v, T, E, x, l, d);
           break;
       }
   }
@@ -5735,11 +5735,11 @@ class f5 {
       alpha: !0,
       antialias: !0,
       canvas: n
-    }), this.renderer.setPixelRatio(window.devicePixelRatio), this.renderer.setSize(this.width, this.height), this.pickHelper = new Zc(this.scene, this.camera, this.renderer.domElement), this._hoveredPlane = void 0, this.renderer.domElement.addEventListener("mousemove", (x) => {
-      this.setPickPosition(x, this.renderer.domElement), this.raycaster.setFromCamera(this.pickPosition, this.camera);
+    }), this.renderer.setPixelRatio(window.devicePixelRatio), this.renderer.setSize(this.width, this.height), this.pickHelper = new Zc(this.scene, this.camera, this.renderer.domElement), this._hoveredPlane = void 0, this.renderer.domElement.addEventListener("mousemove", (P) => {
+      this.setPickPosition(P, this.renderer.domElement), this.raycaster.setFromCamera(this.pickPosition, this.camera);
       const D = this.raycaster.intersectObjects([this.cube], !0);
       D.length ? this.hoveredPlane = D[0].object : this.hoveredPlane = void 0, this.shouldRender = !0;
-    }), this.renderer.domElement.addEventListener("mousedown", (x) => {
+    }), this.renderer.domElement.addEventListener("mousedown", (P) => {
       if (this.hoveredPlane) {
         const D = e1[this.hoveredPlane.name];
         D && this.clickListeners.forEach((q) => {
@@ -5756,22 +5756,22 @@ class f5 {
       rotateLeft: document.createElement("div"),
       rotateRight: document.createElement("div")
     }, this.element.appendChild(this.helperArrows.top), this.element.appendChild(this.helperArrows.bottom), this.element.appendChild(this.helperArrows.left), this.element.appendChild(this.helperArrows.right), this.element.appendChild(this.helperArrows.rotateLeft), this.element.appendChild(this.helperArrows.rotateRight);
-    const E = (x) => {
-      if (this.hoveredPlane = void 0, x.target) {
-        const D = x.target.querySelector("path");
+    const E = (P) => {
+      if (this.hoveredPlane = void 0, P.target) {
+        const D = P.target.querySelector("path");
         D && D.setAttribute("fill", "#BFDEFD");
       }
       this.shouldRender = !0;
-    }, P = (x) => {
-      if (x.target) {
-        const D = x.target.querySelector("path");
+    }, x = (P) => {
+      if (P.target) {
+        const D = P.target.querySelector("path");
         D && D.setAttribute("fill", "#ffffff");
       }
-    }, f = (x) => {
-      this.clickListeners.forEach((D) => D({ target: x }));
-    }, g = (x) => {
-      if (x.target) {
-        let D = x.target.parentElement;
+    }, f = (P) => {
+      this.clickListeners.forEach((D) => D({ target: P }));
+    }, g = (P) => {
+      if (P.target) {
+        let D = P.target.parentElement;
         for (; D.tagName !== "DIV"; )
           D = D.parentElement;
         const q = D;
@@ -6295,7 +6295,7 @@ class f5 {
           }
       }
     };
-    this.helperArrows.top.setAttribute("id", "helper-arrow-top"), this.helperArrows.top.setAttribute("class", "helper-arrow"), this.helperArrows.top.innerHTML = Ha, this.helperArrows.top.addEventListener("mouseenter", E), this.helperArrows.top.addEventListener("mouseleave", P), this.helperArrows.top.addEventListener("mousedown", g), this.helperArrows.bottom.setAttribute("id", "helper-arrow-bottom"), this.helperArrows.bottom.setAttribute("class", "helper-arrow"), this.helperArrows.bottom.innerHTML = Ha, this.helperArrows.bottom.addEventListener("mouseenter", E), this.helperArrows.bottom.addEventListener("mouseleave", P), this.helperArrows.bottom.addEventListener("mousedown", g), this.helperArrows.left.setAttribute("id", "helper-arrow-left"), this.helperArrows.left.setAttribute("class", "helper-arrow"), this.helperArrows.left.innerHTML = Ha, this.helperArrows.left.addEventListener("mouseenter", E), this.helperArrows.left.addEventListener("mouseleave", P), this.helperArrows.left.addEventListener("mousedown", g), this.helperArrows.right.setAttribute("id", "helper-arrow-right"), this.helperArrows.right.setAttribute("class", "helper-arrow"), this.helperArrows.right.innerHTML = Ha, this.helperArrows.right.addEventListener("mouseenter", E), this.helperArrows.right.addEventListener("mouseleave", P), this.helperArrows.right.addEventListener("mousedown", g), this.helperArrows.rotateLeft.setAttribute("id", "helper-arrow-rotate-left"), this.helperArrows.rotateLeft.setAttribute("class", "helper-arrow"), this.helperArrows.rotateLeft.innerHTML = `<img src="${c5}"/>`, this.helperArrows.rotateLeft.addEventListener("mouseenter", E), this.helperArrows.rotateLeft.addEventListener("mouseleave", P), this.helperArrows.rotateLeft.addEventListener("mousedown", g), this.helperArrows.rotateRight.setAttribute("id", "helper-arrow-rotate-right"), this.helperArrows.rotateRight.setAttribute("class", "helper-arrow"), this.helperArrows.rotateRight.innerHTML = `<img src="${u5}"/>`, this.helperArrows.rotateRight.addEventListener("mouseenter", E), this.helperArrows.rotateRight.addEventListener("mouseleave", P), this.helperArrows.rotateRight.addEventListener("mousedown", g), this.hideHelperArrows(), this.axis = r && r.axis || "none", this.shouldRender = !0;
+    this.helperArrows.top.setAttribute("id", "helper-arrow-top"), this.helperArrows.top.setAttribute("class", "helper-arrow"), this.helperArrows.top.innerHTML = Ha, this.helperArrows.top.addEventListener("mouseenter", E), this.helperArrows.top.addEventListener("mouseleave", x), this.helperArrows.top.addEventListener("mousedown", g), this.helperArrows.bottom.setAttribute("id", "helper-arrow-bottom"), this.helperArrows.bottom.setAttribute("class", "helper-arrow"), this.helperArrows.bottom.innerHTML = Ha, this.helperArrows.bottom.addEventListener("mouseenter", E), this.helperArrows.bottom.addEventListener("mouseleave", x), this.helperArrows.bottom.addEventListener("mousedown", g), this.helperArrows.left.setAttribute("id", "helper-arrow-left"), this.helperArrows.left.setAttribute("class", "helper-arrow"), this.helperArrows.left.innerHTML = Ha, this.helperArrows.left.addEventListener("mouseenter", E), this.helperArrows.left.addEventListener("mouseleave", x), this.helperArrows.left.addEventListener("mousedown", g), this.helperArrows.right.setAttribute("id", "helper-arrow-right"), this.helperArrows.right.setAttribute("class", "helper-arrow"), this.helperArrows.right.innerHTML = Ha, this.helperArrows.right.addEventListener("mouseenter", E), this.helperArrows.right.addEventListener("mouseleave", x), this.helperArrows.right.addEventListener("mousedown", g), this.helperArrows.rotateLeft.setAttribute("id", "helper-arrow-rotate-left"), this.helperArrows.rotateLeft.setAttribute("class", "helper-arrow"), this.helperArrows.rotateLeft.innerHTML = `<img src="${c5}"/>`, this.helperArrows.rotateLeft.addEventListener("mouseenter", E), this.helperArrows.rotateLeft.addEventListener("mouseleave", x), this.helperArrows.rotateLeft.addEventListener("mousedown", g), this.helperArrows.rotateRight.setAttribute("id", "helper-arrow-rotate-right"), this.helperArrows.rotateRight.setAttribute("class", "helper-arrow"), this.helperArrows.rotateRight.innerHTML = `<img src="${u5}"/>`, this.helperArrows.rotateRight.addEventListener("mouseenter", E), this.helperArrows.rotateRight.addEventListener("mouseleave", x), this.helperArrows.rotateRight.addEventListener("mousedown", g), this.hideHelperArrows(), this.axis = r && r.axis || "none", this.shouldRender = !0;
   }
   setCameraTransforms(e, r) {
     this.camera.quaternion.copy(r), this.camera.position.set(e.x, e.y, e.z), this.pointLight.position.set(e.x, e.y, e.z), this.camera.updateProjectionMatrix();
@@ -6721,33 +6721,33 @@ class w5 {
       }
     }, this.controls = new br(this._camera, this.renderer.domElement), this.controls.mouseButtons = this.mouseConfigSet.Default, this.controls.screenSpacePanning = !0, this.transformControls = new Dd(this._camera, this.renderer.domElement), this.transformControls.addEventListener("mouseUp", (E) => {
       if (!(!E.target.object || !(E.target.object instanceof t0))) {
-        const P = E.target.allAssociatedObjects;
-        if (!P) return;
+        const x = E.target.allAssociatedObjects;
+        if (!x) return;
         const f = /* @__PURE__ */ new Map(), g = /* @__PURE__ */ new Map();
-        for (let x = 0; x < P.length; x++)
-          f.set(P[x].uuid, Object.assign({}, P[x].userData.lastSave)), g.set(P[x].uuid, Object.assign({}, P[x].save()));
+        for (let P = 0; P < x.length; P++)
+          f.set(x[P].uuid, Object.assign({}, x[P].userData.lastSave)), g.set(x[P].uuid, Object.assign({}, x[P].save()));
         Ja({
           category: "OBJECT_TRANSFORM",
           objectId: E.target.object.uuid,
-          recallFunction: (x) => {
-            if (x === "UNDO")
-              for (let D = 0; D < P.length; D++)
-                P[D].restore(f.get(P[D].uuid));
-            else if (x === "REDO")
-              for (let D = 0; D < P.length; D++)
-                P[D].restore(g.get(P[D].uuid));
+          recallFunction: (P) => {
+            if (P === "UNDO")
+              for (let D = 0; D < x.length; D++)
+                x[D].restore(f.get(x[D].uuid));
+            else if (P === "REDO")
+              for (let D = 0; D < x.length; D++)
+                x[D].restore(g.get(x[D].uuid));
           }
         });
       }
     }), this.transformControls.addEventListener("mouseDown", (E) => {
-      const P = E.target.allAssociatedObjects;
-      if (P)
-        for (let f = 0; f < P.length; f++)
-          P[f].userData.lastSave = P[f].save();
+      const x = E.target.allAssociatedObjects;
+      if (x)
+        for (let f = 0; f < x.length; f++)
+          x[f].userData.lastSave = x[f].save();
     }), this.transformControls.addEventListener("change", (E) => {
       const f = E.target.allAssociatedObjects;
       if (typeof f < "u") {
-        const g = f[0] && f[0].position, x = f[0] && f[0].userData.lastSave, D = x && new H.Vector3().fromArray(x.position);
+        const g = f[0] && f[0].position, P = f[0] && f[0].userData.lastSave, D = P && new H.Vector3().fromArray(P.position);
         if (g && D) {
           const q = new H.Vector3().copy(g).sub(D);
           for (let O = 0; O < f.length; O++)
@@ -6761,25 +6761,25 @@ class w5 {
       }
     }), this.currentlyMovingObjects = !1, this.pickHelper = new Zc(this.scene, this._camera, this.renderer.domElement), this.fog = new H.FogExp2(r, 0.015), this.scene.fog = this.fog, this.composer = new Bd(this.renderer), this.renderPass = new Hd(this.scene, this._camera), this.composer.addPass(this.renderPass), this.settingHandlers = {}, this.settingHandlers.lightHelpersVisible = (E) => {
       console.log(E), this.lights.setHelpersVisible(E);
-    }, Pe.addMessageHandler("SET_RENDERER_SHOULD_ANIMATE", (E, ...P) => {
-      this.shouldAnimate = P[0];
-    }), Pe.addMessageHandler("RENDERER_SHOULD_CHANGE_BACKGROUND", (E, ...P) => {
-      this.background = P[0], this.needsToRender = !0;
-    }), Pe.addMessageHandler("RENDERER_SHOULD_CHANGE_FOG_COLOR", (E, ...P) => {
-      this.fogColor = P[0], this.needsToRender = !0;
-    }), Pe.addMessageHandler("SHOULD_REMOVE_CONTAINER", (E, ...P) => {
-      const f = P[0], g = this.scene.getObjectByProperty("uuid", f);
+    }, Pe.addMessageHandler("SET_RENDERER_SHOULD_ANIMATE", (E, ...x) => {
+      this.shouldAnimate = x[0];
+    }), Pe.addMessageHandler("RENDERER_SHOULD_CHANGE_BACKGROUND", (E, ...x) => {
+      this.background = x[0], this.needsToRender = !0;
+    }), Pe.addMessageHandler("RENDERER_SHOULD_CHANGE_FOG_COLOR", (E, ...x) => {
+      this.fogColor = x[0], this.needsToRender = !0;
+    }), Pe.addMessageHandler("SHOULD_REMOVE_CONTAINER", (E, ...x) => {
+      const f = x[0], g = this.scene.getObjectByProperty("uuid", f);
       g && g.parent && g.parent.remove(g), this.needsToRender = !0;
-    }), Pe.addMessageHandler("LOOK_ALONG_AXIS", (E, ...P) => {
-      const f = P[0];
+    }), Pe.addMessageHandler("LOOK_ALONG_AXIS", (E, ...x) => {
+      const f = x[0];
       if (!Qo[f]) {
         console.warn("invalid args");
         return;
       }
-      const g = this.camera.position.distanceTo(this.controls.target), x = 125, D = this.controls.target.clone(), q = gr.linear, O = () => {
+      const g = this.camera.position.distanceTo(this.controls.target), P = 125, D = this.controls.target.clone(), q = gr.linear, O = () => {
         this.controls.target.set(D.x, D.y, D.z), this.orientationControl.axis = f, this.storeCameraState(), this.needsToRender = !0;
       }, X = this.controls.target.clone().add(Qo[f].clone().multiplyScalar(g)), C = d5[f].clone();
-      this.smoothCameraToQuat({ position: X, target: D, duration: x, onFinish: O, easingFunction: q, quat: C }), this.needsToRender = !0;
+      this.smoothCameraToQuat({ position: X, target: D, duration: P, onFinish: O, easingFunction: q, quat: C }), this.needsToRender = !0;
     }), Pe.addMessageHandler("TOGGLE_RENDERER_STATS_VISIBLE", () => {
       this.stats.hidden ? this.stats.unhide() : this.stats.hide();
     }), Pe.addMessageHandler("GET_RENDERER_STATS_VISIBLE", () => !this.stats.hidden), this.addCleanupListener(window, "mouseup", (E) => {
@@ -6796,11 +6796,11 @@ class w5 {
       this.requestRender(), O0.setScope("EDITOR");
     }), this.renderer.domElement.addEventListener("mousedown", (E) => {
       O0.setScope("EDITOR");
-      const P = this.pickHelper.pick(E, [this.workspace, this.interactables]);
-      if (P.pickedObject) {
+      const x = this.pickHelper.pick(E, [this.workspace, this.interactables]);
+      if (x.pickedObject) {
         if (E.button === 0) {
           const f = this.pickHelper.getPickedPoint();
-          this.cursor.position.set(f[0], f[1], f[2]), this.currentlyMovingObjects || (E.shiftKey ? $("APPEND_SELECTION", [P.pickedObject]) : E.altKey || $("SET_SELECTION", [P.pickedObject]));
+          this.cursor.position.set(f[0], f[1], f[2]), this.currentlyMovingObjects || (E.shiftKey ? $("APPEND_SELECTION", [x.pickedObject]) : E.altKey || $("SET_SELECTION", [x.pickedObject]));
         }
       } else
         E.button === 0 && !E.shiftKey && !E.altKey && $("PHASE_OUT");
@@ -6866,8 +6866,8 @@ class w5 {
     const r = this.orientationControl.axis, a = this.camera.near, n = this.camera.far, i = this.camera instanceof H.PerspectiveCamera && this.camera.fov || this.fov, s = this.camera instanceof H.PerspectiveCamera && this.camera.getFilmWidth() || 35, o = this.camera instanceof H.PerspectiveCamera && this.camera.getFilmHeight() || 35 / this.aspect, u = this.controls.target.toArray();
     if (e) {
       const d = o / 2, v = -d, T = s / 2, E = -T;
-      let P = new H.OrthographicCamera(E, T, d, v, a, n);
-      this.camera = P, this.camera.layers.enableAll();
+      let x = new H.OrthographicCamera(E, T, d, v, a, n);
+      this.camera = x, this.camera.layers.enableAll();
     } else
       this.camera = new H.PerspectiveCamera(i, this.aspect, a, n), this.camera.layers.enableAll();
     this.controls.target.fromArray(u);
@@ -6954,10 +6954,10 @@ class w5 {
       T.copy(i);
       const E = T.slerp(s, d);
       this.camera.position.set(v.x, v.y, v.z), this.camera.quaternion.copy(E);
-      const P = new H.Vector3();
-      this.camera.getWorldDirection(P);
-      const f = P.multiplyScalar(n), g = this.camera.position.clone().add(f), x = this.camera.position.clone().sub(g).normalize().multiplyScalar(this.orientationControl.cameraDistance);
-      this.orientationControl.setCameraTransforms(x, this.camera.quaternion), l === 1 && (this.smoothingCamera = !1, e.onFinish && e.onFinish(o), this.storeCameraState());
+      const x = new H.Vector3();
+      this.camera.getWorldDirection(x);
+      const f = x.multiplyScalar(n), g = this.camera.position.clone().add(f), P = this.camera.position.clone().sub(g).normalize().multiplyScalar(this.orientationControl.cameraDistance);
+      this.orientationControl.setCameraTransforms(P, this.camera.quaternion), l === 1 && (this.smoothingCamera = !1, e.onFinish && e.onFinish(o), this.storeCameraState());
     }, o.start();
   }
   update() {
@@ -7170,7 +7170,7 @@ const Ko = [
   12500,
   16e3,
   2e4
-], cb = [
+], lb = [
   8,
   16,
   31.5,
@@ -7183,7 +7183,7 @@ const Ko = [
   4e3,
   8e3,
   16e3
-], ub = [
+], cb = [
   {
     Lower: 11,
     Center: 16,
@@ -7246,7 +7246,7 @@ function Mn(t, e) {
 const t1 = {
   value: 2e-5
 };
-function db(t) {
+function ub(t) {
   return Mn((e) => 20 * Math.log10(e / t1.value), t);
 }
 function Qa(t) {
@@ -7255,7 +7255,7 @@ function Qa(t) {
 function P5(t, e = 400) {
   return Mn((r) => r ** 2 / e, t);
 }
-function fb(t, e = 400) {
+function db(t, e = 400) {
   return Mn((r) => Math.sqrt(r * e), t);
 }
 var Pi, Zo;
@@ -7692,7 +7692,7 @@ class T5 {
           phi: u,
           theta: v,
           directivity: this.dirDataList[T].directivity[u / i][v / i]
-        }, P = {
+        }, x = {
           phi: u,
           theta: d,
           directivity: this.dirDataList[T].directivity[u / i][d / i]
@@ -7705,7 +7705,7 @@ class T5 {
           theta: d,
           directivity: this.dirDataList[T].directivity[o / i][d / i]
         };
-        return console.log(E), console.log(P), console.log(f), console.log(g), Qa(E5(a, n, E, P, f, g) + this.sensitivity[T] + e);
+        return console.log(E), console.log(x), console.log(f), console.log(g), Qa(E5(a, n, E, x, f, g) + this.sensitivity[T] + e);
       default:
         return Qa(this.sensitivity[0] + e);
     }
@@ -8115,19 +8115,19 @@ const M5 = {
   poly3: M5
 }, { primitives: ot } = Q0;
 ot.cuboid, ot.ellipse, ot.arc, ot.ellipsoid, ot.geodesicSphere, ot.roundedCuboid, ot.roundedCylinder, ot.roundedRectangle, ot.star, ot.line;
-const { booleans: mb } = Q0, { transforms: N5 } = Q0;
+const { booleans: fb } = Q0, { transforms: N5 } = Q0;
 N5.align;
 const { measurements: Z0 } = Q0;
 Z0.measureArea, Z0.measureBoundingBox, Z0.measureBoundingSphere, Z0.measureCenter, Z0.measureCenterOfMass, Z0.measureDimensions, Z0.measureVolume, Z0.measureAggregateArea, Z0.measureAggregateVolume, Z0.measureAggregateBoundingBox, Z0.measureEpsilon;
 const { extrusions: Ei } = Q0;
 Ei.extrudeRectangular, Ei.extrudeFromSlices, Ei.extrudeHelical;
-const { expansions: pb } = Q0, { hulls: hb } = Q0, { text: il } = Q0;
+const { expansions: mb } = Q0, { hulls: pb } = Q0, { text: il } = Q0;
 il.vectorText, il.vectorChar;
 const { colors: Ot } = Q0;
 Ot.colorize, Ot.colorNameToRgb, Ot.hexToRgb, Ot.hslToRgb, Ot.hsvToRgb, Ot.rgbToHex, Ot.rgbToHsl, Ot.rgbToHsv;
 const { utils: sl } = Q0;
 sl.degToRad, sl.radToDeg;
-const { plane: gb, vec3: Ab } = a1, { poly3: bb } = n1, Rr = {
+const { plane: hb, vec3: gb } = a1, { poly3: Ab } = n1, Rr = {
   geometry: n1,
   math: a1
 };
@@ -8296,32 +8296,32 @@ class Pt extends t0 {
     ), this.normal = new H.Vector3(), this._triangles[0].getNormal(this.normal), this.center = new H.Vector3();
     let n = 0;
     this._triangles.forEach((E) => {
-      const P = E.getArea();
-      n += P, this.center.add(E.getMidpoint(new H.Vector3()).multiplyScalar(P));
+      const x = E.getArea();
+      n += x, this.center.add(E.getMidpoint(new H.Vector3()).multiplyScalar(x));
     }), this.center.divideScalar(n), this.selectedMaterial = bt.materials.selected, this.normalMaterial = bt.materials.mesh, this.normalColor = new H.Color(11184810);
     const i = {};
-    this.triangles.forEach((E, P) => {
-      const f = this._triangles[P].getNormal(new H.Vector3()).toArray().map((g) => $c(g, 5));
+    this.triangles.forEach((E, x) => {
+      const f = this._triangles[x].getNormal(new H.Vector3()).toArray().map((g) => $c(g, 5));
       for (let g = 0; g < 3; g++) {
-        const x = [E[g], E[(g + 1) % 3]], D = JSON.stringify([x.sort(), f]);
+        const P = [E[g], E[(g + 1) % 3]], D = JSON.stringify([P.sort(), f]);
         i[D] ? i[D].keep = !1 : i[D] = {
           keep: !0,
-          line: x,
+          line: P,
           triangle_normal: f,
-          triangle_index: P
+          triangle_index: x
         };
       }
     });
     const s = [];
-    Object.keys(i).reduce((E, P) => (i[P].keep && E.push(i[P].line), E), []).forEach((E) => {
-      E.forEach((P) => {
-        s.push(P[0], P[1], P[2]);
+    Object.keys(i).reduce((E, x) => (i[x].keep && E.push(i[x].line), E), []).forEach((E) => {
+      E.forEach((x) => {
+        s.push(x[0], x[1], x[2]);
       });
     });
     const o = new H.BufferGeometry();
     o.setAttribute("position", new H.Float32BufferAttribute(s, 3)), this.edges = new H.LineSegments(o, bt.materials.line), this.edges.geometry.name = "surface-edges-geometry", this.add(this.mesh), this.mesh.visible = this.fillSurface, this.add(this.wire), this.wireframeVisible = e.wireframeVisible || bt.wireframeVisible, this.add(this.edges), this.edgesVisible = e.edgesVisible || bt.edgesVisible, this.add(this.vertexNormals), this.displayVertexNormals = e.displayVertexNormals || bt.displayVertexNormals, this.absorption = [0, 0.04, 0.23, 0.52, 0.9, 0.94, 0.66, 0.66];
     const u = [63, 125, 250, 500, 1e3, 2e3, 4e3, 8e3];
-    this.absorptionFunction = ts(this.absorption, u), this.reflectionFunction = (E, P) => al(this.absorptionFunction(E), P), this.scatteringCoefficient = e.scatteringCoefficient || bt.scatteringCoefficient, this.acousticMaterial = e.acousticMaterial, this.brdf = [];
+    this.absorptionFunction = ts(this.absorption, u), this.reflectionFunction = (E, x) => al(this.absorptionFunction(E), x), this.scatteringCoefficient = e.scatteringCoefficient || bt.scatteringCoefficient, this.acousticMaterial = e.acousticMaterial, this.brdf = [];
     for (const E in this.acousticMaterial.absorption)
       this.brdf.push(
         new nl({
@@ -8332,7 +8332,7 @@ class Pt extends t0 {
     this.getArea(), this.edgeLoop = this.calculateEdgeLoop();
     const l = this.edgeLoop.map((E) => Rr.math.vec3.fromArray([E.x, E.y, E.z])), d = Rr.math.plane.fromPoints(l[0], l[1], l[2]);
     this.polygon = Rr.geometry.poly3.fromPointsAndPlane(l, d);
-    const v = X5(1e-6), T = (E, P) => !v(E.x, P[0]) || !v(E.y, P[1]) || !v(E.z, P[2]);
+    const v = X5(1e-6), T = (E, x) => !v(E.x, x[0]) || !v(E.y, x[1]) || !v(E.z, x[2]);
     T(this.normal, this.polygon.plane) && (this.polygon = Rr.geometry.poly3.fromPointsAndPlane(l, Rr.math.plane.fromPoints(l[2], l[1], l[0])), T(this.normal, this.polygon.plane));
   }
   dispose() {
@@ -8533,7 +8533,7 @@ class Y5 {
     if (e.isGeometry === !0)
       return console.error("THREE.TessellateModifier no longer supports Geometry. Use BufferGeometry instead."), e;
     e.index !== null && (e = e.toNonIndexed());
-    const r = this.maxIterations, a = this.maxEdgeLength * this.maxEdgeLength, n = new Ae(), i = new Ae(), s = new Ae(), o = new Ae(), u = [n, i, s, o], l = new Ae(), d = new Ae(), v = new Ae(), T = new Ae(), E = [l, d, v, T], P = new Ct(), f = new Ct(), g = new Ct(), x = new Ct(), D = [P, f, g, x], q = new y0(), O = new y0(), X = new y0(), C = new y0(), F = [q, O, X, C], p = new y0(), S = new y0(), h = new y0(), R = new y0(), M = [p, S, h, R], W = e.attributes, _ = W.normal !== void 0, te = W.color !== void 0, z = W.uv !== void 0, se = W.uv2 !== void 0;
+    const r = this.maxIterations, a = this.maxEdgeLength * this.maxEdgeLength, n = new Ae(), i = new Ae(), s = new Ae(), o = new Ae(), u = [n, i, s, o], l = new Ae(), d = new Ae(), v = new Ae(), T = new Ae(), E = [l, d, v, T], x = new Ct(), f = new Ct(), g = new Ct(), P = new Ct(), D = [x, f, g, P], q = new y0(), O = new y0(), X = new y0(), C = new y0(), F = [q, O, X, C], p = new y0(), S = new y0(), h = new y0(), R = new y0(), M = [p, S, h, R], W = e.attributes, _ = W.normal !== void 0, te = W.color !== void 0, z = W.uv !== void 0, se = W.uv2 !== void 0;
     let ue = Array.from(W.position.array), K = _ ? Array.from(W.normal.array) : null, ce = te ? Array.from(W.color.array) : null, me = z ? Array.from(W.uv.array) : null, ge = se ? Array.from(W.uv2.array) : null, xe = ue, pe = K, G = ce, Z = me, ie = ge, Y = 0, m = !0;
     function w(N, Q, ee) {
       const de = u[N], ve = u[Q], ke = u[ee];
@@ -8557,9 +8557,9 @@ class Y5 {
     for (; m && Y < r; ) {
       Y++, m = !1, ue = xe, xe = [], _ && (K = pe, pe = []), te && (ce = G, G = []), z && (me = Z, Z = []), se && (ge = ie, ie = []);
       for (let N = 0, Q = 0, ee = ue.length; N < ee; N += 9, Q += 6) {
-        n.fromArray(ue, N + 0), i.fromArray(ue, N + 3), s.fromArray(ue, N + 6), _ && (l.fromArray(K, N + 0), d.fromArray(K, N + 3), v.fromArray(K, N + 6)), te && (P.fromArray(ce, N + 0), f.fromArray(ce, N + 3), g.fromArray(ce, N + 6)), z && (q.fromArray(me, Q + 0), O.fromArray(me, Q + 2), X.fromArray(me, Q + 4)), se && (p.fromArray(ge, Q + 0), S.fromArray(ge, Q + 2), h.fromArray(ge, Q + 4));
+        n.fromArray(ue, N + 0), i.fromArray(ue, N + 3), s.fromArray(ue, N + 6), _ && (l.fromArray(K, N + 0), d.fromArray(K, N + 3), v.fromArray(K, N + 6)), te && (x.fromArray(ce, N + 0), f.fromArray(ce, N + 3), g.fromArray(ce, N + 6)), z && (q.fromArray(me, Q + 0), O.fromArray(me, Q + 2), X.fromArray(me, Q + 4)), se && (p.fromArray(ge, Q + 0), S.fromArray(ge, Q + 2), h.fromArray(ge, Q + 4));
         const de = n.distanceToSquared(i), ve = i.distanceToSquared(s), ke = n.distanceToSquared(s);
-        de > a || ve > a || ke > a ? (m = !0, de >= ve && de >= ke ? (o.lerpVectors(n, i, 0.5), _ && T.lerpVectors(l, d, 0.5), te && x.lerpColors(P, f, 0.5), z && C.lerpVectors(q, O, 0.5), se && R.lerpVectors(p, S, 0.5), w(0, 3, 2), w(3, 1, 2)) : ve >= de && ve >= ke ? (o.lerpVectors(i, s, 0.5), _ && T.lerpVectors(d, v, 0.5), te && x.lerpColors(f, g, 0.5), z && C.lerpVectors(O, X, 0.5), se && R.lerpVectors(S, h, 0.5), w(0, 1, 3), w(3, 2, 0)) : (o.lerpVectors(n, s, 0.5), _ && T.lerpVectors(l, v, 0.5), te && x.lerpColors(P, g, 0.5), z && C.lerpVectors(q, X, 0.5), se && R.lerpVectors(p, h, 0.5), w(0, 1, 3), w(3, 1, 2))) : w(0, 1, 2);
+        de > a || ve > a || ke > a ? (m = !0, de >= ve && de >= ke ? (o.lerpVectors(n, i, 0.5), _ && T.lerpVectors(l, d, 0.5), te && P.lerpColors(x, f, 0.5), z && C.lerpVectors(q, O, 0.5), se && R.lerpVectors(p, S, 0.5), w(0, 3, 2), w(3, 1, 2)) : ve >= de && ve >= ke ? (o.lerpVectors(i, s, 0.5), _ && T.lerpVectors(d, v, 0.5), te && P.lerpColors(f, g, 0.5), z && C.lerpVectors(O, X, 0.5), se && R.lerpVectors(S, h, 0.5), w(0, 1, 3), w(3, 2, 0)) : (o.lerpVectors(n, s, 0.5), _ && T.lerpVectors(l, v, 0.5), te && P.lerpColors(x, g, 0.5), z && C.lerpVectors(q, X, 0.5), se && R.lerpVectors(p, h, 0.5), w(0, 1, 3), w(3, 1, 2))) : w(0, 1, 2);
       }
     }
     const L = new ht();
@@ -8709,7 +8709,7 @@ class $t extends t0 {
 ae("ADD_ROOM", qn($t));
 ae("REMOVE_ROOM", On);
 ae("ROOM_SET_PROPERTY", Rn);
-const vb = () => Cs("room"), { min: J5, max: Q5 } = Math;
+const bb = () => Cs("room"), { min: J5, max: Q5 } = Math;
 class _5 extends t0 {
   boundingBox;
   volume;
@@ -8735,7 +8735,7 @@ class _5 extends t0 {
     T.setIndex(o);
     const E = new H.Float32BufferAttribute(l, 3);
     E.setUsage(H.DynamicDrawUsage), T.setAttribute("position", E), T.setAttribute("normal", new H.Float32BufferAttribute(d, 3)), T.setAttribute("color", new H.Float32BufferAttribute(v, 3));
-    const P = /* @__PURE__ */ new Set(), f = (X) => `${J5(...X)}${Q5(...X)}`, g = df(P);
+    const x = /* @__PURE__ */ new Set(), f = (X) => `${J5(...X)}${Q5(...X)}`, g = df(x);
     for (let X = 0; X < o.length / 3; X++) {
       const C = o[X * 3 + 0], F = o[X * 3 + 1], p = o[X * 3 + 2];
       [
@@ -8748,7 +8748,7 @@ class _5 extends t0 {
       });
     }
     T.addGroup(0, 72, 1);
-    const x = new H.MeshPhongMaterial({
+    const P = new H.MeshPhongMaterial({
       fog: !1,
       transparent: !0,
       // opacity: 0.1,
@@ -8765,7 +8765,7 @@ class _5 extends t0 {
       side: H.DoubleSide,
       vertexColors: !0
     }), q = new H.BufferGeometry();
-    this.mesh = new H.Mesh(T, [x, D]), this.add(this.mesh), q.setIndex(u), q.setAttribute("position", E);
+    this.mesh = new H.Mesh(T, [P, D]), this.add(this.mesh), q.setIndex(u), q.setAttribute("position", E);
     const O = new H.LineBasicMaterial({ color: 16777215, transparent: !0 });
     this.add(new H.LineSegments(q, O)), this.mesh.geometry.computeBoundingBox(), this.mesh.geometry.computeBoundingSphere();
   }
@@ -8828,7 +8828,7 @@ class K5 {
     for (let u = 0; u < this.numberOfChannels; u++) {
       const l = new Float32Array(s - 1);
       for (let d = 0; d < s - 1; d++) {
-        let v = d * i, T = Math.floor(v), E = T + 1, P = v - Math.floor(v), f = this.channelData[u][T] + (this.channelData[u][E] - this.channelData[u][T]) * P;
+        let v = d * i, T = Math.floor(v), E = T + 1, x = v - Math.floor(v), f = this.channelData[u][T] + (this.channelData[u][E] - this.channelData[u][T]) * x;
         l[d] = f;
       }
       o.push(l);
@@ -8867,11 +8867,11 @@ async function Vt(t, e, r) {
   return a(e, r);
 }
 ir("ray-tracer", async (t, e) => {
-  const { default: r } = await import("./index-H3gIQi9f.mjs");
+  const { default: r } = await import("./index-_wa2egJn.mjs");
   return new r(e);
 });
 ir("image-source", async (t, e) => {
-  const { ImageSourceSolver: r } = await import("./index-DnurVtAq.mjs"), a = {
+  const { ImageSourceSolver: r } = await import("./index-DaM-oOkX.mjs"), a = {
     name: "Image Source",
     roomID: "",
     sourceIDs: [],
@@ -8886,23 +8886,23 @@ ir("image-source", async (t, e) => {
   return new r(a);
 });
 ir("rt60", async (t, e) => {
-  const { default: r } = await import("./index-B3r0nIUh.mjs");
+  const { default: r } = await import("./index-DtTkjuX3.mjs");
   return new r();
 });
 ir("energydecay", async (t, e) => {
-  const { default: r } = await import("./energy-decay-TWd1I3nM.mjs");
+  const { default: r } = await import("./energy-decay-CbgTNaA7.mjs");
   return new r();
 });
 ir("fdtd-2d", async (t, e) => {
-  const { default: r } = await import("./index-CLICDHqT.mjs");
+  const { default: r } = await import("./index-TWGPuuBz.mjs");
   return new r();
 });
 ir("beam-trace", async (t, e) => {
-  const { BeamTraceSolver: r } = await import("./index-BwrZisMg.mjs");
+  const { BeamTraceSolver: r } = await import("./index-BX0-hWdu.mjs");
   return new r();
 });
 ir("art", async (t, e) => {
-  const { ART: r } = await import("./art-a7DC7Wdu.mjs");
+  const { ART: r } = await import("./art-J3LdGPEH.mjs");
   return new r();
 });
 class $5 extends ac {
@@ -8944,9 +8944,9 @@ class $5 extends ac {
       const d = new DataView(l), v = 32 / 8 * 3 + 32 / 8 * 3 * 3 + 16 / 8, T = d.getUint32(80, !0);
       if (80 + 32 / 8 + T * v === d.byteLength)
         return !0;
-      const P = [115, 111, 108, 105, 100];
+      const x = [115, 111, 108, 105, 100];
       for (let f = 0; f < 5; f++)
-        if (a(P, d, f)) return !1;
+        if (a(x, d, f)) return !1;
       return !0;
     }
     function a(l, d, v) {
@@ -8956,27 +8956,27 @@ class $5 extends ac {
     }
     function n(l) {
       const d = new DataView(l), v = d.getUint32(80, !0);
-      let T, E, P, f = !1, g, x, D, q, O;
+      let T, E, x, f = !1, g, P, D, q, O;
       for (let R = 0; R < 70; R++)
-        d.getUint32(R, !1) == 1129270351 && d.getUint8(R + 4) == 82 && d.getUint8(R + 5) == 61 && (f = !0, g = new Float32Array(v * 3 * 3), x = d.getUint8(R + 6) / 255, D = d.getUint8(R + 7) / 255, q = d.getUint8(R + 8) / 255, O = d.getUint8(R + 9) / 255);
+        d.getUint32(R, !1) == 1129270351 && d.getUint8(R + 4) == 82 && d.getUint8(R + 5) == 61 && (f = !0, g = new Float32Array(v * 3 * 3), P = d.getUint8(R + 6) / 255, D = d.getUint8(R + 7) / 255, q = d.getUint8(R + 8) / 255, O = d.getUint8(R + 9) / 255);
       const X = 84, C = 50, F = new ht(), p = new Float32Array(v * 3 * 3), S = new Float32Array(v * 3 * 3), h = new Ct();
       for (let R = 0; R < v; R++) {
         const M = X + R * C, W = d.getFloat32(M, !0), _ = d.getFloat32(M + 4, !0), te = d.getFloat32(M + 8, !0);
         if (f) {
           const z = d.getUint16(M + 48, !0);
-          (z & 32768) === 0 ? (T = (z & 31) / 31, E = (z >> 5 & 31) / 31, P = (z >> 10 & 31) / 31) : (T = x, E = D, P = q);
+          (z & 32768) === 0 ? (T = (z & 31) / 31, E = (z >> 5 & 31) / 31, x = (z >> 10 & 31) / 31) : (T = P, E = D, x = q);
         }
         for (let z = 1; z <= 3; z++) {
           const se = M + z * 12, ue = R * 3 * 3 + (z - 1) * 3;
-          p[ue] = d.getFloat32(se, !0), p[ue + 1] = d.getFloat32(se + 4, !0), p[ue + 2] = d.getFloat32(se + 8, !0), S[ue] = W, S[ue + 1] = _, S[ue + 2] = te, f && (h.setRGB(T, E, P, C2), g[ue] = h.r, g[ue + 1] = h.g, g[ue + 2] = h.b);
+          p[ue] = d.getFloat32(se, !0), p[ue + 1] = d.getFloat32(se + 4, !0), p[ue + 2] = d.getFloat32(se + 8, !0), S[ue] = W, S[ue + 1] = _, S[ue + 2] = te, f && (h.setRGB(T, E, x, C2), g[ue] = h.r, g[ue + 1] = h.g, g[ue + 2] = h.b);
         }
       }
       return F.setAttribute("position", new Xa(p, 3)), F.setAttribute("normal", new Xa(S, 3)), f && (F.setAttribute("color", new Xa(g, 3)), F.hasColors = !0, F.alpha = O), F;
     }
     function i(l) {
       const d = new ht(), v = /solid([\s\S]*?)endsolid/g, T = /facet([\s\S]*?)endfacet/g, E = /solid\s(.+)/;
-      let P = 0;
-      const f = /[\s]+([+-]?(?:\d*)(?:\.\d*)?(?:[eE][+-]?\d+)?)/.source, g = new RegExp("vertex" + f + f + f, "g"), x = new RegExp("normal" + f + f + f, "g"), D = [], q = [], O = [], X = new Ae();
+      let x = 0;
+      const f = /[\s]+([+-]?(?:\d*)(?:\.\d*)?(?:[eE][+-]?\d+)?)/.source, g = new RegExp("vertex" + f + f + f, "g"), P = new RegExp("normal" + f + f + f, "g"), D = [], q = [], O = [], X = new Ae();
       let C, F = 0, p = 0, S = 0;
       for (; (C = v.exec(l)) !== null; ) {
         p = S;
@@ -8984,11 +8984,11 @@ class $5 extends ac {
         for (O.push(R); (C = T.exec(h)) !== null; ) {
           let _ = 0, te = 0;
           const z = C[0];
-          for (; (C = x.exec(z)) !== null; )
+          for (; (C = P.exec(z)) !== null; )
             X.x = parseFloat(C[1]), X.y = parseFloat(C[2]), X.z = parseFloat(C[3]), te++;
           for (; (C = g.exec(z)) !== null; )
             D.push(parseFloat(C[1]), parseFloat(C[2]), parseFloat(C[3])), q.push(X.x, X.y, X.z), _++, S++;
-          te !== 1 && console.error("THREE.STLLoader: Something isn't right with the normal of face number " + P), _ !== 3 && console.error("THREE.STLLoader: Something isn't right with the vertices of face number " + P), P++;
+          te !== 1 && console.error("THREE.STLLoader: Something isn't right with the normal of face number " + x), _ !== 3 && console.error("THREE.STLLoader: Something isn't right with the vertices of face number " + x), x++;
         }
         const M = p, W = S - p;
         d.userData.groupNames = O, d.addGroup(M, W, F), F++;
@@ -9622,7 +9622,7 @@ class cl extends H.Loader {
         palettes: G
       };
     }
-    function x(K, ce, me, ge, xe, pe, G, Z, ie) {
+    function P(K, ce, me, ge, xe, pe, G, Z, ie) {
       const Y = ie;
       let m, w = 0, L, N;
       const Q = h.width;
@@ -9703,7 +9703,7 @@ class cl extends H.Loader {
       else
         switch (h.pixel_size) {
           case 8:
-            x(K, G, ie, m, pe, Z, Y, ge, xe);
+            P(K, G, ie, m, pe, Z, Y, ge, xe);
             break;
           case 16:
             D(K, G, ie, m, pe, Z, Y, ge);
@@ -9823,7 +9823,7 @@ class U9 extends H.Loader {
         for (var V = a(I, k), re = 0; re < V.length; re++)
           B(V[re]);
     }
-    function P(A, b) {
+    function x(A, b) {
       for (var k in A) {
         var B = A[k];
         B.build = b(A[k]);
@@ -9846,7 +9846,7 @@ class U9 extends H.Loader {
               V = I.getAttribute("id"), b.sources[V] = Jn(I);
               break;
             case "sampler":
-              V = I.getAttribute("id"), b.samplers[V] = x(I);
+              V = I.getAttribute("id"), b.samplers[V] = P(I);
               break;
             case "channel":
               V = I.getAttribute("target"), b.channels[V] = D(I);
@@ -9858,7 +9858,7 @@ class U9 extends H.Loader {
       }
       we.animations[A.getAttribute("id")] = b;
     }
-    function x(A) {
+    function P(A) {
       for (var b = {
         inputs: {}
       }, k = 0, B = A.childNodes.length; k < B; k++) {
@@ -11465,7 +11465,7 @@ class U9 extends H.Loader {
       physicsModels: {},
       kinematicsScenes: {}
     };
-    E(b0, "library_animations", "animation", g), E(b0, "library_animation_clips", "animation_clip", z), E(b0, "library_controllers", "controller", K), E(b0, "library_images", "image", Z), E(b0, "library_effects", "effect", m), E(b0, "library_materials", "material", je), E(b0, "library_cameras", "camera", Pa), E(b0, "library_lights", "light", Pu), E(b0, "library_geometries", "geometry", Iu), E(b0, "library_nodes", "node", Qn), E(b0, "library_visual_scenes", "visual_scene", t2), E(b0, "library_kinematics_models", "kinematics_model", qu), E(b0, "library_physics_models", "physics_model", Xu), E(b0, "scene", "instance_kinematics_scene", ju), P(we.animations, q), P(we.clips, se), P(we.controllers, xe), P(we.images, ie), P(we.effects, n0), P(we.materials, p0), P(we.cameras, Ws), P(we.lights, Xs), P(we.geometries, Us), P(we.visualScenes, _s), n2(), Ju();
+    E(b0, "library_animations", "animation", g), E(b0, "library_animation_clips", "animation_clip", z), E(b0, "library_controllers", "controller", K), E(b0, "library_images", "image", Z), E(b0, "library_effects", "effect", m), E(b0, "library_materials", "material", je), E(b0, "library_cameras", "camera", Pa), E(b0, "library_lights", "light", Pu), E(b0, "library_geometries", "geometry", Iu), E(b0, "library_nodes", "node", Qn), E(b0, "library_visual_scenes", "visual_scene", t2), E(b0, "library_kinematics_models", "kinematics_model", qu), E(b0, "library_physics_models", "physics_model", Xu), E(b0, "scene", "instance_kinematics_scene", ju), x(we.animations, q), x(we.clips, se), x(we.controllers, xe), x(we.images, ie), x(we.effects, n0), x(we.materials, p0), x(we.cameras, Ws), x(we.lights, Xs), x(we.geometries, Us), x(we.visualScenes, _s), n2(), Ju();
     var ei = a2(a(b0, "scene")[0]);
     return eo.upAxis === "Z_UP" && ei.quaternion.setFromEuler(new H.Euler(-Math.PI / 2, 0, 0)), ei.scale.multiplyScalar(eo.unit), {
       animations: $n,
@@ -12645,14 +12645,14 @@ function m6() {
         "error"
       ], i = {}, s = null;
       function o(f, g) {
-        var x = f[g];
-        if (typeof x.bind == "function")
-          return x.bind(f);
+        var P = f[g];
+        if (typeof P.bind == "function")
+          return P.bind(f);
         try {
-          return Function.prototype.bind.call(x, f);
+          return Function.prototype.bind.call(P, f);
         } catch {
           return function() {
-            return Function.prototype.apply.apply(x, [f, arguments]);
+            return Function.prototype.apply.apply(P, [f, arguments]);
           };
         }
       }
@@ -12664,8 +12664,8 @@ function m6() {
       }
       function d() {
         for (var f = this.getLevel(), g = 0; g < n.length; g++) {
-          var x = n[g];
-          this[x] = g < f ? e : this.methodFactory(x, f, this.name);
+          var P = n[g];
+          this[P] = g < f ? e : this.methodFactory(P, f, this.name);
         }
         if (this.log = this.debug, typeof console === r && f < this.levels.SILENT)
           return "No console available for logging";
@@ -12675,11 +12675,11 @@ function m6() {
           typeof console !== r && (d.call(this), this[f].apply(this, arguments));
         };
       }
-      function T(f, g, x) {
+      function T(f, g, P) {
         return l(f) || v.apply(this, arguments);
       }
       function E(f, g) {
-        var x = this, D, q, O, X = "loglevel";
+        var P = this, D, q, O, X = "loglevel";
         typeof f == "string" ? X += ":" + f : typeof f == "symbol" && (X = void 0);
         function C(R) {
           var M = (n[R] || "silent").toUpperCase();
@@ -12710,7 +12710,7 @@ function m6() {
                 )[1]);
               } catch {
               }
-            return x.levels[R] === void 0 && (R = void 0), R;
+            return P.levels[R] === void 0 && (R = void 0), R;
           }
         }
         function p() {
@@ -12727,51 +12727,51 @@ function m6() {
         }
         function S(R) {
           var M = R;
-          if (typeof M == "string" && x.levels[M.toUpperCase()] !== void 0 && (M = x.levels[M.toUpperCase()]), typeof M == "number" && M >= 0 && M <= x.levels.SILENT)
+          if (typeof M == "string" && P.levels[M.toUpperCase()] !== void 0 && (M = P.levels[M.toUpperCase()]), typeof M == "number" && M >= 0 && M <= P.levels.SILENT)
             return M;
           throw new TypeError("log.setLevel() called with invalid level: " + R);
         }
-        x.name = f, x.levels = {
+        P.name = f, P.levels = {
           TRACE: 0,
           DEBUG: 1,
           INFO: 2,
           WARN: 3,
           ERROR: 4,
           SILENT: 5
-        }, x.methodFactory = g || T, x.getLevel = function() {
+        }, P.methodFactory = g || T, P.getLevel = function() {
           return O ?? q ?? D;
-        }, x.setLevel = function(R, M) {
-          return O = S(R), M !== !1 && C(O), d.call(x);
-        }, x.setDefaultLevel = function(R) {
-          q = S(R), F() || x.setLevel(R, !1);
-        }, x.resetLevel = function() {
-          O = null, p(), d.call(x);
-        }, x.enableAll = function(R) {
-          x.setLevel(x.levels.TRACE, R);
-        }, x.disableAll = function(R) {
-          x.setLevel(x.levels.SILENT, R);
-        }, x.rebuild = function() {
-          if (s !== x && (D = S(s.getLevel())), d.call(x), s === x)
+        }, P.setLevel = function(R, M) {
+          return O = S(R), M !== !1 && C(O), d.call(P);
+        }, P.setDefaultLevel = function(R) {
+          q = S(R), F() || P.setLevel(R, !1);
+        }, P.resetLevel = function() {
+          O = null, p(), d.call(P);
+        }, P.enableAll = function(R) {
+          P.setLevel(P.levels.TRACE, R);
+        }, P.disableAll = function(R) {
+          P.setLevel(P.levels.SILENT, R);
+        }, P.rebuild = function() {
+          if (s !== P && (D = S(s.getLevel())), d.call(P), s === P)
             for (var R in i)
               i[R].rebuild();
         }, D = S(
           s ? s.getLevel() : "WARN"
         );
         var h = F();
-        h != null && (O = S(h)), d.call(x);
+        h != null && (O = S(h)), d.call(P);
       }
       s = new E(), s.getLogger = function(g) {
         if (typeof g != "symbol" && typeof g != "string" || g === "")
           throw new TypeError("You must supply a name when creating a logger.");
-        var x = i[g];
-        return x || (x = i[g] = new E(
+        var P = i[g];
+        return P || (P = i[g] = new E(
           g,
           s.methodFactory
-        )), x;
+        )), P;
       };
-      var P = typeof window !== r ? window.log : void 0;
+      var x = typeof window !== r ? window.log : void 0;
       return s.noConflict = function() {
-        return typeof window !== r && window.log === s && (window.log = P), s;
+        return typeof window !== r && window.log === s && (window.log = x), s;
       }, s.getLoggers = function() {
         return i;
       }, s.default = s, s;
@@ -12908,11 +12908,11 @@ class h6 {
     function T() {
       const C = {};
       for (o = i.next(); o.value !== "EOF" && !lt(o, 0, "ENDSEC"); )
-        lt(o, 0, "TABLE") ? (o = i.next(), D[o.value] ? (Re.debug(o.value + " Table {"), C[D[o.value].tableName] = P(o), Re.debug("}")) : Re.debug("Unhandled Table " + o.value)) : o = i.next();
+        lt(o, 0, "TABLE") ? (o = i.next(), D[o.value] ? (Re.debug(o.value + " Table {"), C[D[o.value].tableName] = x(o), Re.debug("}")) : Re.debug("Unhandled Table " + o.value)) : o = i.next();
       return o = i.next(), C;
     }
     const E = "ENDTAB";
-    function P(C) {
+    function x(C) {
       const F = D[C.value], p = {};
       let S = 0;
       for (o = i.next(); !lt(o, 0, E); )
@@ -13067,7 +13067,7 @@ class h6 {
         }
       return Re.debug("}"), C[S] = F, C;
     }
-    function x() {
+    function P() {
       const C = {};
       let F = {}, p;
       for (Re.debug("Layer {"), o = i.next(); !lt(o, 0, "ENDTAB"); )
@@ -13107,7 +13107,7 @@ class h6 {
         tableRecordsProperty: "layers",
         tableName: "layer",
         dxfSymbolName: "LAYER",
-        parseTableRecords: x
+        parseTableRecords: P
       }
     };
     function q(C) {
@@ -13173,11 +13173,11 @@ function b6(t) {
     let v = d.flat().reverse().map((f) => l[f]).flat();
     const T = A6(v);
     T.computeVertexNormals(), T.setAttribute("normals", T.getAttribute("normal"));
-    const E = e, P = new Pt(`untitled-${o}`, {
+    const E = e, x = new Pt(`untitled-${o}`, {
       acousticMaterial: E,
       geometry: T
     });
-    n.get(u).add(P);
+    n.get(u).add(x);
   }), new $t("new room", {
     surfaces: [...n.values()]
   });
@@ -13202,13 +13202,13 @@ function S6(t) {
   return r.models.forEach((o) => {
     const u = new H.BufferGeometry(), l = [], d = [], v = [];
     o.faces.forEach((E) => {
-      E.vertices.forEach((P) => {
-        const f = a[P.vertexIndex - 1];
+      E.vertices.forEach((x) => {
+        const f = a[x.vertexIndex - 1];
         f && l.push(f.x, f.y, f.z);
-        const g = n[P.vertexNormalIndex - 1];
+        const g = n[x.vertexNormalIndex - 1];
         g && d.push(g.x, g.y, g.z);
-        const x = i[P.textureCoordsIndex - 1];
-        x && v.push(x.u, x.v, x.w);
+        const P = i[x.textureCoordsIndex - 1];
+        P && v.push(P.u, P.v, P.w);
       });
     }), u.setAttribute("position", new H.BufferAttribute(new Float32Array(l), 3, !1)), u.setAttribute("normals", new H.BufferAttribute(new Float32Array(d), 3, !1)), u.setAttribute("texCoords", new H.BufferAttribute(new Float32Array(v), 3, !1));
     const T = {
@@ -13972,8 +13972,8 @@ function P6(t, e = Pe) {
   }), r.addMessageHandler("RESTORE", (a, ...n) => {
     const i = n && n[0], s = i.file, o = i.json, u = o.meta && o.meta.version || "0.0.0";
     ((d, v) => {
-      const T = (q) => q.split(".").map((O) => parseInt(O, 10) || 0), [E, P, f] = T(d), [g, x, D] = T(v);
-      return E !== g ? E > g : P !== x ? P > x : f >= D;
+      const T = (q) => q.split(".").map((O) => parseInt(O, 10) || 0), [E, x, f] = T(d), [g, P, D] = T(v);
+      return E !== g ? E > g : x !== P ? x > P : f >= D;
     })(u, "0.2.1") ? (r.postMessage("RESTORE_CONTAINERS", o.containers), r.postMessage("RESTORE_SOLVERS", o.solvers), r.postMessage("SET_PROJECT_NAME", o.meta.name)) : (r.postMessage("RESTORE_CONTAINERS", o), r.postMessage("SET_PROJECT_NAME", s.name.replace(".json", "")));
   }), console.log("[registerMessageHandlers] Registered all message handlers");
 }
@@ -14029,23 +14029,23 @@ function x6() {
 async function E6(t, e) {
   switch (t) {
     case "ray-tracer": {
-      const { default: r } = await import("./index-H3gIQi9f.mjs");
+      const { default: r } = await import("./index-_wa2egJn.mjs");
       return new r(e).restore(e);
     }
     case "rt60": {
-      const { default: r } = await import("./index-B3r0nIUh.mjs");
+      const { default: r } = await import("./index-DtTkjuX3.mjs");
       return new r().restore(e);
     }
     case "art": {
-      const { default: r } = await import("./art-a7DC7Wdu.mjs");
+      const { default: r } = await import("./art-J3LdGPEH.mjs");
       return new r(e).restore(e);
     }
     case "image-source": {
-      const { default: r } = await import("./index-DnurVtAq.mjs");
+      const { default: r } = await import("./index-DaM-oOkX.mjs");
       return new r(e).restore(e);
     }
     case "beam-trace": {
-      const { BeamTraceSolver: r } = await import("./index-BwrZisMg.mjs");
+      const { BeamTraceSolver: r } = await import("./index-BX0-hWdu.mjs");
       return new r().restore(e);
     }
     default:
@@ -14053,7 +14053,7 @@ async function E6(t, e) {
   }
 }
 function k6() {
-  import("./events-C-i7VNj9.mjs").then((t) => t.default()), ae("LOG_SOLVER", (t) => {
+  import("./events-Bnu-PIdG.mjs").then((t) => t.default()), ae("LOG_SOLVER", (t) => {
     console.log(a0.getState().solvers[t]);
   }), ae("REMOVE_SOLVERS", (t) => {
     const e = a0.getState().solvers, r = typeof t == "string" ? [t] : t;
@@ -14739,12 +14739,12 @@ function nm(t) {
   return b1($a("", null, null, null, [""], t = A1(t), 0, [0], t));
 }
 function $a(t, e, r, a, n, i, s, o, u) {
-  for (var l = 0, d = 0, v = s, T = 0, E = 0, P = 0, f = 1, g = 1, x = 1, D = 0, q = "", O = n, X = i, C = a, F = q; g; )
-    switch (P = D, D = G0()) {
+  for (var l = 0, d = 0, v = s, T = 0, E = 0, x = 0, f = 1, g = 1, P = 1, D = 0, q = "", O = n, X = i, C = a, F = q; g; )
+    switch (x = D, D = G0()) {
       // (
       case 40:
-        if (P != 108 && P0(F, v - 1) == 58) {
-          rs(F += Je(Za(D), "&", "&\f"), "&\f") != -1 && (x = -1);
+        if (x != 108 && P0(F, v - 1) == 58) {
+          rs(F += Je(Za(D), "&", "&\f"), "&\f") != -1 && (P = -1);
           break;
         }
       // " ' [
@@ -14758,7 +14758,7 @@ function $a(t, e, r, a, n, i, s, o, u) {
       case 10:
       case 13:
       case 32:
-        F += em(P);
+        F += em(x);
         break;
       // \
       case 92:
@@ -14777,7 +14777,7 @@ function $a(t, e, r, a, n, i, s, o, u) {
         break;
       // {
       case 123 * f:
-        o[l++] = ut(F) * x;
+        o[l++] = ut(F) * P;
       // } ; \0
       case 125 * f:
       case 59:
@@ -14789,7 +14789,7 @@ function $a(t, e, r, a, n, i, s, o, u) {
             g = 0;
           // ;
           case 59 + d:
-            x == -1 && (F = Je(F, /\f/g, "")), E > 0 && ut(F) - v && Oa(E > 32 ? pl(F + ";", a, r, v - 1) : pl(Je(F, " ", "") + ";", a, r, v - 2), u);
+            P == -1 && (F = Je(F, /\f/g, "")), E > 0 && ut(F) - v && Oa(E > 32 ? pl(F + ";", a, r, v - 1) : pl(Je(F, " ", "") + ";", a, r, v - 2), u);
             break;
           // @ ;
           case 59:
@@ -14812,11 +14812,11 @@ function $a(t, e, r, a, n, i, s, o, u) {
                     $a(F, C, C, C, [""], X, 0, o, X);
                 }
         }
-        l = d = E = 0, f = x = 1, q = F = "", v = s;
+        l = d = E = 0, f = P = 1, q = F = "", v = s;
         break;
       // :
       case 58:
-        v = 1 + ut(F), E = P;
+        v = 1 + ut(F), E = x;
       default:
         if (f < 1) {
           if (D == 123)
@@ -14827,11 +14827,11 @@ function $a(t, e, r, a, n, i, s, o, u) {
         switch (F += Nn(D), D * f) {
           // &
           case 38:
-            x = d > 0 ? 1 : (F += "\f", -1);
+            P = d > 0 ? 1 : (F += "\f", -1);
             break;
           // ,
           case 44:
-            o[l++] = (ut(F) - 1) * x, x = 1;
+            o[l++] = (ut(F) - 1) * P, P = 1;
             break;
           // @
           case 64:
@@ -14839,15 +14839,15 @@ function $a(t, e, r, a, n, i, s, o, u) {
             break;
           // -
           case 45:
-            P === 45 && ut(F) == 2 && (f = 0);
+            x === 45 && ut(F) == 2 && (f = 0);
         }
     }
   return i;
 }
 function ml(t, e, r, a, n, i, s, o, u, l, d) {
-  for (var v = n - 1, T = n === 0 ? i : [""], E = Is(T), P = 0, f = 0, g = 0; P < a; ++P)
-    for (var x = 0, D = ma(t, v + 1, v = Y6(f = s[P])), q = t; x < E; ++x)
-      (q = h1(f > 0 ? T[x] + " " + D : Je(D, /&\f/g, T[x]))) && (u[g++] = q);
+  for (var v = n - 1, T = n === 0 ? i : [""], E = Is(T), x = 0, f = 0, g = 0; x < a; ++x)
+    for (var P = 0, D = ma(t, v + 1, v = Y6(f = s[x])), q = t; P < E; ++P)
+      (q = h1(f > 0 ? T[P] + " " + D : Je(D, /&\f/g, T[P]))) && (u[g++] = q);
   return Xn(t, e, r, n === 0 ? Es : o, u, l, d);
 }
 function im(t, e, r) {
@@ -15132,8 +15132,8 @@ var hm = function(e, r, a, n) {
     // means that the style elements we're looking at are only Emotion 11 server-rendered style elements
     document.querySelectorAll('style[data-emotion^="' + r + ' "]'),
     function(f) {
-      for (var g = f.getAttribute("data-emotion").split(" "), x = 1; x < g.length; x++)
-        i[g[x]] = !0;
+      for (var g = f.getAttribute("data-emotion").split(" "), P = 1; P < g.length; P++)
+        i[g[P]] = !0;
       o.push(f);
     }
   );
@@ -15144,11 +15144,11 @@ var hm = function(e, r, a, n) {
     })], T = om(l.concat(n, v)), E = function(g) {
       return Ar(nm(g), T);
     };
-    u = function(g, x, D, q) {
-      d = D, E(g ? g + "{" + x.styles + "}" : x.styles), q && (P.inserted[x.name] = !0);
+    u = function(g, P, D, q) {
+      d = D, E(g ? g + "{" + P.styles + "}" : P.styles), q && (x.inserted[P.name] = !0);
     };
   }
-  var P = {
+  var x = {
     key: r,
     sheet: new j6({
       key: r,
@@ -15163,7 +15163,7 @@ var hm = function(e, r, a, n) {
     registered: {},
     insert: u
   };
-  return P.sheet.hydrate(o), P;
+  return x.sheet.hydrate(o), x;
 }, bm = !0;
 function vm(t, e, r) {
   var a = "";
@@ -15586,9 +15586,9 @@ const Um = {
   s.current = t, o.current = r, u.current = a, l.current = n, d.current = e, We(() => {
     const T = i.current;
     if (!T) return;
-    const E = (P) => {
-      P.preventDefault();
-      const f = P.deltaY < 0 ? o.current : -o.current;
+    const E = (x) => {
+      x.preventDefault();
+      const f = x.deltaY < 0 ? o.current : -o.current;
       let g = s.current + f;
       u.current !== void 0 && (g = Math.max(u.current, g)), l.current !== void 0 && (g = Math.min(l.current, g)), Number.isNaN(g) || d.current({ value: g });
     };
@@ -15653,9 +15653,9 @@ const Um = {
   s.current = t, o.current = r, u.current = a, l.current = n, d.current = e, We(() => {
     const T = i.current;
     if (!T) return;
-    const E = (P) => {
-      P.preventDefault();
-      const f = P.deltaY < 0 ? o.current : -o.current;
+    const E = (x) => {
+      x.preventDefault();
+      const f = x.deltaY < 0 ? o.current : -o.current;
       let g = s.current + f;
       u.current !== void 0 && (g = Math.max(u.current, g)), l.current !== void 0 && (g = Math.min(l.current, g)), Number.isNaN(g) || d.current({ value: g });
     };
@@ -15838,8 +15838,8 @@ const I1 = ({
     if (!d) return;
     const v = (T) => {
       T.preventDefault();
-      const E = T.deltaY < 0 ? 1 : -1, P = i.current + E;
-      Number.isNaN(P) || $(u.current, { uuid: s.current, property: o.current, value: P });
+      const E = T.deltaY < 0 ? 1 : -1, x = i.current + E;
+      Number.isNaN(x) || $(u.current, { uuid: s.current, property: o.current, value: x });
     };
     return d.addEventListener("wheel", v, { passive: !1 }), () => d.removeEventListener("wheel", v);
   }, []), /* @__PURE__ */ c(
@@ -16083,8 +16083,8 @@ const Bi = (t, e) => ({ uuid: r, property: a, label: n, tooltip: i, elementProps
     t,
     "receiverIDs",
     r
-  ), v = o || [], T = l || [], E = Te((f, g) => v.includes(f) && T.includes(g), [v, T]), P = Te((f, g, x) => {
-    if (x) {
+  ), v = o || [], T = l || [], E = Te((f, g) => v.includes(f) && T.includes(g), [v, T]), x = Te((f, g, P) => {
+    if (P) {
       const D = v.includes(f) ? v : [...v, f], q = T.includes(g) ? T : [...T, g];
       D !== v && u({ value: D }), q !== T && d({ value: q });
     } else
@@ -16101,7 +16101,7 @@ const Bi = (t, e) => ({ uuid: r, property: a, label: n, tooltip: i, elementProps
         vc,
         {
           checked: E(f.uuid, g.uuid),
-          onChange: (x) => P(f.uuid, g.uuid, x.target.checked),
+          onChange: (P) => x(f.uuid, g.uuid, P.target.checked),
           title: `${f.name} → ${g.name}`,
           sx: C4,
           size: "small"
@@ -16625,7 +16625,7 @@ function Jr({
   tooltipText: o,
   hasToolTip: u
 }) {
-  const l = rp(i), [d, v] = be(Number(e.toFixed(l))), [T, E] = be(!1), P = Te(
+  const l = rp(i), [d, v] = be(Number(e.toFixed(l))), [T, E] = be(!1), x = Te(
     (X, C) => {
       const F = Array.isArray(C) ? C[0] : C;
       v(F), r({ id: t, value: F });
@@ -16637,7 +16637,7 @@ function Jr({
   }, [t, d, i, a, n, r]), g = Te(() => {
     const X = Di(d + i, a, n);
     v(X), r({ id: t, value: X });
-  }, [t, d, i, a, n, r]), x = Te((X) => {
+  }, [t, d, i, a, n, r]), P = Te((X) => {
     const C = X.currentTarget.value;
     v(Number(C === "." ? "0." : C));
   }, []), D = Te(() => {
@@ -16662,7 +16662,7 @@ function Jr({
           min: a,
           max: n,
           step: i,
-          onChange: P,
+          onChange: x,
           sx: ep
         }
       ),
@@ -16679,7 +16679,7 @@ function Jr({
           v(e), E(!0);
         },
         onBlur: D,
-        onChange: x,
+        onChange: P,
         onKeyDown: q,
         slotProps: {
           htmlInput: {
@@ -16711,7 +16711,7 @@ const Pl = {
   fontSize: "0.75rem",
   py: 0.5
 }, M1 = ({ uuid: t }) => {
-  const e = I5(), r = F5(), a = a0((z) => z.solvers[t]), [n, i] = be(a.uniforms.colorBrightness.value), [s, o] = be(a.mesh.scale.z), [u, l] = be(a.heightmapVariable.material.uniforms.damping.value), [d, v] = be(a.numPasses), [T, E] = be(a.running), [P, f] = be(a.recording), [g, x] = be(a.getWireframeVisible()), [D, q] = be(!1), [O, X] = be(!1), [C, F] = be(!1), [p, S] = be(a.sourceKeys), h = e.filter((z) => !a.sources[z.uuid]), [R, M] = be(!1), [W, _] = be(a.receiverKeys), te = r.filter((z) => !a.receiverKeys[z.uuid]);
+  const e = I5(), r = F5(), a = a0((z) => z.solvers[t]), [n, i] = be(a.uniforms.colorBrightness.value), [s, o] = be(a.mesh.scale.z), [u, l] = be(a.heightmapVariable.material.uniforms.damping.value), [d, v] = be(a.numPasses), [T, E] = be(a.running), [x, f] = be(a.recording), [g, P] = be(a.getWireframeVisible()), [D, q] = be(!1), [O, X] = be(!1), [C, F] = be(!1), [p, S] = be(a.sourceKeys), h = e.filter((z) => !a.sources[z.uuid]), [R, M] = be(!1), [W, _] = be(a.receiverKeys), te = r.filter((z) => !a.receiverKeys[z.uuid]);
   return /* @__PURE__ */ U("div", { children: [
     /* @__PURE__ */ U(
       Ne,
@@ -16761,7 +16761,7 @@ const Pl = {
               Xt,
               {
                 onChange: (z) => {
-                  a.setWireframeVisible(z.value), x(z.value);
+                  a.setWireframeVisible(z.value), P(z.value);
                 },
                 value: g
               }
@@ -16927,7 +16927,7 @@ const Pl = {
           onClick: (z) => {
             a.recording ? (a.recording = !1, f(!1)) : (a.recording = !0, f(!0));
           },
-          label: P ? "Stop" : "Record"
+          label: x ? "Stop" : "Record"
         }
       )
     ] }),
@@ -17327,13 +17327,13 @@ function bp() {
     uuid: W,
     name: u[W].name || W.slice(0, 8),
     type: u[W].kind || "Unknown"
-  })), [u]), E = v.rooms.length + v.sources.length + v.receivers.length + v.surfaces.length, P = T.length + 1, f = Te((W) => {
+  })), [u]), E = v.rooms.length + v.sources.length + v.receivers.length + v.surfaces.length, x = T.length + 1, f = Te((W) => {
     e(W), a(null), i(!1), gs("SELECT_OBJECT", W);
     const _ = s[W];
     _ && $("SET_SELECTION", [_]);
   }, [s]), g = Te((W) => {
     $("TOGGLE_CONTAINER_VISIBLE", W);
-  }, []), x = Te((W) => {
+  }, []), P = Te((W) => {
     $("REMOVE_CONTAINER", W), t === W && e(null);
   }, [t]), D = Te((W) => {
     a(W), e(null), i(!1);
@@ -17395,7 +17395,7 @@ function bp() {
               selected: t === W.uuid,
               onSelect: () => f(W.uuid),
               onToggleVisibility: () => g(W.uuid),
-              onDelete: () => x(W.uuid)
+              onDelete: () => P(W.uuid)
             },
             W.uuid
           ))
@@ -17416,7 +17416,7 @@ function bp() {
               selected: t === W.uuid,
               onSelect: () => f(W.uuid),
               onToggleVisibility: () => g(W.uuid),
-              onDelete: () => x(W.uuid)
+              onDelete: () => P(W.uuid)
             },
             W.uuid
           ))
@@ -17437,7 +17437,7 @@ function bp() {
               selected: t === W.uuid,
               onSelect: () => f(W.uuid),
               onToggleVisibility: () => g(W.uuid),
-              onDelete: () => x(W.uuid)
+              onDelete: () => P(W.uuid)
             },
             W.uuid
           ))
@@ -17458,7 +17458,7 @@ function bp() {
               selected: t === W.uuid,
               onSelect: () => f(W.uuid),
               onToggleVisibility: () => g(W.uuid),
-              onDelete: () => x(W.uuid),
+              onDelete: () => P(W.uuid),
               onHover: () => F(W.uuid),
               onUnhover: () => p(W.uuid)
             },
@@ -17471,7 +17471,7 @@ function bp() {
     /* @__PURE__ */ U(ri, { defaultExpanded: !0, disableGutters: !0, sx: qi, children: [
       /* @__PURE__ */ U(ai, { expandIcon: /* @__PURE__ */ c(J0, {}), sx: Oi, children: [
         /* @__PURE__ */ c(Fe, { variant: "subtitle2", sx: { fontWeight: 600, fontSize: "0.75rem" }, children: "Solvers" }),
-        /* @__PURE__ */ c(oo, { label: P, size: "small", sx: { height: 18, fontSize: "0.625rem" } }),
+        /* @__PURE__ */ c(oo, { label: x, size: "small", sx: { height: 18, fontSize: "0.625rem" } }),
         /* @__PURE__ */ c(ds, { title: l ? "Auto-calculate ON" : "Auto-calculate OFF", children: /* @__PURE__ */ c(
           J,
           {
@@ -18237,7 +18237,7 @@ const _p = { className: "react-tabs", focus: !1 }, Kp = { children: G1 }, Zp = (
   }
   function T(q) {
     const { direction: O, disableUpDownKeys: X, disableLeftRightKeys: C } = t;
-    if (P(q.target)) {
+    if (x(q.target)) {
       let { selectedIndex: F } = t, p = !1, S = !1;
       (q.code === "Space" || q.keyCode === 32 || q.code === "Enter" || q.keyCode === 13) && (p = !0, S = !1, E(q)), !C && (q.keyCode === 37 || q.code === "ArrowLeft") || !X && (q.keyCode === 38 || q.code === "ArrowUp") ? (O === "rtl" ? F = i(F) : F = s(F), p = !0, S = !0) : !C && (q.keyCode === 39 || q.code === "ArrowRight") || !X && (q.keyCode === 40 || q.code === "ArrowDown") ? (O === "rtl" ? F = s(F) : F = i(F), p = !0, S = !0) : q.keyCode === 35 || q.code === "End" ? (F = u(), p = !0, S = !0) : (q.keyCode === 36 || q.code === "Home") && (F = o(), p = !0, S = !0), p && q.preventDefault(), S && n(F, q);
     }
@@ -18245,7 +18245,7 @@ const _p = { className: "react-tabs", focus: !1 }, Kp = { children: G1 }, Zp = (
   function E(q) {
     let O = q.target;
     do
-      if (P(O)) {
+      if (x(O)) {
         if (Yt(O))
           return;
         const X = [].slice.call(O.parentNode.children).filter(Il).indexOf(O);
@@ -18254,7 +18254,7 @@ const _p = { className: "react-tabs", focus: !1 }, Kp = { children: G1 }, Zp = (
       }
     while ((O = O.parentNode) != null);
   }
-  function P(q) {
+  function x(q) {
     if (!Il(q))
       return !1;
     let O = q.parentElement;
@@ -18265,9 +18265,9 @@ const _p = { className: "react-tabs", focus: !1 }, Kp = { children: G1 }, Zp = (
     } while (O);
     return !1;
   }
-  const f = Object.assign({}, _p, t), { className: g, domRef: x } = f, D = Jp(f, Yp);
+  const f = Object.assign({}, _p, t), { className: g, domRef: P } = f, D = Jp(f, Yp);
   return j0.createElement("div", Object.assign({}, D, { className: Yn(g), onClick: E, onKeyDown: T, ref: (q) => {
-    a.current = q, x && x(q);
+    a.current = q, P && P(q);
   }, "data-rttabs": !0 }), v());
 };
 var $p = {};
@@ -18299,11 +18299,11 @@ const r8 = 0, tn = 1, a8 = { children: G1, onSelect: Vp, selectedIndex: Gp }, n8
     }, [f]);
   }
   i8(o, d);
-  const E = (f, g, x) => {
-    typeof s == "function" && s(f, g, x) === !1 || (i && l(!0), d === tn && T(f));
+  const E = (f, g, P) => {
+    typeof s == "function" && s(f, g, P) === !1 || (i && l(!0), d === tn && T(f));
   };
-  let P = Object.assign({}, t, o);
-  return P.focus = u, P.onSelect = E, v != null && (P.selectedIndex = v), delete P.defaultFocus, delete P.defaultIndex, delete P.focusTabOnClick, j0.createElement(Zp, P, r);
+  let x = Object.assign({}, t, o);
+  return x.focus = u, x.onSelect = E, v != null && (x.selectedIndex = v), delete x.defaultFocus, delete x.defaultIndex, delete x.focusTabOnClick, j0.createElement(Zp, x, r);
 };
 K1.tabsRole = "Tabs";
 const s8 = ["children", "className"];
@@ -18336,8 +18336,8 @@ const Ri = "react-tabs__tab", d8 = { className: Ri, disabledClassName: `${Ri}--d
   const r = Object.assign({}, d8, t), { children: a, className: n, disabled: i, disabledClassName: s, focus: o, id: u, selected: l, selectedClassName: d, tabIndex: v, tabRef: T } = r, E = u8(r, c8);
   return We(() => {
     l && o && e.current.focus();
-  }, [l, o]), j0.createElement("li", Object.assign({}, E, { className: Yn(n, { [d]: l, [s]: i }), ref: (P) => {
-    e.current = P, T && T(P);
+  }, [l, o]), j0.createElement("li", Object.assign({}, E, { className: Yn(n, { [d]: l, [s]: i }), ref: (x) => {
+    e.current = x, T && T(x);
   }, role: "tab", id: `tab${u}`, "aria-selected": l ? "true" : "false", "aria-disabled": i ? "true" : "false", "aria-controls": `panel${u}`, tabIndex: v || (l ? "0" : null), "data-rttab": !0 }), a);
 };
 $1.tabsRole = "Tab";
@@ -18543,7 +18543,7 @@ function Xr(t, e, r) {
   return { y: t, m: e, d: r, H: 0, M: 0, S: 0, L: 0 };
 }
 function F8(t) {
-  var e = t.dateTime, r = t.date, a = t.time, n = t.periods, i = t.days, s = t.shortDays, o = t.months, u = t.shortMonths, l = Ur(n), d = zr(n), v = Ur(i), T = zr(i), E = Ur(s), P = zr(s), f = Ur(o), g = zr(o), x = Ur(u), D = zr(u), q = {
+  var e = t.dateTime, r = t.date, a = t.time, n = t.periods, i = t.days, s = t.shortDays, o = t.months, u = t.shortMonths, l = Ur(n), d = zr(n), v = Ur(i), T = zr(i), E = Ur(s), x = zr(s), f = Ur(o), g = zr(o), P = Ur(u), D = zr(u), q = {
     a: se,
     A: ue,
     b: K,
@@ -18681,14 +18681,14 @@ function F8(t) {
   }
   function h(m, w, L) {
     var N = E.exec(w.slice(L));
-    return N ? (m.w = P.get(N[0].toLowerCase()), L + N[0].length) : -1;
+    return N ? (m.w = x.get(N[0].toLowerCase()), L + N[0].length) : -1;
   }
   function R(m, w, L) {
     var N = v.exec(w.slice(L));
     return N ? (m.w = T.get(N[0].toLowerCase()), L + N[0].length) : -1;
   }
   function M(m, w, L) {
-    var N = x.exec(w.slice(L));
+    var N = P.exec(w.slice(L));
     return N ? (m.m = D.get(N[0].toLowerCase()), L + N[0].length) : -1;
   }
   function W(m, w, L) {
@@ -19045,7 +19045,7 @@ const zl = (t) => t.time, Xi = (t) => t.pressure[0], uu = (t, e) => [...Array(e 
   We(() => ae("UPDATE_RESULT", (D) => {
     D.uuid === t && d(D.result.data);
   }), [t]);
-  const T = 60, E = e - T, P = r - T, f = H0(
+  const T = 60, E = e - T, x = r - T, f = H0(
     () => aa({
       range: [0, E],
       domain: [0, l && l.length > 0 ? Math.max(...l.map(zl)) : 1]
@@ -19053,11 +19053,11 @@ const zl = (t) => t.time, Xi = (t) => t.pressure[0], uu = (t, e) => [...Array(e 
     [E, l]
   ), g = H0(
     () => aa({
-      range: [P, 0],
+      range: [x, 0],
       domain: l && l.length > 0 ? [Math.min(...l.map(Xi)) * 0.75, Math.max(...l.map(Xi))] : [0, 1]
     }),
-    [P, l]
-  ), x = H0(
+    [x, l]
+  ), P = H0(
     () => Os(
       uu(0, s.maxOrder + 1),
       du(s.maxOrder + 1)
@@ -19071,12 +19071,12 @@ const zl = (t) => t.time, Xi = (t) => t.pressure[0], uu = (t, e) => [...Array(e 
         xScale: f,
         yScale: g,
         width: E,
-        height: P,
+        height: x,
         left: T
       }
     ),
     /* @__PURE__ */ c(sn, { children: v.map((D) => {
-      const q = zl(D), O = P - g(Xi(D)), X = f(q) + T, C = P - O;
+      const q = zl(D), O = x - g(Xi(D)), X = f(q) + T, C = x - O;
       return /* @__PURE__ */ c(
         Y2,
         {
@@ -19084,7 +19084,7 @@ const zl = (t) => t.time, Xi = (t) => t.pressure[0], uu = (t, e) => [...Array(e 
           y: C,
           width: 3,
           height: O,
-          fill: x(D.order),
+          fill: P(D.order),
           className: "test-bar-class",
           onMouseOver: () => {
           },
@@ -19097,26 +19097,26 @@ const zl = (t) => t.time, Xi = (t) => t.pressure[0], uu = (t, e) => [...Array(e 
         `bar-${D.arrival}`
       );
     }) }),
-    /* @__PURE__ */ c(ps, { scale: f, top: P, left: T, label: "Time (s)" }),
+    /* @__PURE__ */ c(ps, { scale: f, top: x, left: T, label: "Time (s)" }),
     /* @__PURE__ */ c(hs, { scale: g, left: T, label: "Sound Pressure Level (dB re: 20uPa)" })
   ] });
 }, L7 = ({ uuid: t, width: e = 400, height: r = 300, events: a = !1 }) => {
-  const { name: n, info: i, from: s } = D0(E0((g) => W0(["name", "info", "from"], g.results[t]))), o = a0((g) => g.solvers[s]), u = o?.plotOrders ?? [], l = o?.frequencies ?? [125, 250, 500, 1e3, 2e3, 4e3, 8e3], d = o?.kind, [v, T] = be(u), [E, P] = be(i.maxOrder);
+  const { name: n, info: i, from: s } = D0(E0((g) => W0(["name", "info", "from"], g.results[t]))), o = a0((g) => g.solvers[s]), u = o?.plotOrders ?? [], l = o?.frequencies ?? [125, 250, 500, 1e3, 2e3, 4e3, 8e3], d = o?.kind, [v, T] = be(u), [E, x] = be(i.maxOrder);
   We(() => ae("UPDATE_RESULT", (g) => {
     if (g.uuid === t) {
-      const x = g.result.info.maxOrder;
-      P(x);
-      const D = Array.from({ length: x + 1 }, (q, O) => O);
+      const P = g.result.info.maxOrder;
+      x(P);
+      const D = Array.from({ length: P + 1 }, (q, O) => O);
       T(D);
     }
   }), [t]), We(() => {
     const g = ae("IMAGESOURCE_SET_PROPERTY", (D) => {
       D.uuid === s && D.property === "plotOrders" && T(D.value);
-    }), x = ae("BEAMTRACE_SET_PROPERTY", (D) => {
+    }), P = ae("BEAMTRACE_SET_PROPERTY", (D) => {
       D.uuid === s && D.property === "plotOrders" && T(D.value);
     });
     return () => {
-      g(), x();
+      g(), P();
     };
   }, [s]);
   const f = H0(
@@ -19131,21 +19131,21 @@ const zl = (t) => t.time, Xi = (t) => t.pressure[0], uu = (t, e) => [...Array(e 
     /* @__PURE__ */ U(J, { sx: H7, children: [
       /* @__PURE__ */ c(J, { sx: q7, children: /* @__PURE__ */ c(wc, { debounceTime: 10, children: ({ width: g }) => /* @__PURE__ */ c(R7, { width: g, height: r, uuid: t, events: a, plotOrders: v, solverKind: d }) }) }),
       /* @__PURE__ */ U(J, { sx: jl, children: [
-        /* @__PURE__ */ c(Pc, { scale: f, labelFormat: (g) => `Order ${g}`, children: (g) => /* @__PURE__ */ c(J, { sx: Gl, children: g.map((x, D) => /* @__PURE__ */ U(
+        /* @__PURE__ */ c(Pc, { scale: f, labelFormat: (g) => `Order ${g}`, children: (g) => /* @__PURE__ */ c(J, { sx: Gl, children: g.map((P, D) => /* @__PURE__ */ U(
           co,
           {
             margin: "0 5px",
             onClick: () => {
             },
             children: [
-              /* @__PURE__ */ c("svg", { width: Wa, height: Wa, children: /* @__PURE__ */ c("rect", { fill: x.value, width: Wa, height: Wa }) }),
-              /* @__PURE__ */ c(K2, { align: "left", margin: "0 0 0 4px", children: x.text }),
+              /* @__PURE__ */ c("svg", { width: Wa, height: Wa, children: /* @__PURE__ */ c("rect", { fill: P.value, width: Wa, height: Wa }) }),
+              /* @__PURE__ */ c(K2, { align: "left", margin: "0 0 0 4px", children: P.text }),
               /* @__PURE__ */ c(
                 Xt,
                 {
-                  value: v.includes(x.datum),
+                  value: v.includes(P.datum),
                   onChange: (q) => {
-                    const O = q.value ? cf([...v, x.datum]) : v.reduce((C, F) => F === x.datum ? C : [...C, F], []);
+                    const O = q.value ? cf([...v, P.datum]) : v.reduce((C, F) => F === P.datum ? C : [...C, F], []);
                     $(d === "beam-trace" ? "BEAMTRACE_SET_PROPERTY" : "IMAGESOURCE_SET_PROPERTY", { uuid: s, property: "plotOrders", value: O });
                   }
                 }
@@ -19173,7 +19173,7 @@ const zl = (t) => t.time, Xi = (t) => t.pressure[0], uu = (t, e) => [...Array(e 
                   Xt,
                   {
                     value: g === i.frequency[0],
-                    onChange: (x) => {
+                    onChange: (P) => {
                       $(d === "beam-trace" ? "BEAMTRACE_SET_PROPERTY" : "IMAGESOURCE_SET_PROPERTY", { uuid: s, property: "plotFrequency", value: g });
                     }
                   }
@@ -19221,7 +19221,7 @@ const Yl = (t) => t.frequency.toString(), Jl = {
     domain: o,
     padding: 0.1
   }), d = aa({
-    domain: [0, Math.round(Math.max(...i.map((g) => Math.max(...o.map((x) => Number(g[x]))))) * 1.5 * 10) / 10]
+    domain: [0, Math.round(Math.max(...i.map((g) => Math.max(...o.map((P) => Number(g[P]))))) * 1.5 * 10) / 10]
   }), v = Sc({
     domain: o,
     range: [fu, mu, pu]
@@ -19229,13 +19229,13 @@ const Yl = (t) => t.frequency.toString(), Jl = {
   We(() => ae("UPDATE_RESULT", (g) => {
     g.uuid === t && s(g.result.data);
   }), [t]);
-  const T = 60, E = 30, P = e - T, f = r - E;
-  return u.rangeRound([0, P]), l.rangeRound([0, u.bandwidth()]), d.range([f, 0]), console.log(i), e < 10 ? null : /* @__PURE__ */ U("svg", { width: e, height: r, children: [
+  const T = 60, E = 30, x = e - T, f = r - E;
+  return u.rangeRound([0, x]), l.rangeRound([0, u.bandwidth()]), d.range([f, 0]), console.log(i), e < 10 ? null : /* @__PURE__ */ U("svg", { width: e, height: r, children: [
     /* @__PURE__ */ c(
       _2,
       {
         scale: d,
-        width: P,
+        width: x,
         height: f,
         left: T
       }
@@ -19251,7 +19251,7 @@ const Yl = (t) => t.frequency.toString(), Jl = {
         x1Scale: l,
         yScale: d,
         color: v,
-        children: (g) => g.map((x) => /* @__PURE__ */ c(sn, { left: x.x0, children: x.bars.map((D) => /* @__PURE__ */ c(
+        children: (g) => g.map((P) => /* @__PURE__ */ c(sn, { left: P.x0, children: P.bars.map((D) => /* @__PURE__ */ c(
           "rect",
           {
             x: D.x,
@@ -19266,8 +19266,8 @@ const Yl = (t) => t.frequency.toString(), Jl = {
               alert(JSON.stringify({ key: q, value: O }));
             }
           },
-          `bar-group-bar-${x.index}-${D.index}-${D.value}-${D.key}`
-        )) }, `bar-group-${x.index}-${x.x0}`))
+          `bar-group-bar-${P.index}-${D.index}-${D.value}-${D.key}`
+        )) }, `bar-group-${P.index}-${P.x0}`))
       }
     ) }),
     /* @__PURE__ */ c(
@@ -19541,11 +19541,6 @@ function pr(t) {
     ] })
   ] });
 }
-function uh(t) {
-  return t.replace(/\w\S*/g, function(e) {
-    return e.charAt(0).toUpperCase() + e.substr(1).toLowerCase();
-  });
-}
 function jr(t) {
   const [e, r] = be(null), a = t.items || ["Delete", "!seperator", "Add To Global Variables", "Log to Console"], n = Te((o) => {
     o.preventDefault(), r(
@@ -19606,7 +19601,7 @@ function gu(t) {
 function Au(t) {
   return /* @__PURE__ */ c(od, { ...t });
 }
-const dh = {
+const uh = {
   flexGrow: 1,
   "& .MuiTreeItem-content": {
     py: 0.25
@@ -19632,120 +19627,120 @@ const dh = {
   "& .MuiTreeItem-group": {
     ml: 1.75
   }
-}, fh = {
+}, dh = {
   bgcolor: "action.selected",
   borderRadius: 0.5
-}, mh = wn(function t(e) {
-  const { container: r, expanded: a, setExpanded: n, parent: i } = e, [s, o] = be(r.selected), [u, l] = be(r.name), d = !0, v = r.uuid, T = r.uuid, E = uh(r.kind), P = u || "untitled", f = Te((h) => {
-    r.kind !== "room" && $(h.shiftKey ? "APPEND_SELECTION" : "SET_SELECTION", [r]);
+}, fh = wn(function t(e) {
+  const { container: r, expanded: a, setExpanded: n, parent: i } = e, [s, o] = be(r.selected), [u, l] = be(r.name), d = !0, v = r.uuid, T = r.uuid, E = u || "untitled", x = Te((S) => {
+    r.kind !== "room" && $(S.shiftKey ? "APPEND_SELECTION" : "SET_SELECTION", [r]);
   }, [r]);
-  We(() => ae("APPEND_SELECTION", (h) => {
-    h.includes(r) && o(!0);
-  }), [r]), We(() => ae("SET_SELECTION", (h) => {
-    o(h.includes(r));
+  We(() => ae("APPEND_SELECTION", (S) => {
+    S.includes(r) && o(!0);
+  }), [r]), We(() => ae("SET_SELECTION", (S) => {
+    o(S.includes(r));
   }), [r]);
-  const g = `${r.kind.toUpperCase()}_SET_PROPERTY`;
-  We(() => ae(g, ({ uuid: h, property: R, value: M }) => {
-    h === r.uuid && R === "name" && l(M);
-  }), [r.uuid, g]);
-  const x = /* @__PURE__ */ c(pr, { label: P, meta: E }), D = /* @__PURE__ */ c(pr, { icon: /* @__PURE__ */ c(hu, { fontSize: "inherit" }), label: P, meta: E }), q = (h) => {
-    if (h.target.textContent)
-      switch (h.target.textContent) {
+  const f = `${r.kind.toUpperCase()}_SET_PROPERTY`;
+  We(() => ae(f, ({ uuid: S, property: h, value: R }) => {
+    S === r.uuid && h === "name" && l(R);
+  }), [r.uuid, f]);
+  const g = /* @__PURE__ */ c(pr, { label: E }), P = /* @__PURE__ */ c(pr, { icon: /* @__PURE__ */ c(hu, { fontSize: "inherit" }), label: E }), D = (S) => {
+    if (S.target.textContent)
+      switch (S.target.textContent) {
         case "Delete":
           {
-            const R = new Set(a);
-            r.traverse((W) => {
-              R.has(W.uuid) && R.delete(W.uuid);
-            }), $("DESELECT_ALL_OBJECTS"), n([...R]);
-            const M = [];
-            r.traverse((W) => {
-              W.kind && ["surface", "source", "receiver", "room"].includes(W.kind) && M.push(W.uuid);
-            }), $("REMOVE_CONTAINERS", M);
+            const h = new Set(a);
+            r.traverse((M) => {
+              h.has(M.uuid) && h.delete(M.uuid);
+            }), $("DESELECT_ALL_OBJECTS"), n([...h]);
+            const R = [];
+            r.traverse((M) => {
+              M.kind && ["surface", "source", "receiver", "room"].includes(M.kind) && R.push(M.uuid);
+            }), $("REMOVE_CONTAINERS", R);
           }
           break;
         case "Log to Console":
           console.log(r);
           break;
       }
-  }, O = ["Delete", "Log to Console"], X = (h) => {
-    h.preventDefault();
+  }, q = ["Delete", "Log to Console"], O = (S) => {
+    S.preventDefault();
   };
   if (r.parent?.uuid !== i)
     return /* @__PURE__ */ c(A0, {});
-  const C = /* @__PURE__ */ c(pr, { icon: /* @__PURE__ */ c(Ns, { fontSize: "inherit" }), label: P, meta: E }), F = /* @__PURE__ */ c(pr, { icon: /* @__PURE__ */ c(gu, { fontSize: "inherit" }), label: P, meta: E }), p = /* @__PURE__ */ c(pr, { icon: /* @__PURE__ */ c(Au, { fontSize: "inherit" }), label: P, meta: E }), S = {
-    onClick: f,
-    sx: s ? fh : void 0
+  const X = /* @__PURE__ */ c(pr, { icon: /* @__PURE__ */ c(Ns, { fontSize: "inherit" }), label: E }), C = /* @__PURE__ */ c(pr, { icon: /* @__PURE__ */ c(gu, { fontSize: "inherit" }), label: E }), F = /* @__PURE__ */ c(pr, { icon: /* @__PURE__ */ c(Au, { fontSize: "inherit" }), label: E }), p = {
+    onClick: x,
+    sx: s ? dh : void 0
   };
   switch (r.kind) {
     case "surface":
-      return /* @__PURE__ */ c(jr, { handleMenuItemClick: q, items: O, children: /* @__PURE__ */ c(
+      return /* @__PURE__ */ c(jr, { handleMenuItemClick: D, items: q, children: /* @__PURE__ */ c(
         mr,
         {
-          label: C,
-          slotProps: { content: S },
+          label: X,
+          slotProps: { content: p },
           draggable: d,
           itemId: T
         }
       ) }, v + "context-menu");
     case "source":
-      return /* @__PURE__ */ c(jr, { handleMenuItemClick: q, items: O, children: /* @__PURE__ */ c(
+      return /* @__PURE__ */ c(jr, { handleMenuItemClick: D, items: q, children: /* @__PURE__ */ c(
         mr,
         {
-          label: F,
-          slotProps: { content: S },
+          label: C,
+          slotProps: { content: p },
           draggable: d,
           itemId: T
         }
       ) }, v + "context-menu");
     case "receiver":
-      return /* @__PURE__ */ c(jr, { handleMenuItemClick: q, items: O, children: /* @__PURE__ */ c(
+      return /* @__PURE__ */ c(jr, { handleMenuItemClick: D, items: q, children: /* @__PURE__ */ c(
         mr,
         {
-          label: p,
-          slotProps: { content: S },
+          label: F,
+          slotProps: { content: p },
           draggable: d,
           itemId: T
         }
       ) }, v + "context-menu");
     case "room":
-      return /* @__PURE__ */ c(jr, { handleMenuItemClick: q, items: O, children: /* @__PURE__ */ c(
+      return /* @__PURE__ */ c(jr, { handleMenuItemClick: D, items: q, children: /* @__PURE__ */ c(
         mr,
         {
-          label: D,
+          label: P,
           slots: { collapseIcon: J0, expandIcon: Et },
-          onKeyDown: X,
+          onKeyDown: O,
           draggable: d,
           itemId: T,
-          children: r.children.filter((h) => h instanceof t0 && h.parent?.uuid === r.uuid).map((h) => /* @__PURE__ */ c(
+          children: r.children.filter((S) => S instanceof t0 && S.parent?.uuid === r.uuid).map((S) => /* @__PURE__ */ c(
             t,
             {
               parent: r.uuid,
-              container: h,
+              container: S,
               expanded: a,
               setExpanded: n
             },
-            h.uuid + "-map-children"
+            S.uuid + "-map-children"
           ))
         }
       ) }, v + "context-menu");
     case "container":
-      return /* @__PURE__ */ c(jr, { handleMenuItemClick: q, items: O, children: /* @__PURE__ */ c(
+      return /* @__PURE__ */ c(jr, { handleMenuItemClick: D, items: q, children: /* @__PURE__ */ c(
         mr,
         {
-          label: x,
+          label: g,
           slots: { collapseIcon: J0, expandIcon: Et },
-          onKeyDown: X,
+          onKeyDown: O,
           draggable: d,
           itemId: T,
-          children: r.children.filter((h) => h instanceof t0 && h.parent?.uuid === r.uuid).map((h) => /* @__PURE__ */ c(
+          children: r.children.filter((S) => S instanceof t0 && S.parent?.uuid === r.uuid).map((S) => /* @__PURE__ */ c(
             t,
             {
               parent: r.uuid,
-              container: h,
+              container: S,
               expanded: a,
               setExpanded: n
             },
-            h.uuid + "-map-children"
+            S.uuid + "-map-children"
           ))
         }
       ) }, v + "context-menu");
@@ -19753,7 +19748,7 @@ const dh = {
       return /* @__PURE__ */ c(A0, {});
   }
 });
-function ph() {
+function mh() {
   const { containers: t, getWorkspace: e } = Be(E0((u) => W0(["containers", "getWorkspace"], u))), [r, a] = be(["containers"]), n = Object.keys(t).length === 0, i = /* @__PURE__ */ c(
     pr,
     {
@@ -19766,7 +19761,7 @@ function ph() {
       expandedItems: r,
       onExpandedItemsChange: (u, l) => a(l),
       disableSelection: !0,
-      sx: dh,
+      sx: uh,
       children: /* @__PURE__ */ c(
         mr,
         {
@@ -19777,7 +19772,7 @@ function ph() {
           },
           itemId: "containers",
           children: s.map((u) => /* @__PURE__ */ c(
-            mh,
+            fh,
             {
               parent: o ? o.uuid : "",
               container: t[u],
@@ -19791,7 +19786,7 @@ function ph() {
     }
   ) : /* @__PURE__ */ c(A0, {});
 }
-const hh = (t, e) => t < e ? t : e, bu = {
+const ph = (t, e) => t < e ? t : e, bu = {
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
@@ -19801,20 +19796,20 @@ const hh = (t, e) => t < e ? t : e, bu = {
   "&:hover": {
     bgcolor: "action.hover"
   }
-}, gh = {
+}, hh = {
   ...bu,
   bgcolor: "primary.light",
   "&:hover": {
     bgcolor: "primary.light"
   }
-}, Ah = {
+}, gh = {
   width: 100,
   height: 16,
   borderRadius: 0.5
-}, bh = {
+}, Ah = {
   textAlign: "center",
   px: 0.5
-}, vh = ({ item: t }) => {
+}, bh = ({ item: t }) => {
   const { set: e, selectedMaterial: r } = nr(E0((i) => W0(["set", "selectedMaterial"], i))), a = r === t.uuid;
   return /* @__PURE__ */ U(
     Pn,
@@ -19823,23 +19818,23 @@ const hh = (t, e) => t < e ? t : e, bu = {
         i.selectedMaterial = t.uuid;
       }),
       selected: a,
-      sx: a ? gh : bu,
+      sx: a ? hh : bu,
       children: [
         /* @__PURE__ */ c(Fe, { variant: "body2", sx: { fontSize: "0.75rem", flex: 1 }, children: t.material }),
-        /* @__PURE__ */ c(J, { sx: { ...Ah, background: nh(t.absorption) } })
+        /* @__PURE__ */ c(J, { sx: { ...gh, background: nh(t.absorption) } })
       ]
     }
   );
-}, yh = ({ absorption: t }) => {
+}, vh = ({ absorption: t }) => {
   const e = Object.keys(t);
-  return /* @__PURE__ */ c(J, { sx: { display: "flex", gap: 0.5, my: 1 }, children: e.map((r) => /* @__PURE__ */ U(J, { sx: bh, children: [
+  return /* @__PURE__ */ c(J, { sx: { display: "flex", gap: 0.5, my: 1 }, children: e.map((r) => /* @__PURE__ */ U(J, { sx: Ah, children: [
     /* @__PURE__ */ U(Fe, { variant: "caption", color: "text.secondary", sx: { display: "block" }, children: [
       r,
       "Hz"
     ] }),
     /* @__PURE__ */ c(Fe, { variant: "body2", sx: { fontWeight: 500 }, children: t[r] })
   ] }, `${r}-${t[r]}`)) });
-}, Sh = () => {
+}, yh = () => {
   const t = nr((e) => e.materials.get(e.selectedMaterial));
   return t ? /* @__PURE__ */ U(J, { sx: { mt: 2 }, children: [
     /* @__PURE__ */ c(Fe, { variant: "subtitle1", sx: { fontWeight: 600 }, children: t.name }),
@@ -19847,9 +19842,9 @@ const hh = (t, e) => t < e ? t : e, bu = {
       /* @__PURE__ */ c(Fe, { variant: "body2", children: t.material }),
       /* @__PURE__ */ c(Fe, { variant: "caption", color: "text.secondary", children: t.uuid })
     ] }),
-    /* @__PURE__ */ c(yh, { absorption: t.absorption })
+    /* @__PURE__ */ c(vh, { absorption: t.absorption })
   ] }) : /* @__PURE__ */ c(Fe, { variant: "body2", color: "text.secondary", sx: { py: 2 }, children: "Nothing Selected" });
-}, Ch = () => {
+}, Sh = () => {
   const { bufferLength: t, query: e, search: r } = nr(E0((n) => W0(["bufferLength", "query", "search"], n))), a = H0(() => r(e), [e, r]);
   return /* @__PURE__ */ c(
     zi,
@@ -19864,10 +19859,10 @@ const hh = (t, e) => t < e ? t : e, bu = {
         boxShadow: "inset 0 0 8px rgba(0,0,0,0.1)",
         p: 0
       },
-      children: a.slice(0, hh(t, a.length)).map((n) => /* @__PURE__ */ c(vh, { item: n }, `item-${n.uuid}`))
+      children: a.slice(0, ph(t, a.length)).map((n) => /* @__PURE__ */ c(bh, { item: n }, `item-${n.uuid}`))
     }
   );
-}, wh = () => {
+}, Ch = () => {
   const t = Be((a) => a.selectedObjects), e = H0(() => [...t].filter((a) => a.kind === "surface"), [t]), r = nr((a) => a.materials.get(a.selectedMaterial));
   return /* @__PURE__ */ c(J, { sx: { mt: 2 }, children: /* @__PURE__ */ c(
     Ut,
@@ -19928,7 +19923,7 @@ const hh = (t, e) => t < e ? t : e, bu = {
             p: 2,
             borderRight: 1,
             borderColor: "divider"
-          }, children: /* @__PURE__ */ c(ph, {}) }),
+          }, children: /* @__PURE__ */ c(mh, {}) }),
           /* @__PURE__ */ U(J, { sx: {
             overflow: "auto",
             p: 2,
@@ -19949,7 +19944,7 @@ const hh = (t, e) => t < e ? t : e, bu = {
                 }
               }
             ),
-            /* @__PURE__ */ c(Ch, {}),
+            /* @__PURE__ */ c(Sh, {}),
             /* @__PURE__ */ c(
               ed,
               {
@@ -19963,23 +19958,23 @@ const hh = (t, e) => t < e ? t : e, bu = {
               }
             ),
             /* @__PURE__ */ c(xt, { sx: { my: 2 } }),
-            /* @__PURE__ */ c(Sh, {}),
-            /* @__PURE__ */ c(wh, {})
+            /* @__PURE__ */ c(yh, {}),
+            /* @__PURE__ */ c(Ch, {})
           ] })
         ] })
       ]
     }
   );
-}, Ph = {
+}, wh = {
   height: "100%",
   width: "100%",
   userSelect: "none"
 };
-function xh({ children: t }) {
-  return /* @__PURE__ */ c(J, { id: "editor-container", sx: Ph, children: t });
+function Ph({ children: t }) {
+  return /* @__PURE__ */ c(J, { id: "editor-container", sx: wh, children: t });
 }
 const Kl = 250;
-class Eh extends j0.Component {
+class xh extends j0.Component {
   state;
   canvas;
   canvasOverlay;
@@ -20023,7 +20018,7 @@ class Eh extends j0.Component {
     Lt.setItem("layout", JSON.stringify(e));
   }
   render() {
-    const { showNavBar: e = !0, fixedPanelWidth: r } = this.props, { resultsPanelOpen: a } = this.state, n = r ?? this.rightPanelSize, i = /* @__PURE__ */ U(xh, { children: [
+    const { showNavBar: e = !0, fixedPanelWidth: r } = this.props, { resultsPanelOpen: a } = this.state, n = r ?? this.rightPanelSize, i = /* @__PURE__ */ U(Ph, { children: [
       /* @__PURE__ */ c("div", { id: "response-overlay", className: "response_overlay response_overlay-hidden", ref: this.responseOverlay }),
       /* @__PURE__ */ c("div", { id: "canvas_overlay", ref: this.canvasOverlay }),
       /* @__PURE__ */ c("div", { id: "orientation-overlay", ref: this.orientationOverlay }),
@@ -20075,7 +20070,7 @@ class Eh extends j0.Component {
     ] });
   }
 }
-function kh() {
+function Eh() {
   try {
     const t = Lt.getItem("layout");
     if (t)
@@ -20085,7 +20080,7 @@ function kh() {
   }
   return JSON.parse(ws);
 }
-const yb = cs(
+const vb = cs(
   function(e, r) {
     const {
       initialProject: a,
@@ -20097,9 +20092,9 @@ const yb = cs(
       fixedPanelWidth: l
     } = e, d = $e(!1);
     Ps(o);
-    const v = $e(kh());
-    We(() => i ? Ve.subscribe((P, f) => {
-      if (P.hasUnsavedChanges && !f.hasUnsavedChanges)
+    const v = $e(Eh());
+    We(() => i ? Ve.subscribe((x, f) => {
+      if (x.hasUnsavedChanges && !f.hasUnsavedChanges)
         try {
           const g = T();
           i(g);
@@ -20128,7 +20123,7 @@ const yb = cs(
       console.log("[CRAMEditor] Cleanup complete");
     }), []);
     const T = Te(() => {
-      const E = Pe.postMessage("SAVE_CONTAINERS")[0] || [], P = Pe.postMessage("SAVE_SOLVERS")[0] || [], { projectName: f, version: g } = Ve.getState();
+      const E = Pe.postMessage("SAVE_CONTAINERS")[0] || [], x = Pe.postMessage("SAVE_SOLVERS")[0] || [], { projectName: f, version: g } = Ve.getState();
       return {
         meta: {
           version: g,
@@ -20136,7 +20131,7 @@ const yb = cs(
           timestamp: (/* @__PURE__ */ new Date()).toISOString()
         },
         containers: E,
-        solvers: P
+        solvers: x
       };
     }, []);
     return sc(r, () => ({
@@ -20151,9 +20146,9 @@ const yb = cs(
       load: (E) => {
         Pe.postMessage("RESTORE", { json: E });
       },
-      importFile: async (E) => new Promise((P, f) => {
+      importFile: async (E) => new Promise((x, f) => {
         try {
-          Pe.postMessage("IMPORT_FILE", [E]), setTimeout(P, 100);
+          Pe.postMessage("IMPORT_FILE", [E]), setTimeout(x, 100);
         } catch (g) {
           f(g);
         }
@@ -20189,7 +20184,7 @@ const yb = cs(
         $("TOGGLE_RESULTS_PANEL", void 0);
       }
     }), [T, n]), /* @__PURE__ */ c(
-      Eh,
+      xh,
       {
         ...v.current,
         showNavBar: u,
@@ -20197,14 +20192,14 @@ const yb = cs(
       }
     );
   }
-), Ih = {
+), kh = {
   position: "relative",
   width: "100%",
   height: "100%",
   userSelect: "none",
   overflow: "hidden"
 };
-function Th() {
+function Ih() {
   try {
     const t = Lt.getItem("layout");
     if (t)
@@ -20214,7 +20209,7 @@ function Th() {
   }
   return JSON.parse(ws);
 }
-const Sb = cs(
+const yb = cs(
   function(e, r) {
     const {
       initialProject: a,
@@ -20223,13 +20218,13 @@ const Sb = cs(
       onError: s,
       storagePrefix: o = "cram"
     } = e, u = $e(null), l = $e(null), d = $e(null), v = $e(null), T = $e(!1);
-    Ps(o), $e(Th()), We(() => i ? Ve.subscribe((f, g) => {
+    Ps(o), $e(Ih()), We(() => i ? Ve.subscribe((f, g) => {
       if (f.hasUnsavedChanges && !g.hasUnsavedChanges)
         try {
-          const x = E();
-          i(x);
-        } catch (x) {
-          s?.(x);
+          const P = E();
+          i(P);
+        } catch (P) {
+          s?.(P);
         }
     }) : void 0, [i, s]), We(() => {
       a && T.current && $("RESTORE", { json: a });
@@ -20243,31 +20238,31 @@ const Sb = cs(
         console.log("[CRAMCanvas] Unmounting - cleaning up resources..."), T.current = !1, g && g.disconnect();
         try {
           Se.dispose();
-        } catch (x) {
-          console.warn("[CRAMCanvas] Error disposing renderer:", x);
+        } catch (P) {
+          console.warn("[CRAMCanvas] Error disposing renderer:", P);
         }
         try {
           Pe.clear();
-        } catch (x) {
-          console.warn("[CRAMCanvas] Error clearing messenger:", x);
+        } catch (P) {
+          console.warn("[CRAMCanvas] Error clearing messenger:", P);
         }
         try {
           Qc();
-        } catch (x) {
-          console.warn("[CRAMCanvas] Error resetting stores:", x);
+        } catch (P) {
+          console.warn("[CRAMCanvas] Error resetting stores:", P);
         }
         console.log("[CRAMCanvas] Cleanup complete");
       };
     }, []);
     const E = Te(() => {
-      const P = Pe.postMessage("SAVE_CONTAINERS")[0] || [], f = Pe.postMessage("SAVE_SOLVERS")[0] || [], { projectName: g, version: x } = Ve.getState();
+      const x = Pe.postMessage("SAVE_CONTAINERS")[0] || [], f = Pe.postMessage("SAVE_SOLVERS")[0] || [], { projectName: g, version: P } = Ve.getState();
       return {
         meta: {
-          version: x,
+          version: P,
           name: g,
           timestamp: (/* @__PURE__ */ new Date()).toISOString()
         },
-        containers: P,
+        containers: x,
         solvers: f
       };
     }, []);
@@ -20276,17 +20271,17 @@ const Sb = cs(
         $("NEW", void 0);
       },
       save: () => {
-        const P = E();
-        return n?.(P), P;
+        const x = E();
+        return n?.(x), x;
       },
-      load: (P) => {
-        $("RESTORE", { json: P });
+      load: (x) => {
+        $("RESTORE", { json: x });
       },
-      importFile: async (P) => new Promise((f, g) => {
+      importFile: async (x) => new Promise((f, g) => {
         try {
-          Pe.postMessage("IMPORT_FILE", [P]), setTimeout(f, 100);
-        } catch (x) {
-          g(x);
+          Pe.postMessage("IMPORT_FILE", [x]), setTimeout(f, 100);
+        } catch (P) {
+          g(P);
         }
       }),
       addSource: () => {
@@ -20295,7 +20290,7 @@ const Sb = cs(
       addReceiver: () => {
         Pe.postMessage("SHOULD_ADD_RECEIVER");
       },
-      addSolver: (P) => {
+      addSolver: (x) => {
         const g = {
           raytracer: "SHOULD_ADD_RAYTRACER",
           "image-source": "SHOULD_ADD_IMAGE_SOURCE",
@@ -20304,7 +20299,7 @@ const Sb = cs(
           rt60: "SHOULD_ADD_RT60",
           "energy-decay": "SHOULD_ADD_ENERGYDECAY",
           art: "ADD_ART"
-        }[P];
+        }[x];
         g && (g.startsWith("SHOULD_") ? Pe.postMessage(g) : $(g, void 0));
       },
       undo: () => {
@@ -20322,7 +20317,7 @@ const Sb = cs(
       /* @__PURE__ */ c(vu, {}),
       /* @__PURE__ */ c(f1, {}),
       /* @__PURE__ */ c(U1, {}),
-      /* @__PURE__ */ U(J, { sx: Ih, children: [
+      /* @__PURE__ */ U(J, { sx: kh, children: [
         /* @__PURE__ */ c("div", { id: "response-overlay", className: "response_overlay response_overlay-hidden", ref: v }),
         /* @__PURE__ */ c("div", { id: "canvas_overlay", ref: l }),
         /* @__PURE__ */ c("div", { id: "orientation-overlay", ref: d }),
@@ -20330,7 +20325,7 @@ const Sb = cs(
       ] })
     ] });
   }
-), Fh = (t, e) => ({
+), Th = (t, e) => ({
   display: "flex",
   alignItems: "center",
   p: "4px 8px",
@@ -20341,7 +20336,7 @@ const Sb = cs(
   "&:hover": {
     bgcolor: e ? "#b3d7ff" : "#e8ecef"
   }
-}), Bh = {
+}), Fh = {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -20352,7 +20347,7 @@ const Sb = cs(
   "& svg": {
     fontSize: 16
   }
-}, Hh = {
+}, Bh = {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -20363,7 +20358,7 @@ const Sb = cs(
   "& svg": {
     fontSize: 14
   }
-}, Dh = {
+}, Hh = {
   flex: 1,
   fontSize: 12,
   fontWeight: 500,
@@ -20371,7 +20366,7 @@ const Sb = cs(
   overflow: "hidden",
   textOverflow: "ellipsis",
   whiteSpace: "nowrap"
-}, qh = {
+}, Dh = {
   flex: 1,
   fontSize: 12,
   fontWeight: 500,
@@ -20382,7 +20377,7 @@ const Sb = cs(
   outline: "none",
   bgcolor: "white",
   minWidth: 0
-}, Oh = (t) => ({
+}, qh = (t) => ({
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -20401,13 +20396,13 @@ const Sb = cs(
     bgcolor: "#d0d7de",
     color: "#1c2127"
   }
-}), Rh = {
+}), Oh = {
   room: hu,
   source: gu,
   receiver: Au,
   surface: Ns
 };
-function Lh({
+function Rh({
   name: t,
   kind: e,
   expanded: r,
@@ -20420,13 +20415,13 @@ function Lh({
   onMouseEnter: l,
   onMouseLeave: d
 }) {
-  const [v, T] = be(!1), [E, P] = be(t), f = $e(null), g = Rh[e] || Ns;
+  const [v, T] = be(!1), [E, x] = be(t), f = $e(null), g = Oh[e] || Ns;
   We(() => {
-    P(t);
+    x(t);
   }, [t]), We(() => {
     v && f.current && (f.current.focus(), f.current.select());
   }, [v]);
-  const x = (S) => {
+  const P = (S) => {
     v || s(S);
   }, D = (S) => {
     S.stopPropagation(), i();
@@ -20435,24 +20430,24 @@ function Lh({
   }, O = (S) => {
     S.stopPropagation(), T(!0);
   }, X = (S) => {
-    P(S.target.value);
+    x(S.target.value);
   }, C = () => {
-    T(!1), E.trim() && E !== t ? u(E.trim()) : P(t);
+    T(!1), E.trim() && E !== t ? u(E.trim()) : x(t);
   }, F = (S) => {
-    S.key === "Enter" ? S.currentTarget.blur() : S.key === "Escape" && (P(t), T(!1));
+    S.key === "Enter" ? S.currentTarget.blur() : S.key === "Escape" && (x(t), T(!1));
   }, p = (S) => {
     S.stopPropagation();
   };
   return /* @__PURE__ */ U(
     J,
     {
-      sx: Fh(r, a),
-      onClick: x,
+      sx: Th(r, a),
+      onClick: P,
       onMouseEnter: l,
       onMouseLeave: d,
       children: [
-        /* @__PURE__ */ c(J, { sx: Bh, onClick: D, children: r ? /* @__PURE__ */ c(J0, {}) : /* @__PURE__ */ c(Et, {}) }),
-        /* @__PURE__ */ c(J, { sx: Hh, children: /* @__PURE__ */ c(g, {}) }),
+        /* @__PURE__ */ c(J, { sx: Fh, onClick: D, children: r ? /* @__PURE__ */ c(J0, {}) : /* @__PURE__ */ c(Et, {}) }),
+        /* @__PURE__ */ c(J, { sx: Bh, children: /* @__PURE__ */ c(g, {}) }),
         v ? /* @__PURE__ */ c(
           J,
           {
@@ -20463,24 +20458,24 @@ function Lh({
             onBlur: C,
             onKeyDown: F,
             onClick: p,
-            sx: qh
+            sx: Dh
           }
-        ) : /* @__PURE__ */ c(J, { sx: Dh, onDoubleClick: O, children: t }),
-        /* @__PURE__ */ c(J, { sx: Oh(n), onClick: q, children: n ? /* @__PURE__ */ c(fc, {}) : /* @__PURE__ */ c(mc, {}) })
+        ) : /* @__PURE__ */ c(J, { sx: Hh, onDoubleClick: O, children: t }),
+        /* @__PURE__ */ c(J, { sx: qh(n), onClick: q, children: n ? /* @__PURE__ */ c(fc, {}) : /* @__PURE__ */ c(mc, {}) })
       ]
     }
   );
 }
-const Mh = {
+const Lh = {
   borderBottom: "1px solid #e1e4e8"
-}, Nh = (t) => ({
+}, Mh = (t) => ({
   display: t ? "block" : "none",
   pl: "20px"
-}), Wh = {
+}), Nh = {
   py: "4px"
-}, Xh = {
+}, Wh = {
   borderTop: "1px solid #e1e4e8"
-}, Uh = /* @__PURE__ */ new Map([
+}, Xh = /* @__PURE__ */ new Map([
   ["room", B1],
   ["source", T1],
   ["receiver", F1],
@@ -20508,13 +20503,13 @@ function rn({ uuid: t, defaultExpanded: e = !1, isChild: r = !1 }) {
       C(), F(), p();
     };
   }, [t]);
-  const P = Te(() => {
+  const x = Te(() => {
     n((C) => !C);
   }, []), f = Te((C) => {
     v && $(C.shiftKey ? "APPEND_SELECTION" : "SET_SELECTION", [v]);
   }, [v]), g = Te(() => {
     v?.kind === "surface" && $("SURFACE_HOVER", t);
-  }, [v?.kind, t]), x = Te(() => {
+  }, [v?.kind, t]), P = Te(() => {
     v?.kind === "surface" && $("SURFACE_UNHOVER", t);
   }, [v?.kind, t]), D = Te(() => {
     if (v) {
@@ -20529,33 +20524,33 @@ function rn({ uuid: t, defaultExpanded: e = !1, isChild: r = !1 }) {
   }, [v, t]);
   if (!v)
     return null;
-  const O = v.kind || "object", X = Uh.get(O);
-  return /* @__PURE__ */ U(J, { sx: Mh, children: [
+  const O = v.kind || "object", X = Xh.get(O);
+  return /* @__PURE__ */ U(J, { sx: Lh, children: [
     /* @__PURE__ */ c(
-      Lh,
+      Rh,
       {
         name: o,
         kind: O,
         expanded: a,
         selected: i,
         visible: l,
-        onToggle: P,
+        onToggle: x,
         onSelect: f,
         onVisibilityToggle: D,
         onNameChange: q,
         onMouseEnter: g,
-        onMouseLeave: x
+        onMouseLeave: P
       }
     ),
-    /* @__PURE__ */ U(J, { sx: Nh(a), children: [
-      X && /* @__PURE__ */ c(J, { sx: Wh, children: /* @__PURE__ */ c(X, { uuid: t }) }),
-      E.length > 0 && /* @__PURE__ */ c(J, { sx: Xh, children: E.map((C) => /* @__PURE__ */ c(rn, { uuid: C, isChild: !0 }, C)) })
+    /* @__PURE__ */ U(J, { sx: Mh(a), children: [
+      X && /* @__PURE__ */ c(J, { sx: Nh, children: /* @__PURE__ */ c(X, { uuid: t }) }),
+      E.length > 0 && /* @__PURE__ */ c(J, { sx: Wh, children: E.map((C) => /* @__PURE__ */ c(rn, { uuid: C, isChild: !0 }, C)) })
     ] })
   ] });
 }
-const zh = {
+const Uh = {
   overflowY: "auto"
-}, jh = (t) => ({
+}, zh = (t) => ({
   display: "flex",
   alignItems: "center",
   p: "4px 8px",
@@ -20566,7 +20561,7 @@ const zh = {
   "&:hover": {
     bgcolor: "#e8ecef"
   }
-}), Vh = {
+}), jh = {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -20577,7 +20572,7 @@ const zh = {
   "& svg": {
     fontSize: 16
   }
-}, Gh = {
+}, Vh = {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -20588,12 +20583,12 @@ const zh = {
   "& svg": {
     fontSize: 14
   }
-}, Yh = {
+}, Gh = {
   flex: 1,
   fontSize: 12,
   fontWeight: 500,
   color: "#1c2127"
-}, Jh = {
+}, Yh = {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -20605,16 +20600,16 @@ const zh = {
   fontSize: 10,
   fontWeight: 600,
   color: "white"
-}, Qh = (t) => ({
+}, Jh = (t) => ({
   display: t ? "block" : "none",
   pl: "20px"
-}), _h = {
+}), Qh = {
   p: "24px 16px",
   textAlign: "center",
   color: "#8c959f",
   fontSize: 13
 };
-function Cb() {
+function Sb() {
   const [t, e] = be(!0), r = Be(E0((i) => i.containers)), a = H0(() => {
     const i = {
       rooms: [],
@@ -20635,24 +20630,24 @@ function Cb() {
       }
     }), i;
   }, [r]), n = a.rooms.length + a.sources.length + a.receivers.length;
-  return /* @__PURE__ */ U(J, { sx: zh, children: [
-    /* @__PURE__ */ U(J, { sx: jh(t), onClick: () => e(!t), children: [
-      /* @__PURE__ */ c(J, { sx: Vh, children: t ? /* @__PURE__ */ c(J0, {}) : /* @__PURE__ */ c(Et, {}) }),
-      /* @__PURE__ */ c(J, { sx: Gh, children: /* @__PURE__ */ c(ld, {}) }),
-      /* @__PURE__ */ c(Fe, { sx: Yh, children: "Objects" }),
-      n > 0 && /* @__PURE__ */ c(J, { sx: Jh, children: n })
+  return /* @__PURE__ */ U(J, { sx: Uh, children: [
+    /* @__PURE__ */ U(J, { sx: zh(t), onClick: () => e(!t), children: [
+      /* @__PURE__ */ c(J, { sx: jh, children: t ? /* @__PURE__ */ c(J0, {}) : /* @__PURE__ */ c(Et, {}) }),
+      /* @__PURE__ */ c(J, { sx: Vh, children: /* @__PURE__ */ c(ld, {}) }),
+      /* @__PURE__ */ c(Fe, { sx: Gh, children: "Objects" }),
+      n > 0 && /* @__PURE__ */ c(J, { sx: Yh, children: n })
     ] }),
-    /* @__PURE__ */ c(J, { sx: Qh(t), children: n === 0 ? /* @__PURE__ */ c(Fe, { sx: _h, children: "No objects yet. Import a model or add objects from the menu." }) : /* @__PURE__ */ U(A0, { children: [
+    /* @__PURE__ */ c(J, { sx: Jh(t), children: n === 0 ? /* @__PURE__ */ c(Fe, { sx: Qh, children: "No objects yet. Import a model or add objects from the menu." }) : /* @__PURE__ */ U(A0, { children: [
       a.rooms.map((i) => /* @__PURE__ */ c(rn, { uuid: i }, i)),
       a.sources.map((i) => /* @__PURE__ */ c(rn, { uuid: i }, i)),
       a.receivers.map((i) => /* @__PURE__ */ c(rn, { uuid: i }, i))
     ] }) })
   ] });
 }
-const Kh = Tt`
+const _h = Tt`
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
-`, Zh = (t) => ({
+`, Kh = (t) => ({
   display: "flex",
   alignItems: "center",
   p: "4px 8px",
@@ -20665,7 +20660,7 @@ const Kh = Tt`
   "&:hover .menu-button": {
     opacity: 1
   }
-}), $h = {
+}), Zh = {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -20676,7 +20671,7 @@ const Kh = Tt`
   "& svg": {
     fontSize: 16
   }
-}, eg = {
+}, $h = {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -20687,7 +20682,7 @@ const Kh = Tt`
   "& svg": {
     fontSize: 14
   }
-}, tg = {
+}, eg = {
   flex: 1,
   fontSize: 12,
   fontWeight: 500,
@@ -20695,7 +20690,7 @@ const Kh = Tt`
   overflow: "hidden",
   textOverflow: "ellipsis",
   whiteSpace: "nowrap"
-}, rg = {
+}, tg = {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -20728,13 +20723,13 @@ const Kh = Tt`
   pointerEvents: t ? "none" : "auto",
   "& svg": {
     fontSize: 14,
-    animation: e ? `${Kh} 1s linear infinite` : "none"
+    animation: e ? `${_h} 1s linear infinite` : "none"
   },
   "&:hover": {
     bgcolor: t ? "transparent" : "#d0d7de",
     color: t ? "#c0c0c0" : "#1c2127"
   }
-}), ag = {
+}), rg = {
   "ray-tracer": xc,
   "image-source": dd,
   "fdtd-2d": fd,
@@ -20756,28 +20751,28 @@ function yu({
   onDelete: u,
   onDuplicate: l
 }) {
-  const d = ag[e] || xc, [v, T] = be(null), E = !!v, P = (O) => {
+  const d = rg[e] || xc, [v, T] = be(null), E = !!v, x = (O) => {
     O.stopPropagation(), s?.();
   }, f = (O) => {
     O.stopPropagation(), o?.();
   }, g = (O) => {
     O.stopPropagation(), T(O.currentTarget);
-  }, x = () => {
+  }, P = () => {
     T(null);
   }, D = () => {
-    x(), l?.();
+    P(), l?.();
   }, q = () => {
-    x(), u?.();
+    P(), u?.();
   };
-  return /* @__PURE__ */ U(J, { sx: Zh(r), onClick: i, children: [
-    /* @__PURE__ */ c(J, { sx: $h, children: r ? /* @__PURE__ */ c(J0, {}) : /* @__PURE__ */ c(Et, {}) }),
-    /* @__PURE__ */ c(J, { sx: eg, children: /* @__PURE__ */ c(d, {}) }),
-    /* @__PURE__ */ c(J, { sx: tg, children: t }),
+  return /* @__PURE__ */ U(J, { sx: Kh(r), onClick: i, children: [
+    /* @__PURE__ */ c(J, { sx: Zh, children: r ? /* @__PURE__ */ c(J0, {}) : /* @__PURE__ */ c(Et, {}) }),
+    /* @__PURE__ */ c(J, { sx: $h, children: /* @__PURE__ */ c(d, {}) }),
+    /* @__PURE__ */ c(J, { sx: eg, children: t }),
     s && /* @__PURE__ */ c(
       J,
       {
         sx: Zl(!a || n, n),
-        onClick: P,
+        onClick: x,
         title: n ? "Calculating..." : "Calculate",
         children: /* @__PURE__ */ c(pc, {})
       }
@@ -20798,7 +20793,7 @@ function yu({
           component: "button",
           type: "button",
           className: "menu-button",
-          sx: rg,
+          sx: tg,
           onClick: g,
           children: /* @__PURE__ */ c(cd, {})
         }
@@ -20808,7 +20803,7 @@ function yu({
         {
           anchorEl: v,
           open: E,
-          onClose: x,
+          onClose: P,
           anchorOrigin: {
             vertical: "bottom",
             horizontal: "right"
@@ -20832,14 +20827,14 @@ function yu({
     ] })
   ] });
 }
-const ng = {
+const ag = {
   borderBottom: "1px solid #e1e4e8"
-}, ig = (t) => ({
+}, ng = (t) => ({
   display: t ? "block" : "none",
   pl: "20px"
-}), sg = {
+}), ig = {
   py: "4px"
-}, og = /* @__PURE__ */ new Map([
+}, sg = /* @__PURE__ */ new Map([
   ["image-source", q1],
   ["ray-tracer", D1],
   ["rt60", O1],
@@ -20848,7 +20843,7 @@ const ng = {
   ["art", W1],
   ["beam-trace", L1]
 ]);
-function lg({ uuid: t, defaultExpanded: e = !1 }) {
+function og({ uuid: t, defaultExpanded: e = !1 }) {
   const [r, a] = be(e), [n, i] = be(!1), s = a0((f) => f.solvers[t]), o = Te(() => {
     a((f) => !f);
   }, []), u = Te(() => {
@@ -20856,10 +20851,10 @@ function lg({ uuid: t, defaultExpanded: e = !1 }) {
   }, [t]);
   We(() => {
     if (s && s.kind === "beamtrace") {
-      const f = ae("BEAMTRACE_CALCULATE", (x) => {
-        x === t && i(!0);
-      }), g = ae("BEAMTRACE_CALCULATE_COMPLETE", (x) => {
-        x === t && i(!1);
+      const f = ae("BEAMTRACE_CALCULATE", (P) => {
+        P === t && i(!0);
+      }), g = ae("BEAMTRACE_CALCULATE_COMPLETE", (P) => {
+        P === t && i(!1);
       });
       return () => {
         f(), g();
@@ -20908,8 +20903,8 @@ function lg({ uuid: t, defaultExpanded: e = !1 }) {
   }, [s, t]);
   if (!s)
     return null;
-  const T = ["beamtrace", "image-source", "ray-tracer"].includes(s.kind), E = ["beamtrace", "image-source", "ray-tracer"].includes(s.kind), P = og.get(s.kind);
-  return /* @__PURE__ */ U(J, { sx: ng, children: [
+  const T = ["beamtrace", "image-source", "ray-tracer"].includes(s.kind), E = ["beamtrace", "image-source", "ray-tracer"].includes(s.kind), x = sg.get(s.kind);
+  return /* @__PURE__ */ U(J, { sx: ag, children: [
     /* @__PURE__ */ c(
       yu,
       {
@@ -20924,22 +20919,22 @@ function lg({ uuid: t, defaultExpanded: e = !1 }) {
         onDelete: u
       }
     ),
-    /* @__PURE__ */ c(J, { sx: ig(r), children: P && /* @__PURE__ */ c(J, { sx: sg, children: /* @__PURE__ */ c(P, { uuid: t }) }) })
+    /* @__PURE__ */ c(J, { sx: ng(r), children: x && /* @__PURE__ */ c(J, { sx: ig, children: /* @__PURE__ */ c(x, { uuid: t }) }) })
   ] });
 }
-const cg = {
+const lg = {
   borderBottom: "1px solid #e1e4e8"
-}, ug = (t) => ({
+}, cg = (t) => ({
   display: t ? "block" : "none",
   pl: "20px"
-}), dg = {
+}), ug = {
   py: "4px"
 };
-function fg({ defaultExpanded: t = !1 }) {
+function dg({ defaultExpanded: t = !1 }) {
   const [e, r] = be(t), a = Te(() => {
     r((n) => !n);
   }, []);
-  return /* @__PURE__ */ U(J, { sx: cg, children: [
+  return /* @__PURE__ */ U(J, { sx: lg, children: [
     /* @__PURE__ */ c(
       yu,
       {
@@ -20949,15 +20944,15 @@ function fg({ defaultExpanded: t = !1 }) {
         onToggle: a
       }
     ),
-    /* @__PURE__ */ c(J, { sx: ug(e), children: /* @__PURE__ */ c(J, { sx: dg, children: /* @__PURE__ */ c(X1, {}) }) })
+    /* @__PURE__ */ c(J, { sx: cg(e), children: /* @__PURE__ */ c(J, { sx: ug, children: /* @__PURE__ */ c(X1, {}) }) })
   ] });
 }
-const mg = Tt`
+const fg = Tt`
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
-`, pg = {
+`, mg = {
   overflowY: "auto"
-}, hg = (t) => ({
+}, pg = (t) => ({
   display: "flex",
   alignItems: "center",
   p: "4px 8px",
@@ -20968,7 +20963,7 @@ const mg = Tt`
   "&:hover": {
     bgcolor: "#e8ecef"
   }
-}), gg = {
+}), hg = {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -20979,7 +20974,7 @@ const mg = Tt`
   "& svg": {
     fontSize: 16
   }
-}, Ag = {
+}, gg = {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -20990,12 +20985,12 @@ const mg = Tt`
   "& svg": {
     fontSize: 14
   }
-}, bg = {
+}, Ag = {
   flex: 1,
   fontSize: 12,
   fontWeight: 500,
   color: "#1c2127"
-}, vg = {
+}, bg = {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -21007,7 +21002,7 @@ const mg = Tt`
   fontSize: 10,
   fontWeight: 600,
   color: "white"
-}, yg = (t, e) => ({
+}, vg = (t, e) => ({
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -21026,108 +21021,108 @@ const mg = Tt`
   },
   "& svg": {
     fontSize: 16,
-    animation: e ? `${mg} 1s linear infinite` : "none"
+    animation: e ? `${fg} 1s linear infinite` : "none"
   }
-}), Sg = (t) => ({
+}), yg = (t) => ({
   display: t ? "block" : "none",
   pl: "20px"
-}), Cg = {
+}), Sg = {
   p: "16px",
   textAlign: "center",
   color: "#8c959f",
   fontSize: 12
 };
-function wb() {
+function Cb() {
   const [t, e] = be(!0), r = a0((u) => u.solvers), a = Ve((u) => u.autoCalculate), n = Ve((u) => u.progress.visible), i = H0(() => Object.keys(r), [r]), s = i.length + 1, o = (u) => {
     u.stopPropagation(), $("SET_AUTO_CALCULATE", !a);
   };
-  return /* @__PURE__ */ U(J, { sx: pg, children: [
-    /* @__PURE__ */ U(J, { sx: hg(t), onClick: () => e(!t), children: [
-      /* @__PURE__ */ c(J, { sx: gg, children: t ? /* @__PURE__ */ c(J0, {}) : /* @__PURE__ */ c(Et, {}) }),
-      /* @__PURE__ */ c(J, { sx: Ag, children: /* @__PURE__ */ c(gd, {}) }),
-      /* @__PURE__ */ c(J, { sx: bg, children: "Solvers" }),
-      /* @__PURE__ */ c(J, { sx: vg, children: s }),
+  return /* @__PURE__ */ U(J, { sx: mg, children: [
+    /* @__PURE__ */ U(J, { sx: pg(t), onClick: () => e(!t), children: [
+      /* @__PURE__ */ c(J, { sx: hg, children: t ? /* @__PURE__ */ c(J0, {}) : /* @__PURE__ */ c(Et, {}) }),
+      /* @__PURE__ */ c(J, { sx: gg, children: /* @__PURE__ */ c(gd, {}) }),
+      /* @__PURE__ */ c(J, { sx: Ag, children: "Solvers" }),
+      /* @__PURE__ */ c(J, { sx: bg, children: s }),
       /* @__PURE__ */ c(
         J,
         {
           component: "button",
-          sx: yg(a, a && n),
+          sx: vg(a, a && n),
           onClick: o,
           title: a ? "Auto-calculate enabled" : "Auto-calculate disabled",
           children: /* @__PURE__ */ c(Ac, {})
         }
       )
     ] }),
-    /* @__PURE__ */ U(J, { sx: Sg(t), children: [
-      i.length > 0 ? i.map((u) => /* @__PURE__ */ c(lg, { uuid: u }, u)) : /* @__PURE__ */ c(J, { sx: Cg, children: "No solvers yet. Add one from the menu." }),
-      /* @__PURE__ */ c(fg, {})
+    /* @__PURE__ */ U(J, { sx: yg(t), children: [
+      i.length > 0 ? i.map((u) => /* @__PURE__ */ c(og, { uuid: u }, u)) : /* @__PURE__ */ c(J, { sx: Sg, children: "No solvers yet. Add one from the menu." }),
+      /* @__PURE__ */ c(dg, {})
     ] })
   ] });
 }
-const wg = { version: "0.2.1", name: "shoebox", timestamp: "2021-03-26T08:06:59.213Z" }, Pg = /* @__PURE__ */ JSON.parse(`[{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Floors","Various"],"manufacturer":"","name":"Wood Floor","material":"Wood floor","absorption":{"63":0.06,"125":0.15,"250":0.11,"500":0.1,"1000":0.07,"2000":0.06,"4000":0.07,"8000":0.07},"nrc":0.09,"source":"Egan","description":"","uuid":"1PgJwgIAqHwMj99A"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"339B4C51-51C8-4B05-9AB2-74391E210FB3","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[-6,0,2.8299999237060547,0,4,2.8299999237060547,-6,4,2.8299999237060547,-6,0,2.8299999237060547,0,0,2.8299999237060547,0,4,2.8299999237060547],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[0.875,0.5,0,0.625,0.75,0,0.625,0.5,0,0.875,0.5,0,0.875,0.75,0,0.625,0.75,0],"normalized":false}},"boundingSphere":{"center":[-3,2,2.8299999237060547],"radius":3.605551275463989}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"floor","position":[0,0,-2.8299999237060547],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"1857F829-AB09-4DB5-A538-87CE6FACCF4C"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 2 layers 5/8in on studs 16inoc w/batt","absorption":{"63":0.06,"125":0.28,"250":0.12,"500":0.1,"1000":0.07,"2000":0.13,"4000":0.09,"8000":0.09},"nrc":0.11,"source":"Egan","description":"","uuid":"xmzQfq6zBKEec4TS"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"A2093E5B-D6EB-4503-B287-9EE173014B5B","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[0,4,2.8299999237060547,0,0,0,0,4,0,0,4,2.8299999237060547,0,0,2.8299999237060547,0,0,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[0.625,0.75,0,0.375,1,0,0.375,0.75,0,0.625,0.75,0,0.625,1,0,0.375,1,0],"normalized":false}},"boundingSphere":{"center":[0,2,1.4149999618530273],"radius":2.4499438548758765}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"wall4","position":[-6,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"6641528A-B8AF-4BDB-B627-14AA1401EDFB"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 2 layers 5/8in on studs 16inoc w/batt","absorption":{"63":0.06,"125":0.28,"250":0.12,"500":0.1,"1000":0.07,"2000":0.13,"4000":0.09,"8000":0.09},"nrc":0.11,"source":"Egan","description":"","uuid":"xmzQfq6zBKEec4TS"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"DDF1FD55-2407-429C-92D8-AFE0E1FE9F0C","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[-6,4,2.8299999237060547,0,4,0,-6,4,0,-6,4,2.8299999237060547,0,4,2.8299999237060547,0,4,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[0.625,0.5,0,0.375,0.75,0,0.375,0.5,0,0.625,0.5,0,0.625,0.75,0,0.375,0.75,0],"normalized":false}},"boundingSphere":{"center":[-3,4,1.4149999618530273],"radius":3.31696018849248}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"wall3","position":[0,-4,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"F925EC4C-7AEA-48FC-9363-EB79CA106FE0"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 2 layers 5/8in on studs 16inoc w/batt","absorption":{"63":0.06,"125":0.28,"250":0.12,"500":0.1,"1000":0.07,"2000":0.13,"4000":0.09,"8000":0.09},"nrc":0.11,"source":"Egan","description":"","uuid":"xmzQfq6zBKEec4TS"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"8DD060AB-9B56-40E9-9296-EE0BD5719908","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[-6,0,2.8299999237060547,-6,4,0,-6,0,0,-6,0,2.8299999237060547,-6,4,2.8299999237060547,-6,4,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[0.625,0.25,0,0.375,0.5,0,0.375,0.25,0,0.625,0.25,0,0.625,0.5,0,0.375,0.5,0],"normalized":false}},"boundingSphere":{"center":[-6,2,1.4149999618530273],"radius":2.4499438548758765}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"wall2","position":[6,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"535C0DEC-3940-4954-B272-ECC1B6CB224E"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 2 layers 5/8in on studs 16inoc w/batt","absorption":{"63":0.06,"125":0.28,"250":0.12,"500":0.1,"1000":0.07,"2000":0.13,"4000":0.09,"8000":0.09},"nrc":0.11,"source":"Egan","description":"","uuid":"xmzQfq6zBKEec4TS"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"6946BD37-4367-44C7-B79C-53238F129BA3","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[0,0,2.8299999237060547,-6,0,0,0,0,0,0,0,2.8299999237060547,-6,0,2.8299999237060547,-6,0,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[0.625,0,0,0.375,0.25,0,0.375,0,0,0.625,0,0,0.625,0.25,0,0.375,0.25,0],"normalized":false}},"boundingSphere":{"center":[-3,0,1.4149999618530273],"radius":3.31696018849248}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"wall1","position":[0,4,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"23DCFCDB-53AA-473A-A23C-BEB0FE4A85F5"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Ceiling"," Ceiling Systems"],"manufacturer":"","name":"Dampa Linar 100 Ceiling System","material":"Dampa Linar 100 Ceiling System","absorption":{"63":0.34,"125":0.48,"250":0.67,"500":0.69,"1000":0.61,"2000":0.46,"4000":0.49,"8000":0.52},"nrc":0.61,"source":"SH","description":"","uuid":"s9OvPvd4RDogxQn7"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"B8A7A35C-D863-4A13-86CB-07EC6D6F9249","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[-6,4,0,0,0,0,-6,0,0,-6,4,0,0,4,0,0,0,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[0.375,0.5,0,0.125,0.75,0,0.125,0.5,0,0.375,0.5,0,0.375,0.75,0,0.125,0.75,0],"normalized":false}},"boundingSphere":{"center":[-3,2,0],"radius":3.605551275463989}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"ceil","position":[0,0,2.8299999237060547],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"BB39378A-EA8B-4FC0-9BA9-EB845F9F41F4"},{"surfaces":[{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Floors","Various"],"manufacturer":"","name":"Wood Floor","material":"Wood floor","absorption":{"63":0.06,"125":0.15,"250":0.11,"500":0.1,"1000":0.07,"2000":0.06,"4000":0.07,"8000":0.07},"nrc":0.09,"source":"Egan","description":"","uuid":"1PgJwgIAqHwMj99A"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"339B4C51-51C8-4B05-9AB2-74391E210FB3","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[-6,0,2.8299999237060547,0,4,2.8299999237060547,-6,4,2.8299999237060547,-6,0,2.8299999237060547,0,0,2.8299999237060547,0,4,2.8299999237060547],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[0.875,0.5,0,0.625,0.75,0,0.625,0.5,0,0.875,0.5,0,0.875,0.75,0,0.625,0.75,0],"normalized":false}},"boundingSphere":{"center":[-3,2,2.8299999237060547],"radius":3.605551275463989}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"floor","position":[0,0,-2.8299999237060547],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"1857F829-AB09-4DB5-A538-87CE6FACCF4C"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 2 layers 5/8in on studs 16inoc w/batt","absorption":{"63":0.06,"125":0.28,"250":0.12,"500":0.1,"1000":0.07,"2000":0.13,"4000":0.09,"8000":0.09},"nrc":0.11,"source":"Egan","description":"","uuid":"xmzQfq6zBKEec4TS"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"A2093E5B-D6EB-4503-B287-9EE173014B5B","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[0,4,2.8299999237060547,0,0,0,0,4,0,0,4,2.8299999237060547,0,0,2.8299999237060547,0,0,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[0.625,0.75,0,0.375,1,0,0.375,0.75,0,0.625,0.75,0,0.625,1,0,0.375,1,0],"normalized":false}},"boundingSphere":{"center":[0,2,1.4149999618530273],"radius":2.4499438548758765}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"wall4","position":[-6,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"6641528A-B8AF-4BDB-B627-14AA1401EDFB"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 2 layers 5/8in on studs 16inoc w/batt","absorption":{"63":0.06,"125":0.28,"250":0.12,"500":0.1,"1000":0.07,"2000":0.13,"4000":0.09,"8000":0.09},"nrc":0.11,"source":"Egan","description":"","uuid":"xmzQfq6zBKEec4TS"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"DDF1FD55-2407-429C-92D8-AFE0E1FE9F0C","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[-6,4,2.8299999237060547,0,4,0,-6,4,0,-6,4,2.8299999237060547,0,4,2.8299999237060547,0,4,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[0.625,0.5,0,0.375,0.75,0,0.375,0.5,0,0.625,0.5,0,0.625,0.75,0,0.375,0.75,0],"normalized":false}},"boundingSphere":{"center":[-3,4,1.4149999618530273],"radius":3.31696018849248}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"wall3","position":[0,-4,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"F925EC4C-7AEA-48FC-9363-EB79CA106FE0"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 2 layers 5/8in on studs 16inoc w/batt","absorption":{"63":0.06,"125":0.28,"250":0.12,"500":0.1,"1000":0.07,"2000":0.13,"4000":0.09,"8000":0.09},"nrc":0.11,"source":"Egan","description":"","uuid":"xmzQfq6zBKEec4TS"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"8DD060AB-9B56-40E9-9296-EE0BD5719908","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[-6,0,2.8299999237060547,-6,4,0,-6,0,0,-6,0,2.8299999237060547,-6,4,2.8299999237060547,-6,4,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[0.625,0.25,0,0.375,0.5,0,0.375,0.25,0,0.625,0.25,0,0.625,0.5,0,0.375,0.5,0],"normalized":false}},"boundingSphere":{"center":[-6,2,1.4149999618530273],"radius":2.4499438548758765}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"wall2","position":[6,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"535C0DEC-3940-4954-B272-ECC1B6CB224E"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 2 layers 5/8in on studs 16inoc w/batt","absorption":{"63":0.06,"125":0.28,"250":0.12,"500":0.1,"1000":0.07,"2000":0.13,"4000":0.09,"8000":0.09},"nrc":0.11,"source":"Egan","description":"","uuid":"xmzQfq6zBKEec4TS"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"6946BD37-4367-44C7-B79C-53238F129BA3","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[0,0,2.8299999237060547,-6,0,0,0,0,0,0,0,2.8299999237060547,-6,0,2.8299999237060547,-6,0,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[0.625,0,0,0.375,0.25,0,0.375,0,0,0.625,0,0,0.625,0.25,0,0.375,0.25,0],"normalized":false}},"boundingSphere":{"center":[-3,0,1.4149999618530273],"radius":3.31696018849248}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"wall1","position":[0,4,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"23DCFCDB-53AA-473A-A23C-BEB0FE4A85F5"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Ceiling"," Ceiling Systems"],"manufacturer":"","name":"Dampa Linar 100 Ceiling System","material":"Dampa Linar 100 Ceiling System","absorption":{"63":0.34,"125":0.48,"250":0.67,"500":0.69,"1000":0.61,"2000":0.46,"4000":0.49,"8000":0.52},"nrc":0.61,"source":"SH","description":"","uuid":"s9OvPvd4RDogxQn7"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"B8A7A35C-D863-4A13-86CB-07EC6D6F9249","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[-6,4,0,0,0,0,-6,0,0,-6,4,0,0,4,0,0,0,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[0.375,0.5,0,0.125,0.75,0,0.125,0.5,0,0.375,0.5,0,0.375,0.75,0,0.125,0.75,0],"normalized":false}},"boundingSphere":{"center":[-3,2,0],"radius":3.605551275463989}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"ceil","position":[0,0,2.8299999237060547],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"BB39378A-EA8B-4FC0-9BA9-EB845F9F41F4"}],"kind":"room","name":"new room","uuid":"0D3FE423-FA7C-40E7-B701-CF78A6A401CC","units":2,"originalFileData":"# Blender v2.91.0 OBJ File: ''\\n# www.blender.org\\nmtllib shoebox.mtl\\no Cube.001_Cube.002\\nv 0.000000 0.000000 2.830000\\nv -6.000000 0.000000 2.830000\\nv 0.000000 4.000000 2.830000\\nv -6.000000 4.000000 2.830000\\nvt 0.875000 0.500000\\nvt 0.625000 0.750000\\nvt 0.625000 0.500000\\nvt 0.875000 0.750000\\nvn 0.0000 0.0000 1.0000\\nusemtl None\\ns off\\nf 2/1/1 3/2/1 4/3/1\\nf 2/1/1 1/4/1 3/2/1\\no Cube.002_Cube.003\\nv 0.000000 0.000000 0.000000\\nv 0.000000 0.000000 2.830000\\nv 0.000000 4.000000 0.000000\\nv 0.000000 4.000000 2.830000\\nvt 0.625000 0.750000\\nvt 0.375000 1.000000\\nvt 0.375000 0.750000\\nvt 0.625000 1.000000\\nvn 1.0000 0.0000 0.0000\\nusemtl None\\ns off\\nf 8/5/2 5/6/2 7/7/2\\nf 8/5/2 6/8/2 5/6/2\\no Cube.003_Cube.004\\nv 0.000000 4.000000 0.000000\\nv 0.000000 4.000000 2.830000\\nv -6.000000 4.000000 0.000000\\nv -6.000000 4.000000 2.830000\\nvt 0.625000 0.500000\\nvt 0.375000 0.750000\\nvt 0.375000 0.500000\\nvt 0.625000 0.750000\\nvn 0.0000 1.0000 0.0000\\nusemtl None\\ns off\\nf 12/9/3 9/10/3 11/11/3\\nf 12/9/3 10/12/3 9/10/3\\no Cube.004_Cube.005\\nv -6.000000 0.000000 0.000000\\nv -6.000000 0.000000 2.830000\\nv -6.000000 4.000000 0.000000\\nv -6.000000 4.000000 2.830000\\nvt 0.625000 0.250000\\nvt 0.375000 0.500000\\nvt 0.375000 0.250000\\nvt 0.625000 0.500000\\nvn -1.0000 0.0000 0.0000\\nusemtl None\\ns off\\nf 14/13/4 15/14/4 13/15/4\\nf 14/13/4 16/16/4 15/14/4\\no Cube.005_Cube.006\\nv 0.000000 0.000000 0.000000\\nv 0.000000 0.000000 2.830000\\nv -6.000000 0.000000 0.000000\\nv -6.000000 0.000000 2.830000\\nvt 0.625000 0.000000\\nvt 0.375000 0.250000\\nvt 0.375000 0.000000\\nvt 0.625000 0.250000\\nvn 0.0000 -1.0000 0.0000\\nusemtl None\\ns off\\nf 18/17/5 19/18/5 17/19/5\\nf 18/17/5 20/20/5 19/18/5\\no Cube.006_Cube.007\\nv 0.000000 0.000000 0.000000\\nv -6.000000 0.000000 0.000000\\nv 0.000000 4.000000 0.000000\\nv -6.000000 4.000000 0.000000\\nvt 0.375000 0.500000\\nvt 0.125000 0.750000\\nvt 0.125000 0.500000\\nvt 0.375000 0.750000\\nvn 0.0000 0.0000 -1.0000\\nusemtl None\\ns off\\nf 24/21/6 21/22/6 22/23/6\\nf 24/21/6 23/24/6 21/22/6\\n","originalFileName":"shoebox.obj","visible":true,"position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1]},{"kind":"source","name":"new source","visible":true,"position":[-1.58,1.42,1.73],"scale":[1,1,1],"rotation":[0,0,0,"XYZ"],"color":13958322,"uuid":"7D40D118-D86D-4823-8392-9D7A36381742"},{"kind":"receiver","name":"new receiver","visible":true,"position":[-4.43,2.52,1.21],"scale":[1,1,1],"rotation":[0,0,0,"XYZ"],"color":14511983,"uuid":"6C6C6EB3-B060-40A0-BF0F-A3F3D9D03B3E"}]`), xg = [{ name: "Ray Tracer", kind: "ray-tracer", uuid: "f77ccadb-0652-4919-8171-6ec70e16a390", roomID: "0D3FE423-FA7C-40E7-B701-CF78A6A401CC", sourceIDs: ["7D40D118-D86D-4823-8392-9D7A36381742"], surfaceIDs: ["1857F829-AB09-4DB5-A538-87CE6FACCF4C", "6641528A-B8AF-4BDB-B627-14AA1401EDFB", "F925EC4C-7AEA-48FC-9363-EB79CA106FE0", "535C0DEC-3940-4954-B272-ECC1B6CB224E", "23DCFCDB-53AA-473A-A23C-BEB0FE4A85F5", "BB39378A-EA8B-4FC0-9BA9-EB845F9F41F4"], receiverIDs: ["6C6C6EB3-B060-40A0-BF0F-A3F3D9D03B3E"], updateInterval: 5, passes: 1e3, pointSize: 2, reflectionOrder: 50, runningWithoutReceivers: !1, raysVisible: !0, pointsVisible: !0, invertedDrawStyle: !1, plotStyle: { mode: "lines" }, paths: {} }], Eg = {
-  meta: wg,
-  containers: Pg,
-  solvers: xg
-}, kg = { version: "0.2.1", name: "concord", timestamp: "2021-03-23T00:10:21.760Z" }, Ig = /* @__PURE__ */ JSON.parse('[{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 2+2 @ 5/8in on 3-5/8in studs","absorption":{"63":0.04,"125":0.15,"250":0.08,"500":0.06,"1000":0.05,"2000":0.05,"4000":0.04,"8000":0.04},"nrc":0.06,"source":"wjhw?","description":"","uuid":"I1esImsQrKZl0AAw"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"3C4CDBD3-E04D-45F6-ABAE-D910EE0BCC11","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[12.430130004882812,2.3483328819274902,4.876800060272217,12.430130004882812,5.575300216674805,4.876800060272217,12.430130004882812,5.575300216674805,0,12.430130004882812,5.575300216674805,0,12.430130004882812,0,0,12.430130004882812,0,2.9337000846862793,12.430130004882812,0,2.9337000846862793,12.430130004882812,2.3483328819274902,4.876800060272217,12.430130004882812,5.575300216674805,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[12.430130004882812,2.7876501083374023,2.4384000301361084],"radius":3.7036182083850524}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"right1","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"59F599B3-6554-4999-A93C-597E4B5275C1"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 2+2 @ 5/8in on 3-5/8in studs","absorption":{"63":0.04,"125":0.15,"250":0.08,"500":0.06,"1000":0.05,"2000":0.05,"4000":0.04,"8000":0.04},"nrc":0.06,"source":"wjhw?","description":"","uuid":"I1esImsQrKZl0AAw"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"BD80155E-DA08-4122-A819-D7C873E060D0","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[6.215065002441406,5.575300216674805,4.876800060272217,12.430130004882812,5.575300216674805,0,12.430130004882812,5.575300216674805,4.876800060272217,6.215065002441406,5.575300216674805,4.876800060272217,6.215065002441406,5.575300216674805,0,12.430130004882812,5.575300216674805,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[9.32259750366211,5.575300216674805,2.4384000301361084],"radius":3.950006702919727}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"back1","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"FDDD16D3-6E8D-4B4B-B4A1-D622E9D6D31D"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Drapery","Drapery"],"manufacturer":"","name":"Fiberglass Fabric Curtain","material":"Fiberglass fabric curtain, 8.5 oz/sq yd (50% fullness) Egan","absorption":{"63":0.03,"125":0.09,"250":0.32,"500":0.68,"1000":0.83,"2000":0.39,"4000":0.76,"8000":0.99},"nrc":0.56,"source":"SH","description":"","uuid":"3sUxVxHXIi9Gc6Zi"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"2E5E970F-6DFD-4269-A688-FD15AE36512B","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[6.215065002441406,10.855531692504883,0,6.215065002441406,5.575300216674805,4.876800060272217,6.215065002441406,10.855531692504883,4.876800060272217,6.215065002441406,10.855531692504883,0,6.215065002441406,5.575300216674805,0,6.215065002441406,5.575300216674805,4.876800060272217],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[6.215065002441406,8.215415954589844,2.4384000301361084],"radius":3.593884502394929}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"right2","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"EA9AA1BF-BA53-4D0E-ACB0-95E7291666FC"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 1 layer 5/8in on studs 16inoc w/batt","absorption":{"63":0.07,"125":0.55,"250":0.14,"500":0.08,"1000":0.04,"2000":0.12,"4000":0.11,"8000":0.11},"nrc":0.1,"source":"Egan","description":"","uuid":"th2PuWU5EhCsaon3"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"29275BAA-EC84-4AF7-868A-E05EA60BD17A","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[0,10.855531692504883,0,6.215065002441406,10.855531692504883,4.876800060272217,0,10.855531692504883,4.876800060272217,0,10.855531692504883,0,6.215065002441406,10.855531692504883,0,6.215065002441406,10.855531692504883,4.876800060272217],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[3.107532501220703,10.855531692504883,2.4384000301361084],"radius":3.950006702919727}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"back2","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"8C87C786-5188-48F7-BFD4-946EF78D1E65"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 2+2 @ 5/8in on 3-5/8in studs","absorption":{"63":0.04,"125":0.15,"250":0.08,"500":0.06,"1000":0.05,"2000":0.05,"4000":0.04,"8000":0.04},"nrc":0.06,"source":"wjhw?","description":"","uuid":"I1esImsQrKZl0AAw"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"F08D41DC-1461-412C-A97D-BF65AFA8EE1E","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[0,2.3483328819274902,4.876800060272217,0,0,0,0,10.855531692504883,0,0,10.855531692504883,0,0,10.855531692504883,4.876800060272217,0,2.3483328819274902,4.876800060272217,0,2.3483328819274902,4.876800060272217,0,0,2.9337000846862793,0,0,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[0,5.427765846252441,2.4384000301361084],"radius":5.950330813384434}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"left","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"ED91F1C5-D2D0-42A0-8686-4B46303256FE"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Diffusion","Diffusion Products"],"manufacturer":"","name":"Diffuse Signature Wood (1\\" Standoff Sides Open)","material":"Diffuse Signature Wood (1\\" Standoff Sides Open)","absorption":{"63":0,"125":0,"250":0.02,"500":0.06,"1000":0.16,"2000":0.13,"4000":0.15,"8000":0.17},"nrc":0.09,"source":"SH","description":"","uuid":"tgGAnP5OCLWlPFF4"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"088EC67F-85BA-4323-BB08-C0213F5F6CA2","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[12.430130004882812,0,0,0,0,2.9337000846862793,12.430130004882812,0,2.9337000846862793,12.430130004882812,0,0,0,0,0,0,0,2.9337000846862793],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[6.215065002441406,0,1.4668500423431396],"radius":6.3858188223041585}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"front","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"0AECC234-8C09-4D6B-AA82-DC0A99B42F2D"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Ceiling"," Ceiling Systems"],"manufacturer":"","name":"Barrisol Stretched Ceiling Over 3\\" Fiberglass","material":"Barrisol Stretched Ceiling over 3\\" fiberglass","absorption":{"63":0.18,"125":0.26,"250":0.58,"500":0.57,"1000":0.43,"2000":0.36,"4000":0.36,"8000":0.36},"nrc":0.49,"source":"SH","description":"","uuid":"Wz4CjrpqIYGba8G0"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"95B298C8-96A1-41A1-9A71-D7C446A0AB46","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[12.430130004882812,0,2.9337000846862793,0,2.3483328819274902,4.876800060272217,12.430130004882812,2.3483328819274902,4.876800060272217,12.430130004882812,0,2.9337000846862793,0,0,2.9337000846862793,0,2.3483328819274902,4.876800060272217],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0.637499988079071,-0.7705000042915344,0,0.637499988079071,-0.7705000042915344,0,0.637499988079071,-0.7705000042915344,0,0.637499988079071,-0.7705000042915344,0,0.637499988079071,-0.7705000042915344,0,0.637499988079071,-0.7705000042915344],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[6.215065002441406,1.1741664409637451,3.905250072479248],"radius":6.399188166825382}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"slope","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"ABA66075-FD1A-4820-B591-66EE2A92CFDB"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Ceiling"," Ceiling Systems"],"manufacturer":"","name":"Dampa Linar 100 Ceiling System","material":"Dampa Linar 100 Ceiling System","absorption":{"63":0.34,"125":0.48,"250":0.67,"500":0.69,"1000":0.61,"2000":0.46,"4000":0.49,"8000":0.52},"nrc":0.61,"source":"SH","description":"","uuid":"s9OvPvd4RDogxQn7"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"333C7898-A815-420A-89D6-3D96BB178242","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[12.430130004882812,2.3483328819274902,4.876800060272217,6.215065002441406,5.575300216674805,4.876800060272217,12.430130004882812,5.575300216674805,4.876800060272217,6.215065002441406,5.575300216674805,4.876800060272217,0,10.855531692504883,4.876800060272217,6.215065002441406,10.855531692504883,4.876800060272217,12.430130004882812,2.3483328819274902,4.876800060272217,0,2.3483328819274902,4.876800060272217,6.215065002441406,5.575300216674805,4.876800060272217,6.215065002441406,5.575300216674805,4.876800060272217,0,2.3483328819274902,4.876800060272217,0,10.855531692504883,4.876800060272217],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[6.215065002441406,6.6019322872161865,4.876800060272217],"radius":7.531277506853956}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"ceil","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"522A95C7-E134-4D1C-92DD-8672102F06E6"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Floors","Various"],"manufacturer":"","name":"Wood Floor","material":"Wood floor","absorption":{"63":0.06,"125":0.15,"250":0.11,"500":0.1,"1000":0.07,"2000":0.06,"4000":0.07,"8000":0.07},"nrc":0.09,"source":"Egan","description":"","uuid":"1PgJwgIAqHwMj99A"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"203BF944-7E6E-4539-B678-F2064CCC8619","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[6.215065002441406,5.575300216674805,0,12.430130004882812,0,0,12.430130004882812,5.575300216674805,0,6.215065002441406,5.575300216674805,0,0,10.855531692504883,0,0,0,0,6.215065002441406,5.575300216674805,0,0,0,0,12.430130004882812,0,0,6.215065002441406,5.575300216674805,0,6.215065002441406,10.855531692504883,0,0,10.855531692504883,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[6.215065002441406,5.427765846252441,0],"radius":8.25152562053324}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"floor","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"34B96D2E-706E-45E8-91D2-0F8FF35AA11E"},{"surfaces":[{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 2+2 @ 5/8in on 3-5/8in studs","absorption":{"63":0.04,"125":0.15,"250":0.08,"500":0.06,"1000":0.05,"2000":0.05,"4000":0.04,"8000":0.04},"nrc":0.06,"source":"wjhw?","description":"","uuid":"I1esImsQrKZl0AAw"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"3C4CDBD3-E04D-45F6-ABAE-D910EE0BCC11","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[12.430130004882812,2.3483328819274902,4.876800060272217,12.430130004882812,5.575300216674805,4.876800060272217,12.430130004882812,5.575300216674805,0,12.430130004882812,5.575300216674805,0,12.430130004882812,0,0,12.430130004882812,0,2.9337000846862793,12.430130004882812,0,2.9337000846862793,12.430130004882812,2.3483328819274902,4.876800060272217,12.430130004882812,5.575300216674805,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[12.430130004882812,2.7876501083374023,2.4384000301361084],"radius":3.7036182083850524}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"right1","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"59F599B3-6554-4999-A93C-597E4B5275C1"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 2+2 @ 5/8in on 3-5/8in studs","absorption":{"63":0.04,"125":0.15,"250":0.08,"500":0.06,"1000":0.05,"2000":0.05,"4000":0.04,"8000":0.04},"nrc":0.06,"source":"wjhw?","description":"","uuid":"I1esImsQrKZl0AAw"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"BD80155E-DA08-4122-A819-D7C873E060D0","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[6.215065002441406,5.575300216674805,4.876800060272217,12.430130004882812,5.575300216674805,0,12.430130004882812,5.575300216674805,4.876800060272217,6.215065002441406,5.575300216674805,4.876800060272217,6.215065002441406,5.575300216674805,0,12.430130004882812,5.575300216674805,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[9.32259750366211,5.575300216674805,2.4384000301361084],"radius":3.950006702919727}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"back1","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"FDDD16D3-6E8D-4B4B-B4A1-D622E9D6D31D"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Drapery","Drapery"],"manufacturer":"","name":"Fiberglass Fabric Curtain","material":"Fiberglass fabric curtain, 8.5 oz/sq yd (50% fullness) Egan","absorption":{"63":0.03,"125":0.09,"250":0.32,"500":0.68,"1000":0.83,"2000":0.39,"4000":0.76,"8000":0.99},"nrc":0.56,"source":"SH","description":"","uuid":"3sUxVxHXIi9Gc6Zi"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"2E5E970F-6DFD-4269-A688-FD15AE36512B","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[6.215065002441406,10.855531692504883,0,6.215065002441406,5.575300216674805,4.876800060272217,6.215065002441406,10.855531692504883,4.876800060272217,6.215065002441406,10.855531692504883,0,6.215065002441406,5.575300216674805,0,6.215065002441406,5.575300216674805,4.876800060272217],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[6.215065002441406,8.215415954589844,2.4384000301361084],"radius":3.593884502394929}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"right2","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"EA9AA1BF-BA53-4D0E-ACB0-95E7291666FC"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 1 layer 5/8in on studs 16inoc w/batt","absorption":{"63":0.07,"125":0.55,"250":0.14,"500":0.08,"1000":0.04,"2000":0.12,"4000":0.11,"8000":0.11},"nrc":0.1,"source":"Egan","description":"","uuid":"th2PuWU5EhCsaon3"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"29275BAA-EC84-4AF7-868A-E05EA60BD17A","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[0,10.855531692504883,0,6.215065002441406,10.855531692504883,4.876800060272217,0,10.855531692504883,4.876800060272217,0,10.855531692504883,0,6.215065002441406,10.855531692504883,0,6.215065002441406,10.855531692504883,4.876800060272217],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[3.107532501220703,10.855531692504883,2.4384000301361084],"radius":3.950006702919727}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"back2","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"8C87C786-5188-48F7-BFD4-946EF78D1E65"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 2+2 @ 5/8in on 3-5/8in studs","absorption":{"63":0.04,"125":0.15,"250":0.08,"500":0.06,"1000":0.05,"2000":0.05,"4000":0.04,"8000":0.04},"nrc":0.06,"source":"wjhw?","description":"","uuid":"I1esImsQrKZl0AAw"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"F08D41DC-1461-412C-A97D-BF65AFA8EE1E","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[0,2.3483328819274902,4.876800060272217,0,0,0,0,10.855531692504883,0,0,10.855531692504883,0,0,10.855531692504883,4.876800060272217,0,2.3483328819274902,4.876800060272217,0,2.3483328819274902,4.876800060272217,0,0,2.9337000846862793,0,0,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[0,5.427765846252441,2.4384000301361084],"radius":5.950330813384434}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"left","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"ED91F1C5-D2D0-42A0-8686-4B46303256FE"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Diffusion","Diffusion Products"],"manufacturer":"","name":"Diffuse Signature Wood (1\\" Standoff Sides Open)","material":"Diffuse Signature Wood (1\\" Standoff Sides Open)","absorption":{"63":0,"125":0,"250":0.02,"500":0.06,"1000":0.16,"2000":0.13,"4000":0.15,"8000":0.17},"nrc":0.09,"source":"SH","description":"","uuid":"tgGAnP5OCLWlPFF4"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"088EC67F-85BA-4323-BB08-C0213F5F6CA2","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[12.430130004882812,0,0,0,0,2.9337000846862793,12.430130004882812,0,2.9337000846862793,12.430130004882812,0,0,0,0,0,0,0,2.9337000846862793],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[6.215065002441406,0,1.4668500423431396],"radius":6.3858188223041585}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"front","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"0AECC234-8C09-4D6B-AA82-DC0A99B42F2D"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Ceiling"," Ceiling Systems"],"manufacturer":"","name":"Barrisol Stretched Ceiling Over 3\\" Fiberglass","material":"Barrisol Stretched Ceiling over 3\\" fiberglass","absorption":{"63":0.18,"125":0.26,"250":0.58,"500":0.57,"1000":0.43,"2000":0.36,"4000":0.36,"8000":0.36},"nrc":0.49,"source":"SH","description":"","uuid":"Wz4CjrpqIYGba8G0"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"95B298C8-96A1-41A1-9A71-D7C446A0AB46","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[12.430130004882812,0,2.9337000846862793,0,2.3483328819274902,4.876800060272217,12.430130004882812,2.3483328819274902,4.876800060272217,12.430130004882812,0,2.9337000846862793,0,0,2.9337000846862793,0,2.3483328819274902,4.876800060272217],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0.637499988079071,-0.7705000042915344,0,0.637499988079071,-0.7705000042915344,0,0.637499988079071,-0.7705000042915344,0,0.637499988079071,-0.7705000042915344,0,0.637499988079071,-0.7705000042915344,0,0.637499988079071,-0.7705000042915344],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[6.215065002441406,1.1741664409637451,3.905250072479248],"radius":6.399188166825382}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"slope","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"ABA66075-FD1A-4820-B591-66EE2A92CFDB"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Ceiling"," Ceiling Systems"],"manufacturer":"","name":"Dampa Linar 100 Ceiling System","material":"Dampa Linar 100 Ceiling System","absorption":{"63":0.34,"125":0.48,"250":0.67,"500":0.69,"1000":0.61,"2000":0.46,"4000":0.49,"8000":0.52},"nrc":0.61,"source":"SH","description":"","uuid":"s9OvPvd4RDogxQn7"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"333C7898-A815-420A-89D6-3D96BB178242","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[12.430130004882812,2.3483328819274902,4.876800060272217,6.215065002441406,5.575300216674805,4.876800060272217,12.430130004882812,5.575300216674805,4.876800060272217,6.215065002441406,5.575300216674805,4.876800060272217,0,10.855531692504883,4.876800060272217,6.215065002441406,10.855531692504883,4.876800060272217,12.430130004882812,2.3483328819274902,4.876800060272217,0,2.3483328819274902,4.876800060272217,6.215065002441406,5.575300216674805,4.876800060272217,6.215065002441406,5.575300216674805,4.876800060272217,0,2.3483328819274902,4.876800060272217,0,10.855531692504883,4.876800060272217],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[6.215065002441406,6.6019322872161865,4.876800060272217],"radius":7.531277506853956}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"ceil","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"522A95C7-E134-4D1C-92DD-8672102F06E6"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Floors","Various"],"manufacturer":"","name":"Wood Floor","material":"Wood floor","absorption":{"63":0.06,"125":0.15,"250":0.11,"500":0.1,"1000":0.07,"2000":0.06,"4000":0.07,"8000":0.07},"nrc":0.09,"source":"Egan","description":"","uuid":"1PgJwgIAqHwMj99A"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"203BF944-7E6E-4539-B678-F2064CCC8619","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[6.215065002441406,5.575300216674805,0,12.430130004882812,0,0,12.430130004882812,5.575300216674805,0,6.215065002441406,5.575300216674805,0,0,10.855531692504883,0,0,0,0,6.215065002441406,5.575300216674805,0,0,0,0,12.430130004882812,0,0,6.215065002441406,5.575300216674805,0,6.215065002441406,10.855531692504883,0,0,10.855531692504883,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[6.215065002441406,5.427765846252441,0],"radius":8.25152562053324}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"floor","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"34B96D2E-706E-45E8-91D2-0F8FF35AA11E"}],"kind":"room","name":"new room","uuid":"77F26146-94CF-46F8-870D-BB5A41C9D802","units":2,"originalFileData":"","originalFileName":"","visible":true,"position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1]},{"kind":"source","name":"new source","visible":true,"position":[3.7,9.9,1],"scale":[1,1,1],"rotation":[0,0,0,"XYZ"],"color":10668418,"uuid":"2825008E-9269-4453-BB81-2290852E5A81"},{"kind":"receiver","name":"new receiver","visible":true,"position":[10.8,3.8000000000000003,1.2000000000000002],"scale":[1,1,1],"rotation":[0,0,0,"XYZ"],"color":14511983,"uuid":"3198FEAC-8F9F-4362-8FB8-ADE61D8A708A"}]'), Tg = [{ name: "Ray Tracer", kind: "ray-tracer", uuid: "1d67c7f8-9c6f-43db-9b20-01b3c6f2feab", roomID: "77F26146-94CF-46F8-870D-BB5A41C9D802", sourceIDs: ["2825008E-9269-4453-BB81-2290852E5A81"], surfaceIDs: ["59F599B3-6554-4999-A93C-597E4B5275C1", "FDDD16D3-6E8D-4B4B-B4A1-D622E9D6D31D", "EA9AA1BF-BA53-4D0E-ACB0-95E7291666FC", "8C87C786-5188-48F7-BFD4-946EF78D1E65", "ED91F1C5-D2D0-42A0-8686-4B46303256FE", "0AECC234-8C09-4D6B-AA82-DC0A99B42F2D", "ABA66075-FD1A-4820-B591-66EE2A92CFDB", "522A95C7-E134-4D1C-92DD-8672102F06E6", "34B96D2E-706E-45E8-91D2-0F8FF35AA11E"], receiverIDs: ["3198FEAC-8F9F-4362-8FB8-ADE61D8A708A"], updateInterval: 5, passes: 500, pointSize: 2, reflectionOrder: 500, runningWithoutReceivers: !1, raysVisible: !0, pointsVisible: !0, invertedDrawStyle: !1, plotStyle: { mode: "lines" }, paths: {} }], Fg = {
-  meta: kg,
-  containers: Ig,
-  solvers: Tg
-}, Bg = { version: "0.2.1", name: "auditorium", timestamp: "2021-04-29T11:59:27.330Z" }, Hg = /* @__PURE__ */ JSON.parse(`[{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Floors","Wood"],"manufacturer":"","name":"Wood Stage Floor (T&G)","material":"Wood Stage Floor (T&G), 2 layers 1/2in, on joists","absorption":{"63":0.04,"125":0.1,"250":0.07,"500":0.06,"1000":0.06,"2000":0.06,"4000":0.06,"8000":0.06},"nrc":0.06,"source":"Beranek (JASA '98)","description":"","uuid":"ZdwcxUjnCaTijM8d"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"400B3C98-438F-414E-9A39-2D5BAC219DC3","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[3.6396543979644775,14.278063774108887,-0.6776000261306763,3.6396543979644775,14.278063774108887,0,3.6396543979644775,-0.7260642051696777,-0.6776000261306763,3.6396543979644775,-0.7260642051696777,0,3.6396543979644775,-0.7260642051696777,-0.6776000261306763,3.6396543979644775,14.278063774108887,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0],"normalized":false}},"boundingSphere":{"center":[3.6396543979644775,6.7759997844696045,-0.33880001306533813],"radius":7.509710350838808}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-0","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"684C19AC-22BD-45FE-898C-C5166936CDDD"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Floors","Wood"],"manufacturer":"","name":"Wood Stage Floor (T&G)","material":"Wood Stage Floor (T&G), 2 layers 1/2in, on joists","absorption":{"63":0.04,"125":0.1,"250":0.07,"500":0.06,"1000":0.06,"2000":0.06,"4000":0.06,"8000":0.06},"nrc":0.06,"source":"Beranek (JASA '98)","description":"","uuid":"ZdwcxUjnCaTijM8d"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"E97F47E2-3237-4B92-A531-B8C3A9AF9885","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[3.6396543979644775,-0.7260642051696777,0,3.6396543979644775,14.278063774108887,0,3.388000011444092,-1.3552000522613525,0,3.6396543979644775,14.278063774108887,0,3.388000011444092,14.90719985961914,0,3.388000011444092,-1.3552000522613525,0,3.388000011444092,-1.3552000522613525,0,3.388000011444092,14.90719985961914,0,0,0,0,0,13.552000045776367,0,0,0,0,3.388000011444092,14.90719985961914,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1],"normalized":false}},"boundingSphere":{"center":[1.8198271989822388,6.775999903678894,0],"radius":8.28103729572734}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-16","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"019734C7-A913-4997-AF56-4127C064DCBC"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Tectum","material":"Tectum, 1in, against solid backing","absorption":{"63":0,"125":0.06,"250":0.13,"500":0.24,"1000":0.45,"2000":0.82,"4000":0.64,"8000":0.64},"nrc":0.41,"source":"Tectum Company","description":"","uuid":"W2wCsvqJV0a1RMGw"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"AA8A615E-B0F8-4810-9B76-E960FD96910E","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[25.27349090576172,0,8.243200302124023,25.27349090576172,0,0.5723999738693237,23.240692138671875,-4.500878810882568,8.243200302124023,23.240692138671875,-4.500878810882568,0.5723999738693237,23.240692138671875,-4.500878810882568,8.243200302124023,25.27349090576172,0,0.5723999738693237],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.9113596677780151,0.4116109311580658,0,-0.9113596677780151,0.4116109311580658,0,-0.9113596677780151,0.4116109311580658,0,-0.9113596677780151,0.4116109311580658,0,-0.9113596677780151,0.4116109311580658,0,-0.9113596677780151,0.4116109311580658,0],"normalized":false}},"boundingSphere":{"center":[24.257091522216797,-2.250439405441284,4.407800137996674],"radius":4.561561097192662}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-1","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"C4C1198C-8ECF-4945-8DBE-BECEBD6261D4"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Tectum","material":"Tectum, 1in, against solid backing","absorption":{"63":0,"125":0.06,"250":0.13,"500":0.24,"1000":0.45,"2000":0.82,"4000":0.64,"8000":0.64},"nrc":0.41,"source":"Tectum Company","description":"","uuid":"W2wCsvqJV0a1RMGw"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"592E5C4E-1FF7-4AAE-8332-3EA1AF4A7B58","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[25.27349090576172,13.552000045776367,8.243200302124023,25.27349090576172,13.552000045776367,0.5723999738693237,25.951091766357422,6.776000022888184,8.243200302124023,25.951091766357422,6.776000022888184,0.5723999738693237,25.951091766357422,6.776000022888184,8.243200302124023,25.27349090576172,13.552000045776367,0.5723999738693237],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.9950371980667114,-0.09950384497642517,0,-0.9950371980667114,-0.09950384497642517,0,-0.9950371980667114,-0.09950384497642517,0,-0.9950371980667114,-0.09950384497642517,0,-0.9950371980667114,-0.09950384497642517,0,-0.9950371980667114,-0.09950384497642517,0],"normalized":false}},"boundingSphere":{"center":[25.61229133605957,10.164000034332275,4.407800137996674],"radius":5.128705901892141}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-2","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"BC98D1A7-A671-4D2C-A9B9-243FC24E6272"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Tectum","material":"Tectum, 1in, against solid backing","absorption":{"63":0,"125":0.06,"250":0.13,"500":0.24,"1000":0.45,"2000":0.82,"4000":0.64,"8000":0.64},"nrc":0.41,"source":"Tectum Company","description":"","uuid":"W2wCsvqJV0a1RMGw"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"86233816-C227-485D-BCFB-3495AB27841E","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[25.951091766357422,6.776000022888184,8.243200302124023,25.951091766357422,6.776000022888184,0.5723999738693237,25.27349090576172,0,8.243200302124023,25.27349090576172,0,0.5723999738693237,25.27349090576172,0,8.243200302124023,25.951091766357422,6.776000022888184,0.5723999738693237],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.9950371980667114,0.09950384497642517,0,-0.9950371980667114,0.09950384497642517,0,-0.9950371980667114,0.09950384497642517,0,-0.9950371980667114,0.09950384497642517,0,-0.9950371980667114,0.09950384497642517,0,-0.9950371980667114,0.09950384497642517,0],"normalized":false}},"boundingSphere":{"center":[25.61229133605957,3.388000011444092,4.407800137996674],"radius":5.128705901892141}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-5","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"002B910B-36C7-478E-BF82-44A5E5827359"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Tectum","material":"Tectum, 1in, against solid backing","absorption":{"63":0,"125":0.06,"250":0.13,"500":0.24,"1000":0.45,"2000":0.82,"4000":0.64,"8000":0.64},"nrc":0.41,"source":"Tectum Company","description":"","uuid":"W2wCsvqJV0a1RMGw"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"75B764E2-FFE8-476A-9917-7C248BD99988","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[23.240692138671875,18.052879333496094,8.243200302124023,23.240692138671875,18.052879333496094,0.5723999738693237,25.27349090576172,13.552000045776367,8.243200302124023,25.27349090576172,13.552000045776367,0.5723999738693237,25.27349090576172,13.552000045776367,8.243200302124023,23.240692138671875,18.052879333496094,0.5723999738693237],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.9113596677780151,-0.411610871553421,0,-0.9113596677780151,-0.411610871553421,0,-0.9113596677780151,-0.411610871553421,0,-0.9113596677780151,-0.411610871553421,0,-0.9113596677780151,-0.411610871553421,0,-0.9113596677780151,-0.411610871553421,0],"normalized":false}},"boundingSphere":{"center":[24.257091522216797,15.80243968963623,4.407800137996674],"radius":4.561561214816119}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-13","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"150F4026-17E8-4FA2-947C-7CCE8766672F"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["People","Various"],"manufacturer":"","name":"Audience In Upholstered Seats","material":"Audience in upholstered seats","absorption":{"63":0,"125":0.18,"250":0.4,"500":0.46,"1000":0.46,"2000":0.51,"4000":0.46,"8000":0.46},"nrc":0.46,"source":"Hann Tucker","description":"","uuid":"QFCVbDYrU5uWvhK2"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"538BB9A3-68A2-425A-B70F-CD45E476386D","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[25.951091766357422,6.776000022888184,0.5723999738693237,25.27349090576172,13.552000045776367,0.5723999738693237,25.27349090576172,0,0.5723999738693237,25.27349090576172,13.552000045776367,0.5723999738693237,23.240692138671875,18.052879333496094,0.5723999738693237,25.27349090576172,0,0.5723999738693237,23.240692138671875,-4.500878810882568,0.5723999738693237,25.27349090576172,0,0.5723999738693237,23.240692138671875,18.052879333496094,0.5723999738693237],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1],"normalized":false}},"boundingSphere":{"center":[24.59589195251465,6.776000261306763,0.5723999738693237],"radius":11.358017791156218}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-3","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"95922F62-13C2-4C06-A997-99B18DE92370"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["People","Various"],"manufacturer":"","name":"Audience In Upholstered Seats","material":"Audience in upholstered seats","absorption":{"63":0,"125":0.18,"250":0.4,"500":0.46,"1000":0.46,"2000":0.51,"4000":0.46,"8000":0.46},"nrc":0.46,"source":"Hann Tucker","description":"","uuid":"QFCVbDYrU5uWvhK2"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"EE864F8C-261F-4F61-B437-8B57B0567E6E","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[13.076691627502441,-4.500878810882568,0.07240000367164612,13.076691627502441,18.052879333496094,0.07240000367164612,3.6396543979644775,-0.7260642051696777,-0.6776000261306763,3.6396543979644775,14.278063774108887,-0.6776000261306763,3.6396543979644775,-0.7260642051696777,-0.6776000261306763,13.076691627502441,18.052879333496094,0.07240000367164612],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.07922429591417313,0,0.9968568086624146,-0.07922429591417313,0,0.9968568086624146,-0.07922429591417313,0,0.9968568086624146,-0.07922429591417313,0,0.9968568086624146,-0.07922429591417313,0,0.9968568086624146,-0.07922429591417313,0,0.9968568086624146],"normalized":false}},"boundingSphere":{"center":[8.35817301273346,6.776000261306763,-0.3026000112295151],"radius":12.230005909151432}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-17","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"12438BB0-6F74-48E6-A9BE-B8223FBBB05B"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["People","Various"],"manufacturer":"","name":"Audience In Upholstered Seats","material":"Audience in upholstered seats","absorption":{"63":0,"125":0.18,"250":0.4,"500":0.46,"1000":0.46,"2000":0.51,"4000":0.46,"8000":0.46},"nrc":0.46,"source":"Hann Tucker","description":"","uuid":"QFCVbDYrU5uWvhK2"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"4ED29942-85B9-4630-A710-A701DC4A2A5F","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[23.240692138671875,-4.500878810882568,0.5723999738693237,23.240692138671875,18.052879333496094,0.5723999738693237,13.076691627502441,-4.500878810882568,0.07240000367164612,13.076691627502441,18.052879333496094,0.07240000367164612,13.076691627502441,-4.500878810882568,0.07240000367164612,23.240692138671875,18.052879333496094,0.5723999738693237],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.04913381114602089,0,0.9987922310829163,-0.04913381114602089,0,0.9987922310829163,-0.04913381114602089,0,0.9987922310829163,-0.04913381114602089,0,0.9987922310829163,-0.04913381114602089,0,0.9987922310829163,-0.04913381114602089,0,0.9987922310829163],"normalized":false}},"boundingSphere":{"center":[18.158691883087158,6.776000261306763,0.3223999887704849],"radius":12.37162997341475}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-18","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"B35F8F84-7DE4-4AE4-ABD1-08F6856713D0"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"99A4D26C-5E26-4692-8C0D-CF185378CFA0","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[13.076691627502441,-4.500878810882568,7.493199825286865,13.076691627502441,-4.500878810882568,0.07240000367164612,3.6396543979644775,-0.7260642051696777,4.743199825286865,3.6396543979644775,-0.7260642051696777,4.743199825286865,13.076691627502441,-4.500878810882568,0.07240000367164612,3.6396543979644775,-0.7260642051696777,0,3.6396543979644775,-0.7260642051696777,-0.6776000261306763,3.6396543979644775,-0.7260642051696777,0,13.076691627502441,-4.500878810882568,0.07240000367164612],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0],"normalized":false}},"boundingSphere":{"center":[8.35817301273346,-2.613471508026123,3.4077998995780945],"radius":6.5205227396105645}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-4","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"5BCC2696-DB53-4AD8-8DD7-65A838026F6C"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"6689D2A1-9B38-489C-9B43-42D02F03C7DB","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[15.076691627502441,18.052879333496094,8.243200302124023,13.076691627502441,18.052879333496094,7.493199825286865,23.240692138671875,18.052879333496094,8.243200302124023,23.240692138671875,18.052879333496094,8.243200302124023,13.076691627502441,18.052879333496094,7.493199825286865,23.240692138671875,18.052879333496094,0.5723999738693237,13.076691627502441,18.052879333496094,0.07240000367164612,23.240692138671875,18.052879333496094,0.5723999738693237,13.076691627502441,18.052879333496094,7.493199825286865],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0],"normalized":false}},"boundingSphere":{"center":[18.158691883087158,18.052879333496094,4.157800152897835],"radius":6.520523060081951}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-6","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"E89777FF-93D0-456E-97D0-9CDD4961BB17"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"DA4B11D6-24CC-472A-98D1-3E106C740E0C","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[13.076691627502441,18.052879333496094,7.493199825286865,3.6396543979644775,14.278063774108887,4.743199825286865,13.076691627502441,18.052879333496094,0.07240000367164612,3.6396543979644775,14.278063774108887,4.743199825286865,3.6396543979644775,14.278063774108887,0,13.076691627502441,18.052879333496094,0.07240000367164612,3.6396543979644775,14.278063774108887,-0.6776000261306763,13.076691627502441,18.052879333496094,0.07240000367164612,3.6396543979644775,14.278063774108887,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0],"normalized":false}},"boundingSphere":{"center":[8.35817301273346,16.16547155380249,3.4077998995780945],"radius":6.520522877634167}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-10","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"5612A937-9C2D-46F5-B75A-6C996F10815B"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"5081D021-FEB7-41F7-91CD-DE1EF838C595","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[15.076691627502441,-4.500878810882568,8.243200302124023,23.240692138671875,-4.500878810882568,8.243200302124023,13.076691627502441,-4.500878810882568,7.493199825286865,23.240692138671875,-4.500878810882568,8.243200302124023,23.240692138671875,-4.500878810882568,0.5723999738693237,13.076691627502441,-4.500878810882568,7.493199825286865,13.076691627502441,-4.500878810882568,0.07240000367164612,13.076691627502441,-4.500878810882568,7.493199825286865,23.240692138671875,-4.500878810882568,0.5723999738693237],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0],"normalized":false}},"boundingSphere":{"center":[18.158691883087158,-4.500878810882568,4.157800152897835],"radius":6.520523060081951}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-19","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"EAC1B97E-7C9F-4455-86E5-6688C117C43D"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"1ED2615E-F9E7-477F-8751-E38570B227C2","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[25.951091766357422,6.776000022888184,8.243200302124023,25.27349090576172,0,8.243200302124023,25.27349090576172,13.552000045776367,8.243200302124023,25.27349090576172,13.552000045776367,8.243200302124023,25.27349090576172,0,8.243200302124023,23.240692138671875,18.052879333496094,8.243200302124023,25.27349090576172,0,8.243200302124023,23.240692138671875,-4.500878810882568,8.243200302124023,23.240692138671875,18.052879333496094,8.243200302124023,23.240692138671875,18.052879333496094,8.243200302124023,23.240692138671875,-4.500878810882568,8.243200302124023,15.076691627502441,18.052879333496094,8.243200302124023,15.076691627502441,-4.500878810882568,8.243200302124023,15.076691627502441,18.052879333496094,8.243200302124023,23.240692138671875,-4.500878810882568,8.243200302124023],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1],"normalized":false}},"boundingSphere":{"center":[20.51389169692993,6.776000261306763,8.243200302124023],"radius":12.519231054811794}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-7","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"ACC14F91-9609-4D98-BD92-DE179F50F4DF"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Concrete Block"],"manufacturer":"","name":"Cmu","material":"CMU, painted","absorption":{"63":0.03,"125":0.1,"250":0.05,"500":0.06,"1000":0.07,"2000":0.09,"4000":0.08,"8000":0.08},"nrc":0.07,"source":"wjhw?","description":"","uuid":"ByswUBFezm3zBKiE"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"447AAFC5-9DAB-428B-BFF8-90CE2859CED1","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[0,0,4.743199825286865,3.388000011444092,-1.3552000522613525,4.743199825286865,0,0,0,3.388000011444092,-1.3552000522613525,0,0,0,0,3.388000011444092,-1.3552000522613525,4.743199825286865],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0.3713906705379486,0.9284766912460327,0,0.3713906705379486,0.9284766912460327,0,0.3713906705379486,0.9284766912460327,0,0.3713906705379486,0.9284766912460327,0,0.3713906705379486,0.9284766912460327,0,0.3713906705379486,0.9284766912460327,0],"normalized":false}},"boundingSphere":{"center":[1.694000005722046,-0.6776000261306763,2.3715999126434326],"radius":2.9922005214304943}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-8","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"8C2E6B59-4406-46AA-BFFC-0DD3A540CC2B"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Concrete Block"],"manufacturer":"","name":"Cmu","material":"CMU, painted","absorption":{"63":0.03,"125":0.1,"250":0.05,"500":0.06,"1000":0.07,"2000":0.09,"4000":0.08,"8000":0.08},"nrc":0.07,"source":"wjhw?","description":"","uuid":"ByswUBFezm3zBKiE"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"CE7D1DD2-4D3C-4974-9990-04CB566F3914","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[3.388000011444092,14.90719985961914,4.743199825286865,0,13.552000045776367,4.743199825286865,3.388000011444092,14.90719985961914,0,0,13.552000045776367,0,3.388000011444092,14.90719985961914,0,0,13.552000045776367,4.743199825286865],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0.37139061093330383,-0.9284766912460327,0,0.37139061093330383,-0.9284766912460327,0,0.37139061093330383,-0.9284766912460327,0,0.37139061093330383,-0.9284766912460327,0,0.37139061093330383,-0.9284766912460327,0,0.37139061093330383,-0.9284766912460327,0],"normalized":false}},"boundingSphere":{"center":[1.694000005722046,14.229599952697754,2.3715999126434326],"radius":2.9922004944349068}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-9","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"23667DCD-801B-4519-AE5D-D24386E78799"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Concrete Block"],"manufacturer":"","name":"Cmu","material":"CMU, painted","absorption":{"63":0.03,"125":0.1,"250":0.05,"500":0.06,"1000":0.07,"2000":0.09,"4000":0.08,"8000":0.08},"nrc":0.07,"source":"wjhw?","description":"","uuid":"ByswUBFezm3zBKiE"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"AC13C7F5-F22B-4EB1-ABF2-19323297501A","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[3.6396543979644775,-0.7260642051696777,4.743199825286865,3.6396543979644775,-0.7260642051696777,0,3.388000011444092,-1.3552000522613525,4.743199825286865,3.388000011444092,-1.3552000522613525,0,3.388000011444092,-1.3552000522613525,4.743199825286865,3.6396543979644775,-0.7260642051696777,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.9284766912460327,0.3713907301425934,0,-0.9284766912460327,0.3713907301425934,0,-0.9284766912460327,0.3713907301425934,0,-0.9284766912460327,0.3713907301425934,0,-0.9284766912460327,0.3713907301425934,0,-0.9284766912460327,0.3713907301425934,0],"normalized":false}},"boundingSphere":{"center":[3.5138272047042847,-1.0406321287155151,2.3715999126434326],"radius":2.395677692582626}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-11","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"09FB51AD-73E9-480E-A3E5-6932C31787DE"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Concrete Block"],"manufacturer":"","name":"Cmu","material":"CMU, painted","absorption":{"63":0.03,"125":0.1,"250":0.05,"500":0.06,"1000":0.07,"2000":0.09,"4000":0.08,"8000":0.08},"nrc":0.07,"source":"wjhw?","description":"","uuid":"ByswUBFezm3zBKiE"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"0C7929BE-458F-413B-BC92-D7FBF0D28AB8","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[3.388000011444092,14.90719985961914,4.743199825286865,3.388000011444092,14.90719985961914,0,3.6396543979644775,14.278063774108887,4.743199825286865,3.6396543979644775,14.278063774108887,0,3.6396543979644775,14.278063774108887,4.743199825286865,3.388000011444092,14.90719985961914,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.9284766912460327,-0.37139061093330383,0,-0.9284766912460327,-0.37139061093330383,0,-0.9284766912460327,-0.37139061093330383,0,-0.9284766912460327,-0.37139061093330383,0,-0.9284766912460327,-0.37139061093330383,0,-0.9284766912460327,-0.37139061093330383,0],"normalized":false}},"boundingSphere":{"center":[3.5138272047042847,14.592631816864014,2.3715999126434326],"radius":2.395677708235577}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-12","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"94111689-BEE4-4E6E-98FA-8CEBFC57DE7B"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Concrete Block"],"manufacturer":"","name":"Cmu","material":"CMU, painted","absorption":{"63":0.03,"125":0.1,"250":0.05,"500":0.06,"1000":0.07,"2000":0.09,"4000":0.08,"8000":0.08},"nrc":0.07,"source":"wjhw?","description":"","uuid":"ByswUBFezm3zBKiE"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"41B752A6-4A0A-4F6E-9EB0-B5E799D8D9C4","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[0,13.552000045776367,0,0,13.552000045776367,4.743199825286865,0,0,0,0,0,4.743199825286865,0,0,0,0,13.552000045776367,4.743199825286865],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0],"normalized":false}},"boundingSphere":{"center":[0,6.776000022888184,2.3715999126434326],"radius":7.179043282766235}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-15","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"DF5D8BCC-C7BF-41EC-994B-09CCCD4D67C7"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"899F381E-5921-4775-9F58-92044872FF55","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[3.6396543979644775,14.278063774108887,4.743199825286865,3.6396543979644775,-0.7260642051696777,4.743199825286865,3.388000011444092,14.90719985961914,4.743199825286865,3.6396543979644775,-0.7260642051696777,4.743199825286865,3.388000011444092,-1.3552000522613525,4.743199825286865,3.388000011444092,14.90719985961914,4.743199825286865,3.388000011444092,14.90719985961914,4.743199825286865,3.388000011444092,-1.3552000522613525,4.743199825286865,0,13.552000045776367,4.743199825286865,0,0,4.743199825286865,0,13.552000045776367,4.743199825286865,3.388000011444092,-1.3552000522613525,4.743199825286865],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1],"normalized":false}},"boundingSphere":{"center":[1.8198271989822388,6.775999903678894,4.743199825286865],"radius":8.28103729572734}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-14","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"E8C1CCA5-3787-4C6B-8A87-2F6B6C1709B6"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"57731404-5792-4623-B964-263A68EFD1AD","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[15.076691627502441,18.052879333496094,8.243200302124023,15.076691627502441,-4.500878810882568,8.243200302124023,13.076691627502441,18.052879333496094,7.493199825286865,13.076691627502441,-4.500878810882568,7.493199825286865,13.076691627502441,18.052879333496094,7.493199825286865,15.076691627502441,-4.500878810882568,8.243200302124023],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0.3511236310005188,0,-0.9363291263580322,0.3511236310005188,0,-0.9363291263580322,0.3511236310005188,0,-0.9363291263580322,0.3511236310005188,0,-0.9363291263580322,0.3511236310005188,0,-0.9363291263580322,0.3511236310005188,0,-0.9363291263580322],"normalized":false}},"boundingSphere":{"center":[14.076691627502441,6.776000261306763,7.868200063705444],"radius":11.327339793066848}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-20","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"871ED5D3-5913-47D3-8585-D6C3BDB05F4E"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"8B8AAEEE-9E0B-486F-837A-74A372F11975","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[13.076691627502441,18.052879333496094,7.493199825286865,13.076691627502441,-4.500878810882568,7.493199825286865,3.6396543979644775,14.278063774108887,4.743199825286865,3.6396543979644775,-0.7260642051696777,4.743199825286865,3.6396543979644775,14.278063774108887,4.743199825286865,13.076691627502441,-4.500878810882568,7.493199825286865],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0.2797684967517853,0,-0.9600675106048584,0.2797684967517853,0,-0.9600675106048584,0.2797684967517853,0,-0.9600675106048584,0.2797684967517853,0,-0.9600675106048584,0.2797684967517853,0,-0.9600675106048584,0.2797684967517853,0,-0.9600675106048584],"normalized":false}},"boundingSphere":{"center":[8.35817301273346,6.776000261306763,6.118199825286865],"radius":12.3013432001023}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-21","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"258494C4-8017-4C71-A8CA-32E17274FEA9"},{"surfaces":[{"kind":"container","visible":true,"name":"STAGE_FLOOR","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"C25652F3-D7EC-42DE-82CA-1A4CCCE37874","children":[{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Floors","Wood"],"manufacturer":"","name":"Wood Stage Floor (T&G)","material":"Wood Stage Floor (T&G), 2 layers 1/2in, on joists","absorption":{"63":0.04,"125":0.1,"250":0.07,"500":0.06,"1000":0.06,"2000":0.06,"4000":0.06,"8000":0.06},"nrc":0.06,"source":"Beranek (JASA '98)","description":"","uuid":"ZdwcxUjnCaTijM8d"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"400B3C98-438F-414E-9A39-2D5BAC219DC3","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[3.6396543979644775,14.278063774108887,-0.6776000261306763,3.6396543979644775,14.278063774108887,0,3.6396543979644775,-0.7260642051696777,-0.6776000261306763,3.6396543979644775,-0.7260642051696777,0,3.6396543979644775,-0.7260642051696777,-0.6776000261306763,3.6396543979644775,14.278063774108887,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0],"normalized":false}},"boundingSphere":{"center":[3.6396543979644775,6.7759997844696045,-0.33880001306533813],"radius":7.509710350838808}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-0","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"684C19AC-22BD-45FE-898C-C5166936CDDD"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Floors","Wood"],"manufacturer":"","name":"Wood Stage Floor (T&G)","material":"Wood Stage Floor (T&G), 2 layers 1/2in, on joists","absorption":{"63":0.04,"125":0.1,"250":0.07,"500":0.06,"1000":0.06,"2000":0.06,"4000":0.06,"8000":0.06},"nrc":0.06,"source":"Beranek (JASA '98)","description":"","uuid":"ZdwcxUjnCaTijM8d"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"E97F47E2-3237-4B92-A531-B8C3A9AF9885","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[3.6396543979644775,-0.7260642051696777,0,3.6396543979644775,14.278063774108887,0,3.388000011444092,-1.3552000522613525,0,3.6396543979644775,14.278063774108887,0,3.388000011444092,14.90719985961914,0,3.388000011444092,-1.3552000522613525,0,3.388000011444092,-1.3552000522613525,0,3.388000011444092,14.90719985961914,0,0,0,0,0,13.552000045776367,0,0,0,0,3.388000011444092,14.90719985961914,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1],"normalized":false}},"boundingSphere":{"center":[1.8198271989822388,6.775999903678894,0],"radius":8.28103729572734}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-16","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"019734C7-A913-4997-AF56-4127C064DCBC"}]},{"kind":"container","visible":true,"name":"BACK_WALL","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"50EAB1A6-F698-4B51-943F-6B1DB50A9316","children":[{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Tectum","material":"Tectum, 1in, against solid backing","absorption":{"63":0,"125":0.06,"250":0.13,"500":0.24,"1000":0.45,"2000":0.82,"4000":0.64,"8000":0.64},"nrc":0.41,"source":"Tectum Company","description":"","uuid":"W2wCsvqJV0a1RMGw"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"AA8A615E-B0F8-4810-9B76-E960FD96910E","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[25.27349090576172,0,8.243200302124023,25.27349090576172,0,0.5723999738693237,23.240692138671875,-4.500878810882568,8.243200302124023,23.240692138671875,-4.500878810882568,0.5723999738693237,23.240692138671875,-4.500878810882568,8.243200302124023,25.27349090576172,0,0.5723999738693237],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.9113596677780151,0.4116109311580658,0,-0.9113596677780151,0.4116109311580658,0,-0.9113596677780151,0.4116109311580658,0,-0.9113596677780151,0.4116109311580658,0,-0.9113596677780151,0.4116109311580658,0,-0.9113596677780151,0.4116109311580658,0],"normalized":false}},"boundingSphere":{"center":[24.257091522216797,-2.250439405441284,4.407800137996674],"radius":4.561561097192662}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-1","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"C4C1198C-8ECF-4945-8DBE-BECEBD6261D4"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Tectum","material":"Tectum, 1in, against solid backing","absorption":{"63":0,"125":0.06,"250":0.13,"500":0.24,"1000":0.45,"2000":0.82,"4000":0.64,"8000":0.64},"nrc":0.41,"source":"Tectum Company","description":"","uuid":"W2wCsvqJV0a1RMGw"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"592E5C4E-1FF7-4AAE-8332-3EA1AF4A7B58","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[25.27349090576172,13.552000045776367,8.243200302124023,25.27349090576172,13.552000045776367,0.5723999738693237,25.951091766357422,6.776000022888184,8.243200302124023,25.951091766357422,6.776000022888184,0.5723999738693237,25.951091766357422,6.776000022888184,8.243200302124023,25.27349090576172,13.552000045776367,0.5723999738693237],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.9950371980667114,-0.09950384497642517,0,-0.9950371980667114,-0.09950384497642517,0,-0.9950371980667114,-0.09950384497642517,0,-0.9950371980667114,-0.09950384497642517,0,-0.9950371980667114,-0.09950384497642517,0,-0.9950371980667114,-0.09950384497642517,0],"normalized":false}},"boundingSphere":{"center":[25.61229133605957,10.164000034332275,4.407800137996674],"radius":5.128705901892141}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-2","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"BC98D1A7-A671-4D2C-A9B9-243FC24E6272"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Tectum","material":"Tectum, 1in, against solid backing","absorption":{"63":0,"125":0.06,"250":0.13,"500":0.24,"1000":0.45,"2000":0.82,"4000":0.64,"8000":0.64},"nrc":0.41,"source":"Tectum Company","description":"","uuid":"W2wCsvqJV0a1RMGw"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"86233816-C227-485D-BCFB-3495AB27841E","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[25.951091766357422,6.776000022888184,8.243200302124023,25.951091766357422,6.776000022888184,0.5723999738693237,25.27349090576172,0,8.243200302124023,25.27349090576172,0,0.5723999738693237,25.27349090576172,0,8.243200302124023,25.951091766357422,6.776000022888184,0.5723999738693237],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.9950371980667114,0.09950384497642517,0,-0.9950371980667114,0.09950384497642517,0,-0.9950371980667114,0.09950384497642517,0,-0.9950371980667114,0.09950384497642517,0,-0.9950371980667114,0.09950384497642517,0,-0.9950371980667114,0.09950384497642517,0],"normalized":false}},"boundingSphere":{"center":[25.61229133605957,3.388000011444092,4.407800137996674],"radius":5.128705901892141}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-5","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"002B910B-36C7-478E-BF82-44A5E5827359"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Tectum","material":"Tectum, 1in, against solid backing","absorption":{"63":0,"125":0.06,"250":0.13,"500":0.24,"1000":0.45,"2000":0.82,"4000":0.64,"8000":0.64},"nrc":0.41,"source":"Tectum Company","description":"","uuid":"W2wCsvqJV0a1RMGw"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"75B764E2-FFE8-476A-9917-7C248BD99988","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[23.240692138671875,18.052879333496094,8.243200302124023,23.240692138671875,18.052879333496094,0.5723999738693237,25.27349090576172,13.552000045776367,8.243200302124023,25.27349090576172,13.552000045776367,0.5723999738693237,25.27349090576172,13.552000045776367,8.243200302124023,23.240692138671875,18.052879333496094,0.5723999738693237],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.9113596677780151,-0.411610871553421,0,-0.9113596677780151,-0.411610871553421,0,-0.9113596677780151,-0.411610871553421,0,-0.9113596677780151,-0.411610871553421,0,-0.9113596677780151,-0.411610871553421,0,-0.9113596677780151,-0.411610871553421,0],"normalized":false}},"boundingSphere":{"center":[24.257091522216797,15.80243968963623,4.407800137996674],"radius":4.561561214816119}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-13","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"150F4026-17E8-4FA2-947C-7CCE8766672F"}]},{"kind":"container","visible":true,"name":"FLOOR","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"22B49FEC-509E-4278-A6EE-C8C7E484A4CD","children":[{"kind":"surface","visible":true,"acousticMaterial":{"tags":["People","Various"],"manufacturer":"","name":"Audience In Upholstered Seats","material":"Audience in upholstered seats","absorption":{"63":0,"125":0.18,"250":0.4,"500":0.46,"1000":0.46,"2000":0.51,"4000":0.46,"8000":0.46},"nrc":0.46,"source":"Hann Tucker","description":"","uuid":"QFCVbDYrU5uWvhK2"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"538BB9A3-68A2-425A-B70F-CD45E476386D","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[25.951091766357422,6.776000022888184,0.5723999738693237,25.27349090576172,13.552000045776367,0.5723999738693237,25.27349090576172,0,0.5723999738693237,25.27349090576172,13.552000045776367,0.5723999738693237,23.240692138671875,18.052879333496094,0.5723999738693237,25.27349090576172,0,0.5723999738693237,23.240692138671875,-4.500878810882568,0.5723999738693237,25.27349090576172,0,0.5723999738693237,23.240692138671875,18.052879333496094,0.5723999738693237],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1],"normalized":false}},"boundingSphere":{"center":[24.59589195251465,6.776000261306763,0.5723999738693237],"radius":11.358017791156218}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-3","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"95922F62-13C2-4C06-A997-99B18DE92370"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["People","Various"],"manufacturer":"","name":"Audience In Upholstered Seats","material":"Audience in upholstered seats","absorption":{"63":0,"125":0.18,"250":0.4,"500":0.46,"1000":0.46,"2000":0.51,"4000":0.46,"8000":0.46},"nrc":0.46,"source":"Hann Tucker","description":"","uuid":"QFCVbDYrU5uWvhK2"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"EE864F8C-261F-4F61-B437-8B57B0567E6E","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[13.076691627502441,-4.500878810882568,0.07240000367164612,13.076691627502441,18.052879333496094,0.07240000367164612,3.6396543979644775,-0.7260642051696777,-0.6776000261306763,3.6396543979644775,14.278063774108887,-0.6776000261306763,3.6396543979644775,-0.7260642051696777,-0.6776000261306763,13.076691627502441,18.052879333496094,0.07240000367164612],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.07922429591417313,0,0.9968568086624146,-0.07922429591417313,0,0.9968568086624146,-0.07922429591417313,0,0.9968568086624146,-0.07922429591417313,0,0.9968568086624146,-0.07922429591417313,0,0.9968568086624146,-0.07922429591417313,0,0.9968568086624146],"normalized":false}},"boundingSphere":{"center":[8.35817301273346,6.776000261306763,-0.3026000112295151],"radius":12.230005909151432}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-17","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"12438BB0-6F74-48E6-A9BE-B8223FBBB05B"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["People","Various"],"manufacturer":"","name":"Audience In Upholstered Seats","material":"Audience in upholstered seats","absorption":{"63":0,"125":0.18,"250":0.4,"500":0.46,"1000":0.46,"2000":0.51,"4000":0.46,"8000":0.46},"nrc":0.46,"source":"Hann Tucker","description":"","uuid":"QFCVbDYrU5uWvhK2"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"4ED29942-85B9-4630-A710-A701DC4A2A5F","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[23.240692138671875,-4.500878810882568,0.5723999738693237,23.240692138671875,18.052879333496094,0.5723999738693237,13.076691627502441,-4.500878810882568,0.07240000367164612,13.076691627502441,18.052879333496094,0.07240000367164612,13.076691627502441,-4.500878810882568,0.07240000367164612,23.240692138671875,18.052879333496094,0.5723999738693237],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.04913381114602089,0,0.9987922310829163,-0.04913381114602089,0,0.9987922310829163,-0.04913381114602089,0,0.9987922310829163,-0.04913381114602089,0,0.9987922310829163,-0.04913381114602089,0,0.9987922310829163,-0.04913381114602089,0,0.9987922310829163],"normalized":false}},"boundingSphere":{"center":[18.158691883087158,6.776000261306763,0.3223999887704849],"radius":12.37162997341475}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-18","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"B35F8F84-7DE4-4AE4-ABD1-08F6856713D0"}]},{"kind":"container","visible":true,"name":"SIDE_WALLS","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"6FD07351-E2A3-48B5-A97E-4CF1292754D1","children":[{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"99A4D26C-5E26-4692-8C0D-CF185378CFA0","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[13.076691627502441,-4.500878810882568,7.493199825286865,13.076691627502441,-4.500878810882568,0.07240000367164612,3.6396543979644775,-0.7260642051696777,4.743199825286865,3.6396543979644775,-0.7260642051696777,4.743199825286865,13.076691627502441,-4.500878810882568,0.07240000367164612,3.6396543979644775,-0.7260642051696777,0,3.6396543979644775,-0.7260642051696777,-0.6776000261306763,3.6396543979644775,-0.7260642051696777,0,13.076691627502441,-4.500878810882568,0.07240000367164612],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0],"normalized":false}},"boundingSphere":{"center":[8.35817301273346,-2.613471508026123,3.4077998995780945],"radius":6.5205227396105645}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-4","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"5BCC2696-DB53-4AD8-8DD7-65A838026F6C"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"6689D2A1-9B38-489C-9B43-42D02F03C7DB","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[15.076691627502441,18.052879333496094,8.243200302124023,13.076691627502441,18.052879333496094,7.493199825286865,23.240692138671875,18.052879333496094,8.243200302124023,23.240692138671875,18.052879333496094,8.243200302124023,13.076691627502441,18.052879333496094,7.493199825286865,23.240692138671875,18.052879333496094,0.5723999738693237,13.076691627502441,18.052879333496094,0.07240000367164612,23.240692138671875,18.052879333496094,0.5723999738693237,13.076691627502441,18.052879333496094,7.493199825286865],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0],"normalized":false}},"boundingSphere":{"center":[18.158691883087158,18.052879333496094,4.157800152897835],"radius":6.520523060081951}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-6","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"E89777FF-93D0-456E-97D0-9CDD4961BB17"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"DA4B11D6-24CC-472A-98D1-3E106C740E0C","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[13.076691627502441,18.052879333496094,7.493199825286865,3.6396543979644775,14.278063774108887,4.743199825286865,13.076691627502441,18.052879333496094,0.07240000367164612,3.6396543979644775,14.278063774108887,4.743199825286865,3.6396543979644775,14.278063774108887,0,13.076691627502441,18.052879333496094,0.07240000367164612,3.6396543979644775,14.278063774108887,-0.6776000261306763,13.076691627502441,18.052879333496094,0.07240000367164612,3.6396543979644775,14.278063774108887,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0],"normalized":false}},"boundingSphere":{"center":[8.35817301273346,16.16547155380249,3.4077998995780945],"radius":6.520522877634167}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-10","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"5612A937-9C2D-46F5-B75A-6C996F10815B"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"5081D021-FEB7-41F7-91CD-DE1EF838C595","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[15.076691627502441,-4.500878810882568,8.243200302124023,23.240692138671875,-4.500878810882568,8.243200302124023,13.076691627502441,-4.500878810882568,7.493199825286865,23.240692138671875,-4.500878810882568,8.243200302124023,23.240692138671875,-4.500878810882568,0.5723999738693237,13.076691627502441,-4.500878810882568,7.493199825286865,13.076691627502441,-4.500878810882568,0.07240000367164612,13.076691627502441,-4.500878810882568,7.493199825286865,23.240692138671875,-4.500878810882568,0.5723999738693237],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0],"normalized":false}},"boundingSphere":{"center":[18.158691883087158,-4.500878810882568,4.157800152897835],"radius":6.520523060081951}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-19","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"EAC1B97E-7C9F-4455-86E5-6688C117C43D"}]},{"kind":"container","visible":true,"name":"FLAT_CEILING","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"2CFEC12E-3B4B-4FF6-A980-F48C4DFF00DD","children":[{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"1ED2615E-F9E7-477F-8751-E38570B227C2","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[25.951091766357422,6.776000022888184,8.243200302124023,25.27349090576172,0,8.243200302124023,25.27349090576172,13.552000045776367,8.243200302124023,25.27349090576172,13.552000045776367,8.243200302124023,25.27349090576172,0,8.243200302124023,23.240692138671875,18.052879333496094,8.243200302124023,25.27349090576172,0,8.243200302124023,23.240692138671875,-4.500878810882568,8.243200302124023,23.240692138671875,18.052879333496094,8.243200302124023,23.240692138671875,18.052879333496094,8.243200302124023,23.240692138671875,-4.500878810882568,8.243200302124023,15.076691627502441,18.052879333496094,8.243200302124023,15.076691627502441,-4.500878810882568,8.243200302124023,15.076691627502441,18.052879333496094,8.243200302124023,23.240692138671875,-4.500878810882568,8.243200302124023],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1],"normalized":false}},"boundingSphere":{"center":[20.51389169692993,6.776000261306763,8.243200302124023],"radius":12.519231054811794}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-7","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"ACC14F91-9609-4D98-BD92-DE179F50F4DF"}]},{"kind":"container","visible":true,"name":"STAGE_WALLS","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"744E318D-EC60-406E-880D-596711954480","children":[{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Concrete Block"],"manufacturer":"","name":"Cmu","material":"CMU, painted","absorption":{"63":0.03,"125":0.1,"250":0.05,"500":0.06,"1000":0.07,"2000":0.09,"4000":0.08,"8000":0.08},"nrc":0.07,"source":"wjhw?","description":"","uuid":"ByswUBFezm3zBKiE"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"447AAFC5-9DAB-428B-BFF8-90CE2859CED1","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[0,0,4.743199825286865,3.388000011444092,-1.3552000522613525,4.743199825286865,0,0,0,3.388000011444092,-1.3552000522613525,0,0,0,0,3.388000011444092,-1.3552000522613525,4.743199825286865],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0.3713906705379486,0.9284766912460327,0,0.3713906705379486,0.9284766912460327,0,0.3713906705379486,0.9284766912460327,0,0.3713906705379486,0.9284766912460327,0,0.3713906705379486,0.9284766912460327,0,0.3713906705379486,0.9284766912460327,0],"normalized":false}},"boundingSphere":{"center":[1.694000005722046,-0.6776000261306763,2.3715999126434326],"radius":2.9922005214304943}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-8","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"8C2E6B59-4406-46AA-BFFC-0DD3A540CC2B"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Concrete Block"],"manufacturer":"","name":"Cmu","material":"CMU, painted","absorption":{"63":0.03,"125":0.1,"250":0.05,"500":0.06,"1000":0.07,"2000":0.09,"4000":0.08,"8000":0.08},"nrc":0.07,"source":"wjhw?","description":"","uuid":"ByswUBFezm3zBKiE"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"CE7D1DD2-4D3C-4974-9990-04CB566F3914","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[3.388000011444092,14.90719985961914,4.743199825286865,0,13.552000045776367,4.743199825286865,3.388000011444092,14.90719985961914,0,0,13.552000045776367,0,3.388000011444092,14.90719985961914,0,0,13.552000045776367,4.743199825286865],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0.37139061093330383,-0.9284766912460327,0,0.37139061093330383,-0.9284766912460327,0,0.37139061093330383,-0.9284766912460327,0,0.37139061093330383,-0.9284766912460327,0,0.37139061093330383,-0.9284766912460327,0,0.37139061093330383,-0.9284766912460327,0],"normalized":false}},"boundingSphere":{"center":[1.694000005722046,14.229599952697754,2.3715999126434326],"radius":2.9922004944349068}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-9","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"23667DCD-801B-4519-AE5D-D24386E78799"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Concrete Block"],"manufacturer":"","name":"Cmu","material":"CMU, painted","absorption":{"63":0.03,"125":0.1,"250":0.05,"500":0.06,"1000":0.07,"2000":0.09,"4000":0.08,"8000":0.08},"nrc":0.07,"source":"wjhw?","description":"","uuid":"ByswUBFezm3zBKiE"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"AC13C7F5-F22B-4EB1-ABF2-19323297501A","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[3.6396543979644775,-0.7260642051696777,4.743199825286865,3.6396543979644775,-0.7260642051696777,0,3.388000011444092,-1.3552000522613525,4.743199825286865,3.388000011444092,-1.3552000522613525,0,3.388000011444092,-1.3552000522613525,4.743199825286865,3.6396543979644775,-0.7260642051696777,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.9284766912460327,0.3713907301425934,0,-0.9284766912460327,0.3713907301425934,0,-0.9284766912460327,0.3713907301425934,0,-0.9284766912460327,0.3713907301425934,0,-0.9284766912460327,0.3713907301425934,0,-0.9284766912460327,0.3713907301425934,0],"normalized":false}},"boundingSphere":{"center":[3.5138272047042847,-1.0406321287155151,2.3715999126434326],"radius":2.395677692582626}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-11","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"09FB51AD-73E9-480E-A3E5-6932C31787DE"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Concrete Block"],"manufacturer":"","name":"Cmu","material":"CMU, painted","absorption":{"63":0.03,"125":0.1,"250":0.05,"500":0.06,"1000":0.07,"2000":0.09,"4000":0.08,"8000":0.08},"nrc":0.07,"source":"wjhw?","description":"","uuid":"ByswUBFezm3zBKiE"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"0C7929BE-458F-413B-BC92-D7FBF0D28AB8","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[3.388000011444092,14.90719985961914,4.743199825286865,3.388000011444092,14.90719985961914,0,3.6396543979644775,14.278063774108887,4.743199825286865,3.6396543979644775,14.278063774108887,0,3.6396543979644775,14.278063774108887,4.743199825286865,3.388000011444092,14.90719985961914,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.9284766912460327,-0.37139061093330383,0,-0.9284766912460327,-0.37139061093330383,0,-0.9284766912460327,-0.37139061093330383,0,-0.9284766912460327,-0.37139061093330383,0,-0.9284766912460327,-0.37139061093330383,0,-0.9284766912460327,-0.37139061093330383,0],"normalized":false}},"boundingSphere":{"center":[3.5138272047042847,14.592631816864014,2.3715999126434326],"radius":2.395677708235577}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-12","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"94111689-BEE4-4E6E-98FA-8CEBFC57DE7B"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Concrete Block"],"manufacturer":"","name":"Cmu","material":"CMU, painted","absorption":{"63":0.03,"125":0.1,"250":0.05,"500":0.06,"1000":0.07,"2000":0.09,"4000":0.08,"8000":0.08},"nrc":0.07,"source":"wjhw?","description":"","uuid":"ByswUBFezm3zBKiE"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"41B752A6-4A0A-4F6E-9EB0-B5E799D8D9C4","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[0,13.552000045776367,0,0,13.552000045776367,4.743199825286865,0,0,0,0,0,4.743199825286865,0,0,0,0,13.552000045776367,4.743199825286865],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0],"normalized":false}},"boundingSphere":{"center":[0,6.776000022888184,2.3715999126434326],"radius":7.179043282766235}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-15","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"DF5D8BCC-C7BF-41EC-994B-09CCCD4D67C7"}]},{"kind":"container","visible":true,"name":"STAGE_CEILING","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"94B92F44-E01B-40A3-B783-CD1CF3AA2BC6","children":[{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"899F381E-5921-4775-9F58-92044872FF55","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[3.6396543979644775,14.278063774108887,4.743199825286865,3.6396543979644775,-0.7260642051696777,4.743199825286865,3.388000011444092,14.90719985961914,4.743199825286865,3.6396543979644775,-0.7260642051696777,4.743199825286865,3.388000011444092,-1.3552000522613525,4.743199825286865,3.388000011444092,14.90719985961914,4.743199825286865,3.388000011444092,14.90719985961914,4.743199825286865,3.388000011444092,-1.3552000522613525,4.743199825286865,0,13.552000045776367,4.743199825286865,0,0,4.743199825286865,0,13.552000045776367,4.743199825286865,3.388000011444092,-1.3552000522613525,4.743199825286865],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1],"normalized":false}},"boundingSphere":{"center":[1.8198271989822388,6.775999903678894,4.743199825286865],"radius":8.28103729572734}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-14","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"E8C1CCA5-3787-4C6B-8A87-2F6B6C1709B6"}]},{"kind":"container","visible":true,"name":"SLOPED_CEILING","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"E6294A9E-6F2C-4828-B186-788F0352FA0C","children":[{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"57731404-5792-4623-B964-263A68EFD1AD","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[15.076691627502441,18.052879333496094,8.243200302124023,15.076691627502441,-4.500878810882568,8.243200302124023,13.076691627502441,18.052879333496094,7.493199825286865,13.076691627502441,-4.500878810882568,7.493199825286865,13.076691627502441,18.052879333496094,7.493199825286865,15.076691627502441,-4.500878810882568,8.243200302124023],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0.3511236310005188,0,-0.9363291263580322,0.3511236310005188,0,-0.9363291263580322,0.3511236310005188,0,-0.9363291263580322,0.3511236310005188,0,-0.9363291263580322,0.3511236310005188,0,-0.9363291263580322,0.3511236310005188,0,-0.9363291263580322],"normalized":false}},"boundingSphere":{"center":[14.076691627502441,6.776000261306763,7.868200063705444],"radius":11.327339793066848}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-20","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"871ED5D3-5913-47D3-8585-D6C3BDB05F4E"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"8B8AAEEE-9E0B-486F-837A-74A372F11975","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[13.076691627502441,18.052879333496094,7.493199825286865,13.076691627502441,-4.500878810882568,7.493199825286865,3.6396543979644775,14.278063774108887,4.743199825286865,3.6396543979644775,-0.7260642051696777,4.743199825286865,3.6396543979644775,14.278063774108887,4.743199825286865,13.076691627502441,-4.500878810882568,7.493199825286865],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0.2797684967517853,0,-0.9600675106048584,0.2797684967517853,0,-0.9600675106048584,0.2797684967517853,0,-0.9600675106048584,0.2797684967517853,0,-0.9600675106048584,0.2797684967517853,0,-0.9600675106048584,0.2797684967517853,0,-0.9600675106048584],"normalized":false}},"boundingSphere":{"center":[8.35817301273346,6.776000261306763,6.118199825286865],"radius":12.3013432001023}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-21","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"258494C4-8017-4C71-A8CA-32E17274FEA9"}]}],"kind":"room","name":"new room","uuid":"2822163E-C892-4474-A3AB-BCD8210F2C3D","units":2,"originalFileData":"","originalFileName":"","visible":true,"position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1]}]`), Dg = [], qg = {
-  meta: Bg,
-  containers: Hg,
-  solvers: Dg
+const Cg = { version: "0.2.1", name: "shoebox", timestamp: "2021-03-26T08:06:59.213Z" }, wg = /* @__PURE__ */ JSON.parse(`[{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Floors","Various"],"manufacturer":"","name":"Wood Floor","material":"Wood floor","absorption":{"63":0.06,"125":0.15,"250":0.11,"500":0.1,"1000":0.07,"2000":0.06,"4000":0.07,"8000":0.07},"nrc":0.09,"source":"Egan","description":"","uuid":"1PgJwgIAqHwMj99A"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"339B4C51-51C8-4B05-9AB2-74391E210FB3","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[-6,0,2.8299999237060547,0,4,2.8299999237060547,-6,4,2.8299999237060547,-6,0,2.8299999237060547,0,0,2.8299999237060547,0,4,2.8299999237060547],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[0.875,0.5,0,0.625,0.75,0,0.625,0.5,0,0.875,0.5,0,0.875,0.75,0,0.625,0.75,0],"normalized":false}},"boundingSphere":{"center":[-3,2,2.8299999237060547],"radius":3.605551275463989}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"floor","position":[0,0,-2.8299999237060547],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"1857F829-AB09-4DB5-A538-87CE6FACCF4C"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 2 layers 5/8in on studs 16inoc w/batt","absorption":{"63":0.06,"125":0.28,"250":0.12,"500":0.1,"1000":0.07,"2000":0.13,"4000":0.09,"8000":0.09},"nrc":0.11,"source":"Egan","description":"","uuid":"xmzQfq6zBKEec4TS"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"A2093E5B-D6EB-4503-B287-9EE173014B5B","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[0,4,2.8299999237060547,0,0,0,0,4,0,0,4,2.8299999237060547,0,0,2.8299999237060547,0,0,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[0.625,0.75,0,0.375,1,0,0.375,0.75,0,0.625,0.75,0,0.625,1,0,0.375,1,0],"normalized":false}},"boundingSphere":{"center":[0,2,1.4149999618530273],"radius":2.4499438548758765}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"wall4","position":[-6,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"6641528A-B8AF-4BDB-B627-14AA1401EDFB"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 2 layers 5/8in on studs 16inoc w/batt","absorption":{"63":0.06,"125":0.28,"250":0.12,"500":0.1,"1000":0.07,"2000":0.13,"4000":0.09,"8000":0.09},"nrc":0.11,"source":"Egan","description":"","uuid":"xmzQfq6zBKEec4TS"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"DDF1FD55-2407-429C-92D8-AFE0E1FE9F0C","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[-6,4,2.8299999237060547,0,4,0,-6,4,0,-6,4,2.8299999237060547,0,4,2.8299999237060547,0,4,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[0.625,0.5,0,0.375,0.75,0,0.375,0.5,0,0.625,0.5,0,0.625,0.75,0,0.375,0.75,0],"normalized":false}},"boundingSphere":{"center":[-3,4,1.4149999618530273],"radius":3.31696018849248}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"wall3","position":[0,-4,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"F925EC4C-7AEA-48FC-9363-EB79CA106FE0"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 2 layers 5/8in on studs 16inoc w/batt","absorption":{"63":0.06,"125":0.28,"250":0.12,"500":0.1,"1000":0.07,"2000":0.13,"4000":0.09,"8000":0.09},"nrc":0.11,"source":"Egan","description":"","uuid":"xmzQfq6zBKEec4TS"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"8DD060AB-9B56-40E9-9296-EE0BD5719908","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[-6,0,2.8299999237060547,-6,4,0,-6,0,0,-6,0,2.8299999237060547,-6,4,2.8299999237060547,-6,4,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[0.625,0.25,0,0.375,0.5,0,0.375,0.25,0,0.625,0.25,0,0.625,0.5,0,0.375,0.5,0],"normalized":false}},"boundingSphere":{"center":[-6,2,1.4149999618530273],"radius":2.4499438548758765}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"wall2","position":[6,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"535C0DEC-3940-4954-B272-ECC1B6CB224E"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 2 layers 5/8in on studs 16inoc w/batt","absorption":{"63":0.06,"125":0.28,"250":0.12,"500":0.1,"1000":0.07,"2000":0.13,"4000":0.09,"8000":0.09},"nrc":0.11,"source":"Egan","description":"","uuid":"xmzQfq6zBKEec4TS"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"6946BD37-4367-44C7-B79C-53238F129BA3","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[0,0,2.8299999237060547,-6,0,0,0,0,0,0,0,2.8299999237060547,-6,0,2.8299999237060547,-6,0,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[0.625,0,0,0.375,0.25,0,0.375,0,0,0.625,0,0,0.625,0.25,0,0.375,0.25,0],"normalized":false}},"boundingSphere":{"center":[-3,0,1.4149999618530273],"radius":3.31696018849248}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"wall1","position":[0,4,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"23DCFCDB-53AA-473A-A23C-BEB0FE4A85F5"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Ceiling"," Ceiling Systems"],"manufacturer":"","name":"Dampa Linar 100 Ceiling System","material":"Dampa Linar 100 Ceiling System","absorption":{"63":0.34,"125":0.48,"250":0.67,"500":0.69,"1000":0.61,"2000":0.46,"4000":0.49,"8000":0.52},"nrc":0.61,"source":"SH","description":"","uuid":"s9OvPvd4RDogxQn7"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"B8A7A35C-D863-4A13-86CB-07EC6D6F9249","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[-6,4,0,0,0,0,-6,0,0,-6,4,0,0,4,0,0,0,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[0.375,0.5,0,0.125,0.75,0,0.125,0.5,0,0.375,0.5,0,0.375,0.75,0,0.125,0.75,0],"normalized":false}},"boundingSphere":{"center":[-3,2,0],"radius":3.605551275463989}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"ceil","position":[0,0,2.8299999237060547],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"BB39378A-EA8B-4FC0-9BA9-EB845F9F41F4"},{"surfaces":[{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Floors","Various"],"manufacturer":"","name":"Wood Floor","material":"Wood floor","absorption":{"63":0.06,"125":0.15,"250":0.11,"500":0.1,"1000":0.07,"2000":0.06,"4000":0.07,"8000":0.07},"nrc":0.09,"source":"Egan","description":"","uuid":"1PgJwgIAqHwMj99A"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"339B4C51-51C8-4B05-9AB2-74391E210FB3","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[-6,0,2.8299999237060547,0,4,2.8299999237060547,-6,4,2.8299999237060547,-6,0,2.8299999237060547,0,0,2.8299999237060547,0,4,2.8299999237060547],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[0.875,0.5,0,0.625,0.75,0,0.625,0.5,0,0.875,0.5,0,0.875,0.75,0,0.625,0.75,0],"normalized":false}},"boundingSphere":{"center":[-3,2,2.8299999237060547],"radius":3.605551275463989}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"floor","position":[0,0,-2.8299999237060547],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"1857F829-AB09-4DB5-A538-87CE6FACCF4C"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 2 layers 5/8in on studs 16inoc w/batt","absorption":{"63":0.06,"125":0.28,"250":0.12,"500":0.1,"1000":0.07,"2000":0.13,"4000":0.09,"8000":0.09},"nrc":0.11,"source":"Egan","description":"","uuid":"xmzQfq6zBKEec4TS"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"A2093E5B-D6EB-4503-B287-9EE173014B5B","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[0,4,2.8299999237060547,0,0,0,0,4,0,0,4,2.8299999237060547,0,0,2.8299999237060547,0,0,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[0.625,0.75,0,0.375,1,0,0.375,0.75,0,0.625,0.75,0,0.625,1,0,0.375,1,0],"normalized":false}},"boundingSphere":{"center":[0,2,1.4149999618530273],"radius":2.4499438548758765}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"wall4","position":[-6,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"6641528A-B8AF-4BDB-B627-14AA1401EDFB"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 2 layers 5/8in on studs 16inoc w/batt","absorption":{"63":0.06,"125":0.28,"250":0.12,"500":0.1,"1000":0.07,"2000":0.13,"4000":0.09,"8000":0.09},"nrc":0.11,"source":"Egan","description":"","uuid":"xmzQfq6zBKEec4TS"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"DDF1FD55-2407-429C-92D8-AFE0E1FE9F0C","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[-6,4,2.8299999237060547,0,4,0,-6,4,0,-6,4,2.8299999237060547,0,4,2.8299999237060547,0,4,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[0.625,0.5,0,0.375,0.75,0,0.375,0.5,0,0.625,0.5,0,0.625,0.75,0,0.375,0.75,0],"normalized":false}},"boundingSphere":{"center":[-3,4,1.4149999618530273],"radius":3.31696018849248}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"wall3","position":[0,-4,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"F925EC4C-7AEA-48FC-9363-EB79CA106FE0"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 2 layers 5/8in on studs 16inoc w/batt","absorption":{"63":0.06,"125":0.28,"250":0.12,"500":0.1,"1000":0.07,"2000":0.13,"4000":0.09,"8000":0.09},"nrc":0.11,"source":"Egan","description":"","uuid":"xmzQfq6zBKEec4TS"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"8DD060AB-9B56-40E9-9296-EE0BD5719908","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[-6,0,2.8299999237060547,-6,4,0,-6,0,0,-6,0,2.8299999237060547,-6,4,2.8299999237060547,-6,4,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[0.625,0.25,0,0.375,0.5,0,0.375,0.25,0,0.625,0.25,0,0.625,0.5,0,0.375,0.5,0],"normalized":false}},"boundingSphere":{"center":[-6,2,1.4149999618530273],"radius":2.4499438548758765}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"wall2","position":[6,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"535C0DEC-3940-4954-B272-ECC1B6CB224E"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 2 layers 5/8in on studs 16inoc w/batt","absorption":{"63":0.06,"125":0.28,"250":0.12,"500":0.1,"1000":0.07,"2000":0.13,"4000":0.09,"8000":0.09},"nrc":0.11,"source":"Egan","description":"","uuid":"xmzQfq6zBKEec4TS"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"6946BD37-4367-44C7-B79C-53238F129BA3","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[0,0,2.8299999237060547,-6,0,0,0,0,0,0,0,2.8299999237060547,-6,0,2.8299999237060547,-6,0,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[0.625,0,0,0.375,0.25,0,0.375,0,0,0.625,0,0,0.625,0.25,0,0.375,0.25,0],"normalized":false}},"boundingSphere":{"center":[-3,0,1.4149999618530273],"radius":3.31696018849248}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"wall1","position":[0,4,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"23DCFCDB-53AA-473A-A23C-BEB0FE4A85F5"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Ceiling"," Ceiling Systems"],"manufacturer":"","name":"Dampa Linar 100 Ceiling System","material":"Dampa Linar 100 Ceiling System","absorption":{"63":0.34,"125":0.48,"250":0.67,"500":0.69,"1000":0.61,"2000":0.46,"4000":0.49,"8000":0.52},"nrc":0.61,"source":"SH","description":"","uuid":"s9OvPvd4RDogxQn7"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"B8A7A35C-D863-4A13-86CB-07EC6D6F9249","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[-6,4,0,0,0,0,-6,0,0,-6,4,0,0,4,0,0,0,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[0.375,0.5,0,0.125,0.75,0,0.125,0.5,0,0.375,0.5,0,0.375,0.75,0,0.125,0.75,0],"normalized":false}},"boundingSphere":{"center":[-3,2,0],"radius":3.605551275463989}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"ceil","position":[0,0,2.8299999237060547],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"BB39378A-EA8B-4FC0-9BA9-EB845F9F41F4"}],"kind":"room","name":"new room","uuid":"0D3FE423-FA7C-40E7-B701-CF78A6A401CC","units":2,"originalFileData":"# Blender v2.91.0 OBJ File: ''\\n# www.blender.org\\nmtllib shoebox.mtl\\no Cube.001_Cube.002\\nv 0.000000 0.000000 2.830000\\nv -6.000000 0.000000 2.830000\\nv 0.000000 4.000000 2.830000\\nv -6.000000 4.000000 2.830000\\nvt 0.875000 0.500000\\nvt 0.625000 0.750000\\nvt 0.625000 0.500000\\nvt 0.875000 0.750000\\nvn 0.0000 0.0000 1.0000\\nusemtl None\\ns off\\nf 2/1/1 3/2/1 4/3/1\\nf 2/1/1 1/4/1 3/2/1\\no Cube.002_Cube.003\\nv 0.000000 0.000000 0.000000\\nv 0.000000 0.000000 2.830000\\nv 0.000000 4.000000 0.000000\\nv 0.000000 4.000000 2.830000\\nvt 0.625000 0.750000\\nvt 0.375000 1.000000\\nvt 0.375000 0.750000\\nvt 0.625000 1.000000\\nvn 1.0000 0.0000 0.0000\\nusemtl None\\ns off\\nf 8/5/2 5/6/2 7/7/2\\nf 8/5/2 6/8/2 5/6/2\\no Cube.003_Cube.004\\nv 0.000000 4.000000 0.000000\\nv 0.000000 4.000000 2.830000\\nv -6.000000 4.000000 0.000000\\nv -6.000000 4.000000 2.830000\\nvt 0.625000 0.500000\\nvt 0.375000 0.750000\\nvt 0.375000 0.500000\\nvt 0.625000 0.750000\\nvn 0.0000 1.0000 0.0000\\nusemtl None\\ns off\\nf 12/9/3 9/10/3 11/11/3\\nf 12/9/3 10/12/3 9/10/3\\no Cube.004_Cube.005\\nv -6.000000 0.000000 0.000000\\nv -6.000000 0.000000 2.830000\\nv -6.000000 4.000000 0.000000\\nv -6.000000 4.000000 2.830000\\nvt 0.625000 0.250000\\nvt 0.375000 0.500000\\nvt 0.375000 0.250000\\nvt 0.625000 0.500000\\nvn -1.0000 0.0000 0.0000\\nusemtl None\\ns off\\nf 14/13/4 15/14/4 13/15/4\\nf 14/13/4 16/16/4 15/14/4\\no Cube.005_Cube.006\\nv 0.000000 0.000000 0.000000\\nv 0.000000 0.000000 2.830000\\nv -6.000000 0.000000 0.000000\\nv -6.000000 0.000000 2.830000\\nvt 0.625000 0.000000\\nvt 0.375000 0.250000\\nvt 0.375000 0.000000\\nvt 0.625000 0.250000\\nvn 0.0000 -1.0000 0.0000\\nusemtl None\\ns off\\nf 18/17/5 19/18/5 17/19/5\\nf 18/17/5 20/20/5 19/18/5\\no Cube.006_Cube.007\\nv 0.000000 0.000000 0.000000\\nv -6.000000 0.000000 0.000000\\nv 0.000000 4.000000 0.000000\\nv -6.000000 4.000000 0.000000\\nvt 0.375000 0.500000\\nvt 0.125000 0.750000\\nvt 0.125000 0.500000\\nvt 0.375000 0.750000\\nvn 0.0000 0.0000 -1.0000\\nusemtl None\\ns off\\nf 24/21/6 21/22/6 22/23/6\\nf 24/21/6 23/24/6 21/22/6\\n","originalFileName":"shoebox.obj","visible":true,"position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1]},{"kind":"source","name":"new source","visible":true,"position":[-1.58,1.42,1.73],"scale":[1,1,1],"rotation":[0,0,0,"XYZ"],"color":13958322,"uuid":"7D40D118-D86D-4823-8392-9D7A36381742"},{"kind":"receiver","name":"new receiver","visible":true,"position":[-4.43,2.52,1.21],"scale":[1,1,1],"rotation":[0,0,0,"XYZ"],"color":14511983,"uuid":"6C6C6EB3-B060-40A0-BF0F-A3F3D9D03B3E"}]`), Pg = [{ name: "Ray Tracer", kind: "ray-tracer", uuid: "f77ccadb-0652-4919-8171-6ec70e16a390", roomID: "0D3FE423-FA7C-40E7-B701-CF78A6A401CC", sourceIDs: ["7D40D118-D86D-4823-8392-9D7A36381742"], surfaceIDs: ["1857F829-AB09-4DB5-A538-87CE6FACCF4C", "6641528A-B8AF-4BDB-B627-14AA1401EDFB", "F925EC4C-7AEA-48FC-9363-EB79CA106FE0", "535C0DEC-3940-4954-B272-ECC1B6CB224E", "23DCFCDB-53AA-473A-A23C-BEB0FE4A85F5", "BB39378A-EA8B-4FC0-9BA9-EB845F9F41F4"], receiverIDs: ["6C6C6EB3-B060-40A0-BF0F-A3F3D9D03B3E"], updateInterval: 5, passes: 1e3, pointSize: 2, reflectionOrder: 50, runningWithoutReceivers: !1, raysVisible: !0, pointsVisible: !0, invertedDrawStyle: !1, plotStyle: { mode: "lines" }, paths: {} }], xg = {
+  meta: Cg,
+  containers: wg,
+  solvers: Pg
+}, Eg = { version: "0.2.1", name: "concord", timestamp: "2021-03-23T00:10:21.760Z" }, kg = /* @__PURE__ */ JSON.parse('[{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 2+2 @ 5/8in on 3-5/8in studs","absorption":{"63":0.04,"125":0.15,"250":0.08,"500":0.06,"1000":0.05,"2000":0.05,"4000":0.04,"8000":0.04},"nrc":0.06,"source":"wjhw?","description":"","uuid":"I1esImsQrKZl0AAw"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"3C4CDBD3-E04D-45F6-ABAE-D910EE0BCC11","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[12.430130004882812,2.3483328819274902,4.876800060272217,12.430130004882812,5.575300216674805,4.876800060272217,12.430130004882812,5.575300216674805,0,12.430130004882812,5.575300216674805,0,12.430130004882812,0,0,12.430130004882812,0,2.9337000846862793,12.430130004882812,0,2.9337000846862793,12.430130004882812,2.3483328819274902,4.876800060272217,12.430130004882812,5.575300216674805,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[12.430130004882812,2.7876501083374023,2.4384000301361084],"radius":3.7036182083850524}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"right1","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"59F599B3-6554-4999-A93C-597E4B5275C1"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 2+2 @ 5/8in on 3-5/8in studs","absorption":{"63":0.04,"125":0.15,"250":0.08,"500":0.06,"1000":0.05,"2000":0.05,"4000":0.04,"8000":0.04},"nrc":0.06,"source":"wjhw?","description":"","uuid":"I1esImsQrKZl0AAw"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"BD80155E-DA08-4122-A819-D7C873E060D0","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[6.215065002441406,5.575300216674805,4.876800060272217,12.430130004882812,5.575300216674805,0,12.430130004882812,5.575300216674805,4.876800060272217,6.215065002441406,5.575300216674805,4.876800060272217,6.215065002441406,5.575300216674805,0,12.430130004882812,5.575300216674805,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[9.32259750366211,5.575300216674805,2.4384000301361084],"radius":3.950006702919727}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"back1","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"FDDD16D3-6E8D-4B4B-B4A1-D622E9D6D31D"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Drapery","Drapery"],"manufacturer":"","name":"Fiberglass Fabric Curtain","material":"Fiberglass fabric curtain, 8.5 oz/sq yd (50% fullness) Egan","absorption":{"63":0.03,"125":0.09,"250":0.32,"500":0.68,"1000":0.83,"2000":0.39,"4000":0.76,"8000":0.99},"nrc":0.56,"source":"SH","description":"","uuid":"3sUxVxHXIi9Gc6Zi"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"2E5E970F-6DFD-4269-A688-FD15AE36512B","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[6.215065002441406,10.855531692504883,0,6.215065002441406,5.575300216674805,4.876800060272217,6.215065002441406,10.855531692504883,4.876800060272217,6.215065002441406,10.855531692504883,0,6.215065002441406,5.575300216674805,0,6.215065002441406,5.575300216674805,4.876800060272217],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[6.215065002441406,8.215415954589844,2.4384000301361084],"radius":3.593884502394929}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"right2","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"EA9AA1BF-BA53-4D0E-ACB0-95E7291666FC"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 1 layer 5/8in on studs 16inoc w/batt","absorption":{"63":0.07,"125":0.55,"250":0.14,"500":0.08,"1000":0.04,"2000":0.12,"4000":0.11,"8000":0.11},"nrc":0.1,"source":"Egan","description":"","uuid":"th2PuWU5EhCsaon3"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"29275BAA-EC84-4AF7-868A-E05EA60BD17A","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[0,10.855531692504883,0,6.215065002441406,10.855531692504883,4.876800060272217,0,10.855531692504883,4.876800060272217,0,10.855531692504883,0,6.215065002441406,10.855531692504883,0,6.215065002441406,10.855531692504883,4.876800060272217],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[3.107532501220703,10.855531692504883,2.4384000301361084],"radius":3.950006702919727}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"back2","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"8C87C786-5188-48F7-BFD4-946EF78D1E65"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 2+2 @ 5/8in on 3-5/8in studs","absorption":{"63":0.04,"125":0.15,"250":0.08,"500":0.06,"1000":0.05,"2000":0.05,"4000":0.04,"8000":0.04},"nrc":0.06,"source":"wjhw?","description":"","uuid":"I1esImsQrKZl0AAw"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"F08D41DC-1461-412C-A97D-BF65AFA8EE1E","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[0,2.3483328819274902,4.876800060272217,0,0,0,0,10.855531692504883,0,0,10.855531692504883,0,0,10.855531692504883,4.876800060272217,0,2.3483328819274902,4.876800060272217,0,2.3483328819274902,4.876800060272217,0,0,2.9337000846862793,0,0,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[0,5.427765846252441,2.4384000301361084],"radius":5.950330813384434}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"left","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"ED91F1C5-D2D0-42A0-8686-4B46303256FE"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Diffusion","Diffusion Products"],"manufacturer":"","name":"Diffuse Signature Wood (1\\" Standoff Sides Open)","material":"Diffuse Signature Wood (1\\" Standoff Sides Open)","absorption":{"63":0,"125":0,"250":0.02,"500":0.06,"1000":0.16,"2000":0.13,"4000":0.15,"8000":0.17},"nrc":0.09,"source":"SH","description":"","uuid":"tgGAnP5OCLWlPFF4"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"088EC67F-85BA-4323-BB08-C0213F5F6CA2","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[12.430130004882812,0,0,0,0,2.9337000846862793,12.430130004882812,0,2.9337000846862793,12.430130004882812,0,0,0,0,0,0,0,2.9337000846862793],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[6.215065002441406,0,1.4668500423431396],"radius":6.3858188223041585}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"front","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"0AECC234-8C09-4D6B-AA82-DC0A99B42F2D"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Ceiling"," Ceiling Systems"],"manufacturer":"","name":"Barrisol Stretched Ceiling Over 3\\" Fiberglass","material":"Barrisol Stretched Ceiling over 3\\" fiberglass","absorption":{"63":0.18,"125":0.26,"250":0.58,"500":0.57,"1000":0.43,"2000":0.36,"4000":0.36,"8000":0.36},"nrc":0.49,"source":"SH","description":"","uuid":"Wz4CjrpqIYGba8G0"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"95B298C8-96A1-41A1-9A71-D7C446A0AB46","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[12.430130004882812,0,2.9337000846862793,0,2.3483328819274902,4.876800060272217,12.430130004882812,2.3483328819274902,4.876800060272217,12.430130004882812,0,2.9337000846862793,0,0,2.9337000846862793,0,2.3483328819274902,4.876800060272217],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0.637499988079071,-0.7705000042915344,0,0.637499988079071,-0.7705000042915344,0,0.637499988079071,-0.7705000042915344,0,0.637499988079071,-0.7705000042915344,0,0.637499988079071,-0.7705000042915344,0,0.637499988079071,-0.7705000042915344],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[6.215065002441406,1.1741664409637451,3.905250072479248],"radius":6.399188166825382}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"slope","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"ABA66075-FD1A-4820-B591-66EE2A92CFDB"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Ceiling"," Ceiling Systems"],"manufacturer":"","name":"Dampa Linar 100 Ceiling System","material":"Dampa Linar 100 Ceiling System","absorption":{"63":0.34,"125":0.48,"250":0.67,"500":0.69,"1000":0.61,"2000":0.46,"4000":0.49,"8000":0.52},"nrc":0.61,"source":"SH","description":"","uuid":"s9OvPvd4RDogxQn7"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"333C7898-A815-420A-89D6-3D96BB178242","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[12.430130004882812,2.3483328819274902,4.876800060272217,6.215065002441406,5.575300216674805,4.876800060272217,12.430130004882812,5.575300216674805,4.876800060272217,6.215065002441406,5.575300216674805,4.876800060272217,0,10.855531692504883,4.876800060272217,6.215065002441406,10.855531692504883,4.876800060272217,12.430130004882812,2.3483328819274902,4.876800060272217,0,2.3483328819274902,4.876800060272217,6.215065002441406,5.575300216674805,4.876800060272217,6.215065002441406,5.575300216674805,4.876800060272217,0,2.3483328819274902,4.876800060272217,0,10.855531692504883,4.876800060272217],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[6.215065002441406,6.6019322872161865,4.876800060272217],"radius":7.531277506853956}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"ceil","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"522A95C7-E134-4D1C-92DD-8672102F06E6"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Floors","Various"],"manufacturer":"","name":"Wood Floor","material":"Wood floor","absorption":{"63":0.06,"125":0.15,"250":0.11,"500":0.1,"1000":0.07,"2000":0.06,"4000":0.07,"8000":0.07},"nrc":0.09,"source":"Egan","description":"","uuid":"1PgJwgIAqHwMj99A"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"203BF944-7E6E-4539-B678-F2064CCC8619","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[6.215065002441406,5.575300216674805,0,12.430130004882812,0,0,12.430130004882812,5.575300216674805,0,6.215065002441406,5.575300216674805,0,0,10.855531692504883,0,0,0,0,6.215065002441406,5.575300216674805,0,0,0,0,12.430130004882812,0,0,6.215065002441406,5.575300216674805,0,6.215065002441406,10.855531692504883,0,0,10.855531692504883,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[6.215065002441406,5.427765846252441,0],"radius":8.25152562053324}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"floor","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"34B96D2E-706E-45E8-91D2-0F8FF35AA11E"},{"surfaces":[{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 2+2 @ 5/8in on 3-5/8in studs","absorption":{"63":0.04,"125":0.15,"250":0.08,"500":0.06,"1000":0.05,"2000":0.05,"4000":0.04,"8000":0.04},"nrc":0.06,"source":"wjhw?","description":"","uuid":"I1esImsQrKZl0AAw"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"3C4CDBD3-E04D-45F6-ABAE-D910EE0BCC11","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[12.430130004882812,2.3483328819274902,4.876800060272217,12.430130004882812,5.575300216674805,4.876800060272217,12.430130004882812,5.575300216674805,0,12.430130004882812,5.575300216674805,0,12.430130004882812,0,0,12.430130004882812,0,2.9337000846862793,12.430130004882812,0,2.9337000846862793,12.430130004882812,2.3483328819274902,4.876800060272217,12.430130004882812,5.575300216674805,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[12.430130004882812,2.7876501083374023,2.4384000301361084],"radius":3.7036182083850524}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"right1","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"59F599B3-6554-4999-A93C-597E4B5275C1"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 2+2 @ 5/8in on 3-5/8in studs","absorption":{"63":0.04,"125":0.15,"250":0.08,"500":0.06,"1000":0.05,"2000":0.05,"4000":0.04,"8000":0.04},"nrc":0.06,"source":"wjhw?","description":"","uuid":"I1esImsQrKZl0AAw"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"BD80155E-DA08-4122-A819-D7C873E060D0","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[6.215065002441406,5.575300216674805,4.876800060272217,12.430130004882812,5.575300216674805,0,12.430130004882812,5.575300216674805,4.876800060272217,6.215065002441406,5.575300216674805,4.876800060272217,6.215065002441406,5.575300216674805,0,12.430130004882812,5.575300216674805,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[9.32259750366211,5.575300216674805,2.4384000301361084],"radius":3.950006702919727}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"back1","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"FDDD16D3-6E8D-4B4B-B4A1-D622E9D6D31D"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Drapery","Drapery"],"manufacturer":"","name":"Fiberglass Fabric Curtain","material":"Fiberglass fabric curtain, 8.5 oz/sq yd (50% fullness) Egan","absorption":{"63":0.03,"125":0.09,"250":0.32,"500":0.68,"1000":0.83,"2000":0.39,"4000":0.76,"8000":0.99},"nrc":0.56,"source":"SH","description":"","uuid":"3sUxVxHXIi9Gc6Zi"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"2E5E970F-6DFD-4269-A688-FD15AE36512B","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[6.215065002441406,10.855531692504883,0,6.215065002441406,5.575300216674805,4.876800060272217,6.215065002441406,10.855531692504883,4.876800060272217,6.215065002441406,10.855531692504883,0,6.215065002441406,5.575300216674805,0,6.215065002441406,5.575300216674805,4.876800060272217],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[6.215065002441406,8.215415954589844,2.4384000301361084],"radius":3.593884502394929}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"right2","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"EA9AA1BF-BA53-4D0E-ACB0-95E7291666FC"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 1 layer 5/8in on studs 16inoc w/batt","absorption":{"63":0.07,"125":0.55,"250":0.14,"500":0.08,"1000":0.04,"2000":0.12,"4000":0.11,"8000":0.11},"nrc":0.1,"source":"Egan","description":"","uuid":"th2PuWU5EhCsaon3"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"29275BAA-EC84-4AF7-868A-E05EA60BD17A","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[0,10.855531692504883,0,6.215065002441406,10.855531692504883,4.876800060272217,0,10.855531692504883,4.876800060272217,0,10.855531692504883,0,6.215065002441406,10.855531692504883,0,6.215065002441406,10.855531692504883,4.876800060272217],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[3.107532501220703,10.855531692504883,2.4384000301361084],"radius":3.950006702919727}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"back2","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"8C87C786-5188-48F7-BFD4-946EF78D1E65"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Gypsum board"],"manufacturer":"","name":"Gypsum Board","material":"Gypsum board, 2+2 @ 5/8in on 3-5/8in studs","absorption":{"63":0.04,"125":0.15,"250":0.08,"500":0.06,"1000":0.05,"2000":0.05,"4000":0.04,"8000":0.04},"nrc":0.06,"source":"wjhw?","description":"","uuid":"I1esImsQrKZl0AAw"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"F08D41DC-1461-412C-A97D-BF65AFA8EE1E","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[0,2.3483328819274902,4.876800060272217,0,0,0,0,10.855531692504883,0,0,10.855531692504883,0,0,10.855531692504883,4.876800060272217,0,2.3483328819274902,4.876800060272217,0,2.3483328819274902,4.876800060272217,0,0,2.9337000846862793,0,0,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[0,5.427765846252441,2.4384000301361084],"radius":5.950330813384434}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"left","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"ED91F1C5-D2D0-42A0-8686-4B46303256FE"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Diffusion","Diffusion Products"],"manufacturer":"","name":"Diffuse Signature Wood (1\\" Standoff Sides Open)","material":"Diffuse Signature Wood (1\\" Standoff Sides Open)","absorption":{"63":0,"125":0,"250":0.02,"500":0.06,"1000":0.16,"2000":0.13,"4000":0.15,"8000":0.17},"nrc":0.09,"source":"SH","description":"","uuid":"tgGAnP5OCLWlPFF4"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"088EC67F-85BA-4323-BB08-C0213F5F6CA2","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[12.430130004882812,0,0,0,0,2.9337000846862793,12.430130004882812,0,2.9337000846862793,12.430130004882812,0,0,0,0,0,0,0,2.9337000846862793],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[6.215065002441406,0,1.4668500423431396],"radius":6.3858188223041585}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"front","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"0AECC234-8C09-4D6B-AA82-DC0A99B42F2D"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Ceiling"," Ceiling Systems"],"manufacturer":"","name":"Barrisol Stretched Ceiling Over 3\\" Fiberglass","material":"Barrisol Stretched Ceiling over 3\\" fiberglass","absorption":{"63":0.18,"125":0.26,"250":0.58,"500":0.57,"1000":0.43,"2000":0.36,"4000":0.36,"8000":0.36},"nrc":0.49,"source":"SH","description":"","uuid":"Wz4CjrpqIYGba8G0"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"95B298C8-96A1-41A1-9A71-D7C446A0AB46","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[12.430130004882812,0,2.9337000846862793,0,2.3483328819274902,4.876800060272217,12.430130004882812,2.3483328819274902,4.876800060272217,12.430130004882812,0,2.9337000846862793,0,0,2.9337000846862793,0,2.3483328819274902,4.876800060272217],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0.637499988079071,-0.7705000042915344,0,0.637499988079071,-0.7705000042915344,0,0.637499988079071,-0.7705000042915344,0,0.637499988079071,-0.7705000042915344,0,0.637499988079071,-0.7705000042915344,0,0.637499988079071,-0.7705000042915344],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[6.215065002441406,1.1741664409637451,3.905250072479248],"radius":6.399188166825382}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"slope","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"ABA66075-FD1A-4820-B591-66EE2A92CFDB"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Ceiling"," Ceiling Systems"],"manufacturer":"","name":"Dampa Linar 100 Ceiling System","material":"Dampa Linar 100 Ceiling System","absorption":{"63":0.34,"125":0.48,"250":0.67,"500":0.69,"1000":0.61,"2000":0.46,"4000":0.49,"8000":0.52},"nrc":0.61,"source":"SH","description":"","uuid":"s9OvPvd4RDogxQn7"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"333C7898-A815-420A-89D6-3D96BB178242","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[12.430130004882812,2.3483328819274902,4.876800060272217,6.215065002441406,5.575300216674805,4.876800060272217,12.430130004882812,5.575300216674805,4.876800060272217,6.215065002441406,5.575300216674805,4.876800060272217,0,10.855531692504883,4.876800060272217,6.215065002441406,10.855531692504883,4.876800060272217,12.430130004882812,2.3483328819274902,4.876800060272217,0,2.3483328819274902,4.876800060272217,6.215065002441406,5.575300216674805,4.876800060272217,6.215065002441406,5.575300216674805,4.876800060272217,0,2.3483328819274902,4.876800060272217,0,10.855531692504883,4.876800060272217],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[6.215065002441406,6.6019322872161865,4.876800060272217],"radius":7.531277506853956}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"ceil","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"522A95C7-E134-4D1C-92DD-8672102F06E6"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Floors","Various"],"manufacturer":"","name":"Wood Floor","material":"Wood floor","absorption":{"63":0.06,"125":0.15,"250":0.11,"500":0.1,"1000":0.07,"2000":0.06,"4000":0.07,"8000":0.07},"nrc":0.09,"source":"Egan","description":"","uuid":"1PgJwgIAqHwMj99A"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"203BF944-7E6E-4539-B678-F2064CCC8619","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[6.215065002441406,5.575300216674805,0,12.430130004882812,0,0,12.430130004882812,5.575300216674805,0,6.215065002441406,5.575300216674805,0,0,10.855531692504883,0,0,0,0,6.215065002441406,5.575300216674805,0,0,0,0,12.430130004882812,0,0,6.215065002441406,5.575300216674805,0,6.215065002441406,10.855531692504883,0,0,10.855531692504883,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1],"normalized":false},"texCoords":{"itemSize":3,"type":"Float32Array","array":[],"normalized":false}},"boundingSphere":{"center":[6.215065002441406,5.427765846252441,0],"radius":8.25152562053324}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"floor","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"34B96D2E-706E-45E8-91D2-0F8FF35AA11E"}],"kind":"room","name":"new room","uuid":"77F26146-94CF-46F8-870D-BB5A41C9D802","units":2,"originalFileData":"","originalFileName":"","visible":true,"position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1]},{"kind":"source","name":"new source","visible":true,"position":[3.7,9.9,1],"scale":[1,1,1],"rotation":[0,0,0,"XYZ"],"color":10668418,"uuid":"2825008E-9269-4453-BB81-2290852E5A81"},{"kind":"receiver","name":"new receiver","visible":true,"position":[10.8,3.8000000000000003,1.2000000000000002],"scale":[1,1,1],"rotation":[0,0,0,"XYZ"],"color":14511983,"uuid":"3198FEAC-8F9F-4362-8FB8-ADE61D8A708A"}]'), Ig = [{ name: "Ray Tracer", kind: "ray-tracer", uuid: "1d67c7f8-9c6f-43db-9b20-01b3c6f2feab", roomID: "77F26146-94CF-46F8-870D-BB5A41C9D802", sourceIDs: ["2825008E-9269-4453-BB81-2290852E5A81"], surfaceIDs: ["59F599B3-6554-4999-A93C-597E4B5275C1", "FDDD16D3-6E8D-4B4B-B4A1-D622E9D6D31D", "EA9AA1BF-BA53-4D0E-ACB0-95E7291666FC", "8C87C786-5188-48F7-BFD4-946EF78D1E65", "ED91F1C5-D2D0-42A0-8686-4B46303256FE", "0AECC234-8C09-4D6B-AA82-DC0A99B42F2D", "ABA66075-FD1A-4820-B591-66EE2A92CFDB", "522A95C7-E134-4D1C-92DD-8672102F06E6", "34B96D2E-706E-45E8-91D2-0F8FF35AA11E"], receiverIDs: ["3198FEAC-8F9F-4362-8FB8-ADE61D8A708A"], updateInterval: 5, passes: 500, pointSize: 2, reflectionOrder: 500, runningWithoutReceivers: !1, raysVisible: !0, pointsVisible: !0, invertedDrawStyle: !1, plotStyle: { mode: "lines" }, paths: {} }], Tg = {
+  meta: Eg,
+  containers: kg,
+  solvers: Ig
+}, Fg = { version: "0.2.1", name: "auditorium", timestamp: "2021-04-29T11:59:27.330Z" }, Bg = /* @__PURE__ */ JSON.parse(`[{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Floors","Wood"],"manufacturer":"","name":"Wood Stage Floor (T&G)","material":"Wood Stage Floor (T&G), 2 layers 1/2in, on joists","absorption":{"63":0.04,"125":0.1,"250":0.07,"500":0.06,"1000":0.06,"2000":0.06,"4000":0.06,"8000":0.06},"nrc":0.06,"source":"Beranek (JASA '98)","description":"","uuid":"ZdwcxUjnCaTijM8d"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"400B3C98-438F-414E-9A39-2D5BAC219DC3","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[3.6396543979644775,14.278063774108887,-0.6776000261306763,3.6396543979644775,14.278063774108887,0,3.6396543979644775,-0.7260642051696777,-0.6776000261306763,3.6396543979644775,-0.7260642051696777,0,3.6396543979644775,-0.7260642051696777,-0.6776000261306763,3.6396543979644775,14.278063774108887,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0],"normalized":false}},"boundingSphere":{"center":[3.6396543979644775,6.7759997844696045,-0.33880001306533813],"radius":7.509710350838808}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-0","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"684C19AC-22BD-45FE-898C-C5166936CDDD"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Floors","Wood"],"manufacturer":"","name":"Wood Stage Floor (T&G)","material":"Wood Stage Floor (T&G), 2 layers 1/2in, on joists","absorption":{"63":0.04,"125":0.1,"250":0.07,"500":0.06,"1000":0.06,"2000":0.06,"4000":0.06,"8000":0.06},"nrc":0.06,"source":"Beranek (JASA '98)","description":"","uuid":"ZdwcxUjnCaTijM8d"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"E97F47E2-3237-4B92-A531-B8C3A9AF9885","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[3.6396543979644775,-0.7260642051696777,0,3.6396543979644775,14.278063774108887,0,3.388000011444092,-1.3552000522613525,0,3.6396543979644775,14.278063774108887,0,3.388000011444092,14.90719985961914,0,3.388000011444092,-1.3552000522613525,0,3.388000011444092,-1.3552000522613525,0,3.388000011444092,14.90719985961914,0,0,0,0,0,13.552000045776367,0,0,0,0,3.388000011444092,14.90719985961914,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1],"normalized":false}},"boundingSphere":{"center":[1.8198271989822388,6.775999903678894,0],"radius":8.28103729572734}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-16","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"019734C7-A913-4997-AF56-4127C064DCBC"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Tectum","material":"Tectum, 1in, against solid backing","absorption":{"63":0,"125":0.06,"250":0.13,"500":0.24,"1000":0.45,"2000":0.82,"4000":0.64,"8000":0.64},"nrc":0.41,"source":"Tectum Company","description":"","uuid":"W2wCsvqJV0a1RMGw"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"AA8A615E-B0F8-4810-9B76-E960FD96910E","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[25.27349090576172,0,8.243200302124023,25.27349090576172,0,0.5723999738693237,23.240692138671875,-4.500878810882568,8.243200302124023,23.240692138671875,-4.500878810882568,0.5723999738693237,23.240692138671875,-4.500878810882568,8.243200302124023,25.27349090576172,0,0.5723999738693237],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.9113596677780151,0.4116109311580658,0,-0.9113596677780151,0.4116109311580658,0,-0.9113596677780151,0.4116109311580658,0,-0.9113596677780151,0.4116109311580658,0,-0.9113596677780151,0.4116109311580658,0,-0.9113596677780151,0.4116109311580658,0],"normalized":false}},"boundingSphere":{"center":[24.257091522216797,-2.250439405441284,4.407800137996674],"radius":4.561561097192662}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-1","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"C4C1198C-8ECF-4945-8DBE-BECEBD6261D4"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Tectum","material":"Tectum, 1in, against solid backing","absorption":{"63":0,"125":0.06,"250":0.13,"500":0.24,"1000":0.45,"2000":0.82,"4000":0.64,"8000":0.64},"nrc":0.41,"source":"Tectum Company","description":"","uuid":"W2wCsvqJV0a1RMGw"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"592E5C4E-1FF7-4AAE-8332-3EA1AF4A7B58","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[25.27349090576172,13.552000045776367,8.243200302124023,25.27349090576172,13.552000045776367,0.5723999738693237,25.951091766357422,6.776000022888184,8.243200302124023,25.951091766357422,6.776000022888184,0.5723999738693237,25.951091766357422,6.776000022888184,8.243200302124023,25.27349090576172,13.552000045776367,0.5723999738693237],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.9950371980667114,-0.09950384497642517,0,-0.9950371980667114,-0.09950384497642517,0,-0.9950371980667114,-0.09950384497642517,0,-0.9950371980667114,-0.09950384497642517,0,-0.9950371980667114,-0.09950384497642517,0,-0.9950371980667114,-0.09950384497642517,0],"normalized":false}},"boundingSphere":{"center":[25.61229133605957,10.164000034332275,4.407800137996674],"radius":5.128705901892141}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-2","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"BC98D1A7-A671-4D2C-A9B9-243FC24E6272"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Tectum","material":"Tectum, 1in, against solid backing","absorption":{"63":0,"125":0.06,"250":0.13,"500":0.24,"1000":0.45,"2000":0.82,"4000":0.64,"8000":0.64},"nrc":0.41,"source":"Tectum Company","description":"","uuid":"W2wCsvqJV0a1RMGw"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"86233816-C227-485D-BCFB-3495AB27841E","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[25.951091766357422,6.776000022888184,8.243200302124023,25.951091766357422,6.776000022888184,0.5723999738693237,25.27349090576172,0,8.243200302124023,25.27349090576172,0,0.5723999738693237,25.27349090576172,0,8.243200302124023,25.951091766357422,6.776000022888184,0.5723999738693237],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.9950371980667114,0.09950384497642517,0,-0.9950371980667114,0.09950384497642517,0,-0.9950371980667114,0.09950384497642517,0,-0.9950371980667114,0.09950384497642517,0,-0.9950371980667114,0.09950384497642517,0,-0.9950371980667114,0.09950384497642517,0],"normalized":false}},"boundingSphere":{"center":[25.61229133605957,3.388000011444092,4.407800137996674],"radius":5.128705901892141}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-5","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"002B910B-36C7-478E-BF82-44A5E5827359"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Tectum","material":"Tectum, 1in, against solid backing","absorption":{"63":0,"125":0.06,"250":0.13,"500":0.24,"1000":0.45,"2000":0.82,"4000":0.64,"8000":0.64},"nrc":0.41,"source":"Tectum Company","description":"","uuid":"W2wCsvqJV0a1RMGw"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"75B764E2-FFE8-476A-9917-7C248BD99988","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[23.240692138671875,18.052879333496094,8.243200302124023,23.240692138671875,18.052879333496094,0.5723999738693237,25.27349090576172,13.552000045776367,8.243200302124023,25.27349090576172,13.552000045776367,0.5723999738693237,25.27349090576172,13.552000045776367,8.243200302124023,23.240692138671875,18.052879333496094,0.5723999738693237],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.9113596677780151,-0.411610871553421,0,-0.9113596677780151,-0.411610871553421,0,-0.9113596677780151,-0.411610871553421,0,-0.9113596677780151,-0.411610871553421,0,-0.9113596677780151,-0.411610871553421,0,-0.9113596677780151,-0.411610871553421,0],"normalized":false}},"boundingSphere":{"center":[24.257091522216797,15.80243968963623,4.407800137996674],"radius":4.561561214816119}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-13","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"150F4026-17E8-4FA2-947C-7CCE8766672F"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["People","Various"],"manufacturer":"","name":"Audience In Upholstered Seats","material":"Audience in upholstered seats","absorption":{"63":0,"125":0.18,"250":0.4,"500":0.46,"1000":0.46,"2000":0.51,"4000":0.46,"8000":0.46},"nrc":0.46,"source":"Hann Tucker","description":"","uuid":"QFCVbDYrU5uWvhK2"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"538BB9A3-68A2-425A-B70F-CD45E476386D","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[25.951091766357422,6.776000022888184,0.5723999738693237,25.27349090576172,13.552000045776367,0.5723999738693237,25.27349090576172,0,0.5723999738693237,25.27349090576172,13.552000045776367,0.5723999738693237,23.240692138671875,18.052879333496094,0.5723999738693237,25.27349090576172,0,0.5723999738693237,23.240692138671875,-4.500878810882568,0.5723999738693237,25.27349090576172,0,0.5723999738693237,23.240692138671875,18.052879333496094,0.5723999738693237],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1],"normalized":false}},"boundingSphere":{"center":[24.59589195251465,6.776000261306763,0.5723999738693237],"radius":11.358017791156218}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-3","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"95922F62-13C2-4C06-A997-99B18DE92370"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["People","Various"],"manufacturer":"","name":"Audience In Upholstered Seats","material":"Audience in upholstered seats","absorption":{"63":0,"125":0.18,"250":0.4,"500":0.46,"1000":0.46,"2000":0.51,"4000":0.46,"8000":0.46},"nrc":0.46,"source":"Hann Tucker","description":"","uuid":"QFCVbDYrU5uWvhK2"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"EE864F8C-261F-4F61-B437-8B57B0567E6E","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[13.076691627502441,-4.500878810882568,0.07240000367164612,13.076691627502441,18.052879333496094,0.07240000367164612,3.6396543979644775,-0.7260642051696777,-0.6776000261306763,3.6396543979644775,14.278063774108887,-0.6776000261306763,3.6396543979644775,-0.7260642051696777,-0.6776000261306763,13.076691627502441,18.052879333496094,0.07240000367164612],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.07922429591417313,0,0.9968568086624146,-0.07922429591417313,0,0.9968568086624146,-0.07922429591417313,0,0.9968568086624146,-0.07922429591417313,0,0.9968568086624146,-0.07922429591417313,0,0.9968568086624146,-0.07922429591417313,0,0.9968568086624146],"normalized":false}},"boundingSphere":{"center":[8.35817301273346,6.776000261306763,-0.3026000112295151],"radius":12.230005909151432}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-17","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"12438BB0-6F74-48E6-A9BE-B8223FBBB05B"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["People","Various"],"manufacturer":"","name":"Audience In Upholstered Seats","material":"Audience in upholstered seats","absorption":{"63":0,"125":0.18,"250":0.4,"500":0.46,"1000":0.46,"2000":0.51,"4000":0.46,"8000":0.46},"nrc":0.46,"source":"Hann Tucker","description":"","uuid":"QFCVbDYrU5uWvhK2"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"4ED29942-85B9-4630-A710-A701DC4A2A5F","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[23.240692138671875,-4.500878810882568,0.5723999738693237,23.240692138671875,18.052879333496094,0.5723999738693237,13.076691627502441,-4.500878810882568,0.07240000367164612,13.076691627502441,18.052879333496094,0.07240000367164612,13.076691627502441,-4.500878810882568,0.07240000367164612,23.240692138671875,18.052879333496094,0.5723999738693237],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.04913381114602089,0,0.9987922310829163,-0.04913381114602089,0,0.9987922310829163,-0.04913381114602089,0,0.9987922310829163,-0.04913381114602089,0,0.9987922310829163,-0.04913381114602089,0,0.9987922310829163,-0.04913381114602089,0,0.9987922310829163],"normalized":false}},"boundingSphere":{"center":[18.158691883087158,6.776000261306763,0.3223999887704849],"radius":12.37162997341475}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-18","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"B35F8F84-7DE4-4AE4-ABD1-08F6856713D0"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"99A4D26C-5E26-4692-8C0D-CF185378CFA0","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[13.076691627502441,-4.500878810882568,7.493199825286865,13.076691627502441,-4.500878810882568,0.07240000367164612,3.6396543979644775,-0.7260642051696777,4.743199825286865,3.6396543979644775,-0.7260642051696777,4.743199825286865,13.076691627502441,-4.500878810882568,0.07240000367164612,3.6396543979644775,-0.7260642051696777,0,3.6396543979644775,-0.7260642051696777,-0.6776000261306763,3.6396543979644775,-0.7260642051696777,0,13.076691627502441,-4.500878810882568,0.07240000367164612],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0],"normalized":false}},"boundingSphere":{"center":[8.35817301273346,-2.613471508026123,3.4077998995780945],"radius":6.5205227396105645}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-4","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"5BCC2696-DB53-4AD8-8DD7-65A838026F6C"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"6689D2A1-9B38-489C-9B43-42D02F03C7DB","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[15.076691627502441,18.052879333496094,8.243200302124023,13.076691627502441,18.052879333496094,7.493199825286865,23.240692138671875,18.052879333496094,8.243200302124023,23.240692138671875,18.052879333496094,8.243200302124023,13.076691627502441,18.052879333496094,7.493199825286865,23.240692138671875,18.052879333496094,0.5723999738693237,13.076691627502441,18.052879333496094,0.07240000367164612,23.240692138671875,18.052879333496094,0.5723999738693237,13.076691627502441,18.052879333496094,7.493199825286865],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0],"normalized":false}},"boundingSphere":{"center":[18.158691883087158,18.052879333496094,4.157800152897835],"radius":6.520523060081951}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-6","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"E89777FF-93D0-456E-97D0-9CDD4961BB17"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"DA4B11D6-24CC-472A-98D1-3E106C740E0C","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[13.076691627502441,18.052879333496094,7.493199825286865,3.6396543979644775,14.278063774108887,4.743199825286865,13.076691627502441,18.052879333496094,0.07240000367164612,3.6396543979644775,14.278063774108887,4.743199825286865,3.6396543979644775,14.278063774108887,0,13.076691627502441,18.052879333496094,0.07240000367164612,3.6396543979644775,14.278063774108887,-0.6776000261306763,13.076691627502441,18.052879333496094,0.07240000367164612,3.6396543979644775,14.278063774108887,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0],"normalized":false}},"boundingSphere":{"center":[8.35817301273346,16.16547155380249,3.4077998995780945],"radius":6.520522877634167}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-10","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"5612A937-9C2D-46F5-B75A-6C996F10815B"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"5081D021-FEB7-41F7-91CD-DE1EF838C595","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[15.076691627502441,-4.500878810882568,8.243200302124023,23.240692138671875,-4.500878810882568,8.243200302124023,13.076691627502441,-4.500878810882568,7.493199825286865,23.240692138671875,-4.500878810882568,8.243200302124023,23.240692138671875,-4.500878810882568,0.5723999738693237,13.076691627502441,-4.500878810882568,7.493199825286865,13.076691627502441,-4.500878810882568,0.07240000367164612,13.076691627502441,-4.500878810882568,7.493199825286865,23.240692138671875,-4.500878810882568,0.5723999738693237],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0],"normalized":false}},"boundingSphere":{"center":[18.158691883087158,-4.500878810882568,4.157800152897835],"radius":6.520523060081951}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-19","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"EAC1B97E-7C9F-4455-86E5-6688C117C43D"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"1ED2615E-F9E7-477F-8751-E38570B227C2","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[25.951091766357422,6.776000022888184,8.243200302124023,25.27349090576172,0,8.243200302124023,25.27349090576172,13.552000045776367,8.243200302124023,25.27349090576172,13.552000045776367,8.243200302124023,25.27349090576172,0,8.243200302124023,23.240692138671875,18.052879333496094,8.243200302124023,25.27349090576172,0,8.243200302124023,23.240692138671875,-4.500878810882568,8.243200302124023,23.240692138671875,18.052879333496094,8.243200302124023,23.240692138671875,18.052879333496094,8.243200302124023,23.240692138671875,-4.500878810882568,8.243200302124023,15.076691627502441,18.052879333496094,8.243200302124023,15.076691627502441,-4.500878810882568,8.243200302124023,15.076691627502441,18.052879333496094,8.243200302124023,23.240692138671875,-4.500878810882568,8.243200302124023],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1],"normalized":false}},"boundingSphere":{"center":[20.51389169692993,6.776000261306763,8.243200302124023],"radius":12.519231054811794}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-7","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"ACC14F91-9609-4D98-BD92-DE179F50F4DF"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Concrete Block"],"manufacturer":"","name":"Cmu","material":"CMU, painted","absorption":{"63":0.03,"125":0.1,"250":0.05,"500":0.06,"1000":0.07,"2000":0.09,"4000":0.08,"8000":0.08},"nrc":0.07,"source":"wjhw?","description":"","uuid":"ByswUBFezm3zBKiE"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"447AAFC5-9DAB-428B-BFF8-90CE2859CED1","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[0,0,4.743199825286865,3.388000011444092,-1.3552000522613525,4.743199825286865,0,0,0,3.388000011444092,-1.3552000522613525,0,0,0,0,3.388000011444092,-1.3552000522613525,4.743199825286865],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0.3713906705379486,0.9284766912460327,0,0.3713906705379486,0.9284766912460327,0,0.3713906705379486,0.9284766912460327,0,0.3713906705379486,0.9284766912460327,0,0.3713906705379486,0.9284766912460327,0,0.3713906705379486,0.9284766912460327,0],"normalized":false}},"boundingSphere":{"center":[1.694000005722046,-0.6776000261306763,2.3715999126434326],"radius":2.9922005214304943}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-8","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"8C2E6B59-4406-46AA-BFFC-0DD3A540CC2B"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Concrete Block"],"manufacturer":"","name":"Cmu","material":"CMU, painted","absorption":{"63":0.03,"125":0.1,"250":0.05,"500":0.06,"1000":0.07,"2000":0.09,"4000":0.08,"8000":0.08},"nrc":0.07,"source":"wjhw?","description":"","uuid":"ByswUBFezm3zBKiE"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"CE7D1DD2-4D3C-4974-9990-04CB566F3914","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[3.388000011444092,14.90719985961914,4.743199825286865,0,13.552000045776367,4.743199825286865,3.388000011444092,14.90719985961914,0,0,13.552000045776367,0,3.388000011444092,14.90719985961914,0,0,13.552000045776367,4.743199825286865],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0.37139061093330383,-0.9284766912460327,0,0.37139061093330383,-0.9284766912460327,0,0.37139061093330383,-0.9284766912460327,0,0.37139061093330383,-0.9284766912460327,0,0.37139061093330383,-0.9284766912460327,0,0.37139061093330383,-0.9284766912460327,0],"normalized":false}},"boundingSphere":{"center":[1.694000005722046,14.229599952697754,2.3715999126434326],"radius":2.9922004944349068}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-9","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"23667DCD-801B-4519-AE5D-D24386E78799"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Concrete Block"],"manufacturer":"","name":"Cmu","material":"CMU, painted","absorption":{"63":0.03,"125":0.1,"250":0.05,"500":0.06,"1000":0.07,"2000":0.09,"4000":0.08,"8000":0.08},"nrc":0.07,"source":"wjhw?","description":"","uuid":"ByswUBFezm3zBKiE"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"AC13C7F5-F22B-4EB1-ABF2-19323297501A","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[3.6396543979644775,-0.7260642051696777,4.743199825286865,3.6396543979644775,-0.7260642051696777,0,3.388000011444092,-1.3552000522613525,4.743199825286865,3.388000011444092,-1.3552000522613525,0,3.388000011444092,-1.3552000522613525,4.743199825286865,3.6396543979644775,-0.7260642051696777,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.9284766912460327,0.3713907301425934,0,-0.9284766912460327,0.3713907301425934,0,-0.9284766912460327,0.3713907301425934,0,-0.9284766912460327,0.3713907301425934,0,-0.9284766912460327,0.3713907301425934,0,-0.9284766912460327,0.3713907301425934,0],"normalized":false}},"boundingSphere":{"center":[3.5138272047042847,-1.0406321287155151,2.3715999126434326],"radius":2.395677692582626}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-11","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"09FB51AD-73E9-480E-A3E5-6932C31787DE"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Concrete Block"],"manufacturer":"","name":"Cmu","material":"CMU, painted","absorption":{"63":0.03,"125":0.1,"250":0.05,"500":0.06,"1000":0.07,"2000":0.09,"4000":0.08,"8000":0.08},"nrc":0.07,"source":"wjhw?","description":"","uuid":"ByswUBFezm3zBKiE"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"0C7929BE-458F-413B-BC92-D7FBF0D28AB8","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[3.388000011444092,14.90719985961914,4.743199825286865,3.388000011444092,14.90719985961914,0,3.6396543979644775,14.278063774108887,4.743199825286865,3.6396543979644775,14.278063774108887,0,3.6396543979644775,14.278063774108887,4.743199825286865,3.388000011444092,14.90719985961914,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.9284766912460327,-0.37139061093330383,0,-0.9284766912460327,-0.37139061093330383,0,-0.9284766912460327,-0.37139061093330383,0,-0.9284766912460327,-0.37139061093330383,0,-0.9284766912460327,-0.37139061093330383,0,-0.9284766912460327,-0.37139061093330383,0],"normalized":false}},"boundingSphere":{"center":[3.5138272047042847,14.592631816864014,2.3715999126434326],"radius":2.395677708235577}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-12","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"94111689-BEE4-4E6E-98FA-8CEBFC57DE7B"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Concrete Block"],"manufacturer":"","name":"Cmu","material":"CMU, painted","absorption":{"63":0.03,"125":0.1,"250":0.05,"500":0.06,"1000":0.07,"2000":0.09,"4000":0.08,"8000":0.08},"nrc":0.07,"source":"wjhw?","description":"","uuid":"ByswUBFezm3zBKiE"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"41B752A6-4A0A-4F6E-9EB0-B5E799D8D9C4","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[0,13.552000045776367,0,0,13.552000045776367,4.743199825286865,0,0,0,0,0,4.743199825286865,0,0,0,0,13.552000045776367,4.743199825286865],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0],"normalized":false}},"boundingSphere":{"center":[0,6.776000022888184,2.3715999126434326],"radius":7.179043282766235}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-15","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"DF5D8BCC-C7BF-41EC-994B-09CCCD4D67C7"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"899F381E-5921-4775-9F58-92044872FF55","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[3.6396543979644775,14.278063774108887,4.743199825286865,3.6396543979644775,-0.7260642051696777,4.743199825286865,3.388000011444092,14.90719985961914,4.743199825286865,3.6396543979644775,-0.7260642051696777,4.743199825286865,3.388000011444092,-1.3552000522613525,4.743199825286865,3.388000011444092,14.90719985961914,4.743199825286865,3.388000011444092,14.90719985961914,4.743199825286865,3.388000011444092,-1.3552000522613525,4.743199825286865,0,13.552000045776367,4.743199825286865,0,0,4.743199825286865,0,13.552000045776367,4.743199825286865,3.388000011444092,-1.3552000522613525,4.743199825286865],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1],"normalized":false}},"boundingSphere":{"center":[1.8198271989822388,6.775999903678894,4.743199825286865],"radius":8.28103729572734}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-14","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"E8C1CCA5-3787-4C6B-8A87-2F6B6C1709B6"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"57731404-5792-4623-B964-263A68EFD1AD","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[15.076691627502441,18.052879333496094,8.243200302124023,15.076691627502441,-4.500878810882568,8.243200302124023,13.076691627502441,18.052879333496094,7.493199825286865,13.076691627502441,-4.500878810882568,7.493199825286865,13.076691627502441,18.052879333496094,7.493199825286865,15.076691627502441,-4.500878810882568,8.243200302124023],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0.3511236310005188,0,-0.9363291263580322,0.3511236310005188,0,-0.9363291263580322,0.3511236310005188,0,-0.9363291263580322,0.3511236310005188,0,-0.9363291263580322,0.3511236310005188,0,-0.9363291263580322,0.3511236310005188,0,-0.9363291263580322],"normalized":false}},"boundingSphere":{"center":[14.076691627502441,6.776000261306763,7.868200063705444],"radius":11.327339793066848}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-20","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"871ED5D3-5913-47D3-8585-D6C3BDB05F4E"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"8B8AAEEE-9E0B-486F-837A-74A372F11975","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[13.076691627502441,18.052879333496094,7.493199825286865,13.076691627502441,-4.500878810882568,7.493199825286865,3.6396543979644775,14.278063774108887,4.743199825286865,3.6396543979644775,-0.7260642051696777,4.743199825286865,3.6396543979644775,14.278063774108887,4.743199825286865,13.076691627502441,-4.500878810882568,7.493199825286865],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0.2797684967517853,0,-0.9600675106048584,0.2797684967517853,0,-0.9600675106048584,0.2797684967517853,0,-0.9600675106048584,0.2797684967517853,0,-0.9600675106048584,0.2797684967517853,0,-0.9600675106048584,0.2797684967517853,0,-0.9600675106048584],"normalized":false}},"boundingSphere":{"center":[8.35817301273346,6.776000261306763,6.118199825286865],"radius":12.3013432001023}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-21","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"258494C4-8017-4C71-A8CA-32E17274FEA9"},{"surfaces":[{"kind":"container","visible":true,"name":"STAGE_FLOOR","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"C25652F3-D7EC-42DE-82CA-1A4CCCE37874","children":[{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Floors","Wood"],"manufacturer":"","name":"Wood Stage Floor (T&G)","material":"Wood Stage Floor (T&G), 2 layers 1/2in, on joists","absorption":{"63":0.04,"125":0.1,"250":0.07,"500":0.06,"1000":0.06,"2000":0.06,"4000":0.06,"8000":0.06},"nrc":0.06,"source":"Beranek (JASA '98)","description":"","uuid":"ZdwcxUjnCaTijM8d"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"400B3C98-438F-414E-9A39-2D5BAC219DC3","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[3.6396543979644775,14.278063774108887,-0.6776000261306763,3.6396543979644775,14.278063774108887,0,3.6396543979644775,-0.7260642051696777,-0.6776000261306763,3.6396543979644775,-0.7260642051696777,0,3.6396543979644775,-0.7260642051696777,-0.6776000261306763,3.6396543979644775,14.278063774108887,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0],"normalized":false}},"boundingSphere":{"center":[3.6396543979644775,6.7759997844696045,-0.33880001306533813],"radius":7.509710350838808}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-0","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"684C19AC-22BD-45FE-898C-C5166936CDDD"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Floors","Wood"],"manufacturer":"","name":"Wood Stage Floor (T&G)","material":"Wood Stage Floor (T&G), 2 layers 1/2in, on joists","absorption":{"63":0.04,"125":0.1,"250":0.07,"500":0.06,"1000":0.06,"2000":0.06,"4000":0.06,"8000":0.06},"nrc":0.06,"source":"Beranek (JASA '98)","description":"","uuid":"ZdwcxUjnCaTijM8d"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"E97F47E2-3237-4B92-A531-B8C3A9AF9885","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[3.6396543979644775,-0.7260642051696777,0,3.6396543979644775,14.278063774108887,0,3.388000011444092,-1.3552000522613525,0,3.6396543979644775,14.278063774108887,0,3.388000011444092,14.90719985961914,0,3.388000011444092,-1.3552000522613525,0,3.388000011444092,-1.3552000522613525,0,3.388000011444092,14.90719985961914,0,0,0,0,0,13.552000045776367,0,0,0,0,3.388000011444092,14.90719985961914,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1],"normalized":false}},"boundingSphere":{"center":[1.8198271989822388,6.775999903678894,0],"radius":8.28103729572734}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-16","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"019734C7-A913-4997-AF56-4127C064DCBC"}]},{"kind":"container","visible":true,"name":"BACK_WALL","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"50EAB1A6-F698-4B51-943F-6B1DB50A9316","children":[{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Tectum","material":"Tectum, 1in, against solid backing","absorption":{"63":0,"125":0.06,"250":0.13,"500":0.24,"1000":0.45,"2000":0.82,"4000":0.64,"8000":0.64},"nrc":0.41,"source":"Tectum Company","description":"","uuid":"W2wCsvqJV0a1RMGw"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"AA8A615E-B0F8-4810-9B76-E960FD96910E","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[25.27349090576172,0,8.243200302124023,25.27349090576172,0,0.5723999738693237,23.240692138671875,-4.500878810882568,8.243200302124023,23.240692138671875,-4.500878810882568,0.5723999738693237,23.240692138671875,-4.500878810882568,8.243200302124023,25.27349090576172,0,0.5723999738693237],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.9113596677780151,0.4116109311580658,0,-0.9113596677780151,0.4116109311580658,0,-0.9113596677780151,0.4116109311580658,0,-0.9113596677780151,0.4116109311580658,0,-0.9113596677780151,0.4116109311580658,0,-0.9113596677780151,0.4116109311580658,0],"normalized":false}},"boundingSphere":{"center":[24.257091522216797,-2.250439405441284,4.407800137996674],"radius":4.561561097192662}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-1","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"C4C1198C-8ECF-4945-8DBE-BECEBD6261D4"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Tectum","material":"Tectum, 1in, against solid backing","absorption":{"63":0,"125":0.06,"250":0.13,"500":0.24,"1000":0.45,"2000":0.82,"4000":0.64,"8000":0.64},"nrc":0.41,"source":"Tectum Company","description":"","uuid":"W2wCsvqJV0a1RMGw"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"592E5C4E-1FF7-4AAE-8332-3EA1AF4A7B58","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[25.27349090576172,13.552000045776367,8.243200302124023,25.27349090576172,13.552000045776367,0.5723999738693237,25.951091766357422,6.776000022888184,8.243200302124023,25.951091766357422,6.776000022888184,0.5723999738693237,25.951091766357422,6.776000022888184,8.243200302124023,25.27349090576172,13.552000045776367,0.5723999738693237],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.9950371980667114,-0.09950384497642517,0,-0.9950371980667114,-0.09950384497642517,0,-0.9950371980667114,-0.09950384497642517,0,-0.9950371980667114,-0.09950384497642517,0,-0.9950371980667114,-0.09950384497642517,0,-0.9950371980667114,-0.09950384497642517,0],"normalized":false}},"boundingSphere":{"center":[25.61229133605957,10.164000034332275,4.407800137996674],"radius":5.128705901892141}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-2","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"BC98D1A7-A671-4D2C-A9B9-243FC24E6272"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Tectum","material":"Tectum, 1in, against solid backing","absorption":{"63":0,"125":0.06,"250":0.13,"500":0.24,"1000":0.45,"2000":0.82,"4000":0.64,"8000":0.64},"nrc":0.41,"source":"Tectum Company","description":"","uuid":"W2wCsvqJV0a1RMGw"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"86233816-C227-485D-BCFB-3495AB27841E","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[25.951091766357422,6.776000022888184,8.243200302124023,25.951091766357422,6.776000022888184,0.5723999738693237,25.27349090576172,0,8.243200302124023,25.27349090576172,0,0.5723999738693237,25.27349090576172,0,8.243200302124023,25.951091766357422,6.776000022888184,0.5723999738693237],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.9950371980667114,0.09950384497642517,0,-0.9950371980667114,0.09950384497642517,0,-0.9950371980667114,0.09950384497642517,0,-0.9950371980667114,0.09950384497642517,0,-0.9950371980667114,0.09950384497642517,0,-0.9950371980667114,0.09950384497642517,0],"normalized":false}},"boundingSphere":{"center":[25.61229133605957,3.388000011444092,4.407800137996674],"radius":5.128705901892141}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-5","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"002B910B-36C7-478E-BF82-44A5E5827359"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Tectum","material":"Tectum, 1in, against solid backing","absorption":{"63":0,"125":0.06,"250":0.13,"500":0.24,"1000":0.45,"2000":0.82,"4000":0.64,"8000":0.64},"nrc":0.41,"source":"Tectum Company","description":"","uuid":"W2wCsvqJV0a1RMGw"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"75B764E2-FFE8-476A-9917-7C248BD99988","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[23.240692138671875,18.052879333496094,8.243200302124023,23.240692138671875,18.052879333496094,0.5723999738693237,25.27349090576172,13.552000045776367,8.243200302124023,25.27349090576172,13.552000045776367,0.5723999738693237,25.27349090576172,13.552000045776367,8.243200302124023,23.240692138671875,18.052879333496094,0.5723999738693237],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.9113596677780151,-0.411610871553421,0,-0.9113596677780151,-0.411610871553421,0,-0.9113596677780151,-0.411610871553421,0,-0.9113596677780151,-0.411610871553421,0,-0.9113596677780151,-0.411610871553421,0,-0.9113596677780151,-0.411610871553421,0],"normalized":false}},"boundingSphere":{"center":[24.257091522216797,15.80243968963623,4.407800137996674],"radius":4.561561214816119}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-13","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"150F4026-17E8-4FA2-947C-7CCE8766672F"}]},{"kind":"container","visible":true,"name":"FLOOR","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"22B49FEC-509E-4278-A6EE-C8C7E484A4CD","children":[{"kind":"surface","visible":true,"acousticMaterial":{"tags":["People","Various"],"manufacturer":"","name":"Audience In Upholstered Seats","material":"Audience in upholstered seats","absorption":{"63":0,"125":0.18,"250":0.4,"500":0.46,"1000":0.46,"2000":0.51,"4000":0.46,"8000":0.46},"nrc":0.46,"source":"Hann Tucker","description":"","uuid":"QFCVbDYrU5uWvhK2"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"538BB9A3-68A2-425A-B70F-CD45E476386D","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[25.951091766357422,6.776000022888184,0.5723999738693237,25.27349090576172,13.552000045776367,0.5723999738693237,25.27349090576172,0,0.5723999738693237,25.27349090576172,13.552000045776367,0.5723999738693237,23.240692138671875,18.052879333496094,0.5723999738693237,25.27349090576172,0,0.5723999738693237,23.240692138671875,-4.500878810882568,0.5723999738693237,25.27349090576172,0,0.5723999738693237,23.240692138671875,18.052879333496094,0.5723999738693237],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1],"normalized":false}},"boundingSphere":{"center":[24.59589195251465,6.776000261306763,0.5723999738693237],"radius":11.358017791156218}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-3","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"95922F62-13C2-4C06-A997-99B18DE92370"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["People","Various"],"manufacturer":"","name":"Audience In Upholstered Seats","material":"Audience in upholstered seats","absorption":{"63":0,"125":0.18,"250":0.4,"500":0.46,"1000":0.46,"2000":0.51,"4000":0.46,"8000":0.46},"nrc":0.46,"source":"Hann Tucker","description":"","uuid":"QFCVbDYrU5uWvhK2"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"EE864F8C-261F-4F61-B437-8B57B0567E6E","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[13.076691627502441,-4.500878810882568,0.07240000367164612,13.076691627502441,18.052879333496094,0.07240000367164612,3.6396543979644775,-0.7260642051696777,-0.6776000261306763,3.6396543979644775,14.278063774108887,-0.6776000261306763,3.6396543979644775,-0.7260642051696777,-0.6776000261306763,13.076691627502441,18.052879333496094,0.07240000367164612],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.07922429591417313,0,0.9968568086624146,-0.07922429591417313,0,0.9968568086624146,-0.07922429591417313,0,0.9968568086624146,-0.07922429591417313,0,0.9968568086624146,-0.07922429591417313,0,0.9968568086624146,-0.07922429591417313,0,0.9968568086624146],"normalized":false}},"boundingSphere":{"center":[8.35817301273346,6.776000261306763,-0.3026000112295151],"radius":12.230005909151432}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-17","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"12438BB0-6F74-48E6-A9BE-B8223FBBB05B"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["People","Various"],"manufacturer":"","name":"Audience In Upholstered Seats","material":"Audience in upholstered seats","absorption":{"63":0,"125":0.18,"250":0.4,"500":0.46,"1000":0.46,"2000":0.51,"4000":0.46,"8000":0.46},"nrc":0.46,"source":"Hann Tucker","description":"","uuid":"QFCVbDYrU5uWvhK2"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"4ED29942-85B9-4630-A710-A701DC4A2A5F","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[23.240692138671875,-4.500878810882568,0.5723999738693237,23.240692138671875,18.052879333496094,0.5723999738693237,13.076691627502441,-4.500878810882568,0.07240000367164612,13.076691627502441,18.052879333496094,0.07240000367164612,13.076691627502441,-4.500878810882568,0.07240000367164612,23.240692138671875,18.052879333496094,0.5723999738693237],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.04913381114602089,0,0.9987922310829163,-0.04913381114602089,0,0.9987922310829163,-0.04913381114602089,0,0.9987922310829163,-0.04913381114602089,0,0.9987922310829163,-0.04913381114602089,0,0.9987922310829163,-0.04913381114602089,0,0.9987922310829163],"normalized":false}},"boundingSphere":{"center":[18.158691883087158,6.776000261306763,0.3223999887704849],"radius":12.37162997341475}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-18","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"B35F8F84-7DE4-4AE4-ABD1-08F6856713D0"}]},{"kind":"container","visible":true,"name":"SIDE_WALLS","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"6FD07351-E2A3-48B5-A97E-4CF1292754D1","children":[{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"99A4D26C-5E26-4692-8C0D-CF185378CFA0","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[13.076691627502441,-4.500878810882568,7.493199825286865,13.076691627502441,-4.500878810882568,0.07240000367164612,3.6396543979644775,-0.7260642051696777,4.743199825286865,3.6396543979644775,-0.7260642051696777,4.743199825286865,13.076691627502441,-4.500878810882568,0.07240000367164612,3.6396543979644775,-0.7260642051696777,0,3.6396543979644775,-0.7260642051696777,-0.6776000261306763,3.6396543979644775,-0.7260642051696777,0,13.076691627502441,-4.500878810882568,0.07240000367164612],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0,0.3713906407356262,0.9284766912460327,0],"normalized":false}},"boundingSphere":{"center":[8.35817301273346,-2.613471508026123,3.4077998995780945],"radius":6.5205227396105645}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-4","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"5BCC2696-DB53-4AD8-8DD7-65A838026F6C"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"6689D2A1-9B38-489C-9B43-42D02F03C7DB","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[15.076691627502441,18.052879333496094,8.243200302124023,13.076691627502441,18.052879333496094,7.493199825286865,23.240692138671875,18.052879333496094,8.243200302124023,23.240692138671875,18.052879333496094,8.243200302124023,13.076691627502441,18.052879333496094,7.493199825286865,23.240692138671875,18.052879333496094,0.5723999738693237,13.076691627502441,18.052879333496094,0.07240000367164612,23.240692138671875,18.052879333496094,0.5723999738693237,13.076691627502441,18.052879333496094,7.493199825286865],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0],"normalized":false}},"boundingSphere":{"center":[18.158691883087158,18.052879333496094,4.157800152897835],"radius":6.520523060081951}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-6","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"E89777FF-93D0-456E-97D0-9CDD4961BB17"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"DA4B11D6-24CC-472A-98D1-3E106C740E0C","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[13.076691627502441,18.052879333496094,7.493199825286865,3.6396543979644775,14.278063774108887,4.743199825286865,13.076691627502441,18.052879333496094,0.07240000367164612,3.6396543979644775,14.278063774108887,4.743199825286865,3.6396543979644775,14.278063774108887,0,13.076691627502441,18.052879333496094,0.07240000367164612,3.6396543979644775,14.278063774108887,-0.6776000261306763,13.076691627502441,18.052879333496094,0.07240000367164612,3.6396543979644775,14.278063774108887,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0,0.3713907301425934,-0.9284766912460327,0],"normalized":false}},"boundingSphere":{"center":[8.35817301273346,16.16547155380249,3.4077998995780945],"radius":6.520522877634167}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-10","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"5612A937-9C2D-46F5-B75A-6C996F10815B"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"5081D021-FEB7-41F7-91CD-DE1EF838C595","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[15.076691627502441,-4.500878810882568,8.243200302124023,23.240692138671875,-4.500878810882568,8.243200302124023,13.076691627502441,-4.500878810882568,7.493199825286865,23.240692138671875,-4.500878810882568,8.243200302124023,23.240692138671875,-4.500878810882568,0.5723999738693237,13.076691627502441,-4.500878810882568,7.493199825286865,13.076691627502441,-4.500878810882568,0.07240000367164612,13.076691627502441,-4.500878810882568,7.493199825286865,23.240692138671875,-4.500878810882568,0.5723999738693237],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0],"normalized":false}},"boundingSphere":{"center":[18.158691883087158,-4.500878810882568,4.157800152897835],"radius":6.520523060081951}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-19","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"EAC1B97E-7C9F-4455-86E5-6688C117C43D"}]},{"kind":"container","visible":true,"name":"FLAT_CEILING","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"2CFEC12E-3B4B-4FF6-A980-F48C4DFF00DD","children":[{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"1ED2615E-F9E7-477F-8751-E38570B227C2","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[25.951091766357422,6.776000022888184,8.243200302124023,25.27349090576172,0,8.243200302124023,25.27349090576172,13.552000045776367,8.243200302124023,25.27349090576172,13.552000045776367,8.243200302124023,25.27349090576172,0,8.243200302124023,23.240692138671875,18.052879333496094,8.243200302124023,25.27349090576172,0,8.243200302124023,23.240692138671875,-4.500878810882568,8.243200302124023,23.240692138671875,18.052879333496094,8.243200302124023,23.240692138671875,18.052879333496094,8.243200302124023,23.240692138671875,-4.500878810882568,8.243200302124023,15.076691627502441,18.052879333496094,8.243200302124023,15.076691627502441,-4.500878810882568,8.243200302124023,15.076691627502441,18.052879333496094,8.243200302124023,23.240692138671875,-4.500878810882568,8.243200302124023],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1],"normalized":false}},"boundingSphere":{"center":[20.51389169692993,6.776000261306763,8.243200302124023],"radius":12.519231054811794}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-7","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"ACC14F91-9609-4D98-BD92-DE179F50F4DF"}]},{"kind":"container","visible":true,"name":"STAGE_WALLS","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"744E318D-EC60-406E-880D-596711954480","children":[{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Concrete Block"],"manufacturer":"","name":"Cmu","material":"CMU, painted","absorption":{"63":0.03,"125":0.1,"250":0.05,"500":0.06,"1000":0.07,"2000":0.09,"4000":0.08,"8000":0.08},"nrc":0.07,"source":"wjhw?","description":"","uuid":"ByswUBFezm3zBKiE"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"447AAFC5-9DAB-428B-BFF8-90CE2859CED1","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[0,0,4.743199825286865,3.388000011444092,-1.3552000522613525,4.743199825286865,0,0,0,3.388000011444092,-1.3552000522613525,0,0,0,0,3.388000011444092,-1.3552000522613525,4.743199825286865],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0.3713906705379486,0.9284766912460327,0,0.3713906705379486,0.9284766912460327,0,0.3713906705379486,0.9284766912460327,0,0.3713906705379486,0.9284766912460327,0,0.3713906705379486,0.9284766912460327,0,0.3713906705379486,0.9284766912460327,0],"normalized":false}},"boundingSphere":{"center":[1.694000005722046,-0.6776000261306763,2.3715999126434326],"radius":2.9922005214304943}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-8","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"8C2E6B59-4406-46AA-BFFC-0DD3A540CC2B"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Concrete Block"],"manufacturer":"","name":"Cmu","material":"CMU, painted","absorption":{"63":0.03,"125":0.1,"250":0.05,"500":0.06,"1000":0.07,"2000":0.09,"4000":0.08,"8000":0.08},"nrc":0.07,"source":"wjhw?","description":"","uuid":"ByswUBFezm3zBKiE"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"CE7D1DD2-4D3C-4974-9990-04CB566F3914","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[3.388000011444092,14.90719985961914,4.743199825286865,0,13.552000045776367,4.743199825286865,3.388000011444092,14.90719985961914,0,0,13.552000045776367,0,3.388000011444092,14.90719985961914,0,0,13.552000045776367,4.743199825286865],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0.37139061093330383,-0.9284766912460327,0,0.37139061093330383,-0.9284766912460327,0,0.37139061093330383,-0.9284766912460327,0,0.37139061093330383,-0.9284766912460327,0,0.37139061093330383,-0.9284766912460327,0,0.37139061093330383,-0.9284766912460327,0],"normalized":false}},"boundingSphere":{"center":[1.694000005722046,14.229599952697754,2.3715999126434326],"radius":2.9922004944349068}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-9","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"23667DCD-801B-4519-AE5D-D24386E78799"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Concrete Block"],"manufacturer":"","name":"Cmu","material":"CMU, painted","absorption":{"63":0.03,"125":0.1,"250":0.05,"500":0.06,"1000":0.07,"2000":0.09,"4000":0.08,"8000":0.08},"nrc":0.07,"source":"wjhw?","description":"","uuid":"ByswUBFezm3zBKiE"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"AC13C7F5-F22B-4EB1-ABF2-19323297501A","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[3.6396543979644775,-0.7260642051696777,4.743199825286865,3.6396543979644775,-0.7260642051696777,0,3.388000011444092,-1.3552000522613525,4.743199825286865,3.388000011444092,-1.3552000522613525,0,3.388000011444092,-1.3552000522613525,4.743199825286865,3.6396543979644775,-0.7260642051696777,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.9284766912460327,0.3713907301425934,0,-0.9284766912460327,0.3713907301425934,0,-0.9284766912460327,0.3713907301425934,0,-0.9284766912460327,0.3713907301425934,0,-0.9284766912460327,0.3713907301425934,0,-0.9284766912460327,0.3713907301425934,0],"normalized":false}},"boundingSphere":{"center":[3.5138272047042847,-1.0406321287155151,2.3715999126434326],"radius":2.395677692582626}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-11","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"09FB51AD-73E9-480E-A3E5-6932C31787DE"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Concrete Block"],"manufacturer":"","name":"Cmu","material":"CMU, painted","absorption":{"63":0.03,"125":0.1,"250":0.05,"500":0.06,"1000":0.07,"2000":0.09,"4000":0.08,"8000":0.08},"nrc":0.07,"source":"wjhw?","description":"","uuid":"ByswUBFezm3zBKiE"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"0C7929BE-458F-413B-BC92-D7FBF0D28AB8","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[3.388000011444092,14.90719985961914,4.743199825286865,3.388000011444092,14.90719985961914,0,3.6396543979644775,14.278063774108887,4.743199825286865,3.6396543979644775,14.278063774108887,0,3.6396543979644775,14.278063774108887,4.743199825286865,3.388000011444092,14.90719985961914,0],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[-0.9284766912460327,-0.37139061093330383,0,-0.9284766912460327,-0.37139061093330383,0,-0.9284766912460327,-0.37139061093330383,0,-0.9284766912460327,-0.37139061093330383,0,-0.9284766912460327,-0.37139061093330383,0,-0.9284766912460327,-0.37139061093330383,0],"normalized":false}},"boundingSphere":{"center":[3.5138272047042847,14.592631816864014,2.3715999126434326],"radius":2.395677708235577}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-12","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"94111689-BEE4-4E6E-98FA-8CEBFC57DE7B"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Concrete Block"],"manufacturer":"","name":"Cmu","material":"CMU, painted","absorption":{"63":0.03,"125":0.1,"250":0.05,"500":0.06,"1000":0.07,"2000":0.09,"4000":0.08,"8000":0.08},"nrc":0.07,"source":"wjhw?","description":"","uuid":"ByswUBFezm3zBKiE"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"41B752A6-4A0A-4F6E-9EB0-B5E799D8D9C4","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[0,13.552000045776367,0,0,13.552000045776367,4.743199825286865,0,0,0,0,0,4.743199825286865,0,0,0,0,13.552000045776367,4.743199825286865],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0],"normalized":false}},"boundingSphere":{"center":[0,6.776000022888184,2.3715999126434326],"radius":7.179043282766235}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-15","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"DF5D8BCC-C7BF-41EC-994B-09CCCD4D67C7"}]},{"kind":"container","visible":true,"name":"STAGE_CEILING","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"94B92F44-E01B-40A3-B783-CD1CF3AA2BC6","children":[{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"899F381E-5921-4775-9F58-92044872FF55","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[3.6396543979644775,14.278063774108887,4.743199825286865,3.6396543979644775,-0.7260642051696777,4.743199825286865,3.388000011444092,14.90719985961914,4.743199825286865,3.6396543979644775,-0.7260642051696777,4.743199825286865,3.388000011444092,-1.3552000522613525,4.743199825286865,3.388000011444092,14.90719985961914,4.743199825286865,3.388000011444092,14.90719985961914,4.743199825286865,3.388000011444092,-1.3552000522613525,4.743199825286865,0,13.552000045776367,4.743199825286865,0,0,4.743199825286865,0,13.552000045776367,4.743199825286865,3.388000011444092,-1.3552000522613525,4.743199825286865],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1,0,0,-1],"normalized":false}},"boundingSphere":{"center":[1.8198271989822388,6.775999903678894,4.743199825286865],"radius":8.28103729572734}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-14","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"E8C1CCA5-3787-4C6B-8A87-2F6B6C1709B6"}]},{"kind":"container","visible":true,"name":"SLOPED_CEILING","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"E6294A9E-6F2C-4828-B186-788F0352FA0C","children":[{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"57731404-5792-4623-B964-263A68EFD1AD","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[15.076691627502441,18.052879333496094,8.243200302124023,15.076691627502441,-4.500878810882568,8.243200302124023,13.076691627502441,18.052879333496094,7.493199825286865,13.076691627502441,-4.500878810882568,7.493199825286865,13.076691627502441,18.052879333496094,7.493199825286865,15.076691627502441,-4.500878810882568,8.243200302124023],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0.3511236310005188,0,-0.9363291263580322,0.3511236310005188,0,-0.9363291263580322,0.3511236310005188,0,-0.9363291263580322,0.3511236310005188,0,-0.9363291263580322,0.3511236310005188,0,-0.9363291263580322,0.3511236310005188,0,-0.9363291263580322],"normalized":false}},"boundingSphere":{"center":[14.076691627502441,6.776000261306763,7.868200063705444],"radius":11.327339793066848}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-20","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"871ED5D3-5913-47D3-8585-D6C3BDB05F4E"},{"kind":"surface","visible":true,"acousticMaterial":{"tags":["Walls","Various"],"manufacturer":"","name":"Plaster On Lath","material":"Plaster on lath","absorption":{"63":0.05,"125":0.14,"250":0.1,"500":0.06,"1000":0.05,"2000":0.04,"4000":0.03,"8000":0.03},"nrc":0.06,"source":"Egan","description":"","uuid":"gRbBSYkSbePlqUoe"},"geometry":{"metadata":{"version":4.5,"type":"BufferGeometry","generator":"BufferGeometry.toJSON"},"uuid":"8B8AAEEE-9E0B-486F-837A-74A372F11975","type":"BufferGeometry","name":"surface-geometry","data":{"attributes":{"position":{"itemSize":3,"type":"Float32Array","array":[13.076691627502441,18.052879333496094,7.493199825286865,13.076691627502441,-4.500878810882568,7.493199825286865,3.6396543979644775,14.278063774108887,4.743199825286865,3.6396543979644775,-0.7260642051696777,4.743199825286865,3.6396543979644775,14.278063774108887,4.743199825286865,13.076691627502441,-4.500878810882568,7.493199825286865],"normalized":false},"normals":{"itemSize":3,"type":"Float32Array","array":[0.2797684967517853,0,-0.9600675106048584,0.2797684967517853,0,-0.9600675106048584,0.2797684967517853,0,-0.9600675106048584,0.2797684967517853,0,-0.9600675106048584,0.2797684967517853,0,-0.9600675106048584,0.2797684967517853,0,-0.9600675106048584],"normalized":false}},"boundingSphere":{"center":[8.35817301273346,6.776000261306763,6.118199825286865],"radius":12.3013432001023}}},"displayVertexNormals":false,"fillSurface":true,"wireframeVisible":false,"edgesVisible":true,"name":"untitled-21","position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1],"uuid":"258494C4-8017-4C71-A8CA-32E17274FEA9"}]}],"kind":"room","name":"new room","uuid":"2822163E-C892-4474-A3AB-BCD8210F2C3D","units":2,"originalFileData":"","originalFileName":"","visible":true,"position":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1]}]`), Hg = [], Dg = {
+  meta: Fg,
+  containers: Bg,
+  solvers: Hg
 };
 ae("OPEN_EXAMPLE", (t) => {
   const { hasUnsavedChanges: e } = Ve.getState();
   if (e && !confirm("Open an example? Unsaved data will be lost."))
     return;
-  const r = Og[t];
+  const r = qg[t];
   $("RESTORE", { json: r });
 });
-const Og = {
-  shoebox: Eg,
-  concord: Fg,
-  auditorium: qg
+const qg = {
+  shoebox: xg,
+  concord: Tg,
+  auditorium: Dg
 };
 export {
-  yb as A,
-  wb as B,
-  Sb as C,
-  Og as D,
+  vb as A,
+  Cb as B,
+  yb as C,
+  qg as D,
   ft as E,
   Ss as F,
-  fb as I,
+  db as I,
   Qa as L,
-  Cb as O,
-  db as P,
+  Sb as O,
+  ub as P,
   v3 as R,
   Pt as S,
   Y5 as T,
   D0 as a,
   P5 as b,
   S3 as c,
-  sb as d,
+  ib as d,
   $ as e,
   a0 as f,
-  vb as g,
+  bb as g,
   ll as h,
   Ve as i,
   $c as j,
-  ub as k,
+  cb as k,
   Id as l,
   Pe as m,
   gs as n,
   ae as o,
   W0 as p,
-  ib as q,
+  nb as q,
   Se as r,
-  ob as s,
+  sb as s,
   Ko as t,
   Be as u,
   Kt as v,
-  cb as w,
+  lb as w,
   $o as x,
   ci as y,
-  lb as z
+  ob as z
 };
-//# sourceMappingURL=index-QQcZNxh5.mjs.map
+//# sourceMappingURL=index-BTFWWgWB.mjs.map
