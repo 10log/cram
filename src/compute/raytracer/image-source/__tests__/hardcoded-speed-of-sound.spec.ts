@@ -24,9 +24,10 @@ describe('Issue #41: Replace hardcoded 343 speed of sound', () => {
     expect(matches).toBeNull();
   });
 
-  test('ImageSourceSolver has a temperature property', () => {
+  test('ImageSourceSolver has a temperature property configurable via params', () => {
     expect(source).toContain('temperature: number');
-    expect(source).toContain('this.temperature = 20');
+    expect(source).toContain('temperature?: number');
+    expect(source).toMatch(/this\.temperature\s*=\s*params\.temperature/);
   });
 
   test('ImageSourceSolver has a speed of sound getter using ac.soundSpeed', () => {
@@ -40,11 +41,11 @@ describe('Issue #41: Replace hardcoded 343 speed of sound', () => {
     expect(ltpMatch).not.toBeNull();
   });
 
-  test('calculateImpulseResponse uses this.c', () => {
+  test('calculateImpulseResponse uses this.c (cached as local const)', () => {
     const irSection = source.match(/async calculateImpulseResponse[\s\S]*?^\s{4}\}/m);
     expect(irSection).not.toBeNull();
-    // Should use this.c, not a literal
-    expect(irSection![0]).toContain('this.c');
+    // Should cache this.c and use it, not a literal
+    expect(irSection![0]).toMatch(/const c = this\.c/);
     expect(irSection![0]).not.toMatch(/arrivalTime\(\s*343\s*\)/);
   });
 

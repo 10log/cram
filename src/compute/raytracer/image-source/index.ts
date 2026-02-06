@@ -310,6 +310,7 @@ export interface ImageSourceSolverParams {
   plotOrders: number[];
   frequencies: number[];
   levelTimeProgression?: string;
+  temperature?: number;
 }
 
 const defaults = {
@@ -374,7 +375,7 @@ export class ImageSourceSolver extends Solver {
         this._plotOrders = params.plotOrders; 
         this.levelTimeProgression = params.levelTimeProgression || uuid();
         this.isHybrid = isHybrid;
-        this.temperature = 20;
+        this.temperature = params.temperature != null ? params.temperature : 20;
 
         this.impulseResponsePlaying = false; 
 
@@ -689,13 +690,14 @@ export class ImageSourceSolver extends Solver {
       if(this.sourceIDs.length === 0) throw Error("No sources have been assigned to the raytracer");
       if(this.validRayPaths?.length === 0) throw Error("No rays have been traced yet");
 
-      let sortedPath: ImageSourcePath[] | null = this.validRayPaths; 
-      sortedPath?.sort((a, b) => (a.arrivalTime(this.c) > b.arrivalTime(this.c)) ? 1 : -1);
+      const c = this.c;
+      let sortedPath: ImageSourcePath[] | null = this.validRayPaths;
+      sortedPath?.sort((a, b) => (a.arrivalTime(c) > b.arrivalTime(c)) ? 1 : -1);
 
       console.log(sortedPath);
 
       if(sortedPath != null){
-        const endTime = sortedPath[sortedPath.length - 1].arrivalTime(this.c)+0.05;
+        const endTime = sortedPath[sortedPath.length - 1].arrivalTime(c)+0.05;
         const endSample = sampleRate*endTime;
 
         let samples: Float32Array[] = [];
@@ -704,7 +706,7 @@ export class ImageSourceSolver extends Solver {
         }
 
         for(let i = 0; i<sortedPath.length; i++){
-          let t = sortedPath[i].arrivalTime(this.c);
+          let t = sortedPath[i].arrivalTime(c);
           let p = sortedPath[i].arrivalPressure(spls, this.frequencies);
 
           (Math.random() > 0.5) && (p=p.map(x=>-x)); 
