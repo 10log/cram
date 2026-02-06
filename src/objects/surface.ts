@@ -379,16 +379,6 @@ class Surface extends Container {
     this.reflectionFunction = (freq, theta) => reflectionCoefficient(this.absorptionFunction(freq), theta);
     this.scatteringCoefficient = props.scatteringCoefficient || defaults.scatteringCoefficient;
     this.acousticMaterial = props.acousticMaterial;
-    this.brdf = [] as BRDF[];
-    const freqKeys = Object.keys(this.acousticMaterial.absorption).map(Number);
-    freqKeys.forEach(freq => {
-      this.brdf.push(
-        new BRDF({
-          absorptionCoefficient: (this.acousticMaterial.absorption as Record<string, number>)[String(freq)],
-          diffusionCoefficient: this.scatteringFunction(freq)
-        })
-      );
-    });
     this.getArea();
 
     this.edgeLoop = this.calculateEdgeLoop();

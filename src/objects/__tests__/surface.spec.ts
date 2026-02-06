@@ -706,7 +706,7 @@ describe('Surface', () => {
       (BRDF as jest.Mock).mockClear();
 
       const geometry = createMockGeometry();
-      const surface = new Surface('BRDFTest', {
+      new Surface('BRDFTest', {
         geometry,
         acousticMaterial: mockAcousticMaterial,
       });
