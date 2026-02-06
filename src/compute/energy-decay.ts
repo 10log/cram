@@ -6,6 +6,7 @@ import { audioEngine } from "../audio-engine/audio-engine";
 import { emit, on } from "../messenger";
 import { addSolver, setSolverProperty, useSolver } from "../store/solver-store";
 import Solver, { SolverParams } from "./solver";
+import { trimIR } from "./trim-ir";
 
 // import audio
 
@@ -251,26 +252,6 @@ function abs(data: Float32Array): Float32Array{
 function subFromArray(data: Float32Array, sub: number): Float32Array{
     let subarray = data.map((x)=>(x-sub)); 
     return subarray; 
-}
-
-function trimIR(ir: Float32Array): Float32Array {
-    let tolerance = 1e-6; 
-    let startSample = 0; 
-    let endSample = ir.length; 
-
-    let sindex = 0; 
-    while(Math.abs(ir[sindex]) < tolerance){
-        startSample = sindex; 
-        sindex++; 
-    }
-
-    sindex = ir.length - 1;
-    while(Math.abs(ir[sindex]) < tolerance){
-        endSample = sindex; 
-        sindex--; 
-    }
-
-    return ir.slice(startSample,endSample); 
 }
 
 export default EnergyDecay
