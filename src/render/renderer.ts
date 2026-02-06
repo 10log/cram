@@ -44,6 +44,8 @@ import Cursor from "./Cursor";
 import { Processes } from "../constants/processes";
 
 import { Markup } from "./Markup";
+import type { RendererTheme } from "../themes";
+import { useTheme } from "../store/theme-store";
 import Model from "../objects/model";
 import { useContainer } from "../store";
 import { debounce } from "../common/debounce";
@@ -244,7 +246,9 @@ export default class Renderer {
     this.cursor = new Cursor();
     this.env.add(this.cursor);
 
-    const background = 0xf5f8fa;
+    // Get initial theme colors
+    const rendererTheme = useTheme.getState().theme.renderer;
+    const background = rendererTheme.background;
 
     // scene
     this.scene = new THREE.Scene();
@@ -1068,6 +1072,31 @@ export default class Renderer {
   set fogColor(color: string) {
     this.scene.fog?.color.setStyle(color);
   }
+
+  /**
+   * Apply a renderer theme to update scene colors
+   */
+  applyTheme(rendererTheme: RendererTheme) {
+    // Update scene background
+    (this.scene.background as THREE.Color).setHex(rendererTheme.background);
+
+    // Update fog color
+    if (this.fog) {
+      this.fog.color.setHex(rendererTheme.fog);
+    }
+
+    // Update grid colors
+    if (this.grid) {
+      this.grid.updateColors(
+        rendererTheme.gridMinor,
+        rendererTheme.gridMajor,
+        rendererTheme.gridOpacity,
+        rendererTheme.gridMajorOpacity
+      );
+    }
+
+    this.needsToRender = true;
+  }
   get fov() {
     return this.camera instanceof THREE.PerspectiveCamera ? this.camera.fov : this._fov;
   }
@@ -1286,5 +1315,9 @@ on("FOCUS_ON_CURSOR", () => {
   };
   renderer.smoothCameraTo({ position, target, duration, onFinish, easingFunction });
   renderer.requestRender();
+});
+
+on("THEME_CHANGED", (theme) => {
+  renderer.applyTheme(theme.renderer);
 });
 

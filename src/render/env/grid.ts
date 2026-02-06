@@ -70,4 +70,17 @@ export default class Grid extends Container{
 	get mesh() {
 		return this.children[2];
 	}
+
+	/**
+	 * Update grid line colors and opacity for theme changes
+	 */
+	updateColors(minorColor: number, majorColor: number, minorOpacity: number, majorOpacity: number) {
+		const material = this.gridHelper.material as THREE.LineBasicMaterial;
+		material.color.setHex(minorColor);
+		material.opacity = minorOpacity;
+
+		const majorMaterial = this.majorGridHelper.material as THREE.LineBasicMaterial;
+		majorMaterial.color.setHex(majorColor);
+		majorMaterial.opacity = majorOpacity;
+	}
 }

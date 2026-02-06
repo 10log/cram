@@ -56,6 +56,7 @@ export const CRAMEditor = forwardRef<CRAMEditorRef, CRAMEditorProps>(
       storagePrefix = 'cram',
       showNavBar = true,
       fixedPanelWidth,
+      themeMode,
     } = props;
 
     const initializedRef = useRef(false);
@@ -90,6 +91,13 @@ export const CRAMEditor = forwardRef<CRAMEditorRef, CRAMEditorProps>(
         emit('RESTORE', { json: initialProject });
       }
     }, [initialProject]);
+
+    // Handle theme mode changes from parent app
+    useEffect(() => {
+      if (themeMode) {
+        emit('SET_THEME_MODE', themeMode);
+      }
+    }, [themeMode]);
 
     // Mark as initialized after mount and handle cleanup on unmount
     useEffect(() => {
