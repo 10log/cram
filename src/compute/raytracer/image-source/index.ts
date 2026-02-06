@@ -1054,20 +1054,9 @@ function reflectPointAcrossSurface(point: Vector3, surface: Surface): Vector3{
   // SEE https://gamedev.stackexchange.com/questions/43615/how-can-i-reflect-a-point-with-respect-to-the-plane
 
   let a: Vector3 = new Vector3(surface.polygon.vertices[0][0], surface.polygon.vertices[0][1], surface.polygon.vertices[0][2]);
-  let b: Vector3 = new Vector3(surface.polygon.vertices[1][0], surface.polygon.vertices[1][1], surface.polygon.vertices[1][2]);
-  let c: Vector3 = new Vector3(surface.polygon.vertices[2][0], surface.polygon.vertices[2][1], surface.polygon.vertices[2][2]);
 
   let a_global: Vector3 = surface.localToWorld(a);
-  let b_global: Vector3 = surface.localToWorld(b);
-  let c_global: Vector3 = surface.localToWorld(c);
 
-  b_global.sub(a_global);
-  c_global.sub(a_global);
-  b_global.cross(c_global);
-  b_global.normalize(); 
-  let normal_calc = b_global; 
-
-  // TODO: may want to change this, making some changes in the surface class
   let normal = surface.normal.clone();
   let negnormal = normal.clone(); 
   negnormal.multiplyScalar(-1);
