@@ -15,17 +15,14 @@ describe('FDTD 2D addWall y-coordinate clamping', () => {
     it('buggy version clips y to nx instead of ny on non-square grids', () => {
       const nx = 100;
       const ny = 200; // taller grid
-      const cellSize = 0.1;
 
       // A wall at y = 150 cells (within ny=200 bounds)
-      const rawY = 150;
-
       // Buggy: clamp to nx - 1 = 99
-      const buggyY = clamp(rawY, 0, nx - 1);
+      const buggyY = clamp(150, 0, nx - 1);
       expect(buggyY).toBe(99); // incorrectly clipped!
 
       // Fixed: clamp to ny - 1 = 199
-      const fixedY = clamp(rawY, 0, ny - 1);
+      const fixedY = clamp(150, 0, ny - 1);
       expect(fixedY).toBe(150); // correctly preserved
     });
 
@@ -45,10 +42,6 @@ describe('FDTD 2D addWall y-coordinate clamping', () => {
     it('bug causes wall to be placed at wrong position on wide grids', () => {
       const nx = 300; // wider grid
       const ny = 100;
-      const cellSize = 0.05;
-
-      // A wall at y = 80 cells (within ny=100 bounds)
-      const rawY = 80;
 
       // On a wide grid (nx > ny), the buggy version allows y > ny-1
       // This could cause out-of-bounds texture access
@@ -67,7 +60,6 @@ describe('FDTD 2D addWall y-coordinate clamping', () => {
   describe('x-coordinates are correctly clamped (unchanged)', () => {
     it('x values clamp to nx - 1', () => {
       const nx = 256;
-      const ny = 128;
 
       expect(clamp(300, 0, nx - 1)).toBe(255);
       expect(clamp(0, 0, nx - 1)).toBe(0);
