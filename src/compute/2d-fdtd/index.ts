@@ -26,6 +26,7 @@ import {
 } from "three/examples/jsm/misc/GPUComputationRenderer.js";
 import shaders from "./shaders";
 import Solver from "../solver";
+import { computeTimestep } from "./timestep";
 
 import Source from "../../objects/source";
 import Receiver from "../../objects/receiver";
@@ -147,7 +148,7 @@ class FDTD_2D extends Solver {
     this.width = this.nx * this.cellSize;
     this.height = this.ny * this.cellSize;
 
-    this.dt = this.cellSize / (this.waveSpeed * Math.SQRT2);
+    this.dt = computeTimestep(this.cellSize, this.waveSpeed);
 
     this.sources = {} as KeyValuePair<Source>;
     this.sourceKeys = [] as string[];
@@ -295,6 +296,8 @@ class FDTD_2D extends Solver {
     (this.heightmapVariable.material as ShaderMaterial).uniforms["mouseSize"] = { value: 0.0 };
 
     (this.heightmapVariable.material as ShaderMaterial).uniforms["damping"] = { value: 0.9999 };
+
+    (this.heightmapVariable.material as ShaderMaterial).uniforms["courantSq"] = { value: (this.waveSpeed * this.dt / this.cellSize) ** 2 };
 
     (this.heightmapVariable.material as ShaderMaterial).uniforms["heightCompensation"] = { value: 0 };
 
