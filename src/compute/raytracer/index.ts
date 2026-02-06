@@ -162,6 +162,7 @@ export type RayTracerSaveObject = {
   invertedDrawStyle: boolean;
   plotStyle: Partial<Plotly.PlotData>;
   paths: KVP<RayPath[]>;
+  frequencies: number[];
 }
 
 export interface RayTracerParams {
@@ -617,7 +618,8 @@ class RayTracer extends Solver {
     if (intersections.length > 0) {
 
       // broadband average energy for scalar backward compat
-      const energy = bandEnergy.reduce((a, b) => a + b, 0) / bandEnergy.length;
+      const totalEnergy = bandEnergy.reduce((a, b) => a + b, 0);
+      const energy = bandEnergy.length > 0 ? totalEnergy / bandEnergy.length : 0;
 
       //check to see if the intersection was with a receiver
       if (intersections[0].object.userData?.kind === 'receiver') {
@@ -662,7 +664,7 @@ class RayTracer extends Solver {
         // find the incident angle
         const angle = intersections[0].face && rd.clone().multiplyScalar(-1).angleTo(intersections[0].face.normal);
 
-        // push the intersection onto the chain (snapshot BEFORE reflection)
+        // push the intersection onto the chain
         chain.push({
           object: intersections[0].object.parent!.uuid,
           angle: angle!,
@@ -676,7 +678,6 @@ class RayTracer extends Solver {
           faceIndex: intersections[0].faceIndex!,
           point: [intersections[0].point.x, intersections[0].point.y, intersections[0].point.z],
           energy,
-          bandEnergy: [...bandEnergy],
         });
 
         if (intersections[0].object.parent instanceof Surface) {
@@ -710,9 +711,11 @@ class RayTracer extends Solver {
 
         // apply per-band reflection loss
         const surface = intersections[0].object.parent as Surface;
-        const newBandEnergy = bandEnergy.map((e, f) =>
-          e * abs(surface.reflectionFunction(this.frequencies[f], angle!))
-        );
+        const newBandEnergy = this.frequencies.map((frequency, f) => {
+          const e = bandEnergy[f];
+          if (e == null) return 0;
+          return e * abs(surface.reflectionFunction(frequency, angle!));
+        });
 
         // end condition: terminate when all bands are below threshold
         if (rr && normal && Math.max(...newBandEnergy) > 1 / 2 ** 16 && iter < order + 1) {
@@ -1993,7 +1996,7 @@ class RayTracer extends Solver {
         rayPathsVisible: false, 
         plotOrders: [0, 1, 2], // all paths
         frequencies: this.frequencies,
-      }
+      };
 
       let image_source_solver = new ImageSourceSolver(isparams, true); 
       let is_raypaths = image_source_solver.returnSortedPathsForHybrid(343,spls,frequencies); 

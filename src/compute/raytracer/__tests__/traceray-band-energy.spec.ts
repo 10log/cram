@@ -21,21 +21,27 @@ describe('per-band energy tracking', () => {
     expect(signatureMatch![1]).toContain('bandEnergy: BandEnergy');
   });
 
-  it('reflection loss uses this.frequencies[f] loop', () => {
-    // The per-band reflection calculation should index into this.frequencies
-    expect(source).toMatch(/surface\.reflectionFunction\(this\.frequencies\[f\]/);
+  it('reflection loss iterates over this.frequencies', () => {
+    // The per-band reflection calculation should iterate over this.frequencies
+    expect(source).toMatch(/this\.frequencies\.map\(\(frequency, f\)/);
+    expect(source).toMatch(/surface\.reflectionFunction\(frequency, angle/);
   });
 
   it('termination uses Math.max(...newBandEnergy)', () => {
     expect(source).toContain('Math.max(...newBandEnergy)');
   });
 
-  it('chain entries include bandEnergy field', () => {
-    // Chain push should include bandEnergy snapshot
+  it('receiver chain entry includes bandEnergy, RayPath return includes bandEnergy', () => {
+    // At least one chain.push (receiver hit) should include bandEnergy
     const chainPushes = source.match(/chain\.push\(\{[\s\S]*?\}\)/g);
     expect(chainPushes).not.toBeNull();
     const hasBandEnergy = chainPushes!.some(push => push.includes('bandEnergy'));
     expect(hasBandEnergy).toBe(true);
+
+    // The RayPath return should include bandEnergy
+    const returnMatch = source.match(/return\s*\{[\s\S]*?intersectedReceiver:\s*true[\s\S]*?\}\s*as\s*RayPath/);
+    expect(returnMatch).not.toBeNull();
+    expect(returnMatch![0]).toContain('bandEnergy');
   });
 
   it('arrivalPressure has a path.bandEnergy fast path', () => {
