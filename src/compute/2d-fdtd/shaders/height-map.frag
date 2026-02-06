@@ -4,6 +4,7 @@ uniform vec2 mousePos;
 uniform float mouseSize;
 uniform float damping;
 uniform float heightCompensation;
+uniform float courantSq;
 uniform sampler2D sourcemap;
 
 void main()	{
@@ -66,7 +67,7 @@ void main()	{
 
     float mid = 0.25*(u_pos+d_pos+r_pos+l_pos);
   
-    float med = heightmapValue.b * 1.5;
+    float med = 4.0 * courantSq;
     newvel = med*(mid-pos)+vel*damping;
     newpos = pos+newvel;
     
