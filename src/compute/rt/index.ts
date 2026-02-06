@@ -156,8 +156,8 @@ export class RT60 extends Solver{
         totalSurfaceArea += surface.getArea(); 
         sum += surface.getArea() * surface.absorptionFunction(frequency);
       });
-      let avg_abs = sum / totalSurfaceArea; 
-      let airabsterm = 4*airAbs20c40rh(frequency)*v; 
+      let avg_abs = Math.min(sum / totalSurfaceArea, 0.99);
+      let airabsterm = 4*airAbs20c40rh(frequency)*v;
       response.push((unitsConstant * v) / (-totalSurfaceArea*Math.log(1-avg_abs)+airabsterm));
     });
     return response; 
@@ -216,7 +216,7 @@ export class RT60 extends Solver{
     const [[Ax, αx],[Ay, αy],[Az, αz]] = [0,1,2].map(i=>{
       const surfacearea = projectedSurfaces.reduce((acc, { area })=>acc + area[i], 0);
       const sabines = frequencies.map((freq,f) => projectedSurfaces.reduce((acc, { sabines })=> acc+sabines[f][i], 0));
-      const alphas = sabines.map(sabine=>sabine/surfacearea);
+      const alphas = sabines.map(sabine=>Math.min(sabine/surfacearea, 0.99));
       return [surfacearea, alphas];
     });
 
