@@ -163,6 +163,7 @@ export type RayTracerSaveObject = {
   plotStyle: Partial<Plotly.PlotData>;
   paths: KVP<RayPath[]>;
   frequencies: number[];
+  temperature?: number;
 }
 
 export interface RayTracerParams {
@@ -266,7 +267,7 @@ class RayTracer extends Solver {
   bvh!: BVH;
   observed_name: Observable<string>;
 
-  temperature: number;
+  _temperature: number;
   _cachedAirAtt: number[];
 
   hybrid: boolean;
@@ -290,8 +291,8 @@ class RayTracer extends Solver {
     this._isRunning = params.isRunning || defaults.isRunning;
     this._runningWithoutReceivers = params.runningWithoutReceivers || defaults.runningWithoutReceivers;
     this.frequencies = params.frequencies || defaults.frequencies;
-    this.temperature = params.temperature ?? defaults.temperature;
-    this._cachedAirAtt = ac.airAttenuation(this.frequencies, this.temperature);
+    this._temperature = params.temperature ?? defaults.temperature;
+    this._cachedAirAtt = ac.airAttenuation(this.frequencies, this._temperature);
     this.intervals = [] as number[];
     this.plotData = [] as Plotly.Data[];
     this.plotStyle = params.plotStyle || defaults.plotStyle;
@@ -430,8 +431,15 @@ class RayTracer extends Solver {
     this.calculateImpulseResponse = this.calculateImpulseResponse.bind(this);
   }
   update = () => {};
+  get temperature(): number {
+    return this._temperature;
+  }
+  set temperature(value: number) {
+    this._temperature = value;
+    this._cachedAirAtt = ac.airAttenuation(this.frequencies, value);
+  }
   get c(): number {
-    return ac.soundSpeed(this.temperature);
+    return ac.soundSpeed(this._temperature);
   }
 
   save() {
@@ -642,7 +650,7 @@ class RayTracer extends Solver {
         // apply air absorption for the final segment to the receiver
         const receiverSegmentDist = intersections[0].distance;
         const receiverBandEnergy = bandEnergy.map((e, f) =>
-          e * Math.pow(10, -this._cachedAirAtt[f] * receiverSegmentDist / 20)
+          e * Math.pow(10, -this._cachedAirAtt[f] * receiverSegmentDist / 10)
         );
 
         // broadband average energy for scalar backward compat (recompute after air absorption)
@@ -748,8 +756,8 @@ class RayTracer extends Solver {
           if (e == null) return 0;
           // surface reflection
           let energy = e * abs(surface.reflectionFunction(frequency, angle!));
-          // per-segment air absorption
-          energy *= Math.pow(10, -this._cachedAirAtt[f] * segmentDistance / 20);
+          // per-segment air absorption (intensity domain: /10)
+          energy *= Math.pow(10, -this._cachedAirAtt[f] * segmentDistance / 10);
           return energy;
         });
 
@@ -1012,7 +1020,7 @@ class RayTracer extends Solver {
   }
 
   start() {
-    this._cachedAirAtt = ac.airAttenuation(this.frequencies, this.temperature);
+    this._cachedAirAtt = ac.airAttenuation(this.frequencies, this._temperature);
     this.mapIntersectableObjects();
     this.__start_time = Date.now();
     this.__num_checked_paths = 0;

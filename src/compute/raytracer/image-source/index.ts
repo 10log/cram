@@ -242,7 +242,6 @@ class ImageSourcePath{
   public arrivalPressure(initialSPL: number[], freqs: number[], temperature: number = 20): number[]{
 
     let intensity = ac.P2I(ac.Lp2P(initialSPL)) as number[];
-    let arrivalPressure = [];
 
     for(let s = 0; s<this.path.length; s++){
 

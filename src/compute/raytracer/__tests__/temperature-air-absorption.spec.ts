@@ -42,9 +42,14 @@ describe('RayTracer temperature and per-segment air absorption', () => {
     expect(source).toContain('_cachedAirAtt');
   });
 
-  it('has c getter using soundSpeed(this.temperature)', () => {
+  it('has c getter using soundSpeed(this._temperature)', () => {
     expect(source).toMatch(/get\s+c\(\):\s*number\s*\{/);
-    expect(source).toContain('ac.soundSpeed(this.temperature)');
+    expect(source).toContain('ac.soundSpeed(this._temperature)');
+  });
+
+  it('has temperature setter that recomputes cached air attenuation', () => {
+    expect(source).toMatch(/set\s+temperature\(value:\s*number\)/);
+    expect(source).toContain('this._cachedAirAtt = ac.airAttenuation(this.frequencies, value)');
   });
 
   it('save() includes temperature', () => {
@@ -53,28 +58,33 @@ describe('RayTracer temperature and per-segment air absorption', () => {
     expect(saveMatch![1]).toContain('temperature');
   });
 
+  it('RayTracerSaveObject type includes temperature', () => {
+    const saveTypeMatch = source.match(/export\s+type\s+RayTracerSaveObject\s*=\s*\{([\s\S]*?)\}/);
+    expect(saveTypeMatch).not.toBeNull();
+    expect(saveTypeMatch![1]).toContain('temperature');
+  });
+
   // --- Cached air attenuation ---
 
   it('caches air attenuation in constructor', () => {
-    expect(source).toContain('this._cachedAirAtt = ac.airAttenuation(this.frequencies, this.temperature)');
+    expect(source).toContain('this._cachedAirAtt = ac.airAttenuation(this.frequencies, this._temperature)');
   });
 
   it('refreshes cached air attenuation in start()', () => {
     const startMatch = source.match(/start\(\)\s*\{([\s\S]*?)startAllMonteCarlo/);
     expect(startMatch).not.toBeNull();
-    expect(startMatch![1]).toContain('this._cachedAirAtt = ac.airAttenuation(this.frequencies, this.temperature)');
+    expect(startMatch![1]).toContain('this._cachedAirAtt = ac.airAttenuation(this.frequencies, this._temperature)');
   });
 
   // --- Per-segment air absorption in traceRay ---
 
-  it('applies per-segment air absorption using _cachedAirAtt in traceRay', () => {
-    // The traceRay method should multiply band energy by air absorption factor per segment
-    expect(source).toContain('this._cachedAirAtt[f] * segmentDistance');
+  it('applies per-segment air absorption in intensity domain (/10) in traceRay', () => {
+    // bandEnergy is intensity (reflectionFunction returns R²), so dB→linear uses /10
+    expect(source).toContain('this._cachedAirAtt[f] * segmentDistance / 10');
   });
 
-  it('applies air absorption to receiver segment', () => {
-    // When a ray hits a receiver, air absorption for the final segment should be applied
-    expect(source).toContain('this._cachedAirAtt[f] * receiverSegmentDist');
+  it('applies air absorption to receiver segment in intensity domain (/10)', () => {
+    expect(source).toContain('this._cachedAirAtt[f] * receiverSegmentDist / 10');
   });
 
   // --- Hardcoded speed of sound replaced ---
