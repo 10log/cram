@@ -47,17 +47,24 @@ describe('reflectionCoefficient', () => {
   describe('High Absorption (α = 1)', () => {
     it('returns small reflection for α=1 at oblique angle', () => {
       // When α = 1: sqrt(1-α) = 0, ξo = (1-0)/(1+0) = 1
-      // At π/4: R = ((1*sin(π/4) - 1) / (1*sin(π/4) + 1))² ≈ 0.029
+      // At π/4: R = ((1*cos(π/4) - 1) / (1*cos(π/4) + 1))² ≈ 0.029
       const R = reflectionCoefficient(1, Math.PI / 4);
       expect(R).toBeCloseTo(0.029, 2);
     });
 
-    it('returns 1 at normal incidence for α = 1 (model edge case)', () => {
-      // At θ = 0: sin(0) = 0, so ξo*sin(θ) = 0
-      // R = ((0 - 1) / (0 + 1))² = 1
-      // This is an edge case of this particular impedance model
+    it('returns 0 at normal incidence for α = 1 (perfect absorption)', () => {
+      // At θ = 0: cos(0) = 1, ξo = 1
+      // R = ((1*1 - 1) / (1*1 + 1))² = 0
+      // Full absorption at normal incidence — physically correct
       const R = reflectionCoefficient(1, 0);
-      expect(R).toBeCloseTo(1, 5);
+      expect(R).toBeCloseTo(0, 5);
+    });
+
+    it('approaches 1 at grazing incidence for α = 1', () => {
+      // At θ → π/2: cos(θ) → 0, so ξo*cos(θ) → 0
+      // R = ((0 - 1) / (0 + 1))² = 1 (total reflection at grazing)
+      const R = reflectionCoefficient(1, Math.PI / 2 - 0.001);
+      expect(R).toBeCloseTo(1, 1);
     });
   });
 
