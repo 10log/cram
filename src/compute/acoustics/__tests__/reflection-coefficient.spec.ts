@@ -184,6 +184,37 @@ describe('reflectionCoefficient', () => {
     });
   });
 
+  describe('Obtuse Angles (θ > π/2, DoubleSide surfaces)', () => {
+    it('returns value in [0,1] for θ > π/2', () => {
+      const obtuseAngles = [
+        Math.PI * 2 / 3,   // 120°
+        Math.PI * 3 / 4,   // 135°
+        Math.PI * 5 / 6,   // 150°
+        Math.PI - 0.001,   // ~180°
+      ];
+
+      obtuseAngles.forEach(theta => {
+        const R = reflectionCoefficient(0.5, theta);
+        expect(R).toBeGreaterThanOrEqual(0);
+        expect(R).toBeLessThanOrEqual(1);
+      });
+    });
+
+    it('obtuse angle gives same result as its supplementary acute angle', () => {
+      const alphas = [0.1, 0.5, 0.9];
+      const acuteAngles = [Math.PI / 6, Math.PI / 4, Math.PI / 3];
+
+      alphas.forEach(alpha => {
+        acuteAngles.forEach(acute => {
+          const obtuse = Math.PI - acute;
+          const R_acute = reflectionCoefficient(alpha, acute);
+          const R_obtuse = reflectionCoefficient(alpha, obtuse);
+          expect(R_obtuse).toBeCloseTo(R_acute, 10);
+        });
+      });
+    });
+  });
+
   describe('Edge Cases', () => {
     it('handles very small absorption coefficients', () => {
       const R = reflectionCoefficient(0.001, Math.PI / 4);
