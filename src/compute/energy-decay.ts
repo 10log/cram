@@ -264,7 +264,7 @@ function trimIR(ir: Float32Array): Float32Array {
         sindex++; 
     }
 
-    sindex = ir.length
+    sindex = ir.length - 1;
     while(Math.abs(ir[sindex]) < tolerance){
         endSample = sindex; 
         sindex--; 
