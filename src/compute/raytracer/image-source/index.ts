@@ -310,6 +310,7 @@ export interface ImageSourceSolverParams {
   plotOrders: number[];
   frequencies: number[];
   levelTimeProgression?: string;
+  temperature?: number;
 }
 
 const defaults = {
@@ -332,14 +333,15 @@ export interface HybridRayPath {
 
 export class ImageSourceSolver extends Solver {
 
-    sourceIDs: string[]; 
+    sourceIDs: string[];
     receiverIDs: string[];
     roomID: string;
     surfaceIDs: string[];
-    uuid: string; 
+    uuid: string;
     levelTimeProgression: string;
-    maxReflectionOrder: number; 
-    frequencies: number[]; 
+    maxReflectionOrder: number;
+    frequencies: number[];
+    temperature: number; 
     
     private _imageSourcesVisible: boolean;
     private _rayPathsVisible: boolean;
@@ -372,7 +374,8 @@ export class ImageSourceSolver extends Solver {
         this._rayPathsVisible = params.rayPathsVisible; 
         this._plotOrders = params.plotOrders; 
         this.levelTimeProgression = params.levelTimeProgression || uuid();
-        this.isHybrid = isHybrid; 
+        this.isHybrid = isHybrid;
+        this.temperature = params.temperature != null ? params.temperature : 20;
 
         this.impulseResponsePlaying = false; 
 
@@ -486,7 +489,7 @@ export class ImageSourceSolver extends Solver {
       (this._rayPathsVisible) && (this.drawRayPaths()); 
 
       if(!this.isHybrid){
-        this.calculateLTP(343); 
+        this.calculateLTP();
       }
     }
 
@@ -513,7 +516,7 @@ export class ImageSourceSolver extends Solver {
       return result;
     }
 
-    calculateLTP(c: number, consoleOutput: boolean = false){
+    calculateLTP(c: number = this.c, consoleOutput: boolean = false){
       // If no paths have been calculated yet, run the calculation first
       if (!this.validRayPaths || this.validRayPaths.length === 0) {
         if (this.sourceIDs.length > 0 && this.receiverIDs.length > 0) {
@@ -534,7 +537,7 @@ export class ImageSourceSolver extends Solver {
       }
       if(sortedPath !== undefined){
         for(let i = 0; i<sortedPath?.length; i++){
-          let t = sortedPath[i].arrivalTime(343);
+          let t = sortedPath[i].arrivalTime(c);
           let p = sortedPath[i].arrivalPressure(levelTimeProgression.info.initialSPL, levelTimeProgression.info.frequency);
           if(consoleOutput){
             console.log("Arrival: " + (i+1) + " | Arrival Time: (s) " + t + " | Arrival Pressure(1000Hz): " + p + " | Order " + sortedPath[i].order);
@@ -605,7 +608,7 @@ export class ImageSourceSolver extends Solver {
               paths[i].markup(); 
               console.log(paths[i]);
               console.log(paths[i].totalLength)
-              console.log(paths[i].arrivalTime(343)); 
+              console.log(paths[i].arrivalTime(this.c));
               console.log(ac.Lp2P(initialSPL));
               //console.log(paths[i].arrivalPressure(initialSPL,f))
               validCount++; 
@@ -669,7 +672,7 @@ export class ImageSourceSolver extends Solver {
           if(rayPathUUID === this.validRayPaths[i].uuid){
             this.updateSelectedImageSourcePath(this.validRayPaths[i])
             //@ts-ignore
-            console.log("WILL HIGHLIGHT RAY PATH WITH ARRIVAL SPL " + ac.P2Lp(this.validRayPaths[i].arrivalPressure([100], [1000]) as number) + " AND ARRIVAL TIME " + this.validRayPaths[i].arrivalTime(343));
+            console.log("WILL HIGHLIGHT RAY PATH WITH ARRIVAL SPL " + ac.P2Lp(this.validRayPaths[i].arrivalPressure([100], [1000]) as number) + " AND ARRIVAL TIME " + this.validRayPaths[i].arrivalTime(this.c));
             break;
           }
         }
@@ -687,13 +690,14 @@ export class ImageSourceSolver extends Solver {
       if(this.sourceIDs.length === 0) throw Error("No sources have been assigned to the raytracer");
       if(this.validRayPaths?.length === 0) throw Error("No rays have been traced yet");
 
-      let sortedPath: ImageSourcePath[] | null = this.validRayPaths; 
-      sortedPath?.sort((a, b) => (a.arrivalTime(343) > b.arrivalTime(343)) ? 1 : -1); 
+      const c = this.c;
+      let sortedPath: ImageSourcePath[] | null = this.validRayPaths;
+      sortedPath?.sort((a, b) => (a.arrivalTime(c) > b.arrivalTime(c)) ? 1 : -1);
 
       console.log(sortedPath);
 
       if(sortedPath != null){
-        const endTime = sortedPath[sortedPath.length - 1].arrivalTime(343)+0.05;
+        const endTime = sortedPath[sortedPath.length - 1].arrivalTime(c)+0.05;
         const endSample = sampleRate*endTime;
 
         let samples: Float32Array[] = [];
@@ -702,8 +706,8 @@ export class ImageSourceSolver extends Solver {
         }
 
         for(let i = 0; i<sortedPath.length; i++){
-          let t = sortedPath[i].arrivalTime(343);
-          let p = sortedPath[i].arrivalPressure(spls, this.frequencies); 
+          let t = sortedPath[i].arrivalTime(c);
+          let p = sortedPath[i].arrivalPressure(spls, this.frequencies);
 
           (Math.random() > 0.5) && (p=p.map(x=>-x)); 
 
@@ -914,9 +918,13 @@ export class ImageSourceSolver extends Solver {
       this.imageSourcesVisible && this.drawImageSources(); 
     }
 
+    get c(): number {
+      return ac.soundSpeed(this.temperature);
+    }
+
     set plotFrequency(f: number){
       this._plotFrequency = f;
-      this.calculateLTP(343); 
+      this.calculateLTP();
     }
 
   
@@ -1111,7 +1119,7 @@ on("REMOVE_IMAGESOURCE", removeSolver);
 on("ADD_IMAGESOURCE", addSolver(ImageSourceSolver));
 on("UPDATE_IMAGESOURCE", (uuid: string) => void (useSolver.getState().solvers[uuid] as ImageSourceSolver).updateImageSourceCalculation());
 on("RESET_IMAGESOURCE", (uuid: string) => void (useSolver.getState().solvers[uuid] as ImageSourceSolver).reset());
-on("CALCULATE_LTP", (uuid: string) => void (useSolver.getState().solvers[uuid] as ImageSourceSolver).calculateLTP(343));
+on("CALCULATE_LTP", (uuid: string) => void (useSolver.getState().solvers[uuid] as ImageSourceSolver).calculateLTP());
 on("IMAGESOURCE_PLAY_IR", (uuid: string) => void (useSolver.getState().solvers[uuid] as ImageSourceSolver).playImpulseResponse().catch(console.error));
 on("IMAGESOURCE_DOWNLOAD_IR", (uuid: string) => {
   const solver = useSolver.getState().solvers[uuid] as ImageSourceSolver;
