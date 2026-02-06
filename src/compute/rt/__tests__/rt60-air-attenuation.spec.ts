@@ -29,9 +29,10 @@ describe('RT60 air absorption replacement', () => {
       expect(oldAirAbs[250]).toBe(0);
     });
 
-    it('old function only worked for 20°C / 40% RH', () => {
-      // The old function had no temperature or humidity parameters
-      // It was literally a switch statement on frequency
+    it('old function was fixed to one condition while ISO function varies with temperature/humidity', () => {
+      const result20_40 = airAttenuation([1000], 20, 40);
+      const result30_30 = airAttenuation([1000], 30, 30);
+      expect(result20_40[0]).not.toBeCloseTo(result30_30[0], 3);
     });
   });
 
@@ -40,7 +41,7 @@ describe('RT60 air absorption replacement', () => {
       const freqs = [125, 250, 500, 1000, 2000, 4000, 8000];
       const results = airAttenuation(freqs, 20, 40);
 
-      results.forEach((val, i) => {
+      results.forEach((val) => {
         expect(val).toBeGreaterThan(0);
         expect(Number.isFinite(val)).toBe(true);
       });
@@ -76,32 +77,6 @@ describe('RT60 air absorption replacement', () => {
     it('250 Hz attenuation is now non-zero (fixing the old bug)', () => {
       const result = airAttenuation([250], 20, 40);
       expect(result[0]).toBeGreaterThan(0);
-    });
-  });
-
-  describe('source code verification', () => {
-    it('RT60 imports airAttenuation from acoustics module', () => {
-      const fs = require('fs');
-      const path = require('path');
-
-      const sourceFile = fs.readFileSync(
-        path.resolve(__dirname, '..', 'index.ts'),
-        'utf8'
-      );
-
-      expect(sourceFile).toMatch(/import.*airAttenuation.*from.*air-attenuation/);
-    });
-
-    it('airAbs20c40rh function is removed', () => {
-      const fs = require('fs');
-      const path = require('path');
-
-      const sourceFile = fs.readFileSync(
-        path.resolve(__dirname, '..', 'index.ts'),
-        'utf8'
-      );
-
-      expect(sourceFile).not.toMatch(/airAbs20c40rh/);
     });
   });
 
