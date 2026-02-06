@@ -147,7 +147,7 @@ class FDTD_2D extends Solver {
     this.width = this.nx * this.cellSize;
     this.height = this.ny * this.cellSize;
 
-    this.dt = this.cellSize / this.waveSpeed;
+    this.dt = this.cellSize / (this.waveSpeed * Math.SQRT2);
 
     this.sources = {} as KeyValuePair<Source>;
     this.sourceKeys = [] as string[];
