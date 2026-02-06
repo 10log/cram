@@ -687,10 +687,18 @@ class RayTracer extends Solver {
         
         const scattering = (intersections[0].object.parent as Surface)._scatteringCoefficient;
         if(probability(scattering)){
-          rr = new THREE.Vector3(Math.random()-0.5, Math.random()-0.5, Math.random()-0.5).normalize();
-          if(normal!.dot(rr) < 0){
-            rr.multiplyScalar(-1);
-          }
+          // Cosine-weighted (Lambertian) hemisphere sampling via rejection method
+          let candidate: THREE.Vector3;
+          do {
+            candidate = new THREE.Vector3(
+              Math.random() * 2 - 1,
+              Math.random() * 2 - 1,
+              Math.random() * 2 - 1
+            );
+          } while (candidate.lengthSq() > 1 || candidate.lengthSq() < 1e-6);
+          candidate.normalize();
+          // Offset along normal for cosine-weighted distribution
+          rr = candidate.add(normal!).normalize();
         }
 
         // calulcate the losses due to reflection
