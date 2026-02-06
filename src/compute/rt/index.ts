@@ -2,6 +2,7 @@ import Solver, { SolverParams } from "../solver";
 import Room from "../../objects/room";
 import Surface from "../../objects/surface";
 import { third_octave, whole_octave } from '../acoustics';
+import { airAttenuation } from '../acoustics/air-attenuation';
 import { RT_CONSTANTS } from '../../constants/rt-constants';
 import { emit, on } from "../../messenger";
 import { Matrix4, Triangle, Vector3 } from "three";
@@ -137,8 +138,9 @@ export class RT60 extends Solver{
       room.allSurfaces.forEach((surface: Surface) => {
         sum += surface.getArea() * surface.absorptionFunction(frequency);
       });
-      let airabsterm = 4*airAbs20c40rh(frequency)*v; 
-      response.push((unitsConstant*v)/(sum+airabsterm)); 
+      let m = airAttenuation([frequency])[0] / (20 / Math.log(10)); // convert dB/m to Np/m
+      let airabsterm = 4*m*v;
+      response.push((unitsConstant*v)/(sum+airabsterm));
     });
     return response;
   }
@@ -156,8 +158,9 @@ export class RT60 extends Solver{
         totalSurfaceArea += surface.getArea(); 
         sum += surface.getArea() * surface.absorptionFunction(frequency);
       });
-      let avg_abs = sum / totalSurfaceArea; 
-      let airabsterm = 4*airAbs20c40rh(frequency)*v; 
+      let avg_abs = sum / totalSurfaceArea;
+      let m = airAttenuation([frequency])[0] / (20 / Math.log(10)); // convert dB/m to Np/m
+      let airabsterm = 4*m*v;
       response.push((unitsConstant * v) / (-totalSurfaceArea*Math.log(1-avg_abs)+airabsterm));
     });
     return response; 
@@ -278,29 +281,6 @@ export class RT60 extends Solver{
   }
 }
 
-function airAbs20c40rh(f: number): number {
-  // returns metric value of the air abosprtion coefficient m at 20c 40 rh
-  // hardcoded for capstone demonstration
-
-  switch(f){
-    case 125:
-      return 0;
-    case 250:
-      return 0;
-    case 500:
-      return 0.000600423;
-    case 1000:
-      return 0.001069606;
-    case 2000:
-      return 0.002578866;
-    case 4000:
-      return 0.00839936;
-    case 8000:
-      return 0.0246;
-    default:
-      return 0;
-  }
-}
 
 export default RT60;
 
