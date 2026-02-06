@@ -3,9 +3,11 @@
  */
 
 import type { SaveState } from '../store/io';
+import type { ThemeMode } from '../themes';
 
-// Re-export SaveState for consumers
+// Re-export types for consumers
 export type { SaveState };
+export type { ThemeMode };
 
 /**
  * Solver types that can be added via the imperative API
@@ -40,6 +42,10 @@ export interface CRAMEditorProps {
   showNavBar?: boolean;
   /** Fixed width for the right properties panel in pixels (default: uses stored layout preference) */
   fixedPanelWidth?: number;
+
+  // Theming
+  /** Theme mode for the 3D canvas ('light' | 'dark'). When provided, syncs with parent app theme. */
+  themeMode?: ThemeMode;
 }
 
 /**

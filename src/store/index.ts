@@ -6,6 +6,7 @@ export * from './material-store';
 export * from './result-store';
 export * from './solver-store';
 export * from './app-store';
+export * from './theme-store';
 export * from './io';
 
 // Import reset functions for the combined reset function
@@ -15,6 +16,7 @@ import { resetMaterialStore } from './material-store';
 import { resetResultStore } from './result-store';
 import { resetAppStore } from './app-store';
 import { resetSettingsStore } from './settings-store';
+import { resetThemeStore } from './theme-store';
 
 /**
  * Reset all stores to their initial state.
@@ -30,6 +32,7 @@ export const resetAllStores = () => {
   resetMaterialStore();
   resetAppStore();
   resetSettingsStore();
+  resetThemeStore();
 
   console.log('[Store] All stores reset complete');
 };

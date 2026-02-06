@@ -61,6 +61,7 @@ export type {
   CRAMEditorRef,
   SolverType,
   SaveState,
+  ThemeMode,
 } from './types';
 
 // Example projects for demo/testing
