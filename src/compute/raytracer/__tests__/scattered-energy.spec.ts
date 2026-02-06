@@ -13,35 +13,35 @@ import { scatteredEnergy } from '../scattered-energy';
 describe('Issue #40: Clamp negative cos(theta) in scattered energy', () => {
 
   // Standard test case: theta within valid hemisphere
-  test('returns positive energy for receiver in front of surface (theta < π/2)', () => {
+  it('returns positive energy for receiver in front of surface (theta < π/2)', () => {
     const energy = scatteredEnergy(1.0, 0.1, 0.5, Math.PI / 4, 0);
     expect(energy).toBeGreaterThan(0);
   });
 
-  test('returns positive energy for theta = π/4', () => {
+  it('returns positive energy for theta = π/4', () => {
     const energy = scatteredEnergy(1.0, 0.1, 0.5, Math.PI / 4, Math.PI / 4);
     expect(energy).toBeGreaterThan(0);
   });
 
   // Critical bug test: theta > π/2 should yield zero, not negative energy
-  test('returns zero (not negative) energy when receiver is behind surface (theta > π/2)', () => {
+  it('returns zero (not negative) energy when receiver is behind surface (theta > π/2)', () => {
     const energy = scatteredEnergy(1.0, 0.1, 0.5, Math.PI / 4, (3 * Math.PI) / 4);
-    expect(energy).toBeGreaterThanOrEqual(0);
+    expect(energy).toBe(0);
   });
 
-  test('returns zero energy when theta = π (directly behind)', () => {
+  it('returns zero energy when theta = π (directly behind)', () => {
     const energy = scatteredEnergy(1.0, 0.1, 0.5, Math.PI / 4, Math.PI);
-    expect(energy).toBeGreaterThanOrEqual(0);
+    expect(energy).toBe(0);
   });
 
-  test('returns zero energy at exactly theta = π/2 (grazing)', () => {
+  it('returns zero energy at exactly theta = π/2 (grazing)', () => {
     const energy = scatteredEnergy(1.0, 0.1, 0.5, Math.PI / 4, Math.PI / 2);
     // cos(π/2) ≈ 0, so energy should be essentially 0
     expect(energy).toBeCloseTo(0, 10);
   });
 
   // Demonstrate the buggy behavior would produce negative values
-  test('buggy version would produce negative energy for theta > π/2', () => {
+  it('buggy version would produce negative energy for theta > π/2', () => {
     // Without the clamp, cos(3π/4) = -√2/2 ≈ -0.707
     // This would make the entire result negative
     const theta = (3 * Math.PI) / 4;
@@ -54,7 +54,7 @@ describe('Issue #40: Clamp negative cos(theta) in scattered energy', () => {
   });
 
   // Physical validation: Lambert's cosine law
-  test('energy follows cosine distribution for valid angles', () => {
+  it('energy follows cosine distribution for valid angles', () => {
     const e0 = scatteredEnergy(1.0, 0.1, 0.5, Math.PI / 4, 0);         // cos(0) = 1
     const e45 = scatteredEnergy(1.0, 0.1, 0.5, Math.PI / 4, Math.PI / 4); // cos(π/4) ≈ 0.707
     const e60 = scatteredEnergy(1.0, 0.1, 0.5, Math.PI / 4, Math.PI / 3); // cos(π/3) = 0.5
@@ -69,7 +69,7 @@ describe('Issue #40: Clamp negative cos(theta) in scattered energy', () => {
   });
 
   // Non-negativity across full range of theta
-  test('scattered energy is non-negative across all theta values', () => {
+  it('scattered energy is non-negative across all theta values', () => {
     const incoming = 1.0;
     for (let theta = 0; theta < 2 * Math.PI; theta += 0.1) {
       const energy = scatteredEnergy(incoming, 0.1, 0.5, Math.PI / 4, theta);
