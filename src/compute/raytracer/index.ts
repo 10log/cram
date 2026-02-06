@@ -710,7 +710,7 @@ class RayTracer extends Solver {
             initialTheta,
             iter + 1,
             chain,
-            4000,
+            frequency,
           );
         }
       }
