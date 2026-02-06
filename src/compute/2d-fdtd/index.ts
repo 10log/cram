@@ -391,9 +391,9 @@ class FDTD_2D extends Solver {
   }
   addWall(props: FDTDWallProps) {
     const x1 = clamp(Math.floor((props.x1 - this.offsetX) / this.cellSize), 0, this.nx - 1);
-    const y1 = clamp(Math.floor((props.y1 - this.offsetY) / this.cellSize), 0, this.nx - 1);
+    const y1 = clamp(Math.floor((props.y1 - this.offsetY) / this.cellSize), 0, this.ny - 1);
     const x2 = clamp(Math.floor((props.x2 - this.offsetX) / this.cellSize), 0, this.nx - 1);
-    const y2 = clamp(Math.floor((props.y2 - this.offsetY) / this.cellSize), 0, this.nx - 1);
+    const y2 = clamp(Math.floor((props.y2 - this.offsetY) / this.cellSize), 0, this.ny - 1);
     this.walls.push(new FDTDWall({ x1, y1, x2, y2 }));
     this.updateWalls();
   }
