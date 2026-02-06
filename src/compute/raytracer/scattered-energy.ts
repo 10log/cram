@@ -19,5 +19,5 @@ export function scatteredEnergy(
     * scatteringCoefficient
     * (1 - cos(gamma / 2))
     * 2
-    * cos(theta);
+    * Math.max(0, cos(theta));
 }
