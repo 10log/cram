@@ -1,7 +1,7 @@
 import Solver, { SolverParams } from "../solver";
 import Room from "../../objects/room";
 import Surface from "../../objects/surface";
-import { third_octave, whole_octave } from '../acoustics';
+import { third_octave, whole_octave, airAttenuation } from '../acoustics';
 import { RT_CONSTANTS } from '../../constants/rt-constants';
 import { emit, on } from "../../messenger";
 import { Matrix4, Triangle, Vector3 } from "three";
@@ -85,8 +85,10 @@ export class RT60 extends Solver{
 
     this.reset(); 
 
-    this.sabine_rt = this.sabine();
-    this.eyring_rt = this.eyring(); 
+    const airAtten = airAttenuation(this.frequencies);
+    const mValues = airAtten.map(a => a / (20 / Math.log(10))); // convert dB/m to Np/m
+    this.sabine_rt = this.sabine(mValues);
+    this.eyring_rt = this.eyring(mValues);
     this.ap_rt = this.arauPuchades(this.room,this.frequencies); 
 
     if(!this.resultExists){
@@ -126,42 +128,42 @@ export class RT60 extends Solver{
     this.ap_rt = []; 
   }
 
-  sabine() {
-    let room = this.room; 
+  sabine(mValues: number[]) {
+    let room = this.room;
     const unitsConstant = this.unitsConstant;
     const v = this.volume;
 
     const response = [] as number[];
-    this.frequencies.forEach((frequency) => {
+    this.frequencies.forEach((frequency, i) => {
       let sum = 0;
       room.allSurfaces.forEach((surface: Surface) => {
         sum += surface.getArea() * surface.absorptionFunction(frequency);
       });
-      let airabsterm = 4*airAbs20c40rh(frequency)*v; 
-      response.push((unitsConstant*v)/(sum+airabsterm)); 
+      let airabsterm = 4*mValues[i]*v;
+      response.push((unitsConstant*v)/(sum+airabsterm));
     });
     return response;
   }
   
-  eyring(){
-    let room = this.room; 
+  eyring(mValues: number[]){
+    let room = this.room;
     const unitsConstant = this.unitsConstant;
     const v = this.volume;
-     
-    const response = [] as number[]; 
-    this.frequencies.forEach((frequency) => {
-      let sum = 0; 
-      let totalSurfaceArea = 0; 
+
+    const response = [] as number[];
+    this.frequencies.forEach((frequency, i) => {
+      let sum = 0;
+      let totalSurfaceArea = 0;
       room.allSurfaces.forEach((surface: Surface) => {
-        totalSurfaceArea += surface.getArea(); 
+        totalSurfaceArea += surface.getArea();
         sum += surface.getArea() * surface.absorptionFunction(frequency);
       });
       // Clamp α to prevent Math.log(0) = -Infinity or Math.log(negative) = NaN when α ≥ 1
       let avg_abs = Math.max(0, Math.min(sum / totalSurfaceArea, 0.9999));
-      let airabsterm = 4*airAbs20c40rh(frequency)*v;
+      let airabsterm = 4*mValues[i]*v;
       response.push((unitsConstant * v) / (-totalSurfaceArea*Math.log(1-avg_abs)+airabsterm));
     });
-    return response; 
+    return response;
   }
 
 
@@ -280,29 +282,6 @@ export class RT60 extends Solver{
   }
 }
 
-function airAbs20c40rh(f: number): number {
-  // returns metric value of the air abosprtion coefficient m at 20c 40 rh
-  // hardcoded for capstone demonstration
-
-  switch(f){
-    case 125:
-      return 0;
-    case 250:
-      return 0;
-    case 500:
-      return 0.000600423;
-    case 1000:
-      return 0.001069606;
-    case 2000:
-      return 0.002578866;
-    case 4000:
-      return 0.00839936;
-    case 8000:
-      return 0.0246;
-    default:
-      return 0;
-  }
-}
 
 export default RT60;
 
