@@ -93,6 +93,7 @@ export interface BeamTraceSaveObject {
   frequencies: number[];
   levelTimeProgression: string;
   impulseResponseResult: string;
+  temperature?: number;
 }
 
 export interface BeamTraceSolverParams {
@@ -108,6 +109,7 @@ export interface BeamTraceSolverParams {
   frequencies?: number[];
   levelTimeProgression?: string;
   impulseResponseResult?: string;
+  temperature?: number;
 }
 
 const defaults: Required<BeamTraceSolverParams> = {
@@ -123,6 +125,7 @@ const defaults: Required<BeamTraceSolverParams> = {
   frequencies: [125, 250, 500, 1000, 2000, 4000, 8000],
   levelTimeProgression: "",
   impulseResponseResult: "",
+  temperature: 20,
 };
 
 export class BeamTraceSolver extends Solver {
@@ -131,6 +134,7 @@ export class BeamTraceSolver extends Solver {
   receiverIDs: string[];
   maxReflectionOrder: number;
   frequencies: number[];
+  temperature: number;
   levelTimeProgression: string;
   impulseResponseResult: string;
 
@@ -195,6 +199,7 @@ export class BeamTraceSolver extends Solver {
     this.receiverIDs = p.receiverIDs;
     this.maxReflectionOrder = p.maxReflectionOrder;
     this.frequencies = p.frequencies;
+    this.temperature = p.temperature ?? defaults.temperature;
     this._visualizationMode = p.visualizationMode;
     this._showAllBeams = p.showAllBeams;
     this._visibleOrders = p.visibleOrders.length > 0 ? p.visibleOrders : Array.from({ length: p.maxReflectionOrder + 1 }, (_, i) => i);
@@ -256,6 +261,10 @@ export class BeamTraceSolver extends Solver {
     renderer.markup.add(this.virtualSourcesGroup);
   }
 
+  get c(): number {
+    return ac.soundSpeed(this.temperature);
+  }
+
   save(): BeamTraceSaveObject {
     return {
       ...pickProps([
@@ -268,6 +277,7 @@ export class BeamTraceSolver extends Solver {
         "receiverIDs",
         "maxReflectionOrder",
         "frequencies",
+        "temperature",
         "levelTimeProgression",
         "impulseResponseResult"
       ], this),
@@ -289,6 +299,7 @@ export class BeamTraceSolver extends Solver {
     this._showAllBeams = state.showAllBeams ?? false;
     this._visibleOrders = state.visibleOrders ?? Array.from({ length: this.maxReflectionOrder + 1 }, (_, i) => i);
     this.frequencies = state.frequencies;
+    this.temperature = state.temperature ?? 20;
     this.levelTimeProgression = state.levelTimeProgression || uuidv4();
     this.impulseResponseResult = state.impulseResponseResult || uuidv4();
     return this;
@@ -683,7 +694,7 @@ export class BeamTraceSolver extends Solver {
     }
 
     // Calculate LTP result
-    this.calculateLTP(343);
+    this.calculateLTP(this.c);
 
     console.log(`BeamTraceSolver: Found ${this.validPaths.length} valid paths`);
     if (this.lastMetrics) {
@@ -763,7 +774,7 @@ export class BeamTraceSolver extends Solver {
   // Setter for plot frequency (recalculates LTP when changed)
   set plotFrequency(f: number) {
     this._plotFrequency = f;
-    this.calculateLTP(343);
+    this.calculateLTP(this.c);
   }
 
   get plotFrequency(): number {
@@ -1075,7 +1086,7 @@ export class BeamTraceSolver extends Solver {
 
     // Convert back to SPL and apply air absorption
     const arrivalLp = ac.P2Lp(ac.I2P(intensities)) as number[];
-    const airAttenuationdB = ac.airAttenuation(this.frequencies);
+    const airAttenuationdB = ac.airAttenuation(this.frequencies, this.temperature);
 
     for (let f = 0; f < this.frequencies.length; f++) {
       arrivalLp[f] -= airAttenuationdB[f] * path.length;

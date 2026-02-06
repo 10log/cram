@@ -34,6 +34,13 @@ const Parameters = ({ uuid }: { uuid: string }) => {
         property="passes"
         tooltip="Number of rays shot on each callback"
       />
+      <PropertyNumberInput
+        uuid={uuid}
+        label="Temperature"
+        property="temperature"
+        tooltip="Temperature in Celsius (affects speed of sound and air absorption)"
+        elementProps={{ step: 1, min: -20, max: 50 }}
+      />
     </PropertyRowFolder>
   );
 };
