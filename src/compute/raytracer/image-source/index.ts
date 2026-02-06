@@ -239,10 +239,9 @@ class ImageSourcePath{
     return length; 
   }
   
-  public arrivalPressure(initialSPL: number[], freqs: number[]): number[]{
+  public arrivalPressure(initialSPL: number[], freqs: number[], temperature: number = 20): number[]{
 
-    let intensity = ac.P2I(ac.Lp2P(initialSPL)) as number[];  
-    let arrivalPressure = []; 
+    let intensity = ac.P2I(ac.Lp2P(initialSPL)) as number[];
 
     for(let s = 0; s<this.path.length; s++){
 
@@ -255,23 +254,23 @@ class ImageSourcePath{
         for(let findex = 0; findex<freqs.length; findex++){
           // @ts-ignore
           //let reflectionCoefficient = (intersection.reflectingSurface as Surface).reflectionFunction(freqs[findex],intersection.angle);
-          let reflectionCoefficient = 1-(intersection.reflectingSurface as Surface).absorptionFunction(freqs[findex]); 
-          intensity[findex] = intensity[findex]*reflectionCoefficient; 
+          let reflectionCoefficient = 1-(intersection.reflectingSurface as Surface).absorptionFunction(freqs[findex]);
+          intensity[findex] = intensity[findex]*reflectionCoefficient;
         }
       }
     }
 
-    // convert back to SPL 
-    let arrivalLp = ac.P2Lp(ac.I2P(intensity)); 
-    
+    // convert back to SPL
+    let arrivalLp = ac.P2Lp(ac.I2P(intensity));
+
     // apply air absorption (dB/m)
-    const airAttenuationdB = ac.airAttenuation(freqs); 
+    const airAttenuationdB = ac.airAttenuation(freqs, temperature);
     for(let f = 0; f<freqs.length; f++){
-      arrivalLp[f] = arrivalLp[f] - airAttenuationdB[f]*this.totalLength; 
+      arrivalLp[f] = arrivalLp[f] - airAttenuationdB[f]*this.totalLength;
     }
 
     // convert back to pressure
-    return ac.Lp2P(arrivalLp) as number[]; 
+    return ac.Lp2P(arrivalLp) as number[];
   }
 
   public arrivalTime(c: number): number{
@@ -505,7 +504,7 @@ export class ImageSourceSolver extends Solver {
       if(sortedPath != null){
         for(let i = 0; i<sortedPath.length; i++){
           let t = sortedPath[i].arrivalTime(c);
-          let p = sortedPath[i].arrivalPressure(initialSPLs, freqs); 
+          let p = sortedPath[i].arrivalPressure(initialSPLs, freqs, this.temperature);
           let path: HybridRayPath = {
             time: t, 
             pressure: p,
@@ -538,7 +537,7 @@ export class ImageSourceSolver extends Solver {
       if(sortedPath !== undefined){
         for(let i = 0; i<sortedPath?.length; i++){
           let t = sortedPath[i].arrivalTime(c);
-          let p = sortedPath[i].arrivalPressure(levelTimeProgression.info.initialSPL, levelTimeProgression.info.frequency);
+          let p = sortedPath[i].arrivalPressure(levelTimeProgression.info.initialSPL, levelTimeProgression.info.frequency, this.temperature);
           if(consoleOutput){
             console.log("Arrival: " + (i+1) + " | Arrival Time: (s) " + t + " | Arrival Pressure(1000Hz): " + p + " | Order " + sortedPath[i].order);
           }
@@ -672,7 +671,7 @@ export class ImageSourceSolver extends Solver {
           if(rayPathUUID === this.validRayPaths[i].uuid){
             this.updateSelectedImageSourcePath(this.validRayPaths[i])
             //@ts-ignore
-            console.log("WILL HIGHLIGHT RAY PATH WITH ARRIVAL SPL " + ac.P2Lp(this.validRayPaths[i].arrivalPressure([100], [1000]) as number) + " AND ARRIVAL TIME " + this.validRayPaths[i].arrivalTime(this.c));
+            console.log("WILL HIGHLIGHT RAY PATH WITH ARRIVAL SPL " + ac.P2Lp(this.validRayPaths[i].arrivalPressure([100], [1000], this.temperature) as number) + " AND ARRIVAL TIME " + this.validRayPaths[i].arrivalTime(this.c));
             break;
           }
         }
@@ -707,7 +706,7 @@ export class ImageSourceSolver extends Solver {
 
         for(let i = 0; i<sortedPath.length; i++){
           let t = sortedPath[i].arrivalTime(c);
-          let p = sortedPath[i].arrivalPressure(spls, this.frequencies);
+          let p = sortedPath[i].arrivalPressure(spls, this.frequencies, this.temperature);
 
           (Math.random() > 0.5) && (p=p.map(x=>-x)); 
 

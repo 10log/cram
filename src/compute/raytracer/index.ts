@@ -163,6 +163,7 @@ export type RayTracerSaveObject = {
   plotStyle: Partial<Plotly.PlotData>;
   paths: KVP<RayPath[]>;
   frequencies: number[];
+  temperature?: number;
 }
 
 export interface RayTracerParams {
@@ -184,6 +185,7 @@ export interface RayTracerParams {
   uuid?: string;
   paths?: KVP<RayPath[]>;
   frequencies?: number[];
+  temperature?: number;
 }
 export const defaults = {
   name: "Ray Tracer",
@@ -205,6 +207,7 @@ export const defaults = {
     mode: "lines"
   } as Partial<PlotData>,
   frequencies: [125, 250, 500, 1000, 2000, 4000, 8000] as number[],
+  temperature: 20,
 };
 
 export enum DRAWSTYLE {
@@ -264,8 +267,11 @@ class RayTracer extends Solver {
   bvh!: BVH;
   observed_name: Observable<string>;
 
-  hybrid: boolean; 
-  transitionOrder: number; 
+  _temperature: number;
+  _cachedAirAtt: number[];
+
+  hybrid: boolean;
+  transitionOrder: number;
   
   constructor(params?: RayTracerParams) {
     super(params);
@@ -285,6 +291,8 @@ class RayTracer extends Solver {
     this._isRunning = params.isRunning || defaults.isRunning;
     this._runningWithoutReceivers = params.runningWithoutReceivers || defaults.runningWithoutReceivers;
     this.frequencies = params.frequencies || defaults.frequencies;
+    this._temperature = params.temperature ?? defaults.temperature;
+    this._cachedAirAtt = ac.airAttenuation(this.frequencies, this._temperature);
     this.intervals = [] as number[];
     this.plotData = [] as Plotly.Data[];
     this.plotStyle = params.plotStyle || defaults.plotStyle;
@@ -423,6 +431,17 @@ class RayTracer extends Solver {
     this.calculateImpulseResponse = this.calculateImpulseResponse.bind(this);
   }
   update = () => {};
+  get temperature(): number {
+    return this._temperature;
+  }
+  set temperature(value: number) {
+    this._temperature = value;
+    this._cachedAirAtt = ac.airAttenuation(this.frequencies, value);
+  }
+  get c(): number {
+    return ac.soundSpeed(this._temperature);
+  }
+
   save() {
     const {
       name,
@@ -443,7 +462,8 @@ class RayTracer extends Solver {
       invertedDrawStyle,
       plotStyle,
       paths,
-      frequencies
+      frequencies,
+      temperature
     } = this;
     return {
       name,
@@ -464,7 +484,8 @@ class RayTracer extends Solver {
       invertedDrawStyle,
       plotStyle,
       paths,
-      frequencies
+      frequencies,
+      temperature
     };
   }
 
@@ -626,6 +647,16 @@ class RayTracer extends Solver {
         // find the incident angle
         const angle = intersections[0].face && rd.clone().multiplyScalar(-1).angleTo(intersections[0].face.normal);
 
+        // apply air absorption for the final segment to the receiver
+        const receiverSegmentDist = intersections[0].distance;
+        const receiverBandEnergy = bandEnergy.map((e, f) =>
+          e * Math.pow(10, -this._cachedAirAtt[f] * receiverSegmentDist / 10)
+        );
+
+        // broadband average energy for scalar backward compat (recompute after air absorption)
+        const receiverTotalEnergy = receiverBandEnergy.reduce((a, b) => a + b, 0);
+        const receiverEnergy = receiverBandEnergy.length > 0 ? receiverTotalEnergy / receiverBandEnergy.length : 0;
+
         // push the intersection data onto the chain
         chain.push({
           object: intersections[0].object.parent!.uuid,
@@ -639,8 +670,8 @@ class RayTracer extends Solver {
           faceMaterialIndex: intersections[0].face!.materialIndex,
           faceIndex: intersections[0].faceIndex!,
           point: [intersections[0].point.x, intersections[0].point.y, intersections[0].point.z],
-          energy,
-          bandEnergy: [...bandEnergy],
+          energy: receiverEnergy,
+          bandEnergy: [...receiverBandEnergy],
         });
 
         // Compute arrival direction (direction ray arrives FROM, normalized)
@@ -653,8 +684,8 @@ class RayTracer extends Solver {
           chain,
           chainLength: chain.length,
           intersectedReceiver: true,
-          energy,
-          bandEnergy: [...bandEnergy],
+          energy: receiverEnergy,
+          bandEnergy: [...receiverBandEnergy],
           source,
           initialPhi,
           initialTheta,
@@ -719,10 +750,15 @@ class RayTracer extends Solver {
         }
 
         // apply per-band reflection loss
+        const segmentDistance = intersections[0].distance;
         const newBandEnergy = this.frequencies.map((frequency, f) => {
           const e = bandEnergy[f];
           if (e == null) return 0;
-          return e * abs(surface.reflectionFunction(frequency, angle!));
+          // surface reflection
+          let energy = e * abs(surface.reflectionFunction(frequency, angle!));
+          // per-segment air absorption (intensity domain: /10)
+          energy *= Math.pow(10, -this._cachedAirAtt[f] * segmentDistance / 10);
+          return energy;
         });
 
         // end condition: terminate when all bands are below threshold
@@ -776,7 +812,7 @@ class RayTracer extends Solver {
     );
   }
   quickEstimateStep(source: Source, frequencies: number[], numRays: number) {
-    const soundSpeed = ac.soundSpeed(20);
+    const soundSpeed = this.c;
 
     const rt60s = Array(frequencies.length).fill(0) as number[];
 
@@ -798,7 +834,7 @@ class RayTracer extends Solver {
     let distance = 0;
 
     // attenuation in dB/m
-    const airAttenuationdB = ac.airAttenuation(frequencies);
+    const airAttenuationdB = ac.airAttenuation(frequencies, this.temperature);
 
     let lastIntersection = {} as THREE.Intersection;
 
@@ -984,6 +1020,7 @@ class RayTracer extends Solver {
   }
 
   start() {
+    this._cachedAirAtt = ac.airAttenuation(this.frequencies, this._temperature);
     this.mapIntersectableObjects();
     this.__start_time = Date.now();
     this.__num_checked_paths = 0;
@@ -1014,7 +1051,7 @@ class RayTracer extends Solver {
         p.totalLength = 0;
         for (let i = 0; i < p.chain.length; i++) {
           p.totalLength += p.chain[i].distance;
-          p.time += p.chain[i].distance / 343.2;
+          p.time += p.chain[i].distance / this.c;
         }
       });
     });
@@ -1530,14 +1567,14 @@ class RayTracer extends Solver {
       ) as THREE.Vector3[];
     } else return [] as THREE.Vector3[];
   }
-  calculateResponseByIntensity(freqs: number[] = this.frequencies, temperature: number = 20) {
+  calculateResponseByIntensity(freqs: number[] = this.frequencies, temperature: number = this.temperature) {
     const paths = this.indexedPaths;
 
     // sound speed in m/s
     const soundSpeed = ac.soundSpeed(temperature);
 
     // attenuation in dB/m
-    const airAttenuationdB = ac.airAttenuation(freqs);
+    const airAttenuationdB = ac.airAttenuation(freqs, temperature);
 
     this.responseByIntensity = {} as KVP<KVP<ResponseByIntensity>>;
 
@@ -1940,26 +1977,28 @@ class RayTracer extends Solver {
     const intensities = ac.P2I(ac.Lp2P(initialSPL)) as number[];
 
     if (path.bandEnergy && path.bandEnergy.length === freqs.length) {
-      // New path: per-band energy already tracked during tracing
+      // New path: per-band energy (including air absorption) already tracked during tracing
       for (let i = 0; i < freqs.length; i++) {
         intensities[i] *= path.bandEnergy[i];
       }
-    } else {
-      // Legacy path: re-walk chain (backward compat)
-      path.chain.slice(0, -1).forEach(p => {
-        const surface = useContainer.getState().containers[p.object] as Surface;
-        intensities.forEach((I, i) => {
-          const R = abs(surface.reflectionFunction(freqs[i], p.angle));
-          intensities[i] = I * R;
-        });
-      });
+      // convert back to pressure (no post-hoc air absorption needed)
+      return ac.Lp2P(ac.P2Lp(ac.I2P(intensities)) as number[]) as number[];
     }
+
+    // Legacy path: re-walk chain (backward compat)
+    path.chain.slice(0, -1).forEach(p => {
+      const surface = useContainer.getState().containers[p.object] as Surface;
+      intensities.forEach((I, i) => {
+        const R = abs(surface.reflectionFunction(freqs[i], p.angle));
+        intensities[i] = I * R;
+      });
+    });
 
     // convert back to SPL
     const arrivalLp = ac.P2Lp(ac.I2P(intensities)) as number[];
 
-    // apply air absorption (dB/m)
-    const airAttenuationdB = ac.airAttenuation(freqs);
+    // apply air absorption (dB/m) — only for legacy paths
+    const airAttenuationdB = ac.airAttenuation(freqs, this.temperature);
     freqs.forEach((_, f) => arrivalLp[f] -= airAttenuationdB[f] * path.totalLength);
 
     // convert back to pressure
@@ -1994,20 +2033,21 @@ class RayTracer extends Solver {
         }
       }
 
-      let isparams: ImageSourceSolverParams = {name: "HybridHelperIS", 
-        roomID: this.roomID, 
+      let isparams: ImageSourceSolverParams = {name: "HybridHelperIS",
+        roomID: this.roomID,
         sourceIDs: this.sourceIDs,
-        surfaceIDs: this.surfaceIDs, 
+        surfaceIDs: this.surfaceIDs,
         receiverIDs: this.receiverIDs,
-        maxReflectionOrder: this.transitionOrder, 
-        imageSourcesVisible: false, 
-        rayPathsVisible: false, 
+        maxReflectionOrder: this.transitionOrder,
+        imageSourcesVisible: false,
+        rayPathsVisible: false,
         plotOrders: [0, 1, 2], // all paths
         frequencies: this.frequencies,
+        temperature: this.temperature,
       };
 
-      let image_source_solver = new ImageSourceSolver(isparams, true); 
-      let is_raypaths = image_source_solver.returnSortedPathsForHybrid(343,spls,frequencies); 
+      let image_source_solver = new ImageSourceSolver(isparams, true);
+      let is_raypaths = image_source_solver.returnSortedPathsForHybrid(this.c,spls,frequencies);
 
       // add in hybrid paths 
       for(let i = 0; i<is_raypaths.length; i++){
