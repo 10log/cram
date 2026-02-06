@@ -82,6 +82,8 @@ export interface ResponseByIntensity {
   t60?: LinearRegressionResult[];
 }
 
+export type BandEnergy = number[];
+
 export interface Chain {
   angle_in: number;
   angle_out: number;
@@ -97,6 +99,7 @@ export interface Chain {
   faceMaterialIndex: number;
   angle: number;
   energy: number;
+  bandEnergy?: BandEnergy;
 }
 
 
@@ -105,6 +108,7 @@ export interface RayPath {
   chain: Chain[];
   chainLength: number;
   energy: number; // used for visualization
+  bandEnergy?: BandEnergy;
   time: number;
   source: string;
   initialPhi: number;
@@ -178,6 +182,7 @@ export interface RayTracerParams {
   plotStyle?: Partial<PlotData>;
   uuid?: string;
   paths?: KVP<RayPath[]>;
+  frequencies?: number[];
 }
 export const defaults = {
   name: "Ray Tracer",
@@ -197,7 +202,8 @@ export const defaults = {
   paths: {} as KVP<RayPath[]>,
   plotStyle: {
     mode: "lines"
-  } as Partial<PlotData>
+  } as Partial<PlotData>,
+  frequencies: [125, 250, 500, 1000, 2000, 4000, 8000] as number[],
 };
 
 export enum DRAWSTYLE {
@@ -235,7 +241,7 @@ class RayTracer extends Solver {
   statsUpdatePeriod: number;
   lastTime: number;
   _runningWithoutReceivers: boolean;
-  reflectionLossFrequencies: number[];
+  frequencies: number[];
   allReceiverData!: ReceiverData[];
   hits: THREE.Points;
   _pointSize: number;
@@ -250,7 +256,6 @@ class RayTracer extends Solver {
   responseOverlayElement: HTMLElement;
   quickEstimateResults: KVP<QuickEstimateStepResult[]>;
   responseByIntensity!: KVP<KVP<ResponseByIntensity>>;
-  defaultFrequencies: number[];
   plotData: Plotly.Data[];
   intensitySampleRate: number;
   validRayCount: number;
@@ -278,7 +283,7 @@ class RayTracer extends Solver {
     this.reflectionOrder = params.reflectionOrder || defaults.reflectionOrder;
     this._isRunning = params.isRunning || defaults.isRunning;
     this._runningWithoutReceivers = params.runningWithoutReceivers || defaults.runningWithoutReceivers;
-    this.reflectionLossFrequencies = [4000];
+    this.frequencies = params.frequencies || defaults.frequencies;
     this.intervals = [] as number[];
     this.plotData = [] as Plotly.Data[];
     this.plotStyle = params.plotStyle || defaults.plotStyle;
@@ -286,7 +291,6 @@ class RayTracer extends Solver {
     this.statsUpdatePeriod = 100;
     this._pointSize = params.pointSize || defaults.pointSize;
     this.validRayCount = 0;
-    this.defaultFrequencies = [1000];
     this.intensitySampleRate = 256;
     this.quickEstimateResults = {} as KVP<QuickEstimateStepResult[]>;
 
@@ -437,7 +441,8 @@ class RayTracer extends Solver {
       pointsVisible,
       invertedDrawStyle,
       plotStyle,
-      paths
+      paths,
+      frequencies
     } = this;
     return {
       name,
@@ -457,7 +462,8 @@ class RayTracer extends Solver {
       pointsVisible,
       invertedDrawStyle,
       plotStyle,
-      paths
+      paths,
+      frequencies
     };
   }
 
@@ -588,13 +594,12 @@ class RayTracer extends Solver {
     ro: THREE.Vector3,
     rd: THREE.Vector3,
     order: number,
-    energy: number,
+    bandEnergy: BandEnergy,
     source: string,
     initialPhi: number,
     initialTheta: number,
     iter: number = 1,
     chain: Partial<Chain>[] = [],
-    frequency = 4000,
   ) {
     // normalize the ray
     rd = rd.normalize();
@@ -605,14 +610,14 @@ class RayTracer extends Solver {
     // set the direction
     this.raycaster.ray.direction = rd;
 
-    // console.log("dir",this.raycaster.ray.direction);
-
     // find the surface that the ray intersects
     const intersections = this.raycaster.intersectObjects(this.intersectableObjects, true);
 
     // if there was an intersection
     if (intersections.length > 0) {
-      // console.log("itx",intersections[0].point)
+
+      // broadband average energy for scalar backward compat
+      const energy = bandEnergy.reduce((a, b) => a + b, 0) / bandEnergy.length;
 
       //check to see if the intersection was with a receiver
       if (intersections[0].object.userData?.kind === 'receiver') {
@@ -620,7 +625,6 @@ class RayTracer extends Solver {
         const angle = intersections[0].face && rd.clone().multiplyScalar(-1).angleTo(intersections[0].face.normal);
 
         // push the intersection data onto the chain
-
         chain.push({
           object: intersections[0].object.parent!.uuid,
           angle: angle!,
@@ -633,7 +637,8 @@ class RayTracer extends Solver {
           faceMaterialIndex: intersections[0].face!.materialIndex,
           faceIndex: intersections[0].faceIndex!,
           point: [intersections[0].point.x, intersections[0].point.y, intersections[0].point.z],
-          energy: energy!
+          energy,
+          bandEnergy: [...bandEnergy],
         });
 
         // Compute arrival direction (direction ray arrives FROM, normalized)
@@ -647,6 +652,7 @@ class RayTracer extends Solver {
           chainLength: chain.length,
           intersectedReceiver: true,
           energy,
+          bandEnergy: [...bandEnergy],
           source,
           initialPhi,
           initialTheta,
@@ -656,7 +662,7 @@ class RayTracer extends Solver {
         // find the incident angle
         const angle = intersections[0].face && rd.clone().multiplyScalar(-1).angleTo(intersections[0].face.normal);
 
-        // push the intersection onto the chain
+        // push the intersection onto the chain (snapshot BEFORE reflection)
         chain.push({
           object: intersections[0].object.parent!.uuid,
           angle: angle!,
@@ -669,7 +675,8 @@ class RayTracer extends Solver {
           faceMaterialIndex: intersections[0].face!.materialIndex,
           faceIndex: intersections[0].faceIndex!,
           point: [intersections[0].point.x, intersections[0].point.y, intersections[0].point.z],
-          energy: energy!
+          energy,
+          bandEnergy: [...bandEnergy],
         });
 
         if (intersections[0].object.parent instanceof Surface) {
@@ -684,7 +691,7 @@ class RayTracer extends Solver {
           normal &&
           intersections[0].face &&
           rd.clone().sub(normal.clone().multiplyScalar(rd.dot(normal.clone())).multiplyScalar(2));
-        
+
         const scattering = (intersections[0].object.parent as Surface)._scatteringCoefficient;
         if(probability(scattering)){
           // Cosine-weighted (Lambertian) hemisphere sampling via rejection method
@@ -701,24 +708,25 @@ class RayTracer extends Solver {
           rr = candidate.add(normal!).normalize();
         }
 
-        // calulcate the losses due to reflection
-        const reflectionloss =
-          energy * abs((intersections[0].object.parent as Surface).reflectionFunction(frequency, angle!));
+        // apply per-band reflection loss
+        const surface = intersections[0].object.parent as Surface;
+        const newBandEnergy = bandEnergy.map((e, f) =>
+          e * abs(surface.reflectionFunction(this.frequencies[f], angle!))
+        );
 
-        // end condition
-        if (rr && normal && reflectionloss > 1 / 2 ** 16 && iter < order + 1) {
+        // end condition: terminate when all bands are below threshold
+        if (rr && normal && Math.max(...newBandEnergy) > 1 / 2 ** 16 && iter < order + 1) {
           // recurse
           return this.traceRay(
             intersections[0].point.clone().addScaledVector(normal.clone(), 0.01),
             rr,
             order,
-            reflectionloss,
+            newBandEnergy,
             source,
             initialPhi,
             initialTheta,
             iter + 1,
             chain,
-            frequency,
           );
         }
       }
@@ -726,7 +734,7 @@ class RayTracer extends Solver {
     }
   }
 
-  startQuickEstimate(frequencies: number[] = this.defaultFrequencies, numRays: number = 1000) {
+  startQuickEstimate(frequencies: number[] = this.frequencies, numRays: number = 1000) {
     const tempRunningWithoutReceivers = this.runningWithoutReceivers;
     this.runningWithoutReceivers = true;
     let count = 0;
@@ -880,12 +888,12 @@ class RayTracer extends Solver {
       const direction = new THREE.Vector3().setFromSphericalCoords(1, threeJSAngles[0], threeJSAngles[1]);
       direction.applyEuler(rotation);
 
-      // assign source energy as a function of direction 
+      // assign source energy as a function of direction
       let sourceDH = (useContainer.getState().containers[this.sourceIDs[i]] as Source).directivityHandler;
-      let initialEnergy = 1; // used for plotting
+      const initialBandEnergy: BandEnergy = new Array(this.frequencies.length).fill(1);
 
       // get the path traced by the ray
-      const path = this.traceRay(position, direction, this.reflectionOrder, initialEnergy, this.sourceIDs[i],phi,theta);
+      const path = this.traceRay(position, direction, this.reflectionOrder, initialBandEnergy, this.sourceIDs[i], phi, theta);
 
       // if path exists
       if (path) {
@@ -1102,7 +1110,7 @@ class RayTracer extends Solver {
     emit("HIDE_PROGRESS", undefined);
   }
 
-  async calculateImpulseResponseForPair(sourceId: string, receiverId: string, paths: RayPath[], initialSPL = 100, frequencies = ac.Octave(63, 16000), sampleRate = audioEngine.sampleRate): Promise<{ signal: Float32Array; normalizedSignal: Float32Array }> {
+  async calculateImpulseResponseForPair(sourceId: string, receiverId: string, paths: RayPath[], initialSPL = 100, frequencies = this.frequencies, sampleRate = audioEngine.sampleRate): Promise<{ signal: Float32Array; normalizedSignal: Float32Array }> {
     if (paths.length === 0) throw Error("No rays have been traced for this pair");
 
     let sorted = paths.sort((a, b) => a.time - b.time) as RayPath[];
@@ -1157,7 +1165,7 @@ class RayTracer extends Solver {
     });
   }
 
-  async calculateImpulseResponseForDisplay(initialSPL = 100, frequencies = ac.Octave(63, 16000), sampleRate = audioEngine.sampleRate): Promise<{ signal: Float32Array; normalizedSignal: Float32Array }> {
+  async calculateImpulseResponseForDisplay(initialSPL = 100, frequencies = this.frequencies, sampleRate = audioEngine.sampleRate): Promise<{ signal: Float32Array; normalizedSignal: Float32Array }> {
     if(this.receiverIDs.length == 0) throw Error("No receivers have been assigned to the raytracer");
     if(this.sourceIDs.length == 0) throw Error("No sources have been assigned to the raytracer");
     if(this.paths[this.receiverIDs[0]].length == 0) throw Error("No rays have been traced yet");
@@ -1251,7 +1259,7 @@ class RayTracer extends Solver {
     });
   }
 
-  calculateWithDiffuse(frequencies: number[] = this.reflectionLossFrequencies) {
+  calculateWithDiffuse(frequencies: number[] = this.frequencies) {
     this.allReceiverData = [] as ReceiverData[];
     const keys = Object.keys(this.paths);
     const receiverRadius = (useContainer.getState().containers[this.receiverIDs[0]] as Receiver).scale.x;
@@ -1350,7 +1358,7 @@ class RayTracer extends Solver {
   }
 
   //TODO change this name to something more appropriate
-  calculateReflectionLoss(frequencies: number[] = this.reflectionLossFrequencies) {
+  calculateReflectionLoss(frequencies: number[] = this.frequencies) {
     // reset the receiver data
     this.allReceiverData = [] as ReceiverData[];
 
@@ -1511,7 +1519,7 @@ class RayTracer extends Solver {
       ) as THREE.Vector3[];
     } else return [] as THREE.Vector3[];
   }
-  calculateResponseByIntensity(freqs: number[] = this.defaultFrequencies, temperature: number = 20) {
+  calculateResponseByIntensity(freqs: number[] = this.frequencies, temperature: number = 20) {
     const paths = this.indexedPaths;
 
     // sound speed in m/s
@@ -1918,37 +1926,35 @@ class RayTracer extends Solver {
 
   arrivalPressure(initialSPL: number[], freqs: number[], path: RayPath): number[]{
 
-    const intensities = ac.P2I(ac.Lp2P(initialSPL)) as number[];  
-  
-  
-  
-    // for each surface that the ray intersected
-    path.chain.slice(0,-1).forEach(p => {
-      // get the reflecting surface
-      const surface = useContainer.getState().containers[p.object] as Surface;
-      // multiply intensities by the frequency dependant reflection coefficient
-      intensities.forEach((I, i) => {
-        let R;
-        if (freqs[i]===16000){
-            R = 1 - surface.absorptionFunction(freqs[8000]); // reflection coefficient
-        }else{
-            R = 1 - surface.absorptionFunction(freqs[i]); // reflection coefficient
-        }
-        intensities[i] = I * R; // multiply the intensity by the reflection coefficient
+    const intensities = ac.P2I(ac.Lp2P(initialSPL)) as number[];
+
+    if (path.bandEnergy && path.bandEnergy.length === freqs.length) {
+      // New path: per-band energy already tracked during tracing
+      for (let i = 0; i < freqs.length; i++) {
+        intensities[i] *= path.bandEnergy[i];
+      }
+    } else {
+      // Legacy path: re-walk chain (backward compat)
+      path.chain.slice(0, -1).forEach(p => {
+        const surface = useContainer.getState().containers[p.object] as Surface;
+        intensities.forEach((I, i) => {
+          const R = abs(surface.reflectionFunction(freqs[i], p.angle));
+          intensities[i] = I * R;
+        });
       });
-    });
-  
-    // convert back to SPL 
-    const arrivalLp = ac.P2Lp(ac.I2P(intensities)) as number[]; 
-    
+    }
+
+    // convert back to SPL
+    const arrivalLp = ac.P2Lp(ac.I2P(intensities)) as number[];
+
     // apply air absorption (dB/m)
-    const airAttenuationdB = ac.airAttenuation(freqs); 
-    freqs.forEach((_, freq) => arrivalLp[freq] -= airAttenuationdB[freq] * path.totalLength)
-  
+    const airAttenuationdB = ac.airAttenuation(freqs);
+    freqs.forEach((_, f) => arrivalLp[f] -= airAttenuationdB[f] * path.totalLength);
+
     // convert back to pressure
-    return ac.Lp2P(arrivalLp) as number[]; 
+    return ac.Lp2P(arrivalLp) as number[];
   }
-  async calculateImpulseResponse(initialSPL = 100, frequencies = ac.Octave(63, 16000), sampleRate = audioEngine.sampleRate): Promise<AudioBuffer> {
+  async calculateImpulseResponse(initialSPL = 100, frequencies = this.frequencies, sampleRate = audioEngine.sampleRate): Promise<AudioBuffer> {
     if(this.receiverIDs.length === 0) throw Error("No receivers have been assigned to the raytracer");
     if(this.sourceIDs.length === 0) throw Error("No sources have been assigned to the raytracer");
     if(!this.paths[this.receiverIDs[0]] || this.paths[this.receiverIDs[0]].length === 0) throw Error("No rays have been traced yet");
@@ -1986,7 +1992,7 @@ class RayTracer extends Solver {
         imageSourcesVisible: false, 
         rayPathsVisible: false, 
         plotOrders: [0, 1, 2], // all paths
-        frequencies: [125,250,500,1000,2000,4000,8000],
+        frequencies: this.frequencies,
       }
 
       let image_source_solver = new ImageSourceSolver(isparams, true); 
@@ -2067,7 +2073,7 @@ class RayTracer extends Solver {
   async calculateAmbisonicImpulseResponse(
     order: number = 1,
     initialSPL = 100,
-    frequencies = ac.Octave(63, 16000),
+    frequencies = this.frequencies,
     sampleRate = audioEngine.sampleRate
   ): Promise<AudioBuffer> {
     if (this.receiverIDs.length === 0) throw Error("No receivers have been assigned to the raytracer");

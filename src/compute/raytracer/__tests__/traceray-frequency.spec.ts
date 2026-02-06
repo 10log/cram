@@ -1,16 +1,15 @@
 /**
  * Regression test for traceRay frequency parameter propagation.
  *
- * Bug: The recursive traceRay call hardcoded 4000 instead of passing
+ * Original bug: The recursive traceRay call hardcoded 4000 instead of passing
  * through the `frequency` parameter, so all bounces computed reflection
  * losses at 4000 Hz regardless of the actual band.
  *
- * Fix: Pass `frequency` through the recursive call.
+ * Phase 2 fix: The scalar `frequency` parameter was removed entirely.
+ * Per-band energy is now tracked via a `bandEnergy` array, and reflection
+ * losses are computed for all bands at each bounce using `this.frequencies`.
  *
- * The RayTracer class requires a full Three.js scene, WebGL renderer,
- * and BVH acceleration structure, making it impractical to instantiate
- * in Jest. This test scans the source to verify the recursive call
- * passes the frequency parameter rather than a hardcoded literal.
+ * This test verifies the new per-band approach is in place.
  */
 
 import * as fs from 'fs';
@@ -22,19 +21,26 @@ describe('traceRay frequency propagation', () => {
     'utf8'
   );
 
-  it('recursive traceRay call passes frequency, not a hardcoded literal', () => {
-    // Match the recursive call: `return this.traceRay(` ... `);`
-    // This is distinct from the initial call which uses `const path = this.traceRay(`
-    const match = source.match(/return\s+this\.traceRay\(([\s\S]*?)\);/);
+  it('traceRay signature uses bandEnergy instead of scalar frequency', () => {
+    // The traceRay method should have bandEnergy in its signature
+    const signatureMatch = source.match(/traceRay\(([\s\S]*?)\)\s*\{/);
+    expect(signatureMatch).not.toBeNull();
 
+    const params = signatureMatch![1];
+    expect(params).toContain('bandEnergy');
+    // The old `frequency = 4000` parameter should be gone
+    expect(params).not.toMatch(/frequency\s*=\s*4000/);
+  });
+
+  it('recursive traceRay call passes newBandEnergy, not a scalar', () => {
+    // Match the recursive call: `return this.traceRay(` ... `);`
+    const match = source.match(/return\s+this\.traceRay\(([\s\S]*?)\);/);
     expect(match).not.toBeNull();
 
-    // Extract the last non-empty argument (handles trailing commas)
     const argString = match![1];
-    const args = argString.split(',').map(a => a.trim()).filter(a => a.length > 0);
-    const lastArg = args[args.length - 1];
-
-    // Must be the identifier `frequency`, not a numeric literal like `4000`
-    expect(lastArg).toBe('frequency');
+    // Should contain newBandEnergy, not a scalar energy or frequency
+    expect(argString).toContain('newBandEnergy');
+    // Should NOT contain a frequency argument
+    expect(argString).not.toMatch(/\bfrequency\b/);
   });
 });
