@@ -1,10 +1,8 @@
 import { Vector3 } from 'three';
-import { BVH } from '../raytracer/bvh/BVH';
 import { BRDF } from './brdf';
 import { DirectionalResponse } from './directional-response';
 import { Response } from './response';
-import { Patch, PatchSet, samplePointOnPatch } from './patch';
-import { soundSpeed } from '../acoustics/sound-speed';
+import { PatchSet, samplePointOnPatch } from './patch';
 
 export interface ShootingContext {
   patchSet: PatchSet;
@@ -119,14 +117,8 @@ export function shootFromPatch(ctx: ShootingContext, patchIdx: number): void {
       // Air absorption attenuation
       const airAtten = Math.exp(-airAbsNepers * closestDist);
 
-      // Compute incoming direction at receiver
-      const toReceiver = new Vector3(
-        rcvPatch.centroid.x - origin.x,
-        rcvPatch.centroid.y - origin.y,
-        rcvPatch.centroid.z - origin.z
-      ).normalize();
-      const fromSource = toReceiver.clone().negate();
-      const incomingSlot = brdf.getDirectionIndex(fromSource, rcvPatch.normal);
+      // Compute incoming direction at receiver using ray direction (not centroid)
+      const incomingSlot = brdf.getDirectionIndex(worldDir.clone().negate(), rcvPatch.normal);
 
       // Get outgoing weights from receiver's BRDF
       // Recompute BRDF coefficients for receiver patch material

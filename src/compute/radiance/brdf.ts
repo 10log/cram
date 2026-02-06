@@ -1,4 +1,4 @@
-import { Float32BufferAttribute, IcosahedronGeometry, Matrix4, Vector3 } from 'three';
+import { Float32BufferAttribute, IcosahedronGeometry, Vector3 } from 'three';
 
 const DEFAULT_BRDF_DETAIL = 1;
 
@@ -54,9 +54,12 @@ export class BRDF {
    * Diffuse component is distributed uniformly across all bins.
    */
   computeCoefficients(absorption: number, scattering: number): void {
-    const reflectance = 1 - absorption;
-    const diffuseWeight = reflectance * scattering / this.nSlots;
-    const specularWeight = reflectance * (1 - scattering);
+    // Clamp inputs to [0,1] to handle interpolated values outside valid range
+    const a = Math.max(0, Math.min(1, Number.isFinite(absorption) ? absorption : 0));
+    const s = Math.max(0, Math.min(1, Number.isFinite(scattering) ? scattering : 0));
+    const reflectance = 1 - a;
+    const diffuseWeight = reflectance * s / this.nSlots;
+    const specularWeight = reflectance * (1 - s);
 
     for (let incoming = 0; incoming < this.nSlots; incoming++) {
       // Mirror reflection direction: reflect incoming across z-axis (normal)

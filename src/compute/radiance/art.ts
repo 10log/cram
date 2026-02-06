@@ -5,7 +5,8 @@ import {
   addSolver,
   removeSolver,
   setSolverProperty,
-  useContainer
+  useContainer,
+  useResult
 } from "../../store";
 import { v4 as uuid } from 'uuid';
 import { ResultKind, Result } from "../../store/result-store";
@@ -18,7 +19,7 @@ import Receiver from "../../objects/receiver";
 import { BRDF } from "./brdf";
 import { DirectionalResponse } from "./directional-response";
 import { Response } from "./response";
-import { buildPatchesFromRoom, PatchSet } from "./patch";
+import { buildPatchesFromRoom } from "./patch";
 import {
   ShootingContext,
   selectShootingPatch,
@@ -93,6 +94,8 @@ export class ART extends Solver {
   public lastIterationCount: number;
   /** Patch count from last calculation */
   public lastPatchCount: number;
+  /** Whether any results have been emitted */
+  public hasEmittedResults: boolean;
 
   constructor(props: ARTProps = defaults) {
     super(props);
@@ -120,6 +123,7 @@ export class ART extends Solver {
 
     this.lastIterationCount = 0;
     this.lastPatchCount = 0;
+    this.hasEmittedResults = false;
   }
 
   calculate(): void {
@@ -236,7 +240,23 @@ export class ART extends Solver {
           bandResponses.push(bandResponse);
         }
 
-        // Step 7: Combine frequency bands by summing
+        // Step 7: Add direct path contribution (source → receiver)
+        const directDist = sourcePos.distanceTo(receiverPos);
+        if (directDist > 1e-6) {
+          const directDelaySamples = (directDist / c) * this.sampleRate;
+          const directIdx = Math.round(directDelaySamples);
+          // Sum air attenuation across all frequency bands for broadband direct path
+          for (let b = 0; b < bandResponses.length; b++) {
+            const airAbsDb = airAttenuation([this.frequencies[b]], this.temperature)[0];
+            const airAbsNepers = airAbsDb / (20 / Math.LN10);
+            const directAtten = Math.exp(-airAbsNepers * directDist) / (directDist * directDist);
+            if (directIdx < bandResponses[b].buffer.length) {
+              bandResponses[b].buffer[directIdx] += this.initialEnergy * directAtten;
+            }
+          }
+        }
+
+        // Step 8: Combine frequency bands by summing
         let maxLen = 0;
         for (const br of bandResponses) {
           if (br.buffer.length > maxLen) maxLen = br.buffer.length;
@@ -260,7 +280,7 @@ export class ART extends Solver {
           }
         }
 
-        // Step 8: Emit result
+        // Step 9: Emit result
         const displayData: { time: number; amplitude: number }[] = [];
         const step = Math.max(1, Math.floor(combined.length / 2000));
         for (let i = 0; i < combined.length; i += step) {
@@ -296,7 +316,13 @@ export class ART extends Solver {
           data: trimmedData.length > 0 ? trimmedData : [{ time: 0, amplitude: 0 }],
         };
 
-        emit("ADD_RESULT", result);
+        const existingResult = useResult.getState().results[resultUuid];
+        if (existingResult) {
+          emit("UPDATE_RESULT", { uuid: resultUuid, result });
+        } else {
+          emit("ADD_RESULT", result);
+        }
+        this.hasEmittedResults = true;
       }
     }
   }
@@ -337,7 +363,7 @@ export class ART extends Solver {
   }
 
   get noResults(): boolean {
-    return this.lastIterationCount === 0;
+    return !this.hasEmittedResults;
   }
 }
 

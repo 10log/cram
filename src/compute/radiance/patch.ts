@@ -1,4 +1,4 @@
-import { Vector3, Triangle, BufferGeometry } from 'three';
+import { Vector3, Triangle } from 'three';
 import { TessellateModifier } from './TessellateModifier';
 import Room from '../../objects/room';
 import Surface from '../../objects/surface';
