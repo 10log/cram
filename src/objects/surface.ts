@@ -377,15 +377,6 @@ class Surface extends Container {
     this.reflectionFunction = (freq, theta) => reflectionCoefficient(this.absorptionFunction(freq), theta);
     this.scatteringCoefficient = props.scatteringCoefficient || defaults.scatteringCoefficient;
     this.acousticMaterial = props.acousticMaterial;
-    this.brdf = [] as BRDF[];
-    for (const key in this.acousticMaterial.absorption) {
-      this.brdf.push(
-        new BRDF({
-          absorptionCoefficient: (this.acousticMaterial.absorption as Record<string, number>)[key],
-          diffusionCoefficient: 0.1
-        })
-      );
-    }
     this.getArea();
 
     this.edgeLoop = this.calculateEdgeLoop();
@@ -613,15 +604,22 @@ class Surface extends Container {
     this.absorption = freq.map((x) => (this._acousticMaterial.absorption as Record<string, number>)[String(x)]);
     this.absorptionFunction = interpolateAlpha(this.absorption, freq);
     this.reflectionFunction = (freq, theta) => reflectionCoefficient(this.absorptionFunction(freq), theta);
+    if (material.scattering) {
+      const scFreqs = Object.keys(material.scattering).map(Number);
+      const scVals = scFreqs.map(f => material.scattering![String(f) as keyof typeof material.scattering]!);
+      this.scatteringFunction = interpolateAlpha(scVals, scFreqs);
+      this._scatteringCoefficient = this.scatteringFunction(500);
+    }
     this.brdf = [] as BRDF[];
-    for (const key in this.acousticMaterial.absorption) {
+    const freqKeys = Object.keys(this.acousticMaterial.absorption).map(Number);
+    freqKeys.forEach(freq => {
       this.brdf.push(
         new BRDF({
-          absorptionCoefficient: (this.acousticMaterial.absorption as Record<string, number>)[key],
-          diffusionCoefficient: 0.1
+          absorptionCoefficient: (this.acousticMaterial.absorption as Record<string, number>)[String(freq)],
+          diffusionCoefficient: this.scatteringFunction(freq)
         })
       );
-    }
+    });
   }
   get displayVertexNormals() {
     return this.vertexNormals.visible;

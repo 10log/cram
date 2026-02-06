@@ -693,8 +693,17 @@ class RayTracer extends Solver {
           intersections[0].face &&
           rd.clone().sub(normal.clone().multiplyScalar(rd.dot(normal.clone())).multiplyScalar(2));
 
-        const scattering = (intersections[0].object.parent as Surface)._scatteringCoefficient;
-        if(probability(scattering)){
+        // compute energy-weighted broadband scattering for directional decision
+        const surface = intersections[0].object.parent as Surface;
+        const scatterCoeffs = this.frequencies.map(f => surface.scatteringFunction(f));
+        const totalEnergy = bandEnergy.reduce((a, b) => a + b, 0) || 1;
+        let broadbandScattering = 0;
+        for (let f = 0; f < this.frequencies.length; f++) {
+          broadbandScattering += scatterCoeffs[f] * (bandEnergy[f] || 0);
+        }
+        broadbandScattering /= totalEnergy;
+
+        if (probability(broadbandScattering)) {
           // Cosine-weighted (Lambertian) hemisphere sampling via rejection method
           let candidate: THREE.Vector3;
           do {
@@ -710,7 +719,6 @@ class RayTracer extends Solver {
         }
 
         // apply per-band reflection loss
-        const surface = intersections[0].object.parent as Surface;
         const newBandEnergy = this.frequencies.map((frequency, f) => {
           const e = bandEnergy[f];
           if (e == null) return 0;
@@ -1310,7 +1318,7 @@ class RayTracer extends Solver {
                     value: scatteredEnergy(
                       energytime.energy[index].value,
                       surface.absorptionFunction(frequency),
-                      0.1,
+                      surface.scatteringFunction(frequency),
                       asin(receiverRadius / d.length()),
                       theta
                     )
