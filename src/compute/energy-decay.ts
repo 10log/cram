@@ -103,8 +103,6 @@ class EnergyDecay extends Solver{
         console.log("T30 Values: ");
         console.log(this.T30); 
 
-        this.downloadResultsAsCSV(); 
-
     }
 
     calculateOctavebandBackwardsIntegration(){
