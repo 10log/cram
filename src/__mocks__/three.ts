@@ -80,10 +80,25 @@ export class Vector3 {
     return this;
   }
   normalize() {
+    const len = Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
+    if (len > 0) {
+      this.x /= len;
+      this.y /= len;
+      this.z /= len;
+    }
     return this;
   }
   length() {
     return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
+  }
+  lengthSq() {
+    return this.x * this.x + this.y * this.y + this.z * this.z;
+  }
+  negate() {
+    this.x = -this.x;
+    this.y = -this.y;
+    this.z = -this.z;
+    return this;
   }
   add(v: Vector3) {
     this.x += v.x;
@@ -91,10 +106,28 @@ export class Vector3 {
     this.z += v.z;
     return this;
   }
+  addScaledVector(v: Vector3, s: number) {
+    this.x += v.x * s;
+    this.y += v.y * s;
+    this.z += v.z * s;
+    return this;
+  }
   sub(v: Vector3) {
     this.x -= v.x;
     this.y -= v.y;
     this.z -= v.z;
+    return this;
+  }
+  subVectors(a: Vector3, b: Vector3) {
+    this.x = a.x - b.x;
+    this.y = a.y - b.y;
+    this.z = a.z - b.z;
+    return this;
+  }
+  crossVectors(a: Vector3, b: Vector3) {
+    this.x = a.y * b.z - a.z * b.y;
+    this.y = a.z * b.x - a.x * b.z;
+    this.z = a.x * b.y - a.y * b.x;
     return this;
   }
   multiplyScalar(s: number) {
@@ -557,6 +590,64 @@ export class BoxGeometry extends BufferGeometry {}
 export class SphereGeometry extends BufferGeometry {}
 export class PlaneGeometry extends BufferGeometry {}
 
+// IcosahedronGeometry - generates proper icosahedron vertices for BRDF hemisphere sampling
+export class IcosahedronGeometry extends BufferGeometry {
+  constructor(radius: number = 1, detail: number = 0) {
+    super();
+    const t = (1 + Math.sqrt(5)) / 2;
+    const baseVertices = [
+      [-1,  t,  0], [ 1,  t,  0], [-1, -t,  0], [ 1, -t,  0],
+      [ 0, -1,  t], [ 0,  1,  t], [ 0, -1, -t], [ 0,  1, -t],
+      [ t,  0, -1], [ t,  0,  1], [-t,  0, -1], [-t,  0,  1]
+    ].map(([x, y, z]) => {
+      const len = Math.sqrt(x * x + y * y + z * z);
+      return [x / len * radius, y / len * radius, z / len * radius];
+    });
+
+    const baseFaces = [
+      [0, 11, 5], [0, 5, 1], [0, 1, 7], [0, 7, 10], [0, 10, 11],
+      [1, 5, 9], [5, 11, 4], [11, 10, 2], [10, 7, 6], [7, 1, 8],
+      [3, 9, 4], [3, 4, 2], [3, 2, 6], [3, 6, 8], [3, 8, 9],
+      [4, 9, 5], [2, 4, 11], [6, 2, 10], [8, 6, 7], [9, 8, 1]
+    ];
+
+    let faces = baseFaces.map(f => f.slice());
+    let vertices = baseVertices.map(v => v.slice());
+
+    for (let d = 0; d < detail; d++) {
+      const newFaces: number[][] = [];
+      const midCache: Map<string, number> = new Map();
+      const getMidpoint = (a: number, b: number): number => {
+        const key = Math.min(a, b) + ':' + Math.max(a, b);
+        if (midCache.has(key)) return midCache.get(key)!;
+        const va = vertices[a], vb = vertices[b];
+        const mx = (va[0] + vb[0]) / 2, my = (va[1] + vb[1]) / 2, mz = (va[2] + vb[2]) / 2;
+        const len = Math.sqrt(mx * mx + my * my + mz * mz);
+        const idx = vertices.length;
+        vertices.push([mx / len * radius, my / len * radius, mz / len * radius]);
+        midCache.set(key, idx);
+        return idx;
+      };
+      for (const [a, b, c] of faces) {
+        const ab = getMidpoint(a, b);
+        const bc = getMidpoint(b, c);
+        const ca = getMidpoint(c, a);
+        newFaces.push([a, ab, ca], [b, bc, ab], [c, ca, bc], [ab, bc, ca]);
+      }
+      faces = newFaces;
+    }
+
+    const positions = new Float32Array(faces.length * 9);
+    for (let i = 0; i < faces.length; i++) {
+      const [a, b, c] = faces[i];
+      positions[i * 9]     = vertices[a][0]; positions[i * 9 + 1] = vertices[a][1]; positions[i * 9 + 2] = vertices[a][2];
+      positions[i * 9 + 3] = vertices[b][0]; positions[i * 9 + 4] = vertices[b][1]; positions[i * 9 + 5] = vertices[b][2];
+      positions[i * 9 + 6] = vertices[c][0]; positions[i * 9 + 7] = vertices[c][1]; positions[i * 9 + 8] = vertices[c][2];
+    }
+    this.setAttribute('position', new Float32BufferAttribute(positions, 3));
+  }
+}
+
 // Material classes
 export class Material {
   uuid = `mat-${++objectIdCounter}`;
@@ -790,6 +881,7 @@ const THREE = {
   BoxGeometry,
   SphereGeometry,
   PlaneGeometry,
+  IcosahedronGeometry,
   Material,
   MeshBasicMaterial,
   MeshStandardMaterial,
