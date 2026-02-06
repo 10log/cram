@@ -63,9 +63,9 @@ jest.mock('../../compute/acoustics/reflection-coefficient', () => ({
   default: jest.fn().mockReturnValue(0.5),
 }));
 
-// Mock scatteringFunction
+// Mock scatteringFunction — returns 0.42 to distinguish from old hardcoded 0.1
 jest.mock('../../compute/acoustics/scattering-function', () => ({
-  scatteringFunction: jest.fn().mockReturnValue((f: number) => 0.1),
+  scatteringFunction: jest.fn().mockReturnValue((f: number) => 0.42),
 }));
 
 // Mock TessellateModifier
@@ -697,6 +697,87 @@ describe('Surface', () => {
       // Should not throw
       surface.tessellatedMeshVisible = true;
       expect(surface.tessellatedMeshVisible).toBe(false);
+    });
+  });
+
+  describe('BRDF uses scatteringFunction', () => {
+    it('diffusionCoefficient comes from scatteringFunction not hardcoded 0.1', () => {
+      const { BRDF } = require('../../compute/raytracer/brdf');
+      (BRDF as jest.Mock).mockClear();
+
+      const geometry = createMockGeometry();
+      new Surface('BRDFTest', {
+        geometry,
+        acousticMaterial: mockAcousticMaterial,
+      });
+
+      // BRDF should have been called for each frequency band
+      expect(BRDF).toHaveBeenCalled();
+      // scatteringFunction mock returns 0.42 — verify BRDF gets that, not 0.1
+      const calls = (BRDF as jest.Mock).mock.calls;
+      calls.forEach((call: any[]) => {
+        expect(call[0].diffusionCoefficient).toBe(0.42);
+      });
+    });
+
+    it('setter also uses scatteringFunction for BRDF', () => {
+      const { BRDF } = require('../../compute/raytracer/brdf');
+      const geometry = createMockGeometry();
+      const surface = new Surface('BRDFTest', {
+        geometry,
+        acousticMaterial: mockAcousticMaterial,
+      });
+
+      (BRDF as jest.Mock).mockClear();
+
+      // Re-assign material to trigger setter
+      const newMaterial: AcousticMaterial = {
+        ...mockAcousticMaterial,
+        uuid: 'new-material-uuid',
+      };
+      surface.acousticMaterial = newMaterial;
+
+      expect(BRDF).toHaveBeenCalled();
+      const calls = (BRDF as jest.Mock).mock.calls;
+      calls.forEach((call: any[]) => {
+        expect(call[0].diffusionCoefficient).toBe(0.42);
+      });
+    });
+  });
+
+  describe('material scattering data', () => {
+    it('material with scattering overrides ISO lookup', () => {
+      const interpolateAlpha = require('../../compute/acoustics/interpolate-alpha').default;
+      (interpolateAlpha as jest.Mock).mockClear();
+
+      const geometry = createMockGeometry();
+      const surface = new Surface('ScatterTest', {
+        geometry,
+        acousticMaterial: mockAcousticMaterial,
+      });
+
+      const materialWithScattering: AcousticMaterial = {
+        ...mockAcousticMaterial,
+        uuid: 'scatter-material-uuid',
+        scattering: {
+          '125': 0.05,
+          '250': 0.1,
+          '500': 0.2,
+          '1000': 0.4,
+          '2000': 0.6,
+          '4000': 0.8,
+        },
+      };
+
+      surface.acousticMaterial = materialWithScattering;
+
+      // interpolateAlpha should be called with the scattering values
+      // (once for absorption, once for scattering)
+      const calls = (interpolateAlpha as jest.Mock).mock.calls;
+      const scatteringCall = calls.find(
+        (call: any[]) => Array.isArray(call[0]) && call[0].includes(0.2) && call[0].includes(0.8)
+      );
+      expect(scatteringCall).toBeDefined();
     });
   });
 
