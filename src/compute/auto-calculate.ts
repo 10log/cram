@@ -21,7 +21,7 @@ let isAutoCalculating = false;
 let isProgressVisible = false;
 
 /** Solver kinds that have a calculate method implemented */
-const CALCULATABLE_SOLVER_KINDS = ["beam-trace", "rt60"];
+const CALCULATABLE_SOLVER_KINDS = ["beam-trace", "rt60", "art"];
 
 /**
  * Get solvers that have a calculate method defined
