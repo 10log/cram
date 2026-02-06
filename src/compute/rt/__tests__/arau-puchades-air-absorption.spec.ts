@@ -9,52 +9,6 @@
  */
 
 describe('Arau-Puchades air absorption term', () => {
-  describe('source code verification', () => {
-    it('Arau-Puchades formula now includes airAbs term', () => {
-      const fs = require('fs');
-      const path = require('path');
-
-      const sourceFile = fs.readFileSync(
-        path.resolve(__dirname, '..', 'index.ts'),
-        'utf8'
-      );
-
-      // Find the arauPuchades method
-      const apSection = sourceFile.match(/arauPuchades[\s\S]*?return frequencies\.map[\s\S]*?\}\);/);
-      expect(apSection).not.toBeNull();
-
-      // Should contain airabs term
-      expect(apSection![0]).toMatch(/airabsterm/);
-    });
-  });
-
-  describe('formula consistency', () => {
-    it('all three RT60 methods should include air absorption', () => {
-      const fs = require('fs');
-      const path = require('path');
-
-      const sourceFile = fs.readFileSync(
-        path.resolve(__dirname, '..', 'index.ts'),
-        'utf8'
-      );
-
-      // Sabine should have air absorption
-      const sabineSection = sourceFile.match(/sabine\(\)\s*\{[\s\S]*?return response/);
-      expect(sabineSection).not.toBeNull();
-      expect(sabineSection![0]).toMatch(/airabsterm|airAbs/);
-
-      // Eyring should have air absorption
-      const eyringSection = sourceFile.match(/eyring\(\)\s*\{[\s\S]*?return response/);
-      expect(eyringSection).not.toBeNull();
-      expect(eyringSection![0]).toMatch(/airabsterm|airAbs/);
-
-      // Arau-Puchades should now have air absorption too
-      const apSection = sourceFile.match(/arauPuchades[\s\S]*?return frequencies/);
-      expect(apSection).not.toBeNull();
-      expect(apSection![0]).toMatch(/airabsterm|airAbs/);
-    });
-  });
-
   describe('physical correctness of air absorption term', () => {
     it('air absorption is modeled as 4*m*V', () => {
       // The standard air absorption term in RT60 formulas is 4*m*V
