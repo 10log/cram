@@ -227,10 +227,11 @@ export class RT60 extends Solver{
     const A = Ax+Ay+Az;
 
     return frequencies.map((freq,f)=>{
-      const rt = 
-      ((unitsConstant*v) / (-A * (Math.log(1-αx[f]))) ) ** (Ax/A) *
-      ((unitsConstant*v) / (-A * (Math.log(1-αy[f]))) ) ** (Ay/A) *
-      ((unitsConstant*v) / (-A * (Math.log(1-αz[f]))) ) ** (Az/A);
+      const airabsterm = 4*airAbs20c40rh(freq)*v;
+      const rt =
+      ((unitsConstant*v) / (-A * (Math.log(1-αx[f])) + airabsterm) ) ** (Ax/A) *
+      ((unitsConstant*v) / (-A * (Math.log(1-αy[f])) + airabsterm) ) ** (Ay/A) *
+      ((unitsConstant*v) / (-A * (Math.log(1-αz[f])) + airabsterm) ) ** (Az/A);
       return rt;
     });
   }
