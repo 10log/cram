@@ -47,17 +47,24 @@ describe('reflectionCoefficient', () => {
   describe('High Absorption (α = 1)', () => {
     it('returns small reflection for α=1 at oblique angle', () => {
       // When α = 1: sqrt(1-α) = 0, ξo = (1-0)/(1+0) = 1
-      // At π/4: R = ((1*sin(π/4) - 1) / (1*sin(π/4) + 1))² ≈ 0.029
+      // At π/4: R = ((1*cos(π/4) - 1) / (1*cos(π/4) + 1))² ≈ 0.029
       const R = reflectionCoefficient(1, Math.PI / 4);
       expect(R).toBeCloseTo(0.029, 2);
     });
 
-    it('returns 1 at normal incidence for α = 1 (model edge case)', () => {
-      // At θ = 0: sin(0) = 0, so ξo*sin(θ) = 0
-      // R = ((0 - 1) / (0 + 1))² = 1
-      // This is an edge case of this particular impedance model
+    it('returns 0 at normal incidence for α = 1 (perfect absorption)', () => {
+      // At θ = 0: cos(0) = 1, ξo = 1
+      // R = ((1*1 - 1) / (1*1 + 1))² = 0
+      // Full absorption at normal incidence — physically correct
       const R = reflectionCoefficient(1, 0);
-      expect(R).toBeCloseTo(1, 5);
+      expect(R).toBeCloseTo(0, 5);
+    });
+
+    it('approaches 1 at grazing incidence for α = 1', () => {
+      // At θ → π/2: cos(θ) → 0, so ξo*cos(θ) → 0
+      // R = ((0 - 1) / (0 + 1))² = 1 (total reflection at grazing)
+      const R = reflectionCoefficient(1, Math.PI / 2 - 0.001);
+      expect(R).toBeCloseTo(1, 1);
     });
   });
 
@@ -174,6 +181,37 @@ describe('reflectionCoefficient', () => {
       for (let i = 1; i < Rs.length; i++) {
         expect(Math.abs(Rs[i] - Rs[i - 1])).toBeLessThan(0.2);
       }
+    });
+  });
+
+  describe('Obtuse Angles (θ > π/2, DoubleSide surfaces)', () => {
+    it('returns value in [0,1] for θ > π/2', () => {
+      const obtuseAngles = [
+        Math.PI * 2 / 3,   // 120°
+        Math.PI * 3 / 4,   // 135°
+        Math.PI * 5 / 6,   // 150°
+        Math.PI - 0.001,   // ~180°
+      ];
+
+      obtuseAngles.forEach(theta => {
+        const R = reflectionCoefficient(0.5, theta);
+        expect(R).toBeGreaterThanOrEqual(0);
+        expect(R).toBeLessThanOrEqual(1);
+      });
+    });
+
+    it('obtuse angle gives same result as its supplementary acute angle', () => {
+      const alphas = [0.1, 0.5, 0.9];
+      const acuteAngles = [Math.PI / 6, Math.PI / 4, Math.PI / 3];
+
+      alphas.forEach(alpha => {
+        acuteAngles.forEach(acute => {
+          const obtuse = Math.PI - acute;
+          const R_acute = reflectionCoefficient(alpha, acute);
+          const R_obtuse = reflectionCoefficient(alpha, obtuse);
+          expect(R_obtuse).toBeCloseTo(R_acute, 10);
+        });
+      });
     });
   });
 

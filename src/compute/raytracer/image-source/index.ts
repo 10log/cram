@@ -190,7 +190,7 @@ class ImageSourcePath{
       let prevReflector: Surface | null = this.path[order-1].reflectingSurface; 
       let reflector: Surface | null = this.path[order].reflectingSurface; 
 
-      for(let j = 1; j<room_surfaces.length; j++){
+      for(let j = 0; j<room_surfaces.length; j++){
         if((room_surfaces[j] !== prevReflector) && (room_surfaces[j] !== reflector)){
 
           // from current image source to last image source / receiver

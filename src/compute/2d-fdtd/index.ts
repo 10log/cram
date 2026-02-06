@@ -26,6 +26,7 @@ import {
 } from "three/examples/jsm/misc/GPUComputationRenderer.js";
 import shaders from "./shaders";
 import Solver from "../solver";
+import { computeTimestep } from "./timestep";
 
 import Source from "../../objects/source";
 import Receiver from "../../objects/receiver";
@@ -147,7 +148,7 @@ class FDTD_2D extends Solver {
     this.width = this.nx * this.cellSize;
     this.height = this.ny * this.cellSize;
 
-    this.dt = this.cellSize / this.waveSpeed;
+    this.dt = computeTimestep(this.cellSize, this.waveSpeed);
 
     this.sources = {} as KeyValuePair<Source>;
     this.sourceKeys = [] as string[];
@@ -296,6 +297,8 @@ class FDTD_2D extends Solver {
 
     (this.heightmapVariable.material as ShaderMaterial).uniforms["damping"] = { value: 0.9999 };
 
+    (this.heightmapVariable.material as ShaderMaterial).uniforms["courantSq"] = { value: (this.waveSpeed * this.dt / this.cellSize) ** 2 };
+
     (this.heightmapVariable.material as ShaderMaterial).uniforms["heightCompensation"] = { value: 0 };
 
     (this.heightmapVariable.material as ShaderMaterial).uniforms["cell_size"] = { value: this.cellSize };
@@ -388,9 +391,9 @@ class FDTD_2D extends Solver {
   }
   addWall(props: FDTDWallProps) {
     const x1 = clamp(Math.floor((props.x1 - this.offsetX) / this.cellSize), 0, this.nx - 1);
-    const y1 = clamp(Math.floor((props.y1 - this.offsetY) / this.cellSize), 0, this.nx - 1);
+    const y1 = clamp(Math.floor((props.y1 - this.offsetY) / this.cellSize), 0, this.ny - 1);
     const x2 = clamp(Math.floor((props.x2 - this.offsetX) / this.cellSize), 0, this.nx - 1);
-    const y2 = clamp(Math.floor((props.y2 - this.offsetY) / this.cellSize), 0, this.nx - 1);
+    const y2 = clamp(Math.floor((props.y2 - this.offsetY) / this.cellSize), 0, this.ny - 1);
     this.walls.push(new FDTDWall({ x1, y1, x2, y2 }));
     this.updateWalls();
   }

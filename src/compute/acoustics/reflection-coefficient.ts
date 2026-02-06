@@ -12,8 +12,9 @@
 export function reflectionCoefficient(α: number, θ: number) {
   const rootOneMinusAlpha = Math.sqrt(1 - α);
   const ξo = (1 - rootOneMinusAlpha) / (1 + rootOneMinusAlpha);
-  const ξo_sinθ = ξo * Math.sin(θ);
-  const R = (ξo_sinθ - 1) / (ξo_sinθ + 1);
+  const cosθ = Math.abs(Math.cos(θ));
+  const ξo_cosθ = ξo * cosθ;
+  const R = (ξo_cosθ - 1) / (ξo_cosθ + 1);
   return R**2;
 }
 
