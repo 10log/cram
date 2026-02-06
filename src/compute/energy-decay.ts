@@ -94,7 +94,7 @@ class EnergyDecay extends Solver{
         }
 
         console.log(filterFreqs); 
-        console.log("T10 Values: ");
+        console.log("T15 Values: ");
         console.log(this.T15); 
         console.log("T20 Values: ");
         console.log(this.T20); 
