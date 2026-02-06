@@ -6,6 +6,7 @@ import { audioEngine } from "../audio-engine/audio-engine";
 import { emit, on } from "../messenger";
 import { addSolver, setSolverProperty, useSolver } from "../store/solver-store";
 import Solver, { SolverParams } from "./solver";
+import { schroederBackwardsIntegration } from "./schroeder";
 
 // import audio
 
@@ -191,31 +192,6 @@ function calculateRTFromDecay(decay: Float32Array,decayLength: number,sampleRate
     return reverb_time; 
 }
 
-function schroederBackwardsIntegration(data: Float32Array){
-
-    const td = data.length; // upper integration limit 
-
-    let data_reversed: Float32Array = new Float32Array(data).reverse();
-
-    let data_reversed_sq: Float32Array = data_reversed.map((x)=>Math.pow(x,2)); 
-
-    let data_reversed_sq_cumsum: Float32Array = cumsum(data_reversed_sq); 
-
-    let data_sq: Float32Array = data.map((x)=>Math.pow(x,2)); 
-    let data_sq_sum: number = sum(data_sq);
-    
-    let data_reversed_sq_cumsum_div_sum: Float32Array = data_reversed_sq_cumsum.map((x)=>(x/data_sq_sum)); 
-
-    let bi_result: Float32Array = data_reversed_sq_cumsum_div_sum.map((x)=>{
-        if(x!==0){
-            return 10*Math.log10(x);
-        }else{
-            return 0;
-        }
-    }); 
-    return bi_result; 
-}
-
 function indexOfMin(data: Float32Array): number{
     let min_index = 0;
     let min = data[min_index]; 
@@ -227,20 +203,6 @@ function indexOfMin(data: Float32Array): number{
         }
     }
     return min_index; 
-}
-
-function sum(data: Float32Array): number{
-    let sum: number = data.reduce(function(acc,currentValue) {
-        return acc + currentValue; 
-    }, 0); 
-    return sum; 
-}
-
-function cumsum(data: Float32Array): Float32Array{
-    const cumulativeSum = ((sum: number) => (value: number) => sum += value)(0);
-    let cumsum_array = data.map(cumulativeSum);
-
-    return cumsum_array;
 }
 
 function abs(data: Float32Array): Float32Array{
