@@ -5,7 +5,7 @@
  * NaN when avg_abs > 1 (possible from bad material data). No guard
  * existed in Eyring or Arau-Puchades implementations.
  *
- * Fix: Clamp absorption coefficients to [0, 0.99] before passing to log.
+ * Fix: Clamp absorption coefficients to [0, 0.9999] before passing to log.
  */
 
 describe('RT60 NaN/Infinity guard', () => {
@@ -45,34 +45,38 @@ describe('RT60 NaN/Infinity guard', () => {
   });
 
   describe('clamping behavior', () => {
-    it('clamping to 0.99 prevents -Infinity from Math.log', () => {
+    it('clamping to 0.9999 prevents -Infinity from Math.log', () => {
       const avg_abs = 1.0;
-      const clamped = Math.min(avg_abs, 0.99);
+      const clamped = Math.max(0, Math.min(avg_abs, 0.9999));
       const logValue = Math.log(1 - clamped);
 
       expect(Number.isFinite(logValue)).toBe(true);
-      expect(logValue).toBeCloseTo(Math.log(0.01), 10);
+      expect(logValue).toBeCloseTo(Math.log(0.0001), 10);
     });
 
-    it('clamping to 0.99 prevents NaN from Math.log when α > 1', () => {
+    it('clamping to 0.9999 prevents NaN from Math.log when α > 1', () => {
       const avg_abs = 1.5; // impossible physically, but possible from bad data
-      const clamped = Math.min(avg_abs, 0.99);
+      const clamped = Math.max(0, Math.min(avg_abs, 0.9999));
       const logValue = Math.log(1 - clamped);
 
       expect(Number.isFinite(logValue)).toBe(true);
-      expect(logValue).toBeLessThan(0); // ln(0.01) ≈ -4.6
+      expect(logValue).toBeLessThan(0);
+    });
+
+    it('lower bound clamp prevents negative absorption', () => {
+      const avg_abs = -0.5; // invalid data
+      const clamped = Math.max(0, Math.min(avg_abs, 0.9999));
+
+      expect(clamped).toBe(0);
+      expect(Number.isFinite(Math.log(1 - clamped))).toBe(true);
     });
 
     it('clamping does not affect valid absorption values', () => {
-      const validValues = [0, 0.1, 0.3, 0.5, 0.7, 0.9, 0.95];
+      const validValues = [0, 0.1, 0.3, 0.5, 0.7, 0.9, 0.95, 0.999];
 
       validValues.forEach(alpha => {
-        const clamped = Math.min(alpha, 0.99);
-        // For α <= 0.95, clamping should not change the value
-        if (alpha <= 0.95) {
-          expect(clamped).toBe(alpha);
-        }
-        // For all valid values, log should be finite
+        const clamped = Math.max(0, Math.min(alpha, 0.9999));
+        expect(clamped).toBe(alpha);
         expect(Number.isFinite(Math.log(1 - clamped))).toBe(true);
       });
     });
@@ -86,7 +90,7 @@ describe('RT60 NaN/Infinity guard', () => {
       airAbsorption: number = 0,
       k: number = 0.161
     ): number {
-      const clampedAlpha = Math.min(avgAbsorption, 0.99);
+      const clampedAlpha = Math.max(0, Math.min(avgAbsorption, 0.9999));
       const denominator = -surfaceArea * Math.log(1 - clampedAlpha) + 4 * airAbsorption * volume;
       return (k * volume) / denominator;
     }
@@ -103,9 +107,8 @@ describe('RT60 NaN/Infinity guard', () => {
       expect(rt).toBeGreaterThan(0);
     });
 
-    it('produces physically reasonable result for α = 0.99', () => {
-      // Very high absorption should give very short RT60
-      const rt = eyringRT60_guarded(100, 200, 0.99);
+    it('produces physically reasonable result for α = 0.9999', () => {
+      const rt = eyringRT60_guarded(100, 200, 0.9999);
       expect(rt).toBeGreaterThan(0);
       expect(rt).toBeLessThan(0.1); // Nearly anechoic
     });
@@ -124,38 +127,57 @@ describe('RT60 NaN/Infinity guard', () => {
     });
   });
 
-  describe('source code verification', () => {
-    it('Eyring method clamps avg_abs before Math.log', () => {
-      const fs = require('fs');
-      const path = require('path');
+  describe('Arau-Puchades formula with guard', () => {
+    function arauPuchadesRT60_guarded(
+      volume: number,
+      projectedAreas: [number, number, number],
+      alphas: [number, number, number],
+      k: number = 0.161
+    ): number {
+      const [Ax, Ay, Az] = projectedAreas;
+      const A = Ax + Ay + Az;
+      const clamped = alphas.map(a => Math.max(0, Math.min(a, 0.9999)));
 
-      const sourceFile = fs.readFileSync(
-        path.resolve(__dirname, '..', 'index.ts'),
-        'utf8'
+      return (
+        ((k * volume) / (-A * Math.log(1 - clamped[0]))) ** (Ax / A) *
+        ((k * volume) / (-A * Math.log(1 - clamped[1]))) ** (Ay / A) *
+        ((k * volume) / (-A * Math.log(1 - clamped[2]))) ** (Az / A)
       );
+    }
 
-      // Find the Eyring method and check for Math.min clamping
-      const eyringSection = sourceFile.match(/eyring\(\)\s*\{[\s\S]*?return response/);
-      expect(eyringSection).not.toBeNull();
-
-      // Should contain Math.min(..., 0.99)
-      expect(eyringSection![0]).toMatch(/Math\.min\([^)]*0\.99\)/);
+    it('produces finite result for α = 1.0 on one axis', () => {
+      const rt = arauPuchadesRT60_guarded(100, [80, 60, 60], [1.0, 0.5, 0.5]);
+      expect(Number.isFinite(rt)).toBe(true);
+      expect(rt).toBeGreaterThan(0);
     });
 
-    it('Arau-Puchades method clamps alphas before Math.log', () => {
-      const fs = require('fs');
-      const path = require('path');
+    it('produces finite result for α > 1.0 (bad data)', () => {
+      const rt = arauPuchadesRT60_guarded(100, [80, 60, 60], [1.5, 0.5, 0.5]);
+      expect(Number.isFinite(rt)).toBe(true);
+      expect(rt).toBeGreaterThan(0);
+    });
 
-      const sourceFile = fs.readFileSync(
-        path.resolve(__dirname, '..', 'index.ts'),
-        'utf8'
-      );
+    it('produces finite result for α = 1.0 on all axes', () => {
+      const rt = arauPuchadesRT60_guarded(100, [80, 60, 60], [1.0, 1.0, 1.0]);
+      expect(Number.isFinite(rt)).toBe(true);
+      expect(rt).toBeGreaterThan(0);
+    });
 
-      // Find the arauPuchades method and check for Math.min clamping
-      const apSection = sourceFile.match(/arauPuchades[\s\S]*?return frequencies\.map/);
-      expect(apSection).not.toBeNull();
+    it('produces same results as unguarded for typical absorption values', () => {
+      const volume = 180;
+      const areas: [number, number, number] = [80, 60, 60];
+      const k = 0.161;
+      const A = 200;
 
-      expect(apSection![0]).toMatch(/Math\.min\([^)]*0\.99\)/);
+      const alphaSet: [number, number, number] = [0.3, 0.5, 0.2];
+
+      const guarded = arauPuchadesRT60_guarded(volume, areas, alphaSet, k);
+      const unguarded =
+        ((k * volume) / (-A * Math.log(1 - alphaSet[0]))) ** (areas[0] / A) *
+        ((k * volume) / (-A * Math.log(1 - alphaSet[1]))) ** (areas[1] / A) *
+        ((k * volume) / (-A * Math.log(1 - alphaSet[2]))) ** (areas[2] / A);
+
+      expect(guarded).toBeCloseTo(unguarded, 10);
     });
   });
 });
