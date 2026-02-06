@@ -195,7 +195,7 @@ function schroederBackwardsIntegration(data: Float32Array){
 
     const td = data.length; // upper integration limit 
 
-    let data_reversed: Float32Array = data.reverse(); 
+    let data_reversed: Float32Array = new Float32Array(data).reverse();
 
     let data_reversed_sq: Float32Array = data_reversed.map((x)=>Math.pow(x,2)); 
 
