@@ -46,6 +46,8 @@ import { downloadImpulses as downloadImpulsesFn, playImpulseResponse as playImpu
 import { resetConvergenceState, updateConvergenceMetrics, addToEnergyHistogram } from "./convergence";
 import { buildEdgeGraph, findDiffractionPaths } from "./diffraction";
 import type { EdgeGraph } from "./diffraction";
+import { isWebGPUAvailable } from "./gpu/gpu-context";
+import { GpuRayTracer } from "./gpu/gpu-ray-tracer";
 
 // Re-export all types for external consumers
 export type {
@@ -140,6 +142,10 @@ class RayTracer extends Solver {
   tailCrossfadeTime: number;
   tailCrossfadeDuration: number;
   _edgeGraph: EdgeGraph | null;
+  gpuEnabled: boolean;
+  gpuBatchSize: number;
+  private _gpuRayTracer: GpuRayTracer | null = null;
+  private _gpuRunning: boolean = false;
   private _rafId: number = 0;
 
   constructor(params?: RayTracerParams) {
@@ -206,6 +212,8 @@ class RayTracer extends Solver {
     this.lateReverbTailEnabled = params.lateReverbTailEnabled ?? defaults.lateReverbTailEnabled;
     this.tailCrossfadeTime = params.tailCrossfadeTime ?? defaults.tailCrossfadeTime;
     this.tailCrossfadeDuration = params.tailCrossfadeDuration ?? defaults.tailCrossfadeDuration;
+    this.gpuEnabled = params.gpuEnabled ?? defaults.gpuEnabled;
+    this.gpuBatchSize = params.gpuBatchSize ?? defaults.gpuBatchSize;
     this._edgeGraph = null;
     this._histogramBinWidth = HISTOGRAM_BIN_WIDTH;
     this._histogramNumBins = HISTOGRAM_NUM_BINS;
@@ -355,6 +363,8 @@ class RayTracer extends Solver {
       lateReverbTailEnabled,
       tailCrossfadeTime,
       tailCrossfadeDuration,
+      gpuEnabled,
+      gpuBatchSize,
     } = this;
     return {
       name,
@@ -385,6 +395,8 @@ class RayTracer extends Solver {
       lateReverbTailEnabled,
       tailCrossfadeTime,
       tailCrossfadeDuration,
+      gpuEnabled,
+      gpuBatchSize,
     };
   }
 
@@ -396,6 +408,7 @@ class RayTracer extends Solver {
     });
   }
   dispose() {
+    this._disposeGpu();
     this.removeMessageHandlers();
     Object.keys(window.vars).forEach(key=>{
       if(window.vars[key]['uuid']===this.uuid){
@@ -974,11 +987,18 @@ class RayTracer extends Solver {
     this.__start_time = Date.now();
     this.__num_checked_paths = 0;
     this._resetConvergenceState();
-    this.startAllMonteCarlo();
+
+    if (this.gpuEnabled) {
+      this._startGpuMonteCarlo();
+    } else {
+      this.startAllMonteCarlo();
+    }
   }
 
   stop() {
     this.__calc_time = Date.now() - this.__start_time;
+    this._gpuRunning = false;
+    this._disposeGpu();
     cancelAnimationFrame(this._rafId);
     this._rafId = 0;
     this.intervals.forEach((interval) => {
@@ -1777,6 +1797,184 @@ class RayTracer extends Solver {
     );
     this.ambisonicImpulseResponse = result.ambisonicImpulseResponse;
     this.ambisonicOrder = result.ambisonicOrder;
+  }
+
+  /** Initialize GPU ray tracer. Returns true on success. */
+  private async _initGpu(): Promise<boolean> {
+    if (!isWebGPUAvailable()) {
+      console.warn('[GPU RT] WebGPU not available in this browser');
+      return false;
+    }
+    try {
+      this._gpuRayTracer = new GpuRayTracer();
+      const ok = await this._gpuRayTracer.initialize(
+        this.room,
+        this.receiverIDs,
+        {
+          reflectionOrder: this.reflectionOrder,
+          frequencies: this.frequencies,
+          cachedAirAtt: this._cachedAirAtt,
+          rrThreshold: this.rrThreshold,
+        },
+        this.gpuBatchSize,
+      );
+      if (!ok) {
+        this._gpuRayTracer = null;
+        return false;
+      }
+      return true;
+    } catch (err) {
+      console.error('[GPU RT] Initialization failed:', err);
+      this._gpuRayTracer = null;
+      return false;
+    }
+  }
+
+  /** Start the GPU-accelerated Monte Carlo loop. Falls back to CPU on failure. */
+  private _startGpuMonteCarlo() {
+    this._gpuRunning = true;
+    this._lastConvergenceCheck = Date.now();
+
+    const RAY_INPUT_FLOATS = 16;
+    const numBands = Math.min(this.frequencies.length, 7);
+
+    // Fire-and-forget async init then tick loop
+    this._initGpu().then((ok) => {
+      if (!ok || !this._gpuRunning) {
+        if (this._gpuRunning) {
+          console.warn('[GPU RT] Falling back to CPU ray tracing');
+          this.startAllMonteCarlo();
+        }
+        return;
+      }
+
+      const tick = async () => {
+        if (!this._gpuRunning || !this._isRunning || !this._gpuRayTracer) return;
+
+        try {
+          // Prepare ray inputs for this batch
+          const batchSize = this.gpuBatchSize;
+          const rayInputs = new Float32Array(batchSize * RAY_INPUT_FLOATS);
+
+          let rayIdx = 0;
+          for (let i = 0; i < this.sourceIDs.length && rayIdx < batchSize; i++) {
+            const source = useContainer.getState().containers[this.sourceIDs[i]] as Source;
+            const position = source.position;
+            const rotation = source.rotation;
+            const sourcePhi = source.phi;
+            const sourceTheta = source.theta;
+            const sourceDH = source.directivityHandler;
+            const sourceId = this.sourceIDs[i];
+
+            // Cache ref pressures
+            if (!this._directivityRefPressures) this._directivityRefPressures = new Map();
+            let refPressures = this._directivityRefPressures.get(sourceId);
+            if (!refPressures || refPressures.length !== this.frequencies.length) {
+              refPressures = new Array(this.frequencies.length);
+              for (let f = 0; f < this.frequencies.length; f++) {
+                refPressures[f] = sourceDH.getPressureAtPosition(0, this.frequencies[f], 0, 0) as number;
+              }
+              this._directivityRefPressures.set(sourceId, refPressures);
+            }
+
+            const raysPerSource = Math.floor(batchSize / this.sourceIDs.length);
+            for (let r = 0; r < raysPerSource && rayIdx < batchSize; r++) {
+              const phi = Math.random() * sourcePhi;
+              const theta = Math.random() * sourceTheta;
+
+              const threeJSAngles = cramangle2threejsangle(phi, theta);
+              const direction = new THREE.Vector3().setFromSphericalCoords(1, threeJSAngles[0], threeJSAngles[1]);
+              direction.applyEuler(rotation);
+
+              const off = rayIdx * RAY_INPUT_FLOATS;
+              rayInputs[off] = position.x;
+              rayInputs[off + 1] = position.y;
+              rayInputs[off + 2] = position.z;
+              rayInputs[off + 3] = direction.x;
+              rayInputs[off + 4] = direction.y;
+              rayInputs[off + 5] = direction.z;
+              rayInputs[off + 6] = phi;
+              rayInputs[off + 7] = theta;
+
+              // Band energy with directivity
+              for (let f = 0; f < numBands; f++) {
+                let energy = 1;
+                try {
+                  const dirP = sourceDH.getPressureAtPosition(0, this.frequencies[f], phi, theta);
+                  const refP = refPressures[f];
+                  if (typeof dirP === "number" && typeof refP === "number" && refP > 0) {
+                    energy = (dirP / refP) ** 2;
+                  }
+                } catch (e) { /* fallback to unity */ }
+                rayInputs[off + 8 + f] = energy;
+              }
+
+              rayIdx++;
+            }
+          }
+
+          const actualRayCount = rayIdx;
+          const batchSeed = Math.floor(Math.random() * 0xFFFFFFFF);
+          const paths = await this._gpuRayTracer.traceBatch(rayInputs, actualRayCount, batchSeed);
+
+          // Process returned paths through existing pipeline
+          let sourceIdx = 0;
+          const raysPerSource = Math.floor(actualRayCount / Math.max(1, this.sourceIDs.length));
+
+          for (let p = 0; p < paths.length; p++) {
+            const path = paths[p];
+            // Determine which source this ray belongs to
+            const srcArrayIdx = Math.min(
+              Math.floor(p / Math.max(1, raysPerSource)),
+              this.sourceIDs.length - 1
+            );
+            const sourceId = this.sourceIDs[srcArrayIdx];
+            const position = (useContainer.getState().containers[sourceId] as Source).position;
+            path.source = sourceId;
+
+            this.__num_checked_paths++;
+            (this.stats.numRaysShot.value as number)++;
+
+            this._handleTracedPath(path, position, sourceId);
+          }
+
+          this.flushRayBuffer();
+          renderer.needsToRender = true;
+
+          // Convergence check
+          const now = Date.now();
+          if (this.autoStop && now - this._lastConvergenceCheck >= this._convergenceCheckInterval) {
+            this._lastConvergenceCheck = now;
+            this._updateConvergenceMetrics();
+            if (this.convergenceMetrics.convergenceRatio < this.convergenceThreshold
+                && this.convergenceMetrics.t30Count >= 3) {
+              this.isRunning = false;
+              return;
+            }
+          }
+
+          // Next frame
+          if (this._gpuRunning && this._isRunning) {
+            this._rafId = requestAnimationFrame(() => { tick(); });
+          }
+        } catch (err) {
+          console.error('[GPU RT] Batch error, falling back to CPU:', err);
+          this._gpuRunning = false;
+          this._disposeGpu();
+          this.startAllMonteCarlo();
+        }
+      };
+
+      this._rafId = requestAnimationFrame(() => { tick(); });
+    });
+  }
+
+  /** Destroy GPU ray tracer if initialized. */
+  private _disposeGpu() {
+    if (this._gpuRayTracer) {
+      this._gpuRayTracer.dispose();
+      this._gpuRayTracer = null;
+    }
   }
 
   get sources() {

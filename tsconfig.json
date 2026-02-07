@@ -31,7 +31,8 @@
       "@types/d3",
       "@types/plotly.js",
       "@types/styled-components",
-      "@types/zip.js"
+      "@types/zip.js",
+      "@webgpu/types"
     ],
 
     "lib": [
