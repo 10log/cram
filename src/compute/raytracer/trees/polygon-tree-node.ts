@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { math, geometry, splitPolygonByPlane } from '../../csg';
 
 const EPS = math.constants.EPS;
@@ -27,9 +26,9 @@ type poly = {
 
 export class PolygonTreeNode {
   polygontreenodes: PolygonTreeNode[];
-  parent!: PolygonTreeNode|undefined;
+  parent!: PolygonTreeNode | null | undefined;
   children: PolygonTreeNode[];
-  polygon!: poly;
+  polygon!: poly | null;
   plane!: poly;
   front!: typeof Node;
   back!: typeof Node;
@@ -47,13 +46,13 @@ export class PolygonTreeNode {
   }
   // fill the tree with polygons. Should be called on the root node only; child nodes must
   // always be a derivate (split) of the parent node.
-  addPolygons(polygons) {
+  addPolygons(polygons: any[]) {
     // new polygons can only be added to root node; children can only be splitted polygons
     if (!this.isRootNode()) {
       throw new Error('Assertion failed');
     }
     let _this = this;
-    polygons.forEach(function (polygon) {
+    polygons.forEach(function (polygon: any) {
       _this.addChild(polygon);
     });
   }
@@ -95,9 +94,9 @@ export class PolygonTreeNode {
     return this.polygon;
   }
 
-  getPolygons(result) {
-    let children = [this];
-    let queue = [children];
+  getPolygons(result: any[]) {
+    let children: PolygonTreeNode[] = [this];
+    let queue: PolygonTreeNode[][] = [children];
     let i, j, l, node;
     for (i = 0; i < queue.length; ++i) { // queue size can change in loop, don't cache length
       children = queue[i];
@@ -118,7 +117,7 @@ export class PolygonTreeNode {
   // If the plane doesn't intersect the polygon, the 'this' object is added to one of the arrays
   // If the plane does intersect the polygon, two new child nodes are created for the front and back fragments,
   //  and added to both arrays.
-  splitByPlane(plane, coplanarfrontnodes, coplanarbacknodes, frontnodes, backnodes) {
+  splitByPlane(plane: any, coplanarfrontnodes: PolygonTreeNode[], coplanarbacknodes: PolygonTreeNode[], frontnodes: PolygonTreeNode[], backnodes: PolygonTreeNode[]) {
     if (this.children.length) {
       let queue = [this.children];
       let i;
@@ -144,7 +143,7 @@ export class PolygonTreeNode {
   }
 
   // only to be called for nodes with no children
-  _splitByPlane(splane, coplanarfrontnodes, coplanarbacknodes, frontnodes, backnodes) {
+  _splitByPlane(splane: any, coplanarfrontnodes: PolygonTreeNode[], coplanarbacknodes: PolygonTreeNode[], frontnodes: PolygonTreeNode[], backnodes: PolygonTreeNode[]) {
     let polygon = this.polygon;
     if (polygon) {
       let bound = poly3.measureBoundingSphere(polygon);
@@ -199,7 +198,7 @@ export class PolygonTreeNode {
   // this should be called whenever the polygon is split
   // a child should be created for every fragment of the split polygon
   // returns the newly created child
-  addChild(polygon) {
+  addChild(polygon: any) {
     let newchild = new PolygonTreeNode();
     newchild.parent = this;
     newchild.polygon = polygon;
@@ -208,8 +207,8 @@ export class PolygonTreeNode {
   }
 
   invertSub() {
-    let children = [this];
-    let queue = [children];
+    let children: PolygonTreeNode[] = [this];
+    let queue: PolygonTreeNode[][] = [children];
     let i, j, l, node;
     for (i = 0; i < queue.length; i++) {
       children = queue[i];
@@ -226,7 +225,6 @@ export class PolygonTreeNode {
   recursivelyInvalidatePolygon() {
     let node: PolygonTreeNode = this;
     while (node.polygon) {
-      //@ts-ignore
       node.polygon = null;
       if (node.parent) {
         node = node.parent;
@@ -243,11 +241,9 @@ export class PolygonTreeNode {
       for (let j = 0; j < l; j++) {
         let node = children[j];
         if (node.polygon) {
-          //@ts-ignore
           node.polygon = null;
         }
         if (node.parent) {
-          //@ts-ignore
           node.parent = null;
         }
         if (node.children.length > 0) queue.push(node.children);
@@ -258,8 +254,8 @@ export class PolygonTreeNode {
 
   toString() {
     let result = '';
-    let children = [this];
-    let queue = [children];
+    let children: PolygonTreeNode[] = [this];
+    let queue: PolygonTreeNode[][] = [children];
     let i, j, l, node;
     for (i = 0; i < queue.length; ++i) { // queue size can change in loop, don't cache length
       children = queue[i];
