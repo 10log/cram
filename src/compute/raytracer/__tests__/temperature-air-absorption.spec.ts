@@ -25,6 +25,16 @@ describe('RayTracer temperature and per-segment air absorption', () => {
     'utf8'
   );
 
+  const rayCoreSource = fs.readFileSync(
+    path.resolve(__dirname, '..', 'ray-core.ts'),
+    'utf8'
+  );
+
+  const impulseResponseSource = fs.readFileSync(
+    path.resolve(__dirname, '..', 'impulse-response.ts'),
+    'utf8'
+  );
+
   // --- Temperature property ---
 
   it('RayTracerParams includes optional temperature', () => {
@@ -85,11 +95,11 @@ describe('RayTracer temperature and per-segment air absorption', () => {
 
   it('applies per-segment air absorption in intensity domain (/10) in traceRay', () => {
     // bandEnergy is intensity (reflectionFunction returns R²), so dB→linear uses /10
-    expect(source).toContain('this._cachedAirAtt[f] * segmentDistance / 10');
+    expect(rayCoreSource).toContain('cachedAirAtt[f] * segmentDistance / 10');
   });
 
   it('applies air absorption to receiver segment in intensity domain (/10)', () => {
-    expect(source).toContain('this._cachedAirAtt[f] * receiverSegmentDist / 10');
+    expect(rayCoreSource).toContain('cachedAirAtt[f] * receiverSegmentDist / 10');
   });
 
   // --- Hardcoded speed of sound replaced ---
@@ -130,7 +140,7 @@ describe('RayTracer temperature and per-segment air absorption', () => {
 
   it('arrivalPressure skips post-hoc air absorption for bandEnergy paths', () => {
     // The bandEnergy fast path should return early without applying air absorption
-    expect(source).toContain('no post-hoc air absorption needed');
+    expect(impulseResponseSource).toContain('no post-hoc air absorption needed');
   });
 
   // --- Hybrid passes temperature to image source solver ---

@@ -19,6 +19,16 @@ const typesSource = fs.readFileSync(
   'utf8'
 );
 
+const convergenceSource = fs.readFileSync(
+  path.resolve(__dirname, '..', 'convergence.ts'),
+  'utf8'
+);
+
+const rayCoreSource = fs.readFileSync(
+  path.resolve(__dirname, '..', 'ray-core.ts'),
+  'utf8'
+);
+
 describe('Phase 7: Convergence, Russian Roulette, Stratified Sampling', () => {
 
   describe('7a: Convergence monitoring', () => {
@@ -62,31 +72,31 @@ describe('Phase 7: Convergence, Russian Roulette, Stratified Sampling', () => {
 
     it('_updateConvergenceMetrics uses Schroeder backward integration', () => {
       // Should compute cumulative sum from end to start
-      expect(source).toMatch(/schroeder\[b\]\s*=\s*schroeder\[b\s*\+\s*1\]\s*\+\s*histogram\[b\]/);
+      expect(convergenceSource).toMatch(/schroeder\[b\]\s*=\s*schroeder\[b\s*\+\s*1\]\s*\+\s*histogram\[b\]/);
     });
 
     it('_updateConvergenceMetrics uses Welford online algorithm', () => {
       // Check for Welford's running mean update
-      expect(source).toContain('oldMean + (val - oldMean) / n');
+      expect(convergenceSource).toContain('oldMean + (val - oldMean) / n');
     });
 
-    it('uses stable receiver selection via this.receiverIDs', () => {
-      expect(source).toContain('this.receiverIDs');
+    it('uses stable receiver selection via receiverIDs', () => {
+      expect(convergenceSource).toContain('receiverIDs');
       // Should not just use Object.keys()[0]
-      const updateMethod = source.match(/_updateConvergenceMetrics\(\)\s*\{([\s\S]*?)\n\s{2}\}/);
+      const updateMethod = convergenceSource.match(/function\s+updateConvergenceMetrics\([\s\S]*?\)\s*(?::\s*void\s*)?\{([\s\S]*?)\n\}/);
       expect(updateMethod).not.toBeNull();
-      expect(updateMethod![1]).toContain('this.receiverIDs');
+      expect(updateMethod![1]).toContain('receiverIDs');
     });
 
     it('uses linearRegression for T30 estimation', () => {
-      const updateMethod = source.match(/_updateConvergenceMetrics\(\)\s*\{([\s\S]*?)\n\s{2}\}/);
+      const updateMethod = convergenceSource.match(/function\s+updateConvergenceMetrics\([\s\S]*?\)\s*(?::\s*void\s*)?\{([\s\S]*?)\n\}/);
       expect(updateMethod).not.toBeNull();
       expect(updateMethod![1]).toContain('linearRegression(times, levelsDb)');
     });
 
     it('skips bands with invalid T30 from convergence ratio', () => {
-      expect(source).toContain('validBandCount');
-      expect(source).toContain('validBandCount > 0 ? maxRatio : Infinity');
+      expect(convergenceSource).toContain('validBandCount');
+      expect(convergenceSource).toContain('validBandCount > 0 ? maxRatio : Infinity');
     });
 
     it('save() includes convergenceThreshold, autoStop, rrThreshold', () => {
@@ -127,26 +137,26 @@ describe('Phase 7: Convergence, Russian Roulette, Stratified Sampling', () => {
     });
 
     it('Russian Roulette uses survival probability', () => {
-      expect(source).toContain('survivalProbability');
+      expect(rayCoreSource).toContain('survivalProbability');
     });
 
     it('surviving rays are boosted by 1/survivalProbability', () => {
-      expect(source).toContain('newBandEnergy[f] /= survivalProbability');
+      expect(rayCoreSource).toContain('newBandEnergy[f] /= survivalProbability');
     });
 
     it('Russian Roulette terminates probabilistically', () => {
-      expect(source).toContain('Math.random() > survivalProbability');
+      expect(rayCoreSource).toContain('Math.random() > survivalProbability');
     });
 
     it('reflectionOrder limit preserved as safety bound', () => {
-      expect(source).toContain('iter < order + 1');
+      expect(rayCoreSource).toContain('iter < order + 1');
     });
 
     it('RR termination returns energy and bandEnergy fields', () => {
       // The early termination return should include energy and bandEnergy
       // Find the RR termination block and check it returns a complete RayPath
-      expect(source).toContain('rrEnergy');
-      expect(source).toMatch(/return\s*\{[^}]*energy:\s*rrEnergy[^}]*bandEnergy:[^}]*\}\s*as\s*RayPath/);
+      expect(rayCoreSource).toContain('rrEnergy');
+      expect(rayCoreSource).toMatch(/return\s*\{[^}]*energy:\s*rrEnergy[^}]*bandEnergy:[^}]*\}\s*as\s*RayPath/);
     });
   });
 
