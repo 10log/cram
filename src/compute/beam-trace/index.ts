@@ -1071,15 +1071,27 @@ export class BeamTraceSolver extends Solver {
   private calculateArrivalPressure(initialSPL: number[], path: BeamTracePath): number[] {
     const intensities = ac.P2I(ac.Lp2P(initialSPL)) as number[];
 
-    // Apply absorption at each reflection
-    path.polygonIds.forEach(polygonId => {
+    // Apply angle-dependent reflection at each reflection point
+    path.polygonIds.forEach((polygonId, idx) => {
       if (polygonId === null) return; // Source or receiver point
 
       const surface = this.polygonToSurface.get(polygonId);
       if (!surface) return;
 
+      // Compute incidence angle from path geometry (specular reflection):
+      // For a reflection at points[idx], the incoming ray is from points[idx+1] and
+      // outgoing ray goes to points[idx-1]. The incidence angle is half the angle
+      // between the reversed-incoming and outgoing directions.
+      let angle = 0; // fallback to normal incidence
+      if (idx > 0 && idx < path.points.length - 1) {
+        const toSource = new THREE.Vector3().subVectors(path.points[idx + 1], path.points[idx]).normalize();
+        const toReceiver = new THREE.Vector3().subVectors(path.points[idx - 1], path.points[idx]).normalize();
+        const cosAngle = Math.min(1, Math.max(-1, toSource.dot(toReceiver)));
+        angle = Math.acos(cosAngle) / 2;
+      }
+
       for (let f = 0; f < this.frequencies.length; f++) {
-        const R = 1 - surface.absorptionFunction(this.frequencies[f]);
+        const R = Math.abs(surface.reflectionFunction(this.frequencies[f], angle));
         intensities[f] *= R;
       }
     });
