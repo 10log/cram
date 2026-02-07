@@ -41,6 +41,8 @@ import { reflectionLossFunction as reflectionLossFunctionFn, calculateReflection
 import { pathsToLinearBuffer as pathsToLinearBufferFn, linearBufferToPaths as linearBufferToPathsFn } from "./serialization";
 import { downloadImpulses as downloadImpulsesFn, playImpulseResponse as playImpulseResponseFn, downloadImpulseResponse as downloadImpulseResponseFn, downloadAmbisonicImpulseResponse as downloadAmbisonicIRFn } from "./export-playback";
 import { resetConvergenceState, updateConvergenceMetrics, addToEnergyHistogram } from "./convergence";
+import { buildEdgeGraph, findDiffractionPaths } from "./diffraction";
+import type { EdgeGraph } from "./diffraction";
 
 // Re-export all types for external consumers
 export type {
@@ -129,6 +131,8 @@ class RayTracer extends Solver {
 
   _directivityRefPressures?: Map<string, number[]>;
   maxStoredPaths: number;
+  edgeDiffractionEnabled: boolean;
+  _edgeGraph: EdgeGraph | null;
   private _rafId: number = 0;
 
   constructor(params?: RayTracerParams) {
@@ -191,6 +195,8 @@ class RayTracer extends Solver {
     this.autoStop = params.autoStop ?? defaults.autoStop;
     this.rrThreshold = params.rrThreshold ?? defaults.rrThreshold;
     this.maxStoredPaths = params.maxStoredPaths ?? defaults.maxStoredPaths;
+    this.edgeDiffractionEnabled = params.edgeDiffractionEnabled ?? defaults.edgeDiffractionEnabled;
+    this._edgeGraph = null;
     this._histogramBinWidth = HISTOGRAM_BIN_WIDTH;
     this._histogramNumBins = HISTOGRAM_NUM_BINS;
     this._convergenceCheckInterval = CONVERGENCE_CHECK_INTERVAL_MS;
@@ -335,6 +341,7 @@ class RayTracer extends Solver {
       autoStop,
       rrThreshold,
       maxStoredPaths,
+      edgeDiffractionEnabled,
     } = this;
     return {
       name,
@@ -361,6 +368,7 @@ class RayTracer extends Solver {
       autoStop,
       rrThreshold,
       maxStoredPaths,
+      edgeDiffractionEnabled,
     };
   }
 
@@ -942,6 +950,11 @@ class RayTracer extends Solver {
   start() {
     this._cachedAirAtt = ac.airAttenuation(this.frequencies, this._temperature);
     this.mapIntersectableObjects();
+    if (this.edgeDiffractionEnabled && this.room) {
+      this._edgeGraph = buildEdgeGraph(this.room.allSurfaces);
+    } else {
+      this._edgeGraph = null;
+    }
     this.__start_time = Date.now();
     this.__num_checked_paths = 0;
     this._resetConvergenceState();
@@ -978,8 +991,88 @@ class RayTracer extends Solver {
         }
       });
     });
+    if (this.edgeDiffractionEnabled && this._edgeGraph && this._edgeGraph.edges.length > 0) {
+      this._computeDiffractionPaths();
+    }
     this.mapIntersectableObjects();
     this.reportImpulseResponse();
+  }
+
+  /** Compute deterministic diffraction paths and inject them into this.paths[] */
+  _computeDiffractionPaths() {
+    if (!this._edgeGraph) return;
+
+    const containers = useContainer.getState().containers;
+
+    // Gather source positions
+    const sourcePositions = new Map<string, [number, number, number]>();
+    for (const id of this.sourceIDs) {
+      const src = containers[id] as Source;
+      if (src) {
+        sourcePositions.set(id, [src.position.x, src.position.y, src.position.z]);
+      }
+    }
+
+    // Gather receiver positions
+    const receiverPositions = new Map<string, [number, number, number]>();
+    for (const id of this.receiverIDs) {
+      const rec = containers[id];
+      if (rec) {
+        receiverPositions.set(id, [rec.position.x, rec.position.y, rec.position.z]);
+      }
+    }
+
+    // Get surface meshes for LOS checks (exclude receivers)
+    const surfaces: THREE.Mesh[] = [];
+    this.room.surfaces.traverse((container) => {
+      if (container['kind'] && container['kind'] === 'surface') {
+        surfaces.push((container as Surface).mesh);
+      }
+    });
+
+    const diffractionPaths = findDiffractionPaths(
+      this._edgeGraph,
+      sourcePositions,
+      receiverPositions,
+      this.frequencies,
+      this.c,
+      this._temperature,
+      this.raycaster,
+      surfaces,
+    );
+
+    // Convert DiffractionPath → RayPath and inject into this.paths[]
+    for (const dp of diffractionPaths) {
+      const rayPath: RayPath = {
+        intersectedReceiver: true,
+        chain: [
+          {
+            distance: dp.totalDistance,
+            point: dp.diffractionPoint,
+            object: dp.receiverId,
+            faceNormal: [0, 0, 0],
+            faceIndex: -1,
+            faceMaterialIndex: -1,
+            angle: 0,
+            energy: Math.max(...dp.bandEnergy),
+            bandEnergy: dp.bandEnergy,
+          },
+        ],
+        chainLength: 1,
+        energy: Math.max(...dp.bandEnergy),
+        bandEnergy: dp.bandEnergy,
+        time: dp.time,
+        source: dp.sourceId,
+        initialPhi: 0,
+        initialTheta: 0,
+        totalLength: dp.totalDistance,
+      };
+
+      if (!this.paths[dp.receiverId]) {
+        this.paths[dp.receiverId] = [];
+      }
+      this.paths[dp.receiverId].push(rayPath);
+    }
   }
 
   async reportImpulseResponse() {
