@@ -371,6 +371,7 @@ Replace all hardcoded `343.2` occurrences with `this.c`.
 **Priority:** Medium
 **Effort:** 8–10 hours
 **Depends on:** Phase 2
+**Issue:** #64 — **Status:** Complete (PR #72)
 
 ### 5a. Source Directivity in Ray Generation
 
