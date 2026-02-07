@@ -71,25 +71,6 @@ describe('frequency-dependent scattering', () => {
     });
   });
 
-  describe('calculateWithDiffuse', () => {
-    it('uses surface.scatteringFunction(frequency) not hardcoded 0.1', () => {
-      // Find the calculateWithDiffuse method body
-      const methodStart = raytracerSource.indexOf('calculateWithDiffuse');
-      expect(methodStart).toBeGreaterThan(-1);
-
-      // Extract a generous chunk of the method containing scatteredEnergy call
-      const methodChunk = raytracerSource.slice(methodStart, methodStart + 3000);
-
-      // Find the scatteredEnergy call within the method
-      const scatteredEnergyMatch = methodChunk.match(/scatteredEnergy\(([\s\S]*?)\)\s*\n/);
-      expect(scatteredEnergyMatch).not.toBeNull();
-
-      // The scatteredEnergy call should use surface.scatteringFunction(frequency)
-      expect(scatteredEnergyMatch![1]).toContain('surface.scatteringFunction(frequency)');
-      expect(scatteredEnergyMatch![1]).not.toMatch(/\b0\.1\b/);
-    });
-  });
-
   describe('AcousticMaterial interface', () => {
     it('includes optional scattering field', () => {
       expect(materialSource).toContain('scattering?');

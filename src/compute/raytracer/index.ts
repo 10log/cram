@@ -10,10 +10,10 @@ import Surface from "../../objects/surface";
 import Receiver from "../../objects/receiver";
 import { Stat } from "../../components/parameter-config/Stats";
 import { emit, messenger, on } from "../../messenger";
-import { sort } from "fast-sort";
+
 import FileSaver from "file-saver";
 import Plotly, { PlotData } from "plotly.js";
-import { scatteredEnergy } from "./scattered-energy";
+
 import PointShader from "./shaders/points";
 import * as ac from "../acoustics";
 import { lerp } from "../../common/lerp";
@@ -1697,89 +1697,6 @@ class RayTracer extends Solver {
     });
   }
 
-  calculateWithDiffuse(frequencies: number[] = this.frequencies) {
-    this.allReceiverData = [] as ReceiverData[];
-    const keys = Object.keys(this.paths);
-    const receiverRadius = (useContainer.getState().containers[this.receiverIDs[0]] as Receiver).scale.x;
-    const receiverPosition = (useContainer.getState().containers[this.receiverIDs[0]] as Receiver).position;
-    keys.forEach((key) => {
-      const receiverData = new ReceiverData(key);
-      this.paths[key].forEach((path) => {
-        const energytime = {
-          time: 0,
-          energy: []
-        } as EnergyTime;
-        let intersectedReceiver = false;
-        path.chain.forEach((segment) => {
-          const container = this.receiverIDs.includes(segment.object)
-            ? useContainer.getState().containers[segment.object]
-            : (this.room.surfaceMap[segment.object] as Container);
-          if (container && container.kind) {
-            if (container.kind === "receiver") {
-              intersectedReceiver = true;
-            } else if (container.kind === "surface") {
-              // hit surface
-              const surface = container as Surface;
-              const energytime_diffuse = {
-                time: segment.time_rec,
-                energy: []
-              } as EnergyTime;
-              frequencies.forEach((frequency, index) => {
-                const reflectionloss = abs(surface.reflectionFunction(frequency, segment.angle_in));
-                if (!energytime.energy[index]) {
-                  energytime.energy[index] = {
-                    frequency,
-                    value: reflectionloss
-                  };
-                } else {
-                  energytime.energy[index].value *= reflectionloss;
-                  energytime.time = segment.total_time;
-                  const d = new THREE.Vector3(
-                    receiverPosition.x - segment.point[0],
-                    receiverPosition.y - segment.point[1],
-                    receiverPosition.z - segment.point[2]
-                  );
-                  const theta = new THREE.Vector3().fromArray(segment.faceNormal).angleTo(d);
-
-                  const r = receiverRadius;
-                  energytime_diffuse.energy[index] = {
-                    frequency,
-                    value: scatteredEnergy(
-                      energytime.energy[index].value,
-                      surface.absorptionFunction(frequency),
-                      surface.scatteringFunction(frequency),
-                      asin(receiverRadius / d.length()),
-                      theta
-                    )
-                  };
-                }
-              });
-              if (energytime_diffuse.energy.length > 0) {
-                receiverData.data.push(energytime_diffuse);
-              }
-            } // end container === "surface"
-          } // end container && container.kind
-        }); // end path.chain for each
-        if (intersectedReceiver) {
-          receiverData.data.push(energytime);
-        }
-      });
-      receiverData.data = sort(receiverData.data).asc((x) => x.time);
-      this.allReceiverData.push(receiverData);
-    });
-    const chartdata = this.allReceiverData.map((x) => {
-      return frequencies.map((freq) => {
-        return {
-          label: freq.toString(),
-          x: x.data.map((y) => y.time),
-          y: x.data.map((y) => y.energy.filter((z) => z.frequency == freq)[0].value)
-        };
-      });
-    });
-    messenger.postMessage("UPDATE_CHART_DATA", chartdata && chartdata[0]);
-    return this.allReceiverData;
-  }
-
   reflectionLossFunction(room: Room, raypath: RayPath, frequency: number): number {
     const chain = raypath.chain.slice(0, -1);
     if (chain && chain.length > 0) {
@@ -1858,97 +1775,6 @@ class RayTracer extends Solver {
     }
     this.chartdata = chartdata;
     return [this.allReceiverData, chartdata];
-  }
-  // downloadImpulseResponse(index: number = 0, sample_rate: number = 44100) {
-  //   const data = this.saveImpulseResponse(index, sample_rate);
-  //   if (data) {
-  //     const blob = new Blob([data], {
-  //       type: "text/plain;charset=utf-8"
-  //     });
-  //     FileSaver.saveAs(blob, `ir${index}-fs${sample_rate}hz-t${Date.now()}.txt`);
-  //   } else return;
-  // }
-  resampleResponse(index: number = 0, sampleRate: number = audioEngine.sampleRate) {
-    // if response has been calculated
-    if (this.allReceiverData && this.allReceiverData[index]) {
-      // the receivers temporal data
-      const receiverData = this.allReceiverData[index].data;
-
-      // length of the reponse in seconds
-      const maxTime = receiverData[receiverData.length - 1].time;
-
-      // number of samples the output array will have
-      const numSamples = floor(sampleRate * maxTime);
-
-      // initialize the sampled array
-      const sampledArray = [] as number[][];
-
-      // stick it in a for loop
-      for (let i = 0, j = 0; i < numSamples; i++) {
-        // the time given the current sample and sample rate (in seconds)
-        let sampleTime = (i / numSamples) * maxTime;
-
-        // if there exists data
-        if (receiverData[j] && receiverData[j].time) {
-          // get the actual time of the intersection
-          let actualTime = receiverData[j].time;
-
-          // ex. actual time of intersection is at t=3.5s but the sampled time is only at t=3.2s
-          if (actualTime > sampleTime) {
-            // add a 0.0 for the value at each frequency
-            sampledArray.push([sampleTime].concat(Array(receiverData[j].energy.length).fill(0.0)));
-
-            //continue to next iteration
-            continue;
-          }
-
-          // this will happen when one or more intersections occured in between a sampling period (1/sampleRate)
-          if (actualTime <= sampleTime) {
-            // sum array initialized to 0 (one for each frequency)
-            let sums = receiverData[j].energy.map((x) => 0);
-
-            // counts the number of intersections that occured between samples
-            let sub_counter = 0;
-
-            // loop over all the missed intersections
-            while (actualTime <= sampleTime) {
-              // set the actual time = the current intersections time
-              actualTime = receiverData[j].time;
-
-              // sum the value at each frequency
-              sums.forEach((x, i, a) => (a[i] += receiverData[j].energy[i].value));
-
-              // increment the receiver data point index;
-              j++;
-
-              // increment the sub counter
-              sub_counter++;
-            } // exit the loop
-
-            // push another row onto the sampled array
-            sampledArray.push([sampleTime, ...sums.map((x) => x / sub_counter)]);
-
-            // continue to next iteration
-            continue;
-          }
-        }
-      }
-
-      // return the sample array
-      return sampledArray;
-    }
-
-    // if reponse has not been calculated yet
-    else {
-      console.warn("no data yet");
-    }
-  }
-  saveImpulseResponse(index: number = 0, sample_rate: number = 44100) {
-    const data = this.resampleResponse(index, sample_rate);
-    if (data) {
-      return data.map((x) => x.join(",")).join("\n");
-    }
-    return;
   }
   getReceiverIntersectionPoints(id: string) {
     if (this.paths && this.paths[id] && this.paths[id].length > 0) {
@@ -2238,20 +2064,6 @@ class RayTracer extends Solver {
     return this.responseByIntensity;
   }
 
-  computeImageSources(source: THREE.Vector3, previousReflector: Surface, maxOrder: number) {
-    //     for each surface in geometry do
-    //         if (not previousReflector) or
-    //         ((inFrontOf(surface, previousReflector)) and (surface.normal dot previousReflector.normal < 0))
-    //             newSource = reflect(source, surface)
-    //             sources[nofSources++] = newSource
-    //             if (maxOrder > 0)
-    //                 computeImageSources(newSource, surface, maxOrder - 1)
-    for(const surface of this.room.allSurfaces){
-      if(surface.uuid !== previousReflector.uuid){
-        
-      }
-    }
-  }
   onParameterConfigFocus() {
     console.log("focus");
     console.log(renderer.overlays.global.cells);
