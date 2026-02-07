@@ -1,15 +1,15 @@
 // Mock Three.js first before any imports
-vi.mock('three', () => {
-  const actual = jest.requireActual('../../__mocks__/three');
+vi.mock('three', async () => {
+  const actual = await vi.importActual('../../__mocks__/three');
   return actual;
 });
 
 // Mock VertexNormalsHelper from three/examples
 vi.mock('three/examples/jsm/helpers/VertexNormalsHelper.js', () => ({
-  VertexNormalsHelper: vi.fn().mockImplementation(() => ({
-    visible: false,
-    geometry: { name: '' },
-  })),
+  VertexNormalsHelper: vi.fn().mockImplementation(function (this: any) {
+    this.visible = false;
+    this.geometry = { name: '' };
+  }),
 }));
 
 // Mock messenger
@@ -28,27 +28,30 @@ vi.mock('../../store', () => ({
 
 // Mock CSG
 vi.mock('../../compute/csg', () => ({
-  math: {
-    vec3: {
-      fromArray: vi.fn((arr) => arr),
+  __esModule: true,
+  default: {
+    math: {
+      vec3: {
+        fromArray: vi.fn((arr: number[]) => arr),
+      },
+      plane: {
+        fromPoints: vi.fn(() => [0, 0, 1, 0]),
+      },
     },
-    plane: {
-      fromPoints: vi.fn(() => [0, 0, 1, 0]),
-    },
-  },
-  geometry: {
-    poly3: {
-      fromPointsAndPlane: vi.fn(() => ({
-        vertices: [],
-        plane: [0, 0, 1, 0],
-      })),
+    geometry: {
+      poly3: {
+        fromPointsAndPlane: vi.fn(() => ({
+          vertices: [],
+          plane: [0, 0, 1, 0],
+        })),
+      },
     },
   },
 }));
 
 // Mock BRDF
 vi.mock('../../compute/raytracer/brdf', () => ({
-  BRDF: vi.fn().mockImplementation(() => ({})),
+  BRDF: vi.fn().mockImplementation(function () {}),
 }));
 
 // Mock interpolateAlpha
@@ -70,27 +73,30 @@ vi.mock('../../compute/acoustics/scattering-function', () => ({
 
 // Mock TessellateModifier
 vi.mock('../../compute/radiance/TessellateModifier', () => ({
-  TessellateModifier: vi.fn().mockImplementation(() => ({
-    modify: vi.fn().mockReturnValue({
+  TessellateModifier: vi.fn().mockImplementation(function (this: any) {
+    this.modify = vi.fn().mockReturnValue({
       getAttribute: vi.fn().mockReturnValue({
         count: 0,
         getX: vi.fn(),
         getY: vi.fn(),
         getZ: vi.fn(),
       }),
-    }),
-  })),
+    });
+  }),
 }));
 
 // Mock SurfaceElement
 vi.mock('../surface-element', () => ({
   __esModule: true,
-  default: vi.fn().mockImplementation(() => ({})),
+  default: vi.fn().mockImplementation(function () {}),
 }));
+
+// Import mock THREE for use in test helpers
+import * as THREE_MOCK from '../../__mocks__/three';
 
 // Create mock geometry before importing Surface
 const createMockGeometry = () => {
-  const THREE = jest.requireActual('../../__mocks__/three');
+  const THREE = THREE_MOCK;
   const geometry = new THREE.BufferGeometry();
   // Create a simple triangle geometry
   const vertices = new Float32Array([
@@ -143,7 +149,7 @@ describe('Surface', () => {
     });
 
     it('creates surface with props when provided', () => {
-      const THREE = jest.requireActual('../../__mocks__/three');
+      const THREE = THREE_MOCK;
       const geometry = createMockGeometry();
 
       const surface = new Surface('WithProps', {
@@ -220,7 +226,7 @@ describe('Surface', () => {
         acousticMaterial: mockAcousticMaterial,
       });
 
-      const THREE = jest.requireActual('../../__mocks__/three');
+      const THREE = THREE_MOCK;
       const parent = new THREE.Object3D();
       parent.add(surface);
 
@@ -701,8 +707,8 @@ describe('Surface', () => {
   });
 
   describe('BRDF uses scatteringFunction', () => {
-    it('diffusionCoefficient comes from scatteringFunction not hardcoded 0.1', () => {
-      const { BRDF } = require('../../compute/raytracer/brdf');
+    it('diffusionCoefficient comes from scatteringFunction not hardcoded 0.1', async () => {
+      const { BRDF } = await import('../../compute/raytracer/brdf');
       (BRDF as vi.Mock).mockClear();
 
       const geometry = createMockGeometry();
@@ -720,8 +726,8 @@ describe('Surface', () => {
       });
     });
 
-    it('setter also uses scatteringFunction for BRDF', () => {
-      const { BRDF } = require('../../compute/raytracer/brdf');
+    it('setter also uses scatteringFunction for BRDF', async () => {
+      const { BRDF } = await import('../../compute/raytracer/brdf');
       const geometry = createMockGeometry();
       const surface = new Surface('BRDFTest', {
         geometry,
@@ -746,8 +752,8 @@ describe('Surface', () => {
   });
 
   describe('material scattering data', () => {
-    it('material with scattering overrides ISO lookup', () => {
-      const interpolateAlpha = require('../../compute/acoustics/interpolate-alpha').default;
+    it('material with scattering overrides ISO lookup', async () => {
+      const interpolateAlpha = (await import('../../compute/acoustics/interpolate-alpha')).default;
       (interpolateAlpha as vi.Mock).mockClear();
 
       const geometry = createMockGeometry();

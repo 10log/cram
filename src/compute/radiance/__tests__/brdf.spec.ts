@@ -1,6 +1,6 @@
 // Mock Three.js before any imports
-jest.mock('three', () => {
-  const actual = jest.requireActual('../../../__mocks__/three');
+vi.mock('three', async () => {
+  const actual = await vi.importActual('../../../__mocks__/three');
   return actual;
 });
 
