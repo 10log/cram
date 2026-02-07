@@ -41,6 +41,12 @@ const Parameters = ({ uuid }: { uuid: string }) => {
         tooltip="Temperature in Celsius (affects speed of sound and air absorption)"
         elementProps={{ step: 1, min: -20, max: 50 }}
       />
+      <PropertyNumberInput
+        uuid={uuid}
+        label="Max Paths"
+        property="maxStoredPaths"
+        tooltip="Maximum paths stored per receiver (older paths evicted)"
+      />
     </PropertyRowFolder>
   );
 };

@@ -128,6 +128,8 @@ class RayTracer extends Solver {
   _convergenceCheckInterval: number;
 
   _directivityRefPressures?: Map<string, number[]>;
+  maxStoredPaths: number;
+  private _rafId: number = 0;
 
   constructor(params?: RayTracerParams) {
     super(params);
@@ -188,6 +190,7 @@ class RayTracer extends Solver {
     this.convergenceThreshold = params.convergenceThreshold ?? defaults.convergenceThreshold;
     this.autoStop = params.autoStop ?? defaults.autoStop;
     this.rrThreshold = params.rrThreshold ?? defaults.rrThreshold;
+    this.maxStoredPaths = params.maxStoredPaths ?? defaults.maxStoredPaths;
     this._histogramBinWidth = HISTOGRAM_BIN_WIDTH;
     this._histogramNumBins = HISTOGRAM_NUM_BINS;
     this._convergenceCheckInterval = CONVERGENCE_CHECK_INTERVAL_MS;
@@ -331,6 +334,7 @@ class RayTracer extends Solver {
       convergenceThreshold,
       autoStop,
       rrThreshold,
+      maxStoredPaths,
     } = this;
     return {
       name,
@@ -356,6 +360,7 @@ class RayTracer extends Solver {
       convergenceThreshold,
       autoStop,
       rrThreshold,
+      maxStoredPaths,
     };
   }
 
@@ -459,17 +464,12 @@ class RayTracer extends Solver {
 
     //update the draw range
     this.rayBufferGeometry.setDrawRange(0, this.rayPositionIndexDidOverflow ? this.maxrays : this.rayPositionIndex);
+  }
 
-    // update three.js
+  flushRayBuffer() {
     this.rayBufferAttribute.needsUpdate = true;
-
-    //update version
     this.rayBufferAttribute.version++;
-
-    // update three.js
     this.colorBufferAttribute.needsUpdate = true;
-
-    //update version
     this.colorBufferAttribute.version++;
   }
 
@@ -624,24 +624,33 @@ class RayTracer extends Solver {
 
   startAllMonteCarlo() {
     this._lastConvergenceCheck = Date.now();
-    this.intervals.push(
-      (setInterval(() => {
-        this.stepStratified(this.passes);
-        renderer.needsToRender = true;
+    const tick = () => {
+      if (!this._isRunning) return;
 
-        // Periodic convergence check
-        const now = Date.now();
-        if (this.autoStop && now - this._lastConvergenceCheck >= this._convergenceCheckInterval) {
-          this._lastConvergenceCheck = now;
-          this._updateConvergenceMetrics();
-          if (this.convergenceMetrics.convergenceRatio < this.convergenceThreshold
-              && this.convergenceMetrics.t30Count >= 3) {
-            this.isRunning = false;
-            return;
-          }
+      // Time-budgeted batching: trace as many batches as fit in ~12ms
+      const budgetMs = 12;
+      const start = performance.now();
+      do {
+        this.stepStratified(this.passes);
+      } while (performance.now() - start < budgetMs);
+
+      this.flushRayBuffer();
+      renderer.needsToRender = true;
+
+      // Periodic convergence check
+      const now = Date.now();
+      if (this.autoStop && now - this._lastConvergenceCheck >= this._convergenceCheckInterval) {
+        this._lastConvergenceCheck = now;
+        this._updateConvergenceMetrics();
+        if (this.convergenceMetrics.convergenceRatio < this.convergenceThreshold
+            && this.convergenceMetrics.t30Count >= 3) {
+          this.isRunning = false;
+          return;
         }
-      }, this.updateInterval) as unknown) as number
-    );
+      }
+      this._rafId = requestAnimationFrame(tick);
+    };
+    this._rafId = requestAnimationFrame(tick);
   }
 
   stepStratified(numRays: number) {
@@ -729,7 +738,7 @@ class RayTracer extends Solver {
         this.appendRay(path.chain[j - 1].point, path.chain[j].point, path.chain[j].energy || 1.0, path.chain[j].angle);
       }
       const index = path.chain[path.chain.length - 1].object;
-      this.paths[index] ? this.paths[index].push(path) : (this.paths[index] = [path]);
+      this._pushPathWithEviction(index, path);
       (useContainer.getState().containers[sourceId] as Source).numRays += 1;
     } else if (path.intersectedReceiver) {
       this.appendRay(
@@ -745,11 +754,23 @@ class RayTracer extends Solver {
       this.validRayCount += 1;
       renderer.overlays.global.setCellValue(this.uuid + "-valid-ray-count", this.validRayCount);
       const receiverId = path.chain[path.chain.length - 1].object;
-      this.paths[receiverId] ? this.paths[receiverId].push(path) : (this.paths[receiverId] = [path]);
+      this._pushPathWithEviction(receiverId, path);
       (useContainer.getState().containers[sourceId] as Source).numRays += 1;
 
       // Update energy histogram for convergence monitoring
       this._addToEnergyHistogram(receiverId, path);
+    }
+  }
+
+  /** Push a path onto the paths array, evicting oldest if over maxStoredPaths */
+  _pushPathWithEviction(index: string, path: RayPath) {
+    if (!this.paths[index]) {
+      this.paths[index] = [path];
+    } else {
+      this.paths[index].push(path);
+      if (this.paths[index].length > this.maxStoredPaths) {
+        this.paths[index] = this.paths[index].slice(-this.maxStoredPaths);
+      }
     }
   }
 
@@ -847,7 +868,7 @@ class RayTracer extends Solver {
           const index = path.chain[path.chain.length - 1].object;
 
           // if the receiver uuid is already defined, push the path on, else define it
-          this.paths[index] ? this.paths[index].push(path) : (this.paths[index] = [path]);
+          this._pushPathWithEviction(index, path);
 
           // increment the sources ray counter
           (useContainer.getState().containers[this.sourceIDs[i]] as Source).numRays += 1;
@@ -881,7 +902,7 @@ class RayTracer extends Solver {
           this.validRayCount += 1;
           renderer.overlays.global.setCellValue(this.uuid + "-valid-ray-count", this.validRayCount);
           const index = path.chain[path.chain.length - 1].object;
-          this.paths[index] ? this.paths[index].push(path) : (this.paths[index] = [path]);
+          this._pushPathWithEviction(index, path);
 
           // increment the sources ray counter
           (useContainer.getState().containers[this.sourceIDs[i]] as Source).numRays += 1;
@@ -920,6 +941,8 @@ class RayTracer extends Solver {
 
   stop() {
     this.__calc_time = Date.now() - this.__start_time;
+    cancelAnimationFrame(this._rafId);
+    this._rafId = 0;
     this.intervals.forEach((interval) => {
       window.clearInterval(interval);
     });

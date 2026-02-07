@@ -146,6 +146,7 @@ export type RayTracerSaveObject = {
   convergenceThreshold?: number;
   autoStop?: boolean;
   rrThreshold?: number;
+  maxStoredPaths?: number;
 }
 
 export interface RayTracerParams {
@@ -171,6 +172,7 @@ export interface RayTracerParams {
   convergenceThreshold?: number;
   autoStop?: boolean;
   rrThreshold?: number;
+  maxStoredPaths?: number;
 }
 export interface ConvergenceMetrics {
   totalRays: number;
@@ -206,6 +208,7 @@ export const defaults = {
   convergenceThreshold: 0.01,
   autoStop: true,
   rrThreshold: 0.1,
+  maxStoredPaths: 100000,
 };
 
 export enum DRAWSTYLE {
