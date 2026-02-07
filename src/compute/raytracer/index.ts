@@ -29,7 +29,26 @@ import observe, { Observable } from "../../common/observable";
 import {probability} from '../../common/probability';
 import { encodeBufferFromDirection, getAmbisonicChannelCount } from "ambisonics";
 
-import {ImageSourceSolver, ImageSourceSolverParams} from "./image-source/index"; 
+import {ImageSourceSolver, ImageSourceSolverParams} from "./image-source/index";
+
+import {
+  QuickEstimateStepResult, RayPathResult, ResponseByIntensity, BandEnergy, Chain,
+  RayPath, EnergyTime, ChartData, ReceiverData, RayTracerSaveObject, RayTracerParams,
+  ConvergenceMetrics, defaults, DRAWSTYLE, DrawStyle, normalize,
+  SELF_INTERSECTION_OFFSET, DEFAULT_INTENSITY_SAMPLE_RATE, DEFAULT_INITIAL_SPL,
+  RESPONSE_TIME_PADDING, QUICK_ESTIMATE_MAX_ORDER, MAX_DISPLAY_POINTS, RT60_DECAY_RATIO,
+  HISTOGRAM_BIN_WIDTH, HISTOGRAM_NUM_BINS, CONVERGENCE_CHECK_INTERVAL_MS,
+} from "./types";
+
+// Re-export all types for external consumers
+export {
+  QuickEstimateStepResult, RayPathResult, ResponseByIntensity, BandEnergy, Chain,
+  RayPath, EnergyTime, ChartData, ReceiverData, RayTracerSaveObject, RayTracerParams,
+  ConvergenceMetrics, defaults, DRAWSTYLE, DrawStyle, normalize,
+  SELF_INTERSECTION_OFFSET, DEFAULT_INTENSITY_SAMPLE_RATE, DEFAULT_INITIAL_SPL,
+  RESPONSE_TIME_PADDING, QUICK_ESTIMATE_MAX_ORDER, MAX_DISPLAY_POINTS, RT60_DECAY_RATIO,
+  HISTOGRAM_BIN_WIDTH, HISTOGRAM_NUM_BINS, CONVERGENCE_CHECK_INTERVAL_MS,
+} from "./types";
 
 // Webpack 5 native worker support
 const FilterWorker = () => new Worker(new URL('../../audio-engine/filter.worker.ts', import.meta.url));
@@ -37,208 +56,11 @@ const FilterWorker = () => new Worker(new URL('../../audio-engine/filter.worker.
 const {floor, random, abs, asin} = Math;
 const coinFlip = () => random() > 0.5;
 
-function normalize(arr: Float32Array) {
-  let maxValue = Math.abs(arr[0]);
-  for (let i = 1; i < arr.length; i++){
-    if (Math.abs(arr[i]) > maxValue) {
-      maxValue = Math.abs(arr[i]);
-    }
-  }
-  if (maxValue !== 0) {
-    for (let i = 0; i < arr.length; i++) {
-      arr[i] /= maxValue;
-    }
-  }
-  return arr;
-}
-
-export interface QuickEstimateStepResult {
-  rt60s: number[];
-  angle: number;
-  direction: THREE.Vector3;
-  lastIntersection: THREE.Intersection;
-  distance: number;
-}
-
 //@ts-ignore
 THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
 //@ts-ignore
 THREE.BufferGeometry.prototype.disposeBoundsTree = disposeBoundsTree;
 THREE.Mesh.prototype.raycast = acceleratedRaycast;
-
-export interface RayPathResult {
-  time: number;
-  bounces: number;
-  level: number[];
-}
-
-export interface ResponseByIntensity {
-  freqs: number[];
-  response: RayPathResult[];
-  sampleRate?: number;
-  resampledResponse?: Float32Array[];
-  t20?: LinearRegressionResult[];
-  t30?: LinearRegressionResult[];
-  t60?: LinearRegressionResult[];
-}
-
-export type BandEnergy = number[];
-
-export interface Chain {
-  angle_in: number;
-  angle_out: number;
-  total_time: number;
-  time_rec: number;
-  angle_rec: number;
-  distance: number;
-  // point: THREE.Vector3;
-  point: [number, number, number];
-  object: string;
-  faceNormal: [number, number, number];
-  faceIndex: number;
-  faceMaterialIndex: number;
-  angle: number;
-  energy: number;
-  bandEnergy?: BandEnergy;
-}
-
-
-export interface RayPath {
-  intersectedReceiver: boolean;
-  chain: Chain[];
-  chainLength: number;
-  energy: number; // used for visualization
-  bandEnergy?: BandEnergy;
-  time: number;
-  source: string;
-  initialPhi: number;
-  initialTheta: number;
-  totalLength: number;
-  /** Direction from which the ray arrives at the receiver (normalized, in receiver's local space) */
-  arrivalDirection?: [number, number, number];
-}
-export interface EnergyTime {
-  time: number;
-  energy: {
-    frequency: number;
-    value: number;
-  }[];
-}
-// helper type
-export type ChartData = {
-  label: string;
-  data: number[][];
-  x?: number[];
-  y?: number[];
-};
-
-export interface ReceiverData {
-  id: string;
-  data: EnergyTime[];
-}
-export class ReceiverData {
-  constructor(id: string) {
-    this.id = id;
-    this.data = [] as EnergyTime[];
-  }
-}
-
-export type RayTracerSaveObject = {
-  name: string;
-  kind: "ray-tracer";
-  uuid: string;
-  autoCalculate: boolean;
-  roomID: string;
-  sourceIDs: string[];
-  surfaceIDs: string[];
-  receiverIDs: string[];
-  updateInterval: number;
-  passes: number;
-  pointSize: number;
-  reflectionOrder: number;
-  runningWithoutReceivers: boolean;
-  raysVisible: boolean;
-  pointsVisible: boolean;
-  invertedDrawStyle: boolean;
-  plotStyle: Partial<Plotly.PlotData>;
-  paths: KVP<RayPath[]>;
-  frequencies: number[];
-  temperature?: number;
-  convergenceThreshold?: number;
-  autoStop?: boolean;
-  rrThreshold?: number;
-}
-
-export interface RayTracerParams {
-  name?: string;
-  roomID?: string;
-  sourceIDs?: string[];
-  surfaceIDs?: string[];
-  receiverIDs?: string[];
-  updateInterval?: number;
-  passes?: number;
-  pointSize?: number;
-  reflectionOrder?: number;
-  isRunning?: boolean;
-  runningWithoutReceivers?: boolean;
-  raysVisible?: boolean;
-  pointsVisible?: boolean;
-  invertedDrawStyle?: boolean;
-  plotStyle?: Partial<PlotData>;
-  uuid?: string;
-  paths?: KVP<RayPath[]>;
-  frequencies?: number[];
-  temperature?: number;
-  convergenceThreshold?: number;
-  autoStop?: boolean;
-  rrThreshold?: number;
-}
-export interface ConvergenceMetrics {
-  totalRays: number;
-  validRays: number;
-  estimatedT30: number[];        // per band, latest estimate
-  t30Mean: number[];             // running mean of T30 estimates
-  t30M2: number[];               // running M2 for Welford's variance
-  t30Count: number;              // number of T30 samples taken
-  convergenceRatio: number;      // max(std/mean) across bands
-}
-
-export const defaults = {
-  name: "Ray Tracer",
-  roomID: "",
-  sourceIDs: [] as string[],
-  surfaceIDs: [] as string[],
-  receiverIDs: [] as string[],
-  updateInterval: 5,
-  reflectionOrder: 50,
-  isRunning: false,
-  runningWithoutReceivers: false,
-  passes: 100,
-  pointSize: 2,
-  raysVisible: true,
-  pointsVisible: true,
-  invertedDrawStyle: false,
-  paths: {} as KVP<RayPath[]>,
-  plotStyle: {
-    mode: "lines"
-  } as Partial<PlotData>,
-  frequencies: [125, 250, 500, 1000, 2000, 4000, 8000] as number[],
-  temperature: 20,
-  convergenceThreshold: 0.01,
-  autoStop: true,
-  rrThreshold: 0.1,
-};
-
-export enum DRAWSTYLE {
-  ENERGY = 0.0,
-  ANGLE = 1.0,
-  ANGLE_ENERGY = 2.0
-}
-export interface DrawStyle {
-  ANGLE: 0.0;
-  ENERGY: 1.0;
-  ANGLE_ENERGY: 2.0;
-}
 
 class RayTracer extends Solver {
   roomID: string;
@@ -329,7 +151,7 @@ class RayTracer extends Solver {
     this.statsUpdatePeriod = 100;
     this._pointSize = params.pointSize || defaults.pointSize;
     this.validRayCount = 0;
-    this.intensitySampleRate = 256;
+    this.intensitySampleRate = DEFAULT_INTENSITY_SAMPLE_RATE;
     this.quickEstimateResults = {} as KVP<QuickEstimateStepResult[]>;
 
     const paramsHasRaysVisible = typeof params.raysVisible === "boolean";
@@ -361,9 +183,9 @@ class RayTracer extends Solver {
     this.convergenceThreshold = params.convergenceThreshold ?? defaults.convergenceThreshold;
     this.autoStop = params.autoStop ?? defaults.autoStop;
     this.rrThreshold = params.rrThreshold ?? defaults.rrThreshold;
-    this._histogramBinWidth = 0.001; // 1ms bins
-    this._histogramNumBins = 10000;  // up to 10 seconds
-    this._convergenceCheckInterval = 500; // check every 500ms
+    this._histogramBinWidth = HISTOGRAM_BIN_WIDTH;
+    this._histogramNumBins = HISTOGRAM_NUM_BINS;
+    this._convergenceCheckInterval = CONVERGENCE_CHECK_INTERVAL_MS;
     this._resetConvergenceState();
 
     this.rays = new THREE.LineSegments(
@@ -823,7 +645,7 @@ class RayTracer extends Solver {
           if (maxEnergy > 0) {
             // recurse
             return this.traceRay(
-              intersections[0].point.clone().addScaledVector(normal.clone(), 0.01),
+              intersections[0].point.clone().addScaledVector(normal.clone(), SELF_INTERSECTION_OFFSET),
               rr,
               order,
               newBandEnergy,
@@ -893,7 +715,7 @@ class RayTracer extends Solver {
     const intensities = Array(frequencies.length).fill(source.initialIntensity);
 
     let iter = 0;
-    const maxOrder = 1000;
+    const maxOrder = QUICK_ESTIMATE_MAX_ORDER;
 
     let doneDecaying = false;
 
@@ -931,7 +753,7 @@ class RayTracer extends Solver {
           }
           intensities[f] *= coefficient;
           // const level = (ac.P2Lp(ac.I2P()) as number) - airAttenuationdB[f];
-          const freqDoneDecaying = source.initialIntensity / intensities[f] > 1000000;
+          const freqDoneDecaying = source.initialIntensity / intensities[f] > RT60_DECAY_RATIO;
           if (freqDoneDecaying) {
             rt60s[f] = distance / soundSpeed;
           }
@@ -1495,7 +1317,7 @@ class RayTracer extends Solver {
         }
 
         // Downsample for display (max 2000 points for performance)
-        const maxDisplayPoints = 2000;
+        const maxDisplayPoints = MAX_DISPLAY_POINTS;
         const step = Math.max(1, Math.floor(normalizedSignal.length / maxDisplayPoints));
         const displayData: { time: number; amplitude: number }[] = [];
 
@@ -1542,12 +1364,12 @@ class RayTracer extends Solver {
     emit("HIDE_PROGRESS", undefined);
   }
 
-  async calculateImpulseResponseForPair(sourceId: string, receiverId: string, paths: RayPath[], initialSPL = 100, frequencies = this.frequencies, sampleRate = audioEngine.sampleRate): Promise<{ signal: Float32Array; normalizedSignal: Float32Array }> {
+  async calculateImpulseResponseForPair(sourceId: string, receiverId: string, paths: RayPath[], initialSPL = DEFAULT_INITIAL_SPL, frequencies = this.frequencies, sampleRate = audioEngine.sampleRate): Promise<{ signal: Float32Array; normalizedSignal: Float32Array }> {
     if (paths.length === 0) throw Error("No rays have been traced for this pair");
 
     let sorted = paths.sort((a, b) => a.time - b.time) as RayPath[];
 
-    const totalTime = sorted[sorted.length - 1].time + 0.05;
+    const totalTime = sorted[sorted.length - 1].time + RESPONSE_TIME_PADDING;
 
     const spls = Array(frequencies.length).fill(initialSPL);
 
@@ -1600,14 +1422,14 @@ class RayTracer extends Solver {
     });
   }
 
-  async calculateImpulseResponseForDisplay(initialSPL = 100, frequencies = this.frequencies, sampleRate = audioEngine.sampleRate): Promise<{ signal: Float32Array; normalizedSignal: Float32Array }> {
+  async calculateImpulseResponseForDisplay(initialSPL = DEFAULT_INITIAL_SPL, frequencies = this.frequencies, sampleRate = audioEngine.sampleRate): Promise<{ signal: Float32Array; normalizedSignal: Float32Array }> {
     if(this.receiverIDs.length == 0) throw Error("No receivers have been assigned to the raytracer");
     if(this.sourceIDs.length == 0) throw Error("No sources have been assigned to the raytracer");
     if(this.paths[this.receiverIDs[0]].length == 0) throw Error("No rays have been traced yet");
 
     let sorted = this.paths[this.receiverIDs[0]].sort((a,b)=>a.time - b.time) as RayPath[];
 
-    const totalTime = sorted[sorted.length - 1].time + 0.05;
+    const totalTime = sorted[sorted.length - 1].time + RESPONSE_TIME_PADDING;
 
     const spls = Array(frequencies.length).fill(initialSPL);
 
@@ -2226,14 +2048,14 @@ class RayTracer extends Solver {
     }
     return pressures;
   }
-  async calculateImpulseResponse(initialSPL = 100, frequencies = this.frequencies, sampleRate = audioEngine.sampleRate): Promise<AudioBuffer> {
+  async calculateImpulseResponse(initialSPL = DEFAULT_INITIAL_SPL, frequencies = this.frequencies, sampleRate = audioEngine.sampleRate): Promise<AudioBuffer> {
     if(this.receiverIDs.length === 0) throw Error("No receivers have been assigned to the raytracer");
     if(this.sourceIDs.length === 0) throw Error("No sources have been assigned to the raytracer");
     if(!this.paths[this.receiverIDs[0]] || this.paths[this.receiverIDs[0]].length === 0) throw Error("No rays have been traced yet");
 
     let sorted = this.paths[this.receiverIDs[0]].sort((a,b)=>a.time - b.time) as RayPath[];
 
-    const totalTime = sorted[sorted.length - 1].time + 0.05; // end time is latest time of arrival plus 0.1 seconds for safety
+    const totalTime = sorted[sorted.length - 1].time + RESPONSE_TIME_PADDING;
 
     const spls = Array(frequencies.length).fill(initialSPL);
 
@@ -2348,7 +2170,7 @@ class RayTracer extends Solver {
    */
   async calculateAmbisonicImpulseResponse(
     order: number = 1,
-    initialSPL = 100,
+    initialSPL = DEFAULT_INITIAL_SPL,
     frequencies = this.frequencies,
     sampleRate = audioEngine.sampleRate
   ): Promise<AudioBuffer> {
@@ -2359,7 +2181,7 @@ class RayTracer extends Solver {
     const sorted = this.paths[this.receiverIDs[0]].sort((a, b) => a.time - b.time) as RayPath[];
     if (sorted.length === 0) throw Error("No valid ray paths found");
 
-    const totalTime = sorted[sorted.length - 1].time + 0.05;
+    const totalTime = sorted[sorted.length - 1].time + RESPONSE_TIME_PADDING;
     if (totalTime <= 0) throw Error("Invalid impulse response duration");
     const spls = Array(frequencies.length).fill(initialSPL);
 
@@ -2512,13 +2334,13 @@ class RayTracer extends Solver {
       emit("RAYTRACER_SET_PROPERTY", { uuid: this.uuid, property: "impulseResponsePlaying", value: false });
     };
   }
-  downloadImpulses(filename: string, initialSPL = 100, frequencies = ac.Octave(125, 8000), sampleRate = 44100){
+  downloadImpulses(filename: string, initialSPL = DEFAULT_INITIAL_SPL, frequencies = ac.Octave(125, 8000), sampleRate = 44100){
     if(this.receiverIDs.length === 0) throw Error("No receivers have been assigned to the raytracer");
     if(this.sourceIDs.length === 0) throw Error("No sources have been assigned to the raytracer");
     if(this.paths[this.receiverIDs[0]].length === 0) throw Error("No rays have been traced yet");
 
     const sorted = this.paths[this.receiverIDs[0]].sort((a,b)=>a.time - b.time) as RayPath[];
-    const totalTime = sorted[sorted.length - 1].time + 0.05; // end time is latest time of arrival plus 0.05 seconds for safety
+    const totalTime = sorted[sorted.length - 1].time + RESPONSE_TIME_PADDING;
 
     const spls = Array(frequencies.length).fill(initialSPL);
     const numberOfSamples = floor(sampleRate * totalTime);

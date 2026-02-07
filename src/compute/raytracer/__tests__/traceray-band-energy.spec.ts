@@ -15,6 +15,11 @@ describe('per-band energy tracking', () => {
     'utf8'
   );
 
+  const typesSource = fs.readFileSync(
+    path.resolve(__dirname, '..', 'types.ts'),
+    'utf8'
+  );
+
   it('traceRay signature includes bandEnergy parameter', () => {
     const signatureMatch = source.match(/traceRay\(([\s\S]*?)\)\s*\{/);
     expect(signatureMatch).not.toBeNull();
@@ -49,19 +54,19 @@ describe('per-band energy tracking', () => {
   });
 
   it('BandEnergy type is exported', () => {
-    expect(source).toMatch(/export\s+type\s+BandEnergy\s*=\s*number\[\]/);
+    expect(typesSource).toMatch(/export\s+type\s+BandEnergy\s*=\s*number\[\]/);
   });
 
   it('RayPath interface includes optional bandEnergy', () => {
     // Extract the RayPath interface block
-    const rayPathMatch = source.match(/export\s+interface\s+RayPath\s*\{([\s\S]*?)\}/);
+    const rayPathMatch = typesSource.match(/export\s+interface\s+RayPath\s*\{([\s\S]*?)\}/);
     expect(rayPathMatch).not.toBeNull();
     expect(rayPathMatch![1]).toContain('bandEnergy?: BandEnergy');
   });
 
   it('Chain interface includes optional bandEnergy', () => {
     // Extract the Chain interface block
-    const chainMatch = source.match(/export\s+interface\s+Chain\s*\{([\s\S]*?)\}/);
+    const chainMatch = typesSource.match(/export\s+interface\s+Chain\s*\{([\s\S]*?)\}/);
     expect(chainMatch).not.toBeNull();
     expect(chainMatch![1]).toContain('bandEnergy?: BandEnergy');
   });

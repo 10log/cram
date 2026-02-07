@@ -20,16 +20,21 @@ describe('RayTracer temperature and per-segment air absorption', () => {
     'utf8'
   );
 
+  const typesSource = fs.readFileSync(
+    path.resolve(__dirname, '..', 'types.ts'),
+    'utf8'
+  );
+
   // --- Temperature property ---
 
   it('RayTracerParams includes optional temperature', () => {
-    const paramsMatch = source.match(/export\s+interface\s+RayTracerParams\s*\{([\s\S]*?)\}/);
+    const paramsMatch = typesSource.match(/export\s+interface\s+RayTracerParams\s*\{([\s\S]*?)\}/);
     expect(paramsMatch).not.toBeNull();
     expect(paramsMatch![1]).toContain('temperature');
   });
 
   it('defaults include temperature: 20', () => {
-    const defaultsMatch = source.match(/export\s+const\s+defaults\s*=\s*\{([\s\S]*?)\};/);
+    const defaultsMatch = typesSource.match(/export\s+const\s+defaults\s*=\s*\{([\s\S]*?)\};/);
     expect(defaultsMatch).not.toBeNull();
     expect(defaultsMatch![1]).toMatch(/temperature:\s*20/);
   });
@@ -59,7 +64,7 @@ describe('RayTracer temperature and per-segment air absorption', () => {
   });
 
   it('RayTracerSaveObject type includes temperature', () => {
-    const saveTypeMatch = source.match(/export\s+type\s+RayTracerSaveObject\s*=\s*\{([\s\S]*?)\}/);
+    const saveTypeMatch = typesSource.match(/export\s+type\s+RayTracerSaveObject\s*=\s*\{([\s\S]*?)\}/);
     expect(saveTypeMatch).not.toBeNull();
     expect(saveTypeMatch![1]).toContain('temperature');
   });

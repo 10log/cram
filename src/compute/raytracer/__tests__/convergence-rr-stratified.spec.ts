@@ -14,15 +14,20 @@ const source = fs.readFileSync(
   'utf8'
 );
 
+const typesSource = fs.readFileSync(
+  path.resolve(__dirname, '..', 'types.ts'),
+  'utf8'
+);
+
 describe('Phase 7: Convergence, Russian Roulette, Stratified Sampling', () => {
 
   describe('7a: Convergence monitoring', () => {
     it('exports ConvergenceMetrics interface', () => {
-      expect(source).toMatch(/export\s+interface\s+ConvergenceMetrics/);
+      expect(typesSource).toMatch(/export\s+interface\s+ConvergenceMetrics/);
     });
 
     it('ConvergenceMetrics has required fields', () => {
-      const match = source.match(/export\s+interface\s+ConvergenceMetrics\s*\{([\s\S]*?)\}/);
+      const match = typesSource.match(/export\s+interface\s+ConvergenceMetrics\s*\{([\s\S]*?)\}/);
       expect(match).not.toBeNull();
       const body = match![1];
       expect(body).toContain('totalRays: number');
@@ -32,11 +37,11 @@ describe('Phase 7: Convergence, Russian Roulette, Stratified Sampling', () => {
     });
 
     it('convergenceThreshold property in defaults', () => {
-      expect(source).toMatch(/convergenceThreshold:\s*0\.01/);
+      expect(typesSource).toMatch(/convergenceThreshold:\s*0\.01/);
     });
 
     it('autoStop property in defaults', () => {
-      expect(source).toMatch(/autoStop:\s*true/);
+      expect(typesSource).toMatch(/autoStop:\s*true/);
     });
 
     it('has _updateConvergenceMetrics method', () => {
@@ -93,7 +98,7 @@ describe('Phase 7: Convergence, Russian Roulette, Stratified Sampling', () => {
     });
 
     it('RayTracerParams includes convergenceThreshold, autoStop, rrThreshold', () => {
-      const paramsMatch = source.match(/export\s+interface\s+RayTracerParams\s*\{([\s\S]*?)\}/);
+      const paramsMatch = typesSource.match(/export\s+interface\s+RayTracerParams\s*\{([\s\S]*?)\}/);
       expect(paramsMatch).not.toBeNull();
       expect(paramsMatch![1]).toContain('convergenceThreshold');
       expect(paramsMatch![1]).toContain('autoStop');
@@ -118,7 +123,7 @@ describe('Phase 7: Convergence, Russian Roulette, Stratified Sampling', () => {
     });
 
     it('rrThreshold property in defaults', () => {
-      expect(source).toMatch(/rrThreshold:\s*0\.1/);
+      expect(typesSource).toMatch(/rrThreshold:\s*0\.1/);
     });
 
     it('Russian Roulette uses survival probability', () => {
