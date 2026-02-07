@@ -1,4 +1,3 @@
-// @ts-nocheck
 import FileSaver from "file-saver";
 import * as ac from "../acoustics";
 import { useContainer } from "../../store";

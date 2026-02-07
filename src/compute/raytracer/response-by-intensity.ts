@@ -1,4 +1,3 @@
-// @ts-nocheck
 import * as ac from "../acoustics";
 import { lerp } from "../../common/lerp";
 import { movingAverage } from "../../common/moving-average";
@@ -42,7 +41,7 @@ export function calculateReflectionLoss(
   const allReceiverData = [] as ReceiverData[];
 
   // helper function
-  const dataset = (label, data) => ({ label, data });
+  const dataset = (label: string, data: number[][]) => ({ label, data });
 
   // for the chart
   const chartdata = [] as ChartData[];
@@ -68,7 +67,7 @@ export function calculateReflectionLoss(
       // the individual ray path which holds intersection data
       const raypath = paths[pathkeys[i]][j];
 
-      let refloss;
+      let refloss: any;
       // if there was a given frequency array
       if (frequencies) {
         // map the frequencies to reflection loss

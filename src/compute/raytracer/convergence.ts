@@ -1,4 +1,3 @@
-// @ts-nocheck
 import * as ac from "../acoustics";
 import linearRegression from "../../common/linear-regression";
 import { emit } from "../../messenger";
@@ -141,7 +140,7 @@ export function updateConvergenceMetrics(
 
       if (times.length >= 2) {
         const regression = linearRegression(times, levelsDb);
-        const slope = regression.slope;
+        const slope = regression.m;
         // T60: time for 60 dB decay, extrapolated from decay slope in dB/s
         t30Estimates[f] = slope < 0 ? 60 / -slope : 0;
       }

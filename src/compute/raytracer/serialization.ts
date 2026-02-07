@@ -1,10 +1,9 @@
-// @ts-nocheck
 import { KVP } from "../../common/key-value-pair";
 import { RayPath, Chain } from "./types";
 
 export function pathsToLinearBuffer(paths: KVP<RayPath[]>): Float32Array {
-  const uuidToLinearBuffer = (uuid) => uuid.split("").map((x) => x.charCodeAt(0));
-  const chainArrayToLinearBuffer = (chainArray) => {
+  const uuidToLinearBuffer = (uuid: string) => uuid.split("").map((x: string) => x.charCodeAt(0));
+  const chainArrayToLinearBuffer = (chainArray: Chain[]) => {
     return chainArray
       .map((chain: Chain) => [
         ...uuidToLinearBuffer(chain.object), // 36x8
@@ -55,7 +54,7 @@ export function pathsToLinearBuffer(paths: KVP<RayPath[]>): Float32Array {
 export function linearBufferToPaths(linearBuffer: Float32Array): KVP<RayPath[]> {
   const uuidLength = 36;
   const chainItemLength = 47;
-  const decodeUUID = (buffer) => String.fromCharCode(...buffer);
+  const decodeUUID = (buffer: Float32Array) => String.fromCharCode(...buffer);
   const decodeChainItem = (chainItem: Float32Array) => {
     let o = 0;
     const object = decodeUUID(chainItem.slice(o, (o += uuidLength)));
@@ -77,7 +76,7 @@ export function linearBufferToPaths(linearBuffer: Float32Array): KVP<RayPath[]> 
       point
     } as Chain;
   };
-  const decodePathBuffer = (buffer) => {
+  const decodePathBuffer = (buffer: Float32Array) => {
     const paths = [] as RayPath[];
     let o = 0;
     while (o < buffer.length) {

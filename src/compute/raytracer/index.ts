@@ -1,4 +1,3 @@
-// @ts-nocheck
 import Solver from "../solver";
 import * as THREE from "three";
 import Room from "../../objects/room";
@@ -44,10 +43,13 @@ import { downloadImpulses as downloadImpulsesFn, playImpulseResponse as playImpu
 import { resetConvergenceState, updateConvergenceMetrics, addToEnergyHistogram } from "./convergence";
 
 // Re-export all types for external consumers
-export {
+export type {
   QuickEstimateStepResult, RayPathResult, ResponseByIntensity, BandEnergy, Chain,
-  RayPath, EnergyTime, ChartData, ReceiverData, RayTracerSaveObject, RayTracerParams,
-  ConvergenceMetrics, defaults, DRAWSTYLE, DrawStyle, normalize,
+  RayPath, EnergyTime, ChartData, RayTracerSaveObject, RayTracerParams,
+  ConvergenceMetrics, DrawStyle,
+} from "./types";
+export {
+  ReceiverData, defaults, DRAWSTYLE, normalize,
   SELF_INTERSECTION_OFFSET, DEFAULT_INTENSITY_SAMPLE_RATE, DEFAULT_INITIAL_SPL,
   RESPONSE_TIME_PADDING, QUICK_ESTIMATE_MAX_ORDER, MAX_DISPLAY_POINTS, RT60_DECAY_RATIO,
   HISTOGRAM_BIN_WIDTH, HISTOGRAM_NUM_BINS, CONVERGENCE_CHECK_INTERVAL_MS,
@@ -59,9 +61,7 @@ const FilterWorker = () => new Worker(new URL('../../audio-engine/filter.worker.
 const {floor, random, abs, asin} = Math;
 const coinFlip = () => random() > 0.5;
 
-//@ts-ignore
 THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
-//@ts-ignore
 THREE.BufferGeometry.prototype.disposeBoundsTree = disposeBoundsTree;
 THREE.Mesh.prototype.raycast = acceleratedRaycast;
 
@@ -126,6 +126,8 @@ class RayTracer extends Solver {
   _histogramNumBins: number;
   _lastConvergenceCheck!: number;
   _convergenceCheckInterval: number;
+
+  _directivityRefPressures?: Map<string, number[]>;
 
   constructor(params?: RayTracerParams) {
     super(params);
@@ -257,7 +259,7 @@ class RayTracer extends Solver {
     renderer.overlays.global.addCell("Valid Rays", this.validRayCount, {
       id: this.uuid + "-valid-ray-count",
       hidden: true,
-      formatter: (value: number) => String(value)
+      formatter: (value) => String(value)
     });
     this.messageHandlerIDs = [] as string[][];
     messenger.postMessage("STATS_SETUP", this.stats);
@@ -278,7 +280,7 @@ class RayTracer extends Solver {
     );
     this.messageHandlerIDs.push(
       messenger.addMessageHandler("SHOULD_REMOVE_CONTAINER", (acc, ...args) => {
-        const id = args[0];
+        const id = args[0] as string;
         if (id) {
           console.log(id);
           if (this.sourceIDs.includes(id)) {
@@ -504,8 +506,7 @@ class RayTracer extends Solver {
     });
     let done = false;
     this.intervals.push(
-      //@ts-ignore
-      setInterval(() => {
+      window.setInterval(() => {
         for (let i = 0; i < this.passes; i++, count++) {
           for (let j = 0; j < this.sourceIDs.length; j++) {
             const id = this.sourceIDs[j];
@@ -672,7 +673,7 @@ class RayTracer extends Solver {
       if (!refPressures || refPressures.length !== this.frequencies.length) {
         refPressures = new Array(this.frequencies.length);
         for (let f = 0; f < this.frequencies.length; f++) {
-          refPressures[f] = sourceDH.getPressureAtPosition(0, this.frequencies[f], 0, 0);
+          refPressures[f] = sourceDH.getPressureAtPosition(0, this.frequencies[f], 0, 0) as number;
         }
         this._directivityRefPressures.set(sourceId, refPressures);
       }
@@ -792,7 +793,7 @@ class RayTracer extends Solver {
       if (!refPressures || refPressures.length !== this.frequencies.length) {
         refPressures = new Array(this.frequencies.length);
         for (let f = 0; f < this.frequencies.length; f++) {
-          refPressures[f] = sourceDH.getPressureAtPosition(0, this.frequencies[f], 0, 0);
+          refPressures[f] = sourceDH.getPressureAtPosition(0, this.frequencies[f], 0, 0) as number;
         }
         this._directivityRefPressures.set(sourceId, refPressures);
       }
@@ -1112,7 +1113,7 @@ class RayTracer extends Solver {
     } else return [] as THREE.Vector3[];
   }
   calculateResponseByIntensity(freqs: number[] = this.frequencies, temperature: number = this.temperature) {
-    const result = calcResponseByIntensityFn(this.indexedPaths, this.receiverIDs, this.sourceIDs, freqs, temperature, this.intensitySampleRate, this.room);
+    const result = calcResponseByIntensityFn(this.indexedPaths, this.receiverIDs, this.sourceIDs, freqs, temperature, this.intensitySampleRate);
     if (result) {
       this.responseByIntensity = result;
     }
@@ -1131,19 +1132,43 @@ class RayTracer extends Solver {
 
   calculateT30(receiverId?: string, sourceId?: string) {
     if (this.responseByIntensity) {
-      calculateT30Fn(this.responseByIntensity, this.receiverIDs, this.sourceIDs, receiverId, sourceId);
+      const recIds = receiverId ? [receiverId] : this.receiverIDs;
+      const srcIds = sourceId ? [sourceId] : this.sourceIDs;
+      for (const rec of recIds) {
+        for (const src of srcIds) {
+          if (this.responseByIntensity[rec]?.[src]) {
+            calculateT30Fn(this.responseByIntensity, rec, src);
+          }
+        }
+      }
     }
     return this.responseByIntensity;
   }
   calculateT20(receiverId?: string, sourceId?: string) {
     if (this.responseByIntensity) {
-      calculateT20Fn(this.responseByIntensity, this.receiverIDs, this.sourceIDs, receiverId, sourceId);
+      const recIds = receiverId ? [receiverId] : this.receiverIDs;
+      const srcIds = sourceId ? [sourceId] : this.sourceIDs;
+      for (const rec of recIds) {
+        for (const src of srcIds) {
+          if (this.responseByIntensity[rec]?.[src]) {
+            calculateT20Fn(this.responseByIntensity, rec, src);
+          }
+        }
+      }
     }
     return this.responseByIntensity;
   }
   calculateT60(receiverId?: string, sourceId?: string) {
     if (this.responseByIntensity) {
-      calculateT60Fn(this.responseByIntensity, this.receiverIDs, this.sourceIDs, receiverId, sourceId);
+      const recIds = receiverId ? [receiverId] : this.receiverIDs;
+      const srcIds = sourceId ? [sourceId] : this.sourceIDs;
+      for (const rec of recIds) {
+        for (const src of srcIds) {
+          if (this.responseByIntensity[rec]?.[src]) {
+            calculateT60Fn(this.responseByIntensity, rec, src);
+          }
+        }
+      }
     }
     return this.responseByIntensity;
   }
@@ -1583,7 +1608,7 @@ declare global {
   }
 }
 
-on("RAYTRACER_CALL_METHOD", callSolverMethod);
+on("RAYTRACER_CALL_METHOD", callSolverMethod as any);
 on("RAYTRACER_SET_PROPERTY", setSolverProperty);
 on("REMOVE_RAYTRACER", removeSolver);
 on("ADD_RAYTRACER", addSolver(RayTracer))
