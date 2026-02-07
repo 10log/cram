@@ -210,7 +210,7 @@ describe('synthesizeTail', () => {
       crossfadeTime: 1.0, endTime: 3.0,
     }];
     const sampleRate = 44100;
-    const { tailSamples, totalSamples } = synthesizeTail(decayParams, sampleRate, 0.05);
+    const { tailSamples, totalSamples } = synthesizeTail(decayParams, sampleRate);
 
     expect(tailSamples).toHaveLength(1);
     expect(totalSamples).toBe(Math.floor(3.0 * sampleRate));
@@ -223,7 +223,7 @@ describe('synthesizeTail', () => {
       crossfadeTime: 0.5, endTime: 1.5,
     }];
     const sampleRate = 44100;
-    const { tailSamples } = synthesizeTail(decayParams, sampleRate, 0.05);
+    const { tailSamples } = synthesizeTail(decayParams, sampleRate);
     const tail = tailSamples[0];
 
     // Compute RMS of first 10ms and last 10ms
@@ -242,14 +242,12 @@ describe('synthesizeTail', () => {
 
   it('returns empty arrays when no valid decay params', () => {
     const decayParams = [{ t60: 0, decayRate: 0, crossfadeLevel: 0, crossfadeTime: 0, endTime: 0 }];
-    const { tailSamples } = synthesizeTail(decayParams, 44100, 0.05);
+    const { tailSamples } = synthesizeTail(decayParams, 44100);
     expect(tailSamples[0].length).toBe(0);
   });
 });
 
 describe('assembleFinalIR', () => {
-  const sampleRate = 1000; // simple rate for easy math
-
   it('samples before crossfade are unchanged', () => {
     const traced = new Float32Array(1000);
     for (let i = 0; i < 1000; i++) traced[i] = i;
@@ -274,10 +272,9 @@ describe('assembleFinalIR', () => {
     const crossfadeDuration = 100;
     const result = assembleFinalIR([traced], [tail], crossfadeStart, crossfadeDuration);
 
-    // At midpoint of crossfade (n = 50), fadeOut + fadeIn should ≈ 1
-    // fadeOut = 0.5 * (1 + cos(pi * 50 / 100)) = 0.5
-    // fadeIn  = 0.5 * (1 - cos(pi * 50 / 100)) = 0.5
-    // Sum = 1.0 (both traced and tail are 1.0)
+    // At midpoint of crossfade, fadeOut + fadeIn = 1.0 for any n
+    // (0.5*(1+cos(x)) + 0.5*(1-cos(x)) = 1.0)
+    // Since both traced and tail are 1.0, output should be ~1.0
     const midIdx = crossfadeStart + Math.floor(crossfadeDuration / 2);
     expect(Math.abs(result[0][midIdx] - 1.0)).toBeLessThan(0.01);
   });

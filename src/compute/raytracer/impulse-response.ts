@@ -84,7 +84,7 @@ export async function calculateImpulseResponseForPair(
 
   const spls = Array(frequencies.length).fill(initialSPL);
 
-  let numberOfSamples = floor(sampleRate * totalTime) * 2;
+  const numberOfSamples = floor(sampleRate * totalTime) * 2;
 
   let samples: Array<Float32Array> = [];
   for (let f = 0; f < frequencies.length; f++) {
@@ -113,7 +113,7 @@ export async function calculateImpulseResponseForPair(
       tailOptions.crossfadeTime, tailOptions.histogramBinWidth
     );
     const { tailSamples, tailStartSample } = synthesizeTail(
-      decayParams, sampleRate, tailOptions.crossfadeDuration
+      decayParams, sampleRate
     );
     const crossfadeDurationSamples = floor(tailOptions.crossfadeDuration * sampleRate);
     samples = assembleFinalIR(samples, tailSamples, tailStartSample, crossfadeDurationSamples);
@@ -121,14 +121,11 @@ export async function calculateImpulseResponseForPair(
     // Re-pad for FFT: ensure samples are doubled for the filter worker
     const maxLen = samples.reduce((m, s) => mathMax(m, s.length), 0);
     const paddedLength = maxLen * 2;
-    if (paddedLength > numberOfSamples) {
-      numberOfSamples = paddedLength;
-      for (let f = 0; f < frequencies.length; f++) {
-        if (samples[f].length < paddedLength) {
-          const padded = new Float32Array(paddedLength);
-          padded.set(samples[f]);
-          samples[f] = padded;
-        }
+    for (let f = 0; f < frequencies.length; f++) {
+      if (samples[f].length < paddedLength) {
+        const padded = new Float32Array(paddedLength);
+        padded.set(samples[f]);
+        samples[f] = padded;
       }
     }
   }
@@ -180,7 +177,7 @@ export async function calculateImpulseResponseForDisplay(
 
   const spls = Array(frequencies.length).fill(initialSPL);
 
-  let numberOfSamples = floor(sampleRate * totalTime) * 2;
+  const numberOfSamples = floor(sampleRate * totalTime) * 2;
 
   let samples: Array<Float32Array> = [];
   for (let f = 0; f < frequencies.length; f++) {
@@ -209,7 +206,7 @@ export async function calculateImpulseResponseForDisplay(
       tailOptions.crossfadeTime, tailOptions.histogramBinWidth
     );
     const { tailSamples, tailStartSample } = synthesizeTail(
-      decayParams, sampleRate, tailOptions.crossfadeDuration
+      decayParams, sampleRate
     );
     const crossfadeDurationSamples = floor(tailOptions.crossfadeDuration * sampleRate);
     samples = assembleFinalIR(samples, tailSamples, tailStartSample, crossfadeDurationSamples);
@@ -217,14 +214,11 @@ export async function calculateImpulseResponseForDisplay(
     // Re-pad for FFT
     const maxLen = samples.reduce((m, s) => mathMax(m, s.length), 0);
     const paddedLength = maxLen * 2;
-    if (paddedLength > numberOfSamples) {
-      numberOfSamples = paddedLength;
-      for (let f = 0; f < frequencies.length; f++) {
-        if (samples[f].length < paddedLength) {
-          const padded = new Float32Array(paddedLength);
-          padded.set(samples[f]);
-          samples[f] = padded;
-        }
+    for (let f = 0; f < frequencies.length; f++) {
+      if (samples[f].length < paddedLength) {
+        const padded = new Float32Array(paddedLength);
+        padded.set(samples[f]);
+        samples[f] = padded;
       }
     }
   }

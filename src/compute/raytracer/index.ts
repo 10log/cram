@@ -1432,7 +1432,7 @@ class RayTracer extends Solver {
     const spls = Array(frequencies.length).fill(initialSPL);
 
     // doubled the number of samples to mitigate the signal reversing
-    let numberOfSamples = floor(sampleRate * totalTime) * 2;
+    const numberOfSamples = floor(sampleRate * totalTime) * 2;
 
     let samples: Array<Float32Array> = [];
     for(let f = 0; f<frequencies.length; f++){
@@ -1499,7 +1499,7 @@ class RayTracer extends Solver {
         this.tailCrossfadeTime, this._histogramBinWidth
       );
       const { tailSamples, tailStartSample } = synthesizeTail(
-        decayParams, sampleRate, this.tailCrossfadeDuration
+        decayParams, sampleRate
       );
       const crossfadeDurationSamples = floor(this.tailCrossfadeDuration * sampleRate);
       samples = assembleFinalIR(samples, tailSamples, tailStartSample, crossfadeDurationSamples);
@@ -1507,14 +1507,11 @@ class RayTracer extends Solver {
       // Re-pad for FFT
       const maxLen = samples.reduce((m, s) => Math.max(m, s.length), 0);
       const paddedLength = maxLen * 2;
-      if (paddedLength > numberOfSamples) {
-        numberOfSamples = paddedLength;
-        for (let f = 0; f < frequencies.length; f++) {
-          if (samples[f].length < paddedLength) {
-            const padded = new Float32Array(paddedLength);
-            padded.set(samples[f]);
-            samples[f] = padded;
-          }
+      for (let f = 0; f < frequencies.length; f++) {
+        if (samples[f].length < paddedLength) {
+          const padded = new Float32Array(paddedLength);
+          padded.set(samples[f]);
+          samples[f] = padded;
         }
       }
     }
@@ -1637,7 +1634,7 @@ class RayTracer extends Solver {
         this.tailCrossfadeTime, this._histogramBinWidth
       );
       const { tailSamples, tailStartSample } = synthesizeTail(
-        decayParams, sampleRate, this.tailCrossfadeDuration
+        decayParams, sampleRate
       );
       const crossfadeDurationSamples = floor(this.tailCrossfadeDuration * sampleRate);
 
@@ -1647,6 +1644,24 @@ class RayTracer extends Solver {
         const tailForBand = [tailSamples[f]];
         const extended = assembleFinalIR(wChannel, tailForBand, tailStartSample, crossfadeDurationSamples);
         samples[f][0] = extended[0];
+      }
+
+      // Re-pad all [f][ch] buffers to 2 * maxLen for the FilterWorker double-length contract
+      let maxLen = 0;
+      for (let f = 0; f < frequencies.length; f++) {
+        for (let ch = 0; ch < nCh; ch++) {
+          if (samples[f][ch].length > maxLen) maxLen = samples[f][ch].length;
+        }
+      }
+      const targetLen = maxLen * 2;
+      for (let f = 0; f < frequencies.length; f++) {
+        for (let ch = 0; ch < nCh; ch++) {
+          if (samples[f][ch].length < targetLen) {
+            const padded = new Float32Array(targetLen);
+            padded.set(samples[f][ch]);
+            samples[f][ch] = padded;
+          }
+        }
       }
     }
 

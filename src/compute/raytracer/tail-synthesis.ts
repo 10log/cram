@@ -85,8 +85,9 @@ export function extractDecayParameters(
       }
     }
 
-    // Clamp decay rate to minimum
-    if (decayRate > -MIN_TAIL_DECAY_RATE && decayRate <= 0) {
+    // Clamp decay rate to minimum, but only if we have a shallow negative decay.
+    // Leave decayRate = 0 / t60 = 0 as "no tail".
+    if (decayRate < 0 && decayRate > -MIN_TAIL_DECAY_RATE) {
       decayRate = -MIN_TAIL_DECAY_RATE;
       t60 = 60 / MIN_TAIL_DECAY_RATE;
     }
@@ -120,13 +121,11 @@ export function extractDecayParameters(
  *
  * @param decayParams - Per-band decay parameters
  * @param sampleRate - Output sample rate
- * @param crossfadeDuration - Crossfade window duration in seconds
  * @returns Per-band tail samples, start sample index, and total output length
  */
 export function synthesizeTail(
   decayParams: DecayParameters[],
   sampleRate: number,
-  crossfadeDuration: number,
 ): { tailSamples: Float32Array[]; tailStartSample: number; totalSamples: number } {
   // Determine max end time across all bands
   let maxEndTime = 0;
@@ -214,9 +213,6 @@ export function assembleFinalIR(
     const outputLength = max(traced.length, crossfadeStartSample + tail.length);
     const output = new Float32Array(outputLength);
 
-    // Copy ray-traced samples up to end of crossfade
-    const crossfadeEnd = min(crossfadeStartSample + crossfadeDurationSamples, outputLength);
-
     // Copy everything before crossfade region
     for (let n = 0; n < min(crossfadeStartSample, traced.length); n++) {
       output[n] = traced[n];
@@ -224,12 +220,13 @@ export function assembleFinalIR(
 
     // Crossfade region: Hann fade-out on traced, Hann fade-in on tail
     const N = crossfadeDurationSamples;
+    const denom = N > 1 ? (N - 1) : 1;
     for (let n = 0; n < N; n++) {
       const sampleIdx = crossfadeStartSample + n;
       if (sampleIdx >= outputLength) break;
 
-      const fadeOut = 0.5 * (1 + cos(PI * n / N));
-      const fadeIn = 0.5 * (1 - cos(PI * n / N));
+      const fadeOut = 0.5 * (1 + cos(PI * n / denom));
+      const fadeIn = 0.5 * (1 - cos(PI * n / denom));
 
       const tracedVal = sampleIdx < traced.length ? traced[sampleIdx] : 0;
       const tailVal = n < tail.length ? tail[n] : 0;
