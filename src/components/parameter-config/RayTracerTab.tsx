@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import RayTracer from "../../compute/raytracer";
-import { ConvergenceMetrics } from "../../compute/raytracer";
 import PropertyRowFolder from "./property-row/PropertyRowFolder";
 import PropertyRow from "./property-row/PropertyRow";
 import PropertyRowLabel from "./property-row/PropertyRowLabel";

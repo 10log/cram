@@ -811,7 +811,9 @@ class RayTracer extends Solver {
             const survivalProbability = maxEnergy / this.rrThreshold;
             if (Math.random() > survivalProbability) {
               // Terminate ray - expected value preserved (no bias)
-              return { chain, chainLength: chain.length, source, intersectedReceiver: false } as RayPath;
+              const rrTotalEnergy = newBandEnergy.reduce((a, b) => a + b, 0);
+              const rrEnergy = newBandEnergy.length > 0 ? rrTotalEnergy / newBandEnergy.length : 0;
+              return { chain, chainLength: chain.length, source, intersectedReceiver: false, energy: rrEnergy, bandEnergy: [...newBandEnergy] } as RayPath;
             }
             // Boost surviving ray energy to compensate
             for (let f = 0; f < newBandEnergy.length; f++) {
@@ -989,8 +991,15 @@ class RayTracer extends Solver {
   }
 
   stepStratified(numRays: number) {
-    const nPhi = Math.ceil(Math.sqrt(numRays));
-    const nTheta = Math.ceil(numRays / nPhi);
+    if (numRays <= 0) return;
+
+    // Choose stratification dimensions such that nPhi * nTheta === numRays.
+    // Start from sqrt(numRays) and search downward for a divisor.
+    let nPhi = Math.floor(Math.sqrt(numRays));
+    while (nPhi > 1 && numRays % nPhi !== 0) {
+      nPhi--;
+    }
+    const nTheta = numRays / nPhi;
 
     for (let i = 0; i < this.sourceIDs.length; i++) {
       const source = useContainer.getState().containers[this.sourceIDs[i]] as Source;
@@ -1266,11 +1275,37 @@ class RayTracer extends Solver {
     this.convergenceMetrics.totalRays = this.__num_checked_paths;
     this.convergenceMetrics.validRays = this.validRayCount;
 
-    // Find first receiver with data
-    const receiverIds = Object.keys(this._energyHistogram);
-    if (receiverIds.length === 0) return;
+    // Choose a stable receiver with data for convergence metrics
+    const receiverIdsWithData = Object.keys(this._energyHistogram);
+    if (receiverIdsWithData.length === 0) return;
 
-    const receiverId = receiverIds[0];
+    let receiverId: string | undefined;
+
+    // Prefer stable ordering via this.receiverIDs
+    if (this.receiverIDs.length > 0) {
+      for (const id of this.receiverIDs) {
+        const hist = this._energyHistogram[id];
+        if (hist && hist.length > 0) {
+          receiverId = id;
+          break;
+        }
+      }
+    }
+
+    // Fallback: lexicographically smallest ID with data
+    if (!receiverId) {
+      const sortedIds = receiverIdsWithData.slice().sort();
+      for (const id of sortedIds) {
+        const hist = this._energyHistogram[id];
+        if (hist && hist.length > 0) {
+          receiverId = id;
+          break;
+        }
+      }
+    }
+
+    if (!receiverId) return;
+
     const histograms = this._energyHistogram[receiverId];
     if (!histograms || histograms.length === 0) return;
 
@@ -1310,10 +1345,23 @@ class RayTracer extends Solver {
 
       if (idx5 >= 0 && idx35 > idx5) {
         // Linear regression in log domain between -5dB and -35dB
-        const time5 = idx5 * this._histogramBinWidth;
-        const time35 = idx35 * this._histogramBinWidth;
-        // T30 is time for 30dB decay, extrapolate to 60dB
-        t30Estimates[f] = (time35 - time5) * 2;
+        const times: number[] = [];
+        const levelsDb: number[] = [];
+
+        for (let b = idx5; b <= idx35; b++) {
+          const value = schroeder[b];
+          if (value > 0) {
+            times.push(b * this._histogramBinWidth);
+            levelsDb.push(10 * Math.log10(value / maxVal));
+          }
+        }
+
+        if (times.length >= 2) {
+          const regression = linearRegression(times, levelsDb);
+          const slope = regression.slope;
+          // T60: time for 60 dB decay, extrapolated from decay slope in dB/s
+          t30Estimates[f] = slope < 0 ? 60 / -slope : 0;
+        }
       }
     }
 
@@ -1324,6 +1372,7 @@ class RayTracer extends Solver {
     const n = this.convergenceMetrics.t30Count;
 
     let maxRatio = 0;
+    let validBandCount = 0;
     for (let f = 0; f < numBands; f++) {
       const val = t30Estimates[f];
       const oldMean = this.convergenceMetrics.t30Mean[f];
@@ -1333,16 +1382,17 @@ class RayTracer extends Solver {
       this.convergenceMetrics.t30Mean[f] = newMean;
       this.convergenceMetrics.t30M2[f] = newM2;
 
-      // Coefficient of variation: std / mean
+      // Coefficient of variation: std / mean (skip bands with no valid T30)
       if (n >= 2 && newMean > 0) {
         const variance = newM2 / (n - 1);
         const ratio = Math.sqrt(variance) / newMean;
         if (ratio > maxRatio) maxRatio = ratio;
-      } else {
-        maxRatio = Infinity;
+        validBandCount++;
       }
+      // Bands with zero/invalid T30 are excluded from convergence check
     }
-    this.convergenceMetrics.convergenceRatio = maxRatio;
+    // Only report convergence if at least one band has a valid estimate
+    this.convergenceMetrics.convergenceRatio = validBandCount > 0 ? maxRatio : Infinity;
 
     // Emit update so UI can display metrics
     emit("RAYTRACER_SET_PROPERTY", {

@@ -65,6 +65,25 @@ describe('Phase 7: Convergence, Russian Roulette, Stratified Sampling', () => {
       expect(source).toContain('oldMean + (val - oldMean) / n');
     });
 
+    it('uses stable receiver selection via this.receiverIDs', () => {
+      expect(source).toContain('this.receiverIDs');
+      // Should not just use Object.keys()[0]
+      const updateMethod = source.match(/_updateConvergenceMetrics\(\)\s*\{([\s\S]*?)\n\s{2}\}/);
+      expect(updateMethod).not.toBeNull();
+      expect(updateMethod![1]).toContain('this.receiverIDs');
+    });
+
+    it('uses linearRegression for T30 estimation', () => {
+      const updateMethod = source.match(/_updateConvergenceMetrics\(\)\s*\{([\s\S]*?)\n\s{2}\}/);
+      expect(updateMethod).not.toBeNull();
+      expect(updateMethod![1]).toContain('linearRegression(times, levelsDb)');
+    });
+
+    it('skips bands with invalid T30 from convergence ratio', () => {
+      expect(source).toContain('validBandCount');
+      expect(source).toContain('validBandCount > 0 ? maxRatio : Infinity');
+    });
+
     it('save() includes convergenceThreshold, autoStop, rrThreshold', () => {
       const saveMatch = source.match(/save\(\)\s*\{([\s\S]*?)\n\s{2}\}/);
       expect(saveMatch).not.toBeNull();
@@ -117,6 +136,13 @@ describe('Phase 7: Convergence, Russian Roulette, Stratified Sampling', () => {
     it('reflectionOrder limit preserved as safety bound', () => {
       expect(source).toContain('iter < order + 1');
     });
+
+    it('RR termination returns energy and bandEnergy fields', () => {
+      // The early termination return should include energy and bandEnergy
+      // Find the RR termination block and check it returns a complete RayPath
+      expect(source).toContain('rrEnergy');
+      expect(source).toMatch(/return\s*\{[^}]*energy:\s*rrEnergy[^}]*bandEnergy:[^}]*\}\s*as\s*RayPath/);
+    });
   });
 
   describe('7b: Russian Roulette unbiasedness', () => {
@@ -154,9 +180,10 @@ describe('Phase 7: Convergence, Russian Roulette, Stratified Sampling', () => {
       expect(source).toMatch(/stepStratified\(numRays:\s*number\)/);
     });
 
-    it('stepStratified uses grid strata with jitter', () => {
-      // Should compute nPhi and nTheta from numRays
-      expect(source).toContain('Math.ceil(Math.sqrt(numRays))');
+    it('stepStratified uses exact-divisor grid strata with jitter', () => {
+      // Should find exact divisor for nPhi * nTheta === numRays
+      expect(source).toContain('Math.floor(Math.sqrt(numRays))');
+      expect(source).toContain('numRays % nPhi !== 0');
       // Should jitter within strata
       expect(source).toMatch(/\(si \+ Math\.random\(\)\)\s*\/\s*nPhi/);
       expect(source).toMatch(/\(sj \+ Math\.random\(\)\)\s*\/\s*nTheta/);
@@ -191,9 +218,10 @@ describe('Phase 7: Convergence, Russian Roulette, Stratified Sampling', () => {
         randomBins[Math.min(bin, 15)]++;
       }
 
-      // Stratified: divide into grid and jitter
-      const nPhi = Math.ceil(Math.sqrt(N));
-      const nTheta = Math.ceil(N / nPhi);
+      // Stratified: divide into exact grid and jitter
+      let nPhi = Math.floor(Math.sqrt(N));
+      while (nPhi > 1 && N % nPhi !== 0) nPhi--;
+      const nTheta = N / nPhi;
       const stratBins = new Array(16).fill(0);
       for (let si = 0; si < nPhi; si++) {
         for (let sj = 0; sj < nTheta; sj++) {
@@ -223,9 +251,12 @@ describe('Phase 7: Convergence, Russian Roulette, Stratified Sampling', () => {
           const phi = Math.random() * 2 * Math.PI;
           rBins[Math.floor((phi / (2 * Math.PI)) * 16) % 16]++;
         }
-        for (let si = 0; si < nPhi; si++) {
-          for (let sj = 0; sj < nTheta; sj++) {
-            const phi = ((si + Math.random()) / nPhi) * 2 * Math.PI;
+        let snPhi = Math.floor(Math.sqrt(N));
+        while (snPhi > 1 && N % snPhi !== 0) snPhi--;
+        const snTheta = N / snPhi;
+        for (let si = 0; si < snPhi; si++) {
+          for (let sj = 0; sj < snTheta; sj++) {
+            const phi = ((si + Math.random()) / snPhi) * 2 * Math.PI;
             sBins[Math.floor((phi / (2 * Math.PI)) * 16) % 16]++;
           }
         }
