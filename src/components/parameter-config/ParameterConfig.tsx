@@ -20,7 +20,7 @@ import ReceiverTab from './ReceiverTab';
 import SurfaceTab from './SurfaceTab';
 import ARTTab from './ARTTab';
 import BeamTraceTab from './BeamTraceTab';
-import type { Container } from '../../objects';
+import type Container from '../../objects/container';
 
 interface TabPanelProps {
   children?: React.ReactNode;

@@ -25,7 +25,7 @@ export interface SurfaceGroupProps {
 export default class SurfaceGroup extends Container {
   kind: string;
   selected: boolean;
-  renderCallback!: (time?: number) => void;
+  declare renderCallback: (time?: number) => void;
   constructor(name: string, props?: SurfaceGroupProps) {
     super(name, props);
     this.name = name;

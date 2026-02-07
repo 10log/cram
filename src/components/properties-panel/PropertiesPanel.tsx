@@ -209,7 +209,6 @@ function ObjectItem({ uuid, name, type, visible, selected, onSelect, onToggleVis
     <ListItem
       disablePadding
       sx={listItemSx}
-      selected={selected}
       onMouseEnter={onHover}
       onMouseLeave={onUnhover}
       secondaryAction={
@@ -223,7 +222,7 @@ function ObjectItem({ uuid, name, type, visible, selected, onSelect, onToggleVis
         </Box>
       }
     >
-      <ListItemButton onClick={onSelect} dense sx={{ py: 0.25 }}>
+      <ListItemButton onClick={onSelect} selected={selected} dense sx={{ py: 0.25 }}>
         <ListItemIcon sx={{ minWidth: 28 }}>
           {typeIcons[type] || <ViewInArIcon fontSize="small" />}
         </ListItemIcon>
@@ -255,7 +254,6 @@ function SolverItem({ uuid, name, type, selected, onSelect, onRun, onDelete }: S
     <ListItem
       disablePadding
       sx={listItemSx}
-      selected={selected}
       secondaryAction={
         <Box sx={{ display: "flex", gap: 0.25 }}>
           <IconButton size="small" onClick={onRun} color="primary" sx={{ p: 0.25 }}>
@@ -267,7 +265,7 @@ function SolverItem({ uuid, name, type, selected, onSelect, onRun, onDelete }: S
         </Box>
       }
     >
-      <ListItemButton onClick={onSelect} dense sx={{ py: 0.25 }}>
+      <ListItemButton onClick={onSelect} selected={selected} dense sx={{ py: 0.25 }}>
         <ListItemIcon sx={{ minWidth: 28 }}>
           {typeIcons.solver}
         </ListItemIcon>
@@ -293,8 +291,8 @@ interface RendererItemProps {
 
 function RendererItem({ selected, onSelect }: RendererItemProps) {
   return (
-    <ListItem disablePadding sx={listItemSx} selected={selected}>
-      <ListItemButton onClick={onSelect} dense sx={{ py: 0.25 }}>
+    <ListItem disablePadding sx={listItemSx}>
+      <ListItemButton onClick={onSelect} selected={selected} dense sx={{ py: 0.25 }}>
         <ListItemIcon sx={{ minWidth: 28 }}>
           {typeIcons.renderer}
         </ListItemIcon>
@@ -404,7 +402,7 @@ export function PropertiesPanel() {
   }, []);
 
   const handleDeleteObject = useCallback((uuid: string) => {
-    emit("REMOVE_CONTAINER", uuid);
+    emit("REMOVE_CONTAINERS", uuid);
     if (selectedObjectId === uuid) setSelectedObjectId(null);
   }, [selectedObjectId]);
 
@@ -419,7 +417,7 @@ export function PropertiesPanel() {
   }, []);
 
   const handleDeleteSolver = useCallback((uuid: string) => {
-    emit("REMOVE_SOLVER", uuid);
+    emit("REMOVE_SOLVERS", uuid);
     if (selectedSolverId === uuid) setSelectedSolverId(null);
   }, [selectedSolverId]);
 

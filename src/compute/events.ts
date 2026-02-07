@@ -19,6 +19,7 @@ declare global {
     RESTORE_SOLVERS: (RayTracerSaveObject | RT60SaveObject | ImageSourceSaveObject | ARTSaveObject | BeamTraceSaveObject)[];
     REMOVE_SOLVERS: string|string[];
     LOG_SOLVER: string;
+    RUN_SOLVER: string;
   }
 }
 
