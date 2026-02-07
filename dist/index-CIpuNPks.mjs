@@ -1,11 +1,12 @@
-import { S as ue } from "./solver-o7QDnUJF.mjs";
-import * as v from "three";
-import { MeshLine as he, MeshLineMaterial as de } from "three.meshline";
-import { v as L, g as fe, e as T, R as V, r as R, p as me, u as B, a as G, P as q, b as pe, L as U, I as ge, F as j, o as k, s as ve, c as Pe, d as ye, f as _ } from "./index-C5-V-Q5w.mjs";
-import { a as Se } from "./air-attenuation-CBIk1QMo.mjs";
-import { a as M, n as W, w as K } from "./audio-engine-Byi3Q7j9.mjs";
-import Q from "chroma-js";
-import { e as be, g as Ie } from "./ambisonics.es-Ci32Q6qr.mjs";
+import { S as he } from "./solver-2Xqbhs6F.mjs";
+import * as g from "three";
+import { MeshLine as de, MeshLineMaterial as fe } from "three.meshline";
+import { v as L, g as pe, e as T, R as V, r as R, p as me, u as B, a as G, P as q, b as ge, L as U, I as ve, F as j, o as k, s as Pe, c as ye, d as Se, f as _ } from "./index-CXm_LEs2.mjs";
+import { a as be } from "./air-attenuation-CBIk1QMo.mjs";
+import { s as Ie } from "./sound-speed-Biev-mJ1.mjs";
+import { a as M, n as W, w as K } from "./audio-engine-Bw0oX7Dw.mjs";
+import X from "chroma-js";
+import { e as Re, g as we } from "./ambisonics.es-Ci32Q6qr.mjs";
 const h = {
   /**
    * Create a new Vector3
@@ -163,7 +164,7 @@ const h = {
   toString(s, e = 4) {
     return `[${s[0].toFixed(e)}, ${s[1].toFixed(e)}, ${s[2].toFixed(e)}]`;
   }
-}, g = {
+}, v = {
   /**
    * Create a plane from a normal vector and a point on the plane
    */
@@ -178,7 +179,7 @@ const h = {
    */
   fromPoints(s, e, t) {
     const o = h.subtract(e, s), n = h.subtract(t, s), r = h.normalize(h.cross(o, n));
-    return g.fromNormalAndPoint(r, s);
+    return v.fromNormalAndPoint(r, s);
   },
   /**
    * Create a plane directly from coefficients
@@ -205,39 +206,39 @@ const h = {
    * Absolute distance from a point to the plane
    */
   distance(s, e) {
-    return Math.abs(g.signedDistance(s, e));
+    return Math.abs(v.signedDistance(s, e));
   },
   /**
    * Classify a point relative to the plane
    */
   classifyPoint(s, e, t = 1e-6) {
-    const o = g.signedDistance(s, e);
+    const o = v.signedDistance(s, e);
     return o > t ? "front" : o < -t ? "back" : "on";
   },
   /**
    * Check if a point is in front of the plane
    */
   isPointInFront(s, e, t = 1e-6) {
-    return g.signedDistance(s, e) > t;
+    return v.signedDistance(s, e) > t;
   },
   /**
    * Check if a point is behind the plane
    */
   isPointBehind(s, e, t = 1e-6) {
-    return g.signedDistance(s, e) < -t;
+    return v.signedDistance(s, e) < -t;
   },
   /**
    * Check if a point is on the plane
    */
   isPointOn(s, e, t = 1e-6) {
-    return Math.abs(g.signedDistance(s, e)) <= t;
+    return Math.abs(v.signedDistance(s, e)) <= t;
   },
   /**
    * Mirror a point across the plane
    * p' = p - 2 * signedDistance(p) * normal
    */
   mirrorPoint(s, e) {
-    const t = g.signedDistance(s, e), o = g.normal(e);
+    const t = v.signedDistance(s, e), o = v.normal(e);
     return h.subtract(s, h.scale(o, 2 * t));
   },
   /**
@@ -245,11 +246,11 @@ const h = {
    * This mirrors two points on the source plane and reconstructs.
    */
   mirrorPlane(s, e) {
-    const t = g.normal(s);
+    const t = v.normal(s);
     let o;
     Math.abs(t[2]) > 0.5 ? o = [0, 0, -s.d / s.c] : Math.abs(t[1]) > 0.5 ? o = [0, -s.d / s.b, 0] : o = [-s.d / s.a, 0, 0];
-    const n = Math.abs(t[0]) < 0.9 ? [1, 0, 0] : [0, 1, 0], r = h.normalize(h.cross(t, n)), i = h.add(o, r), a = h.cross(t, r), l = h.add(o, a), c = g.mirrorPoint(o, e), u = g.mirrorPoint(i, e), m = g.mirrorPoint(l, e);
-    return g.fromPoints(c, u, m);
+    const n = Math.abs(t[0]) < 0.9 ? [1, 0, 0] : [0, 1, 0], r = h.normalize(h.cross(t, n)), i = h.add(o, r), a = h.cross(t, r), l = h.add(o, a), c = v.mirrorPoint(o, e), u = v.mirrorPoint(i, e), p = v.mirrorPoint(l, e);
+    return v.fromPoints(c, u, p);
   },
   /**
    * Flip the plane orientation (negate normal and d)
@@ -270,21 +271,21 @@ const h = {
    * @param plane - The plane to intersect with
    */
   rayIntersection(s, e, t) {
-    const o = g.normal(t), n = h.dot(o, e);
+    const o = v.normal(t), n = h.dot(o, e);
     return Math.abs(n) < 1e-10 ? null : -(h.dot(o, s) + t.d) / n;
   },
   /**
    * Get the point of intersection between a ray and plane
    */
   rayIntersectionPoint(s, e, t) {
-    const o = g.rayIntersection(s, e, t);
+    const o = v.rayIntersection(s, e, t);
     return o === null ? null : h.add(s, h.scale(e, o));
   },
   /**
    * Project a point onto the plane
    */
   projectPoint(s, e) {
-    const t = g.signedDistance(s, e), o = g.normal(e);
+    const t = v.signedDistance(s, e), o = v.normal(e);
     return h.subtract(s, h.scale(o, t));
   },
   /**
@@ -300,7 +301,7 @@ const h = {
   toString(s, e = 4) {
     return `Plane3D(${s.a.toFixed(e)}x + ${s.b.toFixed(e)}y + ${s.c.toFixed(e)}z + ${s.d.toFixed(e)} = 0)`;
   }
-}, x = {
+}, w = {
   /**
    * Create a polygon from vertices (computes plane automatically)
    * Vertices must be in counter-clockwise order when viewed from front
@@ -308,7 +309,7 @@ const h = {
   create(s, e) {
     if (s.length < 3)
       throw new Error("Polygon requires at least 3 vertices");
-    const t = s.map((n) => h.clone(n)), o = g.fromPoints(t[0], t[1], t[2]);
+    const t = s.map((n) => h.clone(n)), o = v.fromPoints(t[0], t[1], t[2]);
     return { vertices: t, plane: o, materialId: e };
   },
   /**
@@ -353,7 +354,7 @@ const h = {
    * Get the normal vector of the polygon (from the plane)
    */
   normal(s) {
-    return g.normal(s.plane);
+    return v.normal(s.plane);
   },
   /**
    * Get edges as pairs of vertices [start, end]
@@ -372,7 +373,7 @@ const h = {
   classify(s, e, t = 1e-6) {
     let o = 0, n = 0;
     for (const r of s.vertices) {
-      const i = g.classifyPoint(r, e, t);
+      const i = v.classifyPoint(r, e, t);
       i === "front" ? o++ : i === "back" && n++;
     }
     return o > 0 && n > 0 ? "spanning" : o > 0 ? "front" : n > 0 ? "back" : "coplanar";
@@ -382,7 +383,7 @@ const h = {
    * Assumes the point is on (or very close to) the polygon's plane
    */
   containsPoint(s, e, t = 1e-6) {
-    const o = g.normal(s.plane), n = s.vertices.length;
+    const o = v.normal(s.plane), n = s.vertices.length;
     for (let r = 0; r < n; r++) {
       const i = s.vertices[r], a = s.vertices[(r + 1) % n], l = h.subtract(a, i), c = h.subtract(e, i), u = h.cross(l, c);
       if (h.dot(u, o) < -t)
@@ -394,12 +395,12 @@ const h = {
    * Ray-polygon intersection
    * Returns t parameter and intersection point, or null if no hit
    */
-  rayIntersection(s, e, t) {
-    const o = g.rayIntersection(s, e, t.plane);
-    if (o === null || o < 0)
+  rayIntersection(s, e, t, o = 1e-4) {
+    const n = v.rayIntersection(s, e, t.plane);
+    if (n === null || n < 0)
       return null;
-    const n = h.add(s, h.scale(e, o));
-    return x.containsPoint(t, n) ? { t: o, point: n } : null;
+    const r = h.add(s, h.scale(e, n));
+    return w.containsPoint(t, r, o) ? { t: n, point: r } : null;
   },
   /**
    * Create a bounding box for the polygon
@@ -414,13 +415,13 @@ const h = {
    * Check if polygon is degenerate (zero or near-zero area)
    */
   isDegenerate(s, e = 1e-10) {
-    return s.vertices.length < 3 || x.area(s) < e;
+    return s.vertices.length < 3 || w.area(s) < e;
   },
   /**
    * Flip the polygon winding (reverse vertex order and flip plane)
    */
   flip(s) {
-    const e = [...s.vertices].reverse(), t = g.flip(s.plane);
+    const e = [...s.vertices].reverse(), t = v.flip(s.plane);
     return {
       vertices: e,
       plane: t,
@@ -445,50 +446,50 @@ const h = {
     return `Polygon3D(${s.vertices.length} vertices: [${e}])`;
   }
 };
-function Re(s, e, t = 1e-6) {
-  const o = x.classify(s, e, t);
+function xe(s, e, t = 1e-4) {
+  const o = w.classify(s, e, t);
   if (o === "front" || o === "coplanar")
     return { front: s, back: null };
   if (o === "back")
     return { front: null, back: s };
   const n = [], r = [], i = s.vertices.length;
   for (let c = 0; c < i; c++) {
-    const u = s.vertices[c], m = s.vertices[(c + 1) % i], f = g.signedDistance(u, e), d = g.signedDistance(m, e), p = f > t ? "front" : f < -t ? "back" : "on", y = d > t ? "front" : d < -t ? "back" : "on";
-    if (p === "front" ? n.push(u) : (p === "back" || n.push(u), r.push(u)), p === "front" && y === "back" || p === "back" && y === "front") {
-      const I = f / (f - d), b = h.lerp(u, m, I);
+    const u = s.vertices[c], p = s.vertices[(c + 1) % i], f = v.signedDistance(u, e), d = v.signedDistance(p, e), m = f > t ? "front" : f < -t ? "back" : "on", y = d > t ? "front" : d < -t ? "back" : "on";
+    if (m === "front" ? n.push(u) : (m === "back" || n.push(u), r.push(u)), m === "front" && y === "back" || m === "back" && y === "front") {
+      const I = f / (f - d), b = h.lerp(u, p, I);
       n.push(b), r.push(b);
     }
   }
-  const a = n.length >= 3 ? x.createWithPlane(n, s.plane, s.materialId) : null, l = r.length >= 3 ? x.createWithPlane(r, s.plane, s.materialId) : null;
+  const a = n.length >= 3 ? w.createWithPlane(n, s.plane, s.materialId) : null, l = r.length >= 3 ? w.createWithPlane(r, s.plane, s.materialId) : null;
   return { front: a, back: l };
 }
-function xe(s, e, t = 1e-6) {
+function De(s, e, t = 1e-4) {
   const o = s.vertices, n = [];
   if (o.length < 3)
     return null;
   for (let r = 0; r < o.length; r++) {
-    const i = o[r], a = o[(r + 1) % o.length], l = g.signedDistance(i, e), c = g.signedDistance(a, e), u = l >= -t, m = c >= -t;
-    if (u && n.push(i), u && !m || !u && m) {
+    const i = o[r], a = o[(r + 1) % o.length], l = v.signedDistance(i, e), c = v.signedDistance(a, e), u = l >= -t, p = c >= -t;
+    if (u && n.push(i), u && !p || !u && p) {
       const f = l / (l - c), d = h.lerp(i, a, Math.max(0, Math.min(1, f)));
       n.push(d);
     }
   }
-  return n.length < 3 ? null : x.createWithPlane(n, s.plane, s.materialId);
+  return n.length < 3 ? null : w.createWithPlane(n, s.plane, s.materialId);
 }
-function De(s, e, t = 1e-6) {
+function Me(s, e, t = 1e-4) {
   let o = s;
   for (const n of e) {
     if (!o)
       return null;
-    o = xe(o, n, t);
+    o = De(o, n, t);
   }
   return o;
 }
-function we(s, e, t = 1e-6) {
+function Te(s, e, t = 1e-4) {
   for (const o of e) {
     let n = !0;
     for (const r of s.vertices)
-      if (g.signedDistance(r, o) >= -t) {
+      if (v.signedDistance(r, o) >= -t) {
         n = !1;
         break;
       }
@@ -497,7 +498,7 @@ function we(s, e, t = 1e-6) {
   }
   return !1;
 }
-function Me(s) {
+function Be(s) {
   if (s.length === 0)
     return null;
   const e = s.map((t, o) => ({
@@ -509,11 +510,11 @@ function Me(s) {
 function H(s) {
   if (s.length === 0)
     return null;
-  const e = Te(s), t = s[e], o = t.polygon.plane, n = [], r = [];
+  const e = Ae(s), t = s[e], o = t.polygon.plane, n = [], r = [];
   for (let i = 0; i < s.length; i++) {
     if (i === e)
       continue;
-    const a = s[i], { front: l, back: c } = Re(a.polygon, o);
+    const a = s[i], { front: l, back: c } = xe(a.polygon, o);
     l && n.push({ polygon: l, originalId: a.originalId }), c && r.push({ polygon: c, originalId: a.originalId });
   }
   return {
@@ -524,7 +525,7 @@ function H(s) {
     back: H(r)
   };
 }
-function Te(s) {
+function Ae(s) {
   if (s.length <= 3)
     return 0;
   let e = 0, t = 1 / 0;
@@ -532,10 +533,10 @@ function Te(s) {
   for (let r = 0; r < s.length; r += n) {
     const i = s[r].polygon.plane;
     let a = 0, l = 0, c = 0;
-    for (let m = 0; m < s.length; m++) {
-      if (r === m)
+    for (let p = 0; p < s.length; p++) {
+      if (r === p)
         continue;
-      const f = x.classify(s[m].polygon, i);
+      const f = w.classify(s[p].polygon, i);
       f === "front" ? a++ : f === "back" ? l++ : f === "spanning" && (a++, l++, c++);
     }
     const u = c * 8 + Math.abs(a - l);
@@ -546,15 +547,15 @@ function Te(s) {
 function O(s, e, t, o = 0, n = 1 / 0, r = -1) {
   if (!t)
     return null;
-  const i = g.signedDistance(s, t.plane), a = g.normal(t.plane), l = h.dot(a, e);
+  const i = v.signedDistance(s, t.plane), a = v.normal(t.plane), l = h.dot(a, e);
   let c, u;
   i >= 0 ? (c = t.front, u = t.back) : (c = t.back, u = t.front);
-  let m = null;
-  Math.abs(l) > 1e-10 && (m = -i / l);
+  let p = null;
+  Math.abs(l) > 1e-10 && (p = -i / l);
   let f = null;
-  if (m === null || m < o) {
+  if (p === null || p < o) {
     if (f = O(s, e, c, o, n, r), !f && t.polygonId !== r) {
-      const d = x.rayIntersection(s, e, t.polygon);
+      const d = w.rayIntersection(s, e, t.polygon);
       d && d.t >= o && d.t <= n && (f = {
         t: d.t,
         point: d.point,
@@ -563,9 +564,9 @@ function O(s, e, t, o = 0, n = 1 / 0, r = -1) {
       });
     }
     f || (f = O(s, e, u, o, n, r));
-  } else if (m > n) {
+  } else if (p > n) {
     if (f = O(s, e, c, o, n, r), !f && t.polygonId !== r) {
-      const d = x.rayIntersection(s, e, t.polygon);
+      const d = w.rayIntersection(s, e, t.polygon);
       d && d.t >= o && d.t <= n && (f = {
         t: d.t,
         point: d.point,
@@ -575,8 +576,8 @@ function O(s, e, t, o = 0, n = 1 / 0, r = -1) {
     }
     f || (f = O(s, e, u, o, n, r));
   } else {
-    if (f = O(s, e, c, o, m, r), !f && t.polygonId !== r) {
-      const d = x.rayIntersection(s, e, t.polygon);
+    if (f = O(s, e, c, o, p, r), !f && t.polygonId !== r) {
+      const d = w.rayIntersection(s, e, t.polygon);
       d && d.t >= o && d.t <= n && (f = {
         t: d.t,
         point: d.point,
@@ -584,22 +585,22 @@ function O(s, e, t, o = 0, n = 1 / 0, r = -1) {
         polygon: t.polygon
       });
     }
-    f || (f = O(s, e, u, m, n, r));
+    f || (f = O(s, e, u, p, n, r));
   }
   return f;
 }
 function $(s, e, t, o, n, r) {
   if (!t)
     return null;
-  const i = g.signedDistance(s, t.plane), a = g.normal(t.plane), l = h.dot(a, e);
+  const i = v.signedDistance(s, t.plane), a = v.normal(t.plane), l = h.dot(a, e);
   let c, u;
   i >= 0 ? (c = t.front, u = t.back) : (c = t.back, u = t.front);
-  let m = null;
-  Math.abs(l) > 1e-10 && (m = -i / l);
+  let p = null;
+  Math.abs(l) > 1e-10 && (p = -i / l);
   let f = null;
-  if (m === null || m < o) {
+  if (p === null || p < o) {
     if (f = $(s, e, c, o, n, r), !f && !r.has(t.polygonId)) {
-      const d = x.rayIntersection(s, e, t.polygon);
+      const d = w.rayIntersection(s, e, t.polygon);
       d && d.t >= o && d.t <= n && (f = {
         t: d.t,
         point: d.point,
@@ -608,9 +609,9 @@ function $(s, e, t, o, n, r) {
       });
     }
     f || (f = $(s, e, u, o, n, r));
-  } else if (m > n) {
+  } else if (p > n) {
     if (f = $(s, e, c, o, n, r), !f && !r.has(t.polygonId)) {
-      const d = x.rayIntersection(s, e, t.polygon);
+      const d = w.rayIntersection(s, e, t.polygon);
       d && d.t >= o && d.t <= n && (f = {
         t: d.t,
         point: d.point,
@@ -620,8 +621,8 @@ function $(s, e, t, o, n, r) {
     }
     f || (f = $(s, e, u, o, n, r));
   } else {
-    if (f = $(s, e, c, o, m, r), !f && !r.has(t.polygonId)) {
-      const d = x.rayIntersection(s, e, t.polygon);
+    if (f = $(s, e, c, o, p, r), !f && !r.has(t.polygonId)) {
+      const d = w.rayIntersection(s, e, t.polygon);
       d && d.t >= o && d.t <= n && (f = {
         t: d.t,
         point: d.point,
@@ -629,28 +630,28 @@ function $(s, e, t, o, n, r) {
         polygon: t.polygon
       });
     }
-    f || (f = $(s, e, u, m, n, r));
+    f || (f = $(s, e, u, p, n, r));
   }
   return f;
 }
-function X(s, e) {
-  const t = [], o = x.edges(e), n = x.centroid(e);
+function J(s, e) {
+  const t = [], o = w.edges(e), n = w.centroid(e);
   for (const [i, a] of o) {
-    let l = g.fromPoints(s, i, a);
-    g.signedDistance(n, l) < 0 && (l = g.flip(l)), t.push(l);
+    let l = v.fromPoints(s, i, a);
+    v.signedDistance(n, l) < 0 && (l = v.flip(l)), t.push(l);
   }
   let r = e.plane;
-  return g.signedDistance(s, r) > 0 && (r = g.flip(r)), t.push(r), t;
-}
-function J(s, e) {
-  return g.mirrorPoint(s, e.plane);
+  return v.signedDistance(s, r) > 0 && (r = v.flip(r)), t.push(r), t;
 }
 function ee(s, e) {
-  const t = x.centroid(s), o = h.subtract(e, t), n = g.normal(s.plane);
+  return v.mirrorPoint(s, e.plane);
+}
+function te(s, e) {
+  const t = w.centroid(s), o = h.subtract(e, t), n = v.normal(s.plane);
   return h.dot(n, o) > 0;
 }
-const Be = 1e-6;
-function Ae(s, e, t) {
+const Fe = 1e-6;
+function ke(s, e, t) {
   const o = {
     id: -1,
     parent: null,
@@ -660,38 +661,38 @@ function Ae(s, e, t) {
   if (t >= 1)
     for (let r = 0; r < e.length; r++) {
       const i = e[r];
-      if (!ee(i, s))
+      if (!te(i, s))
         continue;
-      const a = J(s, i), l = X(a, i), c = {
+      const a = ee(s, i), l = J(a, i), c = {
         id: r,
         parent: o,
         virtualSource: a,
-        aperture: x.clone(i),
+        aperture: w.clone(i),
         boundaryPlanes: l,
         children: []
       };
-      o.children.push(c), t > 1 && te(c, e, 2, t);
+      o.children.push(c), t > 1 && se(c, e, 2, t);
     }
   const n = [];
-  return se(o, n), {
+  return oe(o, n), {
     root: o,
     leafNodes: n,
     polygons: e,
     maxReflectionOrder: t
   };
 }
-function te(s, e, t, o) {
+function se(s, e, t, o) {
   if (!(t > o) && !(!s.boundaryPlanes || !s.aperture))
     for (let n = 0; n < e.length; n++) {
       if (n === s.id)
         continue;
       const r = e[n];
-      if (we(r, s.boundaryPlanes) || !ee(r, s.virtualSource))
+      if (Te(r, s.boundaryPlanes) || !te(r, s.virtualSource))
         continue;
-      const i = De(r, s.boundaryPlanes);
-      if (!i || x.area(i) < Be)
+      const i = Me(r, s.boundaryPlanes);
+      if (!i || w.area(i) < Fe)
         continue;
-      const l = J(s.virtualSource, r), c = X(l, i), u = {
+      const l = ee(s.virtualSource, r), c = J(l, i), u = {
         id: n,
         parent: s,
         virtualSource: l,
@@ -699,27 +700,27 @@ function te(s, e, t, o) {
         boundaryPlanes: c,
         children: []
       };
-      s.children.push(u), t < o && te(u, e, t + 1, o);
+      s.children.push(u), t < o && se(u, e, t + 1, o);
     }
 }
-function se(s, e) {
+function oe(s, e) {
   s.children.length === 0 && s.id !== -1 && e.push(s);
   for (const t of s.children)
-    se(t, e);
+    oe(t, e);
 }
-function Fe(s) {
-  oe(s.root);
+function $e(s) {
+  ne(s.root);
 }
-function oe(s) {
+function ne(s) {
   s.failPlane = void 0, s.failPlaneType = void 0;
   for (const e of s.children)
-    oe(e);
+    ne(e);
 }
-function ke(s, e, t) {
+function Oe(s, e, t) {
   if (!e.aperture || !e.boundaryPlanes)
     return null;
   let n = t[e.id].plane;
-  if (g.signedDistance(e.virtualSource, n) < 0 && (n = g.flip(n)), g.signedDistance(s, n) < 0)
+  if (v.signedDistance(e.virtualSource, n) < 0 && (n = v.flip(n)), v.signedDistance(s, n) < 0)
     return {
       plane: n,
       type: "polygon",
@@ -728,7 +729,7 @@ function ke(s, e, t) {
   const r = e.boundaryPlanes.length - 1;
   for (let i = 0; i < e.boundaryPlanes.length; i++) {
     const a = e.boundaryPlanes[i];
-    if (g.signedDistance(s, a) < 0) {
+    if (v.signedDistance(s, a) < 0) {
       const l = i < r ? "edge" : "aperture";
       return {
         plane: a,
@@ -745,11 +746,11 @@ function Z(s) {
     e++, t = t.parent;
   return e;
 }
-function $e(s, e) {
-  return g.signedDistance(s, e) < 0;
+function Ee(s, e) {
+  return v.signedDistance(s, e) < 0;
 }
-const ne = 16;
-function Oe(s, e = ne) {
+const re = 16;
+function Ce(s, e = re) {
   const t = [];
   for (let o = 0; o < s.length; o += e)
     t.push({
@@ -759,18 +760,18 @@ function Oe(s, e = ne) {
     });
   return t;
 }
-function Ee(s, e) {
+function Le(s, e) {
   return h.distance(s, e.center) < e.radius;
 }
-function Ce(s, e) {
-  return e.skipSphere ? Ee(s, e.skipSphere) ? "inside" : "outside" : "none";
+function _e(s, e) {
+  return e.skipSphere ? Le(s, e.skipSphere) ? "inside" : "outside" : "none";
 }
-function Le(s, e) {
+function ze(s, e) {
   let t = 1 / 0;
   for (const o of e) {
     if (!o.failPlane)
       return null;
-    const n = Math.abs(g.signedDistance(s, o.failPlane));
+    const n = Math.abs(v.signedDistance(s, o.failPlane));
     t = Math.min(t, n);
   }
   return t === 1 / 0 || t <= 1e-10 ? null : {
@@ -781,11 +782,11 @@ function Le(s, e) {
 function Y(s) {
   s.skipSphere = null;
 }
-function _e(s) {
+function Ve(s) {
   for (const e of s.nodes)
     e.failPlane = void 0, e.failPlaneType = void 0;
 }
-class ze {
+class He {
   /**
    * Create a new 3D beam tracing solver
    *
@@ -794,8 +795,8 @@ class ze {
    * @param config - Optional configuration
    */
   constructor(e, t, o = {}) {
-    const n = o.maxReflectionOrder ?? 5, r = o.bucketSize ?? ne;
-    this.polygons = e, this.sourcePosition = h.clone(t), this.bspRoot = Me(e), this.beamTree = Ae(t, e, n), this.buckets = Oe(this.beamTree.leafNodes, r), this.metrics = this.createEmptyMetrics(), this.metrics.totalLeafNodes = this.beamTree.leafNodes.length, this.metrics.bucketsTotal = this.buckets.length;
+    const n = o.maxReflectionOrder ?? 5, r = o.bucketSize ?? re;
+    this.polygons = e, this.sourcePosition = h.clone(t), this.epsilon = o.epsilon ?? 1e-4, this.bspRoot = Be(e), this.beamTree = ke(t, e, n), this.buckets = Ce(this.beamTree.leafNodes, r), this.metrics = this.createEmptyMetrics(), this.metrics.totalLeafNodes = this.beamTree.leafNodes.length, this.metrics.bucketsTotal = this.buckets.length;
   }
   /**
    * Get all valid reflection paths from source to listener
@@ -810,15 +811,15 @@ class ze {
     const n = this.findIntermediatePaths(e, this.beamTree.root);
     t.push(...n);
     for (const r of this.buckets) {
-      const i = Ce(e, r);
+      const i = _e(e, r);
       if (i === "inside") {
         this.metrics.bucketsSkipped++;
         continue;
       }
-      i === "outside" && (Y(r), _e(r)), this.metrics.bucketsChecked++;
+      i === "outside" && (Y(r), Ve(r)), this.metrics.bucketsChecked++;
       let a = !0, l = !0;
       for (const c of r.nodes) {
-        if (c.failPlane && $e(e, c.failPlane)) {
+        if (c.failPlane && Ee(e, c.failPlane)) {
           this.metrics.failPlaneCacheHits++;
           continue;
         }
@@ -826,7 +827,7 @@ class ze {
         const u = this.validatePath(e, c);
         u.valid && u.path ? (t.push(u.path), a = !1, l = !1) : c.failPlane || (l = !1);
       }
-      a && l && r.nodes.length > 0 && (r.skipSphere = Le(e, r.nodes), r.skipSphere && this.metrics.skipSphereCount++);
+      a && l && r.nodes.length > 0 && (r.skipSphere = ze(e, r.nodes), r.skipSphere && this.metrics.skipSphereCount++);
     }
     return this.metrics.validPathCount = t.length, t;
   }
@@ -843,7 +844,7 @@ class ze {
    * @returns Array of detailed reflection paths
    */
   getDetailedPaths(e) {
-    return this.getPaths(e).map((o) => Ue(o, this.polygons));
+    return this.getPaths(e).map((o) => We(o, this.polygons));
   }
   /**
    * Validate the direct path from listener to source
@@ -852,7 +853,7 @@ class ze {
     const t = h.subtract(this.sourcePosition, e), o = h.length(t), n = h.normalize(t);
     this.metrics.raycastCount++;
     const r = O(e, n, this.bspRoot, 0, o, -1);
-    return r && r.t < o - 1e-6 ? null : [
+    return r && r.t < o - this.epsilon ? null : [
       { position: h.clone(e), polygonId: null },
       { position: h.clone(this.sourcePosition), polygonId: null }
     ];
@@ -887,36 +888,36 @@ class ze {
     const c = /* @__PURE__ */ new Set();
     let u = 0;
     for (; l && l.id !== -1; ) {
-      const m = this.polygons[l.id], f = l.virtualSource, d = h.normalize(h.subtract(f, a)), p = x.rayIntersection(a, d, m);
-      if (!p)
+      const p = this.polygons[l.id], f = l.virtualSource, d = h.normalize(h.subtract(f, a)), m = w.rayIntersection(a, d, p);
+      if (!m)
         return o && console.log(`  [Segment ${u}] FAIL: No intersection with polygon ${l.id}`), null;
-      o && (console.log(`  [Segment ${u}] Ray from [${a[0].toFixed(3)}, ${a[1].toFixed(3)}, ${a[2].toFixed(3)}]`), console.log(`    Direction: [${d[0].toFixed(3)}, ${d[1].toFixed(3)}, ${d[2].toFixed(3)}]`), console.log(`    Hit polygon ${l.id} at t=${p.t.toFixed(3)}, point=[${p.point[0].toFixed(3)}, ${p.point[1].toFixed(3)}, ${p.point[2].toFixed(3)}]`)), c.add(l.id), this.metrics.raycastCount++;
-      const y = $(a, d, this.bspRoot, 1e-6, p.t - 1e-6, c);
+      o && (console.log(`  [Segment ${u}] Ray from [${a[0].toFixed(3)}, ${a[1].toFixed(3)}, ${a[2].toFixed(3)}]`), console.log(`    Direction: [${d[0].toFixed(3)}, ${d[1].toFixed(3)}, ${d[2].toFixed(3)}]`), console.log(`    Hit polygon ${l.id} at t=${m.t.toFixed(3)}, point=[${m.point[0].toFixed(3)}, ${m.point[1].toFixed(3)}, ${m.point[2].toFixed(3)}]`)), c.add(l.id), this.metrics.raycastCount++;
+      const y = $(a, d, this.bspRoot, this.epsilon, m.t - this.epsilon, c);
       if (y)
         return o && (console.log(`    OCCLUDED by polygon ${y.polygonId} at t=${y.t.toFixed(3)}, point=[${y.point[0].toFixed(3)}, ${y.point[1].toFixed(3)}, ${y.point[2].toFixed(3)}]`), console.log(`    ignoreIds: [${Array.from(c).join(", ")}]`)), null;
       o && console.log(`    OK - no occlusion (ignoreIds: [${Array.from(c).join(", ")}])`), n.push({
-        position: h.clone(p.point),
+        position: h.clone(m.point),
         polygonId: l.id
-      }), a = p.point, l = l.parent, u++;
+      }), a = m.point, l = l.parent, u++;
     }
     if (l) {
-      const m = h.normalize(h.subtract(l.virtualSource, a)), f = h.distance(l.virtualSource, a);
+      const p = h.normalize(h.subtract(l.virtualSource, a)), f = h.distance(l.virtualSource, a);
       if (o) {
-        console.log(`  [Final segment] Ray from [${a[0].toFixed(3)}, ${a[1].toFixed(3)}, ${a[2].toFixed(3)}]`), console.log(`    To source: [${l.virtualSource[0].toFixed(3)}, ${l.virtualSource[1].toFixed(3)}, ${l.virtualSource[2].toFixed(3)}]`), console.log(`    Direction: [${m[0].toFixed(3)}, ${m[1].toFixed(3)}, ${m[2].toFixed(3)}]`), console.log(`    Distance: ${f.toFixed(3)}`), console.log(`    tMin: ${1e-6}, tMax: ${(f - 1e-6).toFixed(6)}`), console.log(`    ignoreIds: [${Array.from(c).join(", ")}]`);
+        console.log(`  [Final segment] Ray from [${a[0].toFixed(3)}, ${a[1].toFixed(3)}, ${a[2].toFixed(3)}]`), console.log(`    To source: [${l.virtualSource[0].toFixed(3)}, ${l.virtualSource[1].toFixed(3)}, ${l.virtualSource[2].toFixed(3)}]`), console.log(`    Direction: [${p[0].toFixed(3)}, ${p[1].toFixed(3)}, ${p[2].toFixed(3)}]`), console.log(`    Distance: ${f.toFixed(3)}`), console.log(`    tMin: ${this.epsilon}, tMax: ${(f - this.epsilon).toFixed(6)}`), console.log(`    ignoreIds: [${Array.from(c).join(", ")}]`);
         const I = a, b = l.virtualSource;
         if (I[1] < 5.575 && b[1] > 5.575 || I[1] > 5.575 && b[1] < 5.575) {
-          const P = (5.575 - I[1]) / (b[1] - I[1]), S = I[0] + P * (b[0] - I[0]), D = I[2] + P * (b[2] - I[2]);
-          if (console.log(`    CROSSING y=5.575 at t=${P.toFixed(3)}, x=${S.toFixed(3)}, z=${D.toFixed(3)}`), console.log("    back1 spans: x=[6.215, 12.43], z=[0, 4.877]"), S >= 6.215 && S <= 12.43 && D >= 0 && D <= 4.877) {
+          const P = (5.575 - I[1]) / (b[1] - I[1]), S = I[0] + P * (b[0] - I[0]), x = I[2] + P * (b[2] - I[2]);
+          if (console.log(`    CROSSING y=5.575 at t=${P.toFixed(3)}, x=${S.toFixed(3)}, z=${x.toFixed(3)}`), console.log("    back1 spans: x=[6.215, 12.43], z=[0, 4.877]"), S >= 6.215 && S <= 12.43 && x >= 0 && x <= 4.877) {
             console.log("    *** SHOULD HIT back1 (polygons 3, 4) ***"), console.log("    Direct polygon intersection test:");
-            for (const w of [3, 4]) {
-              const E = this.polygons[w], A = x.rayIntersection(a, m, E);
-              A ? console.log(`      Polygon ${w}: HIT at t=${A.t.toFixed(3)}, point=[${A.point[0].toFixed(3)}, ${A.point[1].toFixed(3)}, ${A.point[2].toFixed(3)}]`) : (console.log(`      Polygon ${w}: NO HIT`), console.log(`        Vertices: ${E.vertices.map((F) => `[${F[0].toFixed(2)}, ${F[1].toFixed(2)}, ${F[2].toFixed(2)}]`).join(", ")}`));
+            for (const D of [3, 4]) {
+              const E = this.polygons[D], A = w.rayIntersection(a, p, E);
+              A ? console.log(`      Polygon ${D}: HIT at t=${A.t.toFixed(3)}, point=[${A.point[0].toFixed(3)}, ${A.point[1].toFixed(3)}, ${A.point[2].toFixed(3)}]`) : (console.log(`      Polygon ${D}: NO HIT`), console.log(`        Vertices: ${E.vertices.map((F) => `[${F[0].toFixed(2)}, ${F[1].toFixed(2)}, ${F[2].toFixed(2)}]`).join(", ")}`));
             }
           }
         }
       }
       this.metrics.raycastCount++;
-      const d = 1e-6, p = f - 1e-6, y = $(a, m, this.bspRoot, d, p, c);
+      const d = this.epsilon, m = f - this.epsilon, y = $(a, p, this.bspRoot, d, m, c);
       if (y)
         return o && console.log(`    OCCLUDED by polygon ${y.polygonId} at t=${y.t.toFixed(3)}, point=[${y.point[0].toFixed(3)}, ${y.point[1].toFixed(3)}, ${y.point[2].toFixed(3)}]`), null;
       o && console.log("    OK - path valid!"), n.push({
@@ -933,7 +934,7 @@ class ze {
     const o = this.traverseBeam(e, t);
     if (o)
       return { valid: !0, path: o };
-    const n = ke(e, t, this.polygons);
+    const n = Oe(e, t, this.polygons);
     return n && (t.failPlane = n.plane, t.failPlaneType = n.type), { valid: !1, path: null };
   }
   /**
@@ -978,7 +979,7 @@ class ze {
    * Call this if the room geometry changes.
    */
   clearCache() {
-    Fe(this.beamTree);
+    $e(this.beamTree);
     for (const e of this.buckets)
       Y(e);
   }
@@ -1045,28 +1046,28 @@ class ze {
     this.metrics = this.createEmptyMetrics(), this.metrics.totalLeafNodes = e, this.metrics.bucketsTotal = t;
   }
 }
-function re(s) {
+function ie(s) {
   let e = 0;
   for (let t = 1; t < s.length; t++)
     e += h.distance(s[t - 1].position, s[t].position);
   return e;
 }
-function Ve(s, e = 343) {
-  return re(s) / e;
+function Ne(s, e = 343) {
+  return ie(s) / e;
 }
-function He(s) {
+function Ge(s) {
   return s.filter((e) => e.polygonId !== null).length;
 }
-const Ne = 0.05;
-function Ge(s, e) {
+const qe = 0.05;
+function Ue(s, e) {
   const t = Math.abs(h.dot(h.negate(s), e)), o = Math.max(-1, Math.min(1, t));
   return Math.acos(o);
 }
-function qe(s, e) {
-  const t = g.normal(s.plane);
+function je(s, e) {
+  const t = v.normal(s.plane);
   return h.dot(e, t) > 0 ? h.negate(t) : h.clone(t);
 }
-function Ue(s, e) {
+function We(s, e) {
   if (s.length < 2)
     throw new Error("Path must have at least 2 points (listener and source)");
   const t = h.clone(s[0].position), o = h.clone(s[s.length - 1].position), n = [], r = [];
@@ -1079,27 +1080,27 @@ function Ue(s, e) {
       length: u,
       segmentIndex: a
     });
-    const m = s[a + 1].polygonId;
-    if (m !== null) {
-      const f = e[m], d = s[a + 1].position, p = h.normalize(h.subtract(d, l)), y = s[a + 2]?.position;
+    const p = s[a + 1].polygonId;
+    if (p !== null) {
+      const f = e[p], d = s[a + 1].position, m = h.normalize(h.subtract(d, l)), y = s[a + 2]?.position;
       let I;
-      y ? I = h.normalize(h.subtract(y, d)) : I = h.reflect(p, g.normal(f.plane));
-      const b = qe(f, p), P = Ge(p, b), S = P;
+      y ? I = h.normalize(h.subtract(y, d)) : I = h.reflect(m, v.normal(f.plane));
+      const b = je(f, m), P = Ue(m, b), S = P;
       i += u;
-      const D = Math.abs(P - Math.PI / 2) < Ne;
+      const x = Math.abs(P - Math.PI / 2) < qe;
       n.push({
         polygon: f,
-        polygonId: m,
+        polygonId: p,
         hitPoint: h.clone(d),
         incidenceAngle: P,
         reflectionAngle: S,
-        incomingDirection: p,
+        incomingDirection: m,
         outgoingDirection: I,
         surfaceNormal: b,
         reflectionOrder: n.length + 1,
         cumulativeDistance: i,
         incomingSegmentLength: u,
-        isGrazing: D
+        isGrazing: x
       });
     } else
       i += u;
@@ -1114,14 +1115,14 @@ function Ue(s, e) {
     simplePath: s
   };
 }
-class je {
+class Ke {
   constructor(e) {
     this.position = h.clone(e);
   }
 }
-class We {
+class Ze {
   constructor(e, t, o) {
-    this.source = t, this.solver = new ze(e, t.position, o);
+    this.source = t, this.solver = new He(e, t.position, o);
   }
   /**
    * Get all valid reflection paths to a listener
@@ -1185,22 +1186,22 @@ class We {
     this.solver.debugBeamPath(o, t);
   }
 }
-function Ke() {
-  const s = new he();
+function Ye() {
+  const s = new de();
   s.setPoints([]);
-  const e = new de({
+  const e = new fe({
     lineWidth: 0.1,
     color: 16711680,
     sizeAttenuation: 1
   });
-  return new v.Mesh(s, e);
+  return new g.Mesh(s, e);
 }
-const Ze = Q.scale(["#ff8a0b", "#000080"]).mode("lch");
+const Qe = X.scale(["#ff8a0b", "#000080"]).mode("lch");
 function C(s, e) {
-  const t = e + 1, o = Ze.colors(t), n = Math.min(s, t - 1), r = Q(o[n]);
+  const t = e + 1, o = Qe.colors(t), n = Math.min(s, t - 1), r = X(o[n]);
   return parseInt(r.hex().slice(1), 16);
 }
-const Ye = {
+const Q = {
   name: "Beam Trace",
   uuid: "",
   roomID: "",
@@ -1212,14 +1213,16 @@ const Ye = {
   visibleOrders: [0, 1, 2, 3],
   frequencies: [125, 250, 500, 1e3, 2e3, 4e3, 8e3],
   levelTimeProgression: "",
-  impulseResponseResult: ""
+  impulseResponseResult: "",
+  temperature: 20
 };
-class Qe extends ue {
+class Xe extends he {
   roomID;
   sourceIDs;
   receiverIDs;
   maxReflectionOrder;
   frequencies;
+  temperature;
   levelTimeProgression;
   impulseResponseResult;
   _visualizationMode;
@@ -1252,9 +1255,9 @@ class Qe extends ue {
   selectedBeamsGroup;
   constructor(e = {}) {
     super(e);
-    const t = { ...Ye, ...e };
-    if (this.kind = "beam-trace", this.uuid = t.uuid || L(), this.name = t.name, this.roomID = t.roomID, this.sourceIDs = t.sourceIDs, this.receiverIDs = t.receiverIDs, this.maxReflectionOrder = t.maxReflectionOrder, this.frequencies = t.frequencies, this._visualizationMode = t.visualizationMode, this._showAllBeams = t.showAllBeams, this._visibleOrders = t.visibleOrders.length > 0 ? t.visibleOrders : Array.from({ length: t.maxReflectionOrder + 1 }, (o, n) => n), this._plotFrequency = 1e3, this._plotOrders = Array.from({ length: t.maxReflectionOrder + 1 }, (o, n) => n), this.levelTimeProgression = t.levelTimeProgression || L(), this.impulseResponseResult = t.impulseResponseResult || L(), !this.roomID) {
-      const o = fe();
+    const t = { ...Q, ...e };
+    if (this.kind = "beam-trace", this.uuid = t.uuid || L(), this.name = t.name, this.roomID = t.roomID, this.sourceIDs = t.sourceIDs, this.receiverIDs = t.receiverIDs, this.maxReflectionOrder = t.maxReflectionOrder, this.frequencies = t.frequencies, this.temperature = t.temperature ?? Q.temperature, this._visualizationMode = t.visualizationMode, this._showAllBeams = t.showAllBeams, this._visibleOrders = t.visibleOrders.length > 0 ? t.visibleOrders : Array.from({ length: t.maxReflectionOrder + 1 }, (o, n) => n), this._plotFrequency = 1e3, this._plotOrders = Array.from({ length: t.maxReflectionOrder + 1 }, (o, n) => n), this.levelTimeProgression = t.levelTimeProgression || L(), this.impulseResponseResult = t.impulseResponseResult || L(), !this.roomID) {
+      const o = pe();
       o.length > 0 && (this.roomID = o[0].uuid);
     }
     T("ADD_RESULT", {
@@ -1281,7 +1284,10 @@ class Qe extends ue {
       name: `IR - ${this.name}`,
       uuid: this.impulseResponseResult,
       from: this.uuid
-    }), this.selectedPath = Ke(), R.markup.add(this.selectedPath), this.selectedBeamsGroup = new v.Group(), this.selectedBeamsGroup.name = "selected-beams-highlight", R.markup.add(this.selectedBeamsGroup), this.virtualSourcesGroup = new v.Group(), this.virtualSourcesGroup.name = "virtual-sources", R.markup.add(this.virtualSourcesGroup);
+    }), this.selectedPath = Ye(), R.markup.add(this.selectedPath), this.selectedBeamsGroup = new g.Group(), this.selectedBeamsGroup.name = "selected-beams-highlight", R.markup.add(this.selectedBeamsGroup), this.virtualSourcesGroup = new g.Group(), this.virtualSourcesGroup.name = "virtual-sources", R.markup.add(this.virtualSourcesGroup);
+  }
+  get c() {
+    return Ie(this.temperature);
   }
   save() {
     return {
@@ -1295,6 +1301,7 @@ class Qe extends ue {
         "receiverIDs",
         "maxReflectionOrder",
         "frequencies",
+        "temperature",
         "levelTimeProgression",
         "impulseResponseResult"
       ], this),
@@ -1304,7 +1311,7 @@ class Qe extends ue {
     };
   }
   restore(e) {
-    return this.name = e.name, this.uuid = e.uuid, this.autoCalculate = e.autoCalculate ?? !1, this.roomID = e.roomID, this.sourceIDs = e.sourceIDs, this.receiverIDs = e.receiverIDs, this.maxReflectionOrder = e.maxReflectionOrder, this._visualizationMode = e.visualizationMode || "rays", this._showAllBeams = e.showAllBeams ?? !1, this._visibleOrders = e.visibleOrders ?? Array.from({ length: this.maxReflectionOrder + 1 }, (t, o) => o), this.frequencies = e.frequencies, this.levelTimeProgression = e.levelTimeProgression || L(), this.impulseResponseResult = e.impulseResponseResult || L(), this;
+    return this.name = e.name, this.uuid = e.uuid, this.autoCalculate = e.autoCalculate ?? !1, this.roomID = e.roomID, this.sourceIDs = e.sourceIDs, this.receiverIDs = e.receiverIDs, this.maxReflectionOrder = e.maxReflectionOrder, this._visualizationMode = e.visualizationMode || "rays", this._showAllBeams = e.showAllBeams ?? !1, this._visibleOrders = e.visibleOrders ?? Array.from({ length: this.maxReflectionOrder + 1 }, (t, o) => o), this.frequencies = e.frequencies, this.temperature = e.temperature ?? 20, this.levelTimeProgression = e.levelTimeProgression || L(), this.impulseResponseResult = e.impulseResponseResult || L(), this;
   }
   dispose() {
     this.clearVisualization(), this.removeClickHandler(), R.markup.remove(this.selectedPath), R.markup.remove(this.selectedBeamsGroup), R.markup.remove(this.virtualSourcesGroup), T("REMOVE_RESULT", this.levelTimeProgression), T("REMOVE_RESULT", this.impulseResponseResult);
@@ -1313,7 +1320,7 @@ class Qe extends ue {
     this.removeClickHandler();
     const e = R.renderer.domElement, t = (o) => {
       const n = e.getBoundingClientRect();
-      return new v.Vector2(
+      return new g.Vector2(
         (o.clientX - n.left) / n.width * 2 - 1,
         -((o.clientY - n.top) / n.height) * 2 + 1
       );
@@ -1323,13 +1330,13 @@ class Qe extends ue {
         e.style.cursor = "default";
         return;
       }
-      const n = t(o), r = new v.Raycaster();
+      const n = t(o), r = new g.Raycaster();
       r.setFromCamera(n, R.camera);
       const i = Array.from(this.virtualSourceMap.keys());
       r.intersectObjects(i).length > 0 ? e.style.cursor = "pointer" : e.style.cursor = "default";
     }, this.clickHandler = (o) => {
       if (o.button !== 0 || this.virtualSourceMap.size === 0) return;
-      const n = t(o), r = new v.Raycaster();
+      const n = t(o), r = new g.Raycaster();
       r.setFromCamera(n, R.camera);
       const i = Array.from(this.virtualSourceMap.keys()), a = r.intersectObjects(i);
       if (a.length > 0) {
@@ -1342,49 +1349,49 @@ class Qe extends ue {
   // beam contains polygonPath which is the sequence of polygon IDs for reflections
   highlightVirtualSourcePath(e) {
     this.selectedPath.geometry.setPoints([]), this.clearSelectedBeams();
-    const t = C(e.reflectionOrder, this.maxReflectionOrder), o = new v.Vector3(e.virtualSource[0], e.virtualSource[1], e.virtualSource[2]);
+    const t = C(e.reflectionOrder, this.maxReflectionOrder), o = new g.Vector3(e.virtualSource[0], e.virtualSource[1], e.virtualSource[2]);
     if (this.receiverIDs.length === 0) return;
     const n = B.getState().containers[this.receiverIDs[0]];
     if (!n) return;
-    const r = n.position.clone(), i = new v.LineDashedMaterial({
+    const r = n.position.clone(), i = new g.LineDashedMaterial({
       color: t,
       transparent: !0,
       opacity: 0.4,
       dashSize: 0.3,
       gapSize: 0.15
-    }), a = new v.BufferGeometry().setFromPoints([o, r]), l = new v.Line(a, i);
+    }), a = new g.BufferGeometry().setFromPoints([o, r]), l = new g.Line(a, i);
     l.computeLineDistances(), this.selectedBeamsGroup.add(l);
-    const c = new v.SphereGeometry(0.18, 16, 16), u = new v.MeshBasicMaterial({
+    const c = new g.SphereGeometry(0.18, 16, 16), u = new g.MeshBasicMaterial({
       color: t,
       transparent: !0,
       opacity: 0.4
-    }), m = new v.Mesh(c, u);
-    m.position.copy(o), this.selectedBeamsGroup.add(m);
+    }), p = new g.Mesh(c, u);
+    p.position.copy(o), this.selectedBeamsGroup.add(p);
     const f = e.polygonPath;
     if (!f || f.length === 0) return;
     const d = e.reflectionOrder;
-    for (const p of this.validPaths) {
-      const y = p.order;
+    for (const m of this.validPaths) {
+      const y = m.order;
       if (y !== d) continue;
       let I = !0;
       for (let b = 0; b < f.length; b++) {
         const P = y - b;
-        if (p.polygonIds[P] !== f[b]) {
+        if (m.polygonIds[P] !== f[b]) {
           I = !1;
           break;
         }
       }
       if (I) {
-        const b = p.points, P = p.order;
+        const b = m.points, P = m.order;
         for (let S = 0; S < b.length - 1; S++) {
-          const D = b[S], w = b[S + 1], E = D.distanceTo(w), A = new v.Vector3().addVectors(D, w).multiplyScalar(0.5), F = P - S, ie = F === 0 ? 16777215 : C(F, this.maxReflectionOrder), ae = new v.CylinderGeometry(0.025, 0.025, E, 8), le = new v.MeshBasicMaterial({ color: ie }), z = new v.Mesh(ae, le);
+          const x = b[S], D = b[S + 1], E = x.distanceTo(D), A = new g.Vector3().addVectors(x, D).multiplyScalar(0.5), F = P - S, ae = F === 0 ? 16777215 : C(F, this.maxReflectionOrder), le = new g.CylinderGeometry(0.025, 0.025, E, 8), ce = new g.MeshBasicMaterial({ color: ae }), z = new g.Mesh(le, ce);
           z.position.copy(A);
-          const ce = new v.Vector3().subVectors(w, D).normalize(), N = new v.Quaternion();
-          N.setFromUnitVectors(new v.Vector3(0, 1, 0), ce), z.setRotationFromQuaternion(N), this.selectedBeamsGroup.add(z);
+          const ue = new g.Vector3().subVectors(D, x).normalize(), N = new g.Quaternion();
+          N.setFromUnitVectors(new g.Vector3(0, 1, 0), ue), z.setRotationFromQuaternion(N), this.selectedBeamsGroup.add(z);
         }
-        for (let S = 1; S < p.points.length - 1; S++) {
-          const D = P - S + 1, w = C(D, this.maxReflectionOrder), E = new v.SphereGeometry(0.08, 12, 12), A = new v.MeshBasicMaterial({ color: w }), F = new v.Mesh(E, A);
-          F.position.copy(p.points[S]), this.selectedBeamsGroup.add(F);
+        for (let S = 1; S < m.points.length - 1; S++) {
+          const x = P - S + 1, D = C(x, this.maxReflectionOrder), E = new g.SphereGeometry(0.08, 12, 12), A = new g.MeshBasicMaterial({ color: D }), F = new g.Mesh(E, A);
+          F.position.copy(m.points[S]), this.selectedBeamsGroup.add(F);
         }
         R.needsToRender = !0;
         return;
@@ -1416,24 +1423,24 @@ class Qe extends ue {
     const t = [], o = e.geometry, n = o.getAttribute("position");
     if (!n) return t;
     e.updateMatrixWorld(!0);
-    const r = e.matrixWorld, i = o.getIndex(), a = n.array, l = (c, u, m) => {
-      const f = new v.Vector3(
+    const r = e.matrixWorld, i = o.getIndex(), a = n.array, l = (c, u, p) => {
+      const f = new g.Vector3(
         a[c * 3],
         a[c * 3 + 1],
         a[c * 3 + 2]
-      ).applyMatrix4(r), d = new v.Vector3(
+      ).applyMatrix4(r), d = new g.Vector3(
         a[u * 3],
         a[u * 3 + 1],
         a[u * 3 + 2]
-      ).applyMatrix4(r), p = new v.Vector3(
-        a[m * 3],
-        a[m * 3 + 1],
-        a[m * 3 + 2]
+      ).applyMatrix4(r), m = new g.Vector3(
+        a[p * 3],
+        a[p * 3 + 1],
+        a[p * 3 + 2]
       ).applyMatrix4(r), y = [
         [f.x, f.y, f.z],
         [d.x, d.y, d.z],
-        [p.x, p.y, p.z]
-      ], I = x.create(y);
+        [m.x, m.y, m.z]
+      ], I = w.create(y);
       t.push(I);
     };
     if (i) {
@@ -1466,8 +1473,8 @@ class Qe extends ue {
       e.position.x,
       e.position.y,
       e.position.z
-    ], o = new je(t);
-    this.btSolver = new We(this.polygons, o, {
+    ], o = new Ke(t);
+    this.btSolver = new Ze(this.polygons, o, {
       maxReflectionOrder: this.maxReflectionOrder
     }), console.log(`BeamTraceSolver: Built with ${this.polygons.length} polygons, max order ${this.maxReflectionOrder}`);
   }
@@ -1504,13 +1511,13 @@ class Qe extends ue {
         this.drawPaths(), this.drawBeams();
         break;
     }
-    this.calculateLTP(343), console.log(`BeamTraceSolver: Found ${this.validPaths.length} valid paths`), this.lastMetrics && (console.log(`  Raycasts: ${this.lastMetrics.raycastCount}`), console.log(`  Cache hits: ${this.lastMetrics.failPlaneCacheHits}`), console.log(`  Buckets skipped: ${this.lastMetrics.bucketsSkipped}`)), R.needsToRender = !0;
+    this.calculateLTP(this.c), console.log(`BeamTraceSolver: Found ${this.validPaths.length} valid paths`), this.lastMetrics && (console.log(`  Raycasts: ${this.lastMetrics.raycastCount}`), console.log(`  Cache hits: ${this.lastMetrics.failPlaneCacheHits}`), console.log(`  Buckets skipped: ${this.lastMetrics.bucketsSkipped}`)), R.needsToRender = !0;
   }
   // Convert beam-trace path to our format
   convertPath(e) {
-    const t = e.map((l) => new v.Vector3(l.position[0], l.position[1], l.position[2])), o = re(e), n = Ve(e), r = He(e), i = e.map((l) => l.polygonId);
+    const t = e.map((l) => new g.Vector3(l.position[0], l.position[1], l.position[2])), o = ie(e), n = Ne(e), r = Ge(e), i = e.map((l) => l.polygonId);
     let a;
-    return t.length >= 2 ? a = new v.Vector3().subVectors(t[0], t[1]).normalize().negate() : a = new v.Vector3(0, 0, 1), { points: t, order: r, length: o, arrivalTime: n, polygonIds: i, arrivalDirection: a };
+    return t.length >= 2 ? a = new g.Vector3().subVectors(t[0], t[1]).normalize().negate() : a = new g.Vector3(0, 0, 1), { points: t, order: r, length: o, arrivalTime: n, polygonIds: i, arrivalDirection: a };
   }
   // Calculate Level Time Progression result
   calculateLTP(e = 343) {
@@ -1540,7 +1547,7 @@ class Qe extends ue {
   }
   // Setter for plot frequency (recalculates LTP when changed)
   set plotFrequency(e) {
-    this._plotFrequency = e, this.calculateLTP(343);
+    this._plotFrequency = e, this.calculateLTP(this.c);
   }
   get plotFrequency() {
     return this._plotFrequency;
@@ -1571,10 +1578,10 @@ class Qe extends ue {
     this.validPaths.filter((o) => this._visibleOrders.includes(o.order)).forEach((o) => {
       const n = C(o.order, this.maxReflectionOrder), r = (n >> 16 & 255) / 255, i = (n >> 8 & 255) / 255, a = (n & 255) / 255, l = [r, i, a];
       for (let c = 0; c < o.points.length - 1; c++) {
-        const u = o.points[c], m = o.points[c + 1];
+        const u = o.points[c], p = o.points[c + 1];
         R.markup.addLine(
           [u.x, u.y, u.z],
-          [m.x, m.y, m.z],
+          [p.x, p.y, p.z],
           l,
           l
         );
@@ -1599,16 +1606,16 @@ class Qe extends ue {
       const i = Math.max(0.05, 0.1 - n.reflectionOrder * 0.01), a = C(n.reflectionOrder, this.maxReflectionOrder);
       let l = a;
       if (!r) {
-        const d = (a >> 16 & 255) * 0.4 + 76.8, p = (a >> 8 & 255) * 0.4 + 128 * 0.6, y = (a & 255) * 0.4 + 128 * 0.6;
-        l = Math.round(d) << 16 | Math.round(p) << 8 | Math.round(y);
+        const d = (a >> 16 & 255) * 0.4 + 76.8, m = (a >> 8 & 255) * 0.4 + 128 * 0.6, y = (a & 255) * 0.4 + 128 * 0.6;
+        l = Math.round(d) << 16 | Math.round(m) << 8 | Math.round(y);
       }
-      const c = new v.Vector3(n.virtualSource[0], n.virtualSource[1], n.virtualSource[2]), u = new v.SphereGeometry(i, 12, 12), m = new v.MeshStandardMaterial({
+      const c = new g.Vector3(n.virtualSource[0], n.virtualSource[1], n.virtualSource[2]), u = new g.SphereGeometry(i, 12, 12), p = new g.MeshStandardMaterial({
         color: l,
         transparent: !r,
         opacity: r ? 1 : 0.4,
         roughness: 0.6,
         metalness: 0.1
-      }), f = new v.Mesh(u, m);
+      }), f = new g.Mesh(u, p);
       f.position.copy(c), this.virtualSourcesGroup.add(f), r && this.virtualSourceMap.set(f, {
         ...n,
         polygonPath: n.polygonPath || []
@@ -1638,13 +1645,13 @@ class Qe extends ue {
   clearVirtualSources() {
     for (; this.virtualSourcesGroup.children.length > 0; ) {
       const e = this.virtualSourcesGroup.children[0];
-      if (this.virtualSourcesGroup.remove(e), e instanceof v.Mesh) {
+      if (this.virtualSourcesGroup.remove(e), e instanceof g.Mesh) {
         e.geometry?.dispose();
         const t = e.material;
         if (Array.isArray(t))
           for (const o of t)
-            o instanceof v.Material && o.dispose();
-        else t instanceof v.Material && t.dispose();
+            o instanceof g.Material && o.dispose();
+        else t instanceof g.Material && t.dispose();
       }
     }
   }
@@ -1656,9 +1663,9 @@ class Qe extends ue {
     for (let c = 0; c < this.frequencies.length; c++)
       i.push(new Float32Array(r));
     for (const c of this.validPaths) {
-      const u = Math.random() > 0.5 ? 1 : -1, m = this.calculateArrivalPressure(o, c), f = Math.floor(c.arrivalTime * e);
+      const u = Math.random() > 0.5 ? 1 : -1, p = this.calculateArrivalPressure(o, c), f = Math.floor(c.arrivalTime * e);
       for (let d = 0; d < this.frequencies.length; d++)
-        f < i[d].length && (i[d][f] += m[d] * u);
+        f < i[d].length && (i[d][f] += p[d] * u);
     }
     const l = new Worker(new URL(
       /* @vite-ignore */
@@ -1666,34 +1673,39 @@ class Qe extends ue {
       import.meta.url
     ));
     return new Promise((c, u) => {
-      l.postMessage({ samples: i }), l.onmessage = (m) => {
-        const f = m.data.samples, d = new Float32Array(f[0].length >> 1);
-        let p = 0;
+      l.postMessage({ samples: i }), l.onmessage = (p) => {
+        const f = p.data.samples, d = new Float32Array(f[0].length >> 1);
+        let m = 0;
         for (let P = 0; P < f.length; P++)
           for (let S = 0; S < d.length; S++)
-            d[S] += f[P][S], Math.abs(d[S]) > p && (p = Math.abs(d[S]));
+            d[S] += f[P][S], Math.abs(d[S]) > m && (m = Math.abs(d[S]));
         const y = W(d), I = M.createOfflineContext(1, d.length, e), b = M.createBufferSource(y, I);
         b.connect(I.destination), b.start(), M.renderContextAsync(I).then((P) => {
           this.impulseResponse = P, this.updateImpulseResponseResult(P, e), c(P);
         }).catch(u).finally(() => l.terminate());
-      }, l.onerror = (m) => {
-        l.terminate(), u(m);
+      }, l.onerror = (p) => {
+        l.terminate(), u(p);
       };
     });
   }
   // Calculate arrival pressure for a path
   calculateArrivalPressure(e, t) {
-    const o = pe(U(e));
-    t.polygonIds.forEach((i) => {
+    const o = ge(U(e));
+    t.polygonIds.forEach((i, a) => {
       if (i === null) return;
-      const a = this.polygonToSurface.get(i);
-      if (a)
-        for (let l = 0; l < this.frequencies.length; l++) {
-          const c = 1 - a.absorptionFunction(this.frequencies[l]);
-          o[l] *= c;
-        }
+      const l = this.polygonToSurface.get(i);
+      if (!l) return;
+      let c = 0;
+      if (a > 0 && a < t.points.length - 1) {
+        const u = new g.Vector3().subVectors(t.points[a + 1], t.points[a]).normalize(), p = new g.Vector3().subVectors(t.points[a - 1], t.points[a]).normalize(), f = Math.min(1, Math.max(-1, u.dot(p)));
+        c = Math.acos(f) / 2;
+      }
+      for (let u = 0; u < this.frequencies.length; u++) {
+        const p = Math.abs(l.reflectionFunction(this.frequencies[u], c));
+        o[u] *= p;
+      }
     });
-    const n = q(ge(o)), r = Se(this.frequencies);
+    const n = q(ve(o)), r = be(this.frequencies, this.temperature);
     for (let i = 0; i < this.frequencies.length; i++)
       n[i] -= r[i] * t.length;
     return U(n);
@@ -1752,19 +1764,19 @@ class Qe extends ue {
     if (r <= 0) throw new Error("Invalid impulse response duration");
     const i = Math.floor(t * r) * 2;
     if (i < 2) throw new Error("Impulse response too short to process");
-    const a = Ie(e), l = [];
+    const a = we(e), l = [];
     for (let u = 0; u < this.frequencies.length; u++) {
       l.push([]);
-      for (let m = 0; m < a; m++)
+      for (let p = 0; p < a; p++)
         l[u].push(new Float32Array(i));
     }
     for (const u of this.validPaths) {
-      const m = Math.random() > 0.5 ? 1 : -1, f = this.calculateArrivalPressure(n, u), d = Math.floor(u.arrivalTime * t);
+      const p = Math.random() > 0.5 ? 1 : -1, f = this.calculateArrivalPressure(n, u), d = Math.floor(u.arrivalTime * t);
       if (d >= i) continue;
-      const p = u.arrivalDirection, y = new Float32Array(1);
+      const m = u.arrivalDirection, y = new Float32Array(1);
       for (let I = 0; I < this.frequencies.length; I++) {
-        y[0] = f[I] * m;
-        const b = be(y, p.x, p.y, p.z, e, "threejs");
+        y[0] = f[I] * p;
+        const b = Re(y, m.x, m.y, m.z, e, "threejs");
         for (let P = 0; P < a; P++)
           l[I][P][d] += b[P][0];
       }
@@ -1774,41 +1786,41 @@ class Qe extends ue {
       "/assets/filter.worker-CKhUfGRZ.js",
       import.meta.url
     ));
-    return new Promise((u, m) => {
-      const f = async (d) => new Promise((p) => {
+    return new Promise((u, p) => {
+      const f = async (d) => new Promise((m) => {
         const y = [];
         for (let b = 0; b < this.frequencies.length; b++)
           y.push(l[b][d]);
         const I = c();
         I.postMessage({ samples: y }), I.onmessage = (b) => {
           const P = b.data.samples, S = new Float32Array(P[0].length >> 1);
-          for (let D = 0; D < P.length; D++)
-            for (let w = 0; w < S.length; w++)
-              S[w] += P[D][w];
-          I.terminate(), p(S);
+          for (let x = 0; x < P.length; x++)
+            for (let D = 0; D < S.length; D++)
+              S[D] += P[x][D];
+          I.terminate(), m(S);
         };
       });
       Promise.all(
-        Array.from({ length: a }, (d, p) => f(p))
+        Array.from({ length: a }, (d, m) => f(m))
       ).then((d) => {
-        let p = 0;
+        let m = 0;
         for (const P of d)
           for (let S = 0; S < P.length; S++)
-            Math.abs(P[S]) > p && (p = Math.abs(P[S]));
-        if (p > 0)
+            Math.abs(P[S]) > m && (m = Math.abs(P[S]));
+        if (m > 0)
           for (const P of d)
             for (let S = 0; S < P.length; S++)
-              P[S] /= p;
+              P[S] /= m;
         const y = d[0].length;
         if (y === 0) {
-          m(new Error("Filtered signal has zero length"));
+          p(new Error("Filtered signal has zero length"));
           return;
         }
         const b = M.createOfflineContext(a, y, t).createBuffer(a, y, t);
         for (let P = 0; P < a; P++)
           b.copyToChannel(new Float32Array(d[P]), P);
         this.ambisonicImpulseResponse = b, this.ambisonicOrder = e, u(b);
-      }).catch(m);
+      }).catch(p);
     });
   }
   /**
@@ -1834,7 +1846,7 @@ class Qe extends ue {
   clearSelectedBeams() {
     for (; this.selectedBeamsGroup.children.length > 0; ) {
       const e = this.selectedBeamsGroup.children[0];
-      this.selectedBeamsGroup.remove(e), (e instanceof v.Mesh || e instanceof v.Line) && (e.geometry?.dispose(), e.material instanceof v.Material && e.material.dispose());
+      this.selectedBeamsGroup.remove(e), (e instanceof g.Mesh || e instanceof g.Line) && (e.geometry?.dispose(), e.material instanceof g.Material && e.material.dispose());
     }
   }
   // Getters and setters
@@ -1949,16 +1961,16 @@ class Qe extends ue {
     }
     const o = t[e];
     this.selectedPath.geometry.setPoints([]), this.clearSelectedBeams();
-    const n = C(o.order, this.maxReflectionOrder), r = new v.LineBasicMaterial({
+    const n = C(o.order, this.maxReflectionOrder), r = new g.LineBasicMaterial({
       color: n,
       linewidth: 2,
       transparent: !1
     });
     for (let i = 0; i < o.points.length - 1; i++) {
-      const a = new v.BufferGeometry().setFromPoints([
+      const a = new g.BufferGeometry().setFromPoints([
         o.points[i],
         o.points[i + 1]
-      ]), l = new v.Line(a, r);
+      ]), l = new g.Line(a, r);
       this.selectedBeamsGroup.add(l);
     }
     if (this.btSolver && this.receiverIDs.length > 0) {
@@ -1970,19 +1982,19 @@ class Qe extends ue {
             (u) => u.polygonId === l && u.reflectionOrder === o.order
           );
           if (c) {
-            const u = new v.LineDashedMaterial({
+            const u = new g.LineDashedMaterial({
               color: n,
               linewidth: 1,
               dashSize: 0.3,
               gapSize: 0.15,
               transparent: !0,
               opacity: 0.7
-            }), m = new v.Vector3(
+            }), p = new g.Vector3(
               c.virtualSource[0],
               c.virtualSource[1],
               c.virtualSource[2]
-            ), f = i.position.clone(), d = new v.BufferGeometry().setFromPoints([m, f]), p = new v.Line(d, u);
-            p.computeLineDistances(), this.selectedBeamsGroup.add(p);
+            ), f = i.position.clone(), d = new g.BufferGeometry().setFromPoints([p, f]), m = new g.Line(d, u);
+            m.computeLineDistances(), this.selectedBeamsGroup.add(m);
           }
         }
       }
@@ -1994,9 +2006,9 @@ class Qe extends ue {
     this.selectedPath.geometry.setPoints([]), this.clearSelectedBeams(), R.needsToRender = !0;
   }
 }
-k("BEAMTRACE_SET_PROPERTY", ve);
-k("REMOVE_BEAMTRACE", Pe);
-k("ADD_BEAMTRACE", ye(Qe));
+k("BEAMTRACE_SET_PROPERTY", Pe);
+k("REMOVE_BEAMTRACE", ye);
+k("ADD_BEAMTRACE", Se(Xe));
 k("BEAMTRACE_CALCULATE", (s) => {
   _.getState().solvers[s].calculate(), setTimeout(() => T("BEAMTRACE_CALCULATE_COMPLETE", s), 0);
 });
@@ -2024,6 +2036,6 @@ k("SHOULD_ADD_BEAMTRACE", () => {
   T("ADD_BEAMTRACE", void 0);
 });
 export {
-  Qe as BeamTraceSolver
+  Xe as BeamTraceSolver
 };
-//# sourceMappingURL=index-BxU_KkIg.mjs.map
+//# sourceMappingURL=index-CIpuNPks.mjs.map

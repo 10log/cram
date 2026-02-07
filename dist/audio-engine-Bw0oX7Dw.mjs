@@ -1,9 +1,9 @@
-import { k as g, F as x } from "./index-C5-V-Q5w.mjs";
+import { k as g, F as x } from "./index-CXm_LEs2.mjs";
 function m(o, t) {
   return typeof t == "number" ? o(t) : t.map((e) => o(e));
 }
 function U(o, t) {
-  return g.map((e) => e.Center).filter((e) => e >= Number(o || 0) && e <= Number(t || 2e4));
+  return g.map((e) => e.Center).filter((e) => e >= Number(o) && e <= Number(t));
 }
 function y(o, t) {
   return m((e) => e / Math.pow(2, 1 / (2 * o)), t);
@@ -243,4 +243,4 @@ export {
   B as n,
   v as w
 };
-//# sourceMappingURL=audio-engine-Byi3Q7j9.mjs.map
+//# sourceMappingURL=audio-engine-Bw0oX7Dw.mjs.map
