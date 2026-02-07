@@ -185,7 +185,11 @@ export function buildGpuSceneBuffers(
     const rec = containers[id] as Receiver | undefined;
     if (rec) {
       receiverUuidMap.push(id);
-      receiverData.push(rec.position.x, rec.position.y, rec.position.z, 0.1);
+      // Base geometry radius is 0.1; account for world-space scale
+      const baseRadius = 0.1;
+      const s = rec.scale;
+      const maxScale = Math.max(Math.abs(s.x), Math.abs(s.y), Math.abs(s.z));
+      receiverData.push(rec.position.x, rec.position.y, rec.position.z, baseRadius * maxScale);
     }
   }
 

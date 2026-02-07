@@ -1806,8 +1806,8 @@ class RayTracer extends Solver {
       return false;
     }
     try {
-      this._gpuRayTracer = new GpuRayTracer();
-      const ok = await this._gpuRayTracer.initialize(
+      const tracer = new GpuRayTracer();
+      const ok = await tracer.initialize(
         this.room,
         this.receiverIDs,
         {
@@ -1818,14 +1818,15 @@ class RayTracer extends Solver {
         },
         this.gpuBatchSize,
       );
-      if (!ok) {
-        this._gpuRayTracer = null;
+      // Guard against stop()/dispose() called during the await
+      if (!ok || !this._gpuRunning) {
+        tracer.dispose();
         return false;
       }
+      this._gpuRayTracer = tracer;
       return true;
     } catch (err) {
       console.error('[GPU RT] Initialization failed:', err);
-      this._gpuRayTracer = null;
       return false;
     }
   }
@@ -1917,14 +1918,20 @@ class RayTracer extends Solver {
 
           const actualRayCount = rayIdx;
           const batchSeed = Math.floor(Math.random() * 0xFFFFFFFF);
-          const paths = await this._gpuRayTracer.traceBatch(rayInputs, actualRayCount, batchSeed);
+          const results = await this._gpuRayTracer.traceBatch(rayInputs, actualRayCount, batchSeed);
 
-          // Process returned paths through existing pipeline
+          // Count all rays (including those with no intersections) for accurate stats
+          this.__num_checked_paths += actualRayCount;
+          (this.stats.numRaysShot.value as number) += actualRayCount;
+
+          // Process returned paths — results array is 1:1 with input rays
           const raysPerSource = Math.max(1, Math.floor(actualRayCount / Math.max(1, this.sourceIDs.length)));
 
-          for (let p = 0; p < paths.length; p++) {
-            const path = paths[p];
-            // Determine which source this ray belongs to
+          for (let p = 0; p < results.length; p++) {
+            const path = results[p];
+            if (!path) continue; // Ray produced no intersections
+
+            // Determine which source this ray belongs to (index mapping is preserved)
             const srcArrayIdx = Math.min(
               Math.floor(p / Math.max(1, raysPerSource)),
               this.sourceIDs.length - 1
@@ -1932,9 +1939,6 @@ class RayTracer extends Solver {
             const sourceId = this.sourceIDs[srcArrayIdx];
             const position = (useContainer.getState().containers[sourceId] as Source).position;
             path.source = sourceId;
-
-            this.__num_checked_paths++;
-            (this.stats.numRaysShot.value as number)++;
 
             this._handleTracedPath(path, position, sourceId);
           }

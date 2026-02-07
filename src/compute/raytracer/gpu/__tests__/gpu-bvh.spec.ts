@@ -12,6 +12,7 @@ jest.mock('../../../../store', () => {
             kind: 'receiver',
             uuid: 'receiver-1',
             position: new T.Vector3(2, 1, 0),
+            scale: new T.Vector3(1, 1, 1),
           },
         },
       }),

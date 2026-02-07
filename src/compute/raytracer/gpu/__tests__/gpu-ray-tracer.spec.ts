@@ -1,4 +1,3 @@
-import { isWebGPUAvailable } from '../gpu-context';
 import { GpuRayTracer } from '../gpu-ray-tracer';
 
 // Mock the store module

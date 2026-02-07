@@ -83,8 +83,11 @@ export class GpuRayTracer {
       console.warn(`[GPU RT] reflectionOrder ${config.reflectionOrder} clamped to ${MAX_BOUNCES}`);
     }
 
+    // Truncate frequencies to MAX_BANDS so scene buffer stride matches shader indexing
+    const clampedFrequencies = config.frequencies.slice(0, MAX_BANDS);
+
     // Build scene data
-    this.sceneBuf = buildGpuSceneBuffers(room, receiverIDs, config.frequencies);
+    this.sceneBuf = buildGpuSceneBuffers(room, receiverIDs, clampedFrequencies);
 
     // Create GPU storage buffers for scene
     this.gpuBvhNodes = this.createStorageBuffer(this.sceneBuf.bvhNodes);
@@ -146,7 +149,7 @@ export class GpuRayTracer {
     rayInputs: Float32Array,
     rayCount: number,
     batchSeed: number,
-  ): Promise<RayPath[]> {
+  ): Promise<(RayPath | null)[]> {
     if (!this.device || !this.pipeline || !this.sceneBuf || !this.config) {
       throw new Error('[GPU RT] Not initialized');
     }
@@ -240,8 +243,11 @@ export class GpuRayTracer {
     rayInputs: Float32Array,
     rayCount: number,
     numBands: number,
-  ): RayPath[] {
-    const paths: RayPath[] = [];
+  ): (RayPath | null)[] {
+    // Returns a fixed-length array (1:1 with input rays) so callers can
+    // map each result back to the correct source by index.  Entries are
+    // null for rays that produced no intersections (chainLength === 0).
+    const paths: (RayPath | null)[] = new Array(rayCount);
     const scene = this.sceneBuf!;
 
     for (let r = 0; r < rayCount; r++) {
@@ -250,7 +256,10 @@ export class GpuRayTracer {
       const chainLength = outU32[0];
       const intersectedReceiver = outU32[1] !== 0;
 
-      if (chainLength === 0) continue;
+      if (chainLength === 0) {
+        paths[r] = null;
+        continue;
+      }
 
       const arrivalDir: [number, number, number] = [
         outputData[outOff + 3],
@@ -293,9 +302,6 @@ export class GpuRayTracer {
           objectUuid = scene.surfaceUuidMap[surfaceIndex] ?? '';
         }
 
-        // Get face normal from the stored normals (not available in chain —
-        // we'll use a zero normal for now, since _handleTracedPath doesn't
-        // use faceNormal for any critical logic)
         chain.push({
           point: [px, py, pz],
           distance,
@@ -318,7 +324,7 @@ export class GpuRayTracer {
       const totalE = finalBandEnergy.reduce((a, b) => a + b, 0);
       const meanE = numBands > 0 ? totalE / numBands : 0;
 
-      paths.push({
+      paths[r] = {
         intersectedReceiver,
         chain,
         chainLength: chain.length,
@@ -330,7 +336,7 @@ export class GpuRayTracer {
         initialTheta,
         totalLength: 0, // Computed by caller
         arrivalDirection: intersectedReceiver ? arrivalDir : undefined,
-      });
+      };
     }
 
     return paths;
