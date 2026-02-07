@@ -176,7 +176,7 @@ function pathsToLinearBufferV2(paths: KVP<RayPath[]>): Float32Array {
 
     for (const path of paths[key]) {
       buffer[o++] = uuidToIndex.get(path.source)!;
-      buffer[o++] = path.chainLength;
+      buffer[o++] = path.chain.length;
       buffer[o++] = path.time;
       buffer[o++] = Number(path.intersectedReceiver);
       buffer[o++] = path.energy;
@@ -208,6 +208,14 @@ function linearBufferToPathsV2(linearBuffer: Float32Array): KVP<RayPath[]> {
   o++; // skip magic
   const numUUIDs = linearBuffer[o++];
 
+  // Validate header
+  if (!Number.isFinite(numUUIDs) || numUUIDs < 0 || numUUIDs !== (numUUIDs | 0)) {
+    throw new Error('Invalid V2 buffer: bad numUUIDs');
+  }
+  if (o + numUUIDs * 36 > linearBuffer.length) {
+    throw new Error('Invalid V2 buffer: UUID table exceeds buffer length');
+  }
+
   // Read UUID lookup table
   const uuidList: string[] = [];
   for (let i = 0; i < numUUIDs; i++) {
@@ -221,9 +229,16 @@ function linearBufferToPathsV2(linearBuffer: Float32Array): KVP<RayPath[]> {
   // Read path data
   const pathsObj = {} as KVP<RayPath[]>;
   while (o < linearBuffer.length) {
-    const receiverUuid = uuidList[linearBuffer[o++]];
+    const receiverIdx = linearBuffer[o++];
+    if (receiverIdx < 0 || receiverIdx >= uuidList.length) {
+      throw new Error('Invalid V2 buffer: receiver index out of range');
+    }
+    const receiverUuid = uuidList[receiverIdx];
     const pathBufLen = linearBuffer[o++];
-    const endOffset = o + pathBufLen;
+    if (!Number.isFinite(pathBufLen) || pathBufLen < 0) {
+      throw new Error('Invalid V2 buffer: bad pathBufLen');
+    }
+    const endOffset = Math.min(o + pathBufLen, linearBuffer.length);
 
     const paths = [] as RayPath[];
     while (o < endOffset) {

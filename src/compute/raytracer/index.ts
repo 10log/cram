@@ -624,6 +624,10 @@ class RayTracer extends Solver {
 
   startAllMonteCarlo() {
     this._lastConvergenceCheck = Date.now();
+    if (this._rafId) {
+      cancelAnimationFrame(this._rafId);
+      this._rafId = 0;
+    }
     const tick = () => {
       if (!this._isRunning) return;
 
@@ -764,14 +768,19 @@ class RayTracer extends Solver {
 
   /** Push a path onto the paths array, evicting oldest if over maxStoredPaths */
   _pushPathWithEviction(index: string, path: RayPath) {
+    const cap = Math.max(1, this.maxStoredPaths | 0);
     if (!this.paths[index]) {
       this.paths[index] = [path];
-    } else {
-      this.paths[index].push(path);
-      if (this.paths[index].length > this.maxStoredPaths) {
-        this.paths[index] = this.paths[index].slice(-this.maxStoredPaths);
+      return;
+    }
+    const arr = this.paths[index];
+    if (arr.length >= cap) {
+      const overflow = arr.length - cap + 1;
+      if (overflow > 0) {
+        arr.splice(0, overflow);
       }
     }
+    arr.push(path);
   }
 
   /** Add a ray path's energy to the convergence histogram */
