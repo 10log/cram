@@ -2,7 +2,7 @@ name: Build Library
 
 on:
   push:
-    branches: [master]
+    branches: [master, varese-dev]
     paths:
       - 'src/**'
       - 'package.json'
