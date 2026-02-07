@@ -267,11 +267,11 @@ fn traceClosest(
     } else {
       let leftIdx = bitcast<u32>(bvhNodes[off + 3u]);
       let rightIdx = data1Bits;
-      if (stackPtr < BVH_STACK_SIZE - 1u) {
+      if (stackPtr < BVH_STACK_SIZE) {
         stack[stackPtr] = leftIdx;
         stackPtr += 1u;
       }
-      if (stackPtr < BVH_STACK_SIZE - 1u) {
+      if (stackPtr < BVH_STACK_SIZE) {
         stack[stackPtr] = rightIdx;
         stackPtr += 1u;
       }

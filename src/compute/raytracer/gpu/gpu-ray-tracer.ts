@@ -83,9 +83,14 @@ export class GpuRayTracer {
     const maxBufSize = ctx.device.limits.maxBufferSize;
     const perRayChainBytes = MAX_BOUNCES * CHAIN_ENTRY_BYTES;
     const maxByLimits = Math.floor(Math.min(maxStorageBinding, maxBufSize) / perRayChainBytes);
-    const batchSize = Math.min(requestedBatchSize, maxByLimits);
-    if (batchSize < requestedBatchSize) {
-      console.warn(`[GPU RT] batchSize ${requestedBatchSize} exceeds device limits; clamped to ${batchSize}`);
+    if (maxByLimits < 1) {
+      console.error('[GPU RT] Device storage limits too small for even a single ray chain buffer');
+      return false;
+    }
+    const normalizedRequested = Math.max(1, requestedBatchSize);
+    const batchSize = Math.min(normalizedRequested, maxByLimits);
+    if (batchSize < normalizedRequested) {
+      console.warn(`[GPU RT] batchSize ${normalizedRequested} exceeds device limits; clamped to ${batchSize}`);
     }
     this.maxBatchSize = batchSize;
 

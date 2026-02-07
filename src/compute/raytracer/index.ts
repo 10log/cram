@@ -1805,8 +1805,9 @@ class RayTracer extends Solver {
       console.warn('[GPU RT] WebGPU not available in this browser');
       return false;
     }
+    let tracer: GpuRayTracer | null = null;
     try {
-      const tracer = new GpuRayTracer();
+      tracer = new GpuRayTracer();
       const ok = await tracer.initialize(
         this.room,
         this.receiverIDs,
@@ -1827,6 +1828,7 @@ class RayTracer extends Solver {
       return true;
     } catch (err) {
       console.error('[GPU RT] Initialization failed:', err);
+      if (tracer) tracer.dispose();
       return false;
     }
   }
@@ -1867,9 +1869,17 @@ class RayTracer extends Solver {
         if (!this._gpuRunning || !this._isRunning || !this._gpuRayTracer) return;
 
         try {
+          // Validate and clamp batch size
+          if (!Number.isFinite(this.gpuBatchSize) || this.gpuBatchSize <= 0) {
+            console.warn('[GPU RT] Invalid gpuBatchSize, falling back to CPU');
+            this._gpuRunning = false;
+            this._disposeGpu();
+            this.startAllMonteCarlo();
+            return;
+          }
           // Clamp to the capacity allocated during initialize() to avoid
           // exceeding GPU buffer sizes if the user changes gpuBatchSize mid-run
-          const batchSize = Math.min(this.gpuBatchSize, initBatchSize);
+          const batchSize = Math.min(Math.floor(this.gpuBatchSize), initBatchSize);
           const rayInputs = new Float32Array(batchSize * RAY_INPUT_FLOATS);
 
           let rayIdx = 0;
