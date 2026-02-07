@@ -1,17 +1,17 @@
 import { GpuRayTracer } from '../gpu-ray-tracer';
 
 // Mock the store module
-jest.mock('../../../../store', () => ({
+vi.mock('../../../../store', () => ({
   useContainer: {
     getState: () => ({
       containers: {},
     }),
   },
   useSolver: { getState: () => ({ solvers: {} }) },
-  addSolver: jest.fn(),
-  removeSolver: jest.fn(),
-  setSolverProperty: jest.fn(),
-  callSolverMethod: jest.fn(),
+  addSolver: vi.fn(),
+  removeSolver: vi.fn(),
+  setSolverProperty: vi.fn(),
+  callSolverMethod: vi.fn(),
 }));
 
 describe('GpuRayTracer', () => {

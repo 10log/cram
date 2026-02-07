@@ -2,8 +2,8 @@ import * as THREE from 'three';
 import { buildGpuSceneBuffers } from '../gpu-bvh';
 
 // Mock the store module
-jest.mock('../../../../store', () => {
-  const T = require('three');
+vi.mock('../../../../store', async () => {
+  const T = await import('three');
   return {
     useContainer: {
       getState: () => ({
@@ -18,10 +18,10 @@ jest.mock('../../../../store', () => {
       }),
     },
     useSolver: { getState: () => ({ solvers: {} }) },
-    addSolver: jest.fn(),
-    removeSolver: jest.fn(),
-    setSolverProperty: jest.fn(),
-    callSolverMethod: jest.fn(),
+    addSolver: vi.fn(),
+    removeSolver: vi.fn(),
+    setSolverProperty: vi.fn(),
+    callSolverMethod: vi.fn(),
   };
 });
 
