@@ -5,13 +5,28 @@ import { BandEnergy, Chain, RayPath, SELF_INTERSECTION_OFFSET } from "./types";
 
 const { abs } = Math;
 
+// Pre-allocated scratch vectors to avoid per-ray allocations
+const _negRd = new THREE.Vector3();
+const _normalCopy = new THREE.Vector3();
+const _normalScaled = new THREE.Vector3();
+const _reflectedDir = new THREE.Vector3();
+const _scatterCandidate = new THREE.Vector3();
+const _offsetOrigin = new THREE.Vector3();
+const _arrivalDir = new THREE.Vector3();
+
+const _plane = new THREE.Plane();
+const _pleq = new THREE.Vector4();
+const _avec4 = new THREE.Vector4();
+const _bvec4 = new THREE.Vector4();
+const _cvec4 = new THREE.Vector4();
+
 export function inFrontOf(a: THREE.Triangle, b: THREE.Triangle) {
-  const plane = a.getPlane(new THREE.Plane());
-  const pleq = new THREE.Vector4(plane.normal.x, plane.normal.y, plane.normal.z, plane.constant);
-  const avec4 = new THREE.Vector4(b.a.x, b.a.y, b.a.z, 1);
-  const bvec4 = new THREE.Vector4(b.b.x, b.b.y, b.b.z, 1);
-  const cvec4 = new THREE.Vector4(b.c.x, b.c.y, b.c.z, 1);
-  return pleq.dot(avec4) > 0 || pleq.dot(bvec4) > 0 || pleq.dot(cvec4) > 0;
+  a.getPlane(_plane);
+  _pleq.set(_plane.normal.x, _plane.normal.y, _plane.normal.z, _plane.constant);
+  _avec4.set(b.a.x, b.a.y, b.a.z, 1);
+  _bvec4.set(b.b.x, b.b.y, b.b.z, 1);
+  _cvec4.set(b.c.x, b.c.y, b.c.z, 1);
+  return _pleq.dot(_avec4) > 0 || _pleq.dot(_bvec4) > 0 || _pleq.dot(_cvec4) > 0;
 }
 
 export function traceRay(
@@ -52,7 +67,7 @@ export function traceRay(
     //check to see if the intersection was with a receiver
     if (intersections[0].object.userData?.kind === 'receiver') {
       // find the incident angle
-      const angle = intersections[0].face && rd.clone().multiplyScalar(-1).angleTo(intersections[0].face.normal);
+      const angle = intersections[0].face && _negRd.copy(rd).multiplyScalar(-1).angleTo(intersections[0].face.normal);
 
       // apply air absorption for the final segment to the receiver
       const receiverSegmentDist = intersections[0].distance;
@@ -83,8 +98,8 @@ export function traceRay(
 
       // Compute arrival direction (direction ray arrives FROM, normalized)
       // This is the opposite of the ray direction (ray travels toward receiver)
-      const arrivalDir = rd.clone().normalize().negate();
-      const arrivalDirection: [number, number, number] = [arrivalDir.x, arrivalDir.y, arrivalDir.z];
+      _arrivalDir.copy(rd).normalize().negate();
+      const arrivalDirection: [number, number, number] = [_arrivalDir.x, _arrivalDir.y, _arrivalDir.z];
 
       // end the chain here
       return {
@@ -100,7 +115,7 @@ export function traceRay(
       } as RayPath;
     } else {
       // find the incident angle
-      const angle = intersections[0].face && rd.clone().multiplyScalar(-1).angleTo(intersections[0].face.normal);
+      const angle = intersections[0].face && _negRd.copy(rd).multiplyScalar(-1).angleTo(intersections[0].face.normal);
 
       // push the intersection onto the chain
       chain.push({
@@ -122,14 +137,14 @@ export function traceRay(
         intersections[0].object.parent.numHits += 1;
       }
 
-      // get the normal direction of the intersection
-      const normal = intersections[0].face && intersections[0].face.normal.normalize();
+      // get the normal direction of the intersection (copy to avoid mutating mesh data)
+      const normal = intersections[0].face && _normalCopy.copy(intersections[0].face.normal).normalize();
 
       // find the reflected direction
       let rr =
         normal &&
         intersections[0].face &&
-        rd.clone().sub(normal.clone().multiplyScalar(rd.dot(normal.clone())).multiplyScalar(2));
+        _reflectedDir.copy(rd).sub(_normalScaled.copy(normal).multiplyScalar(rd.dot(normal)).multiplyScalar(2));
 
       // compute energy-weighted broadband scattering for directional decision
       const surface = intersections[0].object.parent as Surface;
@@ -143,17 +158,16 @@ export function traceRay(
 
       if (probability(broadbandScattering)) {
         // Cosine-weighted (Lambertian) hemisphere sampling via rejection method
-        let candidate: THREE.Vector3;
         do {
-          candidate = new THREE.Vector3(
+          _scatterCandidate.set(
             Math.random() * 2 - 1,
             Math.random() * 2 - 1,
             Math.random() * 2 - 1
           );
-        } while (candidate.lengthSq() > 1 || candidate.lengthSq() < 1e-6);
-        candidate.normalize();
+        } while (_scatterCandidate.lengthSq() > 1 || _scatterCandidate.lengthSq() < 1e-6);
+        _scatterCandidate.normalize();
         // Offset along normal for cosine-weighted distribution
-        rr = candidate.add(normal!).normalize();
+        rr = _reflectedDir.copy(_scatterCandidate).add(normal!).normalize();
       }
 
       // apply per-band reflection loss
@@ -192,7 +206,7 @@ export function traceRay(
             frequencies,
             cachedAirAtt,
             rrThreshold,
-            intersections[0].point.clone().addScaledVector(normal.clone(), SELF_INTERSECTION_OFFSET),
+            _offsetOrigin.copy(intersections[0].point).addScaledVector(normal, SELF_INTERSECTION_OFFSET),
             rr,
             order,
             newBandEnergy,

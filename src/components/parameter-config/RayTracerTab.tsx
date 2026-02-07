@@ -21,7 +21,7 @@ const Parameters = ({ uuid }: { uuid: string }) => {
   const [open, toggle] = useToggle(true);
   return (
     <PropertyRowFolder label="Parameters" open={open} onOpenClose={toggle}>
-      <PropertyNumberInput uuid={uuid} label="Rate (ms)" property="updateInterval" tooltip="Sets the callback rate" />
+      <PropertyNumberInput uuid={uuid} label="Rate (ms)" property="updateInterval" tooltip="Callback rate for quick estimate (ms)" />
       <PropertyNumberInput
         uuid={uuid}
         label="Order"
@@ -40,6 +40,13 @@ const Parameters = ({ uuid }: { uuid: string }) => {
         property="temperature"
         tooltip="Temperature in Celsius (affects speed of sound and air absorption)"
         elementProps={{ step: 1, min: -20, max: 50 }}
+      />
+      <PropertyNumberInput
+        uuid={uuid}
+        label="Max Paths"
+        property="maxStoredPaths"
+        tooltip="Maximum paths stored per receiver (older paths evicted)"
+        elementProps={{ step: 1000, min: 1 }}
       />
     </PropertyRowFolder>
   );
