@@ -936,8 +936,13 @@ class RayTracer extends Solver {
       direction.applyEuler(rotation);
 
       // assign source energy as a function of direction
-      let sourceDH = (useContainer.getState().containers[this.sourceIDs[i]] as Source).directivityHandler;
-      const initialBandEnergy: BandEnergy = new Array(this.frequencies.length).fill(1);
+      const sourceDH = (useContainer.getState().containers[this.sourceIDs[i]] as Source).directivityHandler;
+      const initialBandEnergy: BandEnergy = new Array(this.frequencies.length);
+      for (let f = 0; f < this.frequencies.length; f++) {
+        const dirPressure = sourceDH.getPressureAtPosition(0, this.frequencies[f], phi, theta);
+        const refPressure = sourceDH.getPressureAtPosition(0, this.frequencies[f], 0, 0);
+        initialBandEnergy[f] = refPressure > 0 ? (dirPressure / refPressure) ** 2 : 1;
+      }
 
       // get the path traced by the ray
       const path = this.traceRay(position, direction, this.reflectionOrder, initialBandEnergy, this.sourceIDs[i], phi, theta);
@@ -1174,11 +1179,14 @@ class RayTracer extends Solver {
       samples.push(new Float32Array(numberOfSamples));
     }
 
-    // add in raytracer paths
+    // add in raytracer paths (apply receiver directivity)
+    const recForPair = useContainer.getState().containers[receiverId] as Receiver;
     for (let i = 0; i < sorted.length; i++) {
       const randomPhase = coinFlip() ? 1 : -1;
       const t = sorted[i].time;
-      const p = this.arrivalPressure(spls, frequencies, sorted[i]).map(x => x * randomPhase);
+      const dir = sorted[i].arrivalDirection || [0, 0, 1] as [number, number, number];
+      const recGain = recForPair.getGain(dir as [number, number, number]);
+      const p = this.arrivalPressure(spls, frequencies, sorted[i], recGain).map(x => x * randomPhase);
       const roundedSample = floor(t * sampleRate);
 
       for (let f = 0; f < frequencies.length; f++) {
@@ -1231,11 +1239,14 @@ class RayTracer extends Solver {
       samples.push(new Float32Array(numberOfSamples));
     }
 
-    // add in raytracer paths
+    // add in raytracer paths (apply receiver directivity)
+    const recForDisplay = useContainer.getState().containers[this.receiverIDs[0]] as Receiver;
     for(let i = 0; i<sorted.length; i++){
       const randomPhase = coinFlip() ? 1 : -1;
       const t = sorted[i].time;
-      const p = this.arrivalPressure(spls, frequencies, sorted[i]).map(x => x * randomPhase);
+      const dir = sorted[i].arrivalDirection || [0, 0, 1] as [number, number, number];
+      const recGain = recForDisplay.getGain(dir as [number, number, number]);
+      const p = this.arrivalPressure(spls, frequencies, sorted[i], recGain).map(x => x * randomPhase);
       const roundedSample = floor(t * sampleRate);
 
       for(let f = 0; f<frequencies.length; f++){
@@ -1581,6 +1592,7 @@ class RayTracer extends Solver {
     // for each receiver
     for (const receiverKey in paths) {
       this.responseByIntensity[receiverKey] = {} as KVP<ResponseByIntensity>;
+      const recForIntensity = useContainer.getState().containers[receiverKey] as Receiver;
 
       // for each source
       for (const sourceKey in paths[receiverKey]) {
@@ -1593,7 +1605,7 @@ class RayTracer extends Solver {
         const Itotal = ac.P2I(ac.Lp2P((useContainer.getState().containers[sourceKey] as Source).initialSPL)) as number;
 
         // for each path
-        for (let i = 0; i < paths[receiverKey][sourceKey].length; i++) { 
+        for (let i = 0; i < paths[receiverKey][sourceKey].length; i++) {
 
           // propogagtion time
           let time = 0;
@@ -1602,14 +1614,25 @@ class RayTracer extends Solver {
           // const Iray = Itotal / (useContainer.getState().containers[sourceKey] as Source).numRays;
 
           // initial intensity at each frequency
-          let IrayArray: number[] = []; 
+          let IrayArray: number[] = [];
           let phi = paths[receiverKey][sourceKey][i].initialPhi;
-          let theta = paths[receiverKey][sourceKey][i].initialTheta; 
+          let theta = paths[receiverKey][sourceKey][i].initialTheta;
 
-          let srcDirectivityHandler = (useContainer.getState().containers[sourceKey] as Source).directivityHandler; 
+          let srcDirectivityHandler = (useContainer.getState().containers[sourceKey] as Source).directivityHandler;
 
           for(let findex = 0; findex<freqs.length; findex++){
-            IrayArray[findex] = ac.P2I(srcDirectivityHandler.getPressureAtPosition(0,freqs[findex],phi,theta)) as number; 
+            IrayArray[findex] = ac.P2I(srcDirectivityHandler.getPressureAtPosition(0,freqs[findex],phi,theta)) as number;
+          }
+
+          // apply receiver directivity gain (intensity domain: gain²)
+          const pathObj = paths[receiverKey][sourceKey][i];
+          const dir = pathObj.arrivalDirection || [0, 0, 1] as [number, number, number];
+          const recGainIntensity = recForIntensity.getGain(dir as [number, number, number]);
+          const recGainSq = recGainIntensity * recGainIntensity;
+          if (recGainSq !== 1.0) {
+            for (let findex = 0; findex < freqs.length; findex++) {
+              IrayArray[findex] *= recGainSq;
+            }
           }
 
           // for each intersection
@@ -1972,17 +1995,21 @@ class RayTracer extends Solver {
     return pathsObj;
   }
 
-  arrivalPressure(initialSPL: number[], freqs: number[], path: RayPath): number[]{
+  arrivalPressure(initialSPL: number[], freqs: number[], path: RayPath, receiverGain: number = 1.0): number[]{
 
     const intensities = ac.P2I(ac.Lp2P(initialSPL)) as number[];
 
     if (path.bandEnergy && path.bandEnergy.length === freqs.length) {
-      // New path: per-band energy (including air absorption) already tracked during tracing
+      // New path: per-band energy (including air absorption and source directivity) already tracked during tracing
       for (let i = 0; i < freqs.length; i++) {
         intensities[i] *= path.bandEnergy[i];
       }
-      // convert back to pressure (no post-hoc air absorption needed)
-      return ac.Lp2P(ac.P2Lp(ac.I2P(intensities)) as number[]) as number[];
+      // convert back to pressure (no post-hoc air absorption needed), apply receiver directivity gain
+      const pressures = ac.Lp2P(ac.P2Lp(ac.I2P(intensities)) as number[]) as number[];
+      if (receiverGain !== 1.0) {
+        for (let i = 0; i < pressures.length; i++) pressures[i] *= receiverGain;
+      }
+      return pressures;
     }
 
     // Legacy path: re-walk chain (backward compat)
@@ -2001,8 +2028,12 @@ class RayTracer extends Solver {
     const airAttenuationdB = ac.airAttenuation(freqs, this.temperature);
     freqs.forEach((_, f) => arrivalLp[f] -= airAttenuationdB[f] * path.totalLength);
 
-    // convert back to pressure
-    return ac.Lp2P(arrivalLp) as number[];
+    // convert back to pressure, apply receiver directivity gain
+    const pressures = ac.Lp2P(arrivalLp) as number[];
+    if (receiverGain !== 1.0) {
+      for (let i = 0; i < pressures.length; i++) pressures[i] *= receiverGain;
+    }
+    return pressures;
   }
   async calculateImpulseResponse(initialSPL = 100, frequencies = this.frequencies, sampleRate = audioEngine.sampleRate): Promise<AudioBuffer> {
     if(this.receiverIDs.length === 0) throw Error("No receivers have been assigned to the raytracer");
@@ -2061,11 +2092,14 @@ class RayTracer extends Solver {
       }
     }
   
-    // add in raytracer paths
+    // add in raytracer paths (apply receiver directivity)
+    const recForIR = useContainer.getState().containers[this.receiverIDs[0]] as Receiver;
     for(let i = 0; i<sorted.length; i++){
       const randomPhase = coinFlip() ? 1 : -1;
       const t = sorted[i].time;
-      const p = this.arrivalPressure(spls, frequencies, sorted[i]).map(x => x * randomPhase);
+      const dir = sorted[i].arrivalDirection || [0, 0, 1] as [number, number, number];
+      const recGain = recForIR.getGain(dir as [number, number, number]);
+      const p = this.arrivalPressure(spls, frequencies, sorted[i], recGain).map(x => x * randomPhase);
       const roundedSample = floor(t * sampleRate);
 
       for(let f = 0; f<frequencies.length; f++){
@@ -2106,7 +2140,7 @@ class RayTracer extends Solver {
 
         audioEngine.renderContextAsync(offlineContext).then(impulseResponse=>resolve(impulseResponse)).catch(reject).finally(()=>worker.terminate());
       };
-    
+
     })
 
   }
@@ -2153,18 +2187,18 @@ class RayTracer extends Solver {
       }
     }
 
-    // Process each ray path
+    // Process each ray path (apply receiver directivity)
+    const recForAmbi = useContainer.getState().containers[this.receiverIDs[0]] as Receiver;
     for (let i = 0; i < sorted.length; i++) {
       const path = sorted[i];
       const randomPhase = coinFlip() ? 1 : -1;
       const t = path.time;
-      const p = this.arrivalPressure(spls, frequencies, path).map(x => x * randomPhase);
+      const dir = path.arrivalDirection || [0, 0, 1] as [number, number, number];
+      const recGain = recForAmbi.getGain(dir as [number, number, number]);
+      const p = this.arrivalPressure(spls, frequencies, path, recGain).map(x => x * randomPhase);
       const roundedSample = floor(t * sampleRate);
 
       if (roundedSample >= numberOfSamples) continue;
-
-      // Get arrival direction (default to front if not available)
-      const dir = path.arrivalDirection || [0, 0, 1];
 
       // Create a single-sample impulse for this reflection
       const impulse = new Float32Array(1);
@@ -2303,10 +2337,13 @@ class RayTracer extends Solver {
       samples.push(new Float32Array(numberOfSamples));
     }
     let max = 0;
+    const recForDownload = useContainer.getState().containers[this.receiverIDs[0]] as Receiver;
     for(let i = 0; i<sorted.length; i++){
       const randomPhase = coinFlip() ? 1 : -1;
-      const t = sorted[i].time; 
-      const p = this.arrivalPressure(spls, frequencies, sorted[i]).map(x => x * randomPhase); 
+      const t = sorted[i].time;
+      const dir = sorted[i].arrivalDirection || [0, 0, 1] as [number, number, number];
+      const recGain = recForDownload.getGain(dir as [number, number, number]);
+      const p = this.arrivalPressure(spls, frequencies, sorted[i], recGain).map(x => x * randomPhase);
       const roundedSample = floor(t * sampleRate);
 
       for(let f = 0; f<frequencies.length; f++){
