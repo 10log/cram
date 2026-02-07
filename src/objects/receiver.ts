@@ -9,6 +9,24 @@ import { addContainer, removeContainer, setContainerProperty } from "../store";
 import { renderer } from "../render/renderer";
 // import { vs, fs } from '../render/shaders/glow';
 
+export enum ReceiverPattern {
+  OMNIDIRECTIONAL = 'omni',
+  CARDIOID = 'cardioid',
+  SUPERCARDIOID = 'supercardioid',
+  FIGURE_EIGHT = 'figure8',
+}
+
+/** Analytical polar pattern gain for standard microphone types. */
+export function receiverPatternGain(pattern: ReceiverPattern, theta: number): number {
+  switch (pattern) {
+    case ReceiverPattern.OMNIDIRECTIONAL: return 1.0;
+    case ReceiverPattern.CARDIOID: return 0.5 + 0.5 * Math.cos(theta);
+    case ReceiverPattern.SUPERCARDIOID: return 0.37 + 0.63 * Math.cos(theta);
+    case ReceiverPattern.FIGURE_EIGHT: return Math.cos(theta);
+    default: return 1.0;
+  }
+}
+
 export interface ReceiverSaveObject {
   name: string;
   visible: boolean;
@@ -18,6 +36,7 @@ export interface ReceiverSaveObject {
   uuid: string;
   kind: string;
   color: number;
+  directivityPattern?: string;
 }
 
 export interface ReceiverProps extends ContainerProps {}
@@ -32,6 +51,7 @@ export class Receiver extends Container {
   selectedMaterial: THREE.MeshMatcapMaterial;
   normalMaterial: THREE.MeshMatcapMaterial;
   fdtdSamples: number[];
+  directivityPattern: ReceiverPattern = ReceiverPattern.OMNIDIRECTIONAL;
   constructor(name?: string, _props?: ReceiverProps) {
     super(name||"new receiver");
     this.kind = "receiver";
@@ -72,6 +92,19 @@ export class Receiver extends Container {
     this.renderCallback = (_time?: number) => {};
     renderer.add(this);
   }
+  /**
+   * Compute directivity gain for a ray arriving from the given direction.
+   * @param arrivalDirection - unit vector [x,y,z] pointing FROM the source/reflection toward the receiver
+   * @returns pressure gain factor (-1..1); negative values possible for figure-8 and supercardioid
+   */
+  getGain(arrivalDirection: [number, number, number]): number {
+    if (this.directivityPattern === ReceiverPattern.OMNIDIRECTIONAL) return 1.0;
+    const forward = new THREE.Vector3(0, 0, 1).applyEuler(this.rotation);
+    const arrival = new THREE.Vector3(arrivalDirection[0], arrivalDirection[1], arrivalDirection[2]);
+    const theta = forward.angleTo(arrival);
+    return receiverPatternGain(this.directivityPattern, theta);
+  }
+
   dispose(){
     renderer.remove(this);
   }
@@ -84,6 +117,7 @@ export class Receiver extends Container {
     const color = this.getColorAsNumber();
     const uuid = this.uuid;
     const kind = this.kind;
+    const directivityPattern = this.directivityPattern;
     return {
       kind,
       name,
@@ -92,7 +126,8 @@ export class Receiver extends Container {
       scale,
       rotation,
       color,
-      uuid
+      uuid,
+      directivityPattern
     } as ReceiverSaveObject;
   }
   restore(state: ReceiverSaveObject) {
@@ -107,6 +142,12 @@ export class Receiver extends Container {
     );
     this.color = state.color;
     this.uuid = state.uuid;
+    const savedPattern = state.directivityPattern;
+    if (savedPattern && Object.values(ReceiverPattern).includes(savedPattern as ReceiverPattern)) {
+      this.directivityPattern = savedPattern as ReceiverPattern;
+    } else {
+      this.directivityPattern = ReceiverPattern.OMNIDIRECTIONAL;
+    }
     return this;
   }
   clearSamples() {

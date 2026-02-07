@@ -48,7 +48,7 @@ vi.mock('file-saver', () => ({
   saveAs: vi.fn(),
 }));
 
-import Receiver, { ReceiverSaveObject } from '../receiver';
+import Receiver, { ReceiverSaveObject, ReceiverPattern, receiverPatternGain } from '../receiver';
 
 describe('Receiver', () => {
   describe('constructor', () => {
@@ -517,6 +517,118 @@ describe('Receiver', () => {
       const color = receiver.getColorAsString();
       expect(typeof color).toBe('string');
       expect(color.startsWith('#')).toBe(true);
+    });
+  });
+
+  describe('directivity', () => {
+    it('defaults to omnidirectional', () => {
+      const receiver = new Receiver('Test');
+      expect(receiver.directivityPattern).toBe(ReceiverPattern.OMNIDIRECTIONAL);
+    });
+
+    it('getGain returns 1.0 for omnidirectional pattern regardless of direction', () => {
+      const receiver = new Receiver('Test');
+      expect(receiver.getGain([0, 0, 1])).toBe(1.0);
+      expect(receiver.getGain([1, 0, 0])).toBe(1.0);
+      expect(receiver.getGain([0, 0, -1])).toBe(1.0);
+    });
+
+    it('cardioid: gain = 1.0 on-axis (front), 0.0 at rear', () => {
+      const receiver = new Receiver('Test');
+      receiver.directivityPattern = ReceiverPattern.CARDIOID;
+      // Forward axis is (0,0,1) by default (no rotation)
+      expect(receiver.getGain([0, 0, 1])).toBeCloseTo(1.0, 5);
+      expect(receiver.getGain([0, 0, -1])).toBeCloseTo(0.0, 5);
+    });
+
+    it('cardioid: gain = 0.5 at 90 degrees', () => {
+      const receiver = new Receiver('Test');
+      receiver.directivityPattern = ReceiverPattern.CARDIOID;
+      expect(receiver.getGain([1, 0, 0])).toBeCloseTo(0.5, 5);
+    });
+
+    it('supercardioid: gain = 1.0 on-axis, < 0 at rear', () => {
+      const receiver = new Receiver('Test');
+      receiver.directivityPattern = ReceiverPattern.SUPERCARDIOID;
+      expect(receiver.getGain([0, 0, 1])).toBeCloseTo(1.0, 5);
+      // 180 degrees: 0.37 + 0.63 * cos(pi) = 0.37 - 0.63 = -0.26
+      expect(receiver.getGain([0, 0, -1])).toBeCloseTo(-0.26, 2);
+    });
+
+    it('figure-eight: gain = 1.0 on-axis, 0.0 at 90 degrees, -1.0 at rear', () => {
+      const receiver = new Receiver('Test');
+      receiver.directivityPattern = ReceiverPattern.FIGURE_EIGHT;
+      expect(receiver.getGain([0, 0, 1])).toBeCloseTo(1.0, 5);
+      expect(receiver.getGain([1, 0, 0])).toBeCloseTo(0.0, 5);
+      expect(receiver.getGain([0, 0, -1])).toBeCloseTo(-1.0, 5);
+    });
+
+    it('respects receiver rotation for directivity', () => {
+      const receiver = new Receiver('Test');
+      receiver.directivityPattern = ReceiverPattern.CARDIOID;
+      // Rotate 90 degrees around Y axis: forward becomes (1,0,0)
+      receiver.rotation.set(0, Math.PI / 2, 0);
+      expect(receiver.getGain([1, 0, 0])).toBeCloseTo(1.0, 2);
+      expect(receiver.getGain([-1, 0, 0])).toBeCloseTo(0.0, 2);
+    });
+
+    it('save/restore round-trip preserves directivity pattern', () => {
+      const original = new Receiver('DirTest');
+      original.directivityPattern = ReceiverPattern.CARDIOID;
+      const saved = original.save();
+      expect(saved.directivityPattern).toBe('cardioid');
+
+      const restored = new Receiver('').restore(saved);
+      expect(restored.directivityPattern).toBe(ReceiverPattern.CARDIOID);
+    });
+
+    it('restore without directivityPattern resets to omnidirectional', () => {
+      const receiver = new Receiver('Test');
+      receiver.directivityPattern = ReceiverPattern.CARDIOID;
+      const oldSaveData: ReceiverSaveObject = {
+        name: 'Test',
+        kind: 'receiver',
+        visible: true,
+        position: [0, 0, 0],
+        rotation: [0, 0, 0],
+        scale: [1, 1, 1],
+        uuid: 'test-uuid',
+        color: 0xffffff,
+        // no directivityPattern field — simulates pre-directivity save data
+      };
+      receiver.restore(oldSaveData);
+      // Missing directivityPattern resets to omnidirectional default
+      expect(receiver.directivityPattern).toBe(ReceiverPattern.OMNIDIRECTIONAL);
+
+      const fresh = new Receiver('Fresh');
+      fresh.restore(oldSaveData);
+      expect(fresh.directivityPattern).toBe(ReceiverPattern.OMNIDIRECTIONAL);
+    });
+  });
+
+  describe('receiverPatternGain (standalone)', () => {
+    it('omni: always 1.0', () => {
+      expect(receiverPatternGain(ReceiverPattern.OMNIDIRECTIONAL, 0)).toBe(1.0);
+      expect(receiverPatternGain(ReceiverPattern.OMNIDIRECTIONAL, Math.PI)).toBe(1.0);
+      expect(receiverPatternGain(ReceiverPattern.OMNIDIRECTIONAL, Math.PI / 2)).toBe(1.0);
+    });
+
+    it('cardioid: 0.5 + 0.5*cos(theta)', () => {
+      expect(receiverPatternGain(ReceiverPattern.CARDIOID, 0)).toBeCloseTo(1.0);
+      expect(receiverPatternGain(ReceiverPattern.CARDIOID, Math.PI / 2)).toBeCloseTo(0.5);
+      expect(receiverPatternGain(ReceiverPattern.CARDIOID, Math.PI)).toBeCloseTo(0.0);
+    });
+
+    it('supercardioid: 0.37 + 0.63*cos(theta)', () => {
+      expect(receiverPatternGain(ReceiverPattern.SUPERCARDIOID, 0)).toBeCloseTo(1.0);
+      expect(receiverPatternGain(ReceiverPattern.SUPERCARDIOID, Math.PI / 2)).toBeCloseTo(0.37);
+      expect(receiverPatternGain(ReceiverPattern.SUPERCARDIOID, Math.PI)).toBeCloseTo(-0.26);
+    });
+
+    it('figure-eight: cos(theta)', () => {
+      expect(receiverPatternGain(ReceiverPattern.FIGURE_EIGHT, 0)).toBeCloseTo(1.0);
+      expect(receiverPatternGain(ReceiverPattern.FIGURE_EIGHT, Math.PI / 2)).toBeCloseTo(0.0);
+      expect(receiverPatternGain(ReceiverPattern.FIGURE_EIGHT, Math.PI)).toBeCloseTo(-1.0);
     });
   });
 });

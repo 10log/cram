@@ -67,7 +67,8 @@ describe('per-band energy tracking', () => {
   });
 
   it('step() creates initialBandEnergy array from this.frequencies.length', () => {
-    expect(source).toContain('new Array(this.frequencies.length).fill(1)');
+    // Phase 5 replaced fill(1) with directivity-weighted values
+    expect(source).toContain('new Array(this.frequencies.length)');
   });
 
   it('frequencies property replaces reflectionLossFrequencies and defaultFrequencies', () => {
