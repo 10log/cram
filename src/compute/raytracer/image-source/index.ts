@@ -252,9 +252,7 @@ class ImageSourcePath{
       }else{
         // intersected with a surface
         for(let findex = 0; findex<freqs.length; findex++){
-          // @ts-ignore
-          //let reflectionCoefficient = (intersection.reflectingSurface as Surface).reflectionFunction(freqs[findex],intersection.angle);
-          let reflectionCoefficient = 1-(intersection.reflectingSurface as Surface).absorptionFunction(freqs[findex]);
+          const reflectionCoefficient = Math.abs((intersection.reflectingSurface as Surface).reflectionFunction(freqs[findex], intersection.angle!));
           intensity[findex] = intensity[findex]*reflectionCoefficient;
         }
       }
