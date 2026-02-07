@@ -65,6 +65,9 @@ export class GpuRayTracer {
   private config: GpuRayTracerConfig | null = null;
   private maxBatchSize = 0;
 
+  /** The actual batch size after clamping to device limits. */
+  get effectiveBatchSize(): number { return this.maxBatchSize; }
+
   async initialize(
     room: Room,
     receiverIDs: string[],

@@ -408,6 +408,15 @@ class RayTracer extends Solver {
     });
   }
   dispose() {
+    // Stop any running loops before tearing down resources
+    if (this._isRunning) {
+      this._isRunning = false;
+      this._gpuRunning = false;
+      cancelAnimationFrame(this._rafId);
+      this._rafId = 0;
+      this.intervals.forEach((interval) => window.clearInterval(interval));
+      this.intervals = [] as number[];
+    }
     this._disposeGpu();
     this.removeMessageHandlers();
     Object.keys(window.vars).forEach(key=>{
@@ -998,7 +1007,11 @@ class RayTracer extends Solver {
   stop() {
     this.__calc_time = Date.now() - this.__start_time;
     this._gpuRunning = false;
-    this._disposeGpu();
+    // Defer GPU disposal to let any in-flight traceBatch/mapAsync settle,
+    // avoiding WebGPU validation errors from destroying mid-await buffers.
+    if (this._gpuRayTracer) {
+      setTimeout(() => this._disposeGpu(), 0);
+    }
     cancelAnimationFrame(this._rafId);
     this._rafId = 0;
     this.intervals.forEach((interval) => {
@@ -1862,8 +1875,11 @@ class RayTracer extends Solver {
         return;
       }
 
-      // Capture the batch size that was used to allocate GPU buffers
-      const initBatchSize = this.gpuBatchSize;
+      // Use the actual allocated capacity (may be clamped by device limits)
+      const initBatchSize = this._gpuRayTracer!.effectiveBatchSize;
+
+      // Pre-allocate ray input buffer to avoid GC pressure in the hot loop
+      const rayInputs = new Float32Array(initBatchSize * RAY_INPUT_FLOATS);
 
       const tick = async () => {
         if (!this._gpuRunning || !this._isRunning || !this._gpuRayTracer) return;
@@ -1880,7 +1896,6 @@ class RayTracer extends Solver {
           // Clamp to the capacity allocated during initialize() to avoid
           // exceeding GPU buffer sizes if the user changes gpuBatchSize mid-run
           const batchSize = Math.min(Math.floor(this.gpuBatchSize), initBatchSize);
-          const rayInputs = new Float32Array(batchSize * RAY_INPUT_FLOATS);
 
           let rayIdx = 0;
           for (let i = 0; i < this.sourceIDs.length && rayIdx < batchSize; i++) {
