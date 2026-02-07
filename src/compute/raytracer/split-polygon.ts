@@ -1,14 +1,13 @@
-// @ts-nocheck
 import { CSG } from '@jscad/csg';
 import { equalWithinTolerenceFactory } from '../../common/equal-within-range';
 
 const vector3sAreEqual = equalWithinTolerenceFactory(["x", "y", "z"])(CSG.EPS);
 const planeWsAreEqual = equalWithinTolerenceFactory(["w"])(CSG.EPS);
-const planesAreEqual = (plane1, plane2) => {
+const planesAreEqual = (plane1: any, plane2: any) => {
   return vector3sAreEqual(plane1.normal, plane2.normal) && planeWsAreEqual(plane1, plane2);
 }
 
-export const splitLineSegmentByPlane = (plane: CSG.Plane, p1: CSG.Vector3D, p2: CSG.Vector3D) => {
+export const splitLineSegmentByPlane = (plane: any, p1: any, p2: any) => {
   const direction = CSG.Vector3D.subtract(p2, p1);
   let lambda = (plane[3] - CSG.Vector3D.dot(plane, p1)) / CSG.Vector3D.dot(plane, direction);
   if (Number.isNaN(lambda)) lambda = 0;
@@ -47,11 +46,11 @@ export const SPLIT_POLYGON_RESULT_TYPE = {
  * @param splane split plane
  * @param polygon polygon to split
  */
-export const splitPolygonByPlane = (splane: CSG.Plane, polygon: CSG.Polygon) => {
+export const splitPolygonByPlane = (splane: any, polygon: any) => {
   let result = {
     type: "NULL" as keyof typeof SPLIT_POLYGON_RESULT_TYPE,
-    front: {} as typeof CSG.Polygon,
-    back: {} as typeof CSG.Polygon,
+    front: {} as any,
+    back: {} as any,
   };
   // cache in local lets (speedup):
   let vertices = polygon.vertices;
@@ -61,7 +60,7 @@ export const splitPolygonByPlane = (splane: CSG.Plane, polygon: CSG.Polygon) => 
   } else {
     let hasfront = false;
     let hasback = false;
-    let vertexIsBack = [] as Boolean[];
+    let vertexIsBack = [] as boolean[];
     let MINEPS = -CSG.EPS;
     for (let i = 0; i < numvertices; i++) {
       let t = CSG.Vector3D.dot(splane, vertices[i]) - splane[3];
@@ -81,8 +80,8 @@ export const splitPolygonByPlane = (splane: CSG.Plane, polygon: CSG.Polygon) => 
     } else {
       // spanning
       result.type = "SPANNING";
-      let frontvertices = [] as Array<typeof CSG.Vector3D>;
-      let backvertices = [] as Array<typeof CSG.Vector3D>;
+      let frontvertices = [] as any[];
+      let backvertices = [] as any[];
       let isback = vertexIsBack[0];
       for (let vertexindex = 0; vertexindex < numvertices; vertexindex++) {
         let vertex = vertices[vertexindex];

@@ -16,6 +16,11 @@ describe('source directivity at ray launch', () => {
     'utf8'
   );
 
+  const impulseResponseSource = fs.readFileSync(
+    path.resolve(__dirname, '..', 'impulse-response.ts'),
+    'utf8'
+  );
+
   it('step() uses sourceDH to compute initialBandEnergy per frequency band', () => {
     // Should call getPressureAtPosition for directivity weighting
     expect(source).toContain('sourceDH.getPressureAtPosition(0, this.frequencies[f], phi, theta)');
@@ -39,13 +44,28 @@ describe('source directivity at ray launch', () => {
 
   it('arrivalPressure applies receiverGain to pressure output', () => {
     // The method body should contain receiverGain multiplications
-    expect(source).toContain('pressures[i] *= receiverGain');
+    expect(impulseResponseSource).toContain('pressures[i] *= receiverGain');
   });
 });
 
 describe('receiver directivity in impulse response methods', () => {
   const source = fs.readFileSync(
     path.resolve(__dirname, '..', 'index.ts'),
+    'utf8'
+  );
+
+  const impulseResponseSource = fs.readFileSync(
+    path.resolve(__dirname, '..', 'impulse-response.ts'),
+    'utf8'
+  );
+
+  const exportPlaybackSource = fs.readFileSync(
+    path.resolve(__dirname, '..', 'export-playback.ts'),
+    'utf8'
+  );
+
+  const responseByIntensitySource = fs.readFileSync(
+    path.resolve(__dirname, '..', 'response-by-intensity.ts'),
     'utf8'
   );
 
@@ -59,21 +79,21 @@ describe('receiver directivity in impulse response methods', () => {
   });
 
   it('calculateImpulseResponseForPair applies receiver directivity', () => {
-    expect(source).toContain('recForPair.getGain(');
+    expect(impulseResponseSource).toContain('recForPair.getGain(');
   });
 
   it('calculateImpulseResponseForDisplay applies receiver directivity', () => {
-    expect(source).toContain('recForDisplay.getGain(');
+    expect(impulseResponseSource).toContain('recForDisplay.getGain(');
   });
 
   it('downloadImpulses applies receiver directivity', () => {
-    expect(source).toContain('recForDownload.getGain(');
+    expect(exportPlaybackSource).toContain('recForDownload.getGain(');
   });
 
   it('calculateResponseByIntensity applies receiver directivity', () => {
-    expect(source).toContain('recForIntensity.getGain(');
+    expect(responseByIntensitySource).toContain('recForIntensity.getGain(');
     // Should apply gain squared for intensity domain
-    expect(source).toContain('recGainSq');
+    expect(responseByIntensitySource).toContain('recGainSq');
   });
 });
 

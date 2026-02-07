@@ -1,4 +1,3 @@
-// @ts-nocheck
 import Solver from "../solver";
 import * as THREE from "three";
 import Room from "../../objects/room";
@@ -10,15 +9,11 @@ import Surface from "../../objects/surface";
 import Receiver from "../../objects/receiver";
 import { Stat } from "../../components/parameter-config/Stats";
 import { emit, messenger, on } from "../../messenger";
-import { sort } from "fast-sort";
-import FileSaver from "file-saver";
+
 import Plotly, { PlotData } from "plotly.js";
-import { scatteredEnergy } from "./scattered-energy";
+
 import PointShader from "./shaders/points";
 import * as ac from "../acoustics";
-import { lerp } from "../../common/lerp";
-import { movingAverage } from "../../common/moving-average";
-import linearRegression, { LinearRegressionResult } from "../../common/linear-regression";
 import { BVH } from "./bvh/BVH";
 import { renderer } from "../../render/renderer";
 import { addSolver, callSolverMethod, removeSolver, setSolverProperty, useContainer, useSolver } from "../../store";
@@ -26,10 +21,39 @@ import { ResultKind } from "../../store/result-store";
 import {cramangle2threejsangle} from "../../common/dir-angle-conversions";
 import { audioEngine } from "../../audio-engine/audio-engine";
 import observe, { Observable } from "../../common/observable";
-import {probability} from '../../common/probability';
 import { encodeBufferFromDirection, getAmbisonicChannelCount } from "ambisonics";
 
-import {ImageSourceSolver, ImageSourceSolverParams} from "./image-source/index"; 
+import {ImageSourceSolver, ImageSourceSolverParams} from "./image-source/index";
+
+import {
+  QuickEstimateStepResult, ResponseByIntensity, BandEnergy, Chain,
+  RayPath, ChartData, ReceiverData, RayTracerParams,
+  ConvergenceMetrics, defaults, DRAWSTYLE, normalize,
+  DEFAULT_INTENSITY_SAMPLE_RATE, DEFAULT_INITIAL_SPL,
+  RESPONSE_TIME_PADDING, QUICK_ESTIMATE_MAX_ORDER, MAX_DISPLAY_POINTS, RT60_DECAY_RATIO,
+  HISTOGRAM_BIN_WIDTH, HISTOGRAM_NUM_BINS, CONVERGENCE_CHECK_INTERVAL_MS,
+} from "./types";
+
+// Extracted module imports
+import { traceRay as traceRayFn, inFrontOf as inFrontOfFn } from "./ray-core";
+import { arrivalPressure as arrivalPressureFn, calculateImpulseResponseForPair as calcIRForPairFn, calculateImpulseResponseForDisplay as calcIRForDisplayFn } from "./impulse-response";
+import { reflectionLossFunction as reflectionLossFunctionFn, calculateReflectionLoss as calculateReflectionLossFn, calculateResponseByIntensity as calcResponseByIntensityFn, resampleResponseByIntensity as resampleResponseByIntensityFn, calculateT20 as calculateT20Fn, calculateT30 as calculateT30Fn, calculateT60 as calculateT60Fn } from "./response-by-intensity";
+import { pathsToLinearBuffer as pathsToLinearBufferFn, linearBufferToPaths as linearBufferToPathsFn } from "./serialization";
+import { downloadImpulses as downloadImpulsesFn, playImpulseResponse as playImpulseResponseFn, downloadImpulseResponse as downloadImpulseResponseFn, downloadAmbisonicImpulseResponse as downloadAmbisonicIRFn } from "./export-playback";
+import { resetConvergenceState, updateConvergenceMetrics, addToEnergyHistogram } from "./convergence";
+
+// Re-export all types for external consumers
+export type {
+  QuickEstimateStepResult, RayPathResult, ResponseByIntensity, BandEnergy, Chain,
+  RayPath, EnergyTime, ChartData, RayTracerSaveObject, RayTracerParams,
+  ConvergenceMetrics, DrawStyle,
+} from "./types";
+export {
+  ReceiverData, defaults, DRAWSTYLE, normalize,
+  SELF_INTERSECTION_OFFSET, DEFAULT_INTENSITY_SAMPLE_RATE, DEFAULT_INITIAL_SPL,
+  RESPONSE_TIME_PADDING, QUICK_ESTIMATE_MAX_ORDER, MAX_DISPLAY_POINTS, RT60_DECAY_RATIO,
+  HISTOGRAM_BIN_WIDTH, HISTOGRAM_NUM_BINS, CONVERGENCE_CHECK_INTERVAL_MS,
+} from "./types";
 
 // Webpack 5 native worker support
 const FilterWorker = () => new Worker(new URL('../../audio-engine/filter.worker.ts', import.meta.url));
@@ -37,208 +61,9 @@ const FilterWorker = () => new Worker(new URL('../../audio-engine/filter.worker.
 const {floor, random, abs, asin} = Math;
 const coinFlip = () => random() > 0.5;
 
-function normalize(arr: Float32Array) {
-  let maxValue = Math.abs(arr[0]);
-  for (let i = 1; i < arr.length; i++){
-    if (Math.abs(arr[i]) > maxValue) {
-      maxValue = Math.abs(arr[i]);
-    }
-  }
-  if (maxValue !== 0) {
-    for (let i = 0; i < arr.length; i++) {
-      arr[i] /= maxValue;
-    }
-  }
-  return arr;
-}
-
-export interface QuickEstimateStepResult {
-  rt60s: number[];
-  angle: number;
-  direction: THREE.Vector3;
-  lastIntersection: THREE.Intersection;
-  distance: number;
-}
-
-//@ts-ignore
 THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
-//@ts-ignore
 THREE.BufferGeometry.prototype.disposeBoundsTree = disposeBoundsTree;
 THREE.Mesh.prototype.raycast = acceleratedRaycast;
-
-export interface RayPathResult {
-  time: number;
-  bounces: number;
-  level: number[];
-}
-
-export interface ResponseByIntensity {
-  freqs: number[];
-  response: RayPathResult[];
-  sampleRate?: number;
-  resampledResponse?: Float32Array[];
-  t20?: LinearRegressionResult[];
-  t30?: LinearRegressionResult[];
-  t60?: LinearRegressionResult[];
-}
-
-export type BandEnergy = number[];
-
-export interface Chain {
-  angle_in: number;
-  angle_out: number;
-  total_time: number;
-  time_rec: number;
-  angle_rec: number;
-  distance: number;
-  // point: THREE.Vector3;
-  point: [number, number, number];
-  object: string;
-  faceNormal: [number, number, number];
-  faceIndex: number;
-  faceMaterialIndex: number;
-  angle: number;
-  energy: number;
-  bandEnergy?: BandEnergy;
-}
-
-
-export interface RayPath {
-  intersectedReceiver: boolean;
-  chain: Chain[];
-  chainLength: number;
-  energy: number; // used for visualization
-  bandEnergy?: BandEnergy;
-  time: number;
-  source: string;
-  initialPhi: number;
-  initialTheta: number;
-  totalLength: number;
-  /** Direction from which the ray arrives at the receiver (normalized, in receiver's local space) */
-  arrivalDirection?: [number, number, number];
-}
-export interface EnergyTime {
-  time: number;
-  energy: {
-    frequency: number;
-    value: number;
-  }[];
-}
-// helper type
-export type ChartData = {
-  label: string;
-  data: number[][];
-  x?: number[];
-  y?: number[];
-};
-
-export interface ReceiverData {
-  id: string;
-  data: EnergyTime[];
-}
-export class ReceiverData {
-  constructor(id: string) {
-    this.id = id;
-    this.data = [] as EnergyTime[];
-  }
-}
-
-export type RayTracerSaveObject = {
-  name: string;
-  kind: "ray-tracer";
-  uuid: string;
-  autoCalculate: boolean;
-  roomID: string;
-  sourceIDs: string[];
-  surfaceIDs: string[];
-  receiverIDs: string[];
-  updateInterval: number;
-  passes: number;
-  pointSize: number;
-  reflectionOrder: number;
-  runningWithoutReceivers: boolean;
-  raysVisible: boolean;
-  pointsVisible: boolean;
-  invertedDrawStyle: boolean;
-  plotStyle: Partial<Plotly.PlotData>;
-  paths: KVP<RayPath[]>;
-  frequencies: number[];
-  temperature?: number;
-  convergenceThreshold?: number;
-  autoStop?: boolean;
-  rrThreshold?: number;
-}
-
-export interface RayTracerParams {
-  name?: string;
-  roomID?: string;
-  sourceIDs?: string[];
-  surfaceIDs?: string[];
-  receiverIDs?: string[];
-  updateInterval?: number;
-  passes?: number;
-  pointSize?: number;
-  reflectionOrder?: number;
-  isRunning?: boolean;
-  runningWithoutReceivers?: boolean;
-  raysVisible?: boolean;
-  pointsVisible?: boolean;
-  invertedDrawStyle?: boolean;
-  plotStyle?: Partial<PlotData>;
-  uuid?: string;
-  paths?: KVP<RayPath[]>;
-  frequencies?: number[];
-  temperature?: number;
-  convergenceThreshold?: number;
-  autoStop?: boolean;
-  rrThreshold?: number;
-}
-export interface ConvergenceMetrics {
-  totalRays: number;
-  validRays: number;
-  estimatedT30: number[];        // per band, latest estimate
-  t30Mean: number[];             // running mean of T30 estimates
-  t30M2: number[];               // running M2 for Welford's variance
-  t30Count: number;              // number of T30 samples taken
-  convergenceRatio: number;      // max(std/mean) across bands
-}
-
-export const defaults = {
-  name: "Ray Tracer",
-  roomID: "",
-  sourceIDs: [] as string[],
-  surfaceIDs: [] as string[],
-  receiverIDs: [] as string[],
-  updateInterval: 5,
-  reflectionOrder: 50,
-  isRunning: false,
-  runningWithoutReceivers: false,
-  passes: 100,
-  pointSize: 2,
-  raysVisible: true,
-  pointsVisible: true,
-  invertedDrawStyle: false,
-  paths: {} as KVP<RayPath[]>,
-  plotStyle: {
-    mode: "lines"
-  } as Partial<PlotData>,
-  frequencies: [125, 250, 500, 1000, 2000, 4000, 8000] as number[],
-  temperature: 20,
-  convergenceThreshold: 0.01,
-  autoStop: true,
-  rrThreshold: 0.1,
-};
-
-export enum DRAWSTYLE {
-  ENERGY = 0.0,
-  ANGLE = 1.0,
-  ANGLE_ENERGY = 2.0
-}
-export interface DrawStyle {
-  ANGLE: 0.0;
-  ENERGY: 1.0;
-  ANGLE_ENERGY: 2.0;
-}
 
 class RayTracer extends Solver {
   roomID: string;
@@ -302,6 +127,8 @@ class RayTracer extends Solver {
   _lastConvergenceCheck!: number;
   _convergenceCheckInterval: number;
 
+  _directivityRefPressures?: Map<string, number[]>;
+
   constructor(params?: RayTracerParams) {
     super(params);
     this.kind = "ray-tracer";
@@ -329,7 +156,7 @@ class RayTracer extends Solver {
     this.statsUpdatePeriod = 100;
     this._pointSize = params.pointSize || defaults.pointSize;
     this.validRayCount = 0;
-    this.intensitySampleRate = 256;
+    this.intensitySampleRate = DEFAULT_INTENSITY_SAMPLE_RATE;
     this.quickEstimateResults = {} as KVP<QuickEstimateStepResult[]>;
 
     const paramsHasRaysVisible = typeof params.raysVisible === "boolean";
@@ -361,9 +188,9 @@ class RayTracer extends Solver {
     this.convergenceThreshold = params.convergenceThreshold ?? defaults.convergenceThreshold;
     this.autoStop = params.autoStop ?? defaults.autoStop;
     this.rrThreshold = params.rrThreshold ?? defaults.rrThreshold;
-    this._histogramBinWidth = 0.001; // 1ms bins
-    this._histogramNumBins = 10000;  // up to 10 seconds
-    this._convergenceCheckInterval = 500; // check every 500ms
+    this._histogramBinWidth = HISTOGRAM_BIN_WIDTH;
+    this._histogramNumBins = HISTOGRAM_NUM_BINS;
+    this._convergenceCheckInterval = CONVERGENCE_CHECK_INTERVAL_MS;
     this._resetConvergenceState();
 
     this.rays = new THREE.LineSegments(
@@ -432,7 +259,7 @@ class RayTracer extends Solver {
     renderer.overlays.global.addCell("Valid Rays", this.validRayCount, {
       id: this.uuid + "-valid-ray-count",
       hidden: true,
-      formatter: (value: number) => String(value)
+      formatter: (value) => String(value)
     });
     this.messageHandlerIDs = [] as string[][];
     messenger.postMessage("STATS_SETUP", this.stats);
@@ -453,7 +280,7 @@ class RayTracer extends Solver {
     );
     this.messageHandlerIDs.push(
       messenger.addMessageHandler("SHOULD_REMOVE_CONTAINER", (acc, ...args) => {
-        const id = args[0];
+        const id = args[0] as string;
         if (id) {
           console.log(id);
           if (this.sourceIDs.includes(id)) {
@@ -647,12 +474,7 @@ class RayTracer extends Solver {
   }
 
   inFrontOf(a: THREE.Triangle, b: THREE.Triangle) {
-    const plane = a.getPlane(new THREE.Plane());
-    const pleq = new THREE.Vector4(plane.normal.x, plane.normal.y, plane.normal.z, plane.constant);
-    const avec4 = new THREE.Vector4(b.a.x, b.a.y, b.a.z, 1);
-    const bvec4 = new THREE.Vector4(b.b.x, b.b.y, b.b.z, 1);
-    const cvec4 = new THREE.Vector4(b.c.x, b.c.y, b.c.z, 1);
-    return pleq.dot(avec4) > 0 || pleq.dot(bvec4) > 0 || pleq.dot(cvec4) > 0;
+    return inFrontOfFn(a, b);
   }
 
   traceRay(
@@ -666,178 +488,11 @@ class RayTracer extends Solver {
     iter: number = 1,
     chain: Partial<Chain>[] = [],
   ) {
-    // normalize the ray
-    rd = rd.normalize();
-
-    // set the starting position
-    this.raycaster.ray.origin = ro;
-
-    // set the direction
-    this.raycaster.ray.direction = rd;
-
-    // find the surface that the ray intersects
-    const intersections = this.raycaster.intersectObjects(this.intersectableObjects, true);
-
-    // if there was an intersection
-    if (intersections.length > 0) {
-
-      // broadband average energy for scalar backward compat
-      const totalEnergy = bandEnergy.reduce((a, b) => a + b, 0);
-      const energy = bandEnergy.length > 0 ? totalEnergy / bandEnergy.length : 0;
-
-      //check to see if the intersection was with a receiver
-      if (intersections[0].object.userData?.kind === 'receiver') {
-        // find the incident angle
-        const angle = intersections[0].face && rd.clone().multiplyScalar(-1).angleTo(intersections[0].face.normal);
-
-        // apply air absorption for the final segment to the receiver
-        const receiverSegmentDist = intersections[0].distance;
-        const receiverBandEnergy = bandEnergy.map((e, f) =>
-          e * Math.pow(10, -this._cachedAirAtt[f] * receiverSegmentDist / 10)
-        );
-
-        // broadband average energy for scalar backward compat (recompute after air absorption)
-        const receiverTotalEnergy = receiverBandEnergy.reduce((a, b) => a + b, 0);
-        const receiverEnergy = receiverBandEnergy.length > 0 ? receiverTotalEnergy / receiverBandEnergy.length : 0;
-
-        // push the intersection data onto the chain
-        chain.push({
-          object: intersections[0].object.parent!.uuid,
-          angle: angle!,
-          distance: intersections[0].distance,
-          faceNormal: [
-            intersections[0].face!.normal.x,
-            intersections[0].face!.normal.y,
-            intersections[0].face!.normal.z
-          ],
-          faceMaterialIndex: intersections[0].face!.materialIndex,
-          faceIndex: intersections[0].faceIndex!,
-          point: [intersections[0].point.x, intersections[0].point.y, intersections[0].point.z],
-          energy: receiverEnergy,
-          bandEnergy: [...receiverBandEnergy],
-        });
-
-        // Compute arrival direction (direction ray arrives FROM, normalized)
-        // This is the opposite of the ray direction (ray travels toward receiver)
-        const arrivalDir = rd.clone().normalize().negate();
-        const arrivalDirection: [number, number, number] = [arrivalDir.x, arrivalDir.y, arrivalDir.z];
-
-        // end the chain here
-        return {
-          chain,
-          chainLength: chain.length,
-          intersectedReceiver: true,
-          energy: receiverEnergy,
-          bandEnergy: [...receiverBandEnergy],
-          source,
-          initialPhi,
-          initialTheta,
-          arrivalDirection,
-        } as RayPath;
-      } else {
-        // find the incident angle
-        const angle = intersections[0].face && rd.clone().multiplyScalar(-1).angleTo(intersections[0].face.normal);
-
-        // push the intersection onto the chain
-        chain.push({
-          object: intersections[0].object.parent!.uuid,
-          angle: angle!,
-          distance: intersections[0].distance,
-          faceNormal: [
-            intersections[0].face!.normal.x,
-            intersections[0].face!.normal.y,
-            intersections[0].face!.normal.z
-          ],
-          faceMaterialIndex: intersections[0].face!.materialIndex,
-          faceIndex: intersections[0].faceIndex!,
-          point: [intersections[0].point.x, intersections[0].point.y, intersections[0].point.z],
-          energy,
-        });
-
-        if (intersections[0].object.parent instanceof Surface) {
-          intersections[0].object.parent.numHits += 1;
-        }
-
-        // get the normal direction of the intersection
-        const normal = intersections[0].face && intersections[0].face.normal.normalize();
-
-        // find the reflected direction
-        let rr =
-          normal &&
-          intersections[0].face &&
-          rd.clone().sub(normal.clone().multiplyScalar(rd.dot(normal.clone())).multiplyScalar(2));
-
-        // compute energy-weighted broadband scattering for directional decision
-        const surface = intersections[0].object.parent as Surface;
-        const scatterCoeffs = this.frequencies.map(f => surface.scatteringFunction(f));
-        const totalEnergy = bandEnergy.reduce((a, b) => a + b, 0) || 1;
-        let broadbandScattering = 0;
-        for (let f = 0; f < this.frequencies.length; f++) {
-          broadbandScattering += scatterCoeffs[f] * (bandEnergy[f] || 0);
-        }
-        broadbandScattering /= totalEnergy;
-
-        if (probability(broadbandScattering)) {
-          // Cosine-weighted (Lambertian) hemisphere sampling via rejection method
-          let candidate: THREE.Vector3;
-          do {
-            candidate = new THREE.Vector3(
-              Math.random() * 2 - 1,
-              Math.random() * 2 - 1,
-              Math.random() * 2 - 1
-            );
-          } while (candidate.lengthSq() > 1 || candidate.lengthSq() < 1e-6);
-          candidate.normalize();
-          // Offset along normal for cosine-weighted distribution
-          rr = candidate.add(normal!).normalize();
-        }
-
-        // apply per-band reflection loss
-        const segmentDistance = intersections[0].distance;
-        const newBandEnergy = this.frequencies.map((frequency, f) => {
-          const e = bandEnergy[f];
-          if (e == null) return 0;
-          // surface reflection
-          let energy = e * abs(surface.reflectionFunction(frequency, angle!));
-          // per-segment air absorption (intensity domain: /10)
-          energy *= Math.pow(10, -this._cachedAirAtt[f] * segmentDistance / 10);
-          return energy;
-        });
-
-        // Russian Roulette termination: unbiased probabilistic early termination
-        const maxEnergy = Math.max(...newBandEnergy);
-        if (rr && normal && iter < order + 1) {
-          if (maxEnergy < this.rrThreshold && maxEnergy > 0) {
-            const survivalProbability = maxEnergy / this.rrThreshold;
-            if (Math.random() > survivalProbability) {
-              // Terminate ray - expected value preserved (no bias)
-              const rrTotalEnergy = newBandEnergy.reduce((a, b) => a + b, 0);
-              const rrEnergy = newBandEnergy.length > 0 ? rrTotalEnergy / newBandEnergy.length : 0;
-              return { chain, chainLength: chain.length, source, intersectedReceiver: false, energy: rrEnergy, bandEnergy: [...newBandEnergy] } as RayPath;
-            }
-            // Boost surviving ray energy to compensate
-            for (let f = 0; f < newBandEnergy.length; f++) {
-              newBandEnergy[f] /= survivalProbability;
-            }
-          }
-          if (maxEnergy > 0) {
-            // recurse
-            return this.traceRay(
-              intersections[0].point.clone().addScaledVector(normal.clone(), 0.01),
-              rr,
-              order,
-              newBandEnergy,
-              source,
-              initialPhi,
-              initialTheta,
-              iter + 1,
-              chain,
-            );
-          }
-        }
-      }
-      return { chain, chainLength: chain.length, source, intersectedReceiver: false } as RayPath;
-    }
+    return traceRayFn(
+      this.raycaster, this.intersectableObjects, this.frequencies,
+      this._cachedAirAtt, this.rrThreshold,
+      ro, rd, order, bandEnergy, source, initialPhi, initialTheta, iter, chain,
+    );
   }
 
   startQuickEstimate(frequencies: number[] = this.frequencies, numRays: number = 1000) {
@@ -850,8 +505,7 @@ class RayTracer extends Solver {
     });
     let done = false;
     this.intervals.push(
-      //@ts-ignore
-      setInterval(() => {
+      window.setInterval(() => {
         for (let i = 0; i < this.passes; i++, count++) {
           for (let j = 0; j < this.sourceIDs.length; j++) {
             const id = this.sourceIDs[j];
@@ -893,7 +547,7 @@ class RayTracer extends Solver {
     const intensities = Array(frequencies.length).fill(source.initialIntensity);
 
     let iter = 0;
-    const maxOrder = 1000;
+    const maxOrder = QUICK_ESTIMATE_MAX_ORDER;
 
     let doneDecaying = false;
 
@@ -931,7 +585,7 @@ class RayTracer extends Solver {
           }
           intensities[f] *= coefficient;
           // const level = (ac.P2Lp(ac.I2P()) as number) - airAttenuationdB[f];
-          const freqDoneDecaying = source.initialIntensity / intensities[f] > 1000000;
+          const freqDoneDecaying = source.initialIntensity / intensities[f] > RT60_DECAY_RATIO;
           if (freqDoneDecaying) {
             rt60s[f] = distance / soundSpeed;
           }
@@ -1018,7 +672,7 @@ class RayTracer extends Solver {
       if (!refPressures || refPressures.length !== this.frequencies.length) {
         refPressures = new Array(this.frequencies.length);
         for (let f = 0; f < this.frequencies.length; f++) {
-          refPressures[f] = sourceDH.getPressureAtPosition(0, this.frequencies[f], 0, 0);
+          refPressures[f] = sourceDH.getPressureAtPosition(0, this.frequencies[f], 0, 0) as number;
         }
         this._directivityRefPressures.set(sourceId, refPressures);
       }
@@ -1101,24 +755,7 @@ class RayTracer extends Solver {
 
   /** Add a ray path's energy to the convergence histogram */
   _addToEnergyHistogram(receiverId: string, path: RayPath) {
-    if (!this._energyHistogram[receiverId]) {
-      this._energyHistogram[receiverId] = [];
-      for (let f = 0; f < this.frequencies.length; f++) {
-        this._energyHistogram[receiverId].push(new Float32Array(this._histogramNumBins));
-      }
-    }
-    // Compute total time from chain distances
-    let totalTime = 0;
-    for (let k = 0; k < path.chain.length; k++) {
-      totalTime += path.chain[k].distance;
-    }
-    totalTime /= this.c;
-    const bin = Math.floor(totalTime / this._histogramBinWidth);
-    if (bin >= 0 && bin < this._histogramNumBins && path.bandEnergy) {
-      for (let f = 0; f < this.frequencies.length; f++) {
-        this._energyHistogram[receiverId][f][bin] += path.bandEnergy[f] || 0;
-      }
-    }
+    addToEnergyHistogram(this._energyHistogram, receiverId, path, this.frequencies, this.c, this._histogramBinWidth, this._histogramNumBins);
   }
 
   step() {
@@ -1155,7 +792,7 @@ class RayTracer extends Solver {
       if (!refPressures || refPressures.length !== this.frequencies.length) {
         refPressures = new Array(this.frequencies.length);
         for (let f = 0; f < this.frequencies.length; f++) {
-          refPressures[f] = sourceDH.getPressureAtPosition(0, this.frequencies[f], 0, 0);
+          refPressures[f] = sourceDH.getPressureAtPosition(0, this.frequencies[f], 0, 0) as number;
         }
         this._directivityRefPressures.set(sourceId, refPressures);
       }
@@ -1257,149 +894,19 @@ class RayTracer extends Solver {
 
   /** Reset convergence state for a new simulation run */
   _resetConvergenceState() {
-    this.convergenceMetrics = {
-      totalRays: 0,
-      validRays: 0,
-      estimatedT30: new Array(this.frequencies.length).fill(0),
-      t30Mean: new Array(this.frequencies.length).fill(0),
-      t30M2: new Array(this.frequencies.length).fill(0),
-      t30Count: 0,
-      convergenceRatio: Infinity,
-    };
-    this._energyHistogram = {} as KVP<Float32Array[]>;
-    this._lastConvergenceCheck = Date.now();
+    const state = resetConvergenceState(this.frequencies.length);
+    this.convergenceMetrics = state.convergenceMetrics;
+    this._energyHistogram = state.energyHistogram;
+    this._lastConvergenceCheck = state.lastConvergenceCheck;
   }
 
   /** Compute T30 from Schroeder backward integration of the energy histogram */
   _updateConvergenceMetrics() {
-    this.convergenceMetrics.totalRays = this.__num_checked_paths;
-    this.convergenceMetrics.validRays = this.validRayCount;
-
-    // Choose a stable receiver with data for convergence metrics
-    const receiverIdsWithData = Object.keys(this._energyHistogram);
-    if (receiverIdsWithData.length === 0) return;
-
-    let receiverId: string | undefined;
-
-    // Prefer stable ordering via this.receiverIDs
-    if (this.receiverIDs.length > 0) {
-      for (const id of this.receiverIDs) {
-        const hist = this._energyHistogram[id];
-        if (hist && hist.length > 0) {
-          receiverId = id;
-          break;
-        }
-      }
-    }
-
-    // Fallback: lexicographically smallest ID with data
-    if (!receiverId) {
-      const sortedIds = receiverIdsWithData.slice().sort();
-      for (const id of sortedIds) {
-        const hist = this._energyHistogram[id];
-        if (hist && hist.length > 0) {
-          receiverId = id;
-          break;
-        }
-      }
-    }
-
-    if (!receiverId) return;
-
-    const histograms = this._energyHistogram[receiverId];
-    if (!histograms || histograms.length === 0) return;
-
-    const numBands = this.frequencies.length;
-    const t30Estimates = new Array(numBands).fill(0);
-
-    for (let f = 0; f < numBands; f++) {
-      const histogram = histograms[f];
-
-      // Find last non-zero bin
-      let lastBin = 0;
-      for (let b = this._histogramNumBins - 1; b >= 0; b--) {
-        if (histogram[b] > 0) { lastBin = b; break; }
-      }
-      if (lastBin < 2) { t30Estimates[f] = 0; continue; }
-
-      // Schroeder backward integration
-      const schroeder = new Float32Array(lastBin + 1);
-      schroeder[lastBin] = histogram[lastBin];
-      for (let b = lastBin - 1; b >= 0; b--) {
-        schroeder[b] = schroeder[b + 1] + histogram[b];
-      }
-
-      // Convert to dB (relative to max)
-      const maxVal = schroeder[0];
-      if (maxVal <= 0) { t30Estimates[f] = 0; continue; }
-
-      // Find -5dB and -35dB points for T30 estimation
-      const db5 = maxVal * Math.pow(10, -5 / 10);
-      const db35 = maxVal * Math.pow(10, -35 / 10);
-      let idx5 = -1, idx35 = -1;
-
-      for (let b = 0; b <= lastBin; b++) {
-        if (idx5 < 0 && schroeder[b] <= db5) idx5 = b;
-        if (idx35 < 0 && schroeder[b] <= db35) idx35 = b;
-      }
-
-      if (idx5 >= 0 && idx35 > idx5) {
-        // Linear regression in log domain between -5dB and -35dB
-        const times: number[] = [];
-        const levelsDb: number[] = [];
-
-        for (let b = idx5; b <= idx35; b++) {
-          const value = schroeder[b];
-          if (value > 0) {
-            times.push(b * this._histogramBinWidth);
-            levelsDb.push(10 * Math.log10(value / maxVal));
-          }
-        }
-
-        if (times.length >= 2) {
-          const regression = linearRegression(times, levelsDb);
-          const slope = regression.slope;
-          // T60: time for 60 dB decay, extrapolated from decay slope in dB/s
-          t30Estimates[f] = slope < 0 ? 60 / -slope : 0;
-        }
-      }
-    }
-
-    this.convergenceMetrics.estimatedT30 = t30Estimates;
-
-    // Welford's online algorithm for running mean and variance
-    this.convergenceMetrics.t30Count += 1;
-    const n = this.convergenceMetrics.t30Count;
-
-    let maxRatio = 0;
-    let validBandCount = 0;
-    for (let f = 0; f < numBands; f++) {
-      const val = t30Estimates[f];
-      const oldMean = this.convergenceMetrics.t30Mean[f];
-      const newMean = oldMean + (val - oldMean) / n;
-      const oldM2 = this.convergenceMetrics.t30M2[f];
-      const newM2 = oldM2 + (val - oldMean) * (val - newMean);
-      this.convergenceMetrics.t30Mean[f] = newMean;
-      this.convergenceMetrics.t30M2[f] = newM2;
-
-      // Coefficient of variation: std / mean (skip bands with no valid T30)
-      if (n >= 2 && newMean > 0) {
-        const variance = newM2 / (n - 1);
-        const ratio = Math.sqrt(variance) / newMean;
-        if (ratio > maxRatio) maxRatio = ratio;
-        validBandCount++;
-      }
-      // Bands with zero/invalid T30 are excluded from convergence check
-    }
-    // Only report convergence if at least one band has a valid estimate
-    this.convergenceMetrics.convergenceRatio = validBandCount > 0 ? maxRatio : Infinity;
-
-    // Emit update so UI can display metrics
-    emit("RAYTRACER_SET_PROPERTY", {
-      uuid: this.uuid,
-      property: "convergenceMetrics",
-      value: { ...this.convergenceMetrics }
-    });
+    updateConvergenceMetrics(
+      this.convergenceMetrics, this._energyHistogram, this.frequencies,
+      this.receiverIDs, this.__num_checked_paths, this.validRayCount,
+      this._histogramBinWidth, this._histogramNumBins, this.uuid
+    );
   }
 
   start() {
@@ -1495,7 +1002,7 @@ class RayTracer extends Solver {
         }
 
         // Downsample for display (max 2000 points for performance)
-        const maxDisplayPoints = 2000;
+        const maxDisplayPoints = MAX_DISPLAY_POINTS;
         const step = Math.max(1, Math.floor(normalizedSignal.length / maxDisplayPoints));
         const displayData: { time: number; amplitude: number }[] = [];
 
@@ -1542,122 +1049,12 @@ class RayTracer extends Solver {
     emit("HIDE_PROGRESS", undefined);
   }
 
-  async calculateImpulseResponseForPair(sourceId: string, receiverId: string, paths: RayPath[], initialSPL = 100, frequencies = this.frequencies, sampleRate = audioEngine.sampleRate): Promise<{ signal: Float32Array; normalizedSignal: Float32Array }> {
-    if (paths.length === 0) throw Error("No rays have been traced for this pair");
-
-    let sorted = paths.sort((a, b) => a.time - b.time) as RayPath[];
-
-    const totalTime = sorted[sorted.length - 1].time + 0.05;
-
-    const spls = Array(frequencies.length).fill(initialSPL);
-
-    const numberOfSamples = floor(sampleRate * totalTime) * 2;
-
-    let samples: Array<Float32Array> = [];
-    for (let f = 0; f < frequencies.length; f++) {
-      samples.push(new Float32Array(numberOfSamples));
-    }
-
-    // add in raytracer paths (apply receiver directivity)
-    const recForPair = useContainer.getState().containers[receiverId] as Receiver;
-    for (let i = 0; i < sorted.length; i++) {
-      const randomPhase = coinFlip() ? 1 : -1;
-      const t = sorted[i].time;
-      const dir = sorted[i].arrivalDirection || [0, 0, 1] as [number, number, number];
-      const recGain = recForPair.getGain(dir as [number, number, number]);
-      const p = this.arrivalPressure(spls, frequencies, sorted[i], recGain).map(x => x * randomPhase);
-      const roundedSample = floor(t * sampleRate);
-
-      for (let f = 0; f < frequencies.length; f++) {
-        samples[f][roundedSample] += p[f];
-      }
-    }
-
-    const worker = FilterWorker();
-
-    return new Promise((resolve, reject) => {
-      worker.postMessage({ samples });
-      worker.onmessage = (event) => {
-        const filteredSamples = event.data.samples as Float32Array[];
-
-        const signal = new Float32Array(filteredSamples[0].length >> 1);
-
-        for (let i = 0; i < filteredSamples.length; i++) {
-          for (let j = 0; j < signal.length; j++) {
-            signal[j] += filteredSamples[i][j];
-          }
-        }
-
-        const normalizedSignal = normalize(signal.slice());
-
-        worker.terminate();
-        resolve({ signal, normalizedSignal });
-      };
-      worker.onerror = (error) => {
-        worker.terminate();
-        reject(error);
-      };
-    });
+  async calculateImpulseResponseForPair(sourceId: string, receiverId: string, paths: RayPath[], initialSPL = DEFAULT_INITIAL_SPL, frequencies = this.frequencies, sampleRate = audioEngine.sampleRate): Promise<{ signal: Float32Array; normalizedSignal: Float32Array }> {
+    return calcIRForPairFn(sourceId, receiverId, paths, initialSPL, frequencies, this.temperature, sampleRate);
   }
 
-  async calculateImpulseResponseForDisplay(initialSPL = 100, frequencies = this.frequencies, sampleRate = audioEngine.sampleRate): Promise<{ signal: Float32Array; normalizedSignal: Float32Array }> {
-    if(this.receiverIDs.length == 0) throw Error("No receivers have been assigned to the raytracer");
-    if(this.sourceIDs.length == 0) throw Error("No sources have been assigned to the raytracer");
-    if(this.paths[this.receiverIDs[0]].length == 0) throw Error("No rays have been traced yet");
-
-    let sorted = this.paths[this.receiverIDs[0]].sort((a,b)=>a.time - b.time) as RayPath[];
-
-    const totalTime = sorted[sorted.length - 1].time + 0.05;
-
-    const spls = Array(frequencies.length).fill(initialSPL);
-
-    const numberOfSamples = floor(sampleRate * totalTime) * 2;
-
-    let samples: Array<Float32Array> = [];
-    for(let f = 0; f<frequencies.length; f++){
-      samples.push(new Float32Array(numberOfSamples));
-    }
-
-    // add in raytracer paths (apply receiver directivity)
-    const recForDisplay = useContainer.getState().containers[this.receiverIDs[0]] as Receiver;
-    for(let i = 0; i<sorted.length; i++){
-      const randomPhase = coinFlip() ? 1 : -1;
-      const t = sorted[i].time;
-      const dir = sorted[i].arrivalDirection || [0, 0, 1] as [number, number, number];
-      const recGain = recForDisplay.getGain(dir as [number, number, number]);
-      const p = this.arrivalPressure(spls, frequencies, sorted[i], recGain).map(x => x * randomPhase);
-      const roundedSample = floor(t * sampleRate);
-
-      for(let f = 0; f<frequencies.length; f++){
-          samples[f][roundedSample] += p[f];
-      }
-    }
-
-    const worker = FilterWorker();
-
-    return new Promise((resolve, reject)=>{
-      worker.postMessage({ samples });
-      worker.onmessage = (event) => {
-        const filteredSamples = event.data.samples as Float32Array[];
-
-        const signal = new Float32Array(filteredSamples[0].length >> 1);
-
-        for(let i = 0; i<filteredSamples.length; i++){
-          for(let j = 0; j<signal.length; j++){
-            signal[j] += filteredSamples[i][j];
-          }
-        }
-
-        const normalizedSignal = normalize(signal.slice());
-
-        worker.terminate();
-        resolve({ signal, normalizedSignal });
-      };
-      worker.onerror = (error) => {
-        worker.terminate();
-        reject(error);
-      };
-    });
+  async calculateImpulseResponseForDisplay(initialSPL = DEFAULT_INITIAL_SPL, frequencies = this.frequencies, sampleRate = audioEngine.sampleRate): Promise<{ signal: Float32Array; normalizedSignal: Float32Array }> {
+    return calcIRForDisplayFn(this.receiverIDs, this.sourceIDs, this.paths, initialSPL, frequencies, this.temperature, sampleRate);
   }
   clearRays() {
     if (this.room) {
@@ -1697,258 +1094,15 @@ class RayTracer extends Solver {
     });
   }
 
-  calculateWithDiffuse(frequencies: number[] = this.frequencies) {
-    this.allReceiverData = [] as ReceiverData[];
-    const keys = Object.keys(this.paths);
-    const receiverRadius = (useContainer.getState().containers[this.receiverIDs[0]] as Receiver).scale.x;
-    const receiverPosition = (useContainer.getState().containers[this.receiverIDs[0]] as Receiver).position;
-    keys.forEach((key) => {
-      const receiverData = new ReceiverData(key);
-      this.paths[key].forEach((path) => {
-        const energytime = {
-          time: 0,
-          energy: []
-        } as EnergyTime;
-        let intersectedReceiver = false;
-        path.chain.forEach((segment) => {
-          const container = this.receiverIDs.includes(segment.object)
-            ? useContainer.getState().containers[segment.object]
-            : (this.room.surfaceMap[segment.object] as Container);
-          if (container && container.kind) {
-            if (container.kind === "receiver") {
-              intersectedReceiver = true;
-            } else if (container.kind === "surface") {
-              // hit surface
-              const surface = container as Surface;
-              const energytime_diffuse = {
-                time: segment.time_rec,
-                energy: []
-              } as EnergyTime;
-              frequencies.forEach((frequency, index) => {
-                const reflectionloss = abs(surface.reflectionFunction(frequency, segment.angle_in));
-                if (!energytime.energy[index]) {
-                  energytime.energy[index] = {
-                    frequency,
-                    value: reflectionloss
-                  };
-                } else {
-                  energytime.energy[index].value *= reflectionloss;
-                  energytime.time = segment.total_time;
-                  const d = new THREE.Vector3(
-                    receiverPosition.x - segment.point[0],
-                    receiverPosition.y - segment.point[1],
-                    receiverPosition.z - segment.point[2]
-                  );
-                  const theta = new THREE.Vector3().fromArray(segment.faceNormal).angleTo(d);
-
-                  const r = receiverRadius;
-                  energytime_diffuse.energy[index] = {
-                    frequency,
-                    value: scatteredEnergy(
-                      energytime.energy[index].value,
-                      surface.absorptionFunction(frequency),
-                      surface.scatteringFunction(frequency),
-                      asin(receiverRadius / d.length()),
-                      theta
-                    )
-                  };
-                }
-              });
-              if (energytime_diffuse.energy.length > 0) {
-                receiverData.data.push(energytime_diffuse);
-              }
-            } // end container === "surface"
-          } // end container && container.kind
-        }); // end path.chain for each
-        if (intersectedReceiver) {
-          receiverData.data.push(energytime);
-        }
-      });
-      receiverData.data = sort(receiverData.data).asc((x) => x.time);
-      this.allReceiverData.push(receiverData);
-    });
-    const chartdata = this.allReceiverData.map((x) => {
-      return frequencies.map((freq) => {
-        return {
-          label: freq.toString(),
-          x: x.data.map((y) => y.time),
-          y: x.data.map((y) => y.energy.filter((z) => z.frequency == freq)[0].value)
-        };
-      });
-    });
-    messenger.postMessage("UPDATE_CHART_DATA", chartdata && chartdata[0]);
-    return this.allReceiverData;
-  }
-
   reflectionLossFunction(room: Room, raypath: RayPath, frequency: number): number {
-    const chain = raypath.chain.slice(0, -1);
-    if (chain && chain.length > 0) {
-      let magnitude = 1;
-      for (let k = 0; k < chain.length; k++) {
-        const intersection = chain[k];
-        const surface = room.surfaceMap[intersection.object] as Surface;
-        const angle = intersection["angle"] || 0;
-        magnitude = magnitude * abs(surface.reflectionFunction(frequency, angle));
-      }
-      return magnitude;
-    }
-    return 1;
+    return reflectionLossFunctionFn(room, raypath, frequency);
   }
 
-  //TODO change this name to something more appropriate
   calculateReflectionLoss(frequencies: number[] = this.frequencies) {
-    // reset the receiver data
-    this.allReceiverData = [] as ReceiverData[];
-
-    // helper function
-    const dataset = (label, data) => ({ label, data });
-
-    // for the chart
-    const chartdata = [] as ChartData[];
-    if (frequencies) {
-      for (let i = 0; i < frequencies.length; i++) {
-        chartdata.push(dataset(frequencies[i].toString(), []));
-      }
-    }
-
-    // pathkeys.length should equal the number of receivers in the scene
-    const pathkeys = Object.keys(this.paths);
-
-    // for each receiver's path in the total path array
-    for (let i = 0; i < pathkeys.length; i++) {
-      // init contribution array
-      this.allReceiverData.push({
-        id: pathkeys[i],
-        data: [] as EnergyTime[]
-      });
-
-      // for each path's chain of intersections
-      for (let j = 0; j < this.paths[pathkeys[i]].length; j++) {
-        // the individual ray path which holds intersection data
-        const raypath = this.paths[pathkeys[i]][j];
-
-        let refloss;
-        // if there was a given frequency array
-        if (frequencies) {
-          // map the frequencies to reflection loss
-          refloss = frequencies.map((freq) => ({
-            frequency: freq,
-            value: this.reflectionLossFunction(this.room, raypath, freq)
-          }));
-          frequencies.forEach((f, i) => {
-            chartdata[i].data.push([raypath.time!, this.reflectionLossFunction(this.room, raypath, f)]);
-          });
-        } else {
-          // if no frequencies given, just give back the function that calculates the reflection loss
-          refloss = (freq: number) => this.reflectionLossFunction(this.room, raypath, freq);
-        }
-        this.allReceiverData[this.allReceiverData.length - 1].data.push({
-          time: raypath.time!,
-          energy: refloss
-        });
-      }
-      this.allReceiverData[this.allReceiverData.length - 1].data = this.allReceiverData[
-        this.allReceiverData.length - 1
-      ].data.sort((a, b) => a.time - b.time);
-    }
-    for (let i = 0; i < chartdata.length; i++) {
-      chartdata[i].data = chartdata[i].data.sort((a, b) => a[0] - b[0]);
-      chartdata[i].x = chartdata[i].data.map((x) => x[0]);
-      chartdata[i].y = chartdata[i].data.map((x) => x[1]);
-    }
+    const [allReceiverData, chartdata] = calculateReflectionLossFn(this.paths, this.room, this.receiverIDs, frequencies);
+    this.allReceiverData = allReceiverData;
     this.chartdata = chartdata;
     return [this.allReceiverData, chartdata];
-  }
-  // downloadImpulseResponse(index: number = 0, sample_rate: number = 44100) {
-  //   const data = this.saveImpulseResponse(index, sample_rate);
-  //   if (data) {
-  //     const blob = new Blob([data], {
-  //       type: "text/plain;charset=utf-8"
-  //     });
-  //     FileSaver.saveAs(blob, `ir${index}-fs${sample_rate}hz-t${Date.now()}.txt`);
-  //   } else return;
-  // }
-  resampleResponse(index: number = 0, sampleRate: number = audioEngine.sampleRate) {
-    // if response has been calculated
-    if (this.allReceiverData && this.allReceiverData[index]) {
-      // the receivers temporal data
-      const receiverData = this.allReceiverData[index].data;
-
-      // length of the reponse in seconds
-      const maxTime = receiverData[receiverData.length - 1].time;
-
-      // number of samples the output array will have
-      const numSamples = floor(sampleRate * maxTime);
-
-      // initialize the sampled array
-      const sampledArray = [] as number[][];
-
-      // stick it in a for loop
-      for (let i = 0, j = 0; i < numSamples; i++) {
-        // the time given the current sample and sample rate (in seconds)
-        let sampleTime = (i / numSamples) * maxTime;
-
-        // if there exists data
-        if (receiverData[j] && receiverData[j].time) {
-          // get the actual time of the intersection
-          let actualTime = receiverData[j].time;
-
-          // ex. actual time of intersection is at t=3.5s but the sampled time is only at t=3.2s
-          if (actualTime > sampleTime) {
-            // add a 0.0 for the value at each frequency
-            sampledArray.push([sampleTime].concat(Array(receiverData[j].energy.length).fill(0.0)));
-
-            //continue to next iteration
-            continue;
-          }
-
-          // this will happen when one or more intersections occured in between a sampling period (1/sampleRate)
-          if (actualTime <= sampleTime) {
-            // sum array initialized to 0 (one for each frequency)
-            let sums = receiverData[j].energy.map((x) => 0);
-
-            // counts the number of intersections that occured between samples
-            let sub_counter = 0;
-
-            // loop over all the missed intersections
-            while (actualTime <= sampleTime) {
-              // set the actual time = the current intersections time
-              actualTime = receiverData[j].time;
-
-              // sum the value at each frequency
-              sums.forEach((x, i, a) => (a[i] += receiverData[j].energy[i].value));
-
-              // increment the receiver data point index;
-              j++;
-
-              // increment the sub counter
-              sub_counter++;
-            } // exit the loop
-
-            // push another row onto the sampled array
-            sampledArray.push([sampleTime, ...sums.map((x) => x / sub_counter)]);
-
-            // continue to next iteration
-            continue;
-          }
-        }
-      }
-
-      // return the sample array
-      return sampledArray;
-    }
-
-    // if reponse has not been calculated yet
-    else {
-      console.warn("no data yet");
-    }
-  }
-  saveImpulseResponse(index: number = 0, sample_rate: number = 44100) {
-    const data = this.resampleResponse(index, sample_rate);
-    if (data) {
-      return data.map((x) => x.join(",")).join("\n");
-    }
-    return;
   }
   getReceiverIntersectionPoints(id: string) {
     if (this.paths && this.paths[id] && this.paths[id].length > 0) {
@@ -1958,300 +1112,66 @@ class RayTracer extends Solver {
     } else return [] as THREE.Vector3[];
   }
   calculateResponseByIntensity(freqs: number[] = this.frequencies, temperature: number = this.temperature) {
-    const paths = this.indexedPaths;
-
-    // sound speed in m/s
-    const soundSpeed = ac.soundSpeed(temperature);
-
-    // attenuation in dB/m
-    const airAttenuationdB = ac.airAttenuation(freqs, temperature);
-
-    this.responseByIntensity = {} as KVP<KVP<ResponseByIntensity>>;
-
-    // for each receiver
-    for (const receiverKey in paths) {
-      this.responseByIntensity[receiverKey] = {} as KVP<ResponseByIntensity>;
-      const recForIntensity = useContainer.getState().containers[receiverKey] as Receiver;
-
-      // for each source
-      for (const sourceKey in paths[receiverKey]) {
-        this.responseByIntensity[receiverKey][sourceKey] = {
-          freqs,
-          response: [] as RayPathResult[]
-        };
-
-        // source total intensity
-        const Itotal = ac.P2I(ac.Lp2P((useContainer.getState().containers[sourceKey] as Source).initialSPL)) as number;
-
-        // for each path
-        for (let i = 0; i < paths[receiverKey][sourceKey].length; i++) {
-
-          // propogagtion time
-          let time = 0;
-
-          // ray initial intensity
-          // const Iray = Itotal / (useContainer.getState().containers[sourceKey] as Source).numRays;
-
-          // initial intensity at each frequency
-          let IrayArray: number[] = [];
-          let phi = paths[receiverKey][sourceKey][i].initialPhi;
-          let theta = paths[receiverKey][sourceKey][i].initialTheta;
-
-          let srcDirectivityHandler = (useContainer.getState().containers[sourceKey] as Source).directivityHandler;
-
-          for(let findex = 0; findex<freqs.length; findex++){
-            IrayArray[findex] = ac.P2I(srcDirectivityHandler.getPressureAtPosition(0,freqs[findex],phi,theta)) as number;
-          }
-
-          // apply receiver directivity gain (intensity domain: gain²)
-          const pathObj = paths[receiverKey][sourceKey][i];
-          const dir = pathObj.arrivalDirection || [0, 0, 1] as [number, number, number];
-          const recGainIntensity = recForIntensity.getGain(dir as [number, number, number]);
-          const recGainSq = recGainIntensity * recGainIntensity;
-          if (recGainSq !== 1.0) {
-            for (let findex = 0; findex < freqs.length; findex++) {
-              IrayArray[findex] *= recGainSq;
-            }
-          }
-
-          // for each intersection
-          for (let j = 0; j < paths[receiverKey][sourceKey][i].chain.length; j++) {
-            // intersected angle wrt normal, and the distance traveled
-            const { angle, distance } = paths[receiverKey][sourceKey][i].chain[j];
-
-            time += distance / soundSpeed;
-
-            // the intersected surface
-            // const surface = paths[receiverKey][sourceKey][i].chain[j].object.parent as Surface;
-            const id = paths[receiverKey][sourceKey][i].chain[j].object;
-
-            const surface = useContainer.getState().containers[id] || this.room.surfaceMap[id] || null;
-
-            // for each frequency
-            for (let f = 0; f < freqs.length; f++) {
-              const freq = freqs[f];
-              let coefficient = 1;
-              if (surface && surface.kind === 'surface') {
-                coefficient = (surface as Surface).reflectionFunction(freq, angle);
-                // coefficient = 1 - (surface as Surface).absorptionFunction(freq);
-              }
-              IrayArray.push(ac.P2I(
-                ac.Lp2P((ac.P2Lp(ac.I2P(IrayArray[f] * coefficient)) as number) - airAttenuationdB[f] * distance)
-              ) as number);
-            }
-          }
-          const level = ac.P2Lp(ac.I2P(IrayArray)) as number[];
-          this.responseByIntensity[receiverKey][sourceKey].response.push({
-            time,
-            level,
-            bounces: paths[receiverKey][sourceKey][i].chain.length
-          });
-        }
-        this.responseByIntensity[receiverKey][sourceKey].response.sort((a, b) => a.time - b.time);
-      }
+    const result = calcResponseByIntensityFn(this.indexedPaths, this.receiverIDs, this.sourceIDs, freqs, temperature, this.intensitySampleRate);
+    if (result) {
+      this.responseByIntensity = result;
     }
-
-    return this.resampleResponseByIntensity();
+    return this.responseByIntensity;
   }
 
   resampleResponseByIntensity(sampleRate: number = this.intensitySampleRate) {
     if (this.responseByIntensity) {
-      for (const recKey in this.responseByIntensity) {
-        for (const srcKey in this.responseByIntensity[recKey]) {
-          const { response, freqs } = this.responseByIntensity[recKey][srcKey];
-          const maxTime = response[response.length - 1].time;
-          const numSamples = floor(sampleRate * maxTime);
-          this.responseByIntensity[recKey][srcKey].resampledResponse = Array(freqs.length)
-            .fill(0)
-            .map((x) => new Float32Array(numSamples)) as Array<Float32Array>;
-
-          this.responseByIntensity[recKey][srcKey].sampleRate = sampleRate;
-          let sampleArrayIndex = 0;
-          let zeroIndices = [] as number[];
-          let lastNonZeroPoint = freqs.map((x) => 0);
-          let seenFirstPointYet = false;
-          for (let i = 0, j = 0; i < numSamples; i++) {
-            let sampleTime = (i / numSamples) * maxTime;
-            if (response[j] && response[j].time) {
-              let actualTime = response[j].time;
-              if (actualTime > sampleTime) {
-                for (let f = 0; f < freqs.length; f++) {
-                  this.responseByIntensity[recKey][srcKey].resampledResponse![f][sampleArrayIndex] = 0.0;
-                }
-                if (seenFirstPointYet) {
-                  zeroIndices.push(sampleArrayIndex);
-                }
-                sampleArrayIndex++;
-                continue;
-              }
-              if (actualTime <= sampleTime) {
-                let sums = response[j].level.map((x) => 0);
-                while (actualTime <= sampleTime) {
-                  actualTime = response[j].time;
-                  for (let k = 0; k < freqs.length; k++) {
-                    sums[k] = ac.db_add([sums[k], response[j].level[k]]);
-                  }
-                  j++;
-                }
-                for (let f = 0; f < freqs.length; f++) {
-                  this.responseByIntensity[recKey][srcKey].resampledResponse![f][sampleArrayIndex] = sums[f];
-                  if (zeroIndices.length > 0) {
-                    const dt = 1 / sampleRate;
-                    const lastValue = lastNonZeroPoint[f];
-                    const nextValue = sums[f];
-                    for (let z = 0; z < zeroIndices.length; z++) {
-                      const value = lerp(lastValue, nextValue, (z + 1) / (zeroIndices.length + 1));
-                      this.responseByIntensity[recKey][srcKey].resampledResponse![f][zeroIndices[z]] = value;
-                    }
-                  }
-                  lastNonZeroPoint[f] = sums[f];
-                }
-                if (zeroIndices.length > 0) {
-                  zeroIndices = [] as number[];
-                }
-
-                seenFirstPointYet = true;
-                sampleArrayIndex++;
-                continue;
-              }
-            }
-          }
-          this.calculateT20(recKey, srcKey);
-          this.calculateT30(recKey, srcKey);
-          this.calculateT60(recKey, srcKey);
-        }
-      }
-
-      // return the sample array
+      const result = resampleResponseByIntensityFn(this.responseByIntensity, sampleRate);
+      if (result) this.responseByIntensity = result;
       return this.responseByIntensity;
-    }
-
-    // if reponse has not been calculated yet
-    else {
+    } else {
       console.warn("no data yet");
     }
   }
 
   calculateT30(receiverId?: string, sourceId?: string) {
-    const reckeys = this.receiverIDs;
-    const srckeys = this.sourceIDs;
-    if (reckeys.length > 0 && srckeys.length > 0) {
-      const recid = receiverId || reckeys[0];
-      const srcid = sourceId || srckeys[0];
-      const resampledResponse = this.responseByIntensity[recid][srcid].resampledResponse;
-      const sampleRate = this.responseByIntensity[recid][srcid].sampleRate;
-      const freqs = this.responseByIntensity[recid][srcid].freqs;
-
-      if (resampledResponse && sampleRate) {
-        const resampleTime = new Float32Array(resampledResponse[0].length);
-        for (let i = 0; i < resampledResponse[0].length; i++) {
-          resampleTime[i] = i / sampleRate;
+    if (this.responseByIntensity) {
+      const recIds = receiverId ? [receiverId] : this.receiverIDs;
+      const srcIds = sourceId ? [sourceId] : this.sourceIDs;
+      for (const rec of recIds) {
+        for (const src of srcIds) {
+          if (this.responseByIntensity[rec]?.[src]) {
+            calculateT30Fn(this.responseByIntensity, rec, src);
+          }
         }
-
-        this.responseByIntensity[recid][srcid].t30 = resampledResponse.map((resp) => {
-          let i = 0;
-          let val = resp[i];
-          while (val === 0) {
-            val = resp[i++];
-          }
-          for (let j = i; j >= 0; j--) {
-            resp[j] = val;
-          }
-          const cutoffLevel = val - 30;
-          const avg = movingAverage(resp, 2).filter((x) => x >= cutoffLevel);
-          const len = avg.length;
-
-          return linearRegression(resampleTime.slice(0, len), resp.slice(0, len));
-        });
       }
     }
     return this.responseByIntensity;
   }
   calculateT20(receiverId?: string, sourceId?: string) {
-    const reckeys = this.receiverIDs;
-    const srckeys = this.sourceIDs;
-    if (reckeys.length > 0 && srckeys.length > 0) {
-      const recid = receiverId || reckeys[0];
-      const srcid = sourceId || srckeys[0];
-      const resampledResponse = this.responseByIntensity[recid][srcid].resampledResponse;
-      const sampleRate = this.responseByIntensity[recid][srcid].sampleRate;
-      const freqs = this.responseByIntensity[recid][srcid].freqs;
-
-      if (resampledResponse && sampleRate) {
-        const resampleTime = new Float32Array(resampledResponse[0].length);
-        for (let i = 0; i < resampledResponse[0].length; i++) {
-          resampleTime[i] = i / sampleRate;
+    if (this.responseByIntensity) {
+      const recIds = receiverId ? [receiverId] : this.receiverIDs;
+      const srcIds = sourceId ? [sourceId] : this.sourceIDs;
+      for (const rec of recIds) {
+        for (const src of srcIds) {
+          if (this.responseByIntensity[rec]?.[src]) {
+            calculateT20Fn(this.responseByIntensity, rec, src);
+          }
         }
-
-        this.responseByIntensity[recid][srcid].t20 = resampledResponse.map((resp) => {
-          let i = 0;
-          let val = resp[i];
-          while (val === 0) {
-            val = resp[i++];
-          }
-          for (let j = i; j >= 0; j--) {
-            resp[j] = val;
-          }
-          const cutoffLevel = val - 20;
-          const avg = movingAverage(resp, 2).filter((x) => x >= cutoffLevel);
-          const len = avg.length;
-
-          return linearRegression(resampleTime.slice(0, len), resp.slice(0, len));
-        });
       }
     }
     return this.responseByIntensity;
   }
   calculateT60(receiverId?: string, sourceId?: string) {
-    const reckeys = this.receiverIDs;
-    const srckeys = this.sourceIDs;
-    if (reckeys.length > 0 && srckeys.length > 0) {
-      const recid = receiverId || reckeys[0];
-      const srcid = sourceId || srckeys[0];
-      const resampledResponse = this.responseByIntensity[recid][srcid].resampledResponse;
-      const sampleRate = this.responseByIntensity[recid][srcid].sampleRate;
-      const freqs = this.responseByIntensity[recid][srcid].freqs;
-
-      if (resampledResponse && sampleRate) {
-        const resampleTime = new Float32Array(resampledResponse[0].length);
-        for (let i = 0; i < resampledResponse[0].length; i++) {
-          resampleTime[i] = i / sampleRate;
+    if (this.responseByIntensity) {
+      const recIds = receiverId ? [receiverId] : this.receiverIDs;
+      const srcIds = sourceId ? [sourceId] : this.sourceIDs;
+      for (const rec of recIds) {
+        for (const src of srcIds) {
+          if (this.responseByIntensity[rec]?.[src]) {
+            calculateT60Fn(this.responseByIntensity, rec, src);
+          }
         }
-
-        this.responseByIntensity[recid][srcid].t60 = resampledResponse.map((resp) => {
-          let i = 0;
-          let val = resp[i];
-          while (val === 0) {
-            val = resp[i++];
-          }
-          for (let j = i; j >= 0; j--) {
-            resp[j] = val;
-          }
-          const cutoffLevel = val - 60;
-          const avg = movingAverage(resp, 2).filter((x) => x >= cutoffLevel);
-          const len = avg.length;
-
-          return linearRegression(resampleTime.slice(0, len), resp.slice(0, len));
-        });
       }
     }
     return this.responseByIntensity;
   }
 
-  computeImageSources(source: THREE.Vector3, previousReflector: Surface, maxOrder: number) {
-    //     for each surface in geometry do
-    //         if (not previousReflector) or
-    //         ((inFrontOf(surface, previousReflector)) and (surface.normal dot previousReflector.normal < 0))
-    //             newSource = reflect(source, surface)
-    //             sources[nofSources++] = newSource
-    //             if (maxOrder > 0)
-    //                 computeImageSources(newSource, surface, maxOrder - 1)
-    for(const surface of this.room.allSurfaces){
-      if(surface.uuid !== previousReflector.uuid){
-        
-      }
-    }
-  }
   onParameterConfigFocus() {
     console.log("focus");
     console.log(renderer.overlays.global.cells);
@@ -2263,165 +1183,24 @@ class RayTracer extends Solver {
   }
 
   pathsToLinearBuffer() {
-    const uuidToLinearBuffer = (uuid) => uuid.split("").map((x) => x.charCodeAt(0));
-    const chainArrayToLinearBuffer = (chainArray) => {
-      return chainArray
-        .map((chain: Chain) => [
-          ...uuidToLinearBuffer(chain.object), // 36x8
-          chain.angle, // 1x32
-          chain.distance, // 1x32
-          chain.energy, // 1x32
-          chain.faceIndex, // 1x8
-          chain.faceMaterialIndex, // 1x8
-          ...chain.faceNormal, // 3x32
-          ...chain.point // 3x32
-        ])
-        .flat();
-    };
-    const pathOrder = ["source", "chainLength", "time", "intersectedReceiver", "energy", "chain"];
-    const chainOrder = [
-      "object",
-      "angle",
-      "distance",
-      "energy",
-      "faceIndex",
-      "faceMaterialIndex",
-      "faceNormal",
-      "point"
-    ];
-
-    const buffer = new Float32Array(
-      Object.keys(this.paths)
-        .map((key) => {
-          const pathBuffer = this.paths[key]
-            .map((path) => {
-              return [
-                ...uuidToLinearBuffer(path.source),
-                path.chainLength,
-                path.time,
-                Number(path.intersectedReceiver),
-                path.energy,
-                ...chainArrayToLinearBuffer(path.chain)
-              ];
-            })
-            .flat();
-          return [...uuidToLinearBuffer(key), pathBuffer.length, ...pathBuffer];
-        })
-        .flat()
-    );
-    return buffer;
+    return pathsToLinearBufferFn(this.paths);
   }
 
   linearBufferToPaths(linearBuffer: Float32Array) {
-    const uuidLength = 36;
-    const chainItemLength = 47;
-    const decodeUUID = (buffer) => String.fromCharCode(...buffer);
-    const decodeChainItem = (chainItem: Float32Array) => {
-      let o = 0;
-      const object = decodeUUID(chainItem.slice(o, (o += uuidLength)));
-      const angle = chainItem[o++];
-      const distance = chainItem[o++];
-      const energy = chainItem[o++];
-      const faceIndex = chainItem[o++];
-      const faceMaterialIndex = chainItem[o++];
-      const faceNormal = [chainItem[o++], chainItem[o++], chainItem[o++]];
-      const point = [chainItem[o++], chainItem[o++], chainItem[o++]];
-      return {
-        object,
-        angle,
-        distance,
-        energy,
-        faceIndex,
-        faceMaterialIndex,
-        faceNormal,
-        point
-      } as Chain;
-    };
-    const decodePathBuffer = (buffer) => {
-      const paths = [] as RayPath[];
-      let o = 0;
-      while (o < buffer.length) {
-        const source = decodeUUID(buffer.slice(o, (o += uuidLength)));
-        const chainLength = buffer[o++];
-        const time = buffer[o++];
-        const intersectedReceiver = Boolean(buffer[o++]);
-        const energy = buffer[o++];
-        const chain = [] as Chain[];
-        for (let i = 0; i < chainLength; i++) {
-          chain.push(decodeChainItem(buffer.slice(o, (o += chainItemLength))));
-        }
-        /*
-        paths.push({
-          source,
-          chainLength,
-          time,
-          intersectedReceiver,
-          energy,
-          chain
-        });
-        */
-      }
-      return paths as RayPath[];
-    };
-    let offset = 0;
-    const pathsObj = {} as KVP<RayPath[]>;
-    while (offset < linearBuffer.length) {
-      const uuid = decodeUUID(linearBuffer.slice(offset, (offset += uuidLength)));
-      const pathBufferLength = linearBuffer[offset++];
-      const paths = decodePathBuffer(linearBuffer.slice(offset, (offset += pathBufferLength)));
-      pathsObj[uuid] = paths;
-    }
-    return pathsObj;
+    return linearBufferToPathsFn(linearBuffer);
   }
 
-  arrivalPressure(initialSPL: number[], freqs: number[], path: RayPath, receiverGain: number = 1.0): number[]{
-
-    const intensities = ac.P2I(ac.Lp2P(initialSPL)) as number[];
-
-    if (path.bandEnergy && path.bandEnergy.length === freqs.length) {
-      // New path: per-band energy (including air absorption and source directivity) already tracked during tracing
-      for (let i = 0; i < freqs.length; i++) {
-        intensities[i] *= path.bandEnergy[i];
-      }
-      // convert back to pressure (no post-hoc air absorption needed), apply receiver directivity gain
-      const pressures = ac.Lp2P(ac.P2Lp(ac.I2P(intensities)) as number[]) as number[];
-      if (receiverGain !== 1.0) {
-        for (let i = 0; i < pressures.length; i++) pressures[i] *= receiverGain;
-      }
-      return pressures;
-    }
-
-    // Legacy path: re-walk chain (backward compat)
-    path.chain.slice(0, -1).forEach(p => {
-      const surface = useContainer.getState().containers[p.object] as Surface;
-      intensities.forEach((I, i) => {
-        const R = abs(surface.reflectionFunction(freqs[i], p.angle));
-        intensities[i] = I * R;
-      });
-    });
-
-    // convert back to SPL
-    const arrivalLp = ac.P2Lp(ac.I2P(intensities)) as number[];
-
-    // apply air absorption (dB/m) — only for legacy paths
-    const airAttenuationdB = ac.airAttenuation(freqs, this.temperature);
-    freqs.forEach((_, f) => arrivalLp[f] -= airAttenuationdB[f] * path.totalLength);
-
-    // convert back to pressure, apply receiver directivity gain
-    const pressures = ac.Lp2P(arrivalLp) as number[];
-    if (receiverGain !== 1.0) {
-      for (let i = 0; i < pressures.length; i++) pressures[i] *= receiverGain;
-    }
-    return pressures;
+  arrivalPressure(initialSPL: number[], freqs: number[], path: RayPath, receiverGain: number = 1.0): number[] {
+    return arrivalPressureFn(initialSPL, freqs, path, receiverGain, this.temperature);
   }
-  async calculateImpulseResponse(initialSPL = 100, frequencies = this.frequencies, sampleRate = audioEngine.sampleRate): Promise<AudioBuffer> {
+  async calculateImpulseResponse(initialSPL = DEFAULT_INITIAL_SPL, frequencies = this.frequencies, sampleRate = audioEngine.sampleRate): Promise<AudioBuffer> {
     if(this.receiverIDs.length === 0) throw Error("No receivers have been assigned to the raytracer");
     if(this.sourceIDs.length === 0) throw Error("No sources have been assigned to the raytracer");
     if(!this.paths[this.receiverIDs[0]] || this.paths[this.receiverIDs[0]].length === 0) throw Error("No rays have been traced yet");
 
     let sorted = this.paths[this.receiverIDs[0]].sort((a,b)=>a.time - b.time) as RayPath[];
 
-    const totalTime = sorted[sorted.length - 1].time + 0.05; // end time is latest time of arrival plus 0.1 seconds for safety
+    const totalTime = sorted[sorted.length - 1].time + RESPONSE_TIME_PADDING;
 
     const spls = Array(frequencies.length).fill(initialSPL);
 
@@ -2536,7 +1315,7 @@ class RayTracer extends Solver {
    */
   async calculateAmbisonicImpulseResponse(
     order: number = 1,
-    initialSPL = 100,
+    initialSPL = DEFAULT_INITIAL_SPL,
     frequencies = this.frequencies,
     sampleRate = audioEngine.sampleRate
   ): Promise<AudioBuffer> {
@@ -2547,7 +1326,7 @@ class RayTracer extends Solver {
     const sorted = this.paths[this.receiverIDs[0]].sort((a, b) => a.time - b.time) as RayPath[];
     if (sorted.length === 0) throw Error("No valid ray paths found");
 
-    const totalTime = sorted[sorted.length - 1].time + 0.05;
+    const totalTime = sorted[sorted.length - 1].time + RESPONSE_TIME_PADDING;
     if (totalTime <= 0) throw Error("Invalid impulse response duration");
     const spls = Array(frequencies.length).fill(initialSPL);
 
@@ -2678,109 +1457,36 @@ class RayTracer extends Solver {
   impulseResponsePlaying = false;
 
   async playImpulseResponse(){
-    if(!this.impulseResponse){
-      try{
-      this.impulseResponse = await this.calculateImpulseResponse();
-      } catch(err){
-        throw err
-      }
-    }
-    if (audioEngine.context.state === 'suspended') {
-      audioEngine.context.resume();
-    }
-    console.log(this.impulseResponse);
-    const impulseResponse = audioEngine.context.createBufferSource();
-    impulseResponse.buffer = this.impulseResponse;
-    impulseResponse.connect(audioEngine.context.destination);
-    impulseResponse.start();
-    emit("RAYTRACER_SET_PROPERTY", { uuid: this.uuid, property: "impulseResponsePlaying", value: true });
-    impulseResponse.onended = () => {
-      impulseResponse.stop();
-      impulseResponse.disconnect(audioEngine.context.destination);
-      emit("RAYTRACER_SET_PROPERTY", { uuid: this.uuid, property: "impulseResponsePlaying", value: false });
-    };
+    const result = await playImpulseResponseFn(
+      this.impulseResponse, () => this.calculateImpulseResponse(), this.uuid
+    );
+    this.impulseResponse = result.impulseResponse;
   }
-  downloadImpulses(filename: string, initialSPL = 100, frequencies = ac.Octave(125, 8000), sampleRate = 44100){
-    if(this.receiverIDs.length === 0) throw Error("No receivers have been assigned to the raytracer");
-    if(this.sourceIDs.length === 0) throw Error("No sources have been assigned to the raytracer");
-    if(this.paths[this.receiverIDs[0]].length === 0) throw Error("No rays have been traced yet");
-
-    const sorted = this.paths[this.receiverIDs[0]].sort((a,b)=>a.time - b.time) as RayPath[];
-    const totalTime = sorted[sorted.length - 1].time + 0.05; // end time is latest time of arrival plus 0.05 seconds for safety
-
-    const spls = Array(frequencies.length).fill(initialSPL);
-    const numberOfSamples = floor(sampleRate * totalTime);
-
-    const samples: Array<Float32Array> = []; 
-    for(let f = 0; f<frequencies.length; f++){
-      samples.push(new Float32Array(numberOfSamples));
-    }
-    let max = 0;
-    const recForDownload = useContainer.getState().containers[this.receiverIDs[0]] as Receiver;
-    for(let i = 0; i<sorted.length; i++){
-      const randomPhase = coinFlip() ? 1 : -1;
-      const t = sorted[i].time;
-      const dir = sorted[i].arrivalDirection || [0, 0, 1] as [number, number, number];
-      const recGain = recForDownload.getGain(dir as [number, number, number]);
-      const p = this.arrivalPressure(spls, frequencies, sorted[i], recGain).map(x => x * randomPhase);
-      const roundedSample = floor(t * sampleRate);
-
-      for(let f = 0; f<frequencies.length; f++){
-        samples[f][roundedSample] += p[f];
-        if(abs(samples[f][roundedSample]) > max){
-          max = abs(samples[f][roundedSample]);
-        }
-      }
-    }
-
-    for(let f = 0; f<frequencies.length; f++){
-      const blob = ac.wavAsBlob([ac.normalize(samples[f])], { sampleRate, bitDepth: 32 });
-      FileSaver.saveAs(blob, `${frequencies[f]}_${filename}.wav`);
-    }
+  downloadImpulses(filename: string, initialSPL = DEFAULT_INITIAL_SPL, frequencies = ac.Octave(125, 8000), sampleRate = 44100){
+    downloadImpulsesFn(
+      this.paths, this.receiverIDs, this.sourceIDs,
+      (spls, freqs, path, recGain) => this.arrivalPressure(spls, freqs, path, recGain),
+      filename, initialSPL, frequencies, sampleRate
+    );
   }
   async downloadImpulseResponse(filename: string, sampleRate = audioEngine.sampleRate){
-    if(!this.impulseResponse){
-      try{
-        this.impulseResponse = await this.calculateImpulseResponse();
-        } catch(err){
-          throw err
-        }
-    }
-    const blob = ac.wavAsBlob([normalize(this.impulseResponse.getChannelData(0))], { sampleRate, bitDepth: 32 });
-    const extension = !filename.endsWith(".wav") ? ".wav" : "";
-    FileSaver.saveAs(blob, filename + extension);
+    const result = await downloadImpulseResponseFn(
+      this.impulseResponse, () => this.calculateImpulseResponse(), filename, sampleRate
+    );
+    this.impulseResponse = result.impulseResponse;
   }
 
-  /**
-   * Download the ambisonic impulse response as a multi-channel WAV file.
-   * Channels are in ACN order with N3D normalization.
-   *
-   * @param filename - Output filename (without extension)
-   * @param order - Ambisonic order (default: 1)
-   */
   async downloadAmbisonicImpulseResponse(
     filename: string,
     order: number = 1
   ) {
-    // Calculate if not already cached or if order changed
-    if (!this.ambisonicImpulseResponse || this.ambisonicOrder !== order) {
-      this.ambisonicOrder = order;
-      this.ambisonicImpulseResponse = await this.calculateAmbisonicImpulseResponse(order);
-    }
-
-    const nCh = this.ambisonicImpulseResponse.numberOfChannels;
-    const sampleRate = this.ambisonicImpulseResponse.sampleRate;
-    const channelData: Float32Array[] = [];
-
-    // Extract all channels
-    for (let ch = 0; ch < nCh; ch++) {
-      channelData.push(this.ambisonicImpulseResponse.getChannelData(ch));
-    }
-
-    const blob = ac.wavAsBlob(channelData, { sampleRate, bitDepth: 32 });
-    const extension = !filename.endsWith(".wav") ? ".wav" : "";
-    const orderLabel = order === 1 ? "FOA" : `HOA${order}`;
-    FileSaver.saveAs(blob, `${filename}_${orderLabel}${extension}`);
+    const result = await downloadAmbisonicIRFn(
+      this.ambisonicImpulseResponse,
+      (o: number) => this.calculateAmbisonicImpulseResponse(o),
+      this.ambisonicOrder, order, filename
+    );
+    this.ambisonicImpulseResponse = result.ambisonicImpulseResponse;
+    this.ambisonicOrder = result.ambisonicOrder;
   }
 
   get sources() {
@@ -2901,7 +1607,7 @@ declare global {
   }
 }
 
-on("RAYTRACER_CALL_METHOD", callSolverMethod);
+on("RAYTRACER_CALL_METHOD", callSolverMethod as any);
 on("RAYTRACER_SET_PROPERTY", setSolverProperty);
 on("REMOVE_RAYTRACER", removeSolver);
 on("ADD_RAYTRACER", addSolver(RayTracer))

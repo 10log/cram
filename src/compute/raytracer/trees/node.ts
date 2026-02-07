@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { math } from '../../csg';
 import PolygonTreeNode from './polygon-tree-node';
 const { plane } = math;
@@ -18,8 +17,8 @@ type StackItem = {
 
 export class Node {
   plane!: Float32Array;
-  front!: typeof Node;
-  back!: typeof Node;
+  front!: Node;
+  back!: Node;
   parent!: Node|undefined;
   polygontreenodes: PolygonTreeNode[];
   constructor(parent?: Node) {
@@ -32,7 +31,7 @@ export class Node {
 
   // Convert solid space to empty space and empty space to solid space.
   invert() {
-    let queue = [this];
+    let queue: Node[] = [this];
     let node;
     for (let i = 0; i < queue.length; i++) {
       node = queue[i];
@@ -47,7 +46,7 @@ export class Node {
 
   // clip polygontreenodes to our plane
   // calls remove() for all clipped PolygonTreeNodes
-  clipPolygons(polygontreenodes, alsoRemovecoplanarFront) {
+  clipPolygons(polygontreenodes: PolygonTreeNode[], alsoRemovecoplanarFront: boolean) {
     let current: any = { node: this, polygontreenodes: polygontreenodes };
     let node;
     let stack = [] as StackItem[];
@@ -89,20 +88,20 @@ export class Node {
 
   // Remove all polygons in this BSP tree that are inside the other BSP tree
   // `tree`.
-  clipTo({ rootnode }, alsoRemovecoplanarFront) {
-    let node: any = this;
-    let stack = [] as Array<typeof Node>;
+  clipTo({ rootnode }: { rootnode: Node }, alsoRemovecoplanarFront: boolean) {
+    let node: Node = this;
+    let stack = [] as Node[];
     do {
       if (node.polygontreenodes.length > 0) {
         rootnode.clipPolygons(node.polygontreenodes, alsoRemovecoplanarFront);
       }
       if (node.front) stack.push(node.front);
       if (node.back) stack.push(node.back);
-      node = stack.pop();
+      node = stack.pop()!;
     } while (node !== undefined);
   }
 
-  addPolygonTreeNodes(newpolygontreenodes) {
+  addPolygonTreeNodes(newpolygontreenodes: PolygonTreeNode[]) {
     let current: any = { node: this, polygontreenodes: newpolygontreenodes };
     let stack = [] as StackItem[];
     do {
