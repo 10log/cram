@@ -158,6 +158,34 @@ const Convergence = ({ uuid }: { uuid: string }) => {
   );
 };
 
+const LateReverberation = ({ uuid }: { uuid: string }) => {
+  const [open, toggle] = useToggle(false);
+  return (
+    <PropertyRowFolder label="Late Reverberation" open={open} onOpenClose={toggle}>
+      <PropertyCheckboxInput
+        uuid={uuid}
+        label="Enable Tail"
+        property="lateReverbTailEnabled"
+        tooltip="Synthesize a noise-based tail to extend the impulse response beyond ray-traced data"
+      />
+      <PropertyNumberInput
+        uuid={uuid}
+        label="Crossfade Time (s)"
+        property="tailCrossfadeTime"
+        tooltip="Time (s) where crossfade from ray-traced to synthetic tail begins (0 = auto-detect)"
+        elementProps={{ step: 0.1, min: 0, max: 5 }}
+      />
+      <PropertyNumberInput
+        uuid={uuid}
+        label="Crossfade Dur. (s)"
+        property="tailCrossfadeDuration"
+        tooltip="Duration of the Hann crossfade window between ray-traced and synthetic tail"
+        elementProps={{ step: 0.01, min: 0.01, max: 0.5 }}
+      />
+    </PropertyRowFolder>
+  );
+};
+
 const Hybrid = ({ uuid }: { uuid: string}) => {
   const [open, toggle] = useToggle(true);
   return (
@@ -228,6 +256,7 @@ export const RayTracerTab = ({ uuid }: { uuid: string }) => {
       <StyleProperties uuid={uuid} />
       <SolverControls uuid={uuid} />
       <Convergence uuid={uuid} />
+      <LateReverberation uuid={uuid} />
       <Hybrid uuid={uuid} />
       <Output uuid={uuid} />
       <AmbisonicOutput uuid={uuid} />

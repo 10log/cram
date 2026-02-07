@@ -35,7 +35,29 @@ export const HISTOGRAM_NUM_BINS = 10000;
 /** Interval in milliseconds between convergence checks */
 export const CONVERGENCE_CHECK_INTERVAL_MS = 500;
 
+/** Duration of the Hann crossfade window between ray-traced IR and synthesized tail (seconds) */
+export const DEFAULT_TAIL_CROSSFADE_DURATION = 0.05;
+
+/** Minimum decay rate in dB/s to prevent infinite tails */
+export const MIN_TAIL_DECAY_RATE = 1.0;
+
+/** Hard cap on IR length in seconds */
+export const MAX_TAIL_END_TIME = 10.0;
+
 // ── Interfaces and types ─────────────────────────────────────────────
+
+export interface DecayParameters {
+  /** Per-band T60 in seconds */
+  t60: number;
+  /** Decay rate in dB/s (negative) */
+  decayRate: number;
+  /** Linear energy level at crossfade point */
+  crossfadeLevel: number;
+  /** Crossfade start time in seconds */
+  crossfadeTime: number;
+  /** Time where tail reaches silence in seconds */
+  endTime: number;
+}
 
 export interface QuickEstimateStepResult {
   rt60s: number[];
@@ -148,6 +170,9 @@ export type RayTracerSaveObject = {
   rrThreshold?: number;
   maxStoredPaths?: number;
   edgeDiffractionEnabled?: boolean;
+  lateReverbTailEnabled?: boolean;
+  tailCrossfadeTime?: number;
+  tailCrossfadeDuration?: number;
 }
 
 export interface RayTracerParams {
@@ -175,6 +200,9 @@ export interface RayTracerParams {
   rrThreshold?: number;
   maxStoredPaths?: number;
   edgeDiffractionEnabled?: boolean;
+  lateReverbTailEnabled?: boolean;
+  tailCrossfadeTime?: number;
+  tailCrossfadeDuration?: number;
 }
 export interface ConvergenceMetrics {
   totalRays: number;
@@ -212,6 +240,9 @@ export const defaults = {
   rrThreshold: 0.1,
   maxStoredPaths: 100000,
   edgeDiffractionEnabled: false,
+  lateReverbTailEnabled: false,
+  tailCrossfadeTime: 0,
+  tailCrossfadeDuration: 0.05,
 };
 
 export enum DRAWSTYLE {
