@@ -145,6 +145,40 @@ export class Vector3 {
   dot(v: Vector3) {
     return this.x * v.x + this.y * v.y + this.z * v.z;
   }
+  angleTo(v: Vector3) {
+    const denominator = Math.sqrt(this.lengthSq() * v.lengthSq());
+    if (denominator === 0) return Math.PI / 2;
+    const theta = this.dot(v) / denominator;
+    return Math.acos(Math.max(-1, Math.min(1, theta)));
+  }
+  applyEuler(euler: Euler) {
+    // Simplified Euler rotation (XYZ order) for testing
+    const { x: ex, y: ey, z: ez } = euler;
+    let { x, y, z } = this;
+    // Rotate around X
+    if (ex !== 0) {
+      const c = Math.cos(ex), s = Math.sin(ex);
+      const ny = y * c - z * s;
+      const nz = y * s + z * c;
+      y = ny; z = nz;
+    }
+    // Rotate around Y
+    if (ey !== 0) {
+      const c = Math.cos(ey), s = Math.sin(ey);
+      const nx = x * c + z * s;
+      const nz = -x * s + z * c;
+      x = nx; z = nz;
+    }
+    // Rotate around Z
+    if (ez !== 0) {
+      const c = Math.cos(ez), s = Math.sin(ez);
+      const nx = x * c - y * s;
+      const ny = x * s + y * c;
+      x = nx; y = ny;
+    }
+    this.x = x; this.y = y; this.z = z;
+    return this;
+  }
   cross(v: Vector3) {
     const x = this.y * v.z - this.z * v.y;
     const y = this.z * v.x - this.x * v.z;
