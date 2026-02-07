@@ -26,10 +26,10 @@ import { encodeBufferFromDirection, getAmbisonicChannelCount } from "ambisonics"
 import {ImageSourceSolver, ImageSourceSolverParams} from "./image-source/index";
 
 import {
-  QuickEstimateStepResult, RayPathResult, ResponseByIntensity, BandEnergy, Chain,
-  RayPath, EnergyTime, ChartData, ReceiverData, RayTracerSaveObject, RayTracerParams,
-  ConvergenceMetrics, defaults, DRAWSTYLE, DrawStyle, normalize,
-  SELF_INTERSECTION_OFFSET, DEFAULT_INTENSITY_SAMPLE_RATE, DEFAULT_INITIAL_SPL,
+  QuickEstimateStepResult, ResponseByIntensity, BandEnergy, Chain,
+  RayPath, ChartData, ReceiverData, RayTracerParams,
+  ConvergenceMetrics, defaults, DRAWSTYLE, normalize,
+  DEFAULT_INTENSITY_SAMPLE_RATE, DEFAULT_INITIAL_SPL,
   RESPONSE_TIME_PADDING, QUICK_ESTIMATE_MAX_ORDER, MAX_DISPLAY_POINTS, RT60_DECAY_RATIO,
   HISTOGRAM_BIN_WIDTH, HISTOGRAM_NUM_BINS, CONVERGENCE_CHECK_INTERVAL_MS,
 } from "./types";
@@ -491,7 +491,6 @@ class RayTracer extends Solver {
     return traceRayFn(
       this.raycaster, this.intersectableObjects, this.frequencies,
       this._cachedAirAtt, this.rrThreshold,
-      (p1, p2, e, a) => this.appendRay(p1, p2, e, a),
       ro, rd, order, bandEnergy, source, initialPhi, initialTheta, iter, chain,
     );
   }

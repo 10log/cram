@@ -64,11 +64,11 @@ export interface ResponseByIntensity {
 export type BandEnergy = number[];
 
 export interface Chain {
-  angle_in: number;
-  angle_out: number;
-  total_time: number;
-  time_rec: number;
-  angle_rec: number;
+  angle_in?: number;
+  angle_out?: number;
+  total_time?: number;
+  time_rec?: number;
+  angle_rec?: number;
   distance: number;
   // point: THREE.Vector3;
   point: [number, number, number];
@@ -214,8 +214,8 @@ export enum DRAWSTYLE {
   ANGLE_ENERGY = 2.0
 }
 export interface DrawStyle {
-  ANGLE: 0.0;
-  ENERGY: 1.0;
+  ENERGY: 0.0;
+  ANGLE: 1.0;
   ANGLE_ENERGY: 2.0;
 }
 

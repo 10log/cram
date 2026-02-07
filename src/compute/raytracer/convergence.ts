@@ -1,8 +1,7 @@
-import * as ac from "../acoustics";
 import linearRegression from "../../common/linear-regression";
 import { emit } from "../../messenger";
 import { KVP } from "../../common/key-value-pair";
-import { RayPath, ConvergenceMetrics, HISTOGRAM_BIN_WIDTH, HISTOGRAM_NUM_BINS } from "./types";
+import { RayPath, ConvergenceMetrics } from "./types";
 
 /**
  * Reset convergence state for a new simulation run.

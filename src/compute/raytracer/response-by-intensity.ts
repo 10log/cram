@@ -1,7 +1,7 @@
 import * as ac from "../acoustics";
 import { lerp } from "../../common/lerp";
 import { movingAverage } from "../../common/moving-average";
-import linearRegression, { LinearRegressionResult } from "../../common/linear-regression";
+import linearRegression from "../../common/linear-regression";
 import Surface from "../../objects/surface";
 import Source from "../../objects/source";
 import Receiver from "../../objects/receiver";
@@ -129,9 +129,6 @@ export function calculateResponseByIntensity(
         response: [] as RayPathResult[]
       };
 
-      // source total intensity
-      const Itotal = ac.P2I(ac.Lp2P((useContainer.getState().containers[sourceKey] as Source).initialSPL)) as number;
-
       // for each path
       for (let i = 0; i < paths[receiverKey][sourceKey].length; i++) {
 
@@ -184,9 +181,9 @@ export function calculateResponseByIntensity(
               coefficient = (surface as Surface).reflectionFunction(freq, angle);
               // coefficient = 1 - (surface as Surface).absorptionFunction(freq);
             }
-            IrayArray.push(ac.P2I(
+            IrayArray[f] = ac.P2I(
               ac.Lp2P((ac.P2Lp(ac.I2P(IrayArray[f] * coefficient)) as number) - airAttenuationdB[f] * distance)
-            ) as number);
+            ) as number;
           }
         }
         const level = ac.P2Lp(ac.I2P(IrayArray)) as number[];
@@ -248,7 +245,6 @@ export function resampleResponseByIntensity(
               for (let f = 0; f < freqs.length; f++) {
                 responseByIntensity[recKey][srcKey].resampledResponse![f][sampleArrayIndex] = sums[f];
                 if (zeroIndices.length > 0) {
-                  const dt = 1 / sampleRate;
                   const lastValue = lastNonZeroPoint[f];
                   const nextValue = sums[f];
                   for (let z = 0; z < zeroIndices.length; z++) {
@@ -293,7 +289,6 @@ export function calculateT30(
   const srcid = sourceId;
   const resampledResponse = responseByIntensity[recid][srcid].resampledResponse;
   const sampleRate = responseByIntensity[recid][srcid].sampleRate;
-  const freqs = responseByIntensity[recid][srcid].freqs;
 
   if (resampledResponse && sampleRate) {
     const resampleTime = new Float32Array(resampledResponse[0].length);
@@ -328,7 +323,6 @@ export function calculateT20(
   const srcid = sourceId;
   const resampledResponse = responseByIntensity[recid][srcid].resampledResponse;
   const sampleRate = responseByIntensity[recid][srcid].sampleRate;
-  const freqs = responseByIntensity[recid][srcid].freqs;
 
   if (resampledResponse && sampleRate) {
     const resampleTime = new Float32Array(resampledResponse[0].length);
@@ -363,7 +357,6 @@ export function calculateT60(
   const srcid = sourceId;
   const resampledResponse = responseByIntensity[recid][srcid].resampledResponse;
   const sampleRate = responseByIntensity[recid][srcid].sampleRate;
-  const freqs = responseByIntensity[recid][srcid].freqs;
 
   if (resampledResponse && sampleRate) {
     const resampleTime = new Float32Array(resampledResponse[0].length);

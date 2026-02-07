@@ -86,7 +86,7 @@ export async function playImpulseResponse(
     try{
       impulseResponse = await calculateImpulseResponse();
     } catch(err){
-      throw err
+      throw err;
     }
   }
   if (audioEngine.context.state === 'suspended') {

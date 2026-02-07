@@ -1,6 +1,5 @@
 import * as THREE from "three";
 import Surface from "../../objects/surface";
-import Container from "../../objects/container";
 import { probability } from '../../common/probability';
 import { BandEnergy, Chain, RayPath, SELF_INTERSECTION_OFFSET } from "./types";
 
@@ -21,7 +20,6 @@ export function traceRay(
   frequencies: number[],
   cachedAirAtt: number[],
   rrThreshold: number,
-  appendRayFn: (p1: [number, number, number], p2: [number, number, number], energy: number, angle: number) => void,
   ro: THREE.Vector3,
   rd: THREE.Vector3,
   order: number,
@@ -194,7 +192,6 @@ export function traceRay(
             frequencies,
             cachedAirAtt,
             rrThreshold,
-            appendRayFn,
             intersections[0].point.clone().addScaledVector(normal.clone(), SELF_INTERSECTION_OFFSET),
             rr,
             order,

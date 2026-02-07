@@ -17,18 +17,6 @@ export function pathsToLinearBuffer(paths: KVP<RayPath[]>): Float32Array {
       ])
       .flat();
   };
-  const pathOrder = ["source", "chainLength", "time", "intersectedReceiver", "energy", "chain"];
-  const chainOrder = [
-    "object",
-    "angle",
-    "distance",
-    "energy",
-    "faceIndex",
-    "faceMaterialIndex",
-    "faceNormal",
-    "point"
-  ];
-
   const buffer = new Float32Array(
     Object.keys(paths)
       .map((key) => {
@@ -89,7 +77,6 @@ export function linearBufferToPaths(linearBuffer: Float32Array): KVP<RayPath[]> 
       for (let i = 0; i < chainLength; i++) {
         chain.push(decodeChainItem(buffer.slice(o, (o += chainItemLength))));
       }
-      /*
       paths.push({
         source,
         chainLength,
@@ -97,8 +84,7 @@ export function linearBufferToPaths(linearBuffer: Float32Array): KVP<RayPath[]> 
         intersectedReceiver,
         energy,
         chain
-      });
-      */
+      } as RayPath);
     }
     return paths as RayPath[];
   };
