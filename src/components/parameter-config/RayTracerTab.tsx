@@ -48,6 +48,12 @@ const Parameters = ({ uuid }: { uuid: string }) => {
         tooltip="Maximum paths stored per receiver (older paths evicted)"
         elementProps={{ step: 1000, min: 1 }}
       />
+      <PropertyCheckboxInput
+        uuid={uuid}
+        label="Edge Diffraction"
+        property="edgeDiffractionEnabled"
+        tooltip="Enable UTD edge diffraction for sound around convex edges"
+      />
     </PropertyRowFolder>
   );
 };

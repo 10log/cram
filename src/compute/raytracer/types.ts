@@ -147,6 +147,7 @@ export type RayTracerSaveObject = {
   autoStop?: boolean;
   rrThreshold?: number;
   maxStoredPaths?: number;
+  edgeDiffractionEnabled?: boolean;
 }
 
 export interface RayTracerParams {
@@ -173,6 +174,7 @@ export interface RayTracerParams {
   autoStop?: boolean;
   rrThreshold?: number;
   maxStoredPaths?: number;
+  edgeDiffractionEnabled?: boolean;
 }
 export interface ConvergenceMetrics {
   totalRays: number;
@@ -209,6 +211,7 @@ export const defaults = {
   autoStop: true,
   rrThreshold: 0.1,
   maxStoredPaths: 100000,
+  edgeDiffractionEnabled: false,
 };
 
 export enum DRAWSTYLE {

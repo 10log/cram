@@ -41,6 +41,8 @@ import { reflectionLossFunction as reflectionLossFunctionFn, calculateReflection
 import { pathsToLinearBuffer as pathsToLinearBufferFn, linearBufferToPaths as linearBufferToPathsFn } from "./serialization";
 import { downloadImpulses as downloadImpulsesFn, playImpulseResponse as playImpulseResponseFn, downloadImpulseResponse as downloadImpulseResponseFn, downloadAmbisonicImpulseResponse as downloadAmbisonicIRFn } from "./export-playback";
 import { resetConvergenceState, updateConvergenceMetrics, addToEnergyHistogram } from "./convergence";
+import { buildEdgeGraph, findDiffractionPaths } from "./diffraction";
+import type { EdgeGraph } from "./diffraction";
 
 // Re-export all types for external consumers
 export type {
@@ -129,6 +131,8 @@ class RayTracer extends Solver {
 
   _directivityRefPressures?: Map<string, number[]>;
   maxStoredPaths: number;
+  edgeDiffractionEnabled: boolean;
+  _edgeGraph: EdgeGraph | null;
   private _rafId: number = 0;
 
   constructor(params?: RayTracerParams) {
@@ -191,6 +195,8 @@ class RayTracer extends Solver {
     this.autoStop = params.autoStop ?? defaults.autoStop;
     this.rrThreshold = params.rrThreshold ?? defaults.rrThreshold;
     this.maxStoredPaths = params.maxStoredPaths ?? defaults.maxStoredPaths;
+    this.edgeDiffractionEnabled = params.edgeDiffractionEnabled ?? defaults.edgeDiffractionEnabled;
+    this._edgeGraph = null;
     this._histogramBinWidth = HISTOGRAM_BIN_WIDTH;
     this._histogramNumBins = HISTOGRAM_NUM_BINS;
     this._convergenceCheckInterval = CONVERGENCE_CHECK_INTERVAL_MS;
@@ -335,6 +341,7 @@ class RayTracer extends Solver {
       autoStop,
       rrThreshold,
       maxStoredPaths,
+      edgeDiffractionEnabled,
     } = this;
     return {
       name,
@@ -361,6 +368,7 @@ class RayTracer extends Solver {
       autoStop,
       rrThreshold,
       maxStoredPaths,
+      edgeDiffractionEnabled,
     };
   }
 
@@ -942,6 +950,11 @@ class RayTracer extends Solver {
   start() {
     this._cachedAirAtt = ac.airAttenuation(this.frequencies, this._temperature);
     this.mapIntersectableObjects();
+    if (this.edgeDiffractionEnabled && this.room) {
+      this._edgeGraph = buildEdgeGraph(this.room.allSurfaces);
+    } else {
+      this._edgeGraph = null;
+    }
     this.__start_time = Date.now();
     this.__num_checked_paths = 0;
     this._resetConvergenceState();
@@ -978,8 +991,154 @@ class RayTracer extends Solver {
         }
       });
     });
+    if (this.edgeDiffractionEnabled && this._edgeGraph && this._edgeGraph.edges.length > 0) {
+      this._computeDiffractionPaths();
+    }
     this.mapIntersectableObjects();
     this.reportImpulseResponse();
+  }
+
+  /** Compute deterministic diffraction paths and inject them into this.paths[] */
+  _computeDiffractionPaths() {
+    if (!this._edgeGraph) return;
+
+    const containers = useContainer.getState().containers;
+
+    // Gather source positions and directivity data
+    const sourcePositions = new Map<string, [number, number, number]>();
+    const sourceDirectivity = new Map<string, { handler: any; refPressures: number[] }>();
+    for (const id of this.sourceIDs) {
+      const src = containers[id] as Source;
+      if (src) {
+        sourcePositions.set(id, [src.position.x, src.position.y, src.position.z]);
+        // Cache reference pressures for directivity
+        const dh = src.directivityHandler;
+        const refPressures = new Array(this.frequencies.length);
+        for (let f = 0; f < this.frequencies.length; f++) {
+          refPressures[f] = dh.getPressureAtPosition(0, this.frequencies[f], 0, 0) as number;
+        }
+        sourceDirectivity.set(id, { handler: dh, refPressures });
+      }
+    }
+
+    // Gather receiver positions
+    const receiverPositions = new Map<string, [number, number, number]>();
+    for (const id of this.receiverIDs) {
+      const rec = containers[id];
+      if (rec) {
+        receiverPositions.set(id, [rec.position.x, rec.position.y, rec.position.z]);
+      }
+    }
+
+    // Get surface meshes for LOS checks (exclude receivers)
+    const surfaces: THREE.Mesh[] = [];
+    this.room.surfaces.traverse((container) => {
+      if (container['kind'] && container['kind'] === 'surface') {
+        surfaces.push((container as Surface).mesh);
+      }
+    });
+
+    const diffractionPaths = findDiffractionPaths(
+      this._edgeGraph,
+      sourcePositions,
+      receiverPositions,
+      this.frequencies,
+      this.c,
+      this._temperature,
+      this.raycaster,
+      surfaces,
+    );
+
+    // Convert DiffractionPath → RayPath and inject into this.paths[]
+    for (const dp of diffractionPaths) {
+      // Apply source directivity to band energies
+      const srcDir = sourceDirectivity.get(dp.sourceId);
+      if (srcDir) {
+        const srcPos = sourcePositions.get(dp.sourceId)!;
+        // Direction from source to diffraction point
+        const dx = dp.diffractionPoint[0] - srcPos[0];
+        const dy = dp.diffractionPoint[1] - srcPos[1];
+        const dz = dp.diffractionPoint[2] - srcPos[2];
+        const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        if (dist > 1e-10) {
+          // Compute spherical angles in source frame (approximate)
+          const theta = Math.acos(Math.max(-1, Math.min(1, dy / dist))) * (180 / Math.PI);
+          const phi = Math.atan2(dz, dx) * (180 / Math.PI);
+          for (let f = 0; f < this.frequencies.length; f++) {
+            try {
+              const dirP = srcDir.handler.getPressureAtPosition(0, this.frequencies[f], Math.abs(phi), theta);
+              const refP = srcDir.refPressures[f];
+              if (typeof dirP === "number" && typeof refP === "number" && refP > 0) {
+                dp.bandEnergy[f] *= (dirP / refP) ** 2;
+              }
+            } catch (e) {
+              // Fallback to unity gain
+            }
+          }
+        }
+      }
+
+      // Compute mean energy across bands (consistent with ray-core.ts)
+      const meanEnergy = dp.bandEnergy.reduce((a, b) => a + b, 0) / dp.bandEnergy.length;
+
+      // Compute arrival direction: edge→receiver (normalized)
+      const recPos = receiverPositions.get(dp.receiverId)!;
+      const adx = recPos[0] - dp.diffractionPoint[0];
+      const ady = recPos[1] - dp.diffractionPoint[1];
+      const adz = recPos[2] - dp.diffractionPoint[2];
+      const adLen = Math.sqrt(adx * adx + ady * ady + adz * adz);
+      const arrivalDirection: [number, number, number] = adLen > 1e-10
+        ? [adx / adLen, ady / adLen, adz / adLen]
+        : [0, 0, 1];
+
+      // Compute individual leg distances for chain
+      const srcPos = sourcePositions.get(dp.sourceId)!;
+      const sDist = Math.sqrt(
+        (dp.diffractionPoint[0] - srcPos[0]) ** 2 +
+        (dp.diffractionPoint[1] - srcPos[1]) ** 2 +
+        (dp.diffractionPoint[2] - srcPos[2]) ** 2
+      );
+      const rDist = dp.totalDistance - sDist;
+
+      const rayPath: RayPath = {
+        intersectedReceiver: true,
+        chain: [
+          {
+            distance: sDist,
+            point: dp.diffractionPoint,
+            object: dp.edge.surface0Id,
+            faceNormal: dp.edge.normal0,
+            faceIndex: -1,
+            faceMaterialIndex: -1,
+            angle: 0,
+            energy: meanEnergy,
+            bandEnergy: dp.bandEnergy,
+          },
+          {
+            distance: rDist,
+            point: recPos,
+            object: dp.receiverId,
+            faceNormal: [0, 0, 0],
+            faceIndex: -1,
+            faceMaterialIndex: -1,
+            angle: 0,
+            energy: meanEnergy,
+            bandEnergy: dp.bandEnergy,
+          },
+        ],
+        chainLength: 2,
+        energy: meanEnergy,
+        bandEnergy: dp.bandEnergy,
+        time: dp.time,
+        source: dp.sourceId,
+        initialPhi: 0,
+        initialTheta: 0,
+        totalLength: dp.totalDistance,
+        arrivalDirection,
+      };
+
+      this._pushPathWithEviction(dp.receiverId, rayPath);
+    }
   }
 
   async reportImpulseResponse() {
