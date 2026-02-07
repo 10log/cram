@@ -173,6 +173,8 @@ export type RayTracerSaveObject = {
   lateReverbTailEnabled?: boolean;
   tailCrossfadeTime?: number;
   tailCrossfadeDuration?: number;
+  gpuEnabled?: boolean;
+  gpuBatchSize?: number;
 }
 
 export interface RayTracerParams {
@@ -203,6 +205,8 @@ export interface RayTracerParams {
   lateReverbTailEnabled?: boolean;
   tailCrossfadeTime?: number;
   tailCrossfadeDuration?: number;
+  gpuEnabled?: boolean;
+  gpuBatchSize?: number;
 }
 export interface ConvergenceMetrics {
   totalRays: number;
@@ -243,6 +247,8 @@ export const defaults = {
   lateReverbTailEnabled: false,
   tailCrossfadeTime: 0,
   tailCrossfadeDuration: 0.05,
+  gpuEnabled: false,
+  gpuBatchSize: 10000,
 };
 
 export enum DRAWSTYLE {
