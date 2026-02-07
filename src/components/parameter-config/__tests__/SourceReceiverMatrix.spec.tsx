@@ -237,8 +237,8 @@ describe('SourceReceiverMatrix', () => {
 
       render(<SourceReceiverMatrix uuid={defaultUuid} />);
 
-      const checkbox = screen.getByRole('checkbox');
-      expect(checkbox).toHaveAttribute('title', 'Source 1 → Receiver 1');
+      // MUI Checkbox puts the title on the outer span wrapper, not the input
+      expect(screen.getByTitle('Source 1 → Receiver 1')).toBeInTheDocument();
     });
   });
 });

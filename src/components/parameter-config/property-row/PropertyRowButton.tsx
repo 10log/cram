@@ -23,7 +23,7 @@ export interface PropertyRowButtonProps extends React.ButtonHTMLAttributes<HTMLB
   label: string;
 }
 
-export default function PropertyRowButton({ label, onClick, disabled }: PropertyRowButtonProps) {
+export default function PropertyRowButton({ label, onClick, disabled, ...rest }: PropertyRowButtonProps) {
   return (
     <Box sx={propertyRowButtonContainerSx}>
       <Button
@@ -33,6 +33,7 @@ export default function PropertyRowButton({ label, onClick, disabled }: Property
         sx={styledButtonSx}
         onClick={onClick}
         disabled={disabled}
+        {...rest}
       >
         {label}
       </Button>

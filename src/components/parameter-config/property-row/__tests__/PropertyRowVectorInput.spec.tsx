@@ -89,15 +89,15 @@ describe('PropertyRowVectorInput', () => {
       expect(handleChange).toHaveBeenCalledWith({ value: -25 });
     });
 
-    it('calls onChange with NaN when cleared', () => {
+    it('does not call onChange when cleared (NaN is filtered)', () => {
       const handleChange = vi.fn();
       render(<PropertyRowVectorInput {...defaultProps} value={10} onChange={handleChange} />);
       const input = screen.getByRole('spinbutton');
 
       fireEvent.change(input, { target: { value: '' } });
 
-      // valueAsNumber returns NaN for empty input
-      expect(handleChange).toHaveBeenCalledWith({ value: NaN });
+      // Component filters NaN, so onChange is not called
+      expect(handleChange).not.toHaveBeenCalled();
     });
   });
 

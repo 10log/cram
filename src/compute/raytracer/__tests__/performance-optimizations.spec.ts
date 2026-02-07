@@ -149,9 +149,9 @@ describe('Phase 9: Performance Optimizations', () => {
       expect(serializationSource).toContain('linearBufferToPathsV2');
     });
 
-    it('v2 round-trip produces identical paths', () => {
+    it('v2 round-trip produces identical paths', async () => {
       // Inline import to avoid Three.js env issues
-      const { pathsToLinearBuffer, linearBufferToPaths } = require('../serialization');
+      const { pathsToLinearBuffer, linearBufferToPaths } = await import('../serialization');
 
       const testPaths = {
         'receiver-uuid-1234-5678-abcdefghijkl': [
@@ -206,8 +206,8 @@ describe('Phase 9: Performance Optimizations', () => {
       expect(decodedPath.chain[1].point).toEqual([4.0, 5.0, 6.0]);
     });
 
-    it('v1 backward compat: v1 buffer decodes correctly', () => {
-      const { pathsToLinearBufferV1, linearBufferToPaths } = require('../serialization');
+    it('v1 backward compat: v1 buffer decodes correctly', async () => {
+      const { pathsToLinearBufferV1, linearBufferToPaths } = await import('../serialization');
 
       const testPaths = {
         'receiver-uuid-1234-5678-abcdefghijkl': [
@@ -245,9 +245,8 @@ describe('Phase 9: Performance Optimizations', () => {
       expect(decoded[recKey][0].energy).toBeCloseTo(0.5);
     });
 
-    it('v2 is smaller than v1 for multi-path data', () => {
-      const { pathsToLinearBufferV1 } = require('../serialization');
-      const { pathsToLinearBuffer } = require('../serialization');
+    it('v2 is smaller than v1 for multi-path data', async () => {
+      const { pathsToLinearBufferV1, pathsToLinearBuffer } = await import('../serialization');
 
       // Create test data with many paths sharing the same UUIDs
       const chain = {

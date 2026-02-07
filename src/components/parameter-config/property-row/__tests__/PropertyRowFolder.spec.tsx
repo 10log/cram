@@ -64,34 +64,33 @@ describe('PropertyRowFolder', () => {
       expect(svgIcon).toBeInTheDocument();
     });
 
-    it('hides content when closed', () => {
+    it('collapses content when closed', () => {
       const { container } = render(
         <PropertyRowFolder {...defaultProps} open={false} />
       );
-      // Content container should have hidden attribute
-      const contentContainer = container.querySelector('[hidden]');
-      expect(contentContainer).toBeInTheDocument();
+      // MUI Collapse sets height to 0px when closed
+      const collapseWrapper = container.querySelector('.MuiCollapse-root');
+      expect(collapseWrapper).toBeInTheDocument();
+      expect(collapseWrapper).toHaveStyle({ height: '0px' });
     });
 
-    it('shows content when open', () => {
+    it('expands content when open', () => {
       const { container } = render(
         <PropertyRowFolder {...defaultProps} open={true} />
       );
-      // Content container should not have hidden attribute
-      const contentContainers = container.querySelectorAll('[hidden]');
-      expect(contentContainers.length).toBe(0);
+      // MUI Collapse does not have height: 0px when open
+      const collapseWrapper = container.querySelector('.MuiCollapse-root');
+      expect(collapseWrapper).toBeInTheDocument();
+      expect(collapseWrapper).not.toHaveStyle({ height: '0px' });
     });
 
-    it('applies max-content height when open', () => {
+    it('collapse has entered class when open', () => {
       const { container } = render(
         <PropertyRowFolder {...defaultProps} open={true} />
       );
-      // Find the content div by checking style
-      const contentDivs = container.querySelectorAll('div');
-      const hasMaxContent = Array.from(contentDivs).some(
-        div => div.style.height === 'max-content'
-      );
-      expect(hasMaxContent).toBe(true);
+      const collapseWrapper = container.querySelector('.MuiCollapse-root');
+      expect(collapseWrapper).toBeInTheDocument();
+      expect(collapseWrapper!.classList.toString()).toContain('entered');
     });
   });
 
@@ -142,9 +141,9 @@ describe('PropertyRowFolder', () => {
         <PropertyRowFolder {...defaultProps} onOpenClose={handleOpenClose} />
       );
 
-      // Click on the icon's parent span
-      const iconSpan = container.querySelector('span');
-      fireEvent.click(iconSpan!);
+      // Click on the SVG icon
+      const svgIcon = container.querySelector('svg');
+      fireEvent.click(svgIcon!);
 
       expect(handleOpenClose).toHaveBeenCalled();
     });
@@ -156,11 +155,15 @@ describe('PropertyRowFolder', () => {
         <PropertyRowFolder {...defaultProps} open={false} />
       );
 
-      expect(container.querySelector('[hidden]')).toBeInTheDocument();
+      const collapseWrapper = container.querySelector('.MuiCollapse-root');
+      expect(collapseWrapper).toBeInTheDocument();
+      // When closed, the Collapse wrapper has the hidden class
+      expect(collapseWrapper!.classList.toString()).toContain('hidden');
 
       rerender(<PropertyRowFolder {...defaultProps} open={true} />);
 
-      expect(container.querySelector('[hidden]')).not.toBeInTheDocument();
+      // When open, the Collapse no longer has the hidden class
+      expect(collapseWrapper!.classList.toString()).not.toContain('hidden');
     });
 
     it('does not change state without external update', () => {
@@ -171,8 +174,9 @@ describe('PropertyRowFolder', () => {
       const label = screen.getByText('Settings');
       fireEvent.click(label);
 
-      // Should still be closed (controlled component)
-      expect(container.querySelector('[hidden]')).toBeInTheDocument();
+      // Should still be collapsed (controlled component)
+      const collapseWrapper = container.querySelector('.MuiCollapse-root');
+      expect(collapseWrapper).toHaveStyle({ height: '0px' });
     });
   });
 

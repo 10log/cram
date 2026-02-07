@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { PropertyRowSelect } from '../PropertyRowSelect';
 
@@ -34,31 +34,39 @@ describe('PropertyRowSelect', () => {
       expect(select).toBeInTheDocument();
     });
 
-    it('renders all options', () => {
+    it('renders all options when opened', () => {
       render(<PropertyRowSelect {...defaultProps} />);
-      const options = screen.getAllByRole('option');
+      // Open the dropdown
+      fireEvent.mouseDown(screen.getByRole('combobox'));
+      const listbox = screen.getByRole('listbox');
+      const options = within(listbox).getAllByRole('option');
       expect(options).toHaveLength(3);
     });
 
     it('renders options with correct labels', () => {
       render(<PropertyRowSelect {...defaultProps} />);
+      // The selected option label is visible without opening
       expect(screen.getByText('Option 1')).toBeInTheDocument();
+      // Open dropdown to see all options
+      fireEvent.mouseDown(screen.getByRole('combobox'));
       expect(screen.getByText('Option 2')).toBeInTheDocument();
       expect(screen.getByText('Option 3')).toBeInTheDocument();
     });
 
     it('renders options with correct values', () => {
       render(<PropertyRowSelect {...defaultProps} />);
-      const options = screen.getAllByRole('option') as HTMLOptionElement[];
-      expect(options[0].value).toBe('option1');
-      expect(options[1].value).toBe('option2');
-      expect(options[2].value).toBe('option3');
+      fireEvent.mouseDown(screen.getByRole('combobox'));
+      const listbox = screen.getByRole('listbox');
+      const options = within(listbox).getAllByRole('option');
+      expect(options[0]).toHaveAttribute('data-value', 'option1');
+      expect(options[1]).toHaveAttribute('data-value', 'option2');
+      expect(options[2]).toHaveAttribute('data-value', 'option3');
     });
 
     it('selects the correct initial option', () => {
       render(<PropertyRowSelect {...defaultProps} value="option2" />);
-      const select = screen.getByRole('combobox') as HTMLSelectElement;
-      expect(select.value).toBe('option2');
+      // MUI Select shows the selected label as text content
+      expect(screen.getByText('Option 2')).toBeInTheDocument();
     });
   });
 
@@ -66,9 +74,11 @@ describe('PropertyRowSelect', () => {
     it('calls onChange when selection changes', () => {
       const handleChange = vi.fn();
       render(<PropertyRowSelect {...defaultProps} onChange={handleChange} />);
-      const select = screen.getByRole('combobox');
 
-      fireEvent.change(select, { target: { value: 'option2' } });
+      // Open the dropdown and click an option
+      fireEvent.mouseDown(screen.getByRole('combobox'));
+      const listbox = screen.getByRole('listbox');
+      fireEvent.click(within(listbox).getByText('Option 2'));
 
       expect(handleChange).toHaveBeenCalledWith({ value: 'option2' });
     });
@@ -76,9 +86,10 @@ describe('PropertyRowSelect', () => {
     it('calls onChange with the selected value', () => {
       const handleChange = vi.fn();
       render(<PropertyRowSelect {...defaultProps} onChange={handleChange} />);
-      const select = screen.getByRole('combobox');
 
-      fireEvent.change(select, { target: { value: 'option3' } });
+      fireEvent.mouseDown(screen.getByRole('combobox'));
+      const listbox = screen.getByRole('listbox');
+      fireEvent.click(within(listbox).getByText('Option 3'));
 
       expect(handleChange).toHaveBeenCalledWith({ value: 'option3' });
     });
@@ -86,9 +97,10 @@ describe('PropertyRowSelect', () => {
     it('calls onChange only once per selection', () => {
       const handleChange = vi.fn();
       render(<PropertyRowSelect {...defaultProps} onChange={handleChange} />);
-      const select = screen.getByRole('combobox');
 
-      fireEvent.change(select, { target: { value: 'option2' } });
+      fireEvent.mouseDown(screen.getByRole('combobox'));
+      const listbox = screen.getByRole('listbox');
+      fireEvent.click(within(listbox).getByText('Option 2'));
 
       expect(handleChange).toHaveBeenCalledTimes(1);
     });
@@ -99,14 +111,13 @@ describe('PropertyRowSelect', () => {
       const { rerender } = render(
         <PropertyRowSelect {...defaultProps} value="option1" />
       );
-      const select = screen.getByRole('combobox') as HTMLSelectElement;
-      expect(select.value).toBe('option1');
+      expect(screen.getByText('Option 1')).toBeInTheDocument();
 
       rerender(<PropertyRowSelect {...defaultProps} value="option2" />);
-      expect(select.value).toBe('option2');
+      expect(screen.getByText('Option 2')).toBeInTheDocument();
 
       rerender(<PropertyRowSelect {...defaultProps} value="option3" />);
-      expect(select.value).toBe('option3');
+      expect(screen.getByText('Option 3')).toBeInTheDocument();
     });
   });
 
@@ -116,7 +127,9 @@ describe('PropertyRowSelect', () => {
       render(
         <PropertyRowSelect {...defaultProps} options={singleOption} value="only" />
       );
-      const options = screen.getAllByRole('option');
+      fireEvent.mouseDown(screen.getByRole('combobox'));
+      const listbox = screen.getByRole('listbox');
+      const options = within(listbox).getAllByRole('option');
       expect(options).toHaveLength(1);
     });
 
@@ -128,7 +141,9 @@ describe('PropertyRowSelect', () => {
       render(
         <PropertyRowSelect {...defaultProps} options={manyOptions} value="opt0" />
       );
-      const options = screen.getAllByRole('option');
+      fireEvent.mouseDown(screen.getByRole('combobox'));
+      const listbox = screen.getByRole('listbox');
+      const options = within(listbox).getAllByRole('option');
       expect(options).toHaveLength(20);
     });
 
@@ -162,9 +177,10 @@ describe('PropertyRowSelect', () => {
           options={numericOptions}
         />
       );
-      const select = screen.getByRole('combobox');
 
-      fireEvent.change(select, { target: { value: '2' } });
+      fireEvent.mouseDown(screen.getByRole('combobox'));
+      const listbox = screen.getByRole('listbox');
+      fireEvent.click(within(listbox).getByText('Two'));
 
       expect(handleChange).toHaveBeenCalledWith({ value: '2' });
     });
@@ -183,12 +199,12 @@ describe('PropertyRowSelect', () => {
 
     it('can be navigated with keyboard', async () => {
       const handleChange = vi.fn();
-      const user = userEvent.setup();
       render(<PropertyRowSelect {...defaultProps} onChange={handleChange} />);
-      const select = screen.getByRole('combobox');
 
-      await user.click(select);
-      await user.selectOptions(select, 'option2');
+      // Open dropdown and click option
+      fireEvent.mouseDown(screen.getByRole('combobox'));
+      const listbox = screen.getByRole('listbox');
+      fireEvent.click(within(listbox).getByText('Option 2'));
 
       expect(handleChange).toHaveBeenCalledWith({ value: 'option2' });
     });
@@ -207,8 +223,10 @@ describe('PropertyRowSelect', () => {
           value=""
         />
       );
-      const select = screen.getByRole('combobox') as HTMLSelectElement;
-      expect(select.value).toBe('');
+      // Open dropdown to verify the empty-value option is available
+      fireEvent.mouseDown(screen.getByRole('combobox'));
+      const listbox = screen.getByRole('listbox');
+      expect(within(listbox).getByText('Select...')).toBeInTheDocument();
     });
 
     it('handles duplicate labels with different values', () => {
@@ -223,7 +241,9 @@ describe('PropertyRowSelect', () => {
           value="val1"
         />
       );
-      const options = screen.getAllByRole('option');
+      fireEvent.mouseDown(screen.getByRole('combobox'));
+      const listbox = screen.getByRole('listbox');
+      const options = within(listbox).getAllByRole('option');
       expect(options).toHaveLength(2);
     });
   });

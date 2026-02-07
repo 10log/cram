@@ -149,7 +149,7 @@ describe('SaveDialog', () => {
     });
 
     it('emits SAVE event when clicked', async () => {
-      const { emit } = require('../../messenger');
+      const { emit } = await import('../../messenger');
       const user = userEvent.setup();
       render(<SaveDialog />);
 

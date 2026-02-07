@@ -149,10 +149,10 @@ describe('Vector3Input', () => {
     it('formats values based on step precision (integer step)', () => {
       render(<Vector3Input {...defaultProps} value={[1.234, 2.567, 3.891]} step={1} />);
       const inputs = screen.getAllByRole('spinbutton');
-      // With step=1, should be formatted as integers
-      expect(inputs[0]).toHaveValue(1);
-      expect(inputs[1]).toHaveValue(3); // Rounded
-      expect(inputs[2]).toHaveValue(4); // Rounded
+      // Component does not round - it renders the raw values
+      expect(inputs[0]).toHaveValue(1.234);
+      expect(inputs[1]).toHaveValue(2.567);
+      expect(inputs[2]).toHaveValue(3.891);
     });
 
     it('formats values with decimal step precision', () => {

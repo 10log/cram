@@ -2,7 +2,7 @@
  * PropertyRowNumberInput Component Tests
  *
  * Tests for the number input component used in property rows.
- * This component has local state and only commits on blur.
+ * This component calls onChange immediately with valid numbers (NaN filtered).
  */
 
 import React from 'react';
@@ -47,17 +47,15 @@ describe('PropertyRowNumberInput', () => {
   });
 
   describe('Local State Management', () => {
-    it('updates local value on change without calling onChange', () => {
+    it('calls onChange immediately on change with valid number', () => {
       const handleChange = vi.fn();
       render(<PropertyRowNumberInput {...defaultProps} onChange={handleChange} />);
       const input = screen.getByRole('spinbutton');
 
       fireEvent.change(input, { target: { value: '50' } });
 
-      // Value should update visually
-      expect(input).toHaveValue(50);
-      // But onChange should not be called yet
-      expect(handleChange).not.toHaveBeenCalled();
+      // onChange is called immediately (NaN is filtered)
+      expect(handleChange).toHaveBeenCalledWith({ value: 50 });
     });
 
     it('calls onChange on blur with valid number', () => {
@@ -154,16 +152,14 @@ describe('PropertyRowNumberInput', () => {
       expect(input).toHaveFocus();
     });
 
-    it('allows typing numbers', async () => {
-      const user = userEvent.setup();
-      render(<PropertyRowNumberInput {...defaultProps} />);
+    it('allows typing numbers', () => {
+      const handleChange = vi.fn();
+      render(<PropertyRowNumberInput {...defaultProps} onChange={handleChange} />);
       const input = screen.getByRole('spinbutton');
 
-      await user.click(input);
-      await user.clear(input);
-      await user.type(input, '123');
+      fireEvent.change(input, { target: { value: '123' } });
 
-      expect(input).toHaveValue(123);
+      expect(handleChange).toHaveBeenCalledWith({ value: 123 });
     });
   });
 
