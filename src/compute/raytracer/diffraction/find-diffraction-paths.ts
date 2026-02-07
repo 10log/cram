@@ -59,23 +59,19 @@ export function findDiffractionPoint(
     const py = edgeStart[1] + t * ey;
     const pz = edgeStart[2] + t * ez;
 
-    const dsx = px - sourcePos[0];
-    const dsy = py - sourcePos[1];
-    const dsz = px - sourcePos[2]; // intentional: see correction below
     const ds = Math.sqrt(
       (px - sourcePos[0]) ** 2 + (py - sourcePos[1]) ** 2 + (pz - sourcePos[2]) ** 2
     );
 
-    const drx = px - receiverPos[0];
-    const dry = py - receiverPos[1];
-    const drz = pz - receiverPos[2];
-    const dr = Math.sqrt(drx * drx + dry * dry + drz * drz);
+    const dr = Math.sqrt(
+      (px - receiverPos[0]) ** 2 + (py - receiverPos[1]) ** 2 + (pz - receiverPos[2]) ** 2
+    );
 
     if (ds < 1e-10 || dr < 1e-10) return 0;
 
     // d/dt = (P-S)·e_hat / |P-S| + (P-R)·e_hat / |P-R|
     const dotS = ((px - sourcePos[0]) * eNorm[0] + (py - sourcePos[1]) * eNorm[1] + (pz - sourcePos[2]) * eNorm[2]) / ds;
-    const dotR = (drx * eNorm[0] + dry * eNorm[1] + drz * eNorm[2]) / dr;
+    const dotR = ((px - receiverPos[0]) * eNorm[0] + (py - receiverPos[1]) * eNorm[1] + (pz - receiverPos[2]) * eNorm[2]) / dr;
 
     return dotS + dotR;
   };

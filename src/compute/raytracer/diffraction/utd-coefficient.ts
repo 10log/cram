@@ -5,29 +5,21 @@
  * with Fresnel transition function approximation.
  */
 
-const { PI, sqrt, abs, cos, sin, atan2, acos, max, min } = Math;
+const { PI, sqrt, abs, cos, sin, atan2 } = Math;
 
 /**
  * Approximate magnitude of the Fresnel transition function |F(X)|.
  *
- * Uses a rational function fit:
- *   F(X) ≈ sqrt(X) * (1 - exp(-c * X)) for a smooth monotonic approximation.
- *
- * Properties: F(0) → 0, F(∞) → 1, monotonically increasing.
+ * Uses a smooth approximation: F(X) ≈ 1 - exp(-sqrt(π X))
+ * which satisfies F(0) = 0, F(∞) → 1, and is monotonically increasing.
  *
  * @param x - Fresnel integral argument (must be >= 0)
  * @returns Magnitude |F(X)| in [0, 1]
  */
 export function fresnelTransition(x: number): number {
   if (x < 0) x = 0;
-  if (x > 100) return 1;
-
-  // Rational approximation that satisfies F(0)=0, F(large)→1
-  // Based on Kouyoumjian-Pathak: F(X) ≈ 2j√X exp(jX) ∫...
-  // We use the magnitude approximation:
-  const sqrtX = sqrt(x);
-  return sqrtX / (sqrtX + 1) * (1 + 0.926 * x) / (1 + 0.926 * x);
-  // Simplified: F(X) ≈ √X / (√X + 1)
+  // Smooth saturating approximation: no discontinuity
+  return 1 - Math.exp(-sqrt(PI * x));
 }
 
 /**
@@ -190,7 +182,6 @@ export function utdDiffractionCoefficient(
   let Dsq = 0;
 
   // Term 1: cot((pi + (phiR - phiS)) / (2n)) * F(kL a+(phiR - phiS))
-  const beta1 = phiReceiver - phiSource;
   const a1 = aFunc(1, phiReceiver, -1, phiSource);
   const cot1 = cotTerm(n, 1, phiReceiver, -1, phiSource);
   const F1 = fresnelTransition(k * L * a1);

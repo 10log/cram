@@ -123,6 +123,15 @@ describe('Issue #77: Edge Diffraction via UTD', () => {
       expect(edgeGraphSource).toContain('wedgeAngle');
       expect(edgeGraphSource).toContain('2 * Math.PI - interiorAngle');
     });
+
+    it('rejects near-coplanar edges', () => {
+      expect(edgeGraphSource).toContain('COPLANAR_THRESHOLD');
+      expect(edgeGraphSource).toContain('interiorAngle < COPLANAR_THRESHOLD');
+    });
+
+    it('uses neighbor-cell hashing for robust vertex matching', () => {
+      expect(edgeGraphSource).toContain('hashPointKeys');
+    });
   });
 
   describe('diffraction/utd-coefficient.ts', () => {
@@ -232,6 +241,28 @@ describe('Issue #77: Edge Diffraction via UTD', () => {
     it('constructor initializes edgeDiffractionEnabled from params', () => {
       expect(indexSource).toContain('params.edgeDiffractionEnabled ?? defaults.edgeDiffractionEnabled');
     });
+
+    it('uses _pushPathWithEviction for diffraction paths', () => {
+      expect(indexSource).toContain('this._pushPathWithEviction(dp.receiverId, rayPath)');
+    });
+
+    it('sets arrivalDirection on diffraction RayPaths', () => {
+      const methodMatch = indexSource.match(/_computeDiffractionPaths\(\)\s*\{([\s\S]*?)\n\s{2}\}/);
+      expect(methodMatch).not.toBeNull();
+      expect(methodMatch![1]).toContain('arrivalDirection');
+    });
+
+    it('applies source directivity to diffraction band energies', () => {
+      const methodMatch = indexSource.match(/_computeDiffractionPaths\(\)\s*\{([\s\S]*?)\n\s{2}\}/);
+      expect(methodMatch).not.toBeNull();
+      expect(methodMatch![1]).toContain('directivityHandler');
+    });
+
+    it('creates 2-segment chain for diffraction paths', () => {
+      const methodMatch = indexSource.match(/_computeDiffractionPaths\(\)\s*\{([\s\S]*?)\n\s{2}\}/);
+      expect(methodMatch).not.toBeNull();
+      expect(methodMatch![1]).toContain('chainLength: 2');
+    });
   });
 
   describe('RayTracerTab.tsx UI', () => {
@@ -268,7 +299,16 @@ describe('Issue #77: Edge Diffraction via UTD', () => {
     });
 
     it('handles negative input gracefully', () => {
-      expect(fresnelTransition(-1)).toBe(0);
+      expect(fresnelTransition(-1)).toBeCloseTo(0, 5);
+    });
+
+    it('is continuous (no step discontinuity at any threshold)', () => {
+      // Check continuity around x=100 (old code had a hard clamp there)
+      const a = fresnelTransition(99);
+      const b = fresnelTransition(100);
+      const c = fresnelTransition(101);
+      expect(Math.abs(b - a)).toBeLessThan(0.01);
+      expect(Math.abs(c - b)).toBeLessThan(0.01);
     });
   });
 
@@ -372,6 +412,33 @@ describe('Issue #77: Edge Diffraction via UTD', () => {
         normal: { x: 0, y: 0, z: 1 },
       };
       const graph = buildEdgeGraph([surface]);
+      expect(graph.edges).toHaveLength(0);
+    });
+
+    it('rejects coplanar surfaces as diffracting edges', () => {
+      // Two coplanar surfaces sharing an edge (same normal direction)
+      const surface1 = {
+        uuid: 'coplanar1',
+        edgeLoop: [
+          { x: 0, y: 0, z: 0 },
+          { x: 1, y: 0, z: 0 },
+          { x: 1, y: 1, z: 0 },
+          { x: 0, y: 1, z: 0 },
+        ],
+        normal: { x: 0, y: 0, z: 1 },
+      };
+      const surface2 = {
+        uuid: 'coplanar2',
+        edgeLoop: [
+          { x: 1, y: 0, z: 0 },
+          { x: 2, y: 0, z: 0 },
+          { x: 2, y: 1, z: 0 },
+          { x: 1, y: 1, z: 0 },
+        ],
+        normal: { x: 0, y: 0, z: 1 },
+      };
+
+      const graph = buildEdgeGraph([surface1, surface2]);
       expect(graph.edges).toHaveLength(0);
     });
 

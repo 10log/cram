@@ -1004,12 +1004,20 @@ class RayTracer extends Solver {
 
     const containers = useContainer.getState().containers;
 
-    // Gather source positions
+    // Gather source positions and directivity data
     const sourcePositions = new Map<string, [number, number, number]>();
+    const sourceDirectivity = new Map<string, { handler: any; refPressures: number[] }>();
     for (const id of this.sourceIDs) {
       const src = containers[id] as Source;
       if (src) {
         sourcePositions.set(id, [src.position.x, src.position.y, src.position.z]);
+        // Cache reference pressures for directivity
+        const dh = src.directivityHandler;
+        const refPressures = new Array(this.frequencies.length);
+        for (let f = 0; f < this.frequencies.length; f++) {
+          refPressures[f] = dh.getPressureAtPosition(0, this.frequencies[f], 0, 0) as number;
+        }
+        sourceDirectivity.set(id, { handler: dh, refPressures });
       }
     }
 
@@ -1043,35 +1051,93 @@ class RayTracer extends Solver {
 
     // Convert DiffractionPath → RayPath and inject into this.paths[]
     for (const dp of diffractionPaths) {
+      // Apply source directivity to band energies
+      const srcDir = sourceDirectivity.get(dp.sourceId);
+      if (srcDir) {
+        const srcPos = sourcePositions.get(dp.sourceId)!;
+        // Direction from source to diffraction point
+        const dx = dp.diffractionPoint[0] - srcPos[0];
+        const dy = dp.diffractionPoint[1] - srcPos[1];
+        const dz = dp.diffractionPoint[2] - srcPos[2];
+        const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        if (dist > 1e-10) {
+          // Compute spherical angles in source frame (approximate)
+          const theta = Math.acos(Math.max(-1, Math.min(1, dy / dist))) * (180 / Math.PI);
+          const phi = Math.atan2(dz, dx) * (180 / Math.PI);
+          for (let f = 0; f < this.frequencies.length; f++) {
+            try {
+              const dirP = srcDir.handler.getPressureAtPosition(0, this.frequencies[f], Math.abs(phi), theta);
+              const refP = srcDir.refPressures[f];
+              if (typeof dirP === "number" && typeof refP === "number" && refP > 0) {
+                dp.bandEnergy[f] *= (dirP / refP) ** 2;
+              }
+            } catch (e) {
+              // Fallback to unity gain
+            }
+          }
+        }
+      }
+
+      // Compute mean energy across bands (consistent with ray-core.ts)
+      const meanEnergy = dp.bandEnergy.reduce((a, b) => a + b, 0) / dp.bandEnergy.length;
+
+      // Compute arrival direction: edge→receiver (normalized)
+      const recPos = receiverPositions.get(dp.receiverId)!;
+      const adx = recPos[0] - dp.diffractionPoint[0];
+      const ady = recPos[1] - dp.diffractionPoint[1];
+      const adz = recPos[2] - dp.diffractionPoint[2];
+      const adLen = Math.sqrt(adx * adx + ady * ady + adz * adz);
+      const arrivalDirection: [number, number, number] = adLen > 1e-10
+        ? [adx / adLen, ady / adLen, adz / adLen]
+        : [0, 0, 1];
+
+      // Compute individual leg distances for chain
+      const srcPos = sourcePositions.get(dp.sourceId)!;
+      const sDist = Math.sqrt(
+        (dp.diffractionPoint[0] - srcPos[0]) ** 2 +
+        (dp.diffractionPoint[1] - srcPos[1]) ** 2 +
+        (dp.diffractionPoint[2] - srcPos[2]) ** 2
+      );
+      const rDist = dp.totalDistance - sDist;
+
       const rayPath: RayPath = {
         intersectedReceiver: true,
         chain: [
           {
-            distance: dp.totalDistance,
+            distance: sDist,
             point: dp.diffractionPoint,
+            object: dp.edge.surface0Id,
+            faceNormal: dp.edge.normal0,
+            faceIndex: -1,
+            faceMaterialIndex: -1,
+            angle: 0,
+            energy: meanEnergy,
+            bandEnergy: dp.bandEnergy,
+          },
+          {
+            distance: rDist,
+            point: recPos,
             object: dp.receiverId,
             faceNormal: [0, 0, 0],
             faceIndex: -1,
             faceMaterialIndex: -1,
             angle: 0,
-            energy: Math.max(...dp.bandEnergy),
+            energy: meanEnergy,
             bandEnergy: dp.bandEnergy,
           },
         ],
-        chainLength: 1,
-        energy: Math.max(...dp.bandEnergy),
+        chainLength: 2,
+        energy: meanEnergy,
         bandEnergy: dp.bandEnergy,
         time: dp.time,
         source: dp.sourceId,
         initialPhi: 0,
         initialTheta: 0,
         totalLength: dp.totalDistance,
+        arrivalDirection,
       };
 
-      if (!this.paths[dp.receiverId]) {
-        this.paths[dp.receiverId] = [];
-      }
-      this.paths[dp.receiverId].push(rayPath);
+      this._pushPathWithEviction(dp.receiverId, rayPath);
     }
   }
 

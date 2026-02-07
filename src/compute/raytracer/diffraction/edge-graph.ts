@@ -8,11 +8,43 @@
 import { numbersEqualWithinTolerence } from "../../../common/equal-within-range";
 import type { EdgeGraph, DiffractingEdge } from "./types";
 
-/** Spatial hash key for a 3D point at the given tolerance */
-function hashPoint(x: number, y: number, z: number, cellSize: number): string {
-  const ix = Math.round(x / cellSize);
-  const iy = Math.round(y / cellSize);
-  const iz = Math.round(z / cellSize);
+/** All spatial hash keys for a 3D point, including neighbor cells to handle boundary cases */
+function hashPointKeys(x: number, y: number, z: number, cellSize: number): string[] {
+  const fx = x / cellSize;
+  const fy = y / cellSize;
+  const fz = z / cellSize;
+  const ix = Math.floor(fx);
+  const iy = Math.floor(fy);
+  const iz = Math.floor(fz);
+  // Primary key is always floor-based
+  const keys = [`${ix},${iy},${iz}`];
+  // Check if point is near a cell boundary (within 0.5 tolerance/cellSize fraction)
+  // and add neighbor keys to avoid missing matches
+  const offsets = [0, -1, 1];
+  for (const ox of offsets) {
+    for (const oy of offsets) {
+      for (const oz of offsets) {
+        if (ox === 0 && oy === 0 && oz === 0) continue;
+        const nx = ix + ox;
+        const ny = iy + oy;
+        const nz = iz + oz;
+        // Only add neighbor if point is within half a cell of that boundary
+        if (Math.abs(fx - (nx + 0.5)) < 1.0 &&
+            Math.abs(fy - (ny + 0.5)) < 1.0 &&
+            Math.abs(fz - (nz + 0.5)) < 1.0) {
+          keys.push(`${nx},${ny},${nz}`);
+        }
+      }
+    }
+  }
+  return keys;
+}
+
+/** Primary spatial hash key for a 3D point */
+function hashPointPrimary(x: number, y: number, z: number, cellSize: number): string {
+  const ix = Math.floor(x / cellSize);
+  const iy = Math.floor(y / cellSize);
+  const iz = Math.floor(z / cellSize);
   return `${ix},${iy},${iz}`;
 }
 
@@ -61,16 +93,23 @@ export function buildEdgeGraph(surfaces: SurfaceLike[], tolerance: number = 1e-4
       const start: [number, number, number] = [a.x, a.y, a.z];
       const end: [number, number, number] = [b.x, b.y, b.z];
 
-      const h1 = hashPoint(a.x, a.y, a.z, cellSize);
-      const h2 = hashPoint(b.x, b.y, b.z, cellSize);
-      const key = edgeKey(h1, h2);
-
       const raw: RawEdge = { start, end, surfaceId: surface.uuid, normal };
 
-      if (!edgeMap.has(key)) {
-        edgeMap.set(key, [raw]);
-      } else {
-        edgeMap.get(key)!.push(raw);
+      // Insert into all hash key combinations to ensure neighbor-cell matching
+      const keys1 = hashPointKeys(a.x, a.y, a.z, cellSize);
+      const keys2 = hashPointKeys(b.x, b.y, b.z, cellSize);
+      const insertedKeys = new Set<string>();
+      for (const k1 of keys1) {
+        for (const k2 of keys2) {
+          const key = edgeKey(k1, k2);
+          if (insertedKeys.has(key)) continue;
+          insertedKeys.add(key);
+          if (!edgeMap.has(key)) {
+            edgeMap.set(key, [raw]);
+          } else {
+            edgeMap.get(key)!.push(raw);
+          }
+        }
       }
     }
   }
@@ -110,6 +149,12 @@ export function buildEdgeGraph(surfaces: SurfaceLike[], tolerance: number = 1e-4
     const n1 = e1.normal;
     const dot = n0[0] * n1[0] + n0[1] * n1[1] + n0[2] * n1[2];
     const interiorAngle = Math.acos(Math.max(-1, Math.min(1, dot)));
+
+    // Reject near-coplanar surfaces (interiorAngle ≈ 0 means normals point
+    // the same direction, which would give wedgeAngle ≈ 2π — a false positive)
+    const COPLANAR_THRESHOLD = 0.01; // ~0.57 degrees
+    if (interiorAngle < COPLANAR_THRESHOLD) continue;
+
     const wedgeAngle = 2 * Math.PI - interiorAngle;
     const n = wedgeAngle / Math.PI;
 
