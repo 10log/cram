@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import RayTracer from "../../compute/raytracer";
+import { ConvergenceMetrics } from "../../compute/raytracer";
 import PropertyRowFolder from "./property-row/PropertyRowFolder";
 import PropertyRow from "./property-row/PropertyRow";
 import PropertyRowLabel from "./property-row/PropertyRowLabel";
@@ -100,10 +101,55 @@ const SolverControls = ({ uuid }: { uuid: string }) => {
   );
 };
 
+const Convergence = ({ uuid }: { uuid: string }) => {
+  const [open, toggle] = useToggle(true);
+  const [metrics] = useSolverProperty<RayTracer, "convergenceMetrics">(uuid, "convergenceMetrics", "RAYTRACER_SET_PROPERTY");
+
+  const ratioDisplay = metrics && Number.isFinite(metrics.convergenceRatio)
+    ? (metrics.convergenceRatio * 100).toFixed(1) + "%"
+    : "--";
+  const t30Display = metrics && metrics.estimatedT30
+    ? metrics.estimatedT30.map(t => t > 0 ? t.toFixed(2) + "s" : "--").join(", ")
+    : "--";
+
+  return (
+    <PropertyRowFolder label="Convergence" open={open} onOpenClose={toggle}>
+      <PropertyCheckboxInput
+        uuid={uuid}
+        label="Auto-Stop"
+        property="autoStop"
+        tooltip="Automatically stop when simulation converges"
+      />
+      <PropertyNumberInput
+        uuid={uuid}
+        label="Threshold"
+        property="convergenceThreshold"
+        tooltip="Convergence ratio threshold (coefficient of variation of T30 estimates)"
+        elementProps={{ step: 0.001, min: 0.001, max: 1 }}
+      />
+      <PropertyNumberInput
+        uuid={uuid}
+        label="RR Threshold"
+        property="rrThreshold"
+        tooltip="Russian Roulette energy threshold for unbiased ray termination"
+        elementProps={{ step: 0.01, min: 0.01, max: 1 }}
+      />
+      <PropertyRow>
+        <PropertyRowLabel label="Conv. Ratio" hasToolTip tooltip="Current convergence ratio (max coefficient of variation across bands)" />
+        <span style={{ fontSize: "11px", fontFamily: "monospace" }}>{ratioDisplay}</span>
+      </PropertyRow>
+      <PropertyRow>
+        <PropertyRowLabel label="Est. T30" hasToolTip tooltip="Estimated T30 per octave band (125-8000 Hz)" />
+        <span style={{ fontSize: "11px", fontFamily: "monospace", overflow: "hidden", textOverflow: "ellipsis" }}>{t30Display}</span>
+      </PropertyRow>
+    </PropertyRowFolder>
+  );
+};
+
 const Hybrid = ({ uuid }: { uuid: string}) => {
   const [open, toggle] = useToggle(true);
   return (
-    <PropertyRowFolder label="Hybrid Method" open={open} onOpenClose={toggle}> 
+    <PropertyRowFolder label="Hybrid Method" open={open} onOpenClose={toggle}>
       <PropertyCheckboxInput uuid={uuid} label="Use Hybrid Method" property="hybrid" tooltip="Enables Hybrid Calculation" />
       <PropertyTextInput uuid={uuid} label="Transition Order" property="transitionOrder" tooltip="Delination between image source and raytracer" />
     </PropertyRowFolder>
@@ -169,6 +215,7 @@ export const RayTracerTab = ({ uuid }: { uuid: string }) => {
       <SourceReceiverPairs uuid={uuid} />
       <StyleProperties uuid={uuid} />
       <SolverControls uuid={uuid} />
+      <Convergence uuid={uuid} />
       <Hybrid uuid={uuid} />
       <Output uuid={uuid} />
       <AmbisonicOutput uuid={uuid} />

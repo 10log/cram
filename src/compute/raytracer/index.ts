@@ -164,6 +164,9 @@ export type RayTracerSaveObject = {
   paths: KVP<RayPath[]>;
   frequencies: number[];
   temperature?: number;
+  convergenceThreshold?: number;
+  autoStop?: boolean;
+  rrThreshold?: number;
 }
 
 export interface RayTracerParams {
@@ -186,7 +189,20 @@ export interface RayTracerParams {
   paths?: KVP<RayPath[]>;
   frequencies?: number[];
   temperature?: number;
+  convergenceThreshold?: number;
+  autoStop?: boolean;
+  rrThreshold?: number;
 }
+export interface ConvergenceMetrics {
+  totalRays: number;
+  validRays: number;
+  estimatedT30: number[];        // per band, latest estimate
+  t30Mean: number[];             // running mean of T30 estimates
+  t30M2: number[];               // running M2 for Welford's variance
+  t30Count: number;              // number of T30 samples taken
+  convergenceRatio: number;      // max(std/mean) across bands
+}
+
 export const defaults = {
   name: "Ray Tracer",
   roomID: "",
@@ -208,6 +224,9 @@ export const defaults = {
   } as Partial<PlotData>,
   frequencies: [125, 250, 500, 1000, 2000, 4000, 8000] as number[],
   temperature: 20,
+  convergenceThreshold: 0.01,
+  autoStop: true,
+  rrThreshold: 0.1,
 };
 
 export enum DRAWSTYLE {
@@ -272,7 +291,17 @@ class RayTracer extends Solver {
 
   hybrid: boolean;
   transitionOrder: number;
-  
+
+  convergenceThreshold: number;
+  autoStop: boolean;
+  rrThreshold: number;
+  convergenceMetrics!: ConvergenceMetrics;
+  _energyHistogram!: KVP<Float32Array[]>;
+  _histogramBinWidth: number;
+  _histogramNumBins: number;
+  _lastConvergenceCheck!: number;
+  _convergenceCheckInterval: number;
+
   constructor(params?: RayTracerParams) {
     super(params);
     this.kind = "ray-tracer";
@@ -326,9 +355,17 @@ class RayTracer extends Solver {
     this.rayBufferGeometry.setAttribute("color", this.colorBufferAttribute);
     this.chartdata = [] as ChartData[];
 
-    this.hybrid = false; 
-    this.transitionOrder = 2; 
-    
+    this.hybrid = false;
+    this.transitionOrder = 2;
+
+    this.convergenceThreshold = params.convergenceThreshold ?? defaults.convergenceThreshold;
+    this.autoStop = params.autoStop ?? defaults.autoStop;
+    this.rrThreshold = params.rrThreshold ?? defaults.rrThreshold;
+    this._histogramBinWidth = 0.001; // 1ms bins
+    this._histogramNumBins = 10000;  // up to 10 seconds
+    this._convergenceCheckInterval = 500; // check every 500ms
+    this._resetConvergenceState();
+
     this.rays = new THREE.LineSegments(
       this.rayBufferGeometry,
       new THREE.LineBasicMaterial({
@@ -463,7 +500,10 @@ class RayTracer extends Solver {
       plotStyle,
       paths,
       frequencies,
-      temperature
+      temperature,
+      convergenceThreshold,
+      autoStop,
+      rrThreshold,
     } = this;
     return {
       name,
@@ -485,7 +525,10 @@ class RayTracer extends Solver {
       plotStyle,
       paths,
       frequencies,
-      temperature
+      temperature,
+      convergenceThreshold,
+      autoStop,
+      rrThreshold,
     };
   }
 
@@ -761,20 +804,34 @@ class RayTracer extends Solver {
           return energy;
         });
 
-        // end condition: terminate when all bands are below threshold
-        if (rr && normal && Math.max(...newBandEnergy) > 1 / 2 ** 16 && iter < order + 1) {
-          // recurse
-          return this.traceRay(
-            intersections[0].point.clone().addScaledVector(normal.clone(), 0.01),
-            rr,
-            order,
-            newBandEnergy,
-            source,
-            initialPhi,
-            initialTheta,
-            iter + 1,
-            chain,
-          );
+        // Russian Roulette termination: unbiased probabilistic early termination
+        const maxEnergy = Math.max(...newBandEnergy);
+        if (rr && normal && iter < order + 1) {
+          if (maxEnergy < this.rrThreshold && maxEnergy > 0) {
+            const survivalProbability = maxEnergy / this.rrThreshold;
+            if (Math.random() > survivalProbability) {
+              // Terminate ray - expected value preserved (no bias)
+              return { chain, chainLength: chain.length, source, intersectedReceiver: false } as RayPath;
+            }
+            // Boost surviving ray energy to compensate
+            for (let f = 0; f < newBandEnergy.length; f++) {
+              newBandEnergy[f] /= survivalProbability;
+            }
+          }
+          if (maxEnergy > 0) {
+            // recurse
+            return this.traceRay(
+              intersections[0].point.clone().addScaledVector(normal.clone(), 0.01),
+              rr,
+              order,
+              newBandEnergy,
+              source,
+              initialPhi,
+              initialTheta,
+              iter + 1,
+              chain,
+            );
+          }
         }
       }
       return { chain, chainLength: chain.length, source, intersectedReceiver: false } as RayPath;
@@ -819,8 +876,15 @@ class RayTracer extends Solver {
     // source position
     let position = source.position.clone();
 
-    // random direction
-    let direction = new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize();
+    // random direction (rejection sampling for uniform sphere distribution)
+    let dx: number, dy: number, dz: number, lenSq: number;
+    do {
+      dx = Math.random() * 2 - 1;
+      dy = Math.random() * 2 - 1;
+      dz = Math.random() * 2 - 1;
+      lenSq = dx * dx + dy * dy + dz * dz;
+    } while (lenSq > 1 || lenSq < 1e-6);
+    let direction = new THREE.Vector3(dx, dy, dz).normalize();
 
     let angle = 0;
 
@@ -903,14 +967,149 @@ class RayTracer extends Solver {
   }
 
   startAllMonteCarlo() {
+    this._lastConvergenceCheck = Date.now();
     this.intervals.push(
       (setInterval(() => {
-        for (let i = 0; i < this.passes; i++) {
-          this.step();
-        }
+        this.stepStratified(this.passes);
         renderer.needsToRender = true;
+
+        // Periodic convergence check
+        const now = Date.now();
+        if (this.autoStop && now - this._lastConvergenceCheck >= this._convergenceCheckInterval) {
+          this._lastConvergenceCheck = now;
+          this._updateConvergenceMetrics();
+          if (this.convergenceMetrics.convergenceRatio < this.convergenceThreshold
+              && this.convergenceMetrics.t30Count >= 3) {
+            this.isRunning = false;
+            return;
+          }
+        }
       }, this.updateInterval) as unknown) as number
     );
+  }
+
+  stepStratified(numRays: number) {
+    const nPhi = Math.ceil(Math.sqrt(numRays));
+    const nTheta = Math.ceil(numRays / nPhi);
+
+    for (let i = 0; i < this.sourceIDs.length; i++) {
+      const source = useContainer.getState().containers[this.sourceIDs[i]] as Source;
+      const sourcePhi = source.phi;
+      const sourceTheta = source.theta;
+      const position = source.position;
+      const rotation = source.rotation;
+      const sourceDH = source.directivityHandler;
+
+      // cache on-axis reference pressures per source
+      if (!this._directivityRefPressures) {
+        this._directivityRefPressures = new Map();
+      }
+      const sourceId = this.sourceIDs[i];
+      let refPressures = this._directivityRefPressures.get(sourceId);
+      if (!refPressures || refPressures.length !== this.frequencies.length) {
+        refPressures = new Array(this.frequencies.length);
+        for (let f = 0; f < this.frequencies.length; f++) {
+          refPressures[f] = sourceDH.getPressureAtPosition(0, this.frequencies[f], 0, 0);
+        }
+        this._directivityRefPressures.set(sourceId, refPressures);
+      }
+
+      for (let si = 0; si < nPhi; si++) {
+        for (let sj = 0; sj < nTheta; sj++) {
+          this.__num_checked_paths += 1;
+
+          // stratified jittered angles within the source directivity limits
+          const phi = ((si + Math.random()) / nPhi) * sourcePhi;
+          const theta = ((sj + Math.random()) / nTheta) * sourceTheta;
+
+          let threeJSAngles: number[] = cramangle2threejsangle(phi, theta);
+          const direction = new THREE.Vector3().setFromSphericalCoords(1, threeJSAngles[0], threeJSAngles[1]);
+          direction.applyEuler(rotation);
+
+          const initialBandEnergy: BandEnergy = new Array(this.frequencies.length);
+          for (let f = 0; f < this.frequencies.length; f++) {
+            let energy = 1;
+            try {
+              const dirPressure = sourceDH.getPressureAtPosition(0, this.frequencies[f], phi, theta);
+              const refPressure = refPressures[f];
+              if (typeof dirPressure === "number" && typeof refPressure === "number" && refPressure > 0) {
+                energy = (dirPressure / refPressure) ** 2;
+              }
+            } catch (e) {
+              // Fallback to unity gain
+            }
+            initialBandEnergy[f] = energy;
+          }
+
+          const path = this.traceRay(position, direction, this.reflectionOrder, initialBandEnergy, sourceId, phi, theta);
+
+          if (path) {
+            this._handleTracedPath(path, position, sourceId);
+          }
+
+          (this.stats.numRaysShot.value as number)++;
+        }
+      }
+    }
+  }
+
+  /** Common path handling for both step() and stepStratified() */
+  _handleTracedPath(path: RayPath, position: THREE.Vector3, sourceId: string) {
+    if (this._runningWithoutReceivers) {
+      this.appendRay(
+        [position.x, position.y, position.z],
+        path.chain[0].point,
+        path.chain[0].energy || 1.0,
+        path.chain[0].angle
+      );
+      for (let j = 1; j < path.chain.length; j++) {
+        this.appendRay(path.chain[j - 1].point, path.chain[j].point, path.chain[j].energy || 1.0, path.chain[j].angle);
+      }
+      const index = path.chain[path.chain.length - 1].object;
+      this.paths[index] ? this.paths[index].push(path) : (this.paths[index] = [path]);
+      (useContainer.getState().containers[sourceId] as Source).numRays += 1;
+    } else if (path.intersectedReceiver) {
+      this.appendRay(
+        [position.x, position.y, position.z],
+        path.chain[0].point,
+        path.chain[0].energy || 1.0,
+        path.chain[0].angle
+      );
+      for (let j = 1; j < path.chain.length; j++) {
+        this.appendRay(path.chain[j - 1].point, path.chain[j].point, path.chain[j].energy || 1.0, path.chain[j].angle);
+      }
+      (this.stats.numValidRayPaths.value as number)++;
+      this.validRayCount += 1;
+      renderer.overlays.global.setCellValue(this.uuid + "-valid-ray-count", this.validRayCount);
+      const receiverId = path.chain[path.chain.length - 1].object;
+      this.paths[receiverId] ? this.paths[receiverId].push(path) : (this.paths[receiverId] = [path]);
+      (useContainer.getState().containers[sourceId] as Source).numRays += 1;
+
+      // Update energy histogram for convergence monitoring
+      this._addToEnergyHistogram(receiverId, path);
+    }
+  }
+
+  /** Add a ray path's energy to the convergence histogram */
+  _addToEnergyHistogram(receiverId: string, path: RayPath) {
+    if (!this._energyHistogram[receiverId]) {
+      this._energyHistogram[receiverId] = [];
+      for (let f = 0; f < this.frequencies.length; f++) {
+        this._energyHistogram[receiverId].push(new Float32Array(this._histogramNumBins));
+      }
+    }
+    // Compute total time from chain distances
+    let totalTime = 0;
+    for (let k = 0; k < path.chain.length; k++) {
+      totalTime += path.chain[k].distance;
+    }
+    totalTime /= this.c;
+    const bin = Math.floor(totalTime / this._histogramBinWidth);
+    if (bin >= 0 && bin < this._histogramNumBins && path.bandEnergy) {
+      for (let f = 0; f < this.frequencies.length; f++) {
+        this._energyHistogram[receiverId][f][bin] += path.bandEnergy[f] || 0;
+      }
+    }
   }
 
   step() {
@@ -1047,11 +1246,118 @@ class RayTracer extends Solver {
     }
   }
 
+  /** Reset convergence state for a new simulation run */
+  _resetConvergenceState() {
+    this.convergenceMetrics = {
+      totalRays: 0,
+      validRays: 0,
+      estimatedT30: new Array(this.frequencies.length).fill(0),
+      t30Mean: new Array(this.frequencies.length).fill(0),
+      t30M2: new Array(this.frequencies.length).fill(0),
+      t30Count: 0,
+      convergenceRatio: Infinity,
+    };
+    this._energyHistogram = {} as KVP<Float32Array[]>;
+    this._lastConvergenceCheck = Date.now();
+  }
+
+  /** Compute T30 from Schroeder backward integration of the energy histogram */
+  _updateConvergenceMetrics() {
+    this.convergenceMetrics.totalRays = this.__num_checked_paths;
+    this.convergenceMetrics.validRays = this.validRayCount;
+
+    // Find first receiver with data
+    const receiverIds = Object.keys(this._energyHistogram);
+    if (receiverIds.length === 0) return;
+
+    const receiverId = receiverIds[0];
+    const histograms = this._energyHistogram[receiverId];
+    if (!histograms || histograms.length === 0) return;
+
+    const numBands = this.frequencies.length;
+    const t30Estimates = new Array(numBands).fill(0);
+
+    for (let f = 0; f < numBands; f++) {
+      const histogram = histograms[f];
+
+      // Find last non-zero bin
+      let lastBin = 0;
+      for (let b = this._histogramNumBins - 1; b >= 0; b--) {
+        if (histogram[b] > 0) { lastBin = b; break; }
+      }
+      if (lastBin < 2) { t30Estimates[f] = 0; continue; }
+
+      // Schroeder backward integration
+      const schroeder = new Float32Array(lastBin + 1);
+      schroeder[lastBin] = histogram[lastBin];
+      for (let b = lastBin - 1; b >= 0; b--) {
+        schroeder[b] = schroeder[b + 1] + histogram[b];
+      }
+
+      // Convert to dB (relative to max)
+      const maxVal = schroeder[0];
+      if (maxVal <= 0) { t30Estimates[f] = 0; continue; }
+
+      // Find -5dB and -35dB points for T30 estimation
+      const db5 = maxVal * Math.pow(10, -5 / 10);
+      const db35 = maxVal * Math.pow(10, -35 / 10);
+      let idx5 = -1, idx35 = -1;
+
+      for (let b = 0; b <= lastBin; b++) {
+        if (idx5 < 0 && schroeder[b] <= db5) idx5 = b;
+        if (idx35 < 0 && schroeder[b] <= db35) idx35 = b;
+      }
+
+      if (idx5 >= 0 && idx35 > idx5) {
+        // Linear regression in log domain between -5dB and -35dB
+        const time5 = idx5 * this._histogramBinWidth;
+        const time35 = idx35 * this._histogramBinWidth;
+        // T30 is time for 30dB decay, extrapolate to 60dB
+        t30Estimates[f] = (time35 - time5) * 2;
+      }
+    }
+
+    this.convergenceMetrics.estimatedT30 = t30Estimates;
+
+    // Welford's online algorithm for running mean and variance
+    this.convergenceMetrics.t30Count += 1;
+    const n = this.convergenceMetrics.t30Count;
+
+    let maxRatio = 0;
+    for (let f = 0; f < numBands; f++) {
+      const val = t30Estimates[f];
+      const oldMean = this.convergenceMetrics.t30Mean[f];
+      const newMean = oldMean + (val - oldMean) / n;
+      const oldM2 = this.convergenceMetrics.t30M2[f];
+      const newM2 = oldM2 + (val - oldMean) * (val - newMean);
+      this.convergenceMetrics.t30Mean[f] = newMean;
+      this.convergenceMetrics.t30M2[f] = newM2;
+
+      // Coefficient of variation: std / mean
+      if (n >= 2 && newMean > 0) {
+        const variance = newM2 / (n - 1);
+        const ratio = Math.sqrt(variance) / newMean;
+        if (ratio > maxRatio) maxRatio = ratio;
+      } else {
+        maxRatio = Infinity;
+      }
+    }
+    this.convergenceMetrics.convergenceRatio = maxRatio;
+
+    // Emit update so UI can display metrics
+    emit("RAYTRACER_SET_PROPERTY", {
+      uuid: this.uuid,
+      property: "convergenceMetrics",
+      value: { ...this.convergenceMetrics }
+    });
+  }
+
   start() {
     this._cachedAirAtt = ac.airAttenuation(this.frequencies, this._temperature);
     this.mapIntersectableObjects();
     this.__start_time = Date.now();
     this.__num_checked_paths = 0;
+    this._resetConvergenceState();
     this.startAllMonteCarlo();
   }
 
