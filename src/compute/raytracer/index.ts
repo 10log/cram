@@ -1919,12 +1919,13 @@ class RayTracer extends Solver {
             }
 
             const raysPerSource = Math.max(1, Math.floor(batchSize / this.sourceIDs.length));
+            const direction = new THREE.Vector3(); // reuse scratch vector
             for (let r = 0; r < raysPerSource && rayIdx < batchSize; r++) {
               const phi = Math.random() * sourcePhi;
               const theta = Math.random() * sourceTheta;
 
               const threeJSAngles = cramangle2threejsangle(phi, theta);
-              const direction = new THREE.Vector3().setFromSphericalCoords(1, threeJSAngles[0], threeJSAngles[1]);
+              direction.setFromSphericalCoords(1, threeJSAngles[0], threeJSAngles[1]);
               direction.applyEuler(rotation);
 
               const off = rayIdx * RAY_INPUT_FLOATS;
