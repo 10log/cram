@@ -186,6 +186,27 @@ const LateReverberation = ({ uuid }: { uuid: string }) => {
   );
 };
 
+const GpuAcceleration = ({ uuid }: { uuid: string }) => {
+  const [open, toggle] = useToggle(false);
+  return (
+    <PropertyRowFolder label="GPU Acceleration" open={open} onOpenClose={toggle}>
+      <PropertyCheckboxInput
+        uuid={uuid}
+        label="Enable GPU"
+        property="gpuEnabled"
+        tooltip="Use WebGPU compute shaders for parallel ray tracing (requires WebGPU browser)"
+      />
+      <PropertyNumberInput
+        uuid={uuid}
+        label="Batch Size"
+        property="gpuBatchSize"
+        tooltip="Number of rays per GPU dispatch"
+        elementProps={{ step: 1000, min: 1000, max: 50000 }}
+      />
+    </PropertyRowFolder>
+  );
+};
+
 const Hybrid = ({ uuid }: { uuid: string}) => {
   const [open, toggle] = useToggle(true);
   return (
@@ -252,6 +273,7 @@ export const RayTracerTab = ({ uuid }: { uuid: string }) => {
   return (
     <div>
       <Parameters uuid={uuid} />
+      <GpuAcceleration uuid={uuid} />
       <SourceReceiverPairs uuid={uuid} />
       <StyleProperties uuid={uuid} />
       <SolverControls uuid={uuid} />

@@ -30,7 +30,8 @@
       "@types/semver",
       "@types/d3",
       "@types/plotly.js",
-      "@types/zip.js"
+      "@types/zip.js",
+      "@webgpu/types"
     ],
 
     "lib": [
