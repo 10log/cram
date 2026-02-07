@@ -32,11 +32,14 @@ import {
   DEFAULT_INTENSITY_SAMPLE_RATE, DEFAULT_INITIAL_SPL,
   RESPONSE_TIME_PADDING, QUICK_ESTIMATE_MAX_ORDER, MAX_DISPLAY_POINTS, RT60_DECAY_RATIO,
   HISTOGRAM_BIN_WIDTH, HISTOGRAM_NUM_BINS, CONVERGENCE_CHECK_INTERVAL_MS,
+  DEFAULT_TAIL_CROSSFADE_DURATION, MIN_TAIL_DECAY_RATE, MAX_TAIL_END_TIME,
 } from "./types";
 
 // Extracted module imports
 import { traceRay as traceRayFn, inFrontOf as inFrontOfFn } from "./ray-core";
 import { arrivalPressure as arrivalPressureFn, calculateImpulseResponseForPair as calcIRForPairFn, calculateImpulseResponseForDisplay as calcIRForDisplayFn } from "./impulse-response";
+import type { TailOptions } from "./impulse-response";
+import { extractDecayParameters, synthesizeTail, assembleFinalIR } from "./tail-synthesis";
 import { reflectionLossFunction as reflectionLossFunctionFn, calculateReflectionLoss as calculateReflectionLossFn, calculateResponseByIntensity as calcResponseByIntensityFn, resampleResponseByIntensity as resampleResponseByIntensityFn, calculateT20 as calculateT20Fn, calculateT30 as calculateT30Fn, calculateT60 as calculateT60Fn } from "./response-by-intensity";
 import { pathsToLinearBuffer as pathsToLinearBufferFn, linearBufferToPaths as linearBufferToPathsFn } from "./serialization";
 import { downloadImpulses as downloadImpulsesFn, playImpulseResponse as playImpulseResponseFn, downloadImpulseResponse as downloadImpulseResponseFn, downloadAmbisonicImpulseResponse as downloadAmbisonicIRFn } from "./export-playback";
@@ -48,13 +51,14 @@ import type { EdgeGraph } from "./diffraction";
 export type {
   QuickEstimateStepResult, RayPathResult, ResponseByIntensity, BandEnergy, Chain,
   RayPath, EnergyTime, ChartData, RayTracerSaveObject, RayTracerParams,
-  ConvergenceMetrics, DrawStyle,
+  ConvergenceMetrics, DrawStyle, DecayParameters,
 } from "./types";
 export {
   ReceiverData, defaults, DRAWSTYLE, normalize,
   SELF_INTERSECTION_OFFSET, DEFAULT_INTENSITY_SAMPLE_RATE, DEFAULT_INITIAL_SPL,
   RESPONSE_TIME_PADDING, QUICK_ESTIMATE_MAX_ORDER, MAX_DISPLAY_POINTS, RT60_DECAY_RATIO,
   HISTOGRAM_BIN_WIDTH, HISTOGRAM_NUM_BINS, CONVERGENCE_CHECK_INTERVAL_MS,
+  DEFAULT_TAIL_CROSSFADE_DURATION, MIN_TAIL_DECAY_RATE, MAX_TAIL_END_TIME,
 } from "./types";
 
 // Webpack 5 native worker support
@@ -132,6 +136,9 @@ class RayTracer extends Solver {
   _directivityRefPressures?: Map<string, number[]>;
   maxStoredPaths: number;
   edgeDiffractionEnabled: boolean;
+  lateReverbTailEnabled: boolean;
+  tailCrossfadeTime: number;
+  tailCrossfadeDuration: number;
   _edgeGraph: EdgeGraph | null;
   private _rafId: number = 0;
 
@@ -196,6 +203,9 @@ class RayTracer extends Solver {
     this.rrThreshold = params.rrThreshold ?? defaults.rrThreshold;
     this.maxStoredPaths = params.maxStoredPaths ?? defaults.maxStoredPaths;
     this.edgeDiffractionEnabled = params.edgeDiffractionEnabled ?? defaults.edgeDiffractionEnabled;
+    this.lateReverbTailEnabled = params.lateReverbTailEnabled ?? defaults.lateReverbTailEnabled;
+    this.tailCrossfadeTime = params.tailCrossfadeTime ?? defaults.tailCrossfadeTime;
+    this.tailCrossfadeDuration = params.tailCrossfadeDuration ?? defaults.tailCrossfadeDuration;
     this._edgeGraph = null;
     this._histogramBinWidth = HISTOGRAM_BIN_WIDTH;
     this._histogramNumBins = HISTOGRAM_NUM_BINS;
@@ -342,6 +352,9 @@ class RayTracer extends Solver {
       rrThreshold,
       maxStoredPaths,
       edgeDiffractionEnabled,
+      lateReverbTailEnabled,
+      tailCrossfadeTime,
+      tailCrossfadeDuration,
     } = this;
     return {
       name,
@@ -369,6 +382,9 @@ class RayTracer extends Solver {
       rrThreshold,
       maxStoredPaths,
       edgeDiffractionEnabled,
+      lateReverbTailEnabled,
+      tailCrossfadeTime,
+      tailCrossfadeDuration,
     };
   }
 
@@ -1240,11 +1256,31 @@ class RayTracer extends Solver {
   }
 
   async calculateImpulseResponseForPair(sourceId: string, receiverId: string, paths: RayPath[], initialSPL = DEFAULT_INITIAL_SPL, frequencies = this.frequencies, sampleRate = audioEngine.sampleRate): Promise<{ signal: Float32Array; normalizedSignal: Float32Array }> {
-    return calcIRForPairFn(sourceId, receiverId, paths, initialSPL, frequencies, this.temperature, sampleRate);
+    let tailOptions: TailOptions | undefined;
+    if (this.lateReverbTailEnabled && this._energyHistogram[receiverId]) {
+      tailOptions = {
+        energyHistogram: this._energyHistogram[receiverId],
+        crossfadeTime: this.tailCrossfadeTime,
+        crossfadeDuration: this.tailCrossfadeDuration,
+        histogramBinWidth: this._histogramBinWidth,
+        frequencies,
+      };
+    }
+    return calcIRForPairFn(sourceId, receiverId, paths, initialSPL, frequencies, this.temperature, sampleRate, tailOptions);
   }
 
   async calculateImpulseResponseForDisplay(initialSPL = DEFAULT_INITIAL_SPL, frequencies = this.frequencies, sampleRate = audioEngine.sampleRate): Promise<{ signal: Float32Array; normalizedSignal: Float32Array }> {
-    return calcIRForDisplayFn(this.receiverIDs, this.sourceIDs, this.paths, initialSPL, frequencies, this.temperature, sampleRate);
+    let tailOptions: TailOptions | undefined;
+    if (this.lateReverbTailEnabled && this.receiverIDs.length > 0 && this._energyHistogram[this.receiverIDs[0]]) {
+      tailOptions = {
+        energyHistogram: this._energyHistogram[this.receiverIDs[0]],
+        crossfadeTime: this.tailCrossfadeTime,
+        crossfadeDuration: this.tailCrossfadeDuration,
+        histogramBinWidth: this._histogramBinWidth,
+        frequencies,
+      };
+    }
+    return calcIRForDisplayFn(this.receiverIDs, this.sourceIDs, this.paths, initialSPL, frequencies, this.temperature, sampleRate, tailOptions);
   }
   clearRays() {
     if (this.room) {
@@ -1396,7 +1432,7 @@ class RayTracer extends Solver {
     // doubled the number of samples to mitigate the signal reversing
     const numberOfSamples = floor(sampleRate * totalTime) * 2;
 
-    let samples: Array<Float32Array> = []; 
+    let samples: Array<Float32Array> = [];
     for(let f = 0; f<frequencies.length; f++){
       samples.push(new Float32Array(numberOfSamples));
     }
@@ -1451,6 +1487,30 @@ class RayTracer extends Solver {
 
       for(let f = 0; f<frequencies.length; f++){
           samples[f][roundedSample] += p[f];
+      }
+    }
+
+    // Apply late reverberation tail synthesis if enabled
+    if (this.lateReverbTailEnabled && this._energyHistogram[this.receiverIDs[0]]) {
+      const decayParams = extractDecayParameters(
+        this._energyHistogram[this.receiverIDs[0]], frequencies,
+        this.tailCrossfadeTime, this._histogramBinWidth
+      );
+      const { tailSamples, tailStartSample } = synthesizeTail(
+        decayParams, sampleRate
+      );
+      const crossfadeDurationSamples = floor(this.tailCrossfadeDuration * sampleRate);
+      samples = assembleFinalIR(samples, tailSamples, tailStartSample, crossfadeDurationSamples);
+
+      // Re-pad for FFT
+      const maxLen = samples.reduce((m, s) => Math.max(m, s.length), 0);
+      const paddedLength = maxLen * 2;
+      for (let f = 0; f < frequencies.length; f++) {
+        if (samples[f].length < paddedLength) {
+          const padded = new Float32Array(paddedLength);
+          padded.set(samples[f]);
+          samples[f] = padded;
+        }
       }
     }
 
@@ -1560,6 +1620,45 @@ class RayTracer extends Solver {
         // Add to the output buffers
         for (let ch = 0; ch < nCh; ch++) {
           samples[f][ch][roundedSample] += encoded[ch][0];
+        }
+      }
+    }
+
+    // Apply late reverberation tail synthesis to W channel (ch=0) only.
+    // Late reverb is diffuse and directionless — only the omnidirectional channel needs extension.
+    if (this.lateReverbTailEnabled && this._energyHistogram[this.receiverIDs[0]]) {
+      const decayParams = extractDecayParameters(
+        this._energyHistogram[this.receiverIDs[0]], frequencies,
+        this.tailCrossfadeTime, this._histogramBinWidth
+      );
+      const { tailSamples, tailStartSample } = synthesizeTail(
+        decayParams, sampleRate
+      );
+      const crossfadeDurationSamples = floor(this.tailCrossfadeDuration * sampleRate);
+
+      // Extend W channel (ch=0) for each frequency band
+      for (let f = 0; f < frequencies.length; f++) {
+        const wChannel = [samples[f][0]];
+        const tailForBand = [tailSamples[f]];
+        const extended = assembleFinalIR(wChannel, tailForBand, tailStartSample, crossfadeDurationSamples);
+        samples[f][0] = extended[0];
+      }
+
+      // Re-pad all [f][ch] buffers to 2 * maxLen for the FilterWorker double-length contract
+      let maxLen = 0;
+      for (let f = 0; f < frequencies.length; f++) {
+        for (let ch = 0; ch < nCh; ch++) {
+          if (samples[f][ch].length > maxLen) maxLen = samples[f][ch].length;
+        }
+      }
+      const targetLen = maxLen * 2;
+      for (let f = 0; f < frequencies.length; f++) {
+        for (let ch = 0; ch < nCh; ch++) {
+          if (samples[f][ch].length < targetLen) {
+            const padded = new Float32Array(targetLen);
+            padded.set(samples[f][ch]);
+            samples[f][ch] = padded;
+          }
         }
       }
     }

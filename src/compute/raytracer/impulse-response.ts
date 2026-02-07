@@ -4,8 +4,17 @@ import Receiver from "../../objects/receiver";
 import { useContainer } from "../../store";
 import { audioEngine } from "../../audio-engine/audio-engine";
 import { RayPath, normalize, RESPONSE_TIME_PADDING, DEFAULT_INITIAL_SPL } from "./types";
+import { extractDecayParameters, synthesizeTail, assembleFinalIR } from "./tail-synthesis";
 
-const { floor, abs } = Math;
+export interface TailOptions {
+  energyHistogram: Float32Array[];
+  crossfadeTime: number;
+  crossfadeDuration: number;
+  histogramBinWidth: number;
+  frequencies: number[];
+}
+
+const { floor, abs, max: mathMax } = Math;
 const coinFlip = () => Math.random() > 0.5;
 
 // Webpack 5 native worker support
@@ -65,6 +74,7 @@ export async function calculateImpulseResponseForPair(
   frequencies: number[],
   temperature: number,
   sampleRate = audioEngine.sampleRate,
+  tailOptions?: TailOptions,
 ): Promise<{ signal: Float32Array; normalizedSignal: Float32Array }> {
   if (paths.length === 0) throw Error("No rays have been traced for this pair");
 
@@ -93,6 +103,30 @@ export async function calculateImpulseResponseForPair(
 
     for (let f = 0; f < frequencies.length; f++) {
       samples[f][roundedSample] += p[f];
+    }
+  }
+
+  // Apply late reverberation tail synthesis if enabled
+  if (tailOptions && tailOptions.energyHistogram && tailOptions.energyHistogram.length > 0) {
+    const decayParams = extractDecayParameters(
+      tailOptions.energyHistogram, tailOptions.frequencies,
+      tailOptions.crossfadeTime, tailOptions.histogramBinWidth
+    );
+    const { tailSamples, tailStartSample } = synthesizeTail(
+      decayParams, sampleRate
+    );
+    const crossfadeDurationSamples = floor(tailOptions.crossfadeDuration * sampleRate);
+    samples = assembleFinalIR(samples, tailSamples, tailStartSample, crossfadeDurationSamples);
+
+    // Re-pad for FFT: ensure samples are doubled for the filter worker
+    const maxLen = samples.reduce((m, s) => mathMax(m, s.length), 0);
+    const paddedLength = maxLen * 2;
+    for (let f = 0; f < frequencies.length; f++) {
+      if (samples[f].length < paddedLength) {
+        const padded = new Float32Array(paddedLength);
+        padded.set(samples[f]);
+        samples[f] = padded;
+      }
     }
   }
 
@@ -131,6 +165,7 @@ export async function calculateImpulseResponseForDisplay(
   frequencies: number[],
   temperature: number,
   sampleRate = audioEngine.sampleRate,
+  tailOptions?: TailOptions,
 ): Promise<{ signal: Float32Array; normalizedSignal: Float32Array }> {
   if (receiverIDs.length == 0) throw Error("No receivers have been assigned to the raytracer");
   if (sourceIDs.length == 0) throw Error("No sources have been assigned to the raytracer");
@@ -161,6 +196,30 @@ export async function calculateImpulseResponseForDisplay(
 
     for (let f = 0; f < frequencies.length; f++) {
       samples[f][roundedSample] += p[f];
+    }
+  }
+
+  // Apply late reverberation tail synthesis if enabled
+  if (tailOptions && tailOptions.energyHistogram && tailOptions.energyHistogram.length > 0) {
+    const decayParams = extractDecayParameters(
+      tailOptions.energyHistogram, tailOptions.frequencies,
+      tailOptions.crossfadeTime, tailOptions.histogramBinWidth
+    );
+    const { tailSamples, tailStartSample } = synthesizeTail(
+      decayParams, sampleRate
+    );
+    const crossfadeDurationSamples = floor(tailOptions.crossfadeDuration * sampleRate);
+    samples = assembleFinalIR(samples, tailSamples, tailStartSample, crossfadeDurationSamples);
+
+    // Re-pad for FFT
+    const maxLen = samples.reduce((m, s) => mathMax(m, s.length), 0);
+    const paddedLength = maxLen * 2;
+    for (let f = 0; f < frequencies.length; f++) {
+      if (samples[f].length < paddedLength) {
+        const padded = new Float32Array(paddedLength);
+        padded.set(samples[f]);
+        samples[f] = padded;
+      }
     }
   }
 
