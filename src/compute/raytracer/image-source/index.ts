@@ -1,4 +1,3 @@
-// @ts-nocheck
 import Solver from "../../solver";
 import { renderer } from "../../../render/renderer";
 import { v4 as uuid } from 'uuid';
@@ -11,7 +10,6 @@ import Source from "../../../objects/source";
 import Receiver from "../../../objects/receiver";
 import { Vector3 } from "three";
 import Surface from "../../../objects/surface";
-import { intersection } from "lodash";
 import { addSolver, removeSolver, Result, ResultKind, ResultTypes, setSolverProperty, useResult, useSolver } from "../../../store";
 import {useContainer} from '../../../store';
 import { pickProps } from "../../../common/helpers";
@@ -20,7 +18,7 @@ import FileSaver from 'file-saver';
 import { audioEngine } from "../../../audio-engine/audio-engine";
 
 function createLine(){
-  let points = [];
+  let points: THREE.Vector3[] = [];
   const line = new MeshLine();
   line.setPoints(points);
   const material = new MeshLineMaterial({
@@ -154,19 +152,19 @@ class ImageSource{
 
 }
 
-interface intersection{
-  point: Vector3; 
+interface IntersectionPoint {
+  point: Vector3;
   reflectingSurface: Surface | null;
-  angle: number | null; 
+  angle: number | null;
 }
 
 class ImageSourcePath{
 
-  public path: intersection[]; 
-  public uuid; 
-  public highlight; 
-  
-  constructor(path: intersection[]){
+  public path: IntersectionPoint[];
+  public uuid;
+  public highlight;
+
+  constructor(path: IntersectionPoint[]){
     this.path = path; 
     this.uuid = uuid(); 
     this.highlight = false; 
@@ -208,7 +206,6 @@ class ImageSourcePath{
           let trueIntersections = [];
           for(let i = 0; i<intersections.length; i++){
             if(segmentStart.distanceTo(intersections[i].point) < segmentStart.distanceTo(segmentEnd)){
-              //@ts-ignore
               trueIntersections.push(intersections[i]);
             }
           }
@@ -259,7 +256,7 @@ class ImageSourcePath{
     }
 
     // convert back to SPL
-    let arrivalLp = ac.P2Lp(ac.I2P(intensity));
+    let arrivalLp = ac.P2Lp(ac.I2P(intensity)) as number[];
 
     // apply air absorption (dB/m)
     const airAttenuationdB = ac.airAttenuation(freqs, temperature);
@@ -351,7 +348,7 @@ export class ImageSourceSolver extends Solver {
     validRayPaths: ImageSourcePath[] | null; 
     allRayPaths: ImageSourcePath[] | null; 
 
-    selectedImageSourcePath: MeshLine;
+    selectedImageSourcePath: THREE.Mesh;
 
     private _plotFrequency: number; 
 
@@ -434,8 +431,8 @@ export class ImageSourceSolver extends Solver {
     }
 
     updateSelectedImageSourcePath(imageSourcePath: ImageSourcePath){
-      (this.selectedImageSourcePath.geometry as MeshLine).setPoints(
-        imageSourcePath.path.map(x=>x.point.toArray()).flat()
+      (this.selectedImageSourcePath.geometry as unknown as MeshLine).setPoints(
+        new Float32Array(imageSourcePath.path.map(x=>x.point.toArray()).flat())
       );
       // (this.selectedImageSourcePath.geometry as LineGeometry).setFromPoints(
       //   imageSourcePath.path.map(x=>x.point)
@@ -575,8 +572,8 @@ export class ImageSourceSolver extends Solver {
         // assign base image source
         let is_params: ImageSourceParams = {
           baseSource: source.clone(),
-          position: source.position.clone(), 
-          room: room, 
+          position: source.position.clone(),
+          room: this.room,
           reflector: null,
           parent: null, 
           order: 0, 
@@ -626,7 +623,7 @@ export class ImageSourceSolver extends Solver {
       this.allRayPaths = null;  
       this.validRayPaths = null; 
       this.plotOrders = (this.possibleOrders).map((e)=>e.value); 
-      (this.selectedImageSourcePath.geometry as MeshLine).setPoints([]); 
+      (this.selectedImageSourcePath.geometry as unknown as MeshLine).setPoints(new Float32Array(0));
       this.clearImageSources(); 
       this.clearRayPaths(); 
       this.clearLevelTimeProgressionData();
@@ -668,8 +665,7 @@ export class ImageSourceSolver extends Solver {
         for(let i = 0; i<this.validRayPaths.length; i++){
           if(rayPathUUID === this.validRayPaths[i].uuid){
             this.updateSelectedImageSourcePath(this.validRayPaths[i])
-            //@ts-ignore
-            console.log("WILL HIGHLIGHT RAY PATH WITH ARRIVAL SPL " + ac.P2Lp(this.validRayPaths[i].arrivalPressure([100], [1000], this.temperature) as number) + " AND ARRIVAL TIME " + this.validRayPaths[i].arrivalTime(this.c));
+            console.log("WILL HIGHLIGHT RAY PATH WITH ARRIVAL SPL " + ac.P2Lp(this.validRayPaths[i].arrivalPressure([100], [1000], this.temperature)) + " AND ARRIVAL TIME " + this.validRayPaths[i].arrivalTime(this.c));
             break;
           }
         }
@@ -981,42 +977,42 @@ function constructImageSourcePath(is: ImageSource, listener: Receiver): ImageSou
   // note: will return null if no valid path
   // otherwise, will return ImageSourcePath object representing path 
 
-  let path: intersection[] = []; 
-  
-  let maxOrder = is.order; 
+  let path: IntersectionPoint[] = [];
 
-  let listenerStart: intersection = {
+  let maxOrder = is.order;
+
+  let listenerStart: IntersectionPoint = {
     point: listener.position.clone(),
-    reflectingSurface: null, 
+    reflectingSurface: null,
     angle: null,
   }
-  path[maxOrder+1] = listenerStart; 
+  path[maxOrder+1] = listenerStart;
 
-  let raycaster = new THREE.Raycaster(); 
+  let raycaster = new THREE.Raycaster();
 
   for(let order = maxOrder; order>=1; order--){
-    let nextPosition: Vector3 = is.position.clone(); 
-    let lastPosition: Vector3 = (path[order+1]).point.clone(); 
+    let nextPosition: Vector3 = is.position.clone();
+    let lastPosition: Vector3 = (path[order+1]).point.clone();
 
     let direction: Vector3 = new Vector3(0,0,0); // from current image source to last image source / receiver
     direction.subVectors(nextPosition, lastPosition);
-    direction.normalize(); 
+    direction.normalize();
 
     raycaster.set(lastPosition,direction);
-    let intersections;
-    if(is.reflector !== null){
-      intersections = raycaster.intersectObject(is.reflector.mesh,true);
+    if(is.reflector === null){
+      return null; // no valid path
     }
-    
+    const intersections = raycaster.intersectObject(is.reflector.mesh,true);
+
     if(intersections.length>0){
-      
-      let intersect: intersection = {
-        point: intersections[0].point, 
+
+      let intersect: IntersectionPoint = {
+        point: intersections[0].point,
         reflectingSurface: is.reflector,
         angle: direction.clone().multiplyScalar(-1).angleTo(intersections[0].face!.normal),
       };
 
-      path[order] = intersect; 
+      path[order] = intersect;
     }else{
       return null; // no valid path
     }
@@ -1027,10 +1023,10 @@ function constructImageSourcePath(is: ImageSource, listener: Receiver): ImageSou
 
   }
 
-  let sourceEnd: intersection = {
-    point: is.position.clone(),  
-    reflectingSurface: null, 
-    angle: null, 
+  let sourceEnd: IntersectionPoint = {
+    point: is.position.clone(),
+    reflectingSurface: null,
+    angle: null,
   };
 
   path[0] = sourceEnd; 

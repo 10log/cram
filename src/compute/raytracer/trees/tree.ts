@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Node } from './node';
 import { PolygonTreeNode } from "./polygon-tree-node";
 
@@ -10,7 +9,7 @@ import { PolygonTreeNode } from "./polygon-tree-node";
 export class Tree {
   polygonTree: PolygonTreeNode;
   rootnode: Node;
-  constructor(polygons) {
+  constructor(polygons: any[]) {
     this.polygonTree = new PolygonTreeNode();
     this.rootnode = new Node();
     if (polygons) {
@@ -25,18 +24,18 @@ export class Tree {
 
   // Remove all polygons in this BSP tree that are inside the other BSP tree
   // `tree`.
-  clipTo(tree, alsoRemovecoplanarFront) {
+  clipTo(tree: Tree, alsoRemovecoplanarFront: boolean) {
     alsoRemovecoplanarFront = !!alsoRemovecoplanarFront;
     this.rootnode.clipTo(tree, alsoRemovecoplanarFront);
   }
 
   allPolygons() {
-    let result = [];
+    let result: any[] = [];
     this.polygonTree.getPolygons(result);
     return result;
   }
 
-  addPolygons(polygons) {
+  addPolygons(polygons: any[]) {
     let polygontreenodes = new Array(polygons.length);
     for (let i = 0; i < polygons.length; i++) {
       polygontreenodes[i] = this.polygonTree.addChild(polygons[i]);

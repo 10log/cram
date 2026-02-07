@@ -21,6 +21,11 @@ describe('traceRay frequency propagation', () => {
     'utf8'
   );
 
+  const rayCoreSource = fs.readFileSync(
+    path.resolve(__dirname, '..', 'ray-core.ts'),
+    'utf8'
+  );
+
   it('traceRay signature uses bandEnergy instead of scalar frequency', () => {
     // The traceRay method should have bandEnergy in its signature
     const signatureMatch = source.match(/traceRay\(([\s\S]*?)\)\s*\{/);
@@ -34,7 +39,7 @@ describe('traceRay frequency propagation', () => {
 
   it('recursive traceRay call passes newBandEnergy, not a scalar', () => {
     // Match the recursive call: `return this.traceRay(` ... `);`
-    const match = source.match(/return\s+this\.traceRay\(([\s\S]*?)\);/);
+    const match = rayCoreSource.match(/return\s+traceRay\(([\s\S]*?)\);/);
     expect(match).not.toBeNull();
 
     const argString = match![1];

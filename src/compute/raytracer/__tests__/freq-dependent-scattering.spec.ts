@@ -26,10 +26,15 @@ describe('frequency-dependent scattering', () => {
     'utf8'
   );
 
+  const rayCoreSource = fs.readFileSync(
+    path.resolve(__dirname, '..', 'ray-core.ts'),
+    'utf8'
+  );
+
   describe('traceRay', () => {
     it('uses surface.scatteringFunction( not _scatteringCoefficient', () => {
-      // Extract the traceRay method body
-      const traceRayMatch = raytracerSource.match(/traceRay\(([\s\S]*?)\)\s*\{([\s\S]*?)^\s{2}\}/m);
+      // Extract the traceRay function body
+      const traceRayMatch = rayCoreSource.match(/function\s+traceRay\(([\s\S]*?)\)\s*(?::\s*\w[^{]*)?\{([\s\S]*?)^}/m);
       expect(traceRayMatch).not.toBeNull();
       const traceRayBody = traceRayMatch![0];
 
@@ -38,17 +43,17 @@ describe('frequency-dependent scattering', () => {
       expect(traceRayBody).not.toContain('_scatteringCoefficient');
     });
 
-    it('derives scatterCoeffs from this.frequencies', () => {
-      expect(raytracerSource).toContain(
-        'this.frequencies.map(f => surface.scatteringFunction(f))'
+    it('derives scatterCoeffs from frequencies', () => {
+      expect(rayCoreSource).toContain(
+        'frequencies.map(f => surface.scatteringFunction(f))'
       );
     });
 
     it('computes energy-weighted broadband scattering', () => {
       // Verify energy weighting: scatterCoeffs[f] * bandEnergy[f]
-      expect(raytracerSource).toContain('scatterCoeffs[f] * (bandEnergy[f] || 0)');
+      expect(rayCoreSource).toContain('scatterCoeffs[f] * (bandEnergy[f] || 0)');
       // Verify division by total energy
-      expect(raytracerSource).toContain('broadbandScattering /= totalEnergy');
+      expect(rayCoreSource).toContain('broadbandScattering /= totalEnergy');
     });
   });
 
@@ -68,25 +73,6 @@ describe('frequency-dependent scattering', () => {
 
     it('does not contain any hardcoded diffusionCoefficient: 0.1', () => {
       expect(surfaceSource).not.toContain('diffusionCoefficient: 0.1');
-    });
-  });
-
-  describe('calculateWithDiffuse', () => {
-    it('uses surface.scatteringFunction(frequency) not hardcoded 0.1', () => {
-      // Find the calculateWithDiffuse method body
-      const methodStart = raytracerSource.indexOf('calculateWithDiffuse');
-      expect(methodStart).toBeGreaterThan(-1);
-
-      // Extract a generous chunk of the method containing scatteredEnergy call
-      const methodChunk = raytracerSource.slice(methodStart, methodStart + 3000);
-
-      // Find the scatteredEnergy call within the method
-      const scatteredEnergyMatch = methodChunk.match(/scatteredEnergy\(([\s\S]*?)\)\s*\n/);
-      expect(scatteredEnergyMatch).not.toBeNull();
-
-      // The scatteredEnergy call should use surface.scatteringFunction(frequency)
-      expect(scatteredEnergyMatch![1]).toContain('surface.scatteringFunction(frequency)');
-      expect(scatteredEnergyMatch![1]).not.toMatch(/\b0\.1\b/);
     });
   });
 

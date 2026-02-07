@@ -15,53 +15,68 @@ describe('per-band energy tracking', () => {
     'utf8'
   );
 
+  const typesSource = fs.readFileSync(
+    path.resolve(__dirname, '..', 'types.ts'),
+    'utf8'
+  );
+
+  const rayCoreSource = fs.readFileSync(
+    path.resolve(__dirname, '..', 'ray-core.ts'),
+    'utf8'
+  );
+
+  const impulseResponseSource = fs.readFileSync(
+    path.resolve(__dirname, '..', 'impulse-response.ts'),
+    'utf8'
+  );
+
   it('traceRay signature includes bandEnergy parameter', () => {
-    const signatureMatch = source.match(/traceRay\(([\s\S]*?)\)\s*\{/);
+    const signatureMatch = rayCoreSource.match(/traceRay\(([\s\S]*?)\)\s*\{/);
     expect(signatureMatch).not.toBeNull();
     expect(signatureMatch![1]).toContain('bandEnergy: BandEnergy');
   });
 
-  it('reflection loss iterates over this.frequencies', () => {
-    // The per-band reflection calculation should iterate over this.frequencies
-    expect(source).toMatch(/this\.frequencies\.map\(\(frequency, f\)/);
-    expect(source).toMatch(/surface\.reflectionFunction\(frequency, angle/);
+  it('reflection loss iterates over frequencies', () => {
+    // The per-band reflection calculation should iterate over frequencies
+    expect(rayCoreSource).toMatch(/frequencies\.map\(\(frequency, f\)/);
+    expect(rayCoreSource).toMatch(/surface\.reflectionFunction\(frequency, angle/);
   });
 
   it('termination uses Math.max(...newBandEnergy)', () => {
-    expect(source).toContain('Math.max(...newBandEnergy)');
+    expect(rayCoreSource).toContain('Math.max(...newBandEnergy)');
   });
 
   it('receiver chain entry includes bandEnergy, RayPath return includes bandEnergy', () => {
     // At least one chain.push (receiver hit) should include bandEnergy
-    const chainPushes = source.match(/chain\.push\(\{[\s\S]*?\}\)/g);
+    const chainPushes = rayCoreSource.match(/chain\.push\(\{[\s\S]*?\}\)/g);
     expect(chainPushes).not.toBeNull();
     const hasBandEnergy = chainPushes!.some(push => push.includes('bandEnergy'));
     expect(hasBandEnergy).toBe(true);
 
     // The RayPath return should include bandEnergy
-    const returnMatch = source.match(/return\s*\{[\s\S]*?intersectedReceiver:\s*true[\s\S]*?\}\s*as\s*RayPath/);
+    const returnMatch = rayCoreSource.match(/return\s*\{[\s\S]*?intersectedReceiver:\s*true[\s\S]*?\}\s*as\s*RayPath/);
     expect(returnMatch).not.toBeNull();
     expect(returnMatch![0]).toContain('bandEnergy');
   });
 
   it('arrivalPressure has a path.bandEnergy fast path', () => {
-    expect(source).toContain('path.bandEnergy && path.bandEnergy.length === freqs.length');
+    expect(impulseResponseSource).toContain('path.bandEnergy && path.bandEnergy.length === freqs.length');
   });
 
   it('BandEnergy type is exported', () => {
-    expect(source).toMatch(/export\s+type\s+BandEnergy\s*=\s*number\[\]/);
+    expect(typesSource).toMatch(/export\s+type\s+BandEnergy\s*=\s*number\[\]/);
   });
 
   it('RayPath interface includes optional bandEnergy', () => {
     // Extract the RayPath interface block
-    const rayPathMatch = source.match(/export\s+interface\s+RayPath\s*\{([\s\S]*?)\}/);
+    const rayPathMatch = typesSource.match(/export\s+interface\s+RayPath\s*\{([\s\S]*?)\}/);
     expect(rayPathMatch).not.toBeNull();
     expect(rayPathMatch![1]).toContain('bandEnergy?: BandEnergy');
   });
 
   it('Chain interface includes optional bandEnergy', () => {
     // Extract the Chain interface block
-    const chainMatch = source.match(/export\s+interface\s+Chain\s*\{([\s\S]*?)\}/);
+    const chainMatch = typesSource.match(/export\s+interface\s+Chain\s*\{([\s\S]*?)\}/);
     expect(chainMatch).not.toBeNull();
     expect(chainMatch![1]).toContain('bandEnergy?: BandEnergy');
   });

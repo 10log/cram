@@ -1,7 +1,12 @@
 import { KVP } from "../../common/key-value-pair";
 import { RayPath, Chain } from "./types";
 
-export function pathsToLinearBuffer(paths: KVP<RayPath[]>): Float32Array {
+// ── V2 magic number for format detection ─────────────────────────────
+const V2_MAGIC = -2.0;
+
+// ── V1 format (legacy, kept for backward compatibility) ──────────────
+
+function pathsToLinearBufferV1(paths: KVP<RayPath[]>): Float32Array {
   const uuidToLinearBuffer = (uuid: string) => uuid.split("").map((x: string) => x.charCodeAt(0));
   const chainArrayToLinearBuffer = (chainArray: Chain[]) => {
     return chainArray
@@ -39,7 +44,7 @@ export function pathsToLinearBuffer(paths: KVP<RayPath[]>): Float32Array {
   return buffer;
 }
 
-export function linearBufferToPaths(linearBuffer: Float32Array): KVP<RayPath[]> {
+function linearBufferToPathsV1(linearBuffer: Float32Array): KVP<RayPath[]> {
   const uuidLength = 36;
   const chainItemLength = 47;
   const decodeUUID = (buffer: Float32Array) => String.fromCharCode(...buffer);
@@ -98,3 +103,204 @@ export function linearBufferToPaths(linearBuffer: Float32Array): KVP<RayPath[]> 
   }
   return pathsObj;
 }
+
+// ── V2 format (compact binary with UUID lookup table) ────────────────
+//
+// Layout:
+//   [MAGIC=-2.0] [numUUIDs]
+//   [uuid0_c0..uuid0_c35] [uuid1_c0..uuid1_c35] ...   (lookup table)
+//   [receiverIdx] [pathBufLen]
+//     [sourceIdx] [chainLen] [time] [isReceiver] [energy]
+//       [objectIdx] [angle] [dist] [energy] [faceIdx] [matIdx] [nx] [ny] [nz] [px] [py] [pz]
+//     ...
+//   ...
+//
+// Per chain entry: 12 floats (vs 47 in V1). ~75% reduction.
+
+function pathsToLinearBufferV2(paths: KVP<RayPath[]>): Float32Array {
+  // Build UUID lookup table
+  const uuidSet = new Set<string>();
+  for (const key of Object.keys(paths)) {
+    uuidSet.add(key);
+    for (const path of paths[key]) {
+      uuidSet.add(path.source);
+      for (const chain of path.chain) {
+        uuidSet.add(chain.object);
+      }
+    }
+  }
+  const uuidList = Array.from(uuidSet);
+  const uuidToIndex = new Map<string, number>();
+  for (let i = 0; i < uuidList.length; i++) {
+    uuidToIndex.set(uuidList[i], i);
+  }
+
+  // Pre-calculate total size
+  const uuidTableSize = 2 + uuidList.length * 36; // magic + numUUIDs + all UUID chars
+  let dataSize = 0;
+  for (const key of Object.keys(paths)) {
+    // receiverIdx + pathBufLen
+    dataSize += 2;
+    for (const path of paths[key]) {
+      // sourceIdx + chainLen + time + isReceiver + energy
+      dataSize += 5;
+      // 12 floats per chain entry
+      dataSize += path.chain.length * 12;
+    }
+  }
+
+  const buffer = new Float32Array(uuidTableSize + dataSize);
+  let o = 0;
+
+  // Write header
+  buffer[o++] = V2_MAGIC;
+  buffer[o++] = uuidList.length;
+
+  // Write UUID lookup table
+  for (const uuid of uuidList) {
+    for (let c = 0; c < 36; c++) {
+      buffer[o++] = uuid.charCodeAt(c);
+    }
+  }
+
+  // Write path data
+  for (const key of Object.keys(paths)) {
+    buffer[o++] = uuidToIndex.get(key)!;
+
+    // Calculate path buffer length for this receiver
+    let pathBufLen = 0;
+    for (const path of paths[key]) {
+      pathBufLen += 5 + path.chain.length * 12;
+    }
+    buffer[o++] = pathBufLen;
+
+    for (const path of paths[key]) {
+      buffer[o++] = uuidToIndex.get(path.source)!;
+      buffer[o++] = path.chain.length;
+      buffer[o++] = path.time;
+      buffer[o++] = Number(path.intersectedReceiver);
+      buffer[o++] = path.energy;
+
+      for (const chain of path.chain) {
+        buffer[o++] = uuidToIndex.get(chain.object)!;
+        buffer[o++] = chain.angle;
+        buffer[o++] = chain.distance;
+        buffer[o++] = chain.energy;
+        buffer[o++] = chain.faceIndex;
+        buffer[o++] = chain.faceMaterialIndex;
+        buffer[o++] = chain.faceNormal[0];
+        buffer[o++] = chain.faceNormal[1];
+        buffer[o++] = chain.faceNormal[2];
+        buffer[o++] = chain.point[0];
+        buffer[o++] = chain.point[1];
+        buffer[o++] = chain.point[2];
+      }
+    }
+  }
+
+  return buffer;
+}
+
+function linearBufferToPathsV2(linearBuffer: Float32Array): KVP<RayPath[]> {
+  let o = 0;
+
+  // Read header
+  o++; // skip magic
+  const numUUIDs = linearBuffer[o++];
+
+  // Validate header
+  if (!Number.isFinite(numUUIDs) || numUUIDs < 0 || numUUIDs !== (numUUIDs | 0)) {
+    throw new Error('Invalid V2 buffer: bad numUUIDs');
+  }
+  if (o + numUUIDs * 36 > linearBuffer.length) {
+    throw new Error('Invalid V2 buffer: UUID table exceeds buffer length');
+  }
+
+  // Read UUID lookup table
+  const uuidList: string[] = [];
+  for (let i = 0; i < numUUIDs; i++) {
+    const chars: number[] = [];
+    for (let c = 0; c < 36; c++) {
+      chars.push(linearBuffer[o++]);
+    }
+    uuidList.push(String.fromCharCode(...chars));
+  }
+
+  // Read path data
+  const pathsObj = {} as KVP<RayPath[]>;
+  while (o < linearBuffer.length) {
+    const receiverIdx = linearBuffer[o++];
+    if (receiverIdx < 0 || receiverIdx >= uuidList.length) {
+      throw new Error('Invalid V2 buffer: receiver index out of range');
+    }
+    const receiverUuid = uuidList[receiverIdx];
+    const pathBufLen = linearBuffer[o++];
+    if (!Number.isFinite(pathBufLen) || pathBufLen < 0) {
+      throw new Error('Invalid V2 buffer: bad pathBufLen');
+    }
+    const endOffset = Math.min(o + pathBufLen, linearBuffer.length);
+
+    const paths = [] as RayPath[];
+    while (o < endOffset) {
+      const source = uuidList[linearBuffer[o++]];
+      const chainLength = linearBuffer[o++];
+      const time = linearBuffer[o++];
+      const intersectedReceiver = Boolean(linearBuffer[o++]);
+      const energy = linearBuffer[o++];
+
+      const chain = [] as Chain[];
+      for (let i = 0; i < chainLength; i++) {
+        const object = uuidList[linearBuffer[o++]];
+        const angle = linearBuffer[o++];
+        const distance = linearBuffer[o++];
+        const chainEnergy = linearBuffer[o++];
+        const faceIndex = linearBuffer[o++];
+        const faceMaterialIndex = linearBuffer[o++];
+        const faceNormal: [number, number, number] = [linearBuffer[o++], linearBuffer[o++], linearBuffer[o++]];
+        const point: [number, number, number] = [linearBuffer[o++], linearBuffer[o++], linearBuffer[o++]];
+        chain.push({
+          object,
+          angle,
+          distance,
+          energy: chainEnergy,
+          faceIndex,
+          faceMaterialIndex,
+          faceNormal,
+          point,
+        } as Chain);
+      }
+
+      paths.push({
+        source,
+        chainLength,
+        time,
+        intersectedReceiver,
+        energy,
+        chain,
+      } as RayPath);
+    }
+
+    pathsObj[receiverUuid] = paths;
+  }
+
+  return pathsObj;
+}
+
+// ── Public API with auto-detection ───────────────────────────────────
+
+export function pathsToLinearBuffer(paths: KVP<RayPath[]>): Float32Array {
+  return pathsToLinearBufferV2(paths);
+}
+
+export function linearBufferToPaths(linearBuffer: Float32Array): KVP<RayPath[]> {
+  if (linearBuffer.length === 0) return {} as KVP<RayPath[]>;
+
+  // V1 detection: first byte is a UUID charCode (48-122); V2: first byte is -2.0
+  if (linearBuffer[0] === V2_MAGIC) {
+    return linearBufferToPathsV2(linearBuffer);
+  }
+  return linearBufferToPathsV1(linearBuffer);
+}
+
+// Expose V1 for backward-compat testing
+export { pathsToLinearBufferV1, linearBufferToPathsV1 };
