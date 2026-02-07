@@ -1841,22 +1841,35 @@ class RayTracer extends Solver {
     const RAY_INPUT_FLOATS = 16;
     const numBands = Math.min(this.frequencies.length, 7);
 
+    // Warn and fall back to CPU if more than 7 frequency bands
+    if (this.frequencies.length > 7) {
+      console.warn(`[GPU RT] ${this.frequencies.length} frequency bands exceeds GPU limit of 7; falling back to CPU`);
+      this._gpuRunning = false;
+      this.startAllMonteCarlo();
+      return;
+    }
+
     // Fire-and-forget async init then tick loop
     this._initGpu().then((ok) => {
       if (!ok || !this._gpuRunning) {
         if (this._gpuRunning) {
           console.warn('[GPU RT] Falling back to CPU ray tracing');
+          this._gpuRunning = false;
           this.startAllMonteCarlo();
         }
         return;
       }
 
+      // Capture the batch size that was used to allocate GPU buffers
+      const initBatchSize = this.gpuBatchSize;
+
       const tick = async () => {
         if (!this._gpuRunning || !this._isRunning || !this._gpuRayTracer) return;
 
         try {
-          // Prepare ray inputs for this batch
-          const batchSize = this.gpuBatchSize;
+          // Clamp to the capacity allocated during initialize() to avoid
+          // exceeding GPU buffer sizes if the user changes gpuBatchSize mid-run
+          const batchSize = Math.min(this.gpuBatchSize, initBatchSize);
           const rayInputs = new Float32Array(batchSize * RAY_INPUT_FLOATS);
 
           let rayIdx = 0;

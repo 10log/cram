@@ -69,13 +69,24 @@ export class GpuRayTracer {
     room: Room,
     receiverIDs: string[],
     config: GpuRayTracerConfig,
-    batchSize: number,
+    requestedBatchSize: number,
   ): Promise<boolean> {
     const ctx = await requestGpuContext();
     if (!ctx) return false;
 
     this.device = ctx.device;
     this.config = config;
+
+    // Clamp batchSize to fit within device storage buffer limits.
+    // The chain buffer is the largest: batchSize × MAX_BOUNCES × CHAIN_ENTRY_BYTES.
+    const maxStorageBinding = ctx.device.limits.maxStorageBufferBindingSize;
+    const maxBufSize = ctx.device.limits.maxBufferSize;
+    const perRayChainBytes = MAX_BOUNCES * CHAIN_ENTRY_BYTES;
+    const maxByLimits = Math.floor(Math.min(maxStorageBinding, maxBufSize) / perRayChainBytes);
+    const batchSize = Math.min(requestedBatchSize, maxByLimits);
+    if (batchSize < requestedBatchSize) {
+      console.warn(`[GPU RT] batchSize ${requestedBatchSize} exceeds device limits; clamped to ${batchSize}`);
+    }
     this.maxBatchSize = batchSize;
 
     // Clamp reflection order

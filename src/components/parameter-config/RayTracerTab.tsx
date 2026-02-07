@@ -201,7 +201,7 @@ const GpuAcceleration = ({ uuid }: { uuid: string }) => {
         label="Batch Size"
         property="gpuBatchSize"
         tooltip="Number of rays per GPU dispatch"
-        elementProps={{ step: 1000, min: 1000, max: 100000 }}
+        elementProps={{ step: 1000, min: 1000, max: 50000 }}
       />
     </PropertyRowFolder>
   );
