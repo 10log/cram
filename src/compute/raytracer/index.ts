@@ -1832,6 +1832,8 @@ class RayTracer extends Solver {
 
   /** Start the GPU-accelerated Monte Carlo loop. Falls back to CPU on failure. */
   private _startGpuMonteCarlo() {
+    cancelAnimationFrame(this._rafId);
+    this._rafId = 0;
     this._gpuRunning = true;
     this._lastConvergenceCheck = Date.now();
 
@@ -1877,7 +1879,7 @@ class RayTracer extends Solver {
               this._directivityRefPressures.set(sourceId, refPressures);
             }
 
-            const raysPerSource = Math.floor(batchSize / this.sourceIDs.length);
+            const raysPerSource = Math.max(1, Math.floor(batchSize / this.sourceIDs.length));
             for (let r = 0; r < raysPerSource && rayIdx < batchSize; r++) {
               const phi = Math.random() * sourcePhi;
               const theta = Math.random() * sourceTheta;
@@ -1918,8 +1920,7 @@ class RayTracer extends Solver {
           const paths = await this._gpuRayTracer.traceBatch(rayInputs, actualRayCount, batchSeed);
 
           // Process returned paths through existing pipeline
-          let sourceIdx = 0;
-          const raysPerSource = Math.floor(actualRayCount / Math.max(1, this.sourceIDs.length));
+          const raysPerSource = Math.max(1, Math.floor(actualRayCount / Math.max(1, this.sourceIDs.length)));
 
           for (let p = 0; p < paths.length; p++) {
             const path = paths[p];

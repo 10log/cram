@@ -20,7 +20,7 @@ export interface GpuContext {
  * calls return the same adapter/device until `releaseGpuContext()` is called.
  */
 export async function requestGpuContext(): Promise<GpuContext | null> {
-  if (cachedDevice && !cachedDevice.lost) {
+  if (cachedDevice && !deviceLostHandled) {
     return { adapter: cachedAdapter!, device: cachedDevice };
   }
 

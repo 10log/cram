@@ -27,8 +27,15 @@ struct Params {
   _pad0: f32,
   _pad1: f32,
   _pad2: f32,
-  // Per-band air attenuation in dB/m (up to MAX_BANDS)
-  airAtt: array<f32, 7>,
+  // Per-band air attenuation in dB/m (up to MAX_BANDS), packed into vec4s
+  // to satisfy uniform buffer layout rules (array<f32> has 16-byte stride).
+  // airAttPacked[0] = (band0, band1, band2, band3)
+  // airAttPacked[1] = (band4, band5, band6, unused)
+  airAttPacked: array<vec4<f32>, 2>,
+}
+
+fn getAirAtt(band: u32) -> f32 {
+  return params.airAttPacked[band / 4u][band % 4u];
 }
 
 // Per-bounce output written to the chain buffer
@@ -342,7 +349,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (recHit && closestRecT < triHit.t) {
       // Apply air absorption for receiver segment
       for (var b = 0u; b < numBands; b++) {
-        bandEnergy[b] *= pow(10.0, -params.airAtt[b] * closestRecT / 10.0);
+        bandEnergy[b] *= pow(10.0, -getAirAtt(b) * closestRecT / 10.0);
       }
 
       // Compute mean energy
@@ -428,7 +435,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
 
       let R = reflectionCoefficient(alpha, angle);
       bandEnergy[b] *= abs(R);
-      bandEnergy[b] *= pow(10.0, -params.airAtt[b] * hitT / 10.0);
+      bandEnergy[b] *= pow(10.0, -getAirAtt(b) * hitT / 10.0);
 
       broadbandScatter += scatter * bandEnergy[b];
       totalEForScatter += bandEnergy[b];

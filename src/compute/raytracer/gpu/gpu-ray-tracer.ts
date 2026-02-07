@@ -2,7 +2,7 @@
  * CPU-side orchestrator that manages WebGPU resources and dispatches
  * the ray-trace compute shader.
  */
-import { requestGpuContext, releaseGpuContext } from './gpu-context';
+import { requestGpuContext } from './gpu-context';
 import { buildGpuSceneBuffers } from './gpu-bvh';
 import type { GpuSceneBuffers } from './gpu-bvh';
 import type Room from '../../../objects/room';
@@ -29,8 +29,7 @@ const CHAIN_ENTRY_FLOATS = 16;
 const CHAIN_ENTRY_BYTES = CHAIN_ENTRY_FLOATS * 4;
 
 // Params uniform: see struct in WGSL
-// 8 u32/f32 + 4 pad + 7 airAtt  … padded to 16-byte alignment
-// Total: 12 + 7 = 19 floats → pad to 20 (80 bytes)
+// 8 u32/f32 + rrThreshold + 3 pad + 2×vec4 airAttPacked = 20 floats (80 bytes)
 const PARAMS_FLOATS = 20;
 const PARAMS_BYTES = PARAMS_FLOATS * 4;
 
@@ -80,7 +79,6 @@ export class GpuRayTracer {
     this.maxBatchSize = batchSize;
 
     // Clamp reflection order
-    const maxBounces = Math.min(config.reflectionOrder, MAX_BOUNCES);
     if (config.reflectionOrder > MAX_BOUNCES) {
       console.warn(`[GPU RT] reflectionOrder ${config.reflectionOrder} clamped to ${MAX_BOUNCES}`);
     }
@@ -153,15 +151,19 @@ export class GpuRayTracer {
       throw new Error('[GPU RT] Not initialized');
     }
 
+    if (rayCount > this.maxBatchSize) {
+      throw new Error(`[GPU RT] rayCount ${rayCount} exceeds maxBatchSize ${this.maxBatchSize}`);
+    }
+    if (rayCount === 0) return [];
+
     const numBands = Math.min(this.config.frequencies.length, MAX_BANDS);
-    const maxBounces = Math.min(this.config.reflectionOrder, MAX_BOUNCES);
 
     // Write params uniform
     const paramsData = new ArrayBuffer(PARAMS_BYTES);
     const paramsU32 = new Uint32Array(paramsData);
     const paramsF32 = new Float32Array(paramsData);
     paramsU32[0] = rayCount;
-    paramsU32[1] = maxBounces;
+    paramsU32[1] = Math.min(this.config.reflectionOrder, MAX_BOUNCES);
     paramsU32[2] = numBands;
     paramsU32[3] = this.sceneBuf.receiverCount;
     paramsU32[4] = this.sceneBuf.triangleCount;
@@ -170,7 +172,8 @@ export class GpuRayTracer {
     paramsU32[7] = batchSeed;
     paramsF32[8] = this.config.rrThreshold;
     // pad slots 9,10,11
-    // airAtt starts at index 12
+    // airAttPacked: array<vec4<f32>, 2> starts at index 12
+    // vec4[0] = (band0..3) at indices 12-15, vec4[1] = (band4..6, pad) at 16-18
     for (let i = 0; i < numBands; i++) {
       paramsF32[12 + i] = this.config.cachedAirAtt[i];
     }
@@ -246,7 +249,6 @@ export class GpuRayTracer {
       const outU32 = new Uint32Array(outputData.buffer, outOff * 4, RAY_OUTPUT_FLOATS);
       const chainLength = outU32[0];
       const intersectedReceiver = outU32[1] !== 0;
-      const receiverIndex = outU32[2];
 
       if (chainLength === 0) continue;
 

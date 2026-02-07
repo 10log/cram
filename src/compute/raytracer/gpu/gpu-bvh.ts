@@ -306,20 +306,20 @@ function flattenBvh(root: BvhNode): { nodeArray: Float32Array; nodeCount: number
     nodeArray[off + 5] = node.boundsMax[1];
     nodeArray[off + 6] = node.boundsMax[2];
 
+    // Use a Uint32Array view to write integer data into the f32 buffer,
+    // since the WGSL shader reads these slots via bitcast<u32>().
+    const u32View = new Uint32Array(nodeArray.buffer);
+
     if (node.left && node.right) {
       // Internal: reserve slots for children indices, fill after recursion
       const leftIdx = write(node.left);
       const rightIdx = write(node.right);
-      // Store as float-encoded u32 (safe for ints up to 2^24)
-      nodeArray[off + 3] = leftIdx;
-      nodeArray[off + 7] = rightIdx;
+      u32View[off + 3] = leftIdx;
+      u32View[off + 7] = rightIdx;
     } else {
-      // Leaf
-      nodeArray[off + 3] = node.triStart;
-      // Encode leaf flag in high bit via bitwise-or with 0x80000000
-      // We use DataView to write this as a u32 into the f32 slot.
-      const u32View = new Uint32Array(nodeArray.buffer, off * 4 + 7 * 4, 1);
-      u32View[0] = (node.triCount | 0x80000000) >>> 0;
+      // Leaf: triStart in data0, triCount | leaf flag in data1
+      u32View[off + 3] = node.triStart;
+      u32View[off + 7] = (node.triCount | 0x80000000) >>> 0;
     }
 
     return myIndex;
