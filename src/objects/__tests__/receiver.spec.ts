@@ -582,7 +582,7 @@ describe('Receiver', () => {
       expect(restored.directivityPattern).toBe(ReceiverPattern.CARDIOID);
     });
 
-    it('restore with no directivityPattern defaults to omni', () => {
+    it('restore without directivityPattern resets to omnidirectional', () => {
       const receiver = new Receiver('Test');
       receiver.directivityPattern = ReceiverPattern.CARDIOID;
       const oldSaveData: ReceiverSaveObject = {
@@ -597,9 +597,9 @@ describe('Receiver', () => {
         // no directivityPattern field — simulates pre-directivity save data
       };
       receiver.restore(oldSaveData);
-      // Should remain at default (omni) since no directivityPattern was in save data
-      expect(receiver.directivityPattern).toBe(ReceiverPattern.CARDIOID);
-      // But if we create a new receiver and restore without the field:
+      // Missing directivityPattern resets to omnidirectional default
+      expect(receiver.directivityPattern).toBe(ReceiverPattern.OMNIDIRECTIONAL);
+
       const fresh = new Receiver('Fresh');
       fresh.restore(oldSaveData);
       expect(fresh.directivityPattern).toBe(ReceiverPattern.OMNIDIRECTIONAL);

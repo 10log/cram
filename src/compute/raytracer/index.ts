@@ -937,11 +937,34 @@ class RayTracer extends Solver {
 
       // assign source energy as a function of direction
       const sourceDH = (useContainer.getState().containers[this.sourceIDs[i]] as Source).directivityHandler;
+
+      // cache on-axis reference pressures per source (constant for all rays from same source)
+      if (!this._directivityRefPressures) {
+        this._directivityRefPressures = new Map();
+      }
+      const sourceId = this.sourceIDs[i];
+      let refPressures = this._directivityRefPressures.get(sourceId);
+      if (!refPressures || refPressures.length !== this.frequencies.length) {
+        refPressures = new Array(this.frequencies.length);
+        for (let f = 0; f < this.frequencies.length; f++) {
+          refPressures[f] = sourceDH.getPressureAtPosition(0, this.frequencies[f], 0, 0);
+        }
+        this._directivityRefPressures.set(sourceId, refPressures);
+      }
+
       const initialBandEnergy: BandEnergy = new Array(this.frequencies.length);
       for (let f = 0; f < this.frequencies.length; f++) {
-        const dirPressure = sourceDH.getPressureAtPosition(0, this.frequencies[f], phi, theta);
-        const refPressure = sourceDH.getPressureAtPosition(0, this.frequencies[f], 0, 0);
-        initialBandEnergy[f] = refPressure > 0 ? (dirPressure / refPressure) ** 2 : 1;
+        let energy = 1;
+        try {
+          const dirPressure = sourceDH.getPressureAtPosition(0, this.frequencies[f], phi, theta);
+          const refPressure = refPressures[f];
+          if (typeof dirPressure === "number" && typeof refPressure === "number" && refPressure > 0) {
+            energy = (dirPressure / refPressure) ** 2;
+          }
+        } catch (e) {
+          // Fallback to unity gain if directivity data is missing or lookup fails
+        }
+        initialBandEnergy[f] = energy;
       }
 
       // get the path traced by the ray

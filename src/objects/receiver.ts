@@ -94,8 +94,8 @@ export class Receiver extends Container {
   }
   /**
    * Compute directivity gain for a ray arriving from the given direction.
-   * @param arrivalDirection - unit vector [x,y,z] pointing FROM the arriving ray toward the receiver
-   * @returns pressure gain factor (0..1 for most patterns)
+   * @param arrivalDirection - unit vector [x,y,z] pointing FROM the source/reflection toward the receiver
+   * @returns pressure gain factor (-1..1); negative values possible for figure-8 and supercardioid
    */
   getGain(arrivalDirection: [number, number, number]): number {
     if (this.directivityPattern === ReceiverPattern.OMNIDIRECTIONAL) return 1.0;
@@ -142,8 +142,11 @@ export class Receiver extends Container {
     );
     this.color = state.color;
     this.uuid = state.uuid;
-    if (state.directivityPattern) {
-      this.directivityPattern = state.directivityPattern as ReceiverPattern;
+    const savedPattern = state.directivityPattern;
+    if (savedPattern && Object.values(ReceiverPattern).includes(savedPattern as ReceiverPattern)) {
+      this.directivityPattern = savedPattern as ReceiverPattern;
+    } else {
+      this.directivityPattern = ReceiverPattern.OMNIDIRECTIONAL;
     }
     return this;
   }
