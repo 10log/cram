@@ -58,7 +58,6 @@ export const ResultsPanel = () => {
     <div
       style={{
         margin: "0",
-        background: "#fff"
       }}
     >
       <Tabs

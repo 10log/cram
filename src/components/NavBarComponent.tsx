@@ -265,6 +265,8 @@ export function ViewMenu() {
         <MenuItemWithMessenger label="Clear Local Storage" message="CLEAR_LOCAL_STORAGE" />
         <MenuItemWithMessenger label="Toggle Renderer Stats" message="TOGGLE_RENDERER_STATS_VISIBLE" />
         <MenuItemWithEmitter label="Toggle Results Panel" event="TOGGLE_RESULTS_PANEL" hotkey={[Characters.SHIFT, "R"]} />
+        <Divider />
+        <MenuItemWithEmitter label="Reset Layout" event="RESET_LAYOUT" />
       </Menu>
     </>
   );

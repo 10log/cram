@@ -1,0 +1,129 @@
+/**
+ * FlexLayout style overrides for CRAM MUI integration
+ *
+ * Colors are driven by MUI's data-mui-color-scheme attribute,
+ * mapped from CRAM's themes.ts DarkTheme/LightTheme values.
+ */
+
+/* Import FlexLayout base light theme */
+@import 'flexlayout-react/style/light.css';
+
+/* Font and sizing to match MUI compact theme */
+.flexlayout__layout {
+  --font-size: 13px;
+  --font-family: 'Segoe UI', 'Roboto', 'Arial', sans-serif;
+}
+
+/* Dark mode overrides - matches CRAM DarkTheme ui colors */
+[data-mui-color-scheme="dark"] .flexlayout__layout {
+  --color-text: #f5f6f7;
+  --color-background: #121212;
+  --color-base: #121212;
+  --color-1: #1e1e1e;
+  --color-2: #252525;
+  --color-3: #2d2d2d;
+  --color-4: #383838;
+  --color-5: #444444;
+  --color-6: #555555;
+  --color-drag1: rgb(207, 232, 255);
+  --color-drag2: rgb(183, 209, 181);
+  --color-drag1-background: rgba(128, 128, 128, 0.15);
+  --color-drag2-background: rgba(128, 128, 128, 0.15);
+  --color-overflow: #888888;
+  --color-icon: #aaaaaa;
+  --color-tabset-background: var(--color-1);
+  --color-tabset-background-selected: var(--color-1);
+  --color-tabset-background-maximized: var(--color-5);
+  --color-tabset-divider-line: var(--color-4);
+  --color-tabset-header-background: var(--color-2);
+  --color-tabset-header: var(--color-text);
+  --color-border-tab-content: var(--color-background);
+  --color-border-background: var(--color-2);
+  --color-border-divider-line: var(--color-4);
+  --color-tab-content: var(--color-background);
+  --color-tab-selected: var(--color-text);
+  --color-tab-selected-background: var(--color-3);
+  --color-tab-unselected: #999999;
+  --color-tab-unselected-background: transparent;
+  --color-tab-textbox: var(--color-text);
+  --color-tab-textbox-background: var(--color-3);
+  --color-border-tab-selected: var(--color-text);
+  --color-border-tab-selected-background: var(--color-3);
+  --color-border-tab-unselected: #999999;
+  --color-border-tab-unselected-background: var(--color-2);
+  --color-splitter: var(--color-4);
+  --color-splitter-hover: var(--color-5);
+  --color-splitter-drag: var(--color-6);
+  --color-drag-rect-border: var(--color-5);
+  --color-drag-rect-background: var(--color-2);
+  --color-drag-rect: var(--color-text);
+  --color-popup-border: var(--color-5);
+  --color-popup-unselected: var(--color-text);
+  --color-popup-unselected-background: var(--color-1);
+  --color-popup-selected: var(--color-text);
+  --color-popup-selected-background: var(--color-3);
+  --color-edge-marker: #888888;
+  --color-edge-icon: #f5f6f7;
+  --color-toolbar-button-hover: var(--color-3);
+}
+
+/* Light mode - matches CRAM LightTheme ui colors */
+[data-mui-color-scheme="light"] .flexlayout__layout {
+  --color-text: #182026;
+  --color-background: #f5f8fa;
+  --color-base: #ffffff;
+  --color-1: #f7f7f7;
+  --color-2: #f0f0f0;
+  --color-3: #e8e8e8;
+  --color-4: #e0e0e0;
+  --color-5: #d8d8d8;
+  --color-6: #d0d0d0;
+  --color-icon: #666666;
+}
+
+/* Splitter hover transition */
+.flexlayout__splitter {
+  transition: background-color 0.15s ease;
+}
+
+/* Tab button sizing */
+.flexlayout__tab_button {
+  font-size: 13px;
+  padding: 4px 12px;
+}
+
+.flexlayout__tab_button_content {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Border tabs */
+.flexlayout__border_tab_content {
+  font-size: 13px;
+}
+
+/* Toolbar button styling */
+.flexlayout__tab_toolbar_button,
+.flexlayout__border_toolbar_button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 4px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+/* Popup/context menu styling */
+.flexlayout__popup_menu {
+  border-radius: 4px;
+}
+
+.flexlayout__popup_menu_item {
+  font-size: 13px;
+  padding: 6px 16px;
+  min-height: 32px;
+}

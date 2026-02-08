@@ -40,8 +40,6 @@ export interface CRAMEditorProps {
   storagePrefix?: string;
   /** Show the navigation bar (default: true for standalone, false for embedded) */
   showNavBar?: boolean;
-  /** Fixed width for the right properties panel in pixels (default: uses stored layout preference) */
-  fixedPanelWidth?: number;
 
   // Theming
   /** Theme mode for the 3D canvas ('light' | 'dark'). When provided, syncs with parent app theme. */

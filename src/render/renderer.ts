@@ -191,6 +191,9 @@ export default class Renderer {
 
   currentProcess!: Processes;
 
+  /** Theme queued before init() — applied once the scene is created */
+  _pendingTheme?: RendererTheme;
+
   constructor() {
     ["init", "render", "smoothCameraTo", "setOrtho", "storeCameraState", "onOrbitControlsChange"].forEach((method) => {
       this[method] = this[method].bind(this);
@@ -608,6 +611,12 @@ export default class Renderer {
     this.elt.parentElement?.appendChild(this.stats.container);
     this.stats.hide();
     this.render();
+
+    // Apply any theme that was queued before init()
+    if (this._pendingTheme) {
+      this.applyTheme(this._pendingTheme);
+      this._pendingTheme = undefined;
+    }
 
     setTimeout(() => {
       this.needsToRender = true;
@@ -1077,6 +1086,11 @@ export default class Renderer {
    * Apply a renderer theme to update scene colors
    */
   applyTheme(rendererTheme: RendererTheme) {
+    // Guard: scene is only created in init(), skip if not yet initialized
+    if (!this.scene) {
+      this._pendingTheme = rendererTheme;
+      return;
+    }
     // Update scene background
     (this.scene.background as THREE.Color).setHex(rendererTheme.background);
 

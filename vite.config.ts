@@ -76,9 +76,14 @@ export default defineConfig(({ command, mode }) => {
             /^@mui\/material/,
             /^@mui\/icons-material/,
             /^@mui\/x-tree-view/,
+            /^@emotion\//,
             // Note: jscad-modeling-bundle.js is imported in modeling/v2.ts
             'zustand',
+            'zustand/react/shallow',
             'styled-components',
+            // Externalize FlexLayout (consuming app provides it)
+            'flexlayout-react',
+            /^flexlayout-react\//,
             // Externalize Blueprint UI (large)
             '@blueprintjs/core',
             '@blueprintjs/icons',

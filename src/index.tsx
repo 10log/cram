@@ -950,7 +950,7 @@ export async function finishedLoading() {
 const container = document.getElementById("root");
 if (!container) throw new Error('Root container not found');
 const root = createRoot(container);
-root.render(<App {...cram.state} onMount={finishedLoading} />);
+root.render(<App showNavBar onMount={finishedLoading} />);
 
-// finishedLoading is passed as onMount prop and called from App.componentDidMount
+// finishedLoading is passed as onMount prop and called from App useEffect
 history.clear();

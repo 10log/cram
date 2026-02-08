@@ -22,26 +22,8 @@ import { useAppStore, resetAllStores } from '../store';
 // Renderer for cleanup
 import { renderer } from '../render/renderer';
 
-// Layout defaults
-import { layout as defaultLayout } from '../default-storage';
-
 // Storage utility for namespaced localStorage
-import storage, { setStoragePrefix } from './storage';
-
-/**
- * Get layout from localStorage with the configured prefix
- */
-function getLayout() {
-  try {
-    const stored = storage.getItem('layout');
-    if (stored) {
-      return JSON.parse(stored);
-    }
-  } catch (e) {
-    console.warn('Failed to parse layout from localStorage:', e);
-  }
-  return JSON.parse(defaultLayout);
-}
+import { setStoragePrefix } from './storage';
 
 /**
  * CRAMEditor component - the main embeddable CRAM editor
@@ -55,7 +37,6 @@ export const CRAMEditor = forwardRef<CRAMEditorRef, CRAMEditorProps>(
       onError,
       storagePrefix = 'cram',
       showNavBar = true,
-      fixedPanelWidth,
       themeMode,
     } = props;
 
@@ -64,7 +45,6 @@ export const CRAMEditor = forwardRef<CRAMEditorRef, CRAMEditorProps>(
     // Set storage prefix on mount (before reading layout)
     // This must happen synchronously before any localStorage reads
     setStoragePrefix(storagePrefix);
-    const layoutRef = useRef(getLayout());
 
     // Track dirty state changes for onProjectChange callback
     useEffect(() => {
@@ -221,14 +201,9 @@ export const CRAMEditor = forwardRef<CRAMEditorRef, CRAMEditorProps>(
       },
     }), [getSaveState, onSave]);
 
-    // Render the App component with layout props
-    // showNavBar is passed down to conditionally render the navbar
-    // fixedPanelWidth overrides the stored right panel width
     return (
       <App
-        {...layoutRef.current}
         showNavBar={showNavBar}
-        fixedPanelWidth={fixedPanelWidth}
       />
     );
   }
