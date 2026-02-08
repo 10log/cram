@@ -35,8 +35,16 @@ export async function requestGpuContext(): Promise<GpuContext | null> {
       return null;
     }
 
+    // The ray-trace compute shader uses 9 storage buffers (BVH, triangles,
+    // surfaces, receivers, ray I/O, chain buffer). The default WebGPU limit
+    // is 8, so we must request a higher limit from the adapter.
+    const needStorageBuffers = 10; // 9 used + 1 headroom
+    const adapterMax = adapter.limits.maxStorageBuffersPerShaderStage;
+    const storageBufferLimit = Math.min(needStorageBuffers, adapterMax);
+
     const device = await adapter.requestDevice({
       requiredLimits: {
+        maxStorageBuffersPerShaderStage: storageBufferLimit,
         maxStorageBufferBindingSize: adapter.limits.maxStorageBufferBindingSize,
         maxBufferSize: adapter.limits.maxBufferSize,
         maxComputeWorkgroupSizeX: 64,
