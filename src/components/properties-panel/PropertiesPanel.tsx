@@ -374,10 +374,19 @@ export function PropertiesPanel() {
 
   // Solver list
   const solverList = useMemo(() => {
+    const solverDescriptions: Record<string, string> = {
+      "ray-tracer": "Monte Carlo ray tracing",
+      "image-source": "Image source method",
+      "rt60": "Statistical reverberation",
+      "fdtd-2d": "Finite-difference time-domain",
+      "energydecay": "Energy decay analysis",
+      "art": "Acoustic radiance transfer",
+      "beamtrace": "Beam tracing",
+    };
     return Object.keys(solversData).map((uuid) => ({
       uuid,
       name: solversData[uuid].name || uuid.slice(0, 8),
-      type: solversData[uuid].kind || "Unknown",
+      type: solverDescriptions[solversData[uuid].kind] || solversData[uuid].kind || "Unknown",
     }));
   }, [solversData]);
 
