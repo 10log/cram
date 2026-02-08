@@ -1,268 +1,45 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import RayTracer from "../../compute/raytracer";
-import PropertyRowFolder from "./property-row/PropertyRowFolder";
 import PropertyRow from "./property-row/PropertyRow";
 import PropertyRowLabel from "./property-row/PropertyRowLabel";
 import PropertyRowButton from "./property-row/PropertyRowButton";
 import { PropertyRowSelect } from "./property-row/PropertyRowSelect";
 import { createPropertyInputs, useSolverProperty, PropertyButton } from "./SolverComponents";
-import useToggle from "../hooks/use-toggle";
 import { renderer } from "../../render/renderer";
 import SourceReceiverMatrix from "./SourceReceiverMatrix";
 import { emit } from "../../messenger";
 import { Dialog, DialogTitle, DialogContent, IconButton } from "@mui/material";
+import Box from "@mui/material/Box";
+import ToggleButton from "@mui/material/ToggleButton";
+import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
+import Tooltip from "@mui/material/Tooltip";
+import type { SxProps, Theme } from "@mui/material/styles";
 import type { HRTFSubject } from "../../compute/raytracer/binaural/hrtf-data";
 import { getAvailableSubjects, getThumbnailUrl } from "../../compute/raytracer/binaural/hrtf-data";
+import { isWebGPUAvailable } from "../../compute/raytracer/gpu/gpu-context";
+import SolverControlBar from "./SolverControlBar";
+import SectionLabel from "./property-row/SectionLabel";
 
 
 const { PropertyTextInput, PropertyNumberInput, PropertyCheckboxInput } = createPropertyInputs<RayTracer>(
   "RAYTRACER_SET_PROPERTY"
 );
 
-
-const Parameters = ({ uuid }: { uuid: string }) => {
-  const [open, toggle] = useToggle(true);
-  return (
-    <PropertyRowFolder label="Parameters" open={open} onOpenClose={toggle}>
-      <PropertyNumberInput uuid={uuid} label="Rate (ms)" property="updateInterval" tooltip="Callback rate for quick estimate (ms)" />
-      <PropertyNumberInput
-        uuid={uuid}
-        label="Order"
-        property="reflectionOrder"
-        tooltip="Sets the maximum reflection order"
-      />
-      <PropertyNumberInput
-        uuid={uuid}
-        label="Passes"
-        property="passes"
-        tooltip="Number of rays shot on each callback"
-      />
-      <PropertyNumberInput
-        uuid={uuid}
-        label="Temperature"
-        property="temperature"
-        tooltip="Temperature in Celsius (affects speed of sound and air absorption)"
-        elementProps={{ step: 1, min: -20, max: 50 }}
-      />
-      <PropertyNumberInput
-        uuid={uuid}
-        label="Max Paths"
-        property="maxStoredPaths"
-        tooltip="Maximum paths stored per receiver (older paths evicted)"
-        elementProps={{ step: 1000, min: 1 }}
-      />
-      <PropertyCheckboxInput
-        uuid={uuid}
-        label="Edge Diffraction"
-        property="edgeDiffractionEnabled"
-        tooltip="Enable UTD edge diffraction for sound around convex edges"
-      />
-    </PropertyRowFolder>
-  );
+const toggleGroupSx: SxProps<Theme> = {
+  width: "100%",
+  "& .MuiToggleButton-root": {
+    flex: 1,
+    py: 0.25,
+    fontSize: "0.7rem",
+    textTransform: "none",
+    fontWeight: 500,
+  },
 };
 
-const SourceReceiverPairs = ({ uuid }: { uuid: string }) => {
-  const [open, toggle] = useToggle(true);
-  const [ignoreReceivers] = useSolverProperty<RayTracer, "runningWithoutReceivers">(
-    uuid,
-    "runningWithoutReceivers",
-    "RAYTRACER_SET_PROPERTY"
-  );
-
-  return (
-    <PropertyRowFolder label="Source / Receiver Pairs" open={open} onOpenClose={toggle}>
-      <PropertyCheckboxInput
-        uuid={uuid}
-        label="Ignore Receivers"
-        property="runningWithoutReceivers"
-        tooltip="Ignores receiver intersections (visualization only)"
-      />
-      <SourceReceiverMatrix uuid={uuid} disabled={ignoreReceivers} />
-    </PropertyRowFolder>
-  );
+const toggleRowSx: SxProps<Theme> = {
+  px: 1,
+  py: 0.5,
 };
-
-const StyleProperties = ({ uuid }: { uuid: string }) => {
-  const [open, toggle] = useToggle(true);
-  return (
-    <PropertyRowFolder label="Style Properties" open={open} onOpenClose={toggle}>
-      <PropertyNumberInput
-        uuid={uuid}
-        label="Point Size"
-        property="pointSize"
-        tooltip="Sets the size of each interection point"
-      />
-      <PropertyCheckboxInput
-        uuid={uuid}
-        label="Rays Visible"
-        property="raysVisible"
-        tooltip="Toggles the visibility of the rays"
-      />
-      <PropertyCheckboxInput
-        uuid={uuid}
-        label="Points Visible"
-        property="pointsVisible"
-        tooltip="Toggles the visibility of the intersection points"
-      />
-    </PropertyRowFolder>
-  );
-};
-const SolverControls = ({ uuid }: { uuid: string }) => {
-  const [open, toggle] = useToggle(true);
-  return (
-    <PropertyRowFolder label="Solver Controls" open={open} onOpenClose={toggle}>
-      <PropertyCheckboxInput uuid={uuid} label="Running" property="isRunning" tooltip="Starts/stops the raytracer" />
-    </PropertyRowFolder>
-  );
-};
-
-const Convergence = ({ uuid }: { uuid: string }) => {
-  const [open, toggle] = useToggle(true);
-  const [metrics] = useSolverProperty<RayTracer, "convergenceMetrics">(uuid, "convergenceMetrics", "RAYTRACER_SET_PROPERTY");
-
-  const ratioDisplay = metrics && Number.isFinite(metrics.convergenceRatio)
-    ? (metrics.convergenceRatio * 100).toFixed(1) + "%"
-    : "--";
-  const t30Display = metrics && metrics.estimatedT30
-    ? metrics.estimatedT30.map(t => t > 0 ? t.toFixed(2) + "s" : "--").join(", ")
-    : "--";
-
-  return (
-    <PropertyRowFolder label="Convergence" open={open} onOpenClose={toggle}>
-      <PropertyCheckboxInput
-        uuid={uuid}
-        label="Auto-Stop"
-        property="autoStop"
-        tooltip="Automatically stop when simulation converges"
-      />
-      <PropertyNumberInput
-        uuid={uuid}
-        label="Threshold"
-        property="convergenceThreshold"
-        tooltip="Convergence ratio threshold (coefficient of variation of T30 estimates)"
-        elementProps={{ step: 0.001, min: 0.001, max: 1 }}
-      />
-      <PropertyNumberInput
-        uuid={uuid}
-        label="RR Threshold"
-        property="rrThreshold"
-        tooltip="Russian Roulette energy threshold for unbiased ray termination"
-        elementProps={{ step: 0.01, min: 0.01, max: 1 }}
-      />
-      <PropertyRow>
-        <PropertyRowLabel label="Conv. Ratio" hasToolTip tooltip="Current convergence ratio (max coefficient of variation across bands)" />
-        <span style={{ fontSize: "11px", fontFamily: "monospace" }}>{ratioDisplay}</span>
-      </PropertyRow>
-      <PropertyRow>
-        <PropertyRowLabel label="Est. T30" hasToolTip tooltip="Estimated T30 per octave band (125-8000 Hz)" />
-        <span style={{ fontSize: "11px", fontFamily: "monospace", overflow: "hidden", textOverflow: "ellipsis" }}>{t30Display}</span>
-      </PropertyRow>
-    </PropertyRowFolder>
-  );
-};
-
-const LateReverberation = ({ uuid }: { uuid: string }) => {
-  const [open, toggle] = useToggle(false);
-  return (
-    <PropertyRowFolder label="Late Reverberation" open={open} onOpenClose={toggle}>
-      <PropertyCheckboxInput
-        uuid={uuid}
-        label="Enable Tail"
-        property="lateReverbTailEnabled"
-        tooltip="Synthesize a noise-based tail to extend the impulse response beyond ray-traced data"
-      />
-      <PropertyNumberInput
-        uuid={uuid}
-        label="Crossfade Time (s)"
-        property="tailCrossfadeTime"
-        tooltip="Time (s) where crossfade from ray-traced to synthetic tail begins (0 = auto-detect)"
-        elementProps={{ step: 0.1, min: 0, max: 5 }}
-      />
-      <PropertyNumberInput
-        uuid={uuid}
-        label="Crossfade Dur. (s)"
-        property="tailCrossfadeDuration"
-        tooltip="Duration of the Hann crossfade window between ray-traced and synthetic tail"
-        elementProps={{ step: 0.01, min: 0.01, max: 0.5 }}
-      />
-    </PropertyRowFolder>
-  );
-};
-
-const GpuAcceleration = ({ uuid }: { uuid: string }) => {
-  const [open, toggle] = useToggle(false);
-  return (
-    <PropertyRowFolder label="GPU Acceleration" open={open} onOpenClose={toggle}>
-      <PropertyCheckboxInput
-        uuid={uuid}
-        label="Enable GPU"
-        property="gpuEnabled"
-        tooltip="Use WebGPU compute shaders for parallel ray tracing (requires WebGPU browser)"
-      />
-      <PropertyNumberInput
-        uuid={uuid}
-        label="Batch Size"
-        property="gpuBatchSize"
-        tooltip="Number of rays per GPU dispatch"
-        elementProps={{ step: 1000, min: 1000, max: 50000 }}
-      />
-    </PropertyRowFolder>
-  );
-};
-
-const Hybrid = ({ uuid }: { uuid: string}) => {
-  const [open, toggle] = useToggle(true);
-  return (
-    <PropertyRowFolder label="Hybrid Method" open={open} onOpenClose={toggle}>
-      <PropertyCheckboxInput uuid={uuid} label="Use Hybrid Method" property="hybrid" tooltip="Enables Hybrid Calculation" />
-      <PropertyTextInput uuid={uuid} label="Transition Order" property="transitionOrder" tooltip="Delination between image source and raytracer" />
-    </PropertyRowFolder>
-  )
-}
-
-const Output = ({uuid}: {uuid: string}) => {
-  const [open, toggle] = useToggle(true);
-  const [impulseResponsePlaying] = useSolverProperty<RayTracer, "impulseResponsePlaying">(uuid, "impulseResponsePlaying", "RAYTRACER_SET_PROPERTY");
-  return (
-    <PropertyRowFolder label="Impulse Response" open={open} onOpenClose={toggle}>
-      <PropertyButton event="RAYTRACER_PLAY_IR" args={uuid} label="Play" tooltip="Plays the calculated impulse response" disabled={impulseResponsePlaying} />
-      <PropertyButton event="RAYTRACER_DOWNLOAD_IR" args={uuid} label="Download" tooltip="Downloads the calculated broadband impulse response" />
-      <PropertyButton event="RAYTRACER_DOWNLOAD_IR_OCTAVE" args={uuid} label="Download by Octave" tooltip="Downloads the impulse response in each octave" />
-    </PropertyRowFolder>
-  );
-}
-
-const AmbisonicOutput = ({uuid}: {uuid: string}) => {
-  const [open, toggle] = useToggle(false);
-  const [order, setOrder] = useState("1");
-  const [validRayCount] = useSolverProperty<RayTracer, "validRayCount">(uuid, "validRayCount", "RAYTRACER_SET_PROPERTY");
-  const disabled = !validRayCount || validRayCount === 0;
-
-  const handleDownload = () => {
-    emit("RAYTRACER_DOWNLOAD_AMBISONIC_IR", { uuid, order: parseInt(order) });
-  };
-
-  return (
-    <PropertyRowFolder label="Ambisonic Output" open={open} onOpenClose={toggle}>
-      <PropertyRow>
-        <PropertyRowLabel label="Order" hasToolTip tooltip="Ambisonic order (1=FOA 4ch, 2=HOA 9ch, 3=HOA 16ch)" />
-        <PropertyRowSelect
-          value={order}
-          onChange={({ value }) => setOrder(value)}
-          options={[
-            { value: "1", label: "1st Order (4 ch)" },
-            { value: "2", label: "2nd Order (9 ch)" },
-            { value: "3", label: "3rd Order (16 ch)" }
-          ]}
-        />
-      </PropertyRow>
-      <PropertyRow>
-        <PropertyRowLabel label="" hasToolTip tooltip="Downloads ambisonic impulse response (ACN/N3D format)" />
-        <PropertyRowButton onClick={handleDownload} label="Download" disabled={disabled} />
-      </PropertyRow>
-    </PropertyRowFolder>
-  );
-}
 
 const HRTFSubjectDialog = ({
   open,
@@ -348,94 +125,66 @@ const HRTFSubjectDialog = ({
   );
 };
 
-const BinauralOutput = ({ uuid }: { uuid: string }) => {
-  const [open, toggle] = useToggle(false);
-  const [order, setOrder] = useState("1");
-  const [dialogOpen, setDialogOpen] = useState(false);
+export const RayTracerTab = ({ uuid }: { uuid: string }) => {
+  const [isRunning] = useSolverProperty<RayTracer, "isRunning">(uuid, "isRunning", "RAYTRACER_SET_PROPERTY");
   const [validRayCount] = useSolverProperty<RayTracer, "validRayCount">(uuid, "validRayCount", "RAYTRACER_SET_PROPERTY");
+  const [gpuEnabled] = useSolverProperty<RayTracer, "gpuEnabled">(uuid, "gpuEnabled", "RAYTRACER_SET_PROPERTY");
+  const [ignoreReceivers] = useSolverProperty<RayTracer, "runningWithoutReceivers">(uuid, "runningWithoutReceivers", "RAYTRACER_SET_PROPERTY");
+  const [impulseResponsePlaying] = useSolverProperty<RayTracer, "impulseResponsePlaying">(uuid, "impulseResponsePlaying", "RAYTRACER_SET_PROPERTY");
   const [binauralPlaying] = useSolverProperty<RayTracer, "binauralPlaying">(uuid, "binauralPlaying", "RAYTRACER_SET_PROPERTY");
   const [hrtfSubjectId] = useSolverProperty<RayTracer, "hrtfSubjectId">(uuid, "hrtfSubjectId", "RAYTRACER_SET_PROPERTY");
-  const disabled = !validRayCount || validRayCount === 0;
+  const [convergenceMetrics] = useSolverProperty<RayTracer, "convergenceMetrics">(uuid, "convergenceMetrics", "RAYTRACER_SET_PROPERTY");
 
-  const handlePlay = useCallback(() => {
-    emit("RAYTRACER_PLAY_BINAURAL_IR", { uuid, order: parseInt(order) });
-  }, [uuid, order]);
+  const gpuAvailable = useMemo(() => isWebGPUAvailable(), []);
+  const [ambiOrder, setAmbiOrder] = useState("1");
+  const [binauralOrder, setBinauralOrder] = useState("1");
+  const [dialogOpen, setDialogOpen] = useState(false);
 
-  const handleDownload = useCallback(() => {
-    emit("RAYTRACER_DOWNLOAD_BINAURAL_IR", { uuid, order: parseInt(order) });
-  }, [uuid, order]);
+  const hasResults = !!validRayCount && validRayCount > 0;
+  const isCpu = !gpuEnabled;
+
+  const ratioDisplay = convergenceMetrics && Number.isFinite(convergenceMetrics.convergenceRatio)
+    ? (convergenceMetrics.convergenceRatio * 100).toFixed(1) + "%"
+    : "--";
+  const t30Display = convergenceMetrics && convergenceMetrics.estimatedT30
+    ? convergenceMetrics.estimatedT30.map(t => t > 0 ? t.toFixed(2) + "s" : "--").join(", ")
+    : "--";
+
+  const handlePlayPause = useCallback(() => {
+    emit("RAYTRACER_SET_PROPERTY", { uuid, property: "isRunning", value: !isRunning });
+  }, [uuid, isRunning]);
+
+  const handleStop = useCallback(() => {
+    emit("RAYTRACER_SET_PROPERTY", { uuid, property: "isRunning", value: false });
+  }, [uuid]);
+
+  const handleReset = useCallback(() => {
+    emit("RAYTRACER_CLEAR_RAYS", uuid);
+  }, [uuid]);
+
+  const handleModeChange = useCallback((_e: React.MouseEvent, value: string | null) => {
+    if (value !== null) {
+      emit("RAYTRACER_SET_PROPERTY", { uuid, property: "gpuEnabled", value: value === "gpu" });
+    }
+  }, [uuid]);
+
+  const handleAmbiDownload = useCallback(() => {
+    emit("RAYTRACER_DOWNLOAD_AMBISONIC_IR", { uuid, order: parseInt(ambiOrder) });
+  }, [uuid, ambiOrder]);
+
+  const handleBinauralPlay = useCallback(() => {
+    emit("RAYTRACER_PLAY_BINAURAL_IR", { uuid, order: parseInt(binauralOrder) });
+  }, [uuid, binauralOrder]);
+
+  const handleBinauralDownload = useCallback(() => {
+    emit("RAYTRACER_DOWNLOAD_BINAURAL_IR", { uuid, order: parseInt(binauralOrder) });
+  }, [uuid, binauralOrder]);
 
   const handleSubjectSelect = useCallback((id: string) => {
     emit("RAYTRACER_SET_PROPERTY", { uuid, property: "hrtfSubjectId", value: id });
-    // Invalidate cached binaural IR when subject changes
     emit("RAYTRACER_SET_PROPERTY", { uuid, property: "binauralImpulseResponse", value: undefined });
   }, [uuid]);
 
-  return (
-    <PropertyRowFolder label="Binaural Output" open={open} onOpenClose={toggle}>
-      <PropertyRow>
-        <PropertyRowLabel label="Order" hasToolTip tooltip="Ambisonic order for binaural decoding (1=FOA, 2=HOA2, 3=HOA3)" />
-        <PropertyRowSelect
-          value={order}
-          onChange={({ value }) => setOrder(value)}
-          options={[
-            { value: "1", label: "1st Order (4 ch)" },
-            { value: "2", label: "2nd Order (9 ch)" },
-            { value: "3", label: "3rd Order (16 ch)" }
-          ]}
-        />
-      </PropertyRow>
-      <PropertyRow>
-        <PropertyRowLabel label="HRTF Subject" hasToolTip tooltip="Head-related transfer function subject for binaural rendering" />
-        <span style={{ fontSize: 11, fontFamily: "monospace" }}>{hrtfSubjectId || "D1"}</span>
-      </PropertyRow>
-      <PropertyRow>
-        <PropertyRowLabel label="" />
-        <PropertyRowButton
-          onClick={() => setDialogOpen(true)}
-          label="Select HRTF Subject..."
-        />
-      </PropertyRow>
-      <PropertyNumberInput
-        uuid={uuid}
-        label="Head Yaw"
-        property="headYaw"
-        tooltip="Head rotation around vertical axis in degrees (positive = left)"
-        elementProps={{ step: 5, min: -180, max: 180 }}
-      />
-      <PropertyNumberInput
-        uuid={uuid}
-        label="Head Pitch"
-        property="headPitch"
-        tooltip="Head tilt up/down in degrees (positive = up)"
-        elementProps={{ step: 5, min: -90, max: 90 }}
-      />
-      <PropertyNumberInput
-        uuid={uuid}
-        label="Head Roll"
-        property="headRoll"
-        tooltip="Head tilt left/right in degrees (positive = right ear down)"
-        elementProps={{ step: 5, min: -90, max: 90 }}
-      />
-      <PropertyRow>
-        <PropertyRowLabel label="" />
-        <PropertyRowButton onClick={handlePlay} label="Play Binaural" disabled={disabled || binauralPlaying} />
-      </PropertyRow>
-      <PropertyRow>
-        <PropertyRowLabel label="" />
-        <PropertyRowButton onClick={handleDownload} label="Download Stereo WAV" disabled={disabled} />
-      </PropertyRow>
-      <HRTFSubjectDialog
-        open={dialogOpen}
-        onClose={() => setDialogOpen(false)}
-        selectedId={hrtfSubjectId || "D1"}
-        onSelect={handleSubjectSelect}
-      />
-    </PropertyRowFolder>
-  );
-};
-
-export const RayTracerTab = ({ uuid }: { uuid: string }) => {
   useEffect(() => {
     const cells = renderer.overlays.global.cells;
     const key = uuid + "-valid-ray-count";
@@ -444,19 +193,151 @@ export const RayTracerTab = ({ uuid }: { uuid: string }) => {
       if (cells.has(key)) cells.get(key)!.hide();
     };
   }, [uuid]);
+
   return (
     <div>
-      <Parameters uuid={uuid} />
-      <GpuAcceleration uuid={uuid} />
-      <SourceReceiverPairs uuid={uuid} />
-      <StyleProperties uuid={uuid} />
-      <SolverControls uuid={uuid} />
-      <Convergence uuid={uuid} />
-      <LateReverberation uuid={uuid} />
-      <Hybrid uuid={uuid} />
-      <Output uuid={uuid} />
-      <AmbisonicOutput uuid={uuid} />
-      <BinauralOutput uuid={uuid} />
+      <SolverControlBar
+        onPlayPause={handlePlayPause}
+        onStop={handleStop}
+        onReset={handleReset}
+        isRunning={!!isRunning}
+        canRun={true}
+        hasResults={hasResults}
+      />
+
+      {/* CPU / GPU toggle */}
+      <Box sx={toggleRowSx}>
+        <ToggleButtonGroup
+          value={gpuEnabled && gpuAvailable ? "gpu" : "cpu"}
+          exclusive
+          onChange={handleModeChange}
+          size="small"
+          sx={toggleGroupSx}
+        >
+          <ToggleButton value="cpu">CPU</ToggleButton>
+          <Tooltip
+            title={gpuAvailable ? "" : "WebGPU is not supported in this browser"}
+            placement="top"
+          >
+            <span style={{ flex: 1, display: "flex" }}>
+              <ToggleButton value="gpu" disabled={!gpuAvailable} sx={{ flex: 1 }}>
+                GPU
+              </ToggleButton>
+            </span>
+          </Tooltip>
+        </ToggleButtonGroup>
+      </Box>
+
+      {/* Source / Receiver Pairs */}
+      <SectionLabel label="Source / Receiver Pairs" />
+      <PropertyCheckboxInput uuid={uuid} label="Ignore Receivers" property="runningWithoutReceivers" tooltip="Run rays without checking receiver intersections — useful for visualization-only mode" />
+      <SourceReceiverMatrix uuid={uuid} disabled={ignoreReceivers} />
+
+      {/* Parameters */}
+      <SectionLabel label="Parameters" />
+      <PropertyNumberInput uuid={uuid} label="Order" property="reflectionOrder" tooltip="Maximum number of specular reflections each ray can undergo before termination" />
+      <PropertyNumberInput uuid={uuid} label="Max Paths" property="maxStoredPaths" tooltip="Maximum valid paths stored per source-receiver pair. Oldest paths are evicted when the buffer is full." elementProps={{ step: 1000, min: 1 }} />
+      <PropertyCheckboxInput uuid={uuid} label="Edge Diffraction" property="edgeDiffractionEnabled" tooltip="Uniform Theory of Diffraction (UTD) — models sound bending around convex edges using Keller's geometrical theory, adding diffracted contributions at each wedge." />
+      {isCpu && (
+        <>
+          <PropertyNumberInput uuid={uuid} label="Rate (ms)" property="updateInterval" tooltip="Interval between ray-tracing callbacks in milliseconds. Lower values give faster visual feedback but use more CPU." />
+          <PropertyNumberInput uuid={uuid} label="Passes" property="passes" tooltip="Number of rays launched per callback interval. Higher values improve convergence speed at the cost of UI responsiveness." />
+        </>
+      )}
+      {!isCpu && (
+        <PropertyNumberInput uuid={uuid} label="Batch Size" property="gpuBatchSize" tooltip="Number of rays dispatched per WebGPU compute pass. Larger batches improve throughput but increase per-frame latency." elementProps={{ step: 1000, min: 1000, max: 50000 }} />
+      )}
+      <PropertyCheckboxInput uuid={uuid} label="Hybrid Method" property="hybrid" tooltip="Combines deterministic image-source calculation for early reflections with stochastic ray tracing for late reflections, improving accuracy at low orders." />
+      <PropertyTextInput uuid={uuid} label="Transition Order" property="transitionOrder" tooltip="Reflection order at which the solver switches from image-source to ray tracing in hybrid mode" />
+      <PropertyCheckboxInput uuid={uuid} label="Late Reverb Tail" property="lateReverbTailEnabled" tooltip="Synthesize a stochastic noise tail to extend the impulse response beyond the ray-traced data, using energy decay parameters estimated from the simulation." />
+      <PropertyNumberInput uuid={uuid} label="Crossfade Time (s)" property="tailCrossfadeTime" tooltip="Time (seconds) at which the crossfade from ray-traced to synthetic tail begins. Set to 0 for automatic detection based on energy curve." elementProps={{ step: 0.1, min: 0, max: 5 }} />
+      <PropertyNumberInput uuid={uuid} label="Crossfade Dur. (s)" property="tailCrossfadeDuration" tooltip="Duration of the Hann-windowed crossfade between ray-traced and synthetic tail regions" elementProps={{ step: 0.01, min: 0.01, max: 0.5 }} />
+
+      {/* Convergence */}
+      <SectionLabel label="Convergence" />
+      <PropertyCheckboxInput uuid={uuid} label="Auto-Stop" property="autoStop" tooltip="Automatically halt the simulation when the coefficient of variation of T30 estimates across octave bands falls below the threshold" />
+      <PropertyNumberInput uuid={uuid} label="Threshold" property="convergenceThreshold" tooltip="Target coefficient of variation for T30 estimates across octave bands (125 Hz – 8 kHz). Lower values require more rays but yield more stable results." elementProps={{ step: 0.001, min: 0.001, max: 1 }} />
+      <PropertyNumberInput uuid={uuid} label="RR Threshold" property="rrThreshold" tooltip="Russian Roulette termination threshold — rays with energy below this fraction of their initial energy are probabilistically terminated, keeping the estimator unbiased." elementProps={{ step: 0.01, min: 0.01, max: 1 }} />
+      <PropertyRow>
+        <PropertyRowLabel label="Conv. Ratio" hasToolTip tooltip="Current maximum coefficient of variation of T30 across all octave bands — decreases toward the threshold as more rays are traced" />
+        <span style={{ fontSize: "11px", fontFamily: "monospace" }}>{ratioDisplay}</span>
+      </PropertyRow>
+      <PropertyRow>
+        <PropertyRowLabel label="Est. T30" hasToolTip tooltip="Running T30 estimate per octave band (125 Hz – 8 kHz), computed from the energy decay curve of accumulated ray contributions" />
+        <span style={{ fontSize: "11px", fontFamily: "monospace", overflow: "hidden", textOverflow: "ellipsis" }}>{t30Display}</span>
+      </PropertyRow>
+
+      {/* Visualization */}
+      <SectionLabel label="Visualization" />
+      <PropertyNumberInput uuid={uuid} label="Point Size" property="pointSize" tooltip="Radius in pixels of each surface intersection point rendered in the viewport" />
+      <PropertyCheckboxInput uuid={uuid} label="Rays Visible" property="raysVisible" tooltip="Show or hide ray path lines in the 3D viewport" />
+      <PropertyCheckboxInput uuid={uuid} label="Points Visible" property="pointsVisible" tooltip="Show or hide intersection points where rays hit surfaces" />
+
+      {/* Impulse Response */}
+      <SectionLabel label="Impulse Response" />
+      <PropertyButton event="RAYTRACER_PLAY_IR" args={uuid} label="Play" tooltip="Auralise the broadband impulse response through the default audio output" disabled={impulseResponsePlaying} />
+      <PropertyButton event="RAYTRACER_DOWNLOAD_IR" args={uuid} label="Download" tooltip="Export the broadband impulse response as a mono WAV file" />
+      <PropertyButton event="RAYTRACER_DOWNLOAD_IR_OCTAVE" args={uuid} label="Download by Octave" tooltip="Export separate WAV files for each octave-band filtered impulse response" />
+
+      {/* Ambisonic Output */}
+      <SectionLabel label="Ambisonic Output" />
+      <PropertyRow>
+        <PropertyRowLabel label="Order" hasToolTip tooltip="Ambisonic order — 1st (4 ch FOA), 2nd (9 ch HOA), or 3rd (16 ch HOA). Higher orders capture finer spatial detail." />
+        <PropertyRowSelect
+          value={ambiOrder}
+          onChange={({ value }) => setAmbiOrder(value)}
+          options={[
+            { value: "1", label: "1st Order (4 ch)" },
+            { value: "2", label: "2nd Order (9 ch)" },
+            { value: "3", label: "3rd Order (16 ch)" }
+          ]}
+        />
+      </PropertyRow>
+      <PropertyRow>
+        <PropertyRowLabel label="" hasToolTip tooltip="Download a multi-channel WAV in ACN channel order with N3D normalisation" />
+        <PropertyRowButton onClick={handleAmbiDownload} label="Download" disabled={!hasResults} />
+      </PropertyRow>
+
+      {/* Binaural Output */}
+      <SectionLabel label="Binaural Output" />
+      <PropertyRow>
+        <PropertyRowLabel label="Order" hasToolTip tooltip="Ambisonic order used for binaural decoding via HRTF convolution" />
+        <PropertyRowSelect
+          value={binauralOrder}
+          onChange={({ value }) => setBinauralOrder(value)}
+          options={[
+            { value: "1", label: "1st Order (4 ch)" },
+            { value: "2", label: "2nd Order (9 ch)" },
+            { value: "3", label: "3rd Order (16 ch)" }
+          ]}
+        />
+      </PropertyRow>
+      <PropertyRow>
+        <PropertyRowLabel label="HRTF Subject" hasToolTip tooltip="Head-Related Transfer Function dataset used for spatial audio rendering — different subjects have different ear geometries" />
+        <span style={{ fontSize: 11, fontFamily: "monospace" }}>{hrtfSubjectId || "D1"}</span>
+      </PropertyRow>
+      <PropertyRow>
+        <PropertyRowLabel label="" />
+        <PropertyRowButton onClick={() => setDialogOpen(true)} label="Select HRTF Subject..." />
+      </PropertyRow>
+      <PropertyNumberInput uuid={uuid} label="Head Yaw" property="headYaw" tooltip="Listener head rotation around the vertical axis in degrees (positive = left)" elementProps={{ step: 5, min: -180, max: 180 }} />
+      <PropertyNumberInput uuid={uuid} label="Head Pitch" property="headPitch" tooltip="Listener head tilt forward/backward in degrees (positive = up)" elementProps={{ step: 5, min: -90, max: 90 }} />
+      <PropertyNumberInput uuid={uuid} label="Head Roll" property="headRoll" tooltip="Listener head tilt side-to-side in degrees (positive = right ear down)" elementProps={{ step: 5, min: -90, max: 90 }} />
+      <PropertyRow>
+        <PropertyRowLabel label="" />
+        <PropertyRowButton onClick={handleBinauralPlay} label="Play Binaural" disabled={!hasResults || binauralPlaying} />
+      </PropertyRow>
+      <PropertyRow>
+        <PropertyRowLabel label="" />
+        <PropertyRowButton onClick={handleBinauralDownload} label="Download Stereo WAV" disabled={!hasResults} />
+      </PropertyRow>
+
+      <HRTFSubjectDialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        selectedId={hrtfSubjectId || "D1"}
+        onSelect={handleSubjectSelect}
+      />
     </div>
   );
 };

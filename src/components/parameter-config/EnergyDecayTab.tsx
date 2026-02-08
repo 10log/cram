@@ -1,19 +1,19 @@
 import React from 'react';
 import { emit } from "../../messenger";
-import useToggle from "../hooks/use-toggle";
 import { PropertyButton } from "./SolverComponents";
-import PropertyRowFolder from "./property-row/PropertyRowFolder";
 import PropertyRow from "./property-row/PropertyRow";
 import PropertyRowLabel from "./property-row/PropertyRowLabel";
+import SectionLabel from "./property-row/SectionLabel";
 
 export interface EnergyDecayTabProps {
     uuid: string;
 }
-  
-const Input = ({ uuid }: { uuid: string }) => {
-    const [open, toggle] = useToggle(true);
+
+export const EnergyDecayTab = ({ uuid }: EnergyDecayTabProps) => {
     return (
-      <PropertyRowFolder label="Input" open={open} onOpenClose={toggle}>
+      <div>
+        {/* Input */}
+        <SectionLabel label="Input" />
         <PropertyRow>
             <PropertyRowLabel label={"Upload IR"}></PropertyRowLabel>
             <div style={{alignItems:'center'}}>
@@ -34,16 +34,9 @@ const Input = ({ uuid }: { uuid: string }) => {
                 />
         </div>
         </PropertyRow>
-        <PropertyButton event="CALCULATE_AC_PARAMS" args={uuid} label="Calculate Parameters" tooltip="Calculates Acoustical Parameters from Uploaded IR" />
-      </PropertyRowFolder>
+        <PropertyButton event="CALCULATE_AC_PARAMS" args={uuid} label="Calculate Parameters" tooltip="Derive acoustical parameters (T20, T30, EDT, C50, C80, D50, D80, Ts) from the uploaded impulse response using Schroeder backward integration" />
+      </div>
     );
 };
 
-export const EnergyDecayTab = ({ uuid }: EnergyDecayTabProps) => {
-    return (
-        <Input uuid={uuid} />
-    );
-};
-
-export default EnergyDecayTab; 
-  
+export default EnergyDecayTab;

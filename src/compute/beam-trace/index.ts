@@ -93,7 +93,6 @@ export interface BeamTraceSaveObject {
   frequencies: number[];
   levelTimeProgression: string;
   impulseResponseResult: string;
-  temperature?: number;
 }
 
 export interface BeamTraceSolverParams {
@@ -109,11 +108,10 @@ export interface BeamTraceSolverParams {
   frequencies?: number[];
   levelTimeProgression?: string;
   impulseResponseResult?: string;
-  temperature?: number;
 }
 
 const defaults: Required<BeamTraceSolverParams> = {
-  name: "Beam Trace",
+  name: "Beam Tracer",
   uuid: "",
   roomID: "",
   sourceIDs: [],
@@ -125,7 +123,6 @@ const defaults: Required<BeamTraceSolverParams> = {
   frequencies: [125, 250, 500, 1000, 2000, 4000, 8000],
   levelTimeProgression: "",
   impulseResponseResult: "",
-  temperature: 20,
 };
 
 export class BeamTraceSolver extends Solver {
@@ -134,7 +131,6 @@ export class BeamTraceSolver extends Solver {
   receiverIDs: string[];
   maxReflectionOrder: number;
   frequencies: number[];
-  temperature: number;
   levelTimeProgression: string;
   impulseResponseResult: string;
 
@@ -199,7 +195,6 @@ export class BeamTraceSolver extends Solver {
     this.receiverIDs = p.receiverIDs;
     this.maxReflectionOrder = p.maxReflectionOrder;
     this.frequencies = p.frequencies;
-    this.temperature = p.temperature ?? defaults.temperature;
     this._visualizationMode = p.visualizationMode;
     this._showAllBeams = p.showAllBeams;
     this._visibleOrders = p.visibleOrders.length > 0 ? p.visibleOrders : Array.from({ length: p.maxReflectionOrder + 1 }, (_, i) => i);
@@ -261,6 +256,10 @@ export class BeamTraceSolver extends Solver {
     renderer.markup.add(this.virtualSourcesGroup);
   }
 
+  get temperature(): number {
+    return this.room?.temperature ?? 20;
+  }
+
   get c(): number {
     return ac.soundSpeed(this.temperature);
   }
@@ -277,7 +276,6 @@ export class BeamTraceSolver extends Solver {
         "receiverIDs",
         "maxReflectionOrder",
         "frequencies",
-        "temperature",
         "levelTimeProgression",
         "impulseResponseResult"
       ], this),
@@ -299,7 +297,6 @@ export class BeamTraceSolver extends Solver {
     this._showAllBeams = state.showAllBeams ?? false;
     this._visibleOrders = state.visibleOrders ?? Array.from({ length: this.maxReflectionOrder + 1 }, (_, i) => i);
     this.frequencies = state.frequencies;
-    this.temperature = state.temperature ?? 20;
     this.levelTimeProgression = state.levelTimeProgression || uuidv4();
     this.impulseResponseResult = state.impulseResponseResult || uuidv4();
     return this;

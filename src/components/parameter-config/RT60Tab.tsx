@@ -4,9 +4,8 @@ import { RT60 } from '../../compute/rt';
 import { on } from "../../messenger";
 import { useSolver } from "../../store";
 import { pickProps } from "../../common/helpers";
-import useToggle from "../hooks/use-toggle";
 import { createPropertyInputs, PropertyButton } from "./SolverComponents";
-import PropertyRowFolder from "./property-row/PropertyRowFolder";
+import SectionLabel from "./property-row/SectionLabel";
 
 export interface RT60TabProps {
   uuid: string;
@@ -16,28 +15,9 @@ const { PropertyNumberInput } = createPropertyInputs<RT60>(
   "RT60_SET_PROPERTY"
 );
 
-const Settings = ({ uuid }: { uuid: string }) => {
-  const [open, toggle] = useToggle(true);
-  return (
-    <PropertyRowFolder label="Room Settings" open={open} onOpenClose={toggle}>
-    <PropertyNumberInput
-        uuid={uuid}
-        label="Room Volume"
-        property="displayVolume"
-        tooltip="Overrides the calculated room volume"
-        elementProps={{
-          step: 0.01
-        }}
-      />
-    </PropertyRowFolder>
-  );
-};
-
-
-const Export = ({uuid}: { uuid: string }) => {
-  const [open, toggle] = useToggle(true);
+export const RT60Tab = ({ uuid }: RT60TabProps) => {
   const {noResults} = useSolver(useShallow(state => pickProps(["noResults"], state.solvers[uuid] as RT60)));
-  const [, forceUpdate] = useReducer((c) => c + 1, 0) as [never, () => void]
+  const [, forceUpdate] = useReducer((c) => c + 1, 0) as [never, () => void];
 
   useEffect(() => {
     return on("UPDATE_RT60", (_e) => {
@@ -45,18 +25,21 @@ const Export = ({uuid}: { uuid: string }) => {
     });
   }, [forceUpdate]);
 
-  return(
-    <PropertyRowFolder label="Export" open={open} onOpenClose={toggle}>
-      <PropertyButton event="DOWNLOAD_RT60_RESULTS" args={uuid} label="Download RT Results" disabled={noResults} tooltip="Download RT Results as CSV File"/>
-    </PropertyRowFolder>
-  )
-}
-
-export const RT60Tab = ({ uuid }: RT60TabProps) => {
   return (
     <div>
-      <Settings uuid={uuid} />
-      <Export uuid={uuid} />
+      {/* Settings */}
+      <SectionLabel label="Settings" />
+      <PropertyNumberInput
+        uuid={uuid}
+        label="Room Volume"
+        property="displayVolume"
+        tooltip="Override the automatically computed room volume (m³). Used in Sabine, Eyring, and Fitzroy reverberation time formulas."
+        elementProps={{ step: 0.01 }}
+      />
+
+      {/* Export */}
+      <SectionLabel label="Export" />
+      <PropertyButton event="DOWNLOAD_RT60_RESULTS" args={uuid} label="Download RT Results" disabled={noResults} tooltip="Export reverberation time results (T20, T30, EDT) per octave band as a CSV file" />
     </div>
   );
 };

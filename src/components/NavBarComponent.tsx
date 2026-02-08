@@ -225,7 +225,7 @@ export function AddMenu() {
         <Divider />
         <MenuItemWithMessenger label="Ray Tracer" message="SHOULD_ADD_RAYTRACER" />
         <MenuItemWithMessenger label="Image Source" message="SHOULD_ADD_IMAGE_SOURCE"/>
-        <MenuItemWithEmitter label="Beam Trace" event="SHOULD_ADD_BEAMTRACE" />
+        <MenuItemWithEmitter label="Beam Tracer" event="SHOULD_ADD_BEAMTRACE" />
         <MenuItemWithEmitter label="2D-FDTD" event="ADD_FDTD_2D" />
         <MenuItemWithMessenger label="Statistical RT" message="SHOULD_ADD_RT60" />
         <MenuItemWithMessenger label="Energy Decay" message="SHOULD_ADD_ENERGYDECAY"/>

@@ -316,6 +316,7 @@ const SolverTabMap: Record<string, React.ComponentType<{ uuid: string }>> = {
   "image-source": ImageSourceTab,
   "rt60": RT60Tab,
   "energy-decay": EnergyDecayTab,
+  "energydecay": EnergyDecayTab,
   "beam-trace": BeamTraceTab,
   "fdtd-2d": FDTD_2DTab,
   "art": ARTTab,

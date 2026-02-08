@@ -1,7 +1,6 @@
-import React, { memo, useMemo, useCallback } from "react";
+import React, { memo, useMemo, useCallback, useState } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
-import Checkbox from "@mui/material/Checkbox";
 import type { SxProps, Theme } from "@mui/material/styles";
 import { useContainer } from "../../store";
 import { useSolverProperty } from "./SolverComponents";
@@ -20,14 +19,16 @@ const tableSx: SxProps<Theme> = {
   fontSize: 11,
   "& th, & td": {
     p: "4px 6px",
+    transition: "background-color 0.1s",
   },
 };
 
 const headerCellSx: SxProps<Theme> = {
   textAlign: "center",
   fontWeight: 500,
-  color: "#1c2127",
-  borderBottom: "1px solid #e1e4e8",
+  color: "text.primary",
+  borderBottom: "1px solid",
+  borderColor: "divider",
   whiteSpace: "nowrap",
   maxWidth: 80,
   overflow: "hidden",
@@ -36,8 +37,9 @@ const headerCellSx: SxProps<Theme> = {
 
 const rowHeaderCellSx: SxProps<Theme> = {
   fontWeight: 500,
-  color: "#1c2127",
-  borderRight: "1px solid #e1e4e8",
+  color: "text.primary",
+  borderRight: "1px solid",
+  borderColor: "divider",
   whiteSpace: "nowrap",
   maxWidth: 80,
   overflow: "hidden",
@@ -46,33 +48,46 @@ const rowHeaderCellSx: SxProps<Theme> = {
 
 const dataCellSx: SxProps<Theme> = {
   textAlign: "center",
-  borderBottom: "1px solid #f0f0f0",
+  cursor: "pointer",
+  userSelect: "none",
+  borderBottom: "1px solid",
+  borderColor: "action.hover",
+};
+
+const highlightBgSx: SxProps<Theme> = {
+  bgcolor: "action.hover",
 };
 
 const cornerCellSx: SxProps<Theme> = {
   textAlign: "right",
   fontWeight: 400,
   fontSize: 10,
-  color: "#656d76",
-  borderBottom: "1px solid #e1e4e8",
-  borderRight: "1px solid #e1e4e8",
+  color: "text.disabled",
+  borderBottom: "1px solid",
+  borderRight: "1px solid",
+  borderColor: "divider",
 };
 
 const emptyMessageSx: SxProps<Theme> = {
   p: "12px 8px",
   fontSize: 11,
-  color: "#8c959f",
+  color: "text.disabled",
   fontStyle: "italic",
   textAlign: "center",
 };
 
-const checkboxSx: SxProps<Theme> = {
-  p: 0,
-  width: 14,
-  height: 14,
-  "& .MuiSvgIcon-root": {
-    fontSize: 18,
-  },
+const checkMarkSx: SxProps<Theme> = {
+  fontSize: 14,
+  fontWeight: 700,
+  color: "primary.main",
+  lineHeight: 1,
+};
+
+const emptyMarkSx: SxProps<Theme> = {
+  fontSize: 14,
+  fontWeight: 400,
+  color: "text.disabled",
+  lineHeight: 1,
 };
 
 interface SourceReceiverMatrixProps {
@@ -84,6 +99,7 @@ interface SourceReceiverMatrixProps {
 export const SourceReceiverMatrix = memo(({ uuid, disabled = false, eventType = "RAYTRACER_SET_PROPERTY" }: SourceReceiverMatrixProps) => {
   const containers = useContainer((state) => state.containers);
   const version = useContainer((state) => state.version);
+  const [hoverCell, setHoverCell] = useState<{ row: number; col: number } | null>(null);
 
   const sources = useMemo(() => {
     return Object.values(containers)
@@ -109,22 +125,17 @@ export const SourceReceiverMatrix = memo(({ uuid, disabled = false, eventType = 
     eventType
   );
 
-  // Provide defaults for undefined arrays
   const sourceIDs = sourceIDsRaw || [];
   const receiverIDs = receiverIDsRaw || [];
 
-  // Check if a source-receiver pair is selected
   const isPairSelected = useCallback((sourceId: string, receiverId: string) => {
     return sourceIDs.includes(sourceId) && receiverIDs.includes(receiverId);
   }, [sourceIDs, receiverIDs]);
 
-  // Toggle a source-receiver pair
-  // Note: With the current data model, selecting a pair means adding the source to sourceIDs
-  // and the receiver to receiverIDs. All combinations of sourceIDs × receiverIDs form pairs.
-  // Unchecking removes the source/receiver only if no other pairs would be affected.
-  const togglePair = useCallback((sourceId: string, receiverId: string, checked: boolean) => {
-    if (checked) {
-      // Add both source and receiver if not already present
+  const togglePair = useCallback((sourceId: string, receiverId: string) => {
+    const selected = sourceIDs.includes(sourceId) && receiverIDs.includes(receiverId);
+
+    if (!selected) {
       const newSourceIDs = sourceIDs.includes(sourceId) ? sourceIDs : [...sourceIDs, sourceId];
       const newReceiverIDs = receiverIDs.includes(receiverId) ? receiverIDs : [...receiverIDs, receiverId];
 
@@ -135,12 +146,9 @@ export const SourceReceiverMatrix = memo(({ uuid, disabled = false, eventType = 
         setReceiverIDs({ value: newReceiverIDs });
       }
     } else {
-      // Remove the source if it only pairs with this one receiver
       if (receiverIDs.length === 1) {
         setSourceIDs({ value: sourceIDs.filter(id => id !== sourceId) });
       }
-
-      // Remove the receiver if it only pairs with this one source
       if (sourceIDs.length === 1) {
         setReceiverIDs({ value: receiverIDs.filter(id => id !== receiverId) });
       }
@@ -161,32 +169,60 @@ export const SourceReceiverMatrix = memo(({ uuid, disabled = false, eventType = 
 
   return (
     <Box sx={matrixContainerSx(disabled)}>
-      <Box component="table" sx={tableSx}>
+      <Box
+        component="table"
+        sx={tableSx}
+        onMouseLeave={() => setHoverCell(null)}
+      >
         <thead>
           <tr>
             <Box component="th" sx={cornerCellSx}>Src \ Rec</Box>
-            {receivers.map(rec => (
-              <Box component="th" key={rec.uuid} sx={headerCellSx} title={rec.name}>
+            {receivers.map((rec, colIdx) => (
+              <Box
+                component="th"
+                key={rec.uuid}
+                sx={hoverCell && hoverCell.col === colIdx
+                  ? { ...headerCellSx, ...highlightBgSx }
+                  : headerCellSx}
+                title={rec.name}
+              >
                 {rec.name}
               </Box>
             ))}
           </tr>
         </thead>
         <tbody>
-          {sources.map(src => (
+          {sources.map((src, rowIdx) => (
             <tr key={src.uuid}>
-              <Box component="td" sx={rowHeaderCellSx} title={src.name}>{src.name}</Box>
-              {receivers.map(rec => (
-                <Box component="td" key={`${src.uuid}-${rec.uuid}`} sx={dataCellSx}>
-                  <Checkbox
-                    checked={isPairSelected(src.uuid, rec.uuid)}
-                    onChange={(e) => togglePair(src.uuid, rec.uuid, e.target.checked)}
-                    title={`${src.name} → ${rec.name}`}
-                    sx={checkboxSx}
-                    size="small"
-                  />
-                </Box>
-              ))}
+              <Box
+                component="td"
+                sx={hoverCell && hoverCell.row === rowIdx
+                  ? { ...rowHeaderCellSx, ...highlightBgSx }
+                  : rowHeaderCellSx}
+                title={src.name}
+              >
+                {src.name}
+              </Box>
+              {receivers.map((rec, colIdx) => {
+                const selected = isPairSelected(src.uuid, rec.uuid);
+                const highlighted = hoverCell && (hoverCell.row === rowIdx || hoverCell.col === colIdx);
+                return (
+                  <Box
+                    component="td"
+                    key={`${src.uuid}-${rec.uuid}`}
+                    sx={highlighted
+                      ? { ...dataCellSx, ...highlightBgSx }
+                      : dataCellSx}
+                    onClick={() => togglePair(src.uuid, rec.uuid)}
+                    onMouseEnter={() => setHoverCell({ row: rowIdx, col: colIdx })}
+                    title={`${src.name} \u2192 ${rec.name}`}
+                  >
+                    <Typography component="span" sx={selected ? checkMarkSx : emptyMarkSx}>
+                      {selected ? "\u2713" : "\u00B7"}
+                    </Typography>
+                  </Box>
+                );
+              })}
             </tr>
           ))}
         </tbody>

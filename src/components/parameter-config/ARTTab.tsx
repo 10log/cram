@@ -1,13 +1,14 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { ART } from '../../compute/radiance/art';
 import { useContainer } from "../../store";
-import useToggle from "../hooks/use-toggle";
-import { createPropertyInputs, PropertyButton, useSolverProperty } from "./SolverComponents";
-import PropertyRowFolder from "./property-row/PropertyRowFolder";
+import { createPropertyInputs, useSolverProperty } from "./SolverComponents";
 import SourceReceiverMatrix from "./SourceReceiverMatrix";
 import PropertyRow from "./property-row/PropertyRow";
 import PropertyRowLabel from "./property-row/PropertyRowLabel";
 import { PropertyRowSelect } from "./property-row/PropertyRowSelect";
+import SolverControlBar from "./SolverControlBar";
+import SectionLabel from "./property-row/SectionLabel";
+import { emit } from "../../messenger";
 
 export interface ARTTabProps {
   uuid: string;
@@ -17,8 +18,7 @@ const { PropertyNumberInput } = createPropertyInputs<ART>(
   "ART_SET_PROPERTY"
 );
 
-const RoomSettings = ({ uuid }: { uuid: string }) => {
-  const [open, toggle] = useToggle(true);
+export const ARTTab = ({ uuid }: ARTTabProps) => {
   const containers = useContainer((state) => state.containers);
   const version = useContainer((state) => state.version);
 
@@ -29,112 +29,79 @@ const RoomSettings = ({ uuid }: { uuid: string }) => {
   }, [containers, version]);
 
   const [roomID, setRoomID] = useSolverProperty<ART, "roomID">(
-    uuid,
-    "roomID",
-    "ART_SET_PROPERTY"
+    uuid, "roomID", "ART_SET_PROPERTY"
   );
 
+  const handleCalculate = useCallback(() => {
+    emit("CALCULATE_ART", uuid);
+  }, [uuid]);
+
   return (
-    <PropertyRowFolder label="Room" open={open} onOpenClose={toggle}>
+    <div>
+      <SolverControlBar
+        onPlayPause={handleCalculate}
+        canRun={true}
+      />
+
+      {/* Room */}
+      <SectionLabel label="Room" />
       <PropertyRow>
-        <PropertyRowLabel label="Room" hasToolTip tooltip="Room geometry used for tessellation" />
+        <PropertyRowLabel label="Room" hasToolTip tooltip="Room geometry to tessellate into radiosity patches for energy exchange computation" />
         <PropertyRowSelect
           value={roomID || ""}
           onChange={setRoomID}
           options={rooms.length > 0 ? rooms : [{ value: "", label: "No rooms available" }]}
         />
       </PropertyRow>
-    </PropertyRowFolder>
-  );
-};
 
-const SourceReceiverPairs = ({ uuid }: { uuid: string }) => {
-  const [open, toggle] = useToggle(true);
-  return (
-    <PropertyRowFolder label="Source / Receiver Pairs" open={open} onOpenClose={toggle}>
+      {/* Source / Receiver Pairs */}
+      <SectionLabel label="Source / Receiver Pairs" />
       <SourceReceiverMatrix uuid={uuid} eventType="ART_SET_PROPERTY" />
-    </PropertyRowFolder>
-  );
-};
 
-const SolverSettings = ({ uuid }: { uuid: string }) => {
-  const [open, toggle] = useToggle(true);
-  return (
-    <PropertyRowFolder label="Solver Settings" open={open} onOpenClose={toggle}>
+      {/* Solver Settings */}
+      <SectionLabel label="Solver Settings" />
       <PropertyNumberInput
         uuid={uuid}
         label="Max Edge Length"
         property="maxEdgeLength"
-        tooltip="Maximum triangle edge length for tessellation (meters)"
+        tooltip="Maximum triangle edge length during adaptive tessellation (metres). Smaller values create finer radiosity patches for more spatial detail at the cost of computation time."
         elementProps={{ step: 0.1, min: 0.05 }}
       />
       <PropertyNumberInput
         uuid={uuid}
         label="BRDF Detail"
         property="brdfDetail"
-        tooltip="Icosahedron subdivision level (0=6, 1=~18, 2=~66 hemisphere bins)"
+        tooltip="Hemisphere discretization level for directional energy exchange. Level 0 = 6 bins, 1 ≈ 18 bins, 2 ≈ 66 bins. Higher levels model more complex reflection patterns but increase memory and compute cost."
         elementProps={{ step: 1, min: 0, max: 3 }}
       />
       <PropertyNumberInput
         uuid={uuid}
         label="Rays per Shoot"
         property="raysPerShoot"
-        tooltip="Number of rays cast per shooting iteration"
+        tooltip="Number of stochastic rays emitted per progressive shooting iteration to estimate form factors between surface patches"
         elementProps={{ step: 50, min: 10 }}
       />
       <PropertyNumberInput
         uuid={uuid}
         label="Max Iterations"
         property="maxIterations"
-        tooltip="Maximum number of progressive shooting iterations"
+        tooltip="Maximum progressive radiosity shooting iterations before the solver halts — each iteration distributes the highest-energy unshot patch"
         elementProps={{ step: 10, min: 1 }}
       />
       <PropertyNumberInput
         uuid={uuid}
         label="Convergence"
         property="convergenceThreshold"
-        tooltip="Stop when unshot/initial energy ratio falls below this"
+        tooltip="Ratio of remaining unshot energy to initial energy at which the solver stops. Lower values yield more accurate steady-state energy distributions but require more iterations."
         elementProps={{ step: 0.005, min: 0.001, max: 0.5 }}
-      />
-      <PropertyNumberInput
-        uuid={uuid}
-        label="Temperature"
-        property="temperature"
-        tooltip="Temperature in Celsius (affects speed of sound and air absorption)"
-        elementProps={{ step: 1, min: -20, max: 50 }}
       />
       <PropertyNumberInput
         uuid={uuid}
         label="Sample Rate"
         property="sampleRate"
-        tooltip="Internal temporal sample rate (Hz)"
+        tooltip="Temporal resolution for time-dependent energy exchange between patches (Hz). Higher rates capture faster energy fluctuations but increase computation."
         elementProps={{ step: 100, min: 100, max: 44100 }}
       />
-    </PropertyRowFolder>
-  );
-};
-
-const Calculate = ({ uuid }: { uuid: string }) => {
-  const [open, toggle] = useToggle(true);
-  return (
-    <PropertyRowFolder label="Calculate" open={open} onOpenClose={toggle}>
-      <PropertyButton
-        event="CALCULATE_ART"
-        args={uuid}
-        label="Calculate"
-        tooltip="Run the Acoustic Radiance Transfer solver"
-      />
-    </PropertyRowFolder>
-  );
-};
-
-export const ARTTab = ({ uuid }: ARTTabProps) => {
-  return (
-    <div>
-      <RoomSettings uuid={uuid} />
-      <SourceReceiverPairs uuid={uuid} />
-      <SolverSettings uuid={uuid} />
-      <Calculate uuid={uuid} />
     </div>
   );
 };

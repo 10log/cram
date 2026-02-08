@@ -14,7 +14,7 @@ import BarChartIcon from "@mui/icons-material/BarChart"; // RT60
 import GraphicEqIcon from "@mui/icons-material/GraphicEq"; // Energy Decay
 import BlurOnIcon from "@mui/icons-material/BlurOn"; // ART
 import SettingsIcon from "@mui/icons-material/Settings"; // Renderer
-import TimelineIcon from "@mui/icons-material/Timeline"; // Beam Trace
+import TimelineIcon from "@mui/icons-material/Timeline"; // Beam Tracer
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import DeleteIcon from "@mui/icons-material/Delete";
 import Menu from "@mui/material/Menu";
