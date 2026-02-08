@@ -13,12 +13,12 @@ import * as path from 'path';
 // ── Source code for scanning tests ───────────────────────────────────
 
 const hrtfDataSource = fs.readFileSync(
-  path.resolve(__dirname, '..', 'hrtf-data.ts'),
+  path.resolve(__dirname, '..', '..', '..', 'binaural', 'hrtf-data.ts'),
   'utf8'
 );
 
 const binauralDecoderSource = fs.readFileSync(
-  path.resolve(__dirname, '..', 'binaural-decoder.ts'),
+  path.resolve(__dirname, '..', '..', '..', 'binaural', 'binaural-decoder.ts'),
   'utf8'
 );
 
@@ -147,9 +147,8 @@ describe('Binaural HRTF – RayTracer integration', () => {
     'utf8'
   );
 
-  it('index.ts imports binaural modules', () => {
-    expect(indexSource).toContain('from "./binaural/hrtf-data"');
-    expect(indexSource).toContain('from "./binaural/binaural-decoder"');
+  it('index.ts imports shared binaural calculation', () => {
+    expect(indexSource).toContain('from "../binaural/calculate-binaural"');
   });
 
   it('index.ts declares hrtfSubjectId property', () => {

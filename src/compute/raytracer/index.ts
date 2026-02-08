@@ -43,8 +43,7 @@ import { extractDecayParameters, synthesizeTail, assembleFinalIR } from "./tail-
 import { reflectionLossFunction as reflectionLossFunctionFn, calculateReflectionLoss as calculateReflectionLossFn, calculateResponseByIntensity as calcResponseByIntensityFn, resampleResponseByIntensity as resampleResponseByIntensityFn, calculateT20 as calculateT20Fn, calculateT30 as calculateT30Fn, calculateT60 as calculateT60Fn } from "./response-by-intensity";
 import { pathsToLinearBuffer as pathsToLinearBufferFn, linearBufferToPaths as linearBufferToPathsFn } from "./serialization";
 import { downloadImpulses as downloadImpulsesFn, playImpulseResponse as playImpulseResponseFn, downloadImpulseResponse as downloadImpulseResponseFn, downloadAmbisonicImpulseResponse as downloadAmbisonicIRFn, playBinauralImpulseResponse as playBinauralIRFn, downloadBinauralImpulseResponse as downloadBinauralIRFn } from "./export-playback";
-import { loadDecoderFilters } from "./binaural/hrtf-data";
-import { decodeBinaural, rotateAmbisonicIR } from "./binaural/binaural-decoder";
+import { calculateBinauralFromAmbisonic } from "../binaural/calculate-binaural";
 import { resetConvergenceState, updateConvergenceMetrics, addToEnergyHistogram } from "./convergence";
 import { buildEdgeGraph, findDiffractionPaths } from "./diffraction";
 import type { EdgeGraph } from "./diffraction";
@@ -1837,19 +1836,15 @@ class RayTracer extends Solver {
       this.ambisonicOrder = order;
     }
 
-    // Apply head rotation if non-zero
-    let ambiIR = this.ambisonicImpulseResponse;
-    if (this.headYaw !== 0 || this.headPitch !== 0 || this.headRoll !== 0) {
-      ambiIR = rotateAmbisonicIR(ambiIR, this.headYaw, this.headPitch, this.headRoll);
-    }
-
-    // Load HRTF decoder filters
-    const filters = await loadDecoderFilters(this.hrtfSubjectId, order);
-
-    // Decode to binaural stereo
-    const result = await decodeBinaural(ambiIR, filters);
-    this.binauralImpulseResponse = result.buffer;
-    return result.buffer;
+    this.binauralImpulseResponse = await calculateBinauralFromAmbisonic({
+      ambisonicImpulseResponse: this.ambisonicImpulseResponse,
+      order,
+      hrtfSubjectId: this.hrtfSubjectId,
+      headYaw: this.headYaw,
+      headPitch: this.headPitch,
+      headRoll: this.headRoll,
+    });
+    return this.binauralImpulseResponse;
   }
 
   async playBinauralImpulseResponse(order: number = 1) {

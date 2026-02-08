@@ -32,7 +32,10 @@ import {
   playImpulseResponse as sharedPlayIR,
   downloadImpulseResponse as sharedDownloadIR,
   downloadAmbisonicImpulseResponse as sharedDownloadAmbisonicIR,
+  playBinauralImpulseResponse as sharedPlayBinauralIR,
+  downloadBinauralImpulseResponse as sharedDownloadBinauralIR,
 } from "../shared/export-playback";
+import { calculateBinauralFromAmbisonic } from "../binaural/calculate-binaural";
 import chroma from 'chroma-js';
 import { encodeBufferFromDirection, getAmbisonicChannelCount } from "ambisonics";
 
@@ -97,6 +100,10 @@ export interface BeamTraceSaveObject {
   frequencies: number[];
   levelTimeProgression: string;
   impulseResponseResult: string;
+  hrtfSubjectId?: string;
+  headYaw?: number;
+  headPitch?: number;
+  headRoll?: number;
 }
 
 export interface BeamTraceSolverParams {
@@ -112,6 +119,10 @@ export interface BeamTraceSolverParams {
   frequencies?: number[];
   levelTimeProgression?: string;
   impulseResponseResult?: string;
+  hrtfSubjectId?: string;
+  headYaw?: number;
+  headPitch?: number;
+  headRoll?: number;
 }
 
 const defaults: Required<BeamTraceSolverParams> = {
@@ -127,6 +138,10 @@ const defaults: Required<BeamTraceSolverParams> = {
   frequencies: [125, 250, 500, 1000, 2000, 4000, 8000],
   levelTimeProgression: "",
   impulseResponseResult: "",
+  hrtfSubjectId: "D1",
+  headYaw: 0,
+  headPitch: 0,
+  headRoll: 0,
 };
 
 export class BeamTraceSolver extends Solver {
@@ -149,6 +164,14 @@ export class BeamTraceSolver extends Solver {
   private polygons: Polygon3D[] = [];
   private surfaceToPolygonIndex: Map<string, number[]> = new Map();
   private polygonToSurface: Map<number, Surface> = new Map();
+
+  // Binaural
+  hrtfSubjectId: string;
+  headYaw: number;
+  headPitch: number;
+  headRoll: number;
+  binauralImpulseResponse?: AudioBuffer;
+  binauralPlaying: boolean = false;
 
   // Results
   validPaths: BeamTracePath[] = [];
@@ -187,6 +210,11 @@ export class BeamTraceSolver extends Solver {
   private selectedPath: THREE.Mesh;
   private selectedBeamsGroup: THREE.Group;
 
+  // Incremental update tracking: skip full beam tree rebuild when only the listener moved
+  private _lastSourcePos: THREE.Vector3 | null = null;
+  private _lastRoomID: string = "";
+  private _lastMaxOrder: number = -1;
+
   constructor(params: BeamTraceSolverParams = {}) {
     super(params);
     const p = { ...defaults, ...params };
@@ -199,6 +227,10 @@ export class BeamTraceSolver extends Solver {
     this.receiverIDs = p.receiverIDs;
     this.maxReflectionOrder = p.maxReflectionOrder;
     this.frequencies = p.frequencies;
+    this.hrtfSubjectId = p.hrtfSubjectId;
+    this.headYaw = p.headYaw;
+    this.headPitch = p.headPitch;
+    this.headRoll = p.headRoll;
     this._visualizationMode = p.visualizationMode;
     this._showAllBeams = p.showAllBeams;
     this._visibleOrders = p.visibleOrders.length > 0 ? p.visibleOrders : Array.from({ length: p.maxReflectionOrder + 1 }, (_, i) => i);
@@ -281,7 +313,11 @@ export class BeamTraceSolver extends Solver {
         "maxReflectionOrder",
         "frequencies",
         "levelTimeProgression",
-        "impulseResponseResult"
+        "impulseResponseResult",
+        "hrtfSubjectId",
+        "headYaw",
+        "headPitch",
+        "headRoll",
       ], this),
       visualizationMode: this._visualizationMode,
       showAllBeams: this._showAllBeams,
@@ -303,6 +339,10 @@ export class BeamTraceSolver extends Solver {
     this.frequencies = state.frequencies;
     this.levelTimeProgression = state.levelTimeProgression || uuidv4();
     this.impulseResponseResult = state.impulseResponseResult || uuidv4();
+    this.hrtfSubjectId = state.hrtfSubjectId ?? "D1";
+    this.headYaw = state.headYaw ?? 0;
+    this.headPitch = state.headPitch ?? 0;
+    this.headRoll = state.headRoll ?? 0;
     return this;
   }
 
@@ -602,6 +642,20 @@ export class BeamTraceSolver extends Solver {
     return polygons;
   }
 
+  // Check if the beam tree needs to be rebuilt (source moved, room changed, or order changed)
+  private needsBeamTreeRebuild(): boolean {
+    if (!this.btSolver) return true;
+    if (this._lastRoomID !== this.roomID) return true;
+    if (this._lastMaxOrder !== this.maxReflectionOrder) return true;
+    if (this.sourceIDs.length === 0) return true;
+
+    const source = useContainer.getState().containers[this.sourceIDs[0]] as Source;
+    if (!source) return true;
+    if (!this._lastSourcePos || !this._lastSourcePos.equals(source.position)) return true;
+
+    return false;
+  }
+
   // Build/rebuild the beam-trace solver
   buildSolver() {
     if (this.sourceIDs.length === 0) {
@@ -635,6 +689,11 @@ export class BeamTraceSolver extends Solver {
       maxReflectionOrder: this.maxReflectionOrder
     });
 
+    // Record the state used for this build (for incremental update detection)
+    this._lastSourcePos = source.position.clone();
+    this._lastRoomID = this.roomID;
+    this._lastMaxOrder = this.maxReflectionOrder;
+
     console.log(`BeamTraceSolver: Built with ${this.polygons.length} polygons, max order ${this.maxReflectionOrder}`);
   }
 
@@ -645,8 +704,16 @@ export class BeamTraceSolver extends Solver {
       return;
     }
 
-    // Rebuild solver (in case source moved or room changed)
-    this.buildSolver();
+    // Only rebuild beam tree if source, room, or reflection order changed.
+    // If only the listener moved, reuse the existing beam tree (much faster).
+    const needsRebuild = this.needsBeamTreeRebuild();
+    if (needsRebuild) {
+      this.buildSolver();
+    } else if (this.btSolver) {
+      // Clear fail-plane cache so stale listener-position caches don't skip valid paths
+      this.btSolver.clearCache();
+      console.log("BeamTraceSolver: Reusing beam tree (listener-only change)");
+    }
 
     if (!this.btSolver) {
       console.warn("BeamTraceSolver: Solver not built");
@@ -666,13 +733,15 @@ export class BeamTraceSolver extends Solver {
         receiver.position.y,
         receiver.position.z
       ];
-      // Get paths from beam-trace solver
+      // Get paths and detailed paths from beam-trace solver
       const paths = this.btSolver!.getPaths(listenerPos);
       this.lastMetrics = this.btSolver!.getMetrics();
+      const detailedPaths = this.btSolver!.getDetailedPaths(listenerPos);
 
-      // Convert to our format
-      paths.forEach(path => {
-        const btPath = this.convertPath(path);
+      // Convert to our format, using detailed paths for pre-computed angles
+      paths.forEach((path, i) => {
+        const detailed = i < detailedPaths.length ? detailedPaths[i] : undefined;
+        const btPath = this.convertPath(path, detailed);
         this.validPaths.push(btPath);
       });
     });
@@ -708,7 +777,7 @@ export class BeamTraceSolver extends Solver {
   }
 
   // Convert beam-trace path to our format
-  private convertPath(path: ReflectionPath3D): BeamTracePath {
+  private convertPath(path: ReflectionPath3D, detailed?: DetailedReflectionPath3D): BeamTracePath {
     const points = path.map(p => new THREE.Vector3(p.position[0], p.position[1], p.position[2]));
     const length = computePathLength(path);
     const arrivalTime = computeArrivalTime(path, this.c);
@@ -728,7 +797,16 @@ export class BeamTraceSolver extends Solver {
       arrivalDirection = new THREE.Vector3(0, 0, 1);
     }
 
-    return { points, order, length, arrivalTime, polygonIds, arrivalDirection };
+    // Populate detailed reflection info from library if available
+    const reflections = detailed?.reflections.map(r => ({
+      polygonId: r.polygonId,
+      hitPoint: new THREE.Vector3(r.hitPoint[0], r.hitPoint[1], r.hitPoint[2]),
+      incidenceAngle: r.incidenceAngle,
+      surfaceNormal: new THREE.Vector3(r.surfaceNormal[0], r.surfaceNormal[1], r.surfaceNormal[2]),
+      isGrazing: r.isGrazing,
+    }));
+
+    return { points, order, length, arrivalTime, polygonIds, arrivalDirection, reflections };
   }
 
   // Calculate Level Time Progression result
@@ -747,10 +825,16 @@ export class BeamTraceSolver extends Solver {
       frequency: [this._plotFrequency]
     };
 
-    // Calculate arrival pressure for each path
+    // Calculate arrival pressure for each path (with receiver directivity)
+    const recForLTP = this.receiverIDs.length > 0
+      ? useContainer.getState().containers[this.receiverIDs[0]] as Receiver
+      : null;
+
     for (let i = 0; i < sortedPaths.length; i++) {
       const path = sortedPaths[i];
-      const pressure = this.calculateArrivalPressure(levelTimeProgression.info.initialSPL, path);
+      const dir = path.arrivalDirection;
+      const recGain = recForLTP ? recForLTP.getGain([dir.x, dir.y, dir.z]) : 1.0;
+      const pressure = this.calculateArrivalPressure(levelTimeProgression.info.initialSPL, path, recGain);
       const pressureLp = ac.P2Lp(pressure) as number[];
 
       levelTimeProgression.data.push({
@@ -1010,10 +1094,16 @@ export class BeamTraceSolver extends Solver {
       samples.push(new Float32Array(numberOfSamples));
     }
 
-    // Add contributions from each path
+    // Add contributions from each path (with receiver directivity)
+    const recForIR = this.receiverIDs.length > 0
+      ? useContainer.getState().containers[this.receiverIDs[0]] as Receiver
+      : null;
+
     for (const path of this.validPaths) {
       const randomPhase = Math.random() > 0.5 ? 1 : -1;
-      const pressure = this.calculateArrivalPressure(spls, path);
+      const dir = path.arrivalDirection;
+      const recGain = recForIR ? recForIR.getGain([dir.x, dir.y, dir.z]) : 1.0;
+      const pressure = this.calculateArrivalPressure(spls, path, recGain);
       const roundedSample = Math.floor(path.arrivalTime * sampleRate);
 
       for (let f = 0; f < this.frequencies.length; f++) {
@@ -1069,27 +1159,67 @@ export class BeamTraceSolver extends Solver {
   }
 
   // Calculate arrival pressure for a path
-  private calculateArrivalPressure(initialSPL: number[], path: BeamTracePath): number[] {
+  private calculateArrivalPressure(initialSPL: number[], path: BeamTracePath, receiverGain: number = 1.0): number[] {
     const intensities = ac.P2I(ac.Lp2P(initialSPL)) as number[];
 
+    // Apply source directivity weighting
+    // Direction from source (last point) toward the first reflection (or receiver for direct path)
+    const sourceIdx = path.points.length - 1;
+    if (sourceIdx >= 1 && this.sourceIDs.length > 0) {
+      const source = useContainer.getState().containers[this.sourceIDs[0]] as Source;
+      if (source?.directivityHandler) {
+        const sourcePos = path.points[sourceIdx];
+        const nextPoint = path.points[sourceIdx - 1];
+        const worldDir = new THREE.Vector3().subVectors(nextPoint, sourcePos).normalize();
+
+        // Convert world direction to source-local spherical angles
+        const localDir = worldDir.clone().applyEuler(
+          new THREE.Euler(-source.rotation.x, -source.rotation.y, -source.rotation.z, source.rotation.order)
+        );
+        const r = localDir.length();
+        if (r > 1e-10) {
+          const theta = Math.acos(Math.min(1, Math.max(-1, localDir.z / r)));
+          const phi = Math.atan2(localDir.y, localDir.x);
+          const phiDeg = ((phi * 180 / Math.PI) % 360 + 360) % 360;
+          const thetaDeg = theta * 180 / Math.PI;
+
+          for (let f = 0; f < this.frequencies.length; f++) {
+            const dirPressure = source.directivityHandler.getPressureAtPosition(0, this.frequencies[f], phiDeg, thetaDeg);
+            const refPressure = source.directivityHandler.getPressureAtPosition(0, this.frequencies[f], 0, 0);
+            if (typeof dirPressure === 'number' && typeof refPressure === 'number' && refPressure > 0) {
+              intensities[f] *= (dirPressure / refPressure) ** 2;
+            }
+          }
+        }
+      }
+    }
+
     // Apply angle-dependent reflection at each reflection point
+    // path.reflections (from DetailedReflectionPath3D) lists only actual reflections in order,
+    // while path.polygonIds includes null entries for source/receiver.
+    let reflectionIdx = 0;
+
     path.polygonIds.forEach((polygonId, idx) => {
       if (polygonId === null) return; // Source or receiver point
 
       const surface = this.polygonToSurface.get(polygonId);
-      if (!surface) return;
+      if (!surface) {
+        reflectionIdx++;
+        return;
+      }
 
-      // Compute incidence angle from path geometry (specular reflection):
-      // For a reflection at points[idx], the incoming ray is from points[idx+1] and
-      // outgoing ray goes to points[idx-1]. The incidence angle is half the angle
-      // between the reversed-incoming and outgoing directions.
+      // Use pre-computed incidence angle from library when available
       let angle = 0; // fallback to normal incidence
-      if (idx > 0 && idx < path.points.length - 1) {
+      if (path.reflections && reflectionIdx < path.reflections.length) {
+        angle = path.reflections[reflectionIdx].incidenceAngle;
+      } else if (idx > 0 && idx < path.points.length - 1) {
+        // Fallback: compute from path geometry
         const toSource = new THREE.Vector3().subVectors(path.points[idx + 1], path.points[idx]).normalize();
         const toReceiver = new THREE.Vector3().subVectors(path.points[idx - 1], path.points[idx]).normalize();
         const cosAngle = Math.min(1, Math.max(-1, toSource.dot(toReceiver)));
         angle = Math.acos(cosAngle) / 2;
       }
+      reflectionIdx++;
 
       for (let f = 0; f < this.frequencies.length; f++) {
         const R = Math.abs(surface.reflectionFunction(this.frequencies[f], angle));
@@ -1105,7 +1235,14 @@ export class BeamTraceSolver extends Solver {
       arrivalLp[f] -= airAttenuationdB[f] * path.length;
     }
 
-    return ac.Lp2P(arrivalLp) as number[];
+    // Apply receiver directivity gain
+    const pressures = ac.Lp2P(arrivalLp) as number[];
+    if (receiverGain !== 1.0) {
+      for (let f = 0; f < pressures.length; f++) {
+        pressures[f] *= receiverGain;
+      }
+    }
+    return pressures;
   }
 
   // Update the IR result with calculated data
@@ -1196,16 +1333,19 @@ export class BeamTraceSolver extends Solver {
       }
     }
 
-    // Process each path
+    // Process each path (with receiver directivity)
+    const recForAmbi = this.receiverIDs.length > 0
+      ? useContainer.getState().containers[this.receiverIDs[0]] as Receiver
+      : null;
+
     for (const path of this.validPaths) {
       const randomPhase = Math.random() > 0.5 ? 1 : -1;
-      const pressure = this.calculateArrivalPressure(spls, path);
+      const dir = path.arrivalDirection;
+      const recGain = recForAmbi ? recForAmbi.getGain([dir.x, dir.y, dir.z]) : 1.0;
+      const pressure = this.calculateArrivalPressure(spls, path, recGain);
       const roundedSample = Math.floor(path.arrivalTime * sampleRate);
 
       if (roundedSample >= numberOfSamples) continue;
-
-      // Get arrival direction
-      const dir = path.arrivalDirection;
 
       // Create a single-sample impulse for this reflection
       const impulse = new Float32Array(1);
@@ -1308,6 +1448,42 @@ export class BeamTraceSolver extends Solver {
     );
     this.ambisonicImpulseResponse = result.ambisonicImpulseResponse;
     this.ambisonicOrder = result.ambisonicOrder;
+  }
+
+  async calculateBinauralImpulseResponse(order: number = 1): Promise<AudioBuffer> {
+    // Get or compute ambisonic IR
+    if (!this.ambisonicImpulseResponse || this.ambisonicOrder !== order) {
+      this.ambisonicImpulseResponse = await this.calculateAmbisonicImpulseResponse(order);
+      this.ambisonicOrder = order;
+    }
+
+    this.binauralImpulseResponse = await calculateBinauralFromAmbisonic({
+      ambisonicImpulseResponse: this.ambisonicImpulseResponse,
+      order,
+      hrtfSubjectId: this.hrtfSubjectId,
+      headYaw: this.headYaw,
+      headPitch: this.headPitch,
+      headRoll: this.headRoll,
+    });
+    return this.binauralImpulseResponse;
+  }
+
+  async playBinauralImpulseResponse(order: number = 1) {
+    const result = await sharedPlayBinauralIR(
+      this.binauralImpulseResponse,
+      () => this.calculateBinauralImpulseResponse(order),
+      this.uuid, "BEAMTRACE_SET_PROPERTY"
+    );
+    this.binauralImpulseResponse = result.binauralImpulseResponse;
+  }
+
+  async downloadBinauralImpulseResponse(filename: string, order: number = 1) {
+    const result = await sharedDownloadBinauralIR(
+      this.binauralImpulseResponse,
+      () => this.calculateBinauralImpulseResponse(order),
+      filename
+    );
+    this.binauralImpulseResponse = result.binauralImpulseResponse;
   }
 
   // Clear results
@@ -1629,6 +1805,8 @@ declare global {
     BEAMTRACE_PLAY_IR: string;
     BEAMTRACE_DOWNLOAD_IR: string;
     BEAMTRACE_DOWNLOAD_AMBISONIC_IR: { uuid: string; order: number };
+    BEAMTRACE_PLAY_BINAURAL_IR: { uuid: string; order: number };
+    BEAMTRACE_DOWNLOAD_BINAURAL_IR: { uuid: string; order: number };
     SHOULD_ADD_BEAMTRACE: undefined;
   }
 }
@@ -1677,6 +1855,24 @@ on("BEAMTRACE_DOWNLOAD_AMBISONIC_IR", ({ uuid, order }: { uuid: string; order: n
   const filename = `ir-beamtrace-ambi-${sourceName}-${receiverName}`.replace(/[^a-zA-Z0-9-_]/g, '_');
   solver.downloadAmbisonicImpulseResponse(filename, order).catch((err: Error) => {
     window.alert(err.message || "Failed to download ambisonic impulse response");
+  });
+});
+
+on("BEAMTRACE_PLAY_BINAURAL_IR", ({ uuid, order }: { uuid: string; order: number }) => {
+  const solver = useSolver.getState().solvers[uuid] as BeamTraceSolver;
+  solver.playBinauralImpulseResponse(order).catch((err: Error) => {
+    window.alert(err.message || "Failed to play binaural impulse response");
+  });
+});
+
+on("BEAMTRACE_DOWNLOAD_BINAURAL_IR", ({ uuid, order }: { uuid: string; order: number }) => {
+  const solver = useSolver.getState().solvers[uuid] as BeamTraceSolver;
+  const containers = useContainer.getState().containers;
+  const sourceName = solver.sourceIDs.length > 0 ? containers[solver.sourceIDs[0]]?.name || 'source' : 'source';
+  const receiverName = solver.receiverIDs.length > 0 ? containers[solver.receiverIDs[0]]?.name || 'receiver' : 'receiver';
+  const filename = `ir-beamtrace-${sourceName}-${receiverName}`.replace(/[^a-zA-Z0-9-_]/g, '_');
+  solver.downloadBinauralImpulseResponse(filename, order).catch((err: Error) => {
+    window.alert(err.message || "Failed to download binaural impulse response");
   });
 });
 

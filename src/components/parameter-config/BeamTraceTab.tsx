@@ -8,8 +8,11 @@ import PropertyRow from "./property-row/PropertyRow";
 import PropertyRowLabel from "./property-row/PropertyRowLabel";
 import PropertyRowButton from "./property-row/PropertyRowButton";
 import { PropertyRowSelect } from "./property-row/PropertyRowSelect";
+import { PropertyRowNumberInput } from "./property-row/PropertyRowNumberInput";
 import PropertyRowCheckbox from "./property-row/PropertyRowCheckbox";
 import SectionLabel from "./property-row/SectionLabel";
+import { HRTFSubjectDialog } from "./HRTFSubjectDialog";
+import { getAvailableSubjects } from "../../compute/binaural/hrtf-data";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -45,6 +48,20 @@ const visualizationModeOptions = [
   { value: "beams", label: "Beams Only" },
   { value: "both", label: "Both" }
 ];
+
+const headOrientationRowSx: SxProps<Theme> = {
+  display: "flex",
+  alignItems: "center",
+  gap: 0.25,
+  flex: 1,
+};
+
+const axisLabelSx: SxProps<Theme> = {
+  fontSize: "0.6rem",
+  color: "text.disabled",
+  minWidth: 10,
+  textAlign: "center",
+};
 
 const BufferUsageBar = ({ percent, overflow }: { percent: number; overflow: boolean }) => {
   const color = overflow ? "#ff4444" : percent > 80 ? "#ffaa00" : "#44aa44";
@@ -149,6 +166,25 @@ export const BeamTraceTab = ({ uuid }: BeamTraceTabProps) => {
   const showBeamsOptions = mode === "beams" || mode === "both";
 
   const [ambiOrder, setAmbiOrder] = useState("1");
+  const [binauralOrder, setBinauralOrder] = useState("1");
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [subjectLabel, setSubjectLabel] = useState("");
+
+  const [hrtfSubjectId] = useSolverProperty<BeamTraceSolver, "hrtfSubjectId">(uuid, "hrtfSubjectId", "BEAMTRACE_SET_PROPERTY");
+  const [headYaw, setHeadYaw] = useSolverProperty<BeamTraceSolver, "headYaw">(uuid, "headYaw", "BEAMTRACE_SET_PROPERTY");
+  const [headPitch, setHeadPitch] = useSolverProperty<BeamTraceSolver, "headPitch">(uuid, "headPitch", "BEAMTRACE_SET_PROPERTY");
+  const [headRoll, setHeadRoll] = useSolverProperty<BeamTraceSolver, "headRoll">(uuid, "headRoll", "BEAMTRACE_SET_PROPERTY");
+  const [binauralPlaying] = useSolverProperty<BeamTraceSolver, "binauralPlaying">(uuid, "binauralPlaying", "BEAMTRACE_SET_PROPERTY");
+
+  useEffect(() => {
+    const id = hrtfSubjectId || "D1";
+    getAvailableSubjects()
+      .then((subjects) => {
+        const match = subjects.find((s) => s.id === id);
+        setSubjectLabel(match ? match.name : id);
+      })
+      .catch(() => setSubjectLabel(id));
+  }, [hrtfSubjectId]);
 
   useEffect(() => {
     const unsub1 = on("BEAMTRACE_CALCULATE_COMPLETE", (id) => {
@@ -172,6 +208,19 @@ export const BeamTraceTab = ({ uuid }: BeamTraceTabProps) => {
   const handleAmbiDownload = useCallback(() => {
     emit("BEAMTRACE_DOWNLOAD_AMBISONIC_IR", { uuid, order: parseInt(ambiOrder) });
   }, [uuid, ambiOrder]);
+
+  const handleBinauralPlay = useCallback(() => {
+    emit("BEAMTRACE_PLAY_BINAURAL_IR", { uuid, order: parseInt(binauralOrder) });
+  }, [uuid, binauralOrder]);
+
+  const handleBinauralDownload = useCallback(() => {
+    emit("BEAMTRACE_DOWNLOAD_BINAURAL_IR", { uuid, order: parseInt(binauralOrder) });
+  }, [uuid, binauralOrder]);
+
+  const handleSubjectSelect = useCallback((id: string) => {
+    emit("BEAMTRACE_SET_PROPERTY", { uuid, property: "hrtfSubjectId", value: id });
+    emit("BEAMTRACE_SET_PROPERTY", { uuid, property: "binauralImpulseResponse", value: undefined });
+  }, [uuid]);
 
   return (
     <div>
@@ -340,6 +389,51 @@ export const BeamTraceTab = ({ uuid }: BeamTraceTabProps) => {
         <PropertyRowLabel label="" hasToolTip tooltip="Download a multi-channel WAV in ACN channel order with N3D normalisation" />
         <PropertyRowButton onClick={handleAmbiDownload} label="Download" disabled={disabled} />
       </PropertyRow>
+
+      {/* Binaural Output */}
+      <SectionLabel label="Binaural Output" />
+      <PropertyRow>
+        <PropertyRowLabel label="Order" hasToolTip tooltip="Ambisonic order used for binaural decoding via HRTF convolution" />
+        <PropertyRowSelect
+          value={binauralOrder}
+          onChange={({ value }) => setBinauralOrder(value)}
+          options={[
+            { value: "1", label: "1st Order (4 ch)" },
+            { value: "2", label: "2nd Order (9 ch)" },
+            { value: "3", label: "3rd Order (16 ch)" }
+          ]}
+        />
+      </PropertyRow>
+      <PropertyRow>
+        <PropertyRowLabel label="HRTF Subject" hasToolTip tooltip="Head-Related Transfer Function dataset used for spatial audio rendering — different subjects have different ear geometries" />
+        <PropertyRowButton onClick={() => setDialogOpen(true)} label={subjectLabel || hrtfSubjectId || "D1"} />
+      </PropertyRow>
+      <PropertyRow>
+        <PropertyRowLabel label="Head Orientation" hasToolTip tooltip="Listener head rotation in degrees — Yaw: horizontal (positive = left), Pitch: vertical (positive = up), Roll: tilt (positive = right ear down)" />
+        <Box sx={headOrientationRowSx}>
+          <Box component="span" sx={axisLabelSx}>Y</Box>
+          <PropertyRowNumberInput value={headYaw ?? 0} onChange={({ value }) => setHeadYaw(value)} step={5} min={-180} max={180} />
+          <Box component="span" sx={axisLabelSx}>P</Box>
+          <PropertyRowNumberInput value={headPitch ?? 0} onChange={({ value }) => setHeadPitch(value)} step={5} min={-90} max={90} />
+          <Box component="span" sx={axisLabelSx}>R</Box>
+          <PropertyRowNumberInput value={headRoll ?? 0} onChange={({ value }) => setHeadRoll(value)} step={5} min={-90} max={90} />
+        </Box>
+      </PropertyRow>
+      <PropertyRow>
+        <PropertyRowLabel label="" />
+        <PropertyRowButton onClick={handleBinauralPlay} label="Play Binaural" disabled={disabled || binauralPlaying} />
+      </PropertyRow>
+      <PropertyRow>
+        <PropertyRowLabel label="" />
+        <PropertyRowButton onClick={handleBinauralDownload} label="Download Stereo WAV" disabled={disabled} />
+      </PropertyRow>
+
+      <HRTFSubjectDialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        selectedId={hrtfSubjectId || "D1"}
+        onSelect={handleSubjectSelect}
+      />
     </div>
   );
 };
