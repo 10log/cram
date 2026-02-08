@@ -1,20 +1,21 @@
-import { S as yt } from "./solver-BP4XtfBW.mjs";
-import * as C from "three";
-import { computeBoundsTree as vt, disposeBoundsTree as bt, acceleratedRaycast as Rt } from "three-mesh-bvh";
-import { S as nt, u as B, b as Ae, L as oe, P as le, I as he, y as It, e as H, F as me, z as xt, A as St, r as F, m as X, a as Oe, R as Ne, B as _t, C as At, o as j, D as wt, s as Dt, c as Et, d as Tt, f as W } from "./index-Cm7mh5nT.mjs";
-import { a as N, w as ye, n as Pt, O as st } from "./audio-engine-CqZtbt41.mjs";
+import { S as mt } from "./solver-R8BUlJ5R.mjs";
+import * as M from "three";
+import { computeBoundsTree as yt, disposeBoundsTree as vt, acceleratedRaycast as bt } from "three-mesh-bvh";
+import { S as et, u as B, b as xe, L as ae, P as le, I as he, y as Rt, F as It, e as $, z as xt, A as St, r as N, m as X, a as Ce, R as ze, B as _t, C as At, o as H, D as Dt, s as wt, c as Et, d as Tt, f as W } from "./index-WPNQK-eO.mjs";
+import { a as V, w as Pt, n as Bt, O as tt } from "./audio-engine-BltQIBir.mjs";
 import { a as Z } from "./air-attenuation-CBIk1QMo.mjs";
-import { s as rt } from "./sound-speed-Biev-mJ1.mjs";
-import { e as Bt, g as Ct } from "./ambisonics.es-Ci32Q6qr.mjs";
-import { ImageSourceSolver as Mt } from "./index-BU225fTu.mjs";
-function zt(a) {
+import { s as nt } from "./sound-speed-Biev-mJ1.mjs";
+import { e as Mt, g as Ct } from "./ambisonics.es-Ci32Q6qr.mjs";
+import { ImageSourceSolver as zt } from "./index-tQk6FSQk.mjs";
+import { p as Ot, d as Nt, a as Ft, b as Lt, c as kt } from "./export-playback-Datwk8y5.mjs";
+function Ut(a) {
   return a.reduce((e, t) => e + t);
 }
-function Ot(a) {
-  let e = zt(a.map((t) => 10 ** (t / 10)));
+function Gt(a) {
+  let e = Ut(a.map((t) => 10 ** (t / 10)));
   return 10 * Math.log10(e);
 }
-const Nt = `attribute vec2 color;
+const Vt = `attribute vec2 color;
 varying vec2 vColor;
 uniform float pointScale;
 void main() {
@@ -23,7 +24,7 @@ void main() {
   gl_PointSize = pointScale*(color.x/4.0+0.5);
   gl_Position = projectionMatrix * mvPosition;
   
-}`, Ft = `varying vec2 vColor;
+}`, Ht = `varying vec2 vColor;
 uniform float drawStyle;
 uniform int inverted;
 vec3 hsl2rgb(vec3 c)
@@ -85,15 +86,15 @@ void main() {
 	}
   gl_FragColor = vec4(color, alpha);
   
-}`, Fe = {
-  vs: Nt,
-  fs: Ft
+}`, Oe = {
+  vs: Vt,
+  fs: Ht
 };
-function Re(a, e) {
+function ye(a, e) {
   let t = (360 - a) * (Math.PI / 180);
   return [e * (Math.PI / 180), t];
 }
-class Lt {
+class jt {
   constructor(e) {
     this.v = e;
   }
@@ -103,7 +104,7 @@ class Lt {
   }
   set value(e) {
     const t = this.v;
-    this.v = e, this.watchers.forEach((s) => s(this.v, t));
+    this.v = e, this.watchers.forEach((r) => r(this.v, t));
   }
   watch(e) {
     return this.watchers.add(e), () => this.watchers.delete(e);
@@ -115,10 +116,10 @@ class Lt {
     return String(this.v);
   }
 }
-function kt(a, e) {
-  return new Lt(a);
+function qt(a, e) {
+  return new jt(a);
 }
-const Ut = 0.01, it = 256, Y = 100, ee = 0.05, Gt = 1e3, Vt = 2e3, Ht = 1e6, jt = 1e-3, Yt = 1e4, qt = 500, Ie = 1, $t = 10, M = {
+const Yt = 0.01, st = 256, j = 100, ee = 0.05, $t = 1e3, Wt = 2e3, Xt = 1e6, Zt = 1e-3, Kt = 1e4, Jt = 500, ve = 1, Qt = 10, C = {
   name: "Ray Tracer",
   roomID: "",
   sourceIDs: [],
@@ -149,8 +150,8 @@ const Ut = 0.01, it = 256, Y = 100, ee = 0.05, Gt = 1e3, Vt = 2e3, Ht = 1e6, jt 
   gpuEnabled: !1,
   gpuBatchSize: 1e4
 };
-var at = /* @__PURE__ */ ((a) => (a[a.ENERGY = 0] = "ENERGY", a[a.ANGLE = 1] = "ANGLE", a[a.ANGLE_ENERGY = 2] = "ANGLE_ENERGY", a))(at || {});
-function ve(a) {
+var rt = /* @__PURE__ */ ((a) => (a[a.ENERGY = 0] = "ENERGY", a[a.ANGLE = 1] = "ANGLE", a[a.ANGLE_ENERGY = 2] = "ANGLE_ENERGY", a))(rt || {});
+function Pe(a) {
   let e = Math.abs(a[0]);
   for (let t = 1; t < a.length; t++)
     Math.abs(a[t]) > e && (e = Math.abs(a[t]));
@@ -159,25 +160,25 @@ function ve(a) {
       a[t] /= e;
   return a;
 }
-function Wt(a) {
+function en(a) {
   return Math.random() < a;
 }
-const { abs: Xt } = Math, Le = new C.Vector3(), Zt = new C.Vector3(), Kt = new C.Vector3(), ke = new C.Vector3(), J = new C.Vector3(), Jt = new C.Vector3(), ne = new C.Vector3(), Q = new C.Plane(), se = new C.Vector4(), Ue = new C.Vector4(), Ge = new C.Vector4(), Ve = new C.Vector4();
-function Qt(a, e) {
-  return a.getPlane(Q), se.set(Q.normal.x, Q.normal.y, Q.normal.z, Q.constant), Ue.set(e.a.x, e.a.y, e.a.z, 1), Ge.set(e.b.x, e.b.y, e.b.z, 1), Ve.set(e.c.x, e.c.y, e.c.z, 1), se.dot(Ue) > 0 || se.dot(Ge) > 0 || se.dot(Ve) > 0;
+const { abs: tn } = Math, Ne = new M.Vector3(), nn = new M.Vector3(), sn = new M.Vector3(), Fe = new M.Vector3(), J = new M.Vector3(), rn = new M.Vector3(), ne = new M.Vector3(), Q = new M.Plane(), se = new M.Vector4(), Le = new M.Vector4(), ke = new M.Vector4(), Ue = new M.Vector4();
+function on(a, e) {
+  return a.getPlane(Q), se.set(Q.normal.x, Q.normal.y, Q.normal.z, Q.constant), Le.set(e.a.x, e.a.y, e.a.z, 1), ke.set(e.b.x, e.b.y, e.b.z, 1), Ue.set(e.c.x, e.c.y, e.c.z, 1), se.dot(Le) > 0 || se.dot(ke) > 0 || se.dot(Ue) > 0;
 }
-function ot(a, e, t, s, c, o, i, r, n, l, h, f, g = 1, d = []) {
+function it(a, e, t, r, c, o, i, s, n, l, h, p, d = 1, f = []) {
   i = i.normalize(), a.ray.origin = o, a.ray.direction = i;
   const u = a.intersectObjects(e, !0);
   if (u.length > 0) {
-    const m = n.reduce((p, b) => p + b, 0), y = n.length > 0 ? m / n.length : 0;
+    const m = n.reduce((g, b) => g + b, 0), y = n.length > 0 ? m / n.length : 0;
     if (u[0].object.userData?.kind === "receiver") {
-      const p = u[0].face && Le.copy(i).multiplyScalar(-1).angleTo(u[0].face.normal), b = u[0].distance, x = n.map(
-        (_, S) => _ * Math.pow(10, -s[S] * b / 10)
+      const g = u[0].face && Ne.copy(i).multiplyScalar(-1).angleTo(u[0].face.normal), b = u[0].distance, x = n.map(
+        (_, S) => _ * Math.pow(10, -r[S] * b / 10)
       ), I = x.reduce((_, S) => _ + S, 0), v = x.length > 0 ? I / x.length : 0;
-      d.push({
+      f.push({
         object: u[0].object.parent.uuid,
-        angle: p,
+        angle: g,
         distance: u[0].distance,
         faceNormal: [
           u[0].face.normal.x,
@@ -192,21 +193,21 @@ function ot(a, e, t, s, c, o, i, r, n, l, h, f, g = 1, d = []) {
       }), ne.copy(i).normalize().negate();
       const R = [ne.x, ne.y, ne.z];
       return {
-        chain: d,
-        chainLength: d.length,
+        chain: f,
+        chainLength: f.length,
         intersectedReceiver: !0,
         energy: v,
         bandEnergy: [...x],
         source: l,
         initialPhi: h,
-        initialTheta: f,
+        initialTheta: p,
         arrivalDirection: R
       };
     } else {
-      const p = u[0].face && Le.copy(i).multiplyScalar(-1).angleTo(u[0].face.normal);
-      d.push({
+      const g = u[0].face && Ne.copy(i).multiplyScalar(-1).angleTo(u[0].face.normal);
+      f.push({
         object: u[0].object.parent.uuid,
-        angle: p,
+        angle: g,
         distance: u[0].distance,
         faceNormal: [
           u[0].face.normal.x,
@@ -217,14 +218,14 @@ function ot(a, e, t, s, c, o, i, r, n, l, h, f, g = 1, d = []) {
         faceIndex: u[0].faceIndex,
         point: [u[0].point.x, u[0].point.y, u[0].point.z],
         energy: y
-      }), u[0].object.parent instanceof nt && (u[0].object.parent.numHits += 1);
-      const b = u[0].face && Zt.copy(u[0].face.normal).normalize();
-      let x = b && u[0].face && ke.copy(i).sub(Kt.copy(b).multiplyScalar(i.dot(b)).multiplyScalar(2));
+      }), u[0].object.parent instanceof et && (u[0].object.parent.numHits += 1);
+      const b = u[0].face && nn.copy(u[0].face.normal).normalize();
+      let x = b && u[0].face && Fe.copy(i).sub(sn.copy(b).multiplyScalar(i.dot(b)).multiplyScalar(2));
       const I = u[0].object.parent, v = t.map((E) => I.scatteringFunction(E)), R = n.reduce((E, T) => E + T, 0) || 1;
       let _ = 0;
       for (let E = 0; E < t.length; E++)
         _ += v[E] * (n[E] || 0);
-      if (_ /= R, Wt(_)) {
+      if (_ /= R, en(_)) {
         do
           J.set(
             Math.random() * 2 - 1,
@@ -232,54 +233,54 @@ function ot(a, e, t, s, c, o, i, r, n, l, h, f, g = 1, d = []) {
             Math.random() * 2 - 1
           );
         while (J.lengthSq() > 1 || J.lengthSq() < 1e-6);
-        J.normalize(), x = ke.copy(J).add(b).normalize();
+        J.normalize(), x = Fe.copy(J).add(b).normalize();
       }
-      const S = u[0].distance, w = t.map((E, T) => {
-        const D = n[T];
-        if (D == null) return 0;
-        let O = D * Xt(I.reflectionFunction(E, p));
-        return O *= Math.pow(10, -s[T] * S / 10), O;
-      }), A = Math.max(...w);
-      if (x && b && g < r + 1) {
+      const S = u[0].distance, D = t.map((E, T) => {
+        const w = n[T];
+        if (w == null) return 0;
+        let O = w * tn(I.reflectionFunction(E, g));
+        return O *= Math.pow(10, -r[T] * S / 10), O;
+      }), A = Math.max(...D);
+      if (x && b && d < s + 1) {
         if (A < c && A > 0) {
           const E = A / c;
           if (Math.random() > E) {
-            const T = w.reduce((O, k) => O + k, 0), D = w.length > 0 ? T / w.length : 0;
-            return { chain: d, chainLength: d.length, source: l, intersectedReceiver: !1, energy: D, bandEnergy: [...w] };
+            const T = D.reduce((O, L) => O + L, 0), w = D.length > 0 ? T / D.length : 0;
+            return { chain: f, chainLength: f.length, source: l, intersectedReceiver: !1, energy: w, bandEnergy: [...D] };
           }
-          for (let T = 0; T < w.length; T++)
-            w[T] /= E;
+          for (let T = 0; T < D.length; T++)
+            D[T] /= E;
         }
         if (A > 0)
-          return ot(
+          return it(
             a,
             e,
             t,
-            s,
-            c,
-            Jt.copy(u[0].point).addScaledVector(b, Ut),
-            x,
             r,
-            w,
+            c,
+            rn.copy(u[0].point).addScaledVector(b, Yt),
+            x,
+            s,
+            D,
             l,
             h,
-            f,
-            g + 1,
-            d
+            p,
+            d + 1,
+            f
           );
       }
     }
-    return { chain: d, chainLength: d.length, source: l, intersectedReceiver: !1 };
+    return { chain: f, chainLength: f.length, source: l, intersectedReceiver: !1 };
   }
 }
-function en(a) {
-  var e, t, s = a.length;
-  if (s === 1)
+function an(a) {
+  var e, t, r = a.length;
+  if (r === 1)
     e = 0, t = a[0][1];
   else {
-    for (var c = 0, o = 0, i = 0, r = 0, n, l, h, f = 0; f < s; f++)
-      n = a[f], l = n[0], h = n[1], c += l, o += h, i += l * l, r += l * h;
-    e = (s * r - c * o) / (s * i - c * c), t = o / s - e * c / s;
+    for (var c = 0, o = 0, i = 0, s = 0, n, l, h, p = 0; p < r; p++)
+      n = a[p], l = n[0], h = n[1], c += l, o += h, i += l * l, s += l * h;
+    e = (r * s - c * o) / (r * i - c * c), t = o / r - e * c / r;
   }
   return {
     m: e,
@@ -287,20 +288,20 @@ function en(a) {
   };
 }
 function te(a, e) {
-  const t = a.length, s = [];
+  const t = a.length, r = [];
   for (let n = 0; n < t; n++)
-    s.push([a[n], e[n]]);
-  const { m: c, b: o } = en(s);
+    r.push([a[n], e[n]]);
+  const { m: c, b: o } = an(r);
   return { m: c, b: o, fx: (n) => c * n + o, fy: (n) => (n - o) / c };
 }
-const { log10: tn, pow: we, floor: ue, max: De, min: Ee, sqrt: He, cos: je, PI: Ye, random: nn } = Math;
-function fe(a, e, t, s) {
+const { log10: cn, pow: Se, floor: ue, max: _e, min: Ae, sqrt: Ge, cos: Ve, PI: He, random: ln } = Math;
+function fe(a, e, t, r) {
   const c = e.length, o = [];
   for (let i = 0; i < c; i++) {
-    const r = a[i];
+    const s = a[i];
     let n = 0;
-    for (let v = r.length - 1; v >= 0; v--)
-      if (r[v] > 0) {
+    for (let v = s.length - 1; v >= 0; v--)
+      if (s[v] > 0) {
         n = v;
         break;
       }
@@ -309,261 +310,261 @@ function fe(a, e, t, s) {
       continue;
     }
     const l = new Float32Array(n + 1);
-    l[n] = r[n];
+    l[n] = s[n];
     for (let v = n - 1; v >= 0; v--)
-      l[v] = l[v + 1] + r[v];
+      l[v] = l[v + 1] + s[v];
     const h = l[0];
     if (h <= 0) {
       o.push({ t60: 0, decayRate: 0, crossfadeLevel: 0, crossfadeTime: 0, endTime: 0 });
       continue;
     }
-    const f = h * we(10, -5 / 10), g = h * we(10, -35 / 10);
-    let d = -1, u = -1;
+    const p = h * Se(10, -5 / 10), d = h * Se(10, -35 / 10);
+    let f = -1, u = -1;
     for (let v = 0; v <= n; v++)
-      d < 0 && l[v] <= f && (d = v), u < 0 && l[v] <= g && (u = v);
+      f < 0 && l[v] <= p && (f = v), u < 0 && l[v] <= d && (u = v);
     let m = 0, y = 0;
-    if (d >= 0 && u > d) {
+    if (f >= 0 && u > f) {
       const v = [], R = [];
-      for (let _ = d; _ <= u; _++) {
+      for (let _ = f; _ <= u; _++) {
         const S = l[_];
-        S > 0 && (v.push(_ * s), R.push(10 * tn(S / h)));
+        S > 0 && (v.push(_ * r), R.push(10 * cn(S / h)));
       }
       if (v.length >= 2) {
         const S = te(v, R).m;
         S < 0 && (m = S, y = -60 / S);
       }
     }
-    m < 0 && m > -Ie && (m = -Ie, y = 60 / Ie);
-    let p = t;
-    if (p <= 0) {
-      const v = De(1, ue(0.05 / s));
-      p = De(0, n - v) * s;
+    m < 0 && m > -ve && (m = -ve, y = 60 / ve);
+    let g = t;
+    if (g <= 0) {
+      const v = _e(1, ue(0.05 / r));
+      g = _e(0, n - v) * r;
     }
-    const b = Ee(ue(p / s), n), x = b <= n && b >= 0 ? l[b] / h : 0, I = y > 0 ? Ee(p + y, $t) : p;
-    o.push({ t60: y, decayRate: m, crossfadeLevel: x, crossfadeTime: p, endTime: I });
+    const b = Ae(ue(g / r), n), x = b <= n && b >= 0 ? l[b] / h : 0, I = y > 0 ? Ae(g + y, Qt) : g;
+    o.push({ t60: y, decayRate: m, crossfadeLevel: x, crossfadeTime: g, endTime: I });
   }
   return o;
 }
 function de(a, e) {
-  let t = 0, s = 1 / 0;
+  let t = 0, r = 1 / 0;
   for (const n of a)
-    n.endTime > t && (t = n.endTime), n.crossfadeTime > 0 && n.crossfadeTime < s && (s = n.crossfadeTime);
-  if (t <= 0 || !isFinite(s))
+    n.endTime > t && (t = n.endTime), n.crossfadeTime > 0 && n.crossfadeTime < r && (r = n.crossfadeTime);
+  if (t <= 0 || !isFinite(r))
     return { tailSamples: a.map(() => new Float32Array(0)), tailStartSample: 0, totalSamples: 0 };
-  const c = ue(s * e), o = ue(t * e), i = o - c;
+  const c = ue(r * e), o = ue(t * e), i = o - c;
   if (i <= 0)
     return { tailSamples: a.map(() => new Float32Array(0)), tailStartSample: c, totalSamples: o };
-  const r = [];
+  const s = [];
   for (const n of a) {
     const l = new Float32Array(i);
     if (n.decayRate >= 0 || n.crossfadeLevel <= 0) {
-      r.push(l);
+      s.push(l);
       continue;
     }
-    const h = He(n.crossfadeLevel), f = 1 / He(3), g = h / f;
-    for (let d = 0; d < i; d++) {
-      const u = d / e, m = we(10, n.decayRate * u / 20), y = nn() * 2 - 1;
-      l[d] = y * m * g;
+    const h = Ge(n.crossfadeLevel), p = 1 / Ge(3), d = h / p;
+    for (let f = 0; f < i; f++) {
+      const u = f / e, m = Se(10, n.decayRate * u / 20), y = ln() * 2 - 1;
+      l[f] = y * m * d;
     }
-    r.push(l);
+    s.push(l);
   }
-  return { tailSamples: r, tailStartSample: c, totalSamples: o };
+  return { tailSamples: s, tailStartSample: c, totalSamples: o };
 }
-function ge(a, e, t, s) {
+function ge(a, e, t, r) {
   const c = a.length, o = [];
   for (let i = 0; i < c; i++) {
-    const r = a[i], n = e[i];
+    const s = a[i], n = e[i];
     if (!n || n.length === 0) {
-      o.push(r);
+      o.push(s);
       continue;
     }
-    const l = De(r.length, t + n.length), h = new Float32Array(l);
-    for (let d = 0; d < Ee(t, r.length); d++)
-      h[d] = r[d];
-    const f = s, g = f > 1 ? f - 1 : 1;
-    for (let d = 0; d < f; d++) {
-      const u = t + d;
+    const l = _e(s.length, t + n.length), h = new Float32Array(l);
+    for (let f = 0; f < Ae(t, s.length); f++)
+      h[f] = s[f];
+    const p = r, d = p > 1 ? p - 1 : 1;
+    for (let f = 0; f < p; f++) {
+      const u = t + f;
       if (u >= l) break;
-      const m = 0.5 * (1 + je(Ye * d / g)), y = 0.5 * (1 - je(Ye * d / g)), p = u < r.length ? r[u] : 0, b = d < n.length ? n[d] : 0;
-      h[u] = p * m + b * y;
+      const m = 0.5 * (1 + Ve(He * f / d)), y = 0.5 * (1 - Ve(He * f / d)), g = u < s.length ? s[u] : 0, b = f < n.length ? n[f] : 0;
+      h[u] = g * m + b * y;
     }
-    for (let d = f; d < n.length; d++) {
-      const u = t + d;
+    for (let f = p; f < n.length; f++) {
+      const u = t + f;
       if (u >= l) break;
-      h[u] = n[d];
+      h[u] = n[f];
     }
     o.push(h);
   }
   return o;
 }
-const { floor: K, abs: sn, max: ct } = Math, lt = () => Math.random() > 0.5, ht = () => new Worker(new URL(
+const { floor: K, abs: hn, max: ot } = Math, at = () => Math.random() > 0.5, ct = () => new Worker(new URL(
   /* @vite-ignore */
   "/assets/filter.worker-CKhUfGRZ.js",
   import.meta.url
 ));
-function Me(a, e, t, s = 1, c = 20) {
-  const o = Ae(oe(a));
+function Be(a, e, t, r = 1, c = 20) {
+  const o = xe(ae(a));
   if (t.bandEnergy && t.bandEnergy.length === e.length) {
     for (let h = 0; h < e.length; h++)
       o[h] *= t.bandEnergy[h];
-    const l = oe(le(he(o)));
-    if (s !== 1)
-      for (let h = 0; h < l.length; h++) l[h] *= s;
+    const l = ae(le(he(o)));
+    if (r !== 1)
+      for (let h = 0; h < l.length; h++) l[h] *= r;
     return l;
   }
   t.chain.slice(0, -1).forEach((l) => {
     const h = B.getState().containers[l.object];
-    o.forEach((f, g) => {
-      const d = sn(h.reflectionFunction(e[g], l.angle));
-      o[g] = f * d;
+    o.forEach((p, d) => {
+      const f = hn(h.reflectionFunction(e[d], l.angle));
+      o[d] = p * f;
     });
   });
-  const i = le(he(o)), r = Z(e, c);
-  e.forEach((l, h) => i[h] -= r[h] * t.totalLength);
-  const n = oe(i);
-  if (s !== 1)
-    for (let l = 0; l < n.length; l++) n[l] *= s;
+  const i = le(he(o)), s = Z(e, c);
+  e.forEach((l, h) => i[h] -= s[h] * t.totalLength);
+  const n = ae(i);
+  if (r !== 1)
+    for (let l = 0; l < n.length; l++) n[l] *= r;
   return n;
 }
-async function rn(a, e, t, s = Y, c, o, i = N.sampleRate, r) {
+async function un(a, e, t, r = j, c, o, i = V.sampleRate, s) {
   if (t.length === 0) throw Error("No rays have been traced for this pair");
   let n = t.sort((m, y) => m.time - y.time);
-  const l = n[n.length - 1].time + ee, h = Array(c.length).fill(s), f = K(i * l) * 2;
-  let g = [];
+  const l = n[n.length - 1].time + ee, h = Array(c.length).fill(r), p = K(i * l) * 2;
+  let d = [];
   for (let m = 0; m < c.length; m++)
-    g.push(new Float32Array(f));
-  const d = B.getState().containers[e];
+    d.push(new Float32Array(p));
+  const f = B.getState().containers[e];
   for (let m = 0; m < n.length; m++) {
-    const y = lt() ? 1 : -1, p = n[m].time, b = n[m].arrivalDirection || [0, 0, 1], x = d.getGain(b), I = Me(h, c, n[m], x, o).map((R) => R * y), v = K(p * i);
+    const y = at() ? 1 : -1, g = n[m].time, b = n[m].arrivalDirection || [0, 0, 1], x = f.getGain(b), I = Be(h, c, n[m], x, o).map((R) => R * y), v = K(g * i);
     for (let R = 0; R < c.length; R++)
-      g[R][v] += I[R];
+      d[R][v] += I[R];
   }
-  if (r && r.energyHistogram && r.energyHistogram.length > 0) {
+  if (s && s.energyHistogram && s.energyHistogram.length > 0) {
     const m = fe(
-      r.energyHistogram,
-      r.frequencies,
-      r.crossfadeTime,
-      r.histogramBinWidth
-    ), { tailSamples: y, tailStartSample: p } = de(
+      s.energyHistogram,
+      s.frequencies,
+      s.crossfadeTime,
+      s.histogramBinWidth
+    ), { tailSamples: y, tailStartSample: g } = de(
       m,
       i
-    ), b = K(r.crossfadeDuration * i);
-    g = ge(g, y, p, b);
-    const I = g.reduce((v, R) => ct(v, R.length), 0) * 2;
+    ), b = K(s.crossfadeDuration * i);
+    d = ge(d, y, g, b);
+    const I = d.reduce((v, R) => ot(v, R.length), 0) * 2;
     for (let v = 0; v < c.length; v++)
-      if (g[v].length < I) {
+      if (d[v].length < I) {
         const R = new Float32Array(I);
-        R.set(g[v]), g[v] = R;
+        R.set(d[v]), d[v] = R;
       }
   }
-  const u = ht();
+  const u = ct();
   return new Promise((m, y) => {
-    u.postMessage({ samples: g }), u.onmessage = (p) => {
-      const b = p.data.samples, x = new Float32Array(b[0].length >> 1);
+    u.postMessage({ samples: d }), u.onmessage = (g) => {
+      const b = g.data.samples, x = new Float32Array(b[0].length >> 1);
       for (let v = 0; v < b.length; v++)
         for (let R = 0; R < x.length; R++)
           x[R] += b[v][R];
-      const I = ve(x.slice());
+      const I = Pe(x.slice());
       u.terminate(), m({ signal: x, normalizedSignal: I });
-    }, u.onerror = (p) => {
-      u.terminate(), y(p);
+    }, u.onerror = (g) => {
+      u.terminate(), y(g);
     };
   });
 }
-async function an(a, e, t, s = Y, c, o, i = N.sampleRate, r) {
+async function fn(a, e, t, r = j, c, o, i = V.sampleRate, s) {
   if (a.length == 0) throw Error("No receivers have been assigned to the raytracer");
   if (e.length == 0) throw Error("No sources have been assigned to the raytracer");
   if (t[a[0]].length == 0) throw Error("No rays have been traced yet");
   let n = t[a[0]].sort((m, y) => m.time - y.time);
-  const l = n[n.length - 1].time + ee, h = Array(c.length).fill(s), f = K(i * l) * 2;
-  let g = [];
+  const l = n[n.length - 1].time + ee, h = Array(c.length).fill(r), p = K(i * l) * 2;
+  let d = [];
   for (let m = 0; m < c.length; m++)
-    g.push(new Float32Array(f));
-  const d = B.getState().containers[a[0]];
+    d.push(new Float32Array(p));
+  const f = B.getState().containers[a[0]];
   for (let m = 0; m < n.length; m++) {
-    const y = lt() ? 1 : -1, p = n[m].time, b = n[m].arrivalDirection || [0, 0, 1], x = d.getGain(b), I = Me(h, c, n[m], x, o).map((R) => R * y), v = K(p * i);
+    const y = at() ? 1 : -1, g = n[m].time, b = n[m].arrivalDirection || [0, 0, 1], x = f.getGain(b), I = Be(h, c, n[m], x, o).map((R) => R * y), v = K(g * i);
     for (let R = 0; R < c.length; R++)
-      g[R][v] += I[R];
+      d[R][v] += I[R];
   }
-  if (r && r.energyHistogram && r.energyHistogram.length > 0) {
+  if (s && s.energyHistogram && s.energyHistogram.length > 0) {
     const m = fe(
-      r.energyHistogram,
-      r.frequencies,
-      r.crossfadeTime,
-      r.histogramBinWidth
-    ), { tailSamples: y, tailStartSample: p } = de(
+      s.energyHistogram,
+      s.frequencies,
+      s.crossfadeTime,
+      s.histogramBinWidth
+    ), { tailSamples: y, tailStartSample: g } = de(
       m,
       i
-    ), b = K(r.crossfadeDuration * i);
-    g = ge(g, y, p, b);
-    const I = g.reduce((v, R) => ct(v, R.length), 0) * 2;
+    ), b = K(s.crossfadeDuration * i);
+    d = ge(d, y, g, b);
+    const I = d.reduce((v, R) => ot(v, R.length), 0) * 2;
     for (let v = 0; v < c.length; v++)
-      if (g[v].length < I) {
+      if (d[v].length < I) {
         const R = new Float32Array(I);
-        R.set(g[v]), g[v] = R;
+        R.set(d[v]), d[v] = R;
       }
   }
-  const u = ht();
+  const u = ct();
   return new Promise((m, y) => {
-    u.postMessage({ samples: g }), u.onmessage = (p) => {
-      const b = p.data.samples, x = new Float32Array(b[0].length >> 1);
+    u.postMessage({ samples: d }), u.onmessage = (g) => {
+      const b = g.data.samples, x = new Float32Array(b[0].length >> 1);
       for (let v = 0; v < b.length; v++)
         for (let R = 0; R < x.length; R++)
           x[R] += b[v][R];
-      const I = ve(x.slice());
+      const I = Pe(x.slice());
       u.terminate(), m({ signal: x, normalizedSignal: I });
-    }, u.onerror = (p) => {
-      u.terminate(), y(p);
+    }, u.onerror = (g) => {
+      u.terminate(), y(g);
     };
   });
 }
-function ze(a, e = 1) {
+function Me(a, e = 1) {
   let t = a.slice();
-  for (let s = 0; s < a.length; s++)
-    if (s >= e && s < a.length - e) {
-      const c = s - e, o = s + e;
+  for (let r = 0; r < a.length; r++)
+    if (r >= e && r < a.length - e) {
+      const c = r - e, o = r + e;
       let i = 0;
-      for (let r = c; r < o; r++)
-        i += a[r];
-      t[s] = i / (2 * e);
+      for (let s = c; s < o; s++)
+        i += a[s];
+      t[r] = i / (2 * e);
     }
   return t;
 }
-const { floor: on, abs: cn } = Math;
+const { floor: dn, abs: gn } = Math;
 function ce(a, e, t) {
-  const s = e.chain.slice(0, -1);
-  if (s && s.length > 0) {
+  const r = e.chain.slice(0, -1);
+  if (r && r.length > 0) {
     let c = 1;
-    for (let o = 0; o < s.length; o++) {
-      const i = s[o], r = a.surfaceMap[i.object], n = i.angle || 0;
-      c = c * cn(r.reflectionFunction(t, n));
+    for (let o = 0; o < r.length; o++) {
+      const i = r[o], s = a.surfaceMap[i.object], n = i.angle || 0;
+      c = c * gn(s.reflectionFunction(t, n));
     }
     return c;
   }
   return 1;
 }
-function ln(a, e, t, s) {
+function pn(a, e, t, r) {
   const c = [], o = (n, l) => ({ label: n, data: l }), i = [];
-  if (s)
-    for (let n = 0; n < s.length; n++)
-      i.push(o(s[n].toString(), []));
-  const r = Object.keys(a);
-  for (let n = 0; n < r.length; n++) {
+  if (r)
+    for (let n = 0; n < r.length; n++)
+      i.push(o(r[n].toString(), []));
+  const s = Object.keys(a);
+  for (let n = 0; n < s.length; n++) {
     c.push({
-      id: r[n],
+      id: s[n],
       data: []
     });
-    for (let l = 0; l < a[r[n]].length; l++) {
-      const h = a[r[n]][l];
-      let f;
-      s ? (f = s.map((g) => ({
-        frequency: g,
-        value: ce(e, h, g)
-      })), s.forEach((g, d) => {
-        i[d].data.push([h.time, ce(e, h, g)]);
-      })) : f = (g) => ce(e, h, g), c[c.length - 1].data.push({
+    for (let l = 0; l < a[s[n]].length; l++) {
+      const h = a[s[n]][l];
+      let p;
+      r ? (p = r.map((d) => ({
+        frequency: d,
+        value: ce(e, h, d)
+      })), r.forEach((d, f) => {
+        i[f].data.push([h.time, ce(e, h, d)]);
+      })) : p = (d) => ce(e, h, d), c[c.length - 1].data.push({
         time: h.time,
-        energy: f
+        energy: p
       });
     }
     c[c.length - 1].data = c[c.length - 1].data.sort((l, h) => l.time - h.time);
@@ -572,171 +573,171 @@ function ln(a, e, t, s) {
     i[n].data = i[n].data.sort((l, h) => l[0] - h[0]), i[n].x = i[n].data.map((l) => l[0]), i[n].y = i[n].data.map((l) => l[1]);
   return [c, i];
 }
-function hn(a, e, t, s, c, o) {
-  const i = a, r = rt(c), n = Z(s, c), l = {};
+function mn(a, e, t, r, c, o) {
+  const i = a, s = nt(c), n = Z(r, c), l = {};
   for (const h in i) {
     l[h] = {};
-    const f = B.getState().containers[h];
-    for (const g in i[h]) {
-      l[h][g] = {
-        freqs: s,
+    const p = B.getState().containers[h];
+    for (const d in i[h]) {
+      l[h][d] = {
+        freqs: r,
         response: []
       };
-      for (let d = 0; d < i[h][g].length; d++) {
-        let u = 0, m = [], y = i[h][g][d].initialPhi, p = i[h][g][d].initialTheta, b = B.getState().containers[g].directivityHandler;
-        for (let S = 0; S < s.length; S++)
-          m[S] = Ae(b.getPressureAtPosition(0, s[S], y, p));
-        const I = i[h][g][d].arrivalDirection || [0, 0, 1], v = f.getGain(I), R = v * v;
+      for (let f = 0; f < i[h][d].length; f++) {
+        let u = 0, m = [], y = i[h][d][f].initialPhi, g = i[h][d][f].initialTheta, b = B.getState().containers[d].directivityHandler;
+        for (let S = 0; S < r.length; S++)
+          m[S] = xe(b.getPressureAtPosition(0, r[S], y, g));
+        const I = i[h][d][f].arrivalDirection || [0, 0, 1], v = p.getGain(I), R = v * v;
         if (R !== 1)
-          for (let S = 0; S < s.length; S++)
+          for (let S = 0; S < r.length; S++)
             m[S] *= R;
-        for (let S = 0; S < i[h][g][d].chain.length; S++) {
-          const { angle: w, distance: A } = i[h][g][d].chain[S];
-          u += A / r;
-          const E = i[h][g][d].chain[S].object, T = B.getState().containers[E] || null;
-          for (let D = 0; D < s.length; D++) {
-            const O = s[D];
-            let k = 1;
-            T && T.kind === "surface" && (k = T.reflectionFunction(O, w)), m[D] = Ae(
-              oe(le(he(m[D] * k)) - n[D] * A)
+        for (let S = 0; S < i[h][d][f].chain.length; S++) {
+          const { angle: D, distance: A } = i[h][d][f].chain[S];
+          u += A / s;
+          const E = i[h][d][f].chain[S].object, T = B.getState().containers[E] || null;
+          for (let w = 0; w < r.length; w++) {
+            const O = r[w];
+            let L = 1;
+            T && T.kind === "surface" && (L = T.reflectionFunction(O, D)), m[w] = xe(
+              ae(le(he(m[w] * L)) - n[w] * A)
             );
           }
         }
         const _ = le(he(m));
-        l[h][g].response.push({
+        l[h][d].response.push({
           time: u,
           level: _,
-          bounces: i[h][g][d].chain.length
+          bounces: i[h][d][f].chain.length
         });
       }
-      l[h][g].response.sort((d, u) => d.time - u.time);
+      l[h][d].response.sort((f, u) => f.time - u.time);
     }
   }
-  return ut(l, o);
+  return lt(l, o);
 }
-function ut(a, e = it) {
+function lt(a, e = st) {
   if (a) {
     for (const t in a)
-      for (const s in a[t]) {
-        const { response: c, freqs: o } = a[t][s], i = c[c.length - 1].time, r = on(e * i);
-        a[t][s].resampledResponse = Array(o.length).fill(0).map((g) => new Float32Array(r)), a[t][s].sampleRate = e;
-        let n = 0, l = [], h = o.map((g) => 0), f = !1;
-        for (let g = 0, d = 0; g < r; g++) {
-          let u = g / r * i;
-          if (c[d] && c[d].time) {
-            let m = c[d].time;
+      for (const r in a[t]) {
+        const { response: c, freqs: o } = a[t][r], i = c[c.length - 1].time, s = dn(e * i);
+        a[t][r].resampledResponse = Array(o.length).fill(0).map((d) => new Float32Array(s)), a[t][r].sampleRate = e;
+        let n = 0, l = [], h = o.map((d) => 0), p = !1;
+        for (let d = 0, f = 0; d < s; d++) {
+          let u = d / s * i;
+          if (c[f] && c[f].time) {
+            let m = c[f].time;
             if (m > u) {
               for (let y = 0; y < o.length; y++)
-                a[t][s].resampledResponse[y][n] = 0;
-              f && l.push(n), n++;
+                a[t][r].resampledResponse[y][n] = 0;
+              p && l.push(n), n++;
               continue;
             }
             if (m <= u) {
-              let y = c[d].level.map((p) => 0);
+              let y = c[f].level.map((g) => 0);
               for (; m <= u; ) {
-                m = c[d].time;
-                for (let p = 0; p < o.length; p++)
-                  y[p] = Ot([y[p], c[d].level[p]]);
-                d++;
+                m = c[f].time;
+                for (let g = 0; g < o.length; g++)
+                  y[g] = Gt([y[g], c[f].level[g]]);
+                f++;
               }
-              for (let p = 0; p < o.length; p++) {
-                if (a[t][s].resampledResponse[p][n] = y[p], l.length > 0) {
-                  const b = h[p], x = y[p];
+              for (let g = 0; g < o.length; g++) {
+                if (a[t][r].resampledResponse[g][n] = y[g], l.length > 0) {
+                  const b = h[g], x = y[g];
                   for (let I = 0; I < l.length; I++) {
-                    const v = It(b, x, (I + 1) / (l.length + 1));
-                    a[t][s].resampledResponse[p][l[I]] = v;
+                    const v = Rt(b, x, (I + 1) / (l.length + 1));
+                    a[t][r].resampledResponse[g][l[I]] = v;
                   }
                 }
-                h[p] = y[p];
+                h[g] = y[g];
               }
-              l.length > 0 && (l = []), f = !0, n++;
+              l.length > 0 && (l = []), p = !0, n++;
               continue;
             }
           }
         }
-        dt(a, t, s), ft(a, t, s), gt(a, t, s);
+        ut(a, t, r), ht(a, t, r), ft(a, t, r);
       }
     return a;
   } else
     console.warn("no data yet");
 }
+function ht(a, e, t) {
+  const r = e, c = t, o = a[r][c].resampledResponse, i = a[r][c].sampleRate;
+  if (o && i) {
+    const s = new Float32Array(o[0].length);
+    for (let n = 0; n < o[0].length; n++)
+      s[n] = n / i;
+    a[r][c].t30 = o.map((n) => {
+      let l = 0, h = n[l];
+      for (; h === 0; )
+        h = n[l++];
+      for (let u = l; u >= 0; u--)
+        n[u] = h;
+      const p = h - 30, f = Me(n, 2).filter((u) => u >= p).length;
+      return te(s.slice(0, f), n.slice(0, f));
+    });
+  }
+}
+function ut(a, e, t) {
+  const r = e, c = t, o = a[r][c].resampledResponse, i = a[r][c].sampleRate;
+  if (o && i) {
+    const s = new Float32Array(o[0].length);
+    for (let n = 0; n < o[0].length; n++)
+      s[n] = n / i;
+    a[r][c].t20 = o.map((n) => {
+      let l = 0, h = n[l];
+      for (; h === 0; )
+        h = n[l++];
+      for (let u = l; u >= 0; u--)
+        n[u] = h;
+      const p = h - 20, f = Me(n, 2).filter((u) => u >= p).length;
+      return te(s.slice(0, f), n.slice(0, f));
+    });
+  }
+}
 function ft(a, e, t) {
-  const s = e, c = t, o = a[s][c].resampledResponse, i = a[s][c].sampleRate;
+  const r = e, c = t, o = a[r][c].resampledResponse, i = a[r][c].sampleRate;
   if (o && i) {
-    const r = new Float32Array(o[0].length);
+    const s = new Float32Array(o[0].length);
     for (let n = 0; n < o[0].length; n++)
-      r[n] = n / i;
-    a[s][c].t30 = o.map((n) => {
+      s[n] = n / i;
+    a[r][c].t60 = o.map((n) => {
       let l = 0, h = n[l];
       for (; h === 0; )
         h = n[l++];
       for (let u = l; u >= 0; u--)
         n[u] = h;
-      const f = h - 30, d = ze(n, 2).filter((u) => u >= f).length;
-      return te(r.slice(0, d), n.slice(0, d));
+      const p = h - 60, f = Me(n, 2).filter((u) => u >= p).length;
+      return te(s.slice(0, f), n.slice(0, f));
     });
   }
 }
-function dt(a, e, t) {
-  const s = e, c = t, o = a[s][c].resampledResponse, i = a[s][c].sampleRate;
-  if (o && i) {
-    const r = new Float32Array(o[0].length);
-    for (let n = 0; n < o[0].length; n++)
-      r[n] = n / i;
-    a[s][c].t20 = o.map((n) => {
-      let l = 0, h = n[l];
-      for (; h === 0; )
-        h = n[l++];
-      for (let u = l; u >= 0; u--)
-        n[u] = h;
-      const f = h - 20, d = ze(n, 2).filter((u) => u >= f).length;
-      return te(r.slice(0, d), n.slice(0, d));
-    });
-  }
-}
-function gt(a, e, t) {
-  const s = e, c = t, o = a[s][c].resampledResponse, i = a[s][c].sampleRate;
-  if (o && i) {
-    const r = new Float32Array(o[0].length);
-    for (let n = 0; n < o[0].length; n++)
-      r[n] = n / i;
-    a[s][c].t60 = o.map((n) => {
-      let l = 0, h = n[l];
-      for (; h === 0; )
-        h = n[l++];
-      for (let u = l; u >= 0; u--)
-        n[u] = h;
-      const f = h - 60, d = ze(n, 2).filter((u) => u >= f).length;
-      return te(r.slice(0, d), n.slice(0, d));
-    });
-  }
-}
-const pt = -2;
-function un(a) {
-  const s = (n) => String.fromCharCode(...n), c = (n) => {
+const dt = -2;
+function yn(a) {
+  const r = (n) => String.fromCharCode(...n), c = (n) => {
     let l = 0;
-    const h = s(n.slice(l, l += 36)), f = n[l++], g = n[l++], d = n[l++], u = n[l++], m = n[l++], y = [n[l++], n[l++], n[l++]], p = [n[l++], n[l++], n[l++]];
+    const h = r(n.slice(l, l += 36)), p = n[l++], d = n[l++], f = n[l++], u = n[l++], m = n[l++], y = [n[l++], n[l++], n[l++]], g = [n[l++], n[l++], n[l++]];
     return {
       object: h,
-      angle: f,
-      distance: g,
-      energy: d,
+      angle: p,
+      distance: d,
+      energy: f,
       faceIndex: u,
       faceMaterialIndex: m,
       faceNormal: y,
-      point: p
+      point: g
     };
   }, o = (n) => {
     const l = [];
     let h = 0;
     for (; h < n.length; ) {
-      const f = s(n.slice(h, h += 36)), g = n[h++], d = n[h++], u = !!n[h++], m = n[h++], y = [];
-      for (let p = 0; p < g; p++)
+      const p = r(n.slice(h, h += 36)), d = n[h++], f = n[h++], u = !!n[h++], m = n[h++], y = [];
+      for (let g = 0; g < d; g++)
         y.push(c(n.slice(h, h += 47)));
       l.push({
-        source: f,
-        chainLength: g,
-        time: d,
+        source: p,
+        chainLength: d,
+        time: f,
         intersectedReceiver: u,
         energy: m,
         chain: y
@@ -745,14 +746,14 @@ function un(a) {
     return l;
   };
   let i = 0;
-  const r = {};
+  const s = {};
   for (; i < a.length; ) {
-    const n = s(a.slice(i, i += 36)), l = a[i++], h = o(a.slice(i, i += l));
-    r[n] = h;
+    const n = r(a.slice(i, i += 36)), l = a[i++], h = o(a.slice(i, i += l));
+    s[n] = h;
   }
-  return r;
+  return s;
 }
-function fn(a) {
+function vn(a) {
   const e = /* @__PURE__ */ new Set();
   for (const n of Object.keys(a)) {
     e.add(n);
@@ -762,9 +763,9 @@ function fn(a) {
         e.add(h.object);
     }
   }
-  const t = Array.from(e), s = /* @__PURE__ */ new Map();
+  const t = Array.from(e), r = /* @__PURE__ */ new Map();
   for (let n = 0; n < t.length; n++)
-    s.set(t[n], n);
+    r.set(t[n], n);
   const c = 2 + t.length * 36;
   let o = 0;
   for (const n of Object.keys(a)) {
@@ -773,26 +774,26 @@ function fn(a) {
       o += 5, o += l.chain.length * 12;
   }
   const i = new Float32Array(c + o);
-  let r = 0;
-  i[r++] = pt, i[r++] = t.length;
+  let s = 0;
+  i[s++] = dt, i[s++] = t.length;
   for (const n of t)
     for (let l = 0; l < 36; l++)
-      i[r++] = n.charCodeAt(l);
+      i[s++] = n.charCodeAt(l);
   for (const n of Object.keys(a)) {
-    i[r++] = s.get(n);
+    i[s++] = r.get(n);
     let l = 0;
     for (const h of a[n])
       l += 5 + h.chain.length * 12;
-    i[r++] = l;
+    i[s++] = l;
     for (const h of a[n]) {
-      i[r++] = s.get(h.source), i[r++] = h.chain.length, i[r++] = h.time, i[r++] = Number(h.intersectedReceiver), i[r++] = h.energy;
-      for (const f of h.chain)
-        i[r++] = s.get(f.object), i[r++] = f.angle, i[r++] = f.distance, i[r++] = f.energy, i[r++] = f.faceIndex, i[r++] = f.faceMaterialIndex, i[r++] = f.faceNormal[0], i[r++] = f.faceNormal[1], i[r++] = f.faceNormal[2], i[r++] = f.point[0], i[r++] = f.point[1], i[r++] = f.point[2];
+      i[s++] = r.get(h.source), i[s++] = h.chain.length, i[s++] = h.time, i[s++] = Number(h.intersectedReceiver), i[s++] = h.energy;
+      for (const p of h.chain)
+        i[s++] = r.get(p.object), i[s++] = p.angle, i[s++] = p.distance, i[s++] = p.energy, i[s++] = p.faceIndex, i[s++] = p.faceMaterialIndex, i[s++] = p.faceNormal[0], i[s++] = p.faceNormal[1], i[s++] = p.faceNormal[2], i[s++] = p.point[0], i[s++] = p.point[1], i[s++] = p.point[2];
     }
   }
   return i;
 }
-function dn(a) {
+function bn(a) {
   let e = 0;
   e++;
   const t = a[e++];
@@ -800,28 +801,28 @@ function dn(a) {
     throw new Error("Invalid V2 buffer: bad numUUIDs");
   if (e + t * 36 > a.length)
     throw new Error("Invalid V2 buffer: UUID table exceeds buffer length");
-  const s = [];
+  const r = [];
   for (let o = 0; o < t; o++) {
     const i = [];
-    for (let r = 0; r < 36; r++)
+    for (let s = 0; s < 36; s++)
       i.push(a[e++]);
-    s.push(String.fromCharCode(...i));
+    r.push(String.fromCharCode(...i));
   }
   const c = {};
   for (; e < a.length; ) {
     const o = a[e++];
-    if (o < 0 || o >= s.length)
+    if (o < 0 || o >= r.length)
       throw new Error("Invalid V2 buffer: receiver index out of range");
-    const i = s[o], r = a[e++];
-    if (!Number.isFinite(r) || r < 0)
+    const i = r[o], s = a[e++];
+    if (!Number.isFinite(s) || s < 0)
       throw new Error("Invalid V2 buffer: bad pathBufLen");
-    const n = Math.min(e + r, a.length), l = [];
+    const n = Math.min(e + s, a.length), l = [];
     for (; e < n; ) {
-      const h = s[a[e++]], f = a[e++], g = a[e++], d = !!a[e++], u = a[e++], m = [];
-      for (let y = 0; y < f; y++) {
-        const p = s[a[e++]], b = a[e++], x = a[e++], I = a[e++], v = a[e++], R = a[e++], _ = [a[e++], a[e++], a[e++]], S = [a[e++], a[e++], a[e++]];
+      const h = r[a[e++]], p = a[e++], d = a[e++], f = !!a[e++], u = a[e++], m = [];
+      for (let y = 0; y < p; y++) {
+        const g = r[a[e++]], b = a[e++], x = a[e++], I = a[e++], v = a[e++], R = a[e++], _ = [a[e++], a[e++], a[e++]], S = [a[e++], a[e++], a[e++]];
         m.push({
-          object: p,
+          object: g,
           angle: b,
           distance: x,
           energy: I,
@@ -833,9 +834,9 @@ function dn(a) {
       }
       l.push({
         source: h,
-        chainLength: f,
-        time: g,
-        intersectedReceiver: d,
+        chainLength: p,
+        time: d,
+        intersectedReceiver: f,
         energy: u,
         chain: m
       });
@@ -844,127 +845,91 @@ function dn(a) {
   }
   return c;
 }
-function gn(a) {
-  return fn(a);
+function Rn(a) {
+  return vn(a);
 }
-function pn(a) {
-  return a.length === 0 ? {} : a[0] === pt ? dn(a) : un(a);
+function In(a) {
+  return a.length === 0 ? {} : a[0] === dt ? bn(a) : yn(a);
 }
-const { floor: qe, abs: $e } = Math, mn = () => Math.random() > 0.5;
-function yn(a, e, t, s, c, o = Y, i = st(125, 8e3), r = 44100) {
+const { floor: je, abs: qe } = Math, xn = () => Math.random() > 0.5, gt = "RAYTRACER_SET_PROPERTY";
+function Sn(a, e, t, r, c, o = j, i = tt(125, 8e3), s = 44100) {
   if (e.length === 0) throw Error("No receivers have been assigned to the raytracer");
   if (t.length === 0) throw Error("No sources have been assigned to the raytracer");
   if (a[e[0]].length === 0) throw Error("No rays have been traced yet");
-  const n = a[e[0]].sort((m, y) => m.time - y.time), l = n[n.length - 1].time + ee, h = Array(i.length).fill(o), f = qe(r * l), g = [];
+  const n = a[e[0]].sort((m, y) => m.time - y.time), l = n[n.length - 1].time + ee, h = Array(i.length).fill(o), p = je(s * l), d = [];
   for (let m = 0; m < i.length; m++)
-    g.push(new Float32Array(f));
-  let d = 0;
+    d.push(new Float32Array(p));
+  let f = 0;
   const u = B.getState().containers[e[0]];
   for (let m = 0; m < n.length; m++) {
-    const y = mn() ? 1 : -1, p = n[m].time, b = n[m].arrivalDirection || [0, 0, 1], x = u.getGain(b), I = s(h, i, n[m], x).map((R) => R * y), v = qe(p * r);
+    const y = xn() ? 1 : -1, g = n[m].time, b = n[m].arrivalDirection || [0, 0, 1], x = u.getGain(b), I = r(h, i, n[m], x).map((R) => R * y), v = je(g * s);
     for (let R = 0; R < i.length; R++)
-      g[R][v] += I[R], $e(g[R][v]) > d && (d = $e(g[R][v]));
+      d[R][v] += I[R], qe(d[R][v]) > f && (f = qe(d[R][v]));
   }
   for (let m = 0; m < i.length; m++) {
-    const y = ye([Pt(g[m])], { sampleRate: r, bitDepth: 32 });
-    me.saveAs(y, `${i[m]}_${c}.wav`);
+    const y = Pt([Bt(d[m])], { sampleRate: s, bitDepth: 32 });
+    It.saveAs(y, `${i[m]}_${c}.wav`);
   }
 }
-async function vn(a, e, t) {
-  if (!a)
-    try {
-      a = await e();
-    } catch (c) {
-      throw c;
-    }
-  N.context.state === "suspended" && N.context.resume(), console.log(a);
-  const s = N.context.createBufferSource();
-  return s.buffer = a, s.connect(N.context.destination), s.start(), H("RAYTRACER_SET_PROPERTY", { uuid: t, property: "impulseResponsePlaying", value: !0 }), s.onended = () => {
-    s.stop(), s.disconnect(N.context.destination), H("RAYTRACER_SET_PROPERTY", { uuid: t, property: "impulseResponsePlaying", value: !1 });
-  }, { impulseResponse: a };
+async function _n(a, e, t) {
+  return Ot(a, e, t, gt);
 }
-async function bn(a, e, t, s = N.sampleRate) {
-  if (!a)
-    try {
-      a = await e();
-    } catch (i) {
-      throw i;
-    }
-  const c = ye([ve(a.getChannelData(0))], { sampleRate: s, bitDepth: 32 }), o = t.endsWith(".wav") ? "" : ".wav";
-  return me.saveAs(c, t + o), { impulseResponse: a };
+async function An(a, e, t, r) {
+  return Nt(a, e, t, r);
 }
-async function Rn(a, e, t, s = 1, c) {
-  (!a || t !== s) && (t = s, a = await e(s));
-  const o = a.numberOfChannels, i = a.sampleRate, r = [];
-  for (let f = 0; f < o; f++)
-    r.push(a.getChannelData(f));
-  const n = ye(r, { sampleRate: i, bitDepth: 32 }), l = c.endsWith(".wav") ? "" : ".wav", h = s === 1 ? "FOA" : `HOA${s}`;
-  return me.saveAs(n, `${c}_${h}${l}`), { ambisonicImpulseResponse: a, ambisonicOrder: t };
+async function Dn(a, e, t, r = 1, c) {
+  return Ft(a, e, t, r, c);
 }
-async function In(a, e, t) {
-  a || (a = await e()), N.context.state === "suspended" && N.context.resume();
-  const s = N.context.createBufferSource();
-  return s.buffer = a, s.connect(N.context.destination), s.start(), H("RAYTRACER_SET_PROPERTY", { uuid: t, property: "binauralPlaying", value: !0 }), s.onended = () => {
-    s.stop(), s.disconnect(N.context.destination), H("RAYTRACER_SET_PROPERTY", { uuid: t, property: "binauralPlaying", value: !1 });
-  }, { binauralImpulseResponse: a };
+async function wn(a, e, t) {
+  return Lt(a, e, t, gt);
 }
-async function xn(a, e, t) {
-  a || (a = await e());
-  const s = a.sampleRate, c = a.getChannelData(0), o = a.getChannelData(1);
-  let i = 0;
-  for (let f = 0; f < c.length; f++)
-    Math.abs(c[f]) > i && (i = Math.abs(c[f])), Math.abs(o[f]) > i && (i = Math.abs(o[f]));
-  const r = new Float32Array(c.length), n = new Float32Array(o.length);
-  if (i > 0)
-    for (let f = 0; f < c.length; f++)
-      r[f] = c[f] / i, n[f] = o[f] / i;
-  const l = ye([r, n], { sampleRate: s, bitDepth: 32 }), h = t.endsWith(".wav") ? "" : ".wav";
-  return me.saveAs(l, `${t}_binaural${h}`), { binauralImpulseResponse: a };
+async function En(a, e, t) {
+  return kt(a, e, t);
 }
-async function Sn(a, e) {
+async function Tn(a, e) {
   const t = a.sampleRate;
   if (t !== e.sampleRate)
     throw new Error(
       `Sample rate mismatch: ambisonic IR is ${t} Hz but HRTF filters are ${e.sampleRate} Hz`
     );
-  const s = Math.min(a.numberOfChannels, e.channelCount);
-  if (s === 0)
+  const r = Math.min(a.numberOfChannels, e.channelCount);
+  if (r === 0)
     throw new Error("No channels to decode");
   const c = a.length + e.filterLength - 1, o = new OfflineAudioContext(2, c, t);
-  for (let r = 0; r < s; r++) {
+  for (let s = 0; s < r; s++) {
     const n = o.createBuffer(1, a.length, t);
-    n.copyToChannel(a.getChannelData(r), 0);
+    n.copyToChannel(a.getChannelData(s), 0);
     const l = o.createBufferSource();
     l.buffer = n;
     const h = o.createBuffer(2, e.filterLength, t);
-    h.copyToChannel(new Float32Array(e.filtersLeft[r]), 0), h.copyToChannel(new Float32Array(e.filtersRight[r]), 1);
-    const f = o.createConvolver();
-    f.normalize = !1, f.buffer = h, l.connect(f), f.connect(o.destination), l.start(0);
+    h.copyToChannel(new Float32Array(e.filtersLeft[s]), 0), h.copyToChannel(new Float32Array(e.filtersRight[s]), 1);
+    const p = o.createConvolver();
+    p.normalize = !1, p.buffer = h, l.connect(p), p.connect(o.destination), l.start(0);
   }
   return {
     buffer: await o.startRendering(),
     sampleRate: t
   };
 }
-function _n(a, e, t, s) {
-  if (e === 0 && t === 0 && s === 0)
+function Pn(a, e, t, r) {
+  if (e === 0 && t === 0 && r === 0)
     return a;
   const c = a.numberOfChannels, o = a.length, i = a.sampleRate;
   if (c < 4)
     throw new Error("Ambisonic rotation requires at least 4 channels (first order)");
-  const r = e * Math.PI / 180, n = t * Math.PI / 180, l = s * Math.PI / 180, h = Math.cos(r), f = Math.sin(r), g = Math.cos(n), d = Math.sin(n), u = Math.cos(l), m = Math.sin(l), y = h * u + f * d * m, p = -h * m + f * d * u, b = f * g, x = g * m, I = g * u, v = -d, R = -f * u + h * d * m, _ = f * m + h * d * u, S = h * g, A = new OfflineAudioContext(c, o, i).createBuffer(c, o, i);
+  const s = e * Math.PI / 180, n = t * Math.PI / 180, l = r * Math.PI / 180, h = Math.cos(s), p = Math.sin(s), d = Math.cos(n), f = Math.sin(n), u = Math.cos(l), m = Math.sin(l), y = h * u + p * f * m, g = -h * m + p * f * u, b = p * d, x = d * m, I = d * u, v = -f, R = -p * u + h * f * m, _ = p * m + h * f * u, S = h * d, A = new OfflineAudioContext(c, o, i).createBuffer(c, o, i);
   A.copyToChannel(a.getChannelData(0), 0);
-  const E = a.getChannelData(1), T = a.getChannelData(2), D = a.getChannelData(3), O = new Float32Array(o), k = new Float32Array(o), z = new Float32Array(o);
+  const E = a.getChannelData(1), T = a.getChannelData(2), w = a.getChannelData(3), O = new Float32Array(o), L = new Float32Array(o), z = new Float32Array(o);
   for (let P = 0; P < o; P++) {
-    const L = E[P], U = T[P], G = D[P];
-    O[P] = y * L + p * U + b * G, k[P] = x * L + I * U + v * G, z[P] = R * L + _ * U + S * G;
+    const F = E[P], k = T[P], U = w[P];
+    O[P] = y * F + g * k + b * U, L[P] = x * F + I * k + v * U, z[P] = R * F + _ * k + S * U;
   }
-  A.copyToChannel(O, 1), A.copyToChannel(k, 2), A.copyToChannel(z, 3);
+  A.copyToChannel(O, 1), A.copyToChannel(L, 2), A.copyToChannel(z, 3);
   for (let P = 4; P < c; P++)
     A.copyToChannel(a.getChannelData(P), P);
   return A;
 }
-function An(a) {
+function Bn(a) {
   const e = {
     totalRays: 0,
     validRays: 0,
@@ -973,25 +938,25 @@ function An(a) {
     t30M2: new Array(a).fill(0),
     t30Count: 0,
     convergenceRatio: 1 / 0
-  }, t = {}, s = Date.now();
-  return { convergenceMetrics: e, energyHistogram: t, lastConvergenceCheck: s };
+  }, t = {}, r = Date.now();
+  return { convergenceMetrics: e, energyHistogram: t, lastConvergenceCheck: r };
 }
-function wn(a, e, t, s, c, o, i, r, n) {
+function Mn(a, e, t, r, c, o, i, s, n) {
   a.totalRays = c, a.validRays = o;
   const l = Object.keys(e);
   if (l.length === 0) return;
   let h;
-  if (s.length > 0)
-    for (const p of s) {
-      const b = e[p];
+  if (r.length > 0)
+    for (const g of r) {
+      const b = e[g];
       if (b && b.length > 0) {
-        h = p;
+        h = g;
         break;
       }
     }
   if (!h) {
-    const p = l.slice().sort();
-    for (const b of p) {
+    const g = l.slice().sort();
+    for (const b of g) {
       const x = e[b];
       if (x && x.length > 0) {
         h = b;
@@ -1000,19 +965,19 @@ function wn(a, e, t, s, c, o, i, r, n) {
     }
   }
   if (!h) return;
-  const f = e[h];
-  if (!f || f.length === 0) return;
-  const g = t.length, d = new Array(g).fill(0);
-  for (let p = 0; p < g; p++) {
-    const b = f[p];
+  const p = e[h];
+  if (!p || p.length === 0) return;
+  const d = t.length, f = new Array(d).fill(0);
+  for (let g = 0; g < d; g++) {
+    const b = p[g];
     let x = 0;
-    for (let A = r - 1; A >= 0; A--)
+    for (let A = s - 1; A >= 0; A--)
       if (b[A] > 0) {
         x = A;
         break;
       }
     if (x < 2) {
-      d[p] = 0;
+      f[g] = 0;
       continue;
     }
     const I = new Float32Array(x + 1);
@@ -1021,103 +986,103 @@ function wn(a, e, t, s, c, o, i, r, n) {
       I[A] = I[A + 1] + b[A];
     const v = I[0];
     if (v <= 0) {
-      d[p] = 0;
+      f[g] = 0;
       continue;
     }
     const R = v * Math.pow(10, -5 / 10), _ = v * Math.pow(10, -35 / 10);
-    let S = -1, w = -1;
+    let S = -1, D = -1;
     for (let A = 0; A <= x; A++)
-      S < 0 && I[A] <= R && (S = A), w < 0 && I[A] <= _ && (w = A);
-    if (S >= 0 && w > S) {
+      S < 0 && I[A] <= R && (S = A), D < 0 && I[A] <= _ && (D = A);
+    if (S >= 0 && D > S) {
       const A = [], E = [];
-      for (let T = S; T <= w; T++) {
-        const D = I[T];
-        D > 0 && (A.push(T * i), E.push(10 * Math.log10(D / v)));
+      for (let T = S; T <= D; T++) {
+        const w = I[T];
+        w > 0 && (A.push(T * i), E.push(10 * Math.log10(w / v)));
       }
       if (A.length >= 2) {
-        const D = te(A, E).m;
-        d[p] = D < 0 ? 60 / -D : 0;
+        const w = te(A, E).m;
+        f[g] = w < 0 ? 60 / -w : 0;
       }
     }
   }
-  a.estimatedT30 = d, a.t30Count += 1;
+  a.estimatedT30 = f, a.t30Count += 1;
   const u = a.t30Count;
   let m = 0, y = 0;
-  for (let p = 0; p < g; p++) {
-    const b = d[p], x = a.t30Mean[p], I = x + (b - x) / u, R = a.t30M2[p] + (b - x) * (b - I);
-    if (a.t30Mean[p] = I, a.t30M2[p] = R, u >= 2 && I > 0) {
+  for (let g = 0; g < d; g++) {
+    const b = f[g], x = a.t30Mean[g], I = x + (b - x) / u, R = a.t30M2[g] + (b - x) * (b - I);
+    if (a.t30Mean[g] = I, a.t30M2[g] = R, u >= 2 && I > 0) {
       const _ = R / (u - 1), S = Math.sqrt(_) / I;
       S > m && (m = S), y++;
     }
   }
-  a.convergenceRatio = y > 0 ? m : 1 / 0, H("RAYTRACER_SET_PROPERTY", {
+  a.convergenceRatio = y > 0 ? m : 1 / 0, $("RAYTRACER_SET_PROPERTY", {
     uuid: n,
     property: "convergenceMetrics",
     value: { ...a }
   });
 }
-function Dn(a, e, t, s, c, o, i) {
+function Cn(a, e, t, r, c, o, i) {
   if (!a[e]) {
     a[e] = [];
-    for (let l = 0; l < s.length; l++)
+    for (let l = 0; l < r.length; l++)
       a[e].push(new Float32Array(i));
   }
-  let r = 0;
+  let s = 0;
   for (let l = 0; l < t.chain.length; l++)
-    r += t.chain[l].distance;
-  r /= c;
-  const n = Math.floor(r / o);
+    s += t.chain[l].distance;
+  s /= c;
+  const n = Math.floor(s / o);
   if (n >= 0 && n < i && t.bandEnergy)
-    for (let l = 0; l < s.length; l++)
+    for (let l = 0; l < r.length; l++)
       a[e][l][n] += t.bandEnergy[l] || 0;
 }
-function We(a, e, t, s) {
-  const c = a / s, o = e / s, i = t / s, r = Math.floor(c), n = Math.floor(o), l = Math.floor(i), h = [`${r},${n},${l}`], f = [0, -1, 1];
-  for (const g of f)
-    for (const d of f)
-      for (const u of f) {
-        if (g === 0 && d === 0 && u === 0) continue;
-        const m = r + g, y = n + d, p = l + u;
-        Math.abs(c - (m + 0.5)) < 1 && Math.abs(o - (y + 0.5)) < 1 && Math.abs(i - (p + 0.5)) < 1 && h.push(`${m},${y},${p}`);
+function Ye(a, e, t, r) {
+  const c = a / r, o = e / r, i = t / r, s = Math.floor(c), n = Math.floor(o), l = Math.floor(i), h = [`${s},${n},${l}`], p = [0, -1, 1];
+  for (const d of p)
+    for (const f of p)
+      for (const u of p) {
+        if (d === 0 && f === 0 && u === 0) continue;
+        const m = s + d, y = n + f, g = l + u;
+        Math.abs(c - (m + 0.5)) < 1 && Math.abs(o - (y + 0.5)) < 1 && Math.abs(i - (g + 0.5)) < 1 && h.push(`${m},${y},${g}`);
       }
   return h;
 }
-function En(a, e) {
+function zn(a, e) {
   return a < e ? `${a}|${e}` : `${e}|${a}`;
 }
-function Tn(a, e = 1e-4) {
-  const t = xt(e), s = e * 10, c = /* @__PURE__ */ new Map();
+function On(a, e = 1e-4) {
+  const t = xt(e), r = e * 10, c = /* @__PURE__ */ new Map();
   for (const i of a) {
-    const r = i.edgeLoop;
-    if (!r || r.length < 3) continue;
+    const s = i.edgeLoop;
+    if (!s || s.length < 3) continue;
     const n = [i.normal.x, i.normal.y, i.normal.z];
-    for (let l = 0; l < r.length; l++) {
-      const h = r[l], f = r[(l + 1) % r.length], g = [h.x, h.y, h.z], d = [f.x, f.y, f.z], u = { start: g, end: d, surfaceId: i.uuid, normal: n }, m = We(h.x, h.y, h.z, s), y = We(f.x, f.y, f.z, s), p = /* @__PURE__ */ new Set();
+    for (let l = 0; l < s.length; l++) {
+      const h = s[l], p = s[(l + 1) % s.length], d = [h.x, h.y, h.z], f = [p.x, p.y, p.z], u = { start: d, end: f, surfaceId: i.uuid, normal: n }, m = Ye(h.x, h.y, h.z, r), y = Ye(p.x, p.y, p.z, r), g = /* @__PURE__ */ new Set();
       for (const b of m)
         for (const x of y) {
-          const I = En(b, x);
-          p.has(I) || (p.add(I), c.has(I) ? c.get(I).push(u) : c.set(I, [u]));
+          const I = zn(b, x);
+          g.has(I) || (g.add(I), c.has(I) ? c.get(I).push(u) : c.set(I, [u]));
         }
     }
   }
   const o = [];
   for (const [, i] of c) {
     if (i.length !== 2 || i[0].surfaceId === i[1].surfaceId) continue;
-    const r = i[0], n = i[1];
-    if (!(t(r.start[0], n.start[0]) && t(r.start[1], n.start[1]) && t(r.start[2], n.start[2]) && t(r.end[0], n.end[0]) && t(r.end[1], n.end[1]) && t(r.end[2], n.end[2]) || t(r.start[0], n.end[0]) && t(r.start[1], n.end[1]) && t(r.start[2], n.end[2]) && t(r.end[0], n.start[0]) && t(r.end[1], n.start[1]) && t(r.end[2], n.start[2]))) continue;
-    const h = r.end[0] - r.start[0], f = r.end[1] - r.start[1], g = r.end[2] - r.start[2], d = Math.sqrt(h * h + f * f + g * g);
-    if (d < e) continue;
-    const u = [h / d, f / d, g / d], m = r.normal, y = n.normal, p = m[0] * y[0] + m[1] * y[1] + m[2] * y[2], b = Math.acos(Math.max(-1, Math.min(1, p)));
+    const s = i[0], n = i[1];
+    if (!(t(s.start[0], n.start[0]) && t(s.start[1], n.start[1]) && t(s.start[2], n.start[2]) && t(s.end[0], n.end[0]) && t(s.end[1], n.end[1]) && t(s.end[2], n.end[2]) || t(s.start[0], n.end[0]) && t(s.start[1], n.end[1]) && t(s.start[2], n.end[2]) && t(s.end[0], n.start[0]) && t(s.end[1], n.start[1]) && t(s.end[2], n.start[2]))) continue;
+    const h = s.end[0] - s.start[0], p = s.end[1] - s.start[1], d = s.end[2] - s.start[2], f = Math.sqrt(h * h + p * p + d * d);
+    if (f < e) continue;
+    const u = [h / f, p / f, d / f], m = s.normal, y = n.normal, g = m[0] * y[0] + m[1] * y[1] + m[2] * y[2], b = Math.acos(Math.max(-1, Math.min(1, g)));
     if (b < 0.01) continue;
     const I = 2 * Math.PI - b, v = I / Math.PI;
     v <= 1 || o.push({
-      start: r.start,
-      end: r.end,
+      start: s.start,
+      end: s.end,
       direction: u,
-      length: d,
+      length: f,
       normal0: m,
       normal1: y,
-      surface0Id: r.surfaceId,
+      surface0Id: s.surfaceId,
       surface1Id: n.surfaceId,
       wedgeAngle: I,
       n: v
@@ -1125,35 +1090,35 @@ function Tn(a, e = 1e-4) {
   }
   return { edges: o };
 }
-const { PI: V, sqrt: pe, abs: Pn, cos: Te, sin: Bn, atan2: Xe } = Math;
+const { PI: G, sqrt: pe, abs: Nn, cos: De, sin: Fn, atan2: $e } = Math;
 function re(a) {
-  return a < 0 && (a = 0), 1 - Math.exp(-pe(V * a));
+  return a < 0 && (a = 0), 1 - Math.exp(-pe(G * a));
 }
-function Cn(a, e, t, s, c) {
+function Ln(a, e, t, r, c) {
   const o = a, i = [
-    s[0] - t[0],
-    s[1] - t[1],
-    s[2] - t[2]
-  ], r = i[0] * o[0] + i[1] * o[1] + i[2] * o[2], n = [i[0] - r * o[0], i[1] - r * o[1], i[2] - r * o[2]], l = pe(n[0] ** 2 + n[1] ** 2 + n[2] ** 2), h = [
+    r[0] - t[0],
+    r[1] - t[1],
+    r[2] - t[2]
+  ], s = i[0] * o[0] + i[1] * o[1] + i[2] * o[2], n = [i[0] - s * o[0], i[1] - s * o[1], i[2] - s * o[2]], l = pe(n[0] ** 2 + n[1] ** 2 + n[2] ** 2), h = [
     c[0] - t[0],
     c[1] - t[1],
     c[2] - t[2]
-  ], f = h[0] * o[0] + h[1] * o[1] + h[2] * o[2], g = [h[0] - f * o[0], h[1] - f * o[1], h[2] - f * o[2]], d = pe(g[0] ** 2 + g[1] ** 2 + g[2] ** 2);
-  if (l < 1e-10 || d < 1e-10)
-    return { phiSource: V, phiReceiver: V };
-  const u = [n[0] / l, n[1] / l, n[2] / l], m = [g[0] / d, g[1] / d, g[2] / d], y = [-e[0], -e[1], -e[2]], p = [
+  ], p = h[0] * o[0] + h[1] * o[1] + h[2] * o[2], d = [h[0] - p * o[0], h[1] - p * o[1], h[2] - p * o[2]], f = pe(d[0] ** 2 + d[1] ** 2 + d[2] ** 2);
+  if (l < 1e-10 || f < 1e-10)
+    return { phiSource: G, phiReceiver: G };
+  const u = [n[0] / l, n[1] / l, n[2] / l], m = [d[0] / f, d[1] / f, d[2] / f], y = [-e[0], -e[1], -e[2]], g = [
     o[1] * y[2] - o[2] * y[1],
     o[2] * y[0] - o[0] * y[2],
     o[0] * y[1] - o[1] * y[0]
-  ], b = Xe(
-    u[0] * p[0] + u[1] * p[1] + u[2] * p[2],
+  ], b = $e(
+    u[0] * g[0] + u[1] * g[1] + u[2] * g[2],
     u[0] * y[0] + u[1] * y[1] + u[2] * y[2]
-  ), x = Xe(
-    m[0] * p[0] + m[1] * p[1] + m[2] * p[2],
+  ), x = $e(
+    m[0] * g[0] + m[1] * g[1] + m[2] * g[2],
     m[0] * y[0] + m[1] * y[1] + m[2] * y[2]
   ), I = (v) => {
     let R = v;
-    for (; R < 0; ) R += 2 * V;
+    for (; R < 0; ) R += 2 * G;
     return R;
   };
   return {
@@ -1161,109 +1126,109 @@ function Cn(a, e, t, s, c) {
     phiReceiver: I(x)
   };
 }
-function ie(a, e, t, s, c) {
-  const o = t + s * c, i = (V + e * o) / (2 * a), r = Bn(i);
-  return Pn(r) < 1e-12 ? 0 : Te(i) / r;
+function ie(a, e, t, r, c) {
+  const o = t + r * c, i = (G + e * o) / (2 * a), s = Fn(i);
+  return Nn(s) < 1e-12 ? 0 : De(i) / s;
 }
-function Mn(a, e, t, s, c, o, i) {
-  if (t < 1e-10 || s < 1e-10) return 0;
-  const r = 2 * V * a / i;
-  if (r < 1e-10) return 0;
-  const n = t * s / (t + s), l = (E, T, D, O) => {
-    const z = T + D * O, P = Math.round((z + V) / (2 * V * e)), L = Math.round((z - V) / (2 * V * e)), U = 2 * Te((2 * V * e * P - z) / 2) ** 2, G = 2 * Te((2 * V * e * L - z) / 2) ** 2;
-    return E > 0 ? U : G;
+function kn(a, e, t, r, c, o, i) {
+  if (t < 1e-10 || r < 1e-10) return 0;
+  const s = 2 * G * a / i;
+  if (s < 1e-10) return 0;
+  const n = t * r / (t + r), l = (E, T, w, O) => {
+    const z = T + w * O, P = Math.round((z + G) / (2 * G * e)), F = Math.round((z - G) / (2 * G * e)), k = 2 * De((2 * G * e * P - z) / 2) ** 2, U = 2 * De((2 * G * e * F - z) / 2) ** 2;
+    return E > 0 ? k : U;
   };
   let h = 0;
-  const f = l(1, o, -1, c), g = ie(e, 1, o, -1, c), d = re(r * n * f), u = l(-1, o, -1, c), m = ie(e, -1, o, -1, c), y = re(r * n * u), p = l(1, o, 1, c), b = ie(e, 1, o, 1, c), x = re(r * n * p), I = l(-1, o, 1, c), v = ie(e, -1, o, 1, c), R = re(r * n * I), _ = 1 / (2 * e * pe(2 * V * r)), S = g * d + m * y + b * x + v * R;
+  const p = l(1, o, -1, c), d = ie(e, 1, o, -1, c), f = re(s * n * p), u = l(-1, o, -1, c), m = ie(e, -1, o, -1, c), y = re(s * n * u), g = l(1, o, 1, c), b = ie(e, 1, o, 1, c), x = re(s * n * g), I = l(-1, o, 1, c), v = ie(e, -1, o, 1, c), R = re(s * n * I), _ = 1 / (2 * e * pe(2 * G * s)), S = d * f + m * y + b * x + v * R;
   h = _ * _ * S * S;
-  const w = t, A = w / (s * (s + w));
+  const D = t, A = D / (r * (r + D));
   return h * A;
 }
-function zn(a, e, t, s) {
-  const c = e[0] - a[0], o = e[1] - a[1], i = e[2] - a[2], r = c * c + o * o + i * i;
-  if (r < 1e-20)
+function Un(a, e, t, r) {
+  const c = e[0] - a[0], o = e[1] - a[1], i = e[2] - a[2], s = c * c + o * o + i * i;
+  if (s < 1e-20)
     return [...a];
-  const n = Math.sqrt(r), l = [c / n, o / n, i / n], h = (y) => {
-    const p = a[0] + y * c, b = a[1] + y * o, x = a[2] + y * i, I = Math.sqrt(
-      (p - t[0]) ** 2 + (b - t[1]) ** 2 + (x - t[2]) ** 2
+  const n = Math.sqrt(s), l = [c / n, o / n, i / n], h = (y) => {
+    const g = a[0] + y * c, b = a[1] + y * o, x = a[2] + y * i, I = Math.sqrt(
+      (g - t[0]) ** 2 + (b - t[1]) ** 2 + (x - t[2]) ** 2
     ), v = Math.sqrt(
-      (p - s[0]) ** 2 + (b - s[1]) ** 2 + (x - s[2]) ** 2
+      (g - r[0]) ** 2 + (b - r[1]) ** 2 + (x - r[2]) ** 2
     );
     if (I < 1e-10 || v < 1e-10) return 0;
-    const R = ((p - t[0]) * l[0] + (b - t[1]) * l[1] + (x - t[2]) * l[2]) / I, _ = ((p - s[0]) * l[0] + (b - s[1]) * l[1] + (x - s[2]) * l[2]) / v;
+    const R = ((g - t[0]) * l[0] + (b - t[1]) * l[1] + (x - t[2]) * l[2]) / I, _ = ((g - r[0]) * l[0] + (b - r[1]) * l[1] + (x - r[2]) * l[2]) / v;
     return R + _;
   };
-  let f = 0, g = 1;
-  const d = h(f), u = h(g);
-  if (d * u > 0) {
+  let p = 0, d = 1;
+  const f = h(p), u = h(d);
+  if (f * u > 0) {
     const y = (b) => {
       const x = a[0] + b * c, I = a[1] + b * o, v = a[2] + b * i, R = Math.sqrt(
         (x - t[0]) ** 2 + (I - t[1]) ** 2 + (v - t[2]) ** 2
       ), _ = Math.sqrt(
-        (x - s[0]) ** 2 + (I - s[1]) ** 2 + (v - s[2]) ** 2
+        (x - r[0]) ** 2 + (I - r[1]) ** 2 + (v - r[2]) ** 2
       );
       return R + _;
-    }, p = y(0) < y(1) ? 0 : 1;
+    }, g = y(0) < y(1) ? 0 : 1;
     return [
-      a[0] + p * c,
-      a[1] + p * o,
-      a[2] + p * i
+      a[0] + g * c,
+      a[1] + g * o,
+      a[2] + g * i
     ];
   }
   for (let y = 0; y < 50; y++) {
-    const p = (f + g) / 2, b = h(p);
+    const g = (p + d) / 2, b = h(g);
     if (Math.abs(b) < 1e-12) break;
-    d * b < 0 ? g = p : f = p;
+    f * b < 0 ? d = g : p = g;
   }
-  const m = (f + g) / 2;
+  const m = (p + d) / 2;
   return [
     a[0] + m * c,
     a[1] + m * o,
     a[2] + m * i
   ];
 }
-function Ze(a, e, t, s, c = 0.01) {
-  const o = e[0] - a[0], i = e[1] - a[1], r = e[2] - a[2], n = Math.sqrt(o * o + i * i + r * r);
+function We(a, e, t, r, c = 0.01) {
+  const o = e[0] - a[0], i = e[1] - a[1], s = e[2] - a[2], n = Math.sqrt(o * o + i * i + s * s);
   if (n < c) return !0;
-  const l = new C.Vector3(o / n, i / n, r / n), h = new C.Vector3(
+  const l = new M.Vector3(o / n, i / n, s / n), h = new M.Vector3(
     a[0] + l.x * c,
     a[1] + l.y * c,
     a[2] + l.z * c
   );
   t.ray.set(h, l), t.far = n - 2 * c, t.near = 0;
-  const f = t.intersectObjects(s, !0);
-  return t.far = 1 / 0, f.length === 0;
+  const p = t.intersectObjects(r, !0);
+  return t.far = 1 / 0, p.length === 0;
 }
-function On(a, e, t, s, c, o, i, r) {
-  const n = [], l = Z(s, o);
+function Gn(a, e, t, r, c, o, i, s) {
+  const n = [], l = Z(r, o);
   for (const h of a.edges)
-    for (const [f, g] of e)
-      for (const [d, u] of t) {
-        const m = zn(h.start, h.end, g, u), y = Math.sqrt(
-          (m[0] - g[0]) ** 2 + (m[1] - g[1]) ** 2 + (m[2] - g[2]) ** 2
-        ), p = Math.sqrt(
+    for (const [p, d] of e)
+      for (const [f, u] of t) {
+        const m = Un(h.start, h.end, d, u), y = Math.sqrt(
+          (m[0] - d[0]) ** 2 + (m[1] - d[1]) ** 2 + (m[2] - d[2]) ** 2
+        ), g = Math.sqrt(
           (m[0] - u[0]) ** 2 + (m[1] - u[1]) ** 2 + (m[2] - u[2]) ** 2
         );
-        if (y < 1e-6 || p < 1e-6 || !Ze(g, m, i, r) || !Ze(m, u, i, r)) continue;
-        const { phiSource: b, phiReceiver: x } = Cn(
+        if (y < 1e-6 || g < 1e-6 || !We(d, m, i, s) || !We(m, u, i, s)) continue;
+        const { phiSource: b, phiReceiver: x } = Ln(
           h.direction,
           h.normal0,
           m,
-          g,
+          d,
           u
-        ), I = y + p, v = I / c, R = new Array(s.length);
-        for (let _ = 0; _ < s.length; _++) {
-          let S = Mn(
-            s[_],
+        ), I = y + g, v = I / c, R = new Array(r.length);
+        for (let _ = 0; _ < r.length; _++) {
+          let S = kn(
+            r[_],
             h.n,
             y,
-            p,
+            g,
             b,
             x,
             c
           );
-          const w = l[_] * I;
-          S *= Math.pow(10, -w / 10), R[_] = S;
+          const D = l[_] * I;
+          S *= Math.pow(10, -D / 10), R[_] = S;
         }
         n.push({
           edge: h,
@@ -1271,31 +1236,31 @@ function On(a, e, t, s, c, o, i, r) {
           totalDistance: I,
           time: v,
           bandEnergy: R,
-          sourceId: f,
-          receiverId: d
+          sourceId: p,
+          receiverId: f
         });
       }
   return n;
 }
-function Nn(a, e, t) {
-  const s = a.allSurfaces, c = B.getState().containers, o = [], i = [], r = [], n = [];
-  for (let w = 0; w < s.length; w++) {
-    const A = s[w];
+function Vn(a, e, t) {
+  const r = a.allSurfaces, c = B.getState().containers, o = [], i = [], s = [], n = [];
+  for (let D = 0; D < r.length; D++) {
+    const A = r[D];
     o.push(A.uuid);
-    const E = A.mesh, T = E.geometry, D = T.getAttribute("position"), O = T.getIndex();
+    const E = A.mesh, T = E.geometry, w = T.getAttribute("position"), O = T.getIndex();
     E.updateMatrixWorld(!0);
-    const k = E.matrixWorld;
+    const L = E.matrixWorld;
     if (O)
       for (let z = 0; z < O.count; z += 3) {
-        for (let U = 0; U < 3; U++) {
-          const G = O.getX(z + U), be = new C.Vector3(
-            D.getX(G),
-            D.getY(G),
-            D.getZ(G)
-          ).applyMatrix4(k);
-          i.push(be.x, be.y, be.z);
+        for (let k = 0; k < 3; k++) {
+          const U = O.getX(z + k), me = new M.Vector3(
+            w.getX(U),
+            w.getY(U),
+            w.getZ(U)
+          ).applyMatrix4(L);
+          i.push(me.x, me.y, me.z);
         }
-        const P = i.length - 9, L = Ke(
+        const P = i.length - 9, F = Xe(
           i[P],
           i[P + 1],
           i[P + 2],
@@ -1306,19 +1271,19 @@ function Nn(a, e, t) {
           i[P + 7],
           i[P + 8]
         );
-        r.push(L[0], L[1], L[2]), n.push(w);
+        s.push(F[0], F[1], F[2]), n.push(D);
       }
     else
-      for (let z = 0; z < D.count; z += 3) {
-        for (let U = 0; U < 3; U++) {
-          const G = new C.Vector3(
-            D.getX(z + U),
-            D.getY(z + U),
-            D.getZ(z + U)
-          ).applyMatrix4(k);
-          i.push(G.x, G.y, G.z);
+      for (let z = 0; z < w.count; z += 3) {
+        for (let k = 0; k < 3; k++) {
+          const U = new M.Vector3(
+            w.getX(z + k),
+            w.getY(z + k),
+            w.getZ(z + k)
+          ).applyMatrix4(L);
+          i.push(U.x, U.y, U.z);
         }
-        const P = i.length - 9, L = Ke(
+        const P = i.length - 9, F = Xe(
           i[P],
           i[P + 1],
           i[P + 2],
@@ -1329,112 +1294,112 @@ function Nn(a, e, t) {
           i[P + 7],
           i[P + 8]
         );
-        r.push(L[0], L[1], L[2]), n.push(w);
+        s.push(F[0], F[1], F[2]), n.push(D);
       }
   }
-  const l = n.length, h = new Float32Array(i), f = new Float32Array(r), g = new Uint32Array(n), d = new Float32Array(l * 3);
-  for (let w = 0; w < l; w++) {
-    const A = w * 9;
-    d[w * 3] = (h[A] + h[A + 3] + h[A + 6]) / 3, d[w * 3 + 1] = (h[A + 1] + h[A + 4] + h[A + 7]) / 3, d[w * 3 + 2] = (h[A + 2] + h[A + 5] + h[A + 8]) / 3;
+  const l = n.length, h = new Float32Array(i), p = new Float32Array(s), d = new Uint32Array(n), f = new Float32Array(l * 3);
+  for (let D = 0; D < l; D++) {
+    const A = D * 9;
+    f[D * 3] = (h[A] + h[A + 3] + h[A + 6]) / 3, f[D * 3 + 1] = (h[A + 1] + h[A + 4] + h[A + 7]) / 3, f[D * 3 + 2] = (h[A + 2] + h[A + 5] + h[A + 8]) / 3;
   }
   const u = new Uint32Array(l);
-  for (let w = 0; w < l; w++) u[w] = w;
-  const m = Pe(h, d, u, 0, l, 0), y = new Float32Array(l * 9), p = new Float32Array(l * 3), b = new Uint32Array(l);
-  for (let w = 0; w < l; w++) {
-    const A = u[w];
-    y.set(h.subarray(A * 9, A * 9 + 9), w * 9), p.set(f.subarray(A * 3, A * 3 + 3), w * 3), b[w] = g[A];
+  for (let D = 0; D < l; D++) u[D] = D;
+  const m = we(h, f, u, 0, l, 0), y = new Float32Array(l * 9), g = new Float32Array(l * 3), b = new Uint32Array(l);
+  for (let D = 0; D < l; D++) {
+    const A = u[D];
+    y.set(h.subarray(A * 9, A * 9 + 9), D * 9), g.set(p.subarray(A * 3, A * 3 + 3), D * 3), b[D] = d[A];
   }
-  const { nodeArray: x, nodeCount: I } = kn(m), v = t.length, R = new Float32Array(s.length * v * 2);
-  for (let w = 0; w < s.length; w++) {
-    const A = s[w];
+  const { nodeArray: x, nodeCount: I } = qn(m), v = t.length, R = new Float32Array(r.length * v * 2);
+  for (let D = 0; D < r.length; D++) {
+    const A = r[D];
     for (let E = 0; E < v; E++) {
-      const T = (w * v + E) * 2;
+      const T = (D * v + E) * 2;
       R[T] = A.absorptionFunction(t[E]), R[T + 1] = A.scatteringFunction(t[E]);
     }
   }
   const _ = [], S = [];
-  for (const w of e) {
-    const A = c[w];
+  for (const D of e) {
+    const A = c[D];
     if (A) {
-      _.push(w);
-      const E = 0.1, T = A.scale, D = Math.max(Math.abs(T.x), Math.abs(T.y), Math.abs(T.z));
-      S.push(A.position.x, A.position.y, A.position.z, E * D);
+      _.push(D);
+      const E = 0.1, T = A.scale, w = Math.max(Math.abs(T.x), Math.abs(T.y), Math.abs(T.z));
+      S.push(A.position.x, A.position.y, A.position.z, E * w);
     }
   }
   return {
     bvhNodes: x,
     triangleVertices: y,
     triangleSurfaceIndex: b,
-    triangleNormals: p,
+    triangleNormals: g,
     surfaceAcousticData: R,
     receiverSpheres: new Float32Array(S),
     triangleCount: l,
     nodeCount: I,
-    surfaceCount: s.length,
+    surfaceCount: r.length,
     receiverCount: _.length,
     surfaceUuidMap: o,
     receiverUuidMap: _
   };
 }
-const Fn = 8, Ln = 64;
-function Pe(a, e, t, s, c, o) {
-  let i = 1 / 0, r = 1 / 0, n = 1 / 0, l = -1 / 0, h = -1 / 0, f = -1 / 0;
-  for (let _ = s; _ < c; _++) {
+const Hn = 8, jn = 64;
+function we(a, e, t, r, c, o) {
+  let i = 1 / 0, s = 1 / 0, n = 1 / 0, l = -1 / 0, h = -1 / 0, p = -1 / 0;
+  for (let _ = r; _ < c; _++) {
     const S = t[_];
-    for (let w = 0; w < 3; w++) {
-      const A = S * 9 + w * 3, E = a[A], T = a[A + 1], D = a[A + 2];
-      E < i && (i = E), E > l && (l = E), T < r && (r = T), T > h && (h = T), D < n && (n = D), D > f && (f = D);
+    for (let D = 0; D < 3; D++) {
+      const A = S * 9 + D * 3, E = a[A], T = a[A + 1], w = a[A + 2];
+      E < i && (i = E), E > l && (l = E), T < s && (s = T), T > h && (h = T), w < n && (n = w), w > p && (p = w);
     }
   }
-  const g = c - s;
-  if (g <= Fn || o >= Ln)
-    return { boundsMin: [i, r, n], boundsMax: [l, h, f], left: null, right: null, triStart: s, triCount: g };
-  const d = l - i, u = h - r, m = f - n, y = d >= u && d >= m ? 0 : u >= m ? 1 : 2;
-  let p = 1 / 0, b = -1 / 0;
-  for (let _ = s; _ < c; _++) {
+  const d = c - r;
+  if (d <= Hn || o >= jn)
+    return { boundsMin: [i, s, n], boundsMax: [l, h, p], left: null, right: null, triStart: r, triCount: d };
+  const f = l - i, u = h - s, m = p - n, y = f >= u && f >= m ? 0 : u >= m ? 1 : 2;
+  let g = 1 / 0, b = -1 / 0;
+  for (let _ = r; _ < c; _++) {
     const S = e[t[_] * 3 + y];
-    S < p && (p = S), S > b && (b = S);
+    S < g && (g = S), S > b && (b = S);
   }
-  const x = (p + b) * 0.5;
-  let I = s;
-  for (let _ = s; _ < c; _++)
+  const x = (g + b) * 0.5;
+  let I = r;
+  for (let _ = r; _ < c; _++)
     if (e[t[_] * 3 + y] < x) {
       const S = t[I];
       t[I] = t[_], t[_] = S, I++;
     }
-  (I === s || I === c) && (I = s + c >> 1);
-  const v = Pe(a, e, t, s, I, o + 1), R = Pe(a, e, t, I, c, o + 1);
-  return { boundsMin: [i, r, n], boundsMax: [l, h, f], left: v, right: R, triStart: -1, triCount: -1 };
+  (I === r || I === c) && (I = r + c >> 1);
+  const v = we(a, e, t, r, I, o + 1), R = we(a, e, t, I, c, o + 1);
+  return { boundsMin: [i, s, n], boundsMax: [l, h, p], left: v, right: R, triStart: -1, triCount: -1 };
 }
-function kn(a) {
+function qn(a) {
   let e = 0;
   const t = [a];
   for (; t.length > 0; ) {
     const i = t.pop();
     e++, i.left && t.push(i.left), i.right && t.push(i.right);
   }
-  const s = new Float32Array(e * 8);
+  const r = new Float32Array(e * 8);
   let c = 0;
   function o(i) {
-    const r = c++, n = r * 8;
-    s[n] = i.boundsMin[0], s[n + 1] = i.boundsMin[1], s[n + 2] = i.boundsMin[2], s[n + 4] = i.boundsMax[0], s[n + 5] = i.boundsMax[1], s[n + 6] = i.boundsMax[2];
-    const l = new Uint32Array(s.buffer);
+    const s = c++, n = s * 8;
+    r[n] = i.boundsMin[0], r[n + 1] = i.boundsMin[1], r[n + 2] = i.boundsMin[2], r[n + 4] = i.boundsMax[0], r[n + 5] = i.boundsMax[1], r[n + 6] = i.boundsMax[2];
+    const l = new Uint32Array(r.buffer);
     if (i.left && i.right) {
-      const h = o(i.left), f = o(i.right);
-      l[n + 3] = h, l[n + 7] = f;
+      const h = o(i.left), p = o(i.right);
+      l[n + 3] = h, l[n + 7] = p;
     } else
       l[n + 3] = i.triStart, l[n + 7] = (i.triCount | 2147483648) >>> 0;
-    return r;
+    return s;
   }
-  return o(a), { nodeArray: s, nodeCount: e };
+  return o(a), { nodeArray: r, nodeCount: e };
 }
-function Ke(a, e, t, s, c, o, i, r, n) {
-  const l = s - a, h = c - e, f = o - t, g = i - a, d = r - e, u = n - t;
-  let m = h * u - f * d, y = f * g - l * u, p = l * d - h * g;
-  const b = Math.sqrt(m * m + y * y + p * p);
-  return b > 1e-10 && (m /= b, y /= b, p /= b), [m, y, p];
+function Xe(a, e, t, r, c, o, i, s, n) {
+  const l = r - a, h = c - e, p = o - t, d = i - a, f = s - e, u = n - t;
+  let m = h * u - p * f, y = p * d - l * u, g = l * f - h * d;
+  const b = Math.sqrt(m * m + y * y + g * g);
+  return b > 1e-10 && (m /= b, y /= b, g /= b), [m, y, g];
 }
-const Un = `// ─── GPU Ray Tracer Compute Shader ───────────────────────────────────
+const Yn = `// ─── GPU Ray Tracer Compute Shader ───────────────────────────────────
 // Traces one ray per thread through all bounces using an iterative BVH
 // traversal and Moller–Trumbore ray-triangle intersection.
 //
@@ -1947,8 +1912,8 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
     rayOutputs[rayIdx].finalBandEnergy[b] = bandEnergy[b];
   }
 }
-`, q = 64, Je = 7, Gn = 64, mt = 16, Qe = mt * 4, Be = 16, et = Be * 4, Ce = 16, xe = Ce * 4, Vn = 20, tt = Vn * 4;
-class Hn {
+`, q = 64, Ze = 7, $n = 64, pt = 16, Ke = pt * 4, Ee = 16, Je = Ee * 4, Te = 16, be = Te * 4, Wn = 20, Qe = Wn * 4;
+class Xn {
   device = null;
   pipeline = null;
   bindGroupLayout = null;
@@ -1973,20 +1938,20 @@ class Hn {
   get effectiveBatchSize() {
     return this.maxBatchSize;
   }
-  async initialize(e, t, s, c) {
+  async initialize(e, t, r, c) {
     const o = await St();
     if (!o) return !1;
-    this.device = o.device, this.config = s;
-    const i = o.device.limits.maxStorageBufferBindingSize, r = o.device.limits.maxBufferSize, n = q * xe, l = Math.floor(Math.min(i, r) / n);
+    this.device = o.device, this.config = r;
+    const i = o.device.limits.maxStorageBufferBindingSize, s = o.device.limits.maxBufferSize, n = q * be, l = Math.floor(Math.min(i, s) / n);
     if (l < 1)
       return console.error("[GPU RT] Device storage limits too small for even a single ray chain buffer"), !1;
-    const h = Math.max(1, c), f = Math.min(h, l);
-    f < h && console.warn(`[GPU RT] batchSize ${h} exceeds device limits; clamped to ${f}`), this.maxBatchSize = f, s.reflectionOrder > q && console.warn(`[GPU RT] reflectionOrder ${s.reflectionOrder} clamped to ${q}`);
-    const g = s.frequencies.slice(0, Je);
-    this.sceneBuf = Nn(e, t, g), this.gpuBvhNodes = this.createStorageBuffer(this.sceneBuf.bvhNodes), this.gpuTriVerts = this.createStorageBuffer(this.sceneBuf.triangleVertices), this.gpuTriSurfIdx = this.createStorageBuffer(new Uint32Array(this.sceneBuf.triangleSurfaceIndex)), this.gpuTriNormals = this.createStorageBuffer(this.sceneBuf.triangleNormals), this.gpuSurfAcoustic = this.createStorageBuffer(this.sceneBuf.surfaceAcousticData);
-    const d = this.sceneBuf.receiverSpheres.length > 0 ? this.sceneBuf.receiverSpheres : new Float32Array(4);
-    this.gpuReceiverSpheres = this.createStorageBuffer(d);
-    const u = f * Qe, m = f * et, y = f * q * xe;
+    const h = Math.max(1, c), p = Math.min(h, l);
+    p < h && console.warn(`[GPU RT] batchSize ${h} exceeds device limits; clamped to ${p}`), this.maxBatchSize = p, r.reflectionOrder > q && console.warn(`[GPU RT] reflectionOrder ${r.reflectionOrder} clamped to ${q}`);
+    const d = r.frequencies.slice(0, Ze);
+    this.sceneBuf = Vn(e, t, d), this.gpuBvhNodes = this.createStorageBuffer(this.sceneBuf.bvhNodes), this.gpuTriVerts = this.createStorageBuffer(this.sceneBuf.triangleVertices), this.gpuTriSurfIdx = this.createStorageBuffer(new Uint32Array(this.sceneBuf.triangleSurfaceIndex)), this.gpuTriNormals = this.createStorageBuffer(this.sceneBuf.triangleNormals), this.gpuSurfAcoustic = this.createStorageBuffer(this.sceneBuf.surfaceAcousticData);
+    const f = this.sceneBuf.receiverSpheres.length > 0 ? this.sceneBuf.receiverSpheres : new Float32Array(4);
+    this.gpuReceiverSpheres = this.createStorageBuffer(f);
+    const u = p * Ke, m = p * Je, y = p * q * be;
     this.gpuRayInputs = this.device.createBuffer({
       size: u,
       usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
@@ -1997,7 +1962,7 @@ class Hn {
       size: y,
       usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC
     }), this.gpuParams = this.device.createBuffer({
-      size: tt,
+      size: Qe,
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
     }), this.gpuReadbackOutput = this.device.createBuffer({
       size: m,
@@ -2006,28 +1971,28 @@ class Hn {
       size: y,
       usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST
     });
-    const p = this.device.createShaderModule({ code: Un });
+    const g = this.device.createShaderModule({ code: Yn });
     return this.pipeline = this.device.createComputePipeline({
       layout: "auto",
-      compute: { module: p, entryPoint: "main" }
+      compute: { module: g, entryPoint: "main" }
     }), this.bindGroupLayout = this.pipeline.getBindGroupLayout(0), !0;
   }
-  async traceBatch(e, t, s) {
+  async traceBatch(e, t, r) {
     if (!this.device || !this.pipeline || !this.sceneBuf || !this.config)
       throw new Error("[GPU RT] Not initialized");
     if (t > this.maxBatchSize)
       throw new Error(`[GPU RT] rayCount ${t} exceeds maxBatchSize ${this.maxBatchSize}`);
     if (t === 0) return [];
-    const c = Math.min(this.config.frequencies.length, Je), o = new ArrayBuffer(tt), i = new Uint32Array(o), r = new Float32Array(o);
-    i[0] = t, i[1] = Math.min(this.config.reflectionOrder, q), i[2] = c, i[3] = this.sceneBuf.receiverCount, i[4] = this.sceneBuf.triangleCount, i[5] = this.sceneBuf.nodeCount, i[6] = this.sceneBuf.surfaceCount, i[7] = s, r[8] = this.config.rrThreshold;
+    const c = Math.min(this.config.frequencies.length, Ze), o = new ArrayBuffer(Qe), i = new Uint32Array(o), s = new Float32Array(o);
+    i[0] = t, i[1] = Math.min(this.config.reflectionOrder, q), i[2] = c, i[3] = this.sceneBuf.receiverCount, i[4] = this.sceneBuf.triangleCount, i[5] = this.sceneBuf.nodeCount, i[6] = this.sceneBuf.surfaceCount, i[7] = r, s[8] = this.config.rrThreshold;
     for (let y = 0; y < c; y++)
-      r[12 + y] = this.config.cachedAirAtt[y];
+      s[12 + y] = this.config.cachedAirAtt[y];
     this.device.queue.writeBuffer(this.gpuParams, 0, o), this.device.queue.writeBuffer(
       this.gpuRayInputs,
       0,
       e.buffer,
       e.byteOffset,
-      t * Qe
+      t * Ke
     );
     const n = this.device.createBindGroup({
       layout: this.bindGroupLayout,
@@ -2043,22 +2008,22 @@ class Hn {
         { binding: 8, resource: { buffer: this.gpuRayOutputs } },
         { binding: 9, resource: { buffer: this.gpuChainBuffer } }
       ]
-    }), l = Math.ceil(t / Gn), h = this.device.createCommandEncoder(), f = h.beginComputePass();
-    f.setPipeline(this.pipeline), f.setBindGroup(0, n), f.dispatchWorkgroups(l), f.end();
-    const g = t * et, d = t * q * xe;
-    h.copyBufferToBuffer(this.gpuRayOutputs, 0, this.gpuReadbackOutput, 0, g), h.copyBufferToBuffer(this.gpuChainBuffer, 0, this.gpuReadbackChain, 0, d), this.device.queue.submit([h.finish()]), await this.gpuReadbackOutput.mapAsync(GPUMapMode.READ, 0, g), await this.gpuReadbackChain.mapAsync(GPUMapMode.READ, 0, d);
-    const u = new Float32Array(this.gpuReadbackOutput.getMappedRange(0, g).slice(0)), m = new Float32Array(this.gpuReadbackChain.getMappedRange(0, d).slice(0));
+    }), l = Math.ceil(t / $n), h = this.device.createCommandEncoder(), p = h.beginComputePass();
+    p.setPipeline(this.pipeline), p.setBindGroup(0, n), p.dispatchWorkgroups(l), p.end();
+    const d = t * Je, f = t * q * be;
+    h.copyBufferToBuffer(this.gpuRayOutputs, 0, this.gpuReadbackOutput, 0, d), h.copyBufferToBuffer(this.gpuChainBuffer, 0, this.gpuReadbackChain, 0, f), this.device.queue.submit([h.finish()]), await this.gpuReadbackOutput.mapAsync(GPUMapMode.READ, 0, d), await this.gpuReadbackChain.mapAsync(GPUMapMode.READ, 0, f);
+    const u = new Float32Array(this.gpuReadbackOutput.getMappedRange(0, d).slice(0)), m = new Float32Array(this.gpuReadbackChain.getMappedRange(0, f).slice(0));
     return this.gpuReadbackOutput.unmap(), this.gpuReadbackChain.unmap(), this.parseResults(u, m, e, t, c);
   }
-  parseResults(e, t, s, c, o) {
-    const i = new Array(c), r = this.sceneBuf;
+  parseResults(e, t, r, c, o) {
+    const i = new Array(c), s = this.sceneBuf;
     for (let n = 0; n < c; n++) {
-      const l = n * Be, h = new Uint32Array(e.buffer, l * 4, Be), f = h[0], g = h[1] !== 0;
-      if (f === 0) {
+      const l = n * Ee, h = new Uint32Array(e.buffer, l * 4, Ee), p = h[0], d = h[1] !== 0;
+      if (p === 0) {
         i[n] = null;
         continue;
       }
-      const d = [
+      const f = [
         e[l + 3],
         e[l + 4],
         e[l + 5]
@@ -2066,31 +2031,31 @@ class Hn {
       for (let R = 0; R < o; R++)
         u.push(e[l + 8 + R]);
       const m = [], y = n * q;
-      for (let R = 0; R < f; R++) {
-        const _ = (y + R) * Ce, S = new Uint32Array(t.buffer, _ * 4, Ce), w = t[_], A = t[_ + 1], E = t[_ + 2], T = t[_ + 3], D = S[4], O = t[_ + 6], k = t[_ + 7], z = [];
-        for (let L = 0; L < o; L++)
-          z.push(t[_ + 8 + L]);
+      for (let R = 0; R < p; R++) {
+        const _ = (y + R) * Te, S = new Uint32Array(t.buffer, _ * 4, Te), D = t[_], A = t[_ + 1], E = t[_ + 2], T = t[_ + 3], w = S[4], O = t[_ + 6], L = t[_ + 7], z = [];
+        for (let F = 0; F < o; F++)
+          z.push(t[_ + 8 + F]);
         let P;
-        if (D >= r.surfaceCount) {
-          const L = D - r.surfaceCount;
-          P = r.receiverUuidMap[L] ?? "";
+        if (w >= s.surfaceCount) {
+          const F = w - s.surfaceCount;
+          P = s.receiverUuidMap[F] ?? "";
         } else
-          P = r.surfaceUuidMap[D] ?? "";
+          P = s.surfaceUuidMap[w] ?? "";
         m.push({
-          point: [w, A, E],
+          point: [D, A, E],
           distance: T,
           object: P,
           faceNormal: [0, 0, 0],
           faceIndex: -1,
           faceMaterialIndex: -1,
           angle: O,
-          energy: k,
+          energy: L,
           bandEnergy: z
         });
       }
-      const p = n * mt, b = s[p + 6], x = s[p + 7], I = u.reduce((R, _) => R + _, 0), v = o > 0 ? I / o : 0;
+      const g = n * pt, b = r[g + 6], x = r[g + 7], I = u.reduce((R, _) => R + _, 0), v = o > 0 ? I / o : 0;
       i[n] = {
-        intersectedReceiver: g,
+        intersectedReceiver: d,
         chain: m,
         chainLength: m.length,
         energy: v,
@@ -2103,7 +2068,7 @@ class Hn {
         initialTheta: x,
         totalLength: 0,
         // Computed by caller
-        arrivalDirection: g ? d : void 0
+        arrivalDirection: d ? f : void 0
       };
     }
     return i;
@@ -2128,28 +2093,28 @@ class Hn {
     this.gpuBvhNodes = null, this.gpuTriVerts = null, this.gpuTriSurfIdx = null, this.gpuTriNormals = null, this.gpuSurfAcoustic = null, this.gpuReceiverSpheres = null, this.gpuRayInputs = null, this.gpuRayOutputs = null, this.gpuChainBuffer = null, this.gpuParams = null, this.gpuReadbackOutput = null, this.gpuReadbackChain = null, this.pipeline = null, this.bindGroupLayout = null, this.device = null, this.sceneBuf = null, this.config = null;
   }
   createStorageBuffer(e) {
-    const t = Math.max(e.byteLength, 16), s = this.device.createBuffer({
+    const t = Math.max(e.byteLength, 16), r = this.device.createBuffer({
       size: t,
       usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
     });
     return this.device.queue.writeBuffer(
-      s,
+      r,
       0,
       e.buffer,
       e.byteOffset,
       e.byteLength
-    ), s;
+    ), r;
   }
 }
-const Se = () => new Worker(new URL(
+const Re = () => new Worker(new URL(
   /* @vite-ignore */
   "/assets/filter.worker-CKhUfGRZ.js",
   import.meta.url
-)), { floor: $, random: jn, abs: ae } = Math, _e = () => jn() > 0.5;
-C.BufferGeometry.prototype.computeBoundsTree = vt;
-C.BufferGeometry.prototype.disposeBoundsTree = bt;
-C.Mesh.prototype.raycast = Rt;
-class Yn extends yt {
+)), { floor: Y, random: Zn, abs: oe } = Math, Ie = () => Zn() > 0.5;
+M.BufferGeometry.prototype.computeBoundsTree = yt;
+M.BufferGeometry.prototype.disposeBoundsTree = vt;
+M.Mesh.prototype.raycast = bt;
+class Kn extends mt {
   roomID;
   sourceIDs;
   surfaceIDs;
@@ -2226,44 +2191,44 @@ class Yn extends yt {
   binauralImpulseResponse;
   binauralPlaying = !1;
   constructor(e) {
-    super(e), this.kind = "ray-tracer", e = { ...M, ...e }, this.uuid = e.uuid || this.uuid, this.name = e.name || M.name, this.observed_name = kt(this.name), this.responseOverlayElement = document.querySelector("#response-overlay") || document.createElement("div"), this.responseOverlayElement.style.backgroundColor = "#FFFFFF", this.sourceIDs = e.sourceIDs || M.sourceIDs, this.surfaceIDs = e.surfaceIDs || M.surfaceIDs, this.roomID = e.roomID || M.roomID, this.receiverIDs = e.receiverIDs || M.receiverIDs, this.updateInterval = e.updateInterval || M.updateInterval, this.reflectionOrder = e.reflectionOrder || M.reflectionOrder, this._isRunning = e.isRunning || M.isRunning, this._runningWithoutReceivers = e.runningWithoutReceivers || M.runningWithoutReceivers, this.frequencies = e.frequencies || M.frequencies, this._cachedAirAtt = Z(this.frequencies, this.temperature), this.intervals = [], this.plotData = [], this.plotStyle = e.plotStyle || M.plotStyle, this.lastTime = Date.now(), this.statsUpdatePeriod = 100, this._pointSize = e.pointSize || M.pointSize, this.validRayCount = 0, this.intensitySampleRate = it, this.quickEstimateResults = {};
+    super(e), this.kind = "ray-tracer", e = { ...C, ...e }, this.uuid = e.uuid || this.uuid, this.name = e.name || C.name, this.observed_name = qt(this.name), this.responseOverlayElement = document.querySelector("#response-overlay") || document.createElement("div"), this.responseOverlayElement.style.backgroundColor = "#FFFFFF", this.sourceIDs = e.sourceIDs || C.sourceIDs, this.surfaceIDs = e.surfaceIDs || C.surfaceIDs, this.roomID = e.roomID || C.roomID, this.receiverIDs = e.receiverIDs || C.receiverIDs, this.updateInterval = e.updateInterval || C.updateInterval, this.reflectionOrder = e.reflectionOrder || C.reflectionOrder, this._isRunning = e.isRunning || C.isRunning, this._runningWithoutReceivers = e.runningWithoutReceivers || C.runningWithoutReceivers, this.frequencies = e.frequencies || C.frequencies, this._cachedAirAtt = Z(this.frequencies, this.temperature), this.intervals = [], this.plotData = [], this.plotStyle = e.plotStyle || C.plotStyle, this.lastTime = Date.now(), this.statsUpdatePeriod = 100, this._pointSize = e.pointSize || C.pointSize, this.validRayCount = 0, this.intensitySampleRate = st, this.quickEstimateResults = {};
     const t = typeof e.raysVisible == "boolean";
-    this._raysVisible = t ? e.raysVisible : M.raysVisible;
-    const s = typeof e.pointsVisible == "boolean";
-    this._pointsVisible = s ? e.pointsVisible : M.pointsVisible;
+    this._raysVisible = t ? e.raysVisible : C.raysVisible;
+    const r = typeof e.pointsVisible == "boolean";
+    this._pointsVisible = r ? e.pointsVisible : C.pointsVisible;
     const c = typeof e.invertedDrawStyle == "boolean";
-    this._invertedDrawStyle = c ? e.invertedDrawStyle : M.invertedDrawStyle, this.passes = e.passes || M.passes, this.raycaster = new C.Raycaster(), this.rayBufferGeometry = new C.BufferGeometry(), this.rayBufferGeometry.name = "raytracer-ray-buffer-geometry", this.maxrays = 999999, this.rayBufferAttribute = new C.Float32BufferAttribute(new Float32Array(this.maxrays), 3), this.rayBufferAttribute.setUsage(C.DynamicDrawUsage), this.rayBufferGeometry.setAttribute("position", this.rayBufferAttribute), this.rayBufferGeometry.setDrawRange(0, this.maxrays), this.colorBufferAttribute = new C.Float32BufferAttribute(new Float32Array(this.maxrays), 2), this.colorBufferAttribute.setUsage(C.DynamicDrawUsage), this.rayBufferGeometry.setAttribute("color", this.colorBufferAttribute), this.chartdata = [], this.hybrid = !1, this.transitionOrder = 2, this.convergenceThreshold = e.convergenceThreshold ?? M.convergenceThreshold, this.autoStop = e.autoStop ?? M.autoStop, this.rrThreshold = e.rrThreshold ?? M.rrThreshold, this.maxStoredPaths = e.maxStoredPaths ?? M.maxStoredPaths, this.edgeDiffractionEnabled = e.edgeDiffractionEnabled ?? M.edgeDiffractionEnabled, this.lateReverbTailEnabled = e.lateReverbTailEnabled ?? M.lateReverbTailEnabled, this.tailCrossfadeTime = e.tailCrossfadeTime ?? M.tailCrossfadeTime, this.tailCrossfadeDuration = e.tailCrossfadeDuration ?? M.tailCrossfadeDuration, this.gpuEnabled = e.gpuEnabled ?? M.gpuEnabled, this.gpuBatchSize = e.gpuBatchSize ?? M.gpuBatchSize, this.hrtfSubjectId = e.hrtfSubjectId ?? "D1", this.headYaw = e.headYaw ?? 0, this.headPitch = e.headPitch ?? 0, this.headRoll = e.headRoll ?? 0, this._edgeGraph = null, this._histogramBinWidth = jt, this._histogramNumBins = Yt, this._convergenceCheckInterval = qt, this._resetConvergenceState(), this.rays = new C.LineSegments(
+    this._invertedDrawStyle = c ? e.invertedDrawStyle : C.invertedDrawStyle, this.passes = e.passes || C.passes, this.raycaster = new M.Raycaster(), this.rayBufferGeometry = new M.BufferGeometry(), this.rayBufferGeometry.name = "raytracer-ray-buffer-geometry", this.maxrays = 999999, this.rayBufferAttribute = new M.Float32BufferAttribute(new Float32Array(this.maxrays), 3), this.rayBufferAttribute.setUsage(M.DynamicDrawUsage), this.rayBufferGeometry.setAttribute("position", this.rayBufferAttribute), this.rayBufferGeometry.setDrawRange(0, this.maxrays), this.colorBufferAttribute = new M.Float32BufferAttribute(new Float32Array(this.maxrays), 2), this.colorBufferAttribute.setUsage(M.DynamicDrawUsage), this.rayBufferGeometry.setAttribute("color", this.colorBufferAttribute), this.chartdata = [], this.hybrid = !1, this.transitionOrder = 2, this.convergenceThreshold = e.convergenceThreshold ?? C.convergenceThreshold, this.autoStop = e.autoStop ?? C.autoStop, this.rrThreshold = e.rrThreshold ?? C.rrThreshold, this.maxStoredPaths = e.maxStoredPaths ?? C.maxStoredPaths, this.edgeDiffractionEnabled = e.edgeDiffractionEnabled ?? C.edgeDiffractionEnabled, this.lateReverbTailEnabled = e.lateReverbTailEnabled ?? C.lateReverbTailEnabled, this.tailCrossfadeTime = e.tailCrossfadeTime ?? C.tailCrossfadeTime, this.tailCrossfadeDuration = e.tailCrossfadeDuration ?? C.tailCrossfadeDuration, this.gpuEnabled = e.gpuEnabled ?? C.gpuEnabled, this.gpuBatchSize = e.gpuBatchSize ?? C.gpuBatchSize, this.hrtfSubjectId = e.hrtfSubjectId ?? "D1", this.headYaw = e.headYaw ?? 0, this.headPitch = e.headPitch ?? 0, this.headRoll = e.headRoll ?? 0, this._edgeGraph = null, this._histogramBinWidth = Zt, this._histogramNumBins = Kt, this._convergenceCheckInterval = Jt, this._resetConvergenceState(), this.rays = new M.LineSegments(
       this.rayBufferGeometry,
-      new C.LineBasicMaterial({
+      new M.LineBasicMaterial({
         fog: !1,
         color: 2631977,
         transparent: !0,
         opacity: 0.2,
         premultipliedAlpha: !0,
-        blending: C.NormalBlending,
-        depthFunc: C.AlwaysDepth,
+        blending: M.NormalBlending,
+        depthFunc: M.AlwaysDepth,
         name: "raytracer-rays-material"
         // depthTest: false
       })
-    ), this.rays.renderOrder = -0.5, this.rays.frustumCulled = !1, F.scene.add(this.rays);
-    var o = new C.ShaderMaterial({
+    ), this.rays.renderOrder = -0.5, this.rays.frustumCulled = !1, N.scene.add(this.rays);
+    var o = new M.ShaderMaterial({
       fog: !1,
-      vertexShader: Fe.vs,
-      fragmentShader: Fe.fs,
+      vertexShader: Oe.vs,
+      fragmentShader: Oe.fs,
       transparent: !0,
       premultipliedAlpha: !0,
       uniforms: {
-        drawStyle: { value: at.ENERGY },
+        drawStyle: { value: rt.ENERGY },
         inverted: { value: 0 },
         pointScale: { value: this._pointSize }
       },
-      blending: C.NormalBlending,
+      blending: M.NormalBlending,
       name: "raytracer-points-material"
     });
-    this.hits = new C.Points(this.rayBufferGeometry, o), this.hits.frustumCulled = !1, F.scene.add(this.hits), this.rayPositionIndex = 0, Object.defineProperty(this.raycaster, "firstHitOnly", {
+    this.hits = new M.Points(this.rayBufferGeometry, o), this.hits.frustumCulled = !1, N.scene.add(this.hits), this.rayPositionIndex = 0, Object.defineProperty(this.raycaster, "firstHitOnly", {
       value: !0,
       writable: !0
-    }), this.intersections = [], this.findIDs(), this.intersectableObjects = [], this.paths = e.paths || M.paths, this.stats = {
+    }), this.intersections = [], this.findIDs(), this.intersectableObjects = [], this.paths = e.paths || C.paths, this.stats = {
       numRaysShot: {
         name: "# of rays shot",
         value: 0
@@ -2272,21 +2237,21 @@ class Yn extends yt {
         name: "# of valid rays",
         value: 0
       }
-    }, F.overlays.global.addCell("Valid Rays", this.validRayCount, {
+    }, N.overlays.global.addCell("Valid Rays", this.validRayCount, {
       id: this.uuid + "-valid-ray-count",
       hidden: !0,
       formatter: (i) => String(i)
     }), this.messageHandlerIDs = [], X.postMessage("STATS_SETUP", this.stats), this.messageHandlerIDs.push(
-      X.addMessageHandler("RAYTRACER_SOURCE_CHANGE", (i, ...r) => {
-        console.log(r && r[0] && r[0] instanceof Array && r[1] && r[1] === this.uuid), r && r[0] && r[0] instanceof Array && r[1] && r[1] === this.uuid && (this.sourceIDs = r[0].map((n) => n.id));
+      X.addMessageHandler("RAYTRACER_SOURCE_CHANGE", (i, ...s) => {
+        console.log(s && s[0] && s[0] instanceof Array && s[1] && s[1] === this.uuid), s && s[0] && s[0] instanceof Array && s[1] && s[1] === this.uuid && (this.sourceIDs = s[0].map((n) => n.id));
       })
     ), this.messageHandlerIDs.push(
-      X.addMessageHandler("RAYTRACER_RECEIVER_CHANGE", (i, ...r) => {
-        r && r[0] && r[0] instanceof Array && r[1] && r[1] === this.uuid && (this.receiverIDs = r[0].map((n) => n.id));
+      X.addMessageHandler("RAYTRACER_RECEIVER_CHANGE", (i, ...s) => {
+        s && s[0] && s[0] instanceof Array && s[1] && s[1] === this.uuid && (this.receiverIDs = s[0].map((n) => n.id));
       })
     ), this.messageHandlerIDs.push(
-      X.addMessageHandler("SHOULD_REMOVE_CONTAINER", (i, ...r) => {
-        const n = r[0];
+      X.addMessageHandler("SHOULD_REMOVE_CONTAINER", (i, ...s) => {
+        const n = s[0];
         n && (console.log(n), this.sourceIDs.includes(n) ? this.sourceIDs = this.sourceIDs.filter((l) => l != n) : this.receiverIDs.includes(n) && (this.receiverIDs = this.receiverIDs.filter((l) => l != n)));
       })
     ), this.step = this.step.bind(this), this.calculateImpulseResponse = this.calculateImpulseResponse.bind(this);
@@ -2297,27 +2262,27 @@ class Yn extends yt {
     return this.room?.temperature ?? 20;
   }
   get c() {
-    return rt(this.temperature);
+    return nt(this.temperature);
   }
   save() {
     const {
       name: e,
       kind: t,
-      uuid: s,
+      uuid: r,
       autoCalculate: c,
       roomID: o,
       sourceIDs: i,
-      surfaceIDs: r,
+      surfaceIDs: s,
       receiverIDs: n,
       updateInterval: l,
       passes: h,
-      pointSize: f,
-      reflectionOrder: g,
-      runningWithoutReceivers: d,
+      pointSize: p,
+      reflectionOrder: d,
+      runningWithoutReceivers: f,
       raysVisible: u,
       pointsVisible: m,
       invertedDrawStyle: y,
-      plotStyle: p,
+      plotStyle: g,
       paths: b,
       frequencies: x,
       convergenceThreshold: I,
@@ -2325,34 +2290,34 @@ class Yn extends yt {
       rrThreshold: R,
       maxStoredPaths: _,
       edgeDiffractionEnabled: S,
-      lateReverbTailEnabled: w,
+      lateReverbTailEnabled: D,
       tailCrossfadeTime: A,
       tailCrossfadeDuration: E,
       gpuEnabled: T,
-      gpuBatchSize: D,
+      gpuBatchSize: w,
       hrtfSubjectId: O,
-      headYaw: k,
+      headYaw: L,
       headPitch: z,
       headRoll: P
     } = this;
     return {
       name: e,
       kind: t,
-      uuid: s,
+      uuid: r,
       autoCalculate: c,
       roomID: o,
       sourceIDs: i,
-      surfaceIDs: r,
+      surfaceIDs: s,
       receiverIDs: n,
       updateInterval: l,
       passes: h,
-      pointSize: f,
-      reflectionOrder: g,
-      runningWithoutReceivers: d,
+      pointSize: p,
+      reflectionOrder: d,
+      runningWithoutReceivers: f,
       raysVisible: u,
       pointsVisible: m,
       invertedDrawStyle: y,
-      plotStyle: p,
+      plotStyle: g,
       paths: b,
       frequencies: x,
       convergenceThreshold: I,
@@ -2360,13 +2325,13 @@ class Yn extends yt {
       rrThreshold: R,
       maxStoredPaths: _,
       edgeDiffractionEnabled: S,
-      lateReverbTailEnabled: w,
+      lateReverbTailEnabled: D,
       tailCrossfadeTime: A,
       tailCrossfadeDuration: E,
       gpuEnabled: T,
-      gpuBatchSize: D,
+      gpuBatchSize: w,
       hrtfSubjectId: O,
-      headYaw: k,
+      headYaw: L,
       headPitch: z,
       headRoll: P
     };
@@ -2379,7 +2344,7 @@ class Yn extends yt {
   dispose() {
     this._isRunning && (this._isRunning = !1, this._gpuRunning = !1, cancelAnimationFrame(this._rafId), this._rafId = 0, this.intervals.forEach((e) => window.clearInterval(e)), this.intervals = []), this._disposeGpu(), this.removeMessageHandlers(), Object.keys(window.vars).forEach((e) => {
       window.vars[e].uuid === this.uuid && delete window.vars[e];
-    }), F.scene.remove(this.rays), F.scene.remove(this.hits);
+    }), N.scene.remove(this.rays), N.scene.remove(this.hits);
   }
   addSource(e) {
     B.getState().containers[e.uuid] = e, this.findIDs(), this.mapIntersectableObjects();
@@ -2400,26 +2365,26 @@ class Yn extends yt {
     this.mapIntersectableObjects();
   }
   setDrawStyle(e) {
-    this.hits.material.uniforms.drawStyle.value = e, this.hits.material.needsUpdate = !0, F.needsToRender = !0;
+    this.hits.material.uniforms.drawStyle.value = e, this.hits.material.needsUpdate = !0, N.needsToRender = !0;
   }
   setPointScale(e) {
-    this._pointSize = e, this.hits.material.uniforms.pointScale.value = this._pointSize, this.hits.material.needsUpdate = !0, F.needsToRender = !0;
+    this._pointSize = e, this.hits.material.uniforms.pointScale.value = this._pointSize, this.hits.material.needsUpdate = !0, N.needsToRender = !0;
   }
   incrementRayPositionIndex() {
     return this.rayPositionIndex < this.maxrays ? this.rayPositionIndex++ : (this.rayPositionIndex = 0, this.rayPositionIndexDidOverflow = !0, this.rayPositionIndex);
   }
   rayPositionIndexDidOverflow = !1;
-  appendRay(e, t, s = 1, c = 1) {
-    this.rayBufferAttribute.setXYZ(this.incrementRayPositionIndex(), e[0], e[1], e[2]), this.colorBufferAttribute.setXY(this.rayPositionIndex, s, c), this.rayBufferAttribute.setXYZ(this.incrementRayPositionIndex(), t[0], t[1], t[2]), this.colorBufferAttribute.setXY(this.rayPositionIndex, s, c), this.rayBufferGeometry.setDrawRange(0, this.rayPositionIndexDidOverflow ? this.maxrays : this.rayPositionIndex);
+  appendRay(e, t, r = 1, c = 1) {
+    this.rayBufferAttribute.setXYZ(this.incrementRayPositionIndex(), e[0], e[1], e[2]), this.colorBufferAttribute.setXY(this.rayPositionIndex, r, c), this.rayBufferAttribute.setXYZ(this.incrementRayPositionIndex(), t[0], t[1], t[2]), this.colorBufferAttribute.setXY(this.rayPositionIndex, r, c), this.rayBufferGeometry.setDrawRange(0, this.rayPositionIndexDidOverflow ? this.maxrays : this.rayPositionIndex);
   }
   flushRayBuffer() {
     this.rayBufferAttribute.needsUpdate = !0, this.rayBufferAttribute.version++, this.colorBufferAttribute.needsUpdate = !0, this.colorBufferAttribute.version++;
   }
   inFrontOf(e, t) {
-    return Qt(e, t);
+    return on(e, t);
   }
-  traceRay(e, t, s, c, o, i, r, n = 1, l = []) {
-    return ot(
+  traceRay(e, t, r, c, o, i, s, n = 1, l = []) {
+    return it(
       this.raycaster,
       this.intersectableObjects,
       this.frequencies,
@@ -2427,17 +2392,17 @@ class Yn extends yt {
       this.rrThreshold,
       e,
       t,
-      s,
+      r,
       c,
       o,
       i,
-      r,
+      s,
       n,
       l
     );
   }
   startQuickEstimate(e = this.frequencies, t = 1e3) {
-    const s = this.runningWithoutReceivers;
+    const r = this.runningWithoutReceivers;
     this.runningWithoutReceivers = !0;
     let c = 0;
     this.quickEstimateResults = {}, this.sourceIDs.forEach((o) => {
@@ -2446,50 +2411,50 @@ class Yn extends yt {
       window.setInterval(() => {
         for (let o = 0; o < this.passes; o++, c++)
           for (let i = 0; i < this.sourceIDs.length; i++) {
-            const r = this.sourceIDs[i], n = B.getState().containers[r];
-            this.quickEstimateResults[r].push(this.quickEstimateStep(n, e, t));
+            const s = this.sourceIDs[i], n = B.getState().containers[s];
+            this.quickEstimateResults[s].push(this.quickEstimateStep(n, e, t));
           }
-        c >= t ? (this.intervals.forEach((o) => window.clearInterval(o)), this.runningWithoutReceivers = s, console.log(this.quickEstimateResults)) : console.log((c / t * 100).toFixed(1) + "%");
+        c >= t ? (this.intervals.forEach((o) => window.clearInterval(o)), this.runningWithoutReceivers = r, console.log(this.quickEstimateResults)) : console.log((c / t * 100).toFixed(1) + "%");
       }, this.updateInterval)
     );
   }
-  quickEstimateStep(e, t, s) {
+  quickEstimateStep(e, t, r) {
     const c = this.c, o = Array(t.length).fill(0);
-    let i = e.position.clone(), r, n, l, h;
+    let i = e.position.clone(), s, n, l, h;
     do
-      r = Math.random() * 2 - 1, n = Math.random() * 2 - 1, l = Math.random() * 2 - 1, h = r * r + n * n + l * l;
+      s = Math.random() * 2 - 1, n = Math.random() * 2 - 1, l = Math.random() * 2 - 1, h = s * s + n * n + l * l;
     while (h > 1 || h < 1e-6);
-    let f = new C.Vector3(r, n, l).normalize(), g = 0;
-    const d = Array(t.length).fill(e.initialIntensity);
+    let p = new M.Vector3(s, n, l).normalize(), d = 0;
+    const f = Array(t.length).fill(e.initialIntensity);
     let u = 0;
-    const m = Gt;
-    let y = !1, p = 0;
+    const m = $t;
+    let y = !1, g = 0;
     Z(t, this.temperature);
     let b = {};
     for (; !y && u < m; ) {
-      this.raycaster.ray.set(i, f);
+      this.raycaster.ray.set(i, p);
       const x = this.raycaster.intersectObjects(this.intersectableObjects, !0);
       if (x.length > 0) {
-        g = f.clone().multiplyScalar(-1).angleTo(x[0].face.normal), p += x[0].distance;
+        d = p.clone().multiplyScalar(-1).angleTo(x[0].face.normal), g += x[0].distance;
         const I = x[0].object.parent;
         for (let R = 0; R < t.length; R++) {
           const _ = t[R];
           let S = 1;
-          I.kind === "surface" && (S = I.reflectionFunction(_, g)), d[R] *= S;
-          const w = e.initialIntensity / d[R] > Ht;
-          w && (o[R] = p / c), y = y || w;
+          I.kind === "surface" && (S = I.reflectionFunction(_, d)), f[R] *= S;
+          const D = e.initialIntensity / f[R] > Xt;
+          D && (o[R] = g / c), y = y || D;
         }
-        x[0].object.parent instanceof nt && (x[0].object.parent.numHits += 1);
+        x[0].object.parent instanceof et && (x[0].object.parent.numHits += 1);
         const v = x[0].face.normal.normalize();
-        f.sub(v.clone().multiplyScalar(f.dot(v)).multiplyScalar(2)).normalize(), i.copy(x[0].point), b = x[0];
+        p.sub(v.clone().multiplyScalar(p.dot(v)).multiplyScalar(2)).normalize(), i.copy(x[0].point), b = x[0];
       }
       u += 1;
     }
     return this.stats.numRaysShot.value++, {
-      distance: p,
+      distance: g,
       rt60s: o,
-      angle: g,
-      direction: f,
+      angle: d,
+      direction: p,
       lastIntersection: b
     };
   }
@@ -2497,11 +2462,11 @@ class Yn extends yt {
     this._lastConvergenceCheck = Date.now(), this._rafId && (cancelAnimationFrame(this._rafId), this._rafId = 0);
     const e = () => {
       if (!this._isRunning) return;
-      const t = 12, s = performance.now();
+      const t = 12, r = performance.now();
       do
         this.stepStratified(this.passes);
-      while (performance.now() - s < t);
-      this.flushRayBuffer(), F.needsToRender = !0;
+      while (performance.now() - r < t);
+      this.flushRayBuffer(), N.needsToRender = !0;
       const c = Date.now();
       if (this.autoStop && c - this._lastConvergenceCheck >= this._convergenceCheckInterval && (this._lastConvergenceCheck = c, this._updateConvergenceMetrics(), this.convergenceMetrics.convergenceRatio < this.convergenceThreshold && this.convergenceMetrics.t30Count >= 3)) {
         this.isRunning = !1;
@@ -2516,42 +2481,42 @@ class Yn extends yt {
     let t = Math.floor(Math.sqrt(e));
     for (; t > 1 && e % t !== 0; )
       t--;
-    const s = e / t;
+    const r = e / t;
     for (let c = 0; c < this.sourceIDs.length; c++) {
-      const o = B.getState().containers[this.sourceIDs[c]], i = o.phi, r = o.theta, n = o.position, l = o.rotation, h = o.directivityHandler;
+      const o = B.getState().containers[this.sourceIDs[c]], i = o.phi, s = o.theta, n = o.position, l = o.rotation, h = o.directivityHandler;
       this._directivityRefPressures || (this._directivityRefPressures = /* @__PURE__ */ new Map());
-      const f = this.sourceIDs[c];
-      let g = this._directivityRefPressures.get(f);
-      if (!g || g.length !== this.frequencies.length) {
-        g = new Array(this.frequencies.length);
-        for (let d = 0; d < this.frequencies.length; d++)
-          g[d] = h.getPressureAtPosition(0, this.frequencies[d], 0, 0);
-        this._directivityRefPressures.set(f, g);
+      const p = this.sourceIDs[c];
+      let d = this._directivityRefPressures.get(p);
+      if (!d || d.length !== this.frequencies.length) {
+        d = new Array(this.frequencies.length);
+        for (let f = 0; f < this.frequencies.length; f++)
+          d[f] = h.getPressureAtPosition(0, this.frequencies[f], 0, 0);
+        this._directivityRefPressures.set(p, d);
       }
-      for (let d = 0; d < t; d++)
-        for (let u = 0; u < s; u++) {
+      for (let f = 0; f < t; f++)
+        for (let u = 0; u < r; u++) {
           this.__num_checked_paths += 1;
-          const m = (d + Math.random()) / t * i, y = (u + Math.random()) / s * r;
-          let p = Re(m, y);
-          const b = new C.Vector3().setFromSphericalCoords(1, p[0], p[1]);
+          const m = (f + Math.random()) / t * i, y = (u + Math.random()) / r * s;
+          let g = ye(m, y);
+          const b = new M.Vector3().setFromSphericalCoords(1, g[0], g[1]);
           b.applyEuler(l);
           const x = new Array(this.frequencies.length);
           for (let v = 0; v < this.frequencies.length; v++) {
             let R = 1;
             try {
-              const _ = h.getPressureAtPosition(0, this.frequencies[v], m, y), S = g[v];
+              const _ = h.getPressureAtPosition(0, this.frequencies[v], m, y), S = d[v];
               typeof _ == "number" && typeof S == "number" && S > 0 && (R = (_ / S) ** 2);
             } catch {
             }
             x[v] = R;
           }
-          const I = this.traceRay(n, b, this.reflectionOrder, x, f, m, y);
-          I && this._handleTracedPath(I, n, f), this.stats.numRaysShot.value++;
+          const I = this.traceRay(n, b, this.reflectionOrder, x, p, m, y);
+          I && this._handleTracedPath(I, n, p), this.stats.numRaysShot.value++;
         }
     }
   }
   /** Common path handling for both step() and stepStratified() */
-  _handleTracedPath(e, t, s) {
+  _handleTracedPath(e, t, r) {
     if (this._runningWithoutReceivers) {
       this.appendRay(
         [t.x, t.y, t.z],
@@ -2562,7 +2527,7 @@ class Yn extends yt {
       for (let o = 1; o < e.chain.length; o++)
         this.appendRay(e.chain[o - 1].point, e.chain[o].point, e.chain[o].energy || 1, e.chain[o].angle);
       const c = e.chain[e.chain.length - 1].object;
-      this._pushPathWithEviction(c, e), B.getState().containers[s].numRays += 1;
+      this._pushPathWithEviction(c, e), B.getState().containers[r].numRays += 1;
     } else if (e.intersectedReceiver) {
       this.appendRay(
         [t.x, t.y, t.z],
@@ -2572,97 +2537,97 @@ class Yn extends yt {
       );
       for (let o = 1; o < e.chain.length; o++)
         this.appendRay(e.chain[o - 1].point, e.chain[o].point, e.chain[o].energy || 1, e.chain[o].angle);
-      this.stats.numValidRayPaths.value++, this.validRayCount += 1, F.overlays.global.setCellValue(this.uuid + "-valid-ray-count", this.validRayCount);
+      this.stats.numValidRayPaths.value++, this.validRayCount += 1, N.overlays.global.setCellValue(this.uuid + "-valid-ray-count", this.validRayCount);
       const c = e.chain[e.chain.length - 1].object;
-      this._pushPathWithEviction(c, e), B.getState().containers[s].numRays += 1, this._addToEnergyHistogram(c, e);
+      this._pushPathWithEviction(c, e), B.getState().containers[r].numRays += 1, this._addToEnergyHistogram(c, e);
     }
   }
   /** Push a path onto the paths array, evicting oldest if over maxStoredPaths */
   _pushPathWithEviction(e, t) {
-    const s = Math.max(1, this.maxStoredPaths | 0);
+    const r = Math.max(1, this.maxStoredPaths | 0);
     if (!this.paths[e]) {
       this.paths[e] = [t];
       return;
     }
     const c = this.paths[e];
-    if (c.length >= s) {
-      const o = c.length - s + 1;
+    if (c.length >= r) {
+      const o = c.length - r + 1;
       o > 0 && c.splice(0, o);
     }
     c.push(t);
   }
   /** Add a ray path's energy to the convergence histogram */
   _addToEnergyHistogram(e, t) {
-    Dn(this._energyHistogram, e, t, this.frequencies, this.c, this._histogramBinWidth, this._histogramNumBins);
+    Cn(this._energyHistogram, e, t, this.frequencies, this.c, this._histogramBinWidth, this._histogramNumBins);
   }
   step() {
     for (let e = 0; e < this.sourceIDs.length; e++) {
       this.__num_checked_paths += 1;
-      const t = Math.random() * B.getState().containers[this.sourceIDs[e]].theta, s = Math.random() * B.getState().containers[this.sourceIDs[e]].phi, c = B.getState().containers[this.sourceIDs[e]].position, o = B.getState().containers[this.sourceIDs[e]].rotation;
-      let i = Re(s, t);
-      const r = new C.Vector3().setFromSphericalCoords(1, i[0], i[1]);
-      r.applyEuler(o);
+      const t = Math.random() * B.getState().containers[this.sourceIDs[e]].theta, r = Math.random() * B.getState().containers[this.sourceIDs[e]].phi, c = B.getState().containers[this.sourceIDs[e]].position, o = B.getState().containers[this.sourceIDs[e]].rotation;
+      let i = ye(r, t);
+      const s = new M.Vector3().setFromSphericalCoords(1, i[0], i[1]);
+      s.applyEuler(o);
       const n = B.getState().containers[this.sourceIDs[e]].directivityHandler;
       this._directivityRefPressures || (this._directivityRefPressures = /* @__PURE__ */ new Map());
       const l = this.sourceIDs[e];
       let h = this._directivityRefPressures.get(l);
       if (!h || h.length !== this.frequencies.length) {
         h = new Array(this.frequencies.length);
-        for (let d = 0; d < this.frequencies.length; d++)
-          h[d] = n.getPressureAtPosition(0, this.frequencies[d], 0, 0);
+        for (let f = 0; f < this.frequencies.length; f++)
+          h[f] = n.getPressureAtPosition(0, this.frequencies[f], 0, 0);
         this._directivityRefPressures.set(l, h);
       }
-      const f = new Array(this.frequencies.length);
-      for (let d = 0; d < this.frequencies.length; d++) {
+      const p = new Array(this.frequencies.length);
+      for (let f = 0; f < this.frequencies.length; f++) {
         let u = 1;
         try {
-          const m = n.getPressureAtPosition(0, this.frequencies[d], s, t), y = h[d];
+          const m = n.getPressureAtPosition(0, this.frequencies[f], r, t), y = h[f];
           typeof m == "number" && typeof y == "number" && y > 0 && (u = (m / y) ** 2);
         } catch {
         }
-        f[d] = u;
+        p[f] = u;
       }
-      const g = this.traceRay(c, r, this.reflectionOrder, f, this.sourceIDs[e], s, t);
-      if (g) {
+      const d = this.traceRay(c, s, this.reflectionOrder, p, this.sourceIDs[e], r, t);
+      if (d) {
         if (this._runningWithoutReceivers) {
           this.appendRay(
             [c.x, c.y, c.z],
-            g.chain[0].point,
-            g.chain[0].energy || 1,
-            g.chain[0].angle
+            d.chain[0].point,
+            d.chain[0].energy || 1,
+            d.chain[0].angle
           );
-          for (let u = 1; u < g.chain.length; u++)
+          for (let u = 1; u < d.chain.length; u++)
             this.appendRay(
               // the previous point
-              g.chain[u - 1].point,
+              d.chain[u - 1].point,
               // the current point
-              g.chain[u].point,
+              d.chain[u].point,
               // the energy content displayed as a color + alpha
-              g.chain[u].energy || 1,
-              g.chain[u].angle
+              d.chain[u].energy || 1,
+              d.chain[u].angle
             );
-          const d = g.chain[g.chain.length - 1].object;
-          this._pushPathWithEviction(d, g), B.getState().containers[this.sourceIDs[e]].numRays += 1;
-        } else if (g.intersectedReceiver) {
+          const f = d.chain[d.chain.length - 1].object;
+          this._pushPathWithEviction(f, d), B.getState().containers[this.sourceIDs[e]].numRays += 1;
+        } else if (d.intersectedReceiver) {
           this.appendRay(
             [c.x, c.y, c.z],
-            g.chain[0].point,
-            g.chain[0].energy || 1,
-            g.chain[0].angle
+            d.chain[0].point,
+            d.chain[0].energy || 1,
+            d.chain[0].angle
           );
-          for (let u = 1; u < g.chain.length; u++)
+          for (let u = 1; u < d.chain.length; u++)
             this.appendRay(
               // the previous point
-              g.chain[u - 1].point,
+              d.chain[u - 1].point,
               // the current point
-              g.chain[u].point,
+              d.chain[u].point,
               // the energy content displayed as a color + alpha
-              g.chain[u].energy || 1,
-              g.chain[u].angle
+              d.chain[u].energy || 1,
+              d.chain[u].angle
             );
-          this.stats.numValidRayPaths.value++, this.validRayCount += 1, F.overlays.global.setCellValue(this.uuid + "-valid-ray-count", this.validRayCount);
-          const d = g.chain[g.chain.length - 1].object;
-          this._pushPathWithEviction(d, g), B.getState().containers[this.sourceIDs[e]].numRays += 1;
+          this.stats.numValidRayPaths.value++, this.validRayCount += 1, N.overlays.global.setCellValue(this.uuid + "-valid-ray-count", this.validRayCount);
+          const f = d.chain[d.chain.length - 1].object;
+          this._pushPathWithEviction(f, d), B.getState().containers[this.sourceIDs[e]].numRays += 1;
         }
       }
       this.stats.numRaysShot.value++;
@@ -2670,12 +2635,12 @@ class Yn extends yt {
   }
   /** Reset convergence state for a new simulation run */
   _resetConvergenceState() {
-    const e = An(this.frequencies.length);
+    const e = Bn(this.frequencies.length);
     this.convergenceMetrics = e.convergenceMetrics, this._energyHistogram = e.energyHistogram, this._lastConvergenceCheck = e.lastConvergenceCheck;
   }
   /** Compute T30 from Schroeder backward integration of the energy histogram */
   _updateConvergenceMetrics() {
-    wn(
+    Mn(
       this.convergenceMetrics,
       this._energyHistogram,
       this.frequencies,
@@ -2688,50 +2653,50 @@ class Yn extends yt {
     );
   }
   start() {
-    this._isRunning = !0, this._cachedAirAtt = Z(this.frequencies, this.temperature), this.mapIntersectableObjects(), this.edgeDiffractionEnabled && this.room ? this._edgeGraph = Tn(this.room.allSurfaces) : this._edgeGraph = null, this.__start_time = Date.now(), this.__num_checked_paths = 0, this._resetConvergenceState(), this.gpuEnabled ? this._startGpuMonteCarlo() : this.startAllMonteCarlo();
+    this._isRunning = !0, this._cachedAirAtt = Z(this.frequencies, this.temperature), this.mapIntersectableObjects(), this.edgeDiffractionEnabled && this.room ? this._edgeGraph = On(this.room.allSurfaces) : this._edgeGraph = null, this.__start_time = Date.now(), this.__num_checked_paths = 0, this._resetConvergenceState(), this.gpuEnabled ? this._startGpuMonteCarlo() : this.startAllMonteCarlo();
   }
   stop() {
     this._isRunning = !1, this.__calc_time = Date.now() - this.__start_time, this._gpuRunning = !1, this._gpuRayTracer && setTimeout(() => this._disposeGpu(), 0), cancelAnimationFrame(this._rafId), this._rafId = 0, this.intervals.forEach((e) => {
       window.clearInterval(e);
     }), this.intervals = [], Object.keys(this.paths).forEach((e) => {
-      const t = this.__calc_time / 1e3, s = this.paths[e].length, c = s / t, o = this.__num_checked_paths, i = o / t;
+      const t = this.__calc_time / 1e3, r = this.paths[e].length, c = r / t, o = this.__num_checked_paths, i = o / t;
       console.log({
         calc_time: t,
-        num_valid_rays: s,
+        num_valid_rays: r,
         valid_ray_rate: c,
         num_checks: o,
         check_rate: i
-      }), this.paths[e].forEach((r) => {
-        r.time = 0, r.totalLength = 0;
-        for (let n = 0; n < r.chain.length; n++)
-          r.totalLength += r.chain[n].distance, r.time += r.chain[n].distance / this.c;
+      }), this.paths[e].forEach((s) => {
+        s.time = 0, s.totalLength = 0;
+        for (let n = 0; n < s.chain.length; n++)
+          s.totalLength += s.chain[n].distance, s.time += s.chain[n].distance / this.c;
       });
     }), this.edgeDiffractionEnabled && this._edgeGraph && this._edgeGraph.edges.length > 0 && this._computeDiffractionPaths(), this.mapIntersectableObjects(), this.reportImpulseResponse();
   }
   /** Compute deterministic diffraction paths and inject them into this.paths[] */
   _computeDiffractionPaths() {
     if (!this._edgeGraph) return;
-    const e = B.getState().containers, t = /* @__PURE__ */ new Map(), s = /* @__PURE__ */ new Map();
-    for (const r of this.sourceIDs) {
-      const n = e[r];
+    const e = B.getState().containers, t = /* @__PURE__ */ new Map(), r = /* @__PURE__ */ new Map();
+    for (const s of this.sourceIDs) {
+      const n = e[s];
       if (n) {
-        t.set(r, [n.position.x, n.position.y, n.position.z]);
+        t.set(s, [n.position.x, n.position.y, n.position.z]);
         const l = n.directivityHandler, h = new Array(this.frequencies.length);
-        for (let f = 0; f < this.frequencies.length; f++)
-          h[f] = l.getPressureAtPosition(0, this.frequencies[f], 0, 0);
-        s.set(r, { handler: l, refPressures: h });
+        for (let p = 0; p < this.frequencies.length; p++)
+          h[p] = l.getPressureAtPosition(0, this.frequencies[p], 0, 0);
+        r.set(s, { handler: l, refPressures: h });
       }
     }
     const c = /* @__PURE__ */ new Map();
-    for (const r of this.receiverIDs) {
-      const n = e[r];
-      n && c.set(r, [n.position.x, n.position.y, n.position.z]);
+    for (const s of this.receiverIDs) {
+      const n = e[s];
+      n && c.set(s, [n.position.x, n.position.y, n.position.z]);
     }
     const o = [];
-    this.room.surfaces.traverse((r) => {
-      r.kind && r.kind === "surface" && o.push(r.mesh);
+    this.room.surfaces.traverse((s) => {
+      s.kind && s.kind === "surface" && o.push(s.mesh);
     });
-    const i = On(
+    const i = Gn(
       this._edgeGraph,
       t,
       c,
@@ -2741,95 +2706,95 @@ class Yn extends yt {
       this.raycaster,
       o
     );
-    for (const r of i) {
-      const n = s.get(r.sourceId);
+    for (const s of i) {
+      const n = r.get(s.sourceId);
       if (n) {
-        const I = t.get(r.sourceId), v = r.diffractionPoint[0] - I[0], R = r.diffractionPoint[1] - I[1], _ = r.diffractionPoint[2] - I[2], S = Math.sqrt(v * v + R * R + _ * _);
+        const I = t.get(s.sourceId), v = s.diffractionPoint[0] - I[0], R = s.diffractionPoint[1] - I[1], _ = s.diffractionPoint[2] - I[2], S = Math.sqrt(v * v + R * R + _ * _);
         if (S > 1e-10) {
-          const w = Math.acos(Math.max(-1, Math.min(1, R / S))) * (180 / Math.PI), A = Math.atan2(_, v) * (180 / Math.PI);
+          const D = Math.acos(Math.max(-1, Math.min(1, R / S))) * (180 / Math.PI), A = Math.atan2(_, v) * (180 / Math.PI);
           for (let E = 0; E < this.frequencies.length; E++)
             try {
-              const T = n.handler.getPressureAtPosition(0, this.frequencies[E], Math.abs(A), w), D = n.refPressures[E];
-              typeof T == "number" && typeof D == "number" && D > 0 && (r.bandEnergy[E] *= (T / D) ** 2);
+              const T = n.handler.getPressureAtPosition(0, this.frequencies[E], Math.abs(A), D), w = n.refPressures[E];
+              typeof T == "number" && typeof w == "number" && w > 0 && (s.bandEnergy[E] *= (T / w) ** 2);
             } catch {
             }
         }
       }
-      const l = r.bandEnergy.reduce((I, v) => I + v, 0) / r.bandEnergy.length, h = c.get(r.receiverId), f = h[0] - r.diffractionPoint[0], g = h[1] - r.diffractionPoint[1], d = h[2] - r.diffractionPoint[2], u = Math.sqrt(f * f + g * g + d * d), m = u > 1e-10 ? [f / u, g / u, d / u] : [0, 0, 1], y = t.get(r.sourceId), p = Math.sqrt(
-        (r.diffractionPoint[0] - y[0]) ** 2 + (r.diffractionPoint[1] - y[1]) ** 2 + (r.diffractionPoint[2] - y[2]) ** 2
-      ), b = r.totalDistance - p, x = {
+      const l = s.bandEnergy.reduce((I, v) => I + v, 0) / s.bandEnergy.length, h = c.get(s.receiverId), p = h[0] - s.diffractionPoint[0], d = h[1] - s.diffractionPoint[1], f = h[2] - s.diffractionPoint[2], u = Math.sqrt(p * p + d * d + f * f), m = u > 1e-10 ? [p / u, d / u, f / u] : [0, 0, 1], y = t.get(s.sourceId), g = Math.sqrt(
+        (s.diffractionPoint[0] - y[0]) ** 2 + (s.diffractionPoint[1] - y[1]) ** 2 + (s.diffractionPoint[2] - y[2]) ** 2
+      ), b = s.totalDistance - g, x = {
         intersectedReceiver: !0,
         chain: [
           {
-            distance: p,
-            point: r.diffractionPoint,
-            object: r.edge.surface0Id,
-            faceNormal: r.edge.normal0,
+            distance: g,
+            point: s.diffractionPoint,
+            object: s.edge.surface0Id,
+            faceNormal: s.edge.normal0,
             faceIndex: -1,
             faceMaterialIndex: -1,
             angle: 0,
             energy: l,
-            bandEnergy: r.bandEnergy
+            bandEnergy: s.bandEnergy
           },
           {
             distance: b,
             point: h,
-            object: r.receiverId,
+            object: s.receiverId,
             faceNormal: [0, 0, 0],
             faceIndex: -1,
             faceMaterialIndex: -1,
             angle: 0,
             energy: l,
-            bandEnergy: r.bandEnergy
+            bandEnergy: s.bandEnergy
           }
         ],
         chainLength: 2,
         energy: l,
-        bandEnergy: r.bandEnergy,
-        time: r.time,
-        source: r.sourceId,
+        bandEnergy: s.bandEnergy,
+        time: s.time,
+        source: s.sourceId,
         initialPhi: 0,
         initialTheta: 0,
-        totalLength: r.totalDistance,
+        totalLength: s.totalDistance,
         arrivalDirection: m
       };
-      this._pushPathWithEviction(r.receiverId, x);
+      this._pushPathWithEviction(s.receiverId, x);
     }
   }
   async reportImpulseResponse() {
     if (this.receiverIDs.length === 0 || this.sourceIDs.length === 0) return;
-    const e = B.getState().containers, t = N.sampleRate, s = [];
+    const e = B.getState().containers, t = V.sampleRate, r = [];
     for (const c of this.sourceIDs)
       for (const o of this.receiverIDs) {
         if (!this.paths[o] || this.paths[o].length === 0) continue;
-        const i = this.paths[o].filter((r) => r.source === c);
-        i.length > 0 && s.push({ sourceId: c, receiverId: o, paths: i });
+        const i = this.paths[o].filter((s) => s.source === c);
+        i.length > 0 && r.push({ sourceId: c, receiverId: o, paths: i });
       }
-    if (s.length !== 0) {
-      H("SHOW_PROGRESS", {
+    if (r.length !== 0) {
+      $("SHOW_PROGRESS", {
         message: "Calculating impulse response...",
         progress: 0,
         solverUuid: this.uuid
       });
-      for (let c = 0; c < s.length; c++) {
-        const { sourceId: o, receiverId: i, paths: r } = s[c], n = e[o]?.name || "Source", l = e[i]?.name || "Receiver", h = Math.round(c / s.length * 100);
-        H("UPDATE_PROGRESS", {
+      for (let c = 0; c < r.length; c++) {
+        const { sourceId: o, receiverId: i, paths: s } = r[c], n = e[o]?.name || "Source", l = e[i]?.name || "Receiver", h = Math.round(c / r.length * 100);
+        $("UPDATE_PROGRESS", {
           progress: h,
           message: `Calculating IR: ${n} → ${l}`
         });
         try {
-          const { normalizedSignal: f } = await this.calculateImpulseResponseForPair(o, i, r);
+          const { normalizedSignal: p } = await this.calculateImpulseResponseForPair(o, i, s);
           o === this.sourceIDs[0] && i === this.receiverIDs[0] && this.calculateImpulseResponse().then((b) => {
             this.impulseResponse = b;
           }).catch(console.error);
-          const g = Vt, d = Math.max(1, Math.floor(f.length / g)), u = [];
-          for (let b = 0; b < f.length; b += d)
+          const d = Wt, f = Math.max(1, Math.floor(p.length / d)), u = [];
+          for (let b = 0; b < p.length; b += f)
             u.push({
               time: b / t,
-              amplitude: f[b]
+              amplitude: p[b]
             });
-          const m = `${this.uuid}-ir-${o}-${i}`, y = Oe.getState().results[m], p = {
-            kind: Ne.ImpulseResponse,
+          const m = `${this.uuid}-ir-${o}-${i}`, y = Ce.getState().results[m], g = {
+            kind: ze.ImpulseResponse,
             name: `IR: ${n} → ${l}`,
             uuid: m,
             from: this.uuid,
@@ -2842,25 +2807,25 @@ class Yn extends yt {
             },
             data: u
           };
-          y ? H("UPDATE_RESULT", { uuid: m, result: p }) : H("ADD_RESULT", p);
-        } catch (f) {
-          console.error(`Failed to calculate impulse response for ${o} -> ${i}:`, f);
+          y ? $("UPDATE_RESULT", { uuid: m, result: g }) : $("ADD_RESULT", g);
+        } catch (p) {
+          console.error(`Failed to calculate impulse response for ${o} -> ${i}:`, p);
         }
       }
-      H("HIDE_PROGRESS", void 0);
+      $("HIDE_PROGRESS", void 0);
     }
   }
-  async calculateImpulseResponseForPair(e, t, s, c = Y, o = this.frequencies, i = N.sampleRate) {
-    let r;
-    return this.lateReverbTailEnabled && this._energyHistogram[t] && (r = {
+  async calculateImpulseResponseForPair(e, t, r, c = j, o = this.frequencies, i = V.sampleRate) {
+    let s;
+    return this.lateReverbTailEnabled && this._energyHistogram[t] && (s = {
       energyHistogram: this._energyHistogram[t],
       crossfadeTime: this.tailCrossfadeTime,
       crossfadeDuration: this.tailCrossfadeDuration,
       histogramBinWidth: this._histogramBinWidth,
       frequencies: o
-    }), rn(e, t, s, c, o, this.temperature, i, r);
+    }), un(e, t, r, c, o, this.temperature, i, s);
   }
-  async calculateImpulseResponseForDisplay(e = Y, t = this.frequencies, s = N.sampleRate) {
+  async calculateImpulseResponseForDisplay(e = j, t = this.frequencies, r = V.sampleRate) {
     let c;
     return this.lateReverbTailEnabled && this.receiverIDs.length > 0 && this._energyHistogram[this.receiverIDs[0]] && (c = {
       energyHistogram: this._energyHistogram[this.receiverIDs[0]],
@@ -2868,102 +2833,102 @@ class Yn extends yt {
       crossfadeDuration: this.tailCrossfadeDuration,
       histogramBinWidth: this._histogramBinWidth,
       frequencies: t
-    }), an(this.receiverIDs, this.sourceIDs, this.paths, e, t, this.temperature, s, c);
+    }), fn(this.receiverIDs, this.sourceIDs, this.paths, e, t, this.temperature, r, c);
   }
   clearRays() {
     if (this.room)
       for (let e = 0; e < this.room.allSurfaces.length; e++)
         this.room.allSurfaces[e].resetHits();
-    this.validRayCount = 0, F.overlays.global.setCellValue(this.uuid + "-valid-ray-count", this.validRayCount), this.rayBufferGeometry.setDrawRange(0, 1), this.rayPositionIndex = 0, this.rayPositionIndexDidOverflow = !1, this.stats.numRaysShot.value = 0, this.stats.numValidRayPaths.value = 0, X.postMessage("STATS_UPDATE", this.stats), this.sourceIDs.forEach((e) => {
+    this.validRayCount = 0, N.overlays.global.setCellValue(this.uuid + "-valid-ray-count", this.validRayCount), this.rayBufferGeometry.setDrawRange(0, 1), this.rayPositionIndex = 0, this.rayPositionIndexDidOverflow = !1, this.stats.numRaysShot.value = 0, this.stats.numValidRayPaths.value = 0, X.postMessage("STATS_UPDATE", this.stats), this.sourceIDs.forEach((e) => {
       B.getState().containers[e].numRays = 0;
-    }), this.paths = {}, this.mapIntersectableObjects(), F.needsToRender = !0, this.impulseResponse = void 0, this.clearImpulseResponseResults();
+    }), this.paths = {}, this.mapIntersectableObjects(), N.needsToRender = !0, this.impulseResponse = void 0, this.clearImpulseResponseResults();
   }
   clearImpulseResponseResults() {
-    const e = Oe.getState().results;
+    const e = Ce.getState().results;
     Object.keys(e).forEach((t) => {
-      const s = e[t];
-      s.from === this.uuid && s.kind === Ne.ImpulseResponse && H("REMOVE_RESULT", t);
+      const r = e[t];
+      r.from === this.uuid && r.kind === ze.ImpulseResponse && $("REMOVE_RESULT", t);
     });
   }
-  reflectionLossFunction(e, t, s) {
-    return ce(e, t, s);
+  reflectionLossFunction(e, t, r) {
+    return ce(e, t, r);
   }
   calculateReflectionLoss(e = this.frequencies) {
-    const [t, s] = ln(this.paths, this.room, this.receiverIDs, e);
-    return this.allReceiverData = t, this.chartdata = s, [this.allReceiverData, s];
+    const [t, r] = pn(this.paths, this.room, this.receiverIDs, e);
+    return this.allReceiverData = t, this.chartdata = r, [this.allReceiverData, r];
   }
   getReceiverIntersectionPoints(e) {
     return this.paths && this.paths[e] && this.paths[e].length > 0 ? this.paths[e].map(
-      (t) => new C.Vector3().fromArray(t.chain[t.chain.length - 1].point)
+      (t) => new M.Vector3().fromArray(t.chain[t.chain.length - 1].point)
     ) : [];
   }
   calculateResponseByIntensity(e = this.frequencies, t = this.temperature) {
-    const s = hn(this.indexedPaths, this.receiverIDs, this.sourceIDs, e, t, this.intensitySampleRate);
-    return s && (this.responseByIntensity = s), this.responseByIntensity;
+    const r = mn(this.indexedPaths, this.receiverIDs, this.sourceIDs, e, t, this.intensitySampleRate);
+    return r && (this.responseByIntensity = r), this.responseByIntensity;
   }
   resampleResponseByIntensity(e = this.intensitySampleRate) {
     if (this.responseByIntensity) {
-      const t = ut(this.responseByIntensity, e);
+      const t = lt(this.responseByIntensity, e);
       return t && (this.responseByIntensity = t), this.responseByIntensity;
     } else
       console.warn("no data yet");
   }
   calculateT30(e, t) {
     if (this.responseByIntensity) {
-      const s = e ? [e] : this.receiverIDs, c = t ? [t] : this.sourceIDs;
-      for (const o of s)
+      const r = e ? [e] : this.receiverIDs, c = t ? [t] : this.sourceIDs;
+      for (const o of r)
         for (const i of c)
-          this.responseByIntensity[o]?.[i] && ft(this.responseByIntensity, o, i);
+          this.responseByIntensity[o]?.[i] && ht(this.responseByIntensity, o, i);
     }
     return this.responseByIntensity;
   }
   calculateT20(e, t) {
     if (this.responseByIntensity) {
-      const s = e ? [e] : this.receiverIDs, c = t ? [t] : this.sourceIDs;
-      for (const o of s)
+      const r = e ? [e] : this.receiverIDs, c = t ? [t] : this.sourceIDs;
+      for (const o of r)
         for (const i of c)
-          this.responseByIntensity[o]?.[i] && dt(this.responseByIntensity, o, i);
+          this.responseByIntensity[o]?.[i] && ut(this.responseByIntensity, o, i);
     }
     return this.responseByIntensity;
   }
   calculateT60(e, t) {
     if (this.responseByIntensity) {
-      const s = e ? [e] : this.receiverIDs, c = t ? [t] : this.sourceIDs;
-      for (const o of s)
+      const r = e ? [e] : this.receiverIDs, c = t ? [t] : this.sourceIDs;
+      for (const o of r)
         for (const i of c)
-          this.responseByIntensity[o]?.[i] && gt(this.responseByIntensity, o, i);
+          this.responseByIntensity[o]?.[i] && ft(this.responseByIntensity, o, i);
     }
     return this.responseByIntensity;
   }
   onParameterConfigFocus() {
-    console.log("focus"), console.log(F.overlays.global.cells), F.overlays.global.showCell(this.uuid + "-valid-ray-count");
+    console.log("focus"), console.log(N.overlays.global.cells), N.overlays.global.showCell(this.uuid + "-valid-ray-count");
   }
   onParameterConfigBlur() {
-    console.log("blur"), F.overlays.global.hideCell(this.uuid + "-valid-ray-count");
+    console.log("blur"), N.overlays.global.hideCell(this.uuid + "-valid-ray-count");
   }
   pathsToLinearBuffer() {
-    return gn(this.paths);
+    return Rn(this.paths);
   }
   linearBufferToPaths(e) {
-    return pn(e);
+    return In(e);
   }
-  arrivalPressure(e, t, s, c = 1) {
-    return Me(e, t, s, c, this.temperature);
+  arrivalPressure(e, t, r, c = 1) {
+    return Be(e, t, r, c, this.temperature);
   }
-  async calculateImpulseResponse(e = Y, t = this.frequencies, s = N.sampleRate) {
+  async calculateImpulseResponse(e = j, t = this.frequencies, r = V.sampleRate) {
     if (this.receiverIDs.length === 0) throw Error("No receivers have been assigned to the raytracer");
     if (this.sourceIDs.length === 0) throw Error("No sources have been assigned to the raytracer");
     if (!this.paths[this.receiverIDs[0]] || this.paths[this.receiverIDs[0]].length === 0) throw Error("No rays have been traced yet");
-    let c = this.paths[this.receiverIDs[0]].sort((f, g) => f.time - g.time);
-    const o = c[c.length - 1].time + ee, i = Array(t.length).fill(e), r = $(s * o) * 2;
+    let c = this.paths[this.receiverIDs[0]].sort((p, d) => p.time - d.time);
+    const o = c[c.length - 1].time + ee, i = Array(t.length).fill(e), s = Y(r * o) * 2;
     let n = [];
-    for (let f = 0; f < t.length; f++)
-      n.push(new Float32Array(r));
+    for (let p = 0; p < t.length; p++)
+      n.push(new Float32Array(s));
     if (this.hybrid) {
       console.log("Hybrid Calculation...");
       for (let u = 0; u < c.length; u++)
         c[u].chainLength - 1 <= this.transitionOrder && c.splice(u, 1);
-      let f = {
+      let p = {
         name: "HybridHelperIS",
         roomID: this.roomID,
         sourceIDs: this.sourceIDs,
@@ -2975,47 +2940,47 @@ class Yn extends yt {
         plotOrders: [0, 1, 2],
         // all paths
         frequencies: this.frequencies
-      }, d = new Mt(f, !0).returnSortedPathsForHybrid(this.c, i, t);
-      for (let u = 0; u < d.length; u++) {
-        const m = _e() ? 1 : -1, y = d[u].time, p = $(y * s);
+      }, f = new zt(p, !0).returnSortedPathsForHybrid(this.c, i, t);
+      for (let u = 0; u < f.length; u++) {
+        const m = Ie() ? 1 : -1, y = f[u].time, g = Y(y * r);
         for (let b = 0; b < t.length; b++)
-          n[b][p] += d[u].pressure[b] * m;
+          n[b][g] += f[u].pressure[b] * m;
       }
     }
     const l = B.getState().containers[this.receiverIDs[0]];
-    for (let f = 0; f < c.length; f++) {
-      const g = _e() ? 1 : -1, d = c[f].time, u = c[f].arrivalDirection || [0, 0, 1], m = l.getGain(u), y = this.arrivalPressure(i, t, c[f], m).map((b) => b * g), p = $(d * s);
+    for (let p = 0; p < c.length; p++) {
+      const d = Ie() ? 1 : -1, f = c[p].time, u = c[p].arrivalDirection || [0, 0, 1], m = l.getGain(u), y = this.arrivalPressure(i, t, c[p], m).map((b) => b * d), g = Y(f * r);
       for (let b = 0; b < t.length; b++)
-        n[b][p] += y[b];
+        n[b][g] += y[b];
     }
     if (this.lateReverbTailEnabled && this._energyHistogram[this.receiverIDs[0]]) {
-      const f = fe(
+      const p = fe(
         this._energyHistogram[this.receiverIDs[0]],
         t,
         this.tailCrossfadeTime,
         this._histogramBinWidth
-      ), { tailSamples: g, tailStartSample: d } = de(
-        f,
-        s
-      ), u = $(this.tailCrossfadeDuration * s);
-      n = ge(n, g, d, u);
-      const y = n.reduce((p, b) => Math.max(p, b.length), 0) * 2;
-      for (let p = 0; p < t.length; p++)
-        if (n[p].length < y) {
+      ), { tailSamples: d, tailStartSample: f } = de(
+        p,
+        r
+      ), u = Y(this.tailCrossfadeDuration * r);
+      n = ge(n, d, f, u);
+      const y = n.reduce((g, b) => Math.max(g, b.length), 0) * 2;
+      for (let g = 0; g < t.length; g++)
+        if (n[g].length < y) {
           const b = new Float32Array(y);
-          b.set(n[p]), n[p] = b;
+          b.set(n[g]), n[g] = b;
         }
     }
-    const h = Se();
-    return new Promise((f, g) => {
-      h.postMessage({ samples: n }), h.onmessage = (d) => {
-        const u = d.data.samples, m = new Float32Array(u[0].length >> 1);
+    const h = Re();
+    return new Promise((p, d) => {
+      h.postMessage({ samples: n }), h.onmessage = (f) => {
+        const u = f.data.samples, m = new Float32Array(u[0].length >> 1);
         let y = 0;
         for (let I = 0; I < u.length; I++)
           for (let v = 0; v < m.length; v++)
-            m[v] += u[I][v], ae(m[v]) > y && (y = ae(m[v]));
-        const p = ve(m), b = N.createOfflineContext(1, m.length, s), x = N.createBufferSource(p, b);
-        x.connect(b.destination), x.start(), N.renderContextAsync(b).then((I) => f(I)).catch(g).finally(() => h.terminate());
+            m[v] += u[I][v], oe(m[v]) > y && (y = oe(m[v]));
+        const g = Pe(m), b = V.createOfflineContext(1, m.length, r), x = V.createBufferSource(g, b);
+        x.connect(b.destination), x.start(), V.renderContextAsync(b).then((I) => p(I)).catch(d).finally(() => h.terminate());
       };
     });
   }
@@ -3029,95 +2994,95 @@ class Yn extends yt {
    * @param sampleRate - Sample rate for the output
    * @returns Promise resolving to an AudioBuffer with ambisonic channels
    */
-  async calculateAmbisonicImpulseResponse(e = 1, t = Y, s = this.frequencies, c = N.sampleRate) {
+  async calculateAmbisonicImpulseResponse(e = 1, t = j, r = this.frequencies, c = V.sampleRate) {
     if (this.receiverIDs.length === 0) throw Error("No receivers have been assigned to the raytracer");
     if (this.sourceIDs.length === 0) throw Error("No sources have been assigned to the raytracer");
     if (!this.paths[this.receiverIDs[0]] || this.paths[this.receiverIDs[0]].length === 0) throw Error("No rays have been traced yet. Run the raytracer first.");
-    const o = this.paths[this.receiverIDs[0]].sort((d, u) => d.time - u.time);
+    const o = this.paths[this.receiverIDs[0]].sort((f, u) => f.time - u.time);
     if (o.length === 0) throw Error("No valid ray paths found");
     const i = o[o.length - 1].time + ee;
     if (i <= 0) throw Error("Invalid impulse response duration");
-    const r = Array(s.length).fill(t), n = $(c * i) * 2;
+    const s = Array(r.length).fill(t), n = Y(c * i) * 2;
     if (n < 2) throw Error("Impulse response too short to process");
     const l = Ct(e), h = [];
-    for (let d = 0; d < s.length; d++) {
+    for (let f = 0; f < r.length; f++) {
       h.push([]);
       for (let u = 0; u < l; u++)
-        h[d].push(new Float32Array(n));
+        h[f].push(new Float32Array(n));
     }
-    const f = B.getState().containers[this.receiverIDs[0]];
-    for (let d = 0; d < o.length; d++) {
-      const u = o[d], m = _e() ? 1 : -1, y = u.time, p = u.arrivalDirection || [0, 0, 1], b = f.getGain(p), x = this.arrivalPressure(r, s, u, b).map((R) => R * m), I = $(y * c);
+    const p = B.getState().containers[this.receiverIDs[0]];
+    for (let f = 0; f < o.length; f++) {
+      const u = o[f], m = Ie() ? 1 : -1, y = u.time, g = u.arrivalDirection || [0, 0, 1], b = p.getGain(g), x = this.arrivalPressure(s, r, u, b).map((R) => R * m), I = Y(y * c);
       if (I >= n) continue;
       const v = new Float32Array(1);
-      for (let R = 0; R < s.length; R++) {
+      for (let R = 0; R < r.length; R++) {
         v[0] = x[R];
-        const _ = Bt(v, p[0], p[1], p[2], e, "threejs");
+        const _ = Mt(v, g[0], g[1], g[2], e, "threejs");
         for (let S = 0; S < l; S++)
           h[R][S][I] += _[S][0];
       }
     }
     if (this.lateReverbTailEnabled && this._energyHistogram[this.receiverIDs[0]]) {
-      const d = fe(
+      const f = fe(
         this._energyHistogram[this.receiverIDs[0]],
-        s,
+        r,
         this.tailCrossfadeTime,
         this._histogramBinWidth
       ), { tailSamples: u, tailStartSample: m } = de(
-        d,
+        f,
         c
-      ), y = $(this.tailCrossfadeDuration * c);
-      for (let x = 0; x < s.length; x++) {
+      ), y = Y(this.tailCrossfadeDuration * c);
+      for (let x = 0; x < r.length; x++) {
         const I = [h[x][0]], v = [u[x]], R = ge(I, v, m, y);
         h[x][0] = R[0];
       }
-      let p = 0;
-      for (let x = 0; x < s.length; x++)
+      let g = 0;
+      for (let x = 0; x < r.length; x++)
         for (let I = 0; I < l; I++)
-          h[x][I].length > p && (p = h[x][I].length);
-      const b = p * 2;
-      for (let x = 0; x < s.length; x++)
+          h[x][I].length > g && (g = h[x][I].length);
+      const b = g * 2;
+      for (let x = 0; x < r.length; x++)
         for (let I = 0; I < l; I++)
           if (h[x][I].length < b) {
             const v = new Float32Array(b);
             v.set(h[x][I]), h[x][I] = v;
           }
     }
-    const g = Se();
-    return new Promise((d, u) => {
-      const m = async (y) => new Promise((p) => {
+    const d = Re();
+    return new Promise((f, u) => {
+      const m = async (y) => new Promise((g) => {
         const b = [];
-        for (let I = 0; I < s.length; I++)
+        for (let I = 0; I < r.length; I++)
           b.push(h[I][y]);
-        const x = Se();
+        const x = Re();
         x.postMessage({ samples: b }), x.onmessage = (I) => {
           const v = I.data.samples, R = new Float32Array(v[0].length >> 1);
           for (let _ = 0; _ < v.length; _++)
             for (let S = 0; S < R.length; S++)
               R[S] += v[_][S];
-          x.terminate(), p(R);
+          x.terminate(), g(R);
         };
       });
       Promise.all(
-        Array.from({ length: l }, (y, p) => m(p))
+        Array.from({ length: l }, (y, g) => m(g))
       ).then((y) => {
-        let p = 0;
+        let g = 0;
         for (const v of y)
           for (let R = 0; R < v.length; R++)
-            ae(v[R]) > p && (p = ae(v[R]));
-        if (p > 0)
+            oe(v[R]) > g && (g = oe(v[R]));
+        if (g > 0)
           for (const v of y)
             for (let R = 0; R < v.length; R++)
-              v[R] /= p;
+              v[R] /= g;
         const b = y[0].length;
         if (b === 0) {
-          g.terminate(), u(new Error("Filtered signal has zero length"));
+          d.terminate(), u(new Error("Filtered signal has zero length"));
           return;
         }
-        const I = N.createOfflineContext(l, b, c).createBuffer(l, b, c);
+        const I = V.createOfflineContext(l, b, c).createBuffer(l, b, c);
         for (let v = 0; v < l; v++)
           I.copyToChannel(new Float32Array(y[v]), v);
-        g.terminate(), d(I);
+        d.terminate(), f(I);
       }).catch(u);
     });
   }
@@ -3126,43 +3091,43 @@ class Yn extends yt {
   impulseResponse;
   impulseResponsePlaying = !1;
   async playImpulseResponse() {
-    const e = await vn(
+    const e = await _n(
       this.impulseResponse,
       () => this.calculateImpulseResponse(),
       this.uuid
     );
     this.impulseResponse = e.impulseResponse;
   }
-  downloadImpulses(e, t = Y, s = st(125, 8e3), c = 44100) {
-    yn(
+  downloadImpulses(e, t = j, r = tt(125, 8e3), c = 44100) {
+    Sn(
       this.paths,
       this.receiverIDs,
       this.sourceIDs,
-      (o, i, r, n) => this.arrivalPressure(o, i, r, n),
+      (o, i, s, n) => this.arrivalPressure(o, i, s, n),
       e,
       t,
-      s,
+      r,
       c
     );
   }
-  async downloadImpulseResponse(e, t = N.sampleRate) {
-    const s = await bn(
+  async downloadImpulseResponse(e, t = V.sampleRate) {
+    const r = await An(
       this.impulseResponse,
       () => this.calculateImpulseResponse(),
       e,
       t
     );
-    this.impulseResponse = s.impulseResponse;
+    this.impulseResponse = r.impulseResponse;
   }
   async downloadAmbisonicImpulseResponse(e, t = 1) {
-    const s = await Rn(
+    const r = await Dn(
       this.ambisonicImpulseResponse,
       (c) => this.calculateAmbisonicImpulseResponse(c),
       this.ambisonicOrder,
       t,
       e
     );
-    this.ambisonicImpulseResponse = s.ambisonicImpulseResponse, this.ambisonicOrder = s.ambisonicOrder;
+    this.ambisonicImpulseResponse = r.ambisonicImpulseResponse, this.ambisonicOrder = r.ambisonicOrder;
   }
   /**
    * Calculate binaural impulse response from the ambisonic IR using HRTF decoder filters.
@@ -3172,12 +3137,12 @@ class Yn extends yt {
   async calculateBinauralImpulseResponse(e = 1) {
     (!this.ambisonicImpulseResponse || this.ambisonicOrder !== e) && (this.ambisonicImpulseResponse = await this.calculateAmbisonicImpulseResponse(e), this.ambisonicOrder = e);
     let t = this.ambisonicImpulseResponse;
-    (this.headYaw !== 0 || this.headPitch !== 0 || this.headRoll !== 0) && (t = _n(t, this.headYaw, this.headPitch, this.headRoll));
-    const s = await _t(this.hrtfSubjectId, e), c = await Sn(t, s);
+    (this.headYaw !== 0 || this.headPitch !== 0 || this.headRoll !== 0) && (t = Pn(t, this.headYaw, this.headPitch, this.headRoll));
+    const r = await _t(this.hrtfSubjectId, e), c = await Tn(t, r);
     return this.binauralImpulseResponse = c.buffer, c.buffer;
   }
   async playBinauralImpulseResponse(e = 1) {
-    const t = await In(
+    const t = await wn(
       this.binauralImpulseResponse,
       () => this.calculateBinauralImpulseResponse(e),
       this.uuid
@@ -3185,12 +3150,12 @@ class Yn extends yt {
     this.binauralImpulseResponse = t.binauralImpulseResponse;
   }
   async downloadBinauralImpulseResponse(e, t = 1) {
-    const s = await xn(
+    const r = await En(
       this.binauralImpulseResponse,
       () => this.calculateBinauralImpulseResponse(t),
       e
     );
-    this.binauralImpulseResponse = s.binauralImpulseResponse;
+    this.binauralImpulseResponse = r.binauralImpulseResponse;
   }
   /** Initialize GPU ray tracer. Returns true on success. */
   async _initGpu() {
@@ -3198,7 +3163,7 @@ class Yn extends yt {
       return console.warn("[GPU RT] WebGPU not available in this browser"), !1;
     let e = null;
     try {
-      return e = new Hn(), !await e.initialize(
+      return e = new Xn(), !await e.initialize(
         this.room,
         this.receiverIDs,
         {
@@ -3221,8 +3186,8 @@ class Yn extends yt {
       console.warn(`[GPU RT] ${this.frequencies.length} frequency bands exceeds GPU limit of 7; falling back to CPU`), this._gpuRunning = !1, this.startAllMonteCarlo();
       return;
     }
-    this._initGpu().then((s) => {
-      if (!s || !this._gpuRunning) {
+    this._initGpu().then((r) => {
+      if (!r || !this._gpuRunning) {
         this._gpuRunning && (console.warn("[GPU RT] Falling back to CPU ray tracing"), this._gpuRunning = !1, this.startAllMonteCarlo());
         return;
       }
@@ -3233,59 +3198,59 @@ class Yn extends yt {
               console.warn("[GPU RT] Invalid gpuBatchSize, falling back to CPU"), this._gpuRunning = !1, this._disposeGpu(), this.startAllMonteCarlo();
               return;
             }
-            const r = Math.min(Math.floor(this.gpuBatchSize), c);
+            const s = Math.min(Math.floor(this.gpuBatchSize), c);
             let n = 0;
-            for (let u = 0; u < this.sourceIDs.length && n < r; u++) {
-              const m = B.getState().containers[this.sourceIDs[u]], y = m.position, p = m.rotation, b = m.phi, x = m.theta, I = m.directivityHandler, v = this.sourceIDs[u];
+            for (let u = 0; u < this.sourceIDs.length && n < s; u++) {
+              const m = B.getState().containers[this.sourceIDs[u]], y = m.position, g = m.rotation, b = m.phi, x = m.theta, I = m.directivityHandler, v = this.sourceIDs[u];
               this._directivityRefPressures || (this._directivityRefPressures = /* @__PURE__ */ new Map());
               let R = this._directivityRefPressures.get(v);
               if (!R || R.length !== this.frequencies.length) {
                 R = new Array(this.frequencies.length);
-                for (let w = 0; w < this.frequencies.length; w++)
-                  R[w] = I.getPressureAtPosition(0, this.frequencies[w], 0, 0);
+                for (let D = 0; D < this.frequencies.length; D++)
+                  R[D] = I.getPressureAtPosition(0, this.frequencies[D], 0, 0);
                 this._directivityRefPressures.set(v, R);
               }
-              const _ = Math.max(1, Math.floor(r / this.sourceIDs.length)), S = new C.Vector3();
-              for (let w = 0; w < _ && n < r; w++) {
-                const A = Math.random() * b, E = Math.random() * x, T = Re(A, E);
-                S.setFromSphericalCoords(1, T[0], T[1]), S.applyEuler(p);
-                const D = n * e;
-                o[D] = y.x, o[D + 1] = y.y, o[D + 2] = y.z, o[D + 3] = S.x, o[D + 4] = S.y, o[D + 5] = S.z, o[D + 6] = A, o[D + 7] = E;
+              const _ = Math.max(1, Math.floor(s / this.sourceIDs.length)), S = new M.Vector3();
+              for (let D = 0; D < _ && n < s; D++) {
+                const A = Math.random() * b, E = Math.random() * x, T = ye(A, E);
+                S.setFromSphericalCoords(1, T[0], T[1]), S.applyEuler(g);
+                const w = n * e;
+                o[w] = y.x, o[w + 1] = y.y, o[w + 2] = y.z, o[w + 3] = S.x, o[w + 4] = S.y, o[w + 5] = S.z, o[w + 6] = A, o[w + 7] = E;
                 for (let O = 0; O < t; O++) {
-                  let k = 1;
+                  let L = 1;
                   try {
                     const z = I.getPressureAtPosition(0, this.frequencies[O], A, E), P = R[O];
-                    typeof z == "number" && typeof P == "number" && P > 0 && (k = (z / P) ** 2);
+                    typeof z == "number" && typeof P == "number" && P > 0 && (L = (z / P) ** 2);
                   } catch {
                   }
-                  o[D + 8 + O] = k;
+                  o[w + 8 + O] = L;
                 }
                 n++;
               }
             }
-            const l = n, h = Math.floor(Math.random() * 4294967295), f = await this._gpuRayTracer.traceBatch(o, l, h);
+            const l = n, h = Math.floor(Math.random() * 4294967295), p = await this._gpuRayTracer.traceBatch(o, l, h);
             this.__num_checked_paths += l, this.stats.numRaysShot.value += l;
-            const g = Math.max(1, Math.floor(l / Math.max(1, this.sourceIDs.length)));
-            for (let u = 0; u < f.length; u++) {
-              const m = f[u];
+            const d = Math.max(1, Math.floor(l / Math.max(1, this.sourceIDs.length)));
+            for (let u = 0; u < p.length; u++) {
+              const m = p[u];
               if (!m) continue;
               const y = Math.min(
-                Math.floor(u / Math.max(1, g)),
+                Math.floor(u / Math.max(1, d)),
                 this.sourceIDs.length - 1
-              ), p = this.sourceIDs[y], b = B.getState().containers[p].position;
-              m.source = p, this._handleTracedPath(m, b, p);
+              ), g = this.sourceIDs[y], b = B.getState().containers[g].position;
+              m.source = g, this._handleTracedPath(m, b, g);
             }
-            this.flushRayBuffer(), F.needsToRender = !0;
-            const d = Date.now();
-            if (this.autoStop && d - this._lastConvergenceCheck >= this._convergenceCheckInterval && (this._lastConvergenceCheck = d, this._updateConvergenceMetrics(), this.convergenceMetrics.convergenceRatio < this.convergenceThreshold && this.convergenceMetrics.t30Count >= 3)) {
+            this.flushRayBuffer(), N.needsToRender = !0;
+            const f = Date.now();
+            if (this.autoStop && f - this._lastConvergenceCheck >= this._convergenceCheckInterval && (this._lastConvergenceCheck = f, this._updateConvergenceMetrics(), this.convergenceMetrics.convergenceRatio < this.convergenceThreshold && this.convergenceMetrics.t30Count >= 3)) {
               this.isRunning = !1;
               return;
             }
             this._gpuRunning && this._isRunning && (this._rafId = requestAnimationFrame(() => {
               i();
             }));
-          } catch (r) {
-            console.error("[GPU RT] Batch error, falling back to CPU:", r), this._gpuRunning = !1, this._disposeGpu(), this.startAllMonteCarlo();
+          } catch (s) {
+            console.error("[GPU RT] Batch error, falling back to CPU:", s), this._gpuRunning = !1, this._disposeGpu(), this.startAllMonteCarlo();
           }
       };
       this._rafId = requestAnimationFrame(() => {
@@ -3313,9 +3278,9 @@ class Yn extends yt {
     const e = {};
     for (const t in this.paths) {
       e[t] = {};
-      for (let s = 0; s < this.paths[t].length; s++) {
-        const c = this.paths[t][s].source;
-        e[t][c] ? e[t][c].push(this.paths[t][s]) : e[t][c] = [this.paths[t][s]];
+      for (let r = 0; r < this.paths[t].length; r++) {
+        const c = this.paths[t][r].source;
+        e[t][c] ? e[t][c].push(this.paths[t][r]) : e[t][c] = [this.paths[t][r]];
       }
     }
     return e;
@@ -3330,25 +3295,25 @@ class Yn extends yt {
     return this._raysVisible;
   }
   set raysVisible(e) {
-    e != this._raysVisible && (this._raysVisible = e, this.rays.visible = e), F.needsToRender = !0;
+    e != this._raysVisible && (this._raysVisible = e, this.rays.visible = e), N.needsToRender = !0;
   }
   get pointsVisible() {
     return this._pointsVisible;
   }
   set pointsVisible(e) {
-    e != this._pointsVisible && (this._pointsVisible = e, this.hits.visible = e), F.needsToRender = !0;
+    e != this._pointsVisible && (this._pointsVisible = e, this.hits.visible = e), N.needsToRender = !0;
   }
   get invertedDrawStyle() {
     return this._invertedDrawStyle;
   }
   set invertedDrawStyle(e) {
-    this._invertedDrawStyle != e && (this._invertedDrawStyle = e, this.hits.material.uniforms.inverted.value = Number(e), this.hits.material.needsUpdate = !0), F.needsToRender = !0;
+    this._invertedDrawStyle != e && (this._invertedDrawStyle = e, this.hits.material.uniforms.inverted.value = Number(e), this.hits.material.needsUpdate = !0), N.needsToRender = !0;
   }
   get pointSize() {
     return this._pointSize;
   }
   set pointSize(e) {
-    Number.isFinite(e) && e > 0 && (this._pointSize = e, this.hits.material.uniforms.pointScale.value = this._pointSize, this.hits.material.needsUpdate = !0), F.needsToRender = !0;
+    Number.isFinite(e) && e > 0 && (this._pointSize = e, this.hits.material.uniforms.pointScale.value = this._pointSize, this.hits.material.needsUpdate = !0), N.needsToRender = !0;
   }
   get runningWithoutReceivers() {
     return this._runningWithoutReceivers;
@@ -3357,56 +3322,56 @@ class Yn extends yt {
     this.mapIntersectableObjects(), this._runningWithoutReceivers = e;
   }
 }
-j("RAYTRACER_CALL_METHOD", wt);
-j("RAYTRACER_SET_PROPERTY", Dt);
-j("REMOVE_RAYTRACER", Et);
-j("ADD_RAYTRACER", Tt(Yn));
-j("RAYTRACER_CLEAR_RAYS", (a) => void W.getState().solvers[a].clearRays());
-j("RAYTRACER_PLAY_IR", (a) => {
+H("RAYTRACER_CALL_METHOD", Dt);
+H("RAYTRACER_SET_PROPERTY", wt);
+H("REMOVE_RAYTRACER", Et);
+H("ADD_RAYTRACER", Tt(Kn));
+H("RAYTRACER_CLEAR_RAYS", (a) => void W.getState().solvers[a].clearRays());
+H("RAYTRACER_PLAY_IR", (a) => {
   W.getState().solvers[a].playImpulseResponse().catch((t) => {
     window.alert(t.message || "Failed to play impulse response");
   });
 });
-j("RAYTRACER_DOWNLOAD_IR", (a) => {
-  const e = W.getState().solvers[a], t = B.getState().containers, s = e.sourceIDs.length > 0 && t[e.sourceIDs[0]]?.name || "source", c = e.receiverIDs.length > 0 && t[e.receiverIDs[0]]?.name || "receiver", o = `ir-${s}-${c}`.replace(/[^a-zA-Z0-9-_]/g, "_");
+H("RAYTRACER_DOWNLOAD_IR", (a) => {
+  const e = W.getState().solvers[a], t = B.getState().containers, r = e.sourceIDs.length > 0 && t[e.sourceIDs[0]]?.name || "source", c = e.receiverIDs.length > 0 && t[e.receiverIDs[0]]?.name || "receiver", o = `ir-${r}-${c}`.replace(/[^a-zA-Z0-9-_]/g, "_");
   e.downloadImpulseResponse(o).catch((i) => {
     window.alert(i.message || "Failed to download impulse response");
   });
 });
-j("RAYTRACER_DOWNLOAD_IR_OCTAVE", (a) => void W.getState().solvers[a].downloadImpulses(a));
-j("RAYTRACER_DOWNLOAD_AMBISONIC_IR", ({ uuid: a, order: e }) => {
-  const t = W.getState().solvers[a], s = B.getState().containers, c = t.sourceIDs.length > 0 && s[t.sourceIDs[0]]?.name || "source", o = t.receiverIDs.length > 0 && s[t.receiverIDs[0]]?.name || "receiver", i = `ir-${c}-${o}`.replace(/[^a-zA-Z0-9-_]/g, "_");
-  t.downloadAmbisonicImpulseResponse(i, e).catch((r) => {
-    window.alert(r.message || "Failed to download ambisonic impulse response");
+H("RAYTRACER_DOWNLOAD_IR_OCTAVE", (a) => void W.getState().solvers[a].downloadImpulses(a));
+H("RAYTRACER_DOWNLOAD_AMBISONIC_IR", ({ uuid: a, order: e }) => {
+  const t = W.getState().solvers[a], r = B.getState().containers, c = t.sourceIDs.length > 0 && r[t.sourceIDs[0]]?.name || "source", o = t.receiverIDs.length > 0 && r[t.receiverIDs[0]]?.name || "receiver", i = `ir-${c}-${o}`.replace(/[^a-zA-Z0-9-_]/g, "_");
+  t.downloadAmbisonicImpulseResponse(i, e).catch((s) => {
+    window.alert(s.message || "Failed to download ambisonic impulse response");
   });
 });
-j("RAYTRACER_PLAY_BINAURAL_IR", ({ uuid: a, order: e }) => {
-  W.getState().solvers[a].playBinauralImpulseResponse(e).catch((s) => {
-    window.alert(s.message || "Failed to play binaural impulse response");
+H("RAYTRACER_PLAY_BINAURAL_IR", ({ uuid: a, order: e }) => {
+  W.getState().solvers[a].playBinauralImpulseResponse(e).catch((r) => {
+    window.alert(r.message || "Failed to play binaural impulse response");
   });
 });
-j("RAYTRACER_DOWNLOAD_BINAURAL_IR", ({ uuid: a, order: e }) => {
-  const t = W.getState().solvers[a], s = B.getState().containers, c = t.sourceIDs.length > 0 && s[t.sourceIDs[0]]?.name || "source", o = t.receiverIDs.length > 0 && s[t.receiverIDs[0]]?.name || "receiver", i = `ir-${c}-${o}`.replace(/[^a-zA-Z0-9-_]/g, "_");
-  t.downloadBinauralImpulseResponse(i, e).catch((r) => {
-    window.alert(r.message || "Failed to download binaural impulse response");
+H("RAYTRACER_DOWNLOAD_BINAURAL_IR", ({ uuid: a, order: e }) => {
+  const t = W.getState().solvers[a], r = B.getState().containers, c = t.sourceIDs.length > 0 && r[t.sourceIDs[0]]?.name || "source", o = t.receiverIDs.length > 0 && r[t.receiverIDs[0]]?.name || "receiver", i = `ir-${c}-${o}`.replace(/[^a-zA-Z0-9-_]/g, "_");
+  t.downloadBinauralImpulseResponse(i, e).catch((s) => {
+    window.alert(s.message || "Failed to download binaural impulse response");
   });
 });
 export {
-  qt as CONVERGENCE_CHECK_INTERVAL_MS,
-  Y as DEFAULT_INITIAL_SPL,
-  it as DEFAULT_INTENSITY_SAMPLE_RATE,
-  at as DRAWSTYLE,
-  jt as HISTOGRAM_BIN_WIDTH,
-  Yt as HISTOGRAM_NUM_BINS,
-  Vt as MAX_DISPLAY_POINTS,
-  $t as MAX_TAIL_END_TIME,
-  Ie as MIN_TAIL_DECAY_RATE,
-  Gt as QUICK_ESTIMATE_MAX_ORDER,
+  Jt as CONVERGENCE_CHECK_INTERVAL_MS,
+  j as DEFAULT_INITIAL_SPL,
+  st as DEFAULT_INTENSITY_SAMPLE_RATE,
+  rt as DRAWSTYLE,
+  Zt as HISTOGRAM_BIN_WIDTH,
+  Kt as HISTOGRAM_NUM_BINS,
+  Wt as MAX_DISPLAY_POINTS,
+  Qt as MAX_TAIL_END_TIME,
+  ve as MIN_TAIL_DECAY_RATE,
+  $t as QUICK_ESTIMATE_MAX_ORDER,
   ee as RESPONSE_TIME_PADDING,
-  Ht as RT60_DECAY_RATIO,
-  Ut as SELF_INTERSECTION_OFFSET,
-  Yn as default,
-  M as defaults,
-  ve as normalize
+  Xt as RT60_DECAY_RATIO,
+  Yt as SELF_INTERSECTION_OFFSET,
+  Kn as default,
+  C as defaults,
+  Pe as normalize
 };
-//# sourceMappingURL=index-CbW5BHip.mjs.map
+//# sourceMappingURL=index-DTlblsF_.mjs.map

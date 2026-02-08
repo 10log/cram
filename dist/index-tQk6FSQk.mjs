@@ -1,23 +1,24 @@
-import { S as C } from "./solver-BP4XtfBW.mjs";
-import { v as y, e as v, R as V, g as M, r as P, p as k, u as m, a as A, P as O, m as F, L as T, F as q, b as U, I as H, o as f, s as G, c as z, d as j, f as R } from "./index-Cm7mh5nT.mjs";
-import * as E from "three";
-import { Vector3 as _ } from "three";
-import { MeshLine as N, MeshLineMaterial as W } from "three.meshline";
-import { a as Y } from "./air-attenuation-CBIk1QMo.mjs";
-import { s as B } from "./sound-speed-Biev-mJ1.mjs";
-import { a as g, w as $, n as K } from "./audio-engine-CqZtbt41.mjs";
-function Z() {
+import { S as C } from "./solver-R8BUlJ5R.mjs";
+import { v as y, e as v, R as x, g as k, r as f, p as M, u as p, a as A, P as O, m as q, L as T, b as F, I as U, o as g, s as H, c as G, d as z, f as S } from "./index-WPNQK-eO.mjs";
+import * as _ from "three";
+import { Vector3 as E } from "three";
+import { MeshLine as j, MeshLineMaterial as N } from "three.meshline";
+import { a as W } from "./air-attenuation-CBIk1QMo.mjs";
+import { s as Y } from "./sound-speed-Biev-mJ1.mjs";
+import { a as R } from "./audio-engine-BltQIBir.mjs";
+import { p as $, d as B } from "./export-playback-Datwk8y5.mjs";
+function K() {
   let o = [];
-  const e = new N();
+  const e = new j();
   e.setPoints(o);
-  const t = new W({
+  const t = new N({
     lineWidth: 0.1,
     color: 16711680,
     sizeAttenuation: 1
   });
-  return new E.Mesh(e, t);
+  return new _.Mesh(e, t);
 }
-class b {
+class D {
   // the source that all image sources are based off of
   // note: this is not the parent image source! that is 'parent' below 
   baseSource;
@@ -46,12 +47,12 @@ class b {
   markupAllDescendents() {
     for (let e = 0; e < this.children.length; e++) {
       let t = this.children[e].position.clone();
-      P.markup.addPoint([t.x, t.y, t.z], [0, 0, 0]), this.children[e].hasChildren && this.children[e].markupAllDescendents();
+      f.markup.addPoint([t.x, t.y, t.z], [0, 0, 0]), this.children[e].hasChildren && this.children[e].markupAllDescendents();
     }
   }
   markup() {
     let e = this.position.clone();
-    P.markup.addPoint([e.x, e.y, e.z], [0, 0, 0]);
+    f.markup.addPoint([e.x, e.y, e.z], [0, 0, 0]);
   }
   getTotalDescendents() {
     let e = 0;
@@ -73,7 +74,7 @@ class b {
     return this.children.length > 0;
   }
 }
-class J {
+class Z {
   path;
   uuid;
   highlight;
@@ -83,7 +84,7 @@ class J {
   markup() {
     for (let e = 0; e < this.path.length - 1; e++) {
       let t = this.path[e].point.clone(), r = this.path[e + 1].point.clone();
-      P.markup.addLine([t.x, t.y, t.z], [r.x, r.y, r.z]);
+      f.markup.addLine([t.x, t.y, t.z], [r.x, r.y, r.z]);
     }
   }
   isvalid(e) {
@@ -91,15 +92,15 @@ class J {
       let r = this.path[t - 1].point, s = this.path[t].point, i = this.path[t - 1].reflectingSurface, a = this.path[t].reflectingSurface;
       for (let l = 0; l < e.length; l++)
         if (e[l] !== i && e[l] !== a) {
-          let n = new _(0, 0, 0);
+          let n = new E(0, 0, 0);
           n.subVectors(s, r), n.normalize();
-          let h = new E.Raycaster();
+          let h = new _.Raycaster();
           h.set(r, n);
           let c;
           c = h.intersectObject(e[l].mesh, !0);
           let d = [];
-          for (let p = 0; p < c.length; p++)
-            r.distanceTo(c[p].point) < r.distanceTo(s) && d.push(c[p]);
+          for (let m = 0; m < c.length; m++)
+            r.distanceTo(c[m].point) < r.distanceTo(s) && d.push(c[m]);
           if (d.length > 0)
             return !1;
         }
@@ -116,7 +117,7 @@ class J {
     return e;
   }
   arrivalPressure(e, t, r = 20) {
-    let s = U(T(e));
+    let s = F(T(e));
     for (let l = 0; l < this.path.length; l++) {
       let n = this.path[l];
       if (n.reflectingSurface !== null) for (let h = 0; h < t.length; h++) {
@@ -124,8 +125,8 @@ class J {
         s[h] = s[h] * c;
       }
     }
-    let i = O(H(s));
-    const a = Y(t, r);
+    let i = O(U(s));
+    const a = W(t, r);
     for (let l = 0; l < t.length; l++)
       i[l] = i[l] - a[l] * this.totalLength;
     return T(i);
@@ -134,7 +135,7 @@ class J {
     return this.totalLength / e;
   }
 }
-const Q = {
+const J = {
   name: "Image Source",
   roomID: "",
   sourceIDs: [],
@@ -147,7 +148,7 @@ const Q = {
   // all paths
   frequencies: [125, 250, 500, 1e3, 2e3, 4e3, 8e3]
 };
-class X extends C {
+class Q extends C {
   sourceIDs;
   receiverIDs;
   roomID;
@@ -167,9 +168,9 @@ class X extends C {
   selectedImageSourcePath;
   _plotFrequency;
   isHybrid;
-  constructor(e = Q, t = !1) {
+  constructor(e = J, t = !1) {
     super(e), this.uuid = e.uuid || y(), this.kind = "image-source", this.name = e.name, this.roomID = e.roomID, this.sourceIDs = e.sourceIDs, this.receiverIDs = e.receiverIDs, this.maxReflectionOrder = e.maxReflectionOrder, this.frequencies = e.frequencies, this._imageSourcesVisible = e.imageSourcesVisible, this._rayPathsVisible = e.rayPathsVisible, this._plotOrders = e.plotOrders, this.levelTimeProgression = e.levelTimeProgression || y(), this.isHybrid = t, this.impulseResponsePlaying = !1, this._plotFrequency = 1e3, this.isHybrid || v("ADD_RESULT", {
-      kind: V.LevelTimeProgression,
+      kind: x.LevelTimeProgression,
       data: [],
       info: {
         initialSPL: [100],
@@ -180,11 +181,11 @@ class X extends C {
       uuid: this.levelTimeProgression,
       from: this.uuid
     }), this.surfaceIDs = [], this.rootImageSource = null, this.allRayPaths = null, this.validRayPaths = null;
-    const r = M();
-    this.roomID = r[0].uuid, this.selectedImageSourcePath = Z(), P.markup.add(this.selectedImageSourcePath);
+    const r = k();
+    this.roomID = r[0].uuid, this.selectedImageSourcePath = K(), f.markup.add(this.selectedImageSourcePath);
   }
   save() {
-    return k([
+    return M([
       "name",
       "kind",
       "uuid",
@@ -201,7 +202,7 @@ class X extends C {
     ], this);
   }
   dispose() {
-    P.markup.remove(this.selectedImageSourcePath), this.reset(), v("REMOVE_RESULT", this.levelTimeProgression);
+    f.markup.remove(this.selectedImageSourcePath), this.reset(), v("REMOVE_RESULT", this.levelTimeProgression);
   }
   updateSelectedImageSourcePath(e) {
     this.selectedImageSourcePath.geometry.setPoints(
@@ -211,17 +212,17 @@ class X extends C {
   updateImageSourceCalculation() {
     this.clearRayPaths(), this.clearImageSources();
     let e = {
-      baseSource: m.getState().containers[this.sourceIDs[0]],
-      position: m.getState().containers[this.sourceIDs[0]].position.clone(),
+      baseSource: p.getState().containers[this.sourceIDs[0]],
+      position: p.getState().containers[this.sourceIDs[0]].position.clone(),
       room: this.room,
       reflector: null,
       parent: null,
       order: 0
-    }, t = new b(e), r = D(t, this.maxReflectionOrder);
+    }, t = new D(e), r = b(t, this.maxReflectionOrder);
     this.rootImageSource = r;
     let s, i = [];
     if (r !== null) {
-      s = r.constructPathsForAllDescendents(m.getState().containers[this.receiverIDs[0]]), this.allRayPaths = s;
+      s = r.constructPathsForAllDescendents(p.getState().containers[this.receiverIDs[0]]), this.allRayPaths = s;
       for (let a = 0; a < s?.length; a++)
         s[a].isvalid(this.room.allSurfaces) && i.push(s[a]);
     }
@@ -279,14 +280,14 @@ class X extends C {
     return t;
   }
   test() {
-    let e = F.postMessage("FETCH_SOURCE", this.sourceIDs[0])[0], t = {
+    let e = q.postMessage("FETCH_SOURCE", this.sourceIDs[0])[0], t = {
       baseSource: e.clone(),
       position: e.position.clone(),
       room: this.room,
       reflector: null,
       parent: null,
       order: 0
-    }, r = new b(t), i = D(r, 1);
+    }, r = new D(t), i = b(r, 1);
     i?.markup(), console.log(i);
     let a = this.receivers[0];
     console.log(a);
@@ -316,7 +317,7 @@ class X extends C {
     }
   }
   clearImageSources() {
-    P.markup.clearPoints();
+    f.markup.clearPoints();
   }
   drawRayPaths(e) {
     this.clearRayPaths();
@@ -327,7 +328,7 @@ class X extends C {
     }
   }
   clearRayPaths() {
-    P.markup.clearLines();
+    f.markup.clearLines();
   }
   toggleRayPathHighlight(e) {
     if (this.validRayPaths != null) {
@@ -352,42 +353,48 @@ class X extends C {
         h.push(new Float32Array(Math.floor(n)));
       for (let u = 0; u < a.length; u++) {
         let w = a[u].arrivalTime(i), I = a[u].arrivalPressure(s, this.frequencies, this.temperature);
-        Math.random() > 0.5 && (I = I.map((S) => -S));
-        let x = Math.floor(w * r);
-        for (let S = 0; S < this.frequencies.length; S++)
-          h[S][x] += I[S];
+        Math.random() > 0.5 && (I = I.map((P) => -P));
+        let V = Math.floor(w * r);
+        for (let P = 0; P < this.frequencies.length; P++)
+          h[P][V] += I[P];
       }
-      const c = g.createOfflineContext(1, n, r), d = Array(this.frequencies.length);
+      const c = R.createOfflineContext(1, n, r), d = Array(this.frequencies.length);
       for (let u = 0; u < this.frequencies.length; u++)
-        d[u] = g.createFilteredSource(h[u], this.frequencies[u], 1.414, 1, c);
+        d[u] = R.createFilteredSource(h[u], this.frequencies[u], 1.414, 1, c);
       console.log(d);
-      const p = g.createMerger(d.length, c);
+      const m = R.createMerger(d.length, c);
       for (let u = 0; u < d.length; u++)
-        d[u].source.connect(p, 0, u);
-      return p.connect(c.destination), d.forEach((u) => u.source.start()), this.impulseResponse = await g.renderContextAsync(c), this.impulseResponse;
+        d[u].source.connect(m, 0, u);
+      return m.connect(c.destination), d.forEach((u) => u.source.start()), this.impulseResponse = await R.renderContextAsync(c), this.impulseResponse;
     }
   }
   async playImpulseResponse() {
-    this.impulseResponse || await this.calculateImpulseResponse().catch(console.error), g.context.state === "suspended" && g.context.resume(), console.log(this.impulseResponse);
-    const e = g.context.createBufferSource();
-    e.buffer = this.impulseResponse, e.connect(g.context.destination), e.start(), v("IMAGESOURCE_SET_PROPERTY", { uuid: this.uuid, property: "impulseResponsePlaying", value: !0 }), e.onended = () => {
-      e.stop(), e.disconnect(g.context.destination), v("IMAGESOURCE_SET_PROPERTY", { uuid: this.uuid, property: "impulseResponsePlaying", value: !1 });
-    };
+    const e = await $(
+      this.impulseResponse,
+      () => this.calculateImpulseResponse(),
+      this.uuid,
+      "IMAGESOURCE_SET_PROPERTY"
+    );
+    this.impulseResponse = e.impulseResponse;
   }
   async downloadImpulseResponse(e, t = 44100) {
-    this.impulseResponse || await this.calculateImpulseResponse().catch(console.error);
-    const r = $([K(this.impulseResponse.getChannelData(0))], { sampleRate: t, bitDepth: 32 }), s = e.endsWith(".wav") ? "" : ".wav";
-    q.saveAs(r, e + s);
+    const r = await B(
+      this.impulseResponse,
+      () => this.calculateImpulseResponse(),
+      e,
+      t
+    );
+    this.impulseResponse = r.impulseResponse;
   }
   // getters and setters
   get sources() {
-    return this.sourceIDs.length > 0 ? this.sourceIDs.map((e) => m.getState().containers[e]) : [];
+    return this.sourceIDs.length > 0 ? this.sourceIDs.map((e) => p.getState().containers[e]) : [];
   }
   get receivers() {
-    return this.receiverIDs.length > 0 && Object.keys(m.getState().containers).length > 0 ? this.receiverIDs.map((e) => m.getState().containers[e]) : [];
+    return this.receiverIDs.length > 0 && Object.keys(p.getState().containers).length > 0 ? this.receiverIDs.map((e) => p.getState().containers[e]) : [];
   }
   get room() {
-    return m.getState().containers[this.roomID];
+    return p.getState().containers[this.roomID];
   }
   get numValidRays() {
     let e = this.validRayPaths?.length;
@@ -450,28 +457,28 @@ class X extends C {
     return this.room?.temperature ?? 20;
   }
   get c() {
-    return B(this.temperature);
+    return Y(this.temperature);
   }
   set plotFrequency(e) {
     this._plotFrequency = e, this.calculateLTP();
   }
 }
-function D(o, e) {
+function b(o, e) {
   let t = o.room.allSurfaces;
   if (e == 0)
     return null;
   for (let r = 0; r < t.length; r++) {
     let s = o.reflector === null || o.reflector !== t[r], i;
-    if (o.reflector !== null ? i = ee(t[r], o.reflector) : i = !0, s && i) {
+    if (o.reflector !== null ? i = X(t[r], o.reflector) : i = !0, s && i) {
       let a = {
         baseSource: o.baseSource,
-        position: te(o.position.clone(), t[r]).clone(),
+        position: ee(o.position.clone(), t[r]).clone(),
         room: o.room,
         reflector: t[r],
         parent: o,
         order: o.order + 1
-      }, l = new b(a);
-      o.children.push(l), e > 0 && D(l, e - 1);
+      }, l = new D(a);
+      o.children.push(l), e > 0 && b(l, e - 1);
     }
   }
   return o;
@@ -483,17 +490,17 @@ function L(o, e) {
     angle: null
   };
   t[r + 1] = s;
-  let i = new E.Raycaster();
+  let i = new _.Raycaster();
   for (let n = r; n >= 1; n--) {
-    let h = o.position.clone(), c = t[n + 1].point.clone(), d = new _(0, 0, 0);
+    let h = o.position.clone(), c = t[n + 1].point.clone(), d = new E(0, 0, 0);
     if (d.subVectors(h, c), d.normalize(), i.set(c, d), o.reflector === null)
       return null;
-    const p = i.intersectObject(o.reflector.mesh, !0);
-    if (p.length > 0) {
+    const m = i.intersectObject(o.reflector.mesh, !0);
+    if (m.length > 0) {
       let u = {
-        point: p[0].point,
+        point: m[0].point,
         reflectingSurface: o.reflector,
-        angle: d.clone().multiplyScalar(-1).angleTo(p[0].face.normal)
+        angle: d.clone().multiplyScalar(-1).angleTo(m[0].face.normal)
       };
       t[n] = u;
     } else
@@ -505,14 +512,14 @@ function L(o, e) {
     reflectingSurface: null,
     angle: null
   };
-  return t[0] = a, new J(t);
+  return t[0] = a, new Z(t);
 }
-function ee(o, e) {
+function X(o, e) {
   let t = o.normal.clone(), r = e.normal.clone();
   return t.dot(r) <= 0;
 }
-function te(o, e) {
-  let t = new _(e.polygon.vertices[0][0], e.polygon.vertices[0][1], e.polygon.vertices[0][2]), r = e.localToWorld(t), s = e.normal.clone(), i = s.clone();
+function ee(o, e) {
+  let t = new E(e.polygon.vertices[0][0], e.polygon.vertices[0][1], e.polygon.vertices[0][2]), r = e.localToWorld(t), s = e.normal.clone(), i = s.clone();
   i.multiplyScalar(-1);
   let a = r.dot(i), l = s.clone();
   l.multiplyScalar(o.dot(s) + a);
@@ -521,19 +528,19 @@ function te(o, e) {
   let h = l;
   return h.multiplyScalar(-1), h.add(n), h;
 }
-f("IMAGESOURCE_SET_PROPERTY", G);
-f("REMOVE_IMAGESOURCE", z);
-f("ADD_IMAGESOURCE", j(X));
-f("UPDATE_IMAGESOURCE", (o) => void R.getState().solvers[o].updateImageSourceCalculation());
-f("RESET_IMAGESOURCE", (o) => void R.getState().solvers[o].reset());
-f("CALCULATE_LTP", (o) => void R.getState().solvers[o].calculateLTP());
-f("IMAGESOURCE_PLAY_IR", (o) => void R.getState().solvers[o].playImpulseResponse().catch(console.error));
-f("IMAGESOURCE_DOWNLOAD_IR", (o) => {
-  const e = R.getState().solvers[o], t = m.getState().containers, r = e.sourceIDs.length > 0 && t[e.sourceIDs[0]]?.name || "source", s = e.receiverIDs.length > 0 && t[e.receiverIDs[0]]?.name || "receiver", i = `ir-imagesource-${r}-${s}`.replace(/[^a-zA-Z0-9-_]/g, "_");
+g("IMAGESOURCE_SET_PROPERTY", H);
+g("REMOVE_IMAGESOURCE", G);
+g("ADD_IMAGESOURCE", z(Q));
+g("UPDATE_IMAGESOURCE", (o) => void S.getState().solvers[o].updateImageSourceCalculation());
+g("RESET_IMAGESOURCE", (o) => void S.getState().solvers[o].reset());
+g("CALCULATE_LTP", (o) => void S.getState().solvers[o].calculateLTP());
+g("IMAGESOURCE_PLAY_IR", (o) => void S.getState().solvers[o].playImpulseResponse().catch(console.error));
+g("IMAGESOURCE_DOWNLOAD_IR", (o) => {
+  const e = S.getState().solvers[o], t = p.getState().containers, r = e.sourceIDs.length > 0 && t[e.sourceIDs[0]]?.name || "source", s = e.receiverIDs.length > 0 && t[e.receiverIDs[0]]?.name || "receiver", i = `ir-imagesource-${r}-${s}`.replace(/[^a-zA-Z0-9-_]/g, "_");
   e.downloadImpulseResponse(i).catch(console.error);
 });
 export {
-  X as ImageSourceSolver,
-  X as default
+  Q as ImageSourceSolver,
+  Q as default
 };
-//# sourceMappingURL=index-BU225fTu.mjs.map
+//# sourceMappingURL=index-tQk6FSQk.mjs.map

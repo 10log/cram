@@ -1,12 +1,13 @@
-import { S as ue } from "./solver-BP4XtfBW.mjs";
+import { S as ae } from "./solver-R8BUlJ5R.mjs";
 import * as g from "three";
-import { MeshLine as he, MeshLineMaterial as de } from "three.meshline";
-import { v as L, g as fe, e as T, R as V, r as R, p as pe, u as B, a as G, P as q, b as me, L as U, I as ge, F as j, o as k, s as ve, c as Pe, d as ye, f as _ } from "./index-Cm7mh5nT.mjs";
-import { a as Se } from "./air-attenuation-CBIk1QMo.mjs";
-import { s as be } from "./sound-speed-Biev-mJ1.mjs";
-import { a as M, n as W, w as K } from "./audio-engine-CqZtbt41.mjs";
-import Q from "chroma-js";
-import { e as Ie, g as Re } from "./ambisonics.es-Ci32Q6qr.mjs";
+import { MeshLine as le, MeshLineMaterial as ce } from "three.meshline";
+import { v as L, g as ue, e as T, R as V, r as R, p as he, u as M, a as G, P as q, b as de, L as U, I as fe, o as k, s as me, c as pe, d as ge, f as _ } from "./index-WPNQK-eO.mjs";
+import { a as ve } from "./air-attenuation-CBIk1QMo.mjs";
+import { s as Pe } from "./sound-speed-Biev-mJ1.mjs";
+import { a as $, n as ye } from "./audio-engine-BltQIBir.mjs";
+import { p as Se, d as be, a as Ie } from "./export-playback-Datwk8y5.mjs";
+import K from "chroma-js";
+import { e as Re, g as we } from "./ambisonics.es-Ci32Q6qr.mjs";
 const h = {
   /**
    * Create a new Vector3
@@ -178,8 +179,8 @@ const h = {
    * p1 → p2 → p3 appears counter-clockwise
    */
   fromPoints(s, e, t) {
-    const o = h.subtract(e, s), n = h.subtract(t, s), r = h.normalize(h.cross(o, n));
-    return v.fromNormalAndPoint(r, s);
+    const o = h.subtract(e, s), r = h.subtract(t, s), n = h.normalize(h.cross(o, r));
+    return v.fromNormalAndPoint(n, s);
   },
   /**
    * Create a plane directly from coefficients
@@ -249,8 +250,8 @@ const h = {
     const t = v.normal(s);
     let o;
     Math.abs(t[2]) > 0.5 ? o = [0, 0, -s.d / s.c] : Math.abs(t[1]) > 0.5 ? o = [0, -s.d / s.b, 0] : o = [-s.d / s.a, 0, 0];
-    const n = Math.abs(t[0]) < 0.9 ? [1, 0, 0] : [0, 1, 0], r = h.normalize(h.cross(t, n)), i = h.add(o, r), a = h.cross(t, r), l = h.add(o, a), c = v.mirrorPoint(o, e), u = v.mirrorPoint(i, e), p = v.mirrorPoint(l, e);
-    return v.fromPoints(c, u, p);
+    const r = Math.abs(t[0]) < 0.9 ? [1, 0, 0] : [0, 1, 0], n = h.normalize(h.cross(t, r)), i = h.add(o, n), a = h.cross(t, n), l = h.add(o, a), c = v.mirrorPoint(o, e), u = v.mirrorPoint(i, e), m = v.mirrorPoint(l, e);
+    return v.fromPoints(c, u, m);
   },
   /**
    * Flip the plane orientation (negate normal and d)
@@ -271,8 +272,8 @@ const h = {
    * @param plane - The plane to intersect with
    */
   rayIntersection(s, e, t) {
-    const o = v.normal(t), n = h.dot(o, e);
-    return Math.abs(n) < 1e-10 ? null : -(h.dot(o, s) + t.d) / n;
+    const o = v.normal(t), r = h.dot(o, e);
+    return Math.abs(r) < 1e-10 ? null : -(h.dot(o, s) + t.d) / r;
   },
   /**
    * Get the point of intersection between a ray and plane
@@ -309,7 +310,7 @@ const h = {
   create(s, e) {
     if (s.length < 3)
       throw new Error("Polygon requires at least 3 vertices");
-    const t = s.map((n) => h.clone(n)), o = v.fromPoints(t[0], t[1], t[2]);
+    const t = s.map((r) => h.clone(r)), o = v.fromPoints(t[0], t[1], t[2]);
     return { vertices: t, plane: o, materialId: e };
   },
   /**
@@ -318,7 +319,7 @@ const h = {
   createWithPlane(s, e, t) {
     if (s.length < 3)
       throw new Error("Polygon requires at least 3 vertices");
-    return { vertices: s.map((n) => h.clone(n)), plane: e, materialId: t };
+    return { vertices: s.map((r) => h.clone(r)), plane: e, materialId: t };
   },
   /**
    * Get the number of vertices
@@ -345,7 +346,7 @@ const h = {
     let e = [0, 0, 0];
     const t = s.vertices[0];
     for (let o = 1; o < s.vertices.length - 1; o++) {
-      const n = s.vertices[o], r = s.vertices[o + 1], i = h.cross(h.subtract(n, t), h.subtract(r, t));
+      const r = s.vertices[o], n = s.vertices[o + 1], i = h.cross(h.subtract(r, t), h.subtract(n, t));
       e = h.add(e, i);
     }
     return 0.5 * h.length(e);
@@ -371,21 +372,21 @@ const h = {
    * Classify the polygon relative to a plane
    */
   classify(s, e, t = 1e-6) {
-    let o = 0, n = 0;
-    for (const r of s.vertices) {
-      const i = v.classifyPoint(r, e, t);
-      i === "front" ? o++ : i === "back" && n++;
+    let o = 0, r = 0;
+    for (const n of s.vertices) {
+      const i = v.classifyPoint(n, e, t);
+      i === "front" ? o++ : i === "back" && r++;
     }
-    return o > 0 && n > 0 ? "spanning" : o > 0 ? "front" : n > 0 ? "back" : "coplanar";
+    return o > 0 && r > 0 ? "spanning" : o > 0 ? "front" : r > 0 ? "back" : "coplanar";
   },
   /**
    * Check if a point is inside the polygon
    * Assumes the point is on (or very close to) the polygon's plane
    */
   containsPoint(s, e, t = 1e-6) {
-    const o = v.normal(s.plane), n = s.vertices.length;
-    for (let r = 0; r < n; r++) {
-      const i = s.vertices[r], a = s.vertices[(r + 1) % n], l = h.subtract(a, i), c = h.subtract(e, i), u = h.cross(l, c);
+    const o = v.normal(s.plane), r = s.vertices.length;
+    for (let n = 0; n < r; n++) {
+      const i = s.vertices[n], a = s.vertices[(n + 1) % r], l = h.subtract(a, i), c = h.subtract(e, i), u = h.cross(l, c);
       if (h.dot(u, o) < -t)
         return !1;
     }
@@ -396,11 +397,11 @@ const h = {
    * Returns t parameter and intersection point, or null if no hit
    */
   rayIntersection(s, e, t, o = 1e-4) {
-    const n = v.rayIntersection(s, e, t.plane);
-    if (n === null || n < 0)
+    const r = v.rayIntersection(s, e, t.plane);
+    if (r === null || r < 0)
       return null;
-    const r = h.add(s, h.scale(e, n));
-    return w.containsPoint(t, r, o) ? { t: n, point: r } : null;
+    const n = h.add(s, h.scale(e, r));
+    return w.containsPoint(t, n, o) ? { t: r, point: n } : null;
   },
   /**
    * Create a bounding box for the polygon
@@ -446,59 +447,59 @@ const h = {
     return `Polygon3D(${s.vertices.length} vertices: [${e}])`;
   }
 };
-function we(s, e, t = 1e-4) {
+function De(s, e, t = 1e-4) {
   const o = w.classify(s, e, t);
   if (o === "front" || o === "coplanar")
     return { front: s, back: null };
   if (o === "back")
     return { front: null, back: s };
-  const n = [], r = [], i = s.vertices.length;
+  const r = [], n = [], i = s.vertices.length;
   for (let c = 0; c < i; c++) {
-    const u = s.vertices[c], p = s.vertices[(c + 1) % i], f = v.signedDistance(u, e), d = v.signedDistance(p, e), m = f > t ? "front" : f < -t ? "back" : "on", y = d > t ? "front" : d < -t ? "back" : "on";
-    if (m === "front" ? n.push(u) : (m === "back" || n.push(u), r.push(u)), m === "front" && y === "back" || m === "back" && y === "front") {
-      const I = f / (f - d), b = h.lerp(u, p, I);
-      n.push(b), r.push(b);
+    const u = s.vertices[c], m = s.vertices[(c + 1) % i], f = v.signedDistance(u, e), d = v.signedDistance(m, e), p = f > t ? "front" : f < -t ? "back" : "on", y = d > t ? "front" : d < -t ? "back" : "on";
+    if (p === "front" ? r.push(u) : (p === "back" || r.push(u), n.push(u)), p === "front" && y === "back" || p === "back" && y === "front") {
+      const I = f / (f - d), b = h.lerp(u, m, I);
+      r.push(b), n.push(b);
     }
   }
-  const a = n.length >= 3 ? w.createWithPlane(n, s.plane, s.materialId) : null, l = r.length >= 3 ? w.createWithPlane(r, s.plane, s.materialId) : null;
+  const a = r.length >= 3 ? w.createWithPlane(r, s.plane, s.materialId) : null, l = n.length >= 3 ? w.createWithPlane(n, s.plane, s.materialId) : null;
   return { front: a, back: l };
 }
 function xe(s, e, t = 1e-4) {
-  const o = s.vertices, n = [];
+  const o = s.vertices, r = [];
   if (o.length < 3)
     return null;
-  for (let r = 0; r < o.length; r++) {
-    const i = o[r], a = o[(r + 1) % o.length], l = v.signedDistance(i, e), c = v.signedDistance(a, e), u = l >= -t, p = c >= -t;
-    if (u && n.push(i), u && !p || !u && p) {
+  for (let n = 0; n < o.length; n++) {
+    const i = o[n], a = o[(n + 1) % o.length], l = v.signedDistance(i, e), c = v.signedDistance(a, e), u = l >= -t, m = c >= -t;
+    if (u && r.push(i), u && !m || !u && m) {
       const f = l / (l - c), d = h.lerp(i, a, Math.max(0, Math.min(1, f)));
-      n.push(d);
+      r.push(d);
     }
   }
-  return n.length < 3 ? null : w.createWithPlane(n, s.plane, s.materialId);
+  return r.length < 3 ? null : w.createWithPlane(r, s.plane, s.materialId);
 }
-function De(s, e, t = 1e-4) {
+function Me(s, e, t = 1e-4) {
   let o = s;
-  for (const n of e) {
+  for (const r of e) {
     if (!o)
       return null;
-    o = xe(o, n, t);
+    o = xe(o, r, t);
   }
   return o;
 }
-function Me(s, e, t = 1e-4) {
+function Te(s, e, t = 1e-4) {
   for (const o of e) {
-    let n = !0;
-    for (const r of s.vertices)
-      if (v.signedDistance(r, o) >= -t) {
-        n = !1;
+    let r = !0;
+    for (const n of s.vertices)
+      if (v.signedDistance(n, o) >= -t) {
+        r = !1;
         break;
       }
-    if (n)
+    if (r)
       return !0;
   }
   return !1;
 }
-function Te(s) {
+function Be(s) {
   if (s.length === 0)
     return null;
   const e = s.map((t, o) => ({
@@ -510,147 +511,147 @@ function Te(s) {
 function H(s) {
   if (s.length === 0)
     return null;
-  const e = Be(s), t = s[e], o = t.polygon.plane, n = [], r = [];
+  const e = Ae(s), t = s[e], o = t.polygon.plane, r = [], n = [];
   for (let i = 0; i < s.length; i++) {
     if (i === e)
       continue;
-    const a = s[i], { front: l, back: c } = we(a.polygon, o);
-    l && n.push({ polygon: l, originalId: a.originalId }), c && r.push({ polygon: c, originalId: a.originalId });
+    const a = s[i], { front: l, back: c } = De(a.polygon, o);
+    l && r.push({ polygon: l, originalId: a.originalId }), c && n.push({ polygon: c, originalId: a.originalId });
   }
   return {
     plane: o,
     polygon: t.polygon,
     polygonId: t.originalId,
-    front: H(n),
-    back: H(r)
+    front: H(r),
+    back: H(n)
   };
 }
-function Be(s) {
+function Ae(s) {
   if (s.length <= 3)
     return 0;
   let e = 0, t = 1 / 0;
-  const o = Math.min(s.length, 10), n = Math.max(1, Math.floor(s.length / o));
-  for (let r = 0; r < s.length; r += n) {
-    const i = s[r].polygon.plane;
+  const o = Math.min(s.length, 10), r = Math.max(1, Math.floor(s.length / o));
+  for (let n = 0; n < s.length; n += r) {
+    const i = s[n].polygon.plane;
     let a = 0, l = 0, c = 0;
-    for (let p = 0; p < s.length; p++) {
-      if (r === p)
+    for (let m = 0; m < s.length; m++) {
+      if (n === m)
         continue;
-      const f = w.classify(s[p].polygon, i);
+      const f = w.classify(s[m].polygon, i);
       f === "front" ? a++ : f === "back" ? l++ : f === "spanning" && (a++, l++, c++);
     }
     const u = c * 8 + Math.abs(a - l);
-    u < t && (t = u, e = r);
+    u < t && (t = u, e = n);
   }
   return e;
 }
-function O(s, e, t, o = 0, n = 1 / 0, r = -1) {
+function O(s, e, t, o = 0, r = 1 / 0, n = -1) {
   if (!t)
     return null;
   const i = v.signedDistance(s, t.plane), a = v.normal(t.plane), l = h.dot(a, e);
   let c, u;
   i >= 0 ? (c = t.front, u = t.back) : (c = t.back, u = t.front);
-  let p = null;
-  Math.abs(l) > 1e-10 && (p = -i / l);
+  let m = null;
+  Math.abs(l) > 1e-10 && (m = -i / l);
   let f = null;
-  if (p === null || p < o) {
-    if (f = O(s, e, c, o, n, r), !f && t.polygonId !== r) {
+  if (m === null || m < o) {
+    if (f = O(s, e, c, o, r, n), !f && t.polygonId !== n) {
       const d = w.rayIntersection(s, e, t.polygon);
-      d && d.t >= o && d.t <= n && (f = {
+      d && d.t >= o && d.t <= r && (f = {
         t: d.t,
         point: d.point,
         polygonId: t.polygonId,
         polygon: t.polygon
       });
     }
-    f || (f = O(s, e, u, o, n, r));
-  } else if (p > n) {
-    if (f = O(s, e, c, o, n, r), !f && t.polygonId !== r) {
+    f || (f = O(s, e, u, o, r, n));
+  } else if (m > r) {
+    if (f = O(s, e, c, o, r, n), !f && t.polygonId !== n) {
       const d = w.rayIntersection(s, e, t.polygon);
-      d && d.t >= o && d.t <= n && (f = {
+      d && d.t >= o && d.t <= r && (f = {
         t: d.t,
         point: d.point,
         polygonId: t.polygonId,
         polygon: t.polygon
       });
     }
-    f || (f = O(s, e, u, o, n, r));
+    f || (f = O(s, e, u, o, r, n));
   } else {
-    if (f = O(s, e, c, o, p, r), !f && t.polygonId !== r) {
+    if (f = O(s, e, c, o, m, n), !f && t.polygonId !== n) {
       const d = w.rayIntersection(s, e, t.polygon);
-      d && d.t >= o && d.t <= n && (f = {
+      d && d.t >= o && d.t <= r && (f = {
         t: d.t,
         point: d.point,
         polygonId: t.polygonId,
         polygon: t.polygon
       });
     }
-    f || (f = O(s, e, u, p, n, r));
+    f || (f = O(s, e, u, m, r, n));
   }
   return f;
 }
-function $(s, e, t, o, n, r) {
+function F(s, e, t, o, r, n) {
   if (!t)
     return null;
   const i = v.signedDistance(s, t.plane), a = v.normal(t.plane), l = h.dot(a, e);
   let c, u;
   i >= 0 ? (c = t.front, u = t.back) : (c = t.back, u = t.front);
-  let p = null;
-  Math.abs(l) > 1e-10 && (p = -i / l);
+  let m = null;
+  Math.abs(l) > 1e-10 && (m = -i / l);
   let f = null;
-  if (p === null || p < o) {
-    if (f = $(s, e, c, o, n, r), !f && !r.has(t.polygonId)) {
+  if (m === null || m < o) {
+    if (f = F(s, e, c, o, r, n), !f && !n.has(t.polygonId)) {
       const d = w.rayIntersection(s, e, t.polygon);
-      d && d.t >= o && d.t <= n && (f = {
+      d && d.t >= o && d.t <= r && (f = {
         t: d.t,
         point: d.point,
         polygonId: t.polygonId,
         polygon: t.polygon
       });
     }
-    f || (f = $(s, e, u, o, n, r));
-  } else if (p > n) {
-    if (f = $(s, e, c, o, n, r), !f && !r.has(t.polygonId)) {
+    f || (f = F(s, e, u, o, r, n));
+  } else if (m > r) {
+    if (f = F(s, e, c, o, r, n), !f && !n.has(t.polygonId)) {
       const d = w.rayIntersection(s, e, t.polygon);
-      d && d.t >= o && d.t <= n && (f = {
+      d && d.t >= o && d.t <= r && (f = {
         t: d.t,
         point: d.point,
         polygonId: t.polygonId,
         polygon: t.polygon
       });
     }
-    f || (f = $(s, e, u, o, n, r));
+    f || (f = F(s, e, u, o, r, n));
   } else {
-    if (f = $(s, e, c, o, p, r), !f && !r.has(t.polygonId)) {
+    if (f = F(s, e, c, o, m, n), !f && !n.has(t.polygonId)) {
       const d = w.rayIntersection(s, e, t.polygon);
-      d && d.t >= o && d.t <= n && (f = {
+      d && d.t >= o && d.t <= r && (f = {
         t: d.t,
         point: d.point,
         polygonId: t.polygonId,
         polygon: t.polygon
       });
     }
-    f || (f = $(s, e, u, p, n, r));
+    f || (f = F(s, e, u, m, r, n));
   }
   return f;
 }
-function X(s, e) {
-  const t = [], o = w.edges(e), n = w.centroid(e);
+function Z(s, e) {
+  const t = [], o = w.edges(e), r = w.centroid(e);
   for (const [i, a] of o) {
     let l = v.fromPoints(s, i, a);
-    v.signedDistance(n, l) < 0 && (l = v.flip(l)), t.push(l);
+    v.signedDistance(r, l) < 0 && (l = v.flip(l)), t.push(l);
   }
-  let r = e.plane;
-  return v.signedDistance(s, r) > 0 && (r = v.flip(r)), t.push(r), t;
+  let n = e.plane;
+  return v.signedDistance(s, n) > 0 && (n = v.flip(n)), t.push(n), t;
 }
-function J(s, e) {
+function Y(s, e) {
   return v.mirrorPoint(s, e.plane);
 }
-function ee(s, e) {
-  const t = w.centroid(s), o = h.subtract(e, t), n = v.normal(s.plane);
-  return h.dot(n, o) > 0;
+function Q(s, e) {
+  const t = w.centroid(s), o = h.subtract(e, t), r = v.normal(s.plane);
+  return h.dot(r, o) > 0;
 }
-const Ae = 1e-6;
+const ke = 1e-6;
 function Fe(s, e, t) {
   const o = {
     id: -1,
@@ -659,98 +660,98 @@ function Fe(s, e, t) {
     children: []
   };
   if (t >= 1)
-    for (let r = 0; r < e.length; r++) {
-      const i = e[r];
-      if (!ee(i, s))
+    for (let n = 0; n < e.length; n++) {
+      const i = e[n];
+      if (!Q(i, s))
         continue;
-      const a = J(s, i), l = X(a, i), c = {
-        id: r,
+      const a = Y(s, i), l = Z(a, i), c = {
+        id: n,
         parent: o,
         virtualSource: a,
         aperture: w.clone(i),
         boundaryPlanes: l,
         children: []
       };
-      o.children.push(c), t > 1 && te(c, e, 2, t);
+      o.children.push(c), t > 1 && X(c, e, 2, t);
     }
-  const n = [];
-  return se(o, n), {
+  const r = [];
+  return J(o, r), {
     root: o,
-    leafNodes: n,
+    leafNodes: r,
     polygons: e,
     maxReflectionOrder: t
   };
 }
-function te(s, e, t, o) {
+function X(s, e, t, o) {
   if (!(t > o) && !(!s.boundaryPlanes || !s.aperture))
-    for (let n = 0; n < e.length; n++) {
-      if (n === s.id)
+    for (let r = 0; r < e.length; r++) {
+      if (r === s.id)
         continue;
-      const r = e[n];
-      if (Me(r, s.boundaryPlanes) || !ee(r, s.virtualSource))
+      const n = e[r];
+      if (Te(n, s.boundaryPlanes) || !Q(n, s.virtualSource))
         continue;
-      const i = De(r, s.boundaryPlanes);
-      if (!i || w.area(i) < Ae)
+      const i = Me(n, s.boundaryPlanes);
+      if (!i || w.area(i) < ke)
         continue;
-      const l = J(s.virtualSource, r), c = X(l, i), u = {
-        id: n,
+      const l = Y(s.virtualSource, n), c = Z(l, i), u = {
+        id: r,
         parent: s,
         virtualSource: l,
         aperture: i,
         boundaryPlanes: c,
         children: []
       };
-      s.children.push(u), t < o && te(u, e, t + 1, o);
+      s.children.push(u), t < o && X(u, e, t + 1, o);
     }
 }
-function se(s, e) {
+function J(s, e) {
   s.children.length === 0 && s.id !== -1 && e.push(s);
   for (const t of s.children)
-    se(t, e);
+    J(t, e);
 }
-function ke(s) {
-  oe(s.root);
+function $e(s) {
+  ee(s.root);
 }
-function oe(s) {
+function ee(s) {
   s.failPlane = void 0, s.failPlaneType = void 0;
   for (const e of s.children)
-    oe(e);
+    ee(e);
 }
-function $e(s, e, t) {
+function Oe(s, e, t) {
   if (!e.aperture || !e.boundaryPlanes)
     return null;
-  let n = t[e.id].plane;
-  if (v.signedDistance(e.virtualSource, n) < 0 && (n = v.flip(n)), v.signedDistance(s, n) < 0)
+  let r = t[e.id].plane;
+  if (v.signedDistance(e.virtualSource, r) < 0 && (r = v.flip(r)), v.signedDistance(s, r) < 0)
     return {
-      plane: n,
+      plane: r,
       type: "polygon",
-      nodeDepth: Z(e)
+      nodeDepth: j(e)
     };
-  const r = e.boundaryPlanes.length - 1;
+  const n = e.boundaryPlanes.length - 1;
   for (let i = 0; i < e.boundaryPlanes.length; i++) {
     const a = e.boundaryPlanes[i];
     if (v.signedDistance(s, a) < 0) {
-      const l = i < r ? "edge" : "aperture";
+      const l = i < n ? "edge" : "aperture";
       return {
         plane: a,
         type: l,
-        nodeDepth: Z(e)
+        nodeDepth: j(e)
       };
     }
   }
   return null;
 }
-function Z(s) {
+function j(s) {
   let e = 0, t = s;
   for (; t && t.id !== -1; )
     e++, t = t.parent;
   return e;
 }
-function Oe(s, e) {
+function Ee(s, e) {
   return v.signedDistance(s, e) < 0;
 }
-const ne = 16;
-function Ee(s, e = ne) {
+const te = 16;
+function Ce(s, e = te) {
   const t = [];
   for (let o = 0; o < s.length; o += e)
     t.push({
@@ -760,33 +761,33 @@ function Ee(s, e = ne) {
     });
   return t;
 }
-function Ce(s, e) {
+function Le(s, e) {
   return h.distance(s, e.center) < e.radius;
 }
-function Le(s, e) {
-  return e.skipSphere ? Ce(s, e.skipSphere) ? "inside" : "outside" : "none";
-}
 function _e(s, e) {
+  return e.skipSphere ? Le(s, e.skipSphere) ? "inside" : "outside" : "none";
+}
+function ze(s, e) {
   let t = 1 / 0;
   for (const o of e) {
     if (!o.failPlane)
       return null;
-    const n = Math.abs(v.signedDistance(s, o.failPlane));
-    t = Math.min(t, n);
+    const r = Math.abs(v.signedDistance(s, o.failPlane));
+    t = Math.min(t, r);
   }
   return t === 1 / 0 || t <= 1e-10 ? null : {
     center: h.clone(s),
     radius: t
   };
 }
-function Y(s) {
+function W(s) {
   s.skipSphere = null;
 }
-function ze(s) {
+function Ve(s) {
   for (const e of s.nodes)
     e.failPlane = void 0, e.failPlaneType = void 0;
 }
-class Ve {
+class He {
   /**
    * Create a new 3D beam tracing solver
    *
@@ -795,8 +796,8 @@ class Ve {
    * @param config - Optional configuration
    */
   constructor(e, t, o = {}) {
-    const n = o.maxReflectionOrder ?? 5, r = o.bucketSize ?? ne;
-    this.polygons = e, this.sourcePosition = h.clone(t), this.epsilon = o.epsilon ?? 1e-4, this.bspRoot = Te(e), this.beamTree = Fe(t, e, n), this.buckets = Ee(this.beamTree.leafNodes, r), this.metrics = this.createEmptyMetrics(), this.metrics.totalLeafNodes = this.beamTree.leafNodes.length, this.metrics.bucketsTotal = this.buckets.length;
+    const r = o.maxReflectionOrder ?? 5, n = o.bucketSize ?? te;
+    this.polygons = e, this.sourcePosition = h.clone(t), this.epsilon = o.epsilon ?? 1e-4, this.bspRoot = Be(e), this.beamTree = Fe(t, e, r), this.buckets = Ce(this.beamTree.leafNodes, n), this.metrics = this.createEmptyMetrics(), this.metrics.totalLeafNodes = this.beamTree.leafNodes.length, this.metrics.bucketsTotal = this.buckets.length;
   }
   /**
    * Get all valid reflection paths from source to listener
@@ -808,18 +809,18 @@ class Ve {
     this.resetMetrics();
     const t = [], o = this.validateDirectPath(e);
     o && t.push(o);
-    const n = this.findIntermediatePaths(e, this.beamTree.root);
-    t.push(...n);
-    for (const r of this.buckets) {
-      const i = Le(e, r);
+    const r = this.findIntermediatePaths(e, this.beamTree.root);
+    t.push(...r);
+    for (const n of this.buckets) {
+      const i = _e(e, n);
       if (i === "inside") {
         this.metrics.bucketsSkipped++;
         continue;
       }
-      i === "outside" && (Y(r), ze(r)), this.metrics.bucketsChecked++;
+      i === "outside" && (W(n), Ve(n)), this.metrics.bucketsChecked++;
       let a = !0, l = !0;
-      for (const c of r.nodes) {
-        if (c.failPlane && Oe(e, c.failPlane)) {
+      for (const c of n.nodes) {
+        if (c.failPlane && Ee(e, c.failPlane)) {
           this.metrics.failPlaneCacheHits++;
           continue;
         }
@@ -827,7 +828,7 @@ class Ve {
         const u = this.validatePath(e, c);
         u.valid && u.path ? (t.push(u.path), a = !1, l = !1) : c.failPlane || (l = !1);
       }
-      a && l && r.nodes.length > 0 && (r.skipSphere = _e(e, r.nodes), r.skipSphere && this.metrics.skipSphereCount++);
+      a && l && n.nodes.length > 0 && (n.skipSphere = ze(e, n.nodes), n.skipSphere && this.metrics.skipSphereCount++);
     }
     return this.metrics.validPathCount = t.length, t;
   }
@@ -844,16 +845,16 @@ class Ve {
    * @returns Array of detailed reflection paths
    */
   getDetailedPaths(e) {
-    return this.getPaths(e).map((o) => je(o, this.polygons));
+    return this.getPaths(e).map((o) => We(o, this.polygons));
   }
   /**
    * Validate the direct path from listener to source
    */
   validateDirectPath(e) {
-    const t = h.subtract(this.sourcePosition, e), o = h.length(t), n = h.normalize(t);
+    const t = h.subtract(this.sourcePosition, e), o = h.length(t), r = h.normalize(t);
     this.metrics.raycastCount++;
-    const r = O(e, n, this.bspRoot, 0, o, -1);
-    return r && r.t < o - this.epsilon ? null : [
+    const n = O(e, r, this.bspRoot, 0, o, -1);
+    return n && n.t < o - this.epsilon ? null : [
       { position: h.clone(e), polygonId: null },
       { position: h.clone(this.sourcePosition), polygonId: null }
     ];
@@ -865,11 +866,11 @@ class Ve {
    */
   findIntermediatePaths(e, t) {
     const o = [];
-    for (const n of t.children)
-      n.children.length > 0 && o.push(...this.findIntermediatePaths(e, n));
+    for (const r of t.children)
+      r.children.length > 0 && o.push(...this.findIntermediatePaths(e, r));
     if (t.id !== -1 && t.aperture) {
-      const n = this.traverseBeam(e, t);
-      n && o.push(n);
+      const r = this.traverseBeam(e, t);
+      r && o.push(r);
     }
     return o;
   }
@@ -877,55 +878,55 @@ class Ve {
    * Traverse a beam from listener to source, building the reflection path
    */
   traverseBeam(e, t, o = !1) {
-    const n = [
+    const r = [
       { position: h.clone(e), polygonId: null }
-    ], r = [];
+    ], n = [];
     let i = t;
     for (; i && i.id !== -1; )
-      r.unshift(i.id), i = i.parent;
-    o && (console.log(`[traverseBeam] Exploring beam with polygonPath: [${r.join(", ")}]`), console.log(`  Listener: [${e[0].toFixed(3)}, ${e[1].toFixed(3)}, ${e[2].toFixed(3)}]`), console.log(`  Virtual source: [${t.virtualSource[0].toFixed(3)}, ${t.virtualSource[1].toFixed(3)}, ${t.virtualSource[2].toFixed(3)}]`));
+      n.unshift(i.id), i = i.parent;
+    o && (console.log(`[traverseBeam] Exploring beam with polygonPath: [${n.join(", ")}]`), console.log(`  Listener: [${e[0].toFixed(3)}, ${e[1].toFixed(3)}, ${e[2].toFixed(3)}]`), console.log(`  Virtual source: [${t.virtualSource[0].toFixed(3)}, ${t.virtualSource[1].toFixed(3)}, ${t.virtualSource[2].toFixed(3)}]`));
     let a = e, l = t;
     const c = /* @__PURE__ */ new Set();
     let u = 0;
     for (; l && l.id !== -1; ) {
-      const p = this.polygons[l.id], f = l.virtualSource, d = h.normalize(h.subtract(f, a)), m = w.rayIntersection(a, d, p);
-      if (!m)
+      const m = this.polygons[l.id], f = l.virtualSource, d = h.normalize(h.subtract(f, a)), p = w.rayIntersection(a, d, m);
+      if (!p)
         return o && console.log(`  [Segment ${u}] FAIL: No intersection with polygon ${l.id}`), null;
-      o && (console.log(`  [Segment ${u}] Ray from [${a[0].toFixed(3)}, ${a[1].toFixed(3)}, ${a[2].toFixed(3)}]`), console.log(`    Direction: [${d[0].toFixed(3)}, ${d[1].toFixed(3)}, ${d[2].toFixed(3)}]`), console.log(`    Hit polygon ${l.id} at t=${m.t.toFixed(3)}, point=[${m.point[0].toFixed(3)}, ${m.point[1].toFixed(3)}, ${m.point[2].toFixed(3)}]`)), c.add(l.id), this.metrics.raycastCount++;
-      const y = $(a, d, this.bspRoot, this.epsilon, m.t - this.epsilon, c);
+      o && (console.log(`  [Segment ${u}] Ray from [${a[0].toFixed(3)}, ${a[1].toFixed(3)}, ${a[2].toFixed(3)}]`), console.log(`    Direction: [${d[0].toFixed(3)}, ${d[1].toFixed(3)}, ${d[2].toFixed(3)}]`), console.log(`    Hit polygon ${l.id} at t=${p.t.toFixed(3)}, point=[${p.point[0].toFixed(3)}, ${p.point[1].toFixed(3)}, ${p.point[2].toFixed(3)}]`)), c.add(l.id), this.metrics.raycastCount++;
+      const y = F(a, d, this.bspRoot, this.epsilon, p.t - this.epsilon, c);
       if (y)
         return o && (console.log(`    OCCLUDED by polygon ${y.polygonId} at t=${y.t.toFixed(3)}, point=[${y.point[0].toFixed(3)}, ${y.point[1].toFixed(3)}, ${y.point[2].toFixed(3)}]`), console.log(`    ignoreIds: [${Array.from(c).join(", ")}]`)), null;
-      o && console.log(`    OK - no occlusion (ignoreIds: [${Array.from(c).join(", ")}])`), n.push({
-        position: h.clone(m.point),
+      o && console.log(`    OK - no occlusion (ignoreIds: [${Array.from(c).join(", ")}])`), r.push({
+        position: h.clone(p.point),
         polygonId: l.id
-      }), a = m.point, l = l.parent, u++;
+      }), a = p.point, l = l.parent, u++;
     }
     if (l) {
-      const p = h.normalize(h.subtract(l.virtualSource, a)), f = h.distance(l.virtualSource, a);
+      const m = h.normalize(h.subtract(l.virtualSource, a)), f = h.distance(l.virtualSource, a);
       if (o) {
-        console.log(`  [Final segment] Ray from [${a[0].toFixed(3)}, ${a[1].toFixed(3)}, ${a[2].toFixed(3)}]`), console.log(`    To source: [${l.virtualSource[0].toFixed(3)}, ${l.virtualSource[1].toFixed(3)}, ${l.virtualSource[2].toFixed(3)}]`), console.log(`    Direction: [${p[0].toFixed(3)}, ${p[1].toFixed(3)}, ${p[2].toFixed(3)}]`), console.log(`    Distance: ${f.toFixed(3)}`), console.log(`    tMin: ${this.epsilon}, tMax: ${(f - this.epsilon).toFixed(6)}`), console.log(`    ignoreIds: [${Array.from(c).join(", ")}]`);
+        console.log(`  [Final segment] Ray from [${a[0].toFixed(3)}, ${a[1].toFixed(3)}, ${a[2].toFixed(3)}]`), console.log(`    To source: [${l.virtualSource[0].toFixed(3)}, ${l.virtualSource[1].toFixed(3)}, ${l.virtualSource[2].toFixed(3)}]`), console.log(`    Direction: [${m[0].toFixed(3)}, ${m[1].toFixed(3)}, ${m[2].toFixed(3)}]`), console.log(`    Distance: ${f.toFixed(3)}`), console.log(`    tMin: ${this.epsilon}, tMax: ${(f - this.epsilon).toFixed(6)}`), console.log(`    ignoreIds: [${Array.from(c).join(", ")}]`);
         const I = a, b = l.virtualSource;
         if (I[1] < 5.575 && b[1] > 5.575 || I[1] > 5.575 && b[1] < 5.575) {
-          const P = (5.575 - I[1]) / (b[1] - I[1]), S = I[0] + P * (b[0] - I[0]), x = I[2] + P * (b[2] - I[2]);
-          if (console.log(`    CROSSING y=5.575 at t=${P.toFixed(3)}, x=${S.toFixed(3)}, z=${x.toFixed(3)}`), console.log("    back1 spans: x=[6.215, 12.43], z=[0, 4.877]"), S >= 6.215 && S <= 12.43 && x >= 0 && x <= 4.877) {
+          const P = (5.575 - I[1]) / (b[1] - I[1]), S = I[0] + P * (b[0] - I[0]), D = I[2] + P * (b[2] - I[2]);
+          if (console.log(`    CROSSING y=5.575 at t=${P.toFixed(3)}, x=${S.toFixed(3)}, z=${D.toFixed(3)}`), console.log("    back1 spans: x=[6.215, 12.43], z=[0, 4.877]"), S >= 6.215 && S <= 12.43 && D >= 0 && D <= 4.877) {
             console.log("    *** SHOULD HIT back1 (polygons 3, 4) ***"), console.log("    Direct polygon intersection test:");
-            for (const D of [3, 4]) {
-              const E = this.polygons[D], A = w.rayIntersection(a, p, E);
-              A ? console.log(`      Polygon ${D}: HIT at t=${A.t.toFixed(3)}, point=[${A.point[0].toFixed(3)}, ${A.point[1].toFixed(3)}, ${A.point[2].toFixed(3)}]`) : (console.log(`      Polygon ${D}: NO HIT`), console.log(`        Vertices: ${E.vertices.map((F) => `[${F[0].toFixed(2)}, ${F[1].toFixed(2)}, ${F[2].toFixed(2)}]`).join(", ")}`));
+            for (const x of [3, 4]) {
+              const E = this.polygons[x], B = w.rayIntersection(a, m, E);
+              B ? console.log(`      Polygon ${x}: HIT at t=${B.t.toFixed(3)}, point=[${B.point[0].toFixed(3)}, ${B.point[1].toFixed(3)}, ${B.point[2].toFixed(3)}]`) : (console.log(`      Polygon ${x}: NO HIT`), console.log(`        Vertices: ${E.vertices.map((A) => `[${A[0].toFixed(2)}, ${A[1].toFixed(2)}, ${A[2].toFixed(2)}]`).join(", ")}`));
             }
           }
         }
       }
       this.metrics.raycastCount++;
-      const d = this.epsilon, m = f - this.epsilon, y = $(a, p, this.bspRoot, d, m, c);
+      const d = this.epsilon, p = f - this.epsilon, y = F(a, m, this.bspRoot, d, p, c);
       if (y)
         return o && console.log(`    OCCLUDED by polygon ${y.polygonId} at t=${y.t.toFixed(3)}, point=[${y.point[0].toFixed(3)}, ${y.point[1].toFixed(3)}, ${y.point[2].toFixed(3)}]`), null;
-      o && console.log("    OK - path valid!"), n.push({
+      o && console.log("    OK - path valid!"), r.push({
         position: h.clone(l.virtualSource),
         polygonId: null
       });
     }
-    return n;
+    return r;
   }
   /**
    * Validate a path through a beam node
@@ -934,8 +935,8 @@ class Ve {
     const o = this.traverseBeam(e, t);
     if (o)
       return { valid: !0, path: o };
-    const n = $e(e, t, this.polygons);
-    return n && (t.failPlane = n.plane, t.failPlaneType = n.type), { valid: !1, path: null };
+    const r = Oe(e, t, this.polygons);
+    return r && (t.failPlane = r.plane, t.failPlaneType = r.type), { valid: !1, path: null };
   }
   /**
    * Get performance metrics from the last getPaths() call
@@ -956,17 +957,17 @@ class Ve {
         if (c.id === a[l])
           return o(c, a, l + 1);
       return null;
-    }, n = o(this.beamTree.root, t, 0);
-    if (!n) {
+    }, r = o(this.beamTree.root, t, 0);
+    if (!r) {
       console.log("ERROR: Could not find beam node for this polygon path");
       return;
     }
-    console.log(`Found beam node with virtual source: [${n.virtualSource[0].toFixed(3)}, ${n.virtualSource[1].toFixed(3)}, ${n.virtualSource[2].toFixed(3)}]`);
-    const r = this.traverseBeam(e, n, !0);
-    if (r) {
+    console.log(`Found beam node with virtual source: [${r.virtualSource[0].toFixed(3)}, ${r.virtualSource[1].toFixed(3)}, ${r.virtualSource[2].toFixed(3)}]`);
+    const n = this.traverseBeam(e, r, !0);
+    if (n) {
       console.log("PATH VALID - returned path:");
-      for (let i = 0; i < r.length; i++) {
-        const a = r[i];
+      for (let i = 0; i < n.length; i++) {
+        const a = n[i];
         console.log(`  [${i}] pos=[${a.position[0].toFixed(3)}, ${a.position[1].toFixed(3)}, ${a.position[2].toFixed(3)}], polygonId=${a.polygonId}`);
       }
     } else
@@ -979,9 +980,9 @@ class Ve {
    * Call this if the room geometry changes.
    */
   clearCache() {
-    ke(this.beamTree);
+    $e(this.beamTree);
     for (const e of this.buckets)
-      Y(e);
+      W(e);
   }
   /**
    * Get the number of leaf nodes in the beam tree
@@ -1006,21 +1007,21 @@ class Ve {
    * Returns beams organized by reflection order
    */
   getBeamsForVisualization(e) {
-    const t = [], o = e ?? this.beamTree.maxReflectionOrder, n = (r, i, a) => {
+    const t = [], o = e ?? this.beamTree.maxReflectionOrder, r = (n, i, a) => {
       if (i > o)
         return;
-      const l = r.id !== -1 ? [...a, r.id] : a;
-      r.id !== -1 && r.aperture && t.push({
-        virtualSource: h.clone(r.virtualSource),
-        apertureVertices: r.aperture.vertices.map((c) => h.clone(c)),
+      const l = n.id !== -1 ? [...a, n.id] : a;
+      n.id !== -1 && n.aperture && t.push({
+        virtualSource: h.clone(n.virtualSource),
+        apertureVertices: n.aperture.vertices.map((c) => h.clone(c)),
         reflectionOrder: i,
-        polygonId: r.id,
+        polygonId: n.id,
         polygonPath: l
       });
-      for (const c of r.children)
-        n(c, i + 1, l);
+      for (const c of n.children)
+        r(c, i + 1, l);
     };
-    return n(this.beamTree.root, 0, []), t;
+    return r(this.beamTree.root, 0, []), t;
   }
   /**
    * Create empty metrics object
@@ -1046,61 +1047,61 @@ class Ve {
     this.metrics = this.createEmptyMetrics(), this.metrics.totalLeafNodes = e, this.metrics.bucketsTotal = t;
   }
 }
-function re(s) {
+function se(s) {
   let e = 0;
   for (let t = 1; t < s.length; t++)
     e += h.distance(s[t - 1].position, s[t].position);
   return e;
 }
-function He(s, e = 343) {
-  return re(s) / e;
+function Ne(s, e = 343) {
+  return se(s) / e;
 }
-function Ne(s) {
+function Ge(s) {
   return s.filter((e) => e.polygonId !== null).length;
 }
-const Ge = 0.05;
-function qe(s, e) {
+const qe = 0.05;
+function Ue(s, e) {
   const t = Math.abs(h.dot(h.negate(s), e)), o = Math.max(-1, Math.min(1, t));
   return Math.acos(o);
 }
-function Ue(s, e) {
+function je(s, e) {
   const t = v.normal(s.plane);
   return h.dot(e, t) > 0 ? h.negate(t) : h.clone(t);
 }
-function je(s, e) {
+function We(s, e) {
   if (s.length < 2)
     throw new Error("Path must have at least 2 points (listener and source)");
-  const t = h.clone(s[0].position), o = h.clone(s[s.length - 1].position), n = [], r = [];
+  const t = h.clone(s[0].position), o = h.clone(s[s.length - 1].position), r = [], n = [];
   let i = 0;
   for (let a = 0; a < s.length - 1; a++) {
     const l = s[a].position, c = s[a + 1].position, u = h.distance(l, c);
-    r.push({
+    n.push({
       startPoint: h.clone(l),
       endPoint: h.clone(c),
       length: u,
       segmentIndex: a
     });
-    const p = s[a + 1].polygonId;
-    if (p !== null) {
-      const f = e[p], d = s[a + 1].position, m = h.normalize(h.subtract(d, l)), y = s[a + 2]?.position;
+    const m = s[a + 1].polygonId;
+    if (m !== null) {
+      const f = e[m], d = s[a + 1].position, p = h.normalize(h.subtract(d, l)), y = s[a + 2]?.position;
       let I;
-      y ? I = h.normalize(h.subtract(y, d)) : I = h.reflect(m, v.normal(f.plane));
-      const b = Ue(f, m), P = qe(m, b), S = P;
+      y ? I = h.normalize(h.subtract(y, d)) : I = h.reflect(p, v.normal(f.plane));
+      const b = je(f, p), P = Ue(p, b), S = P;
       i += u;
-      const x = Math.abs(P - Math.PI / 2) < Ge;
-      n.push({
+      const D = Math.abs(P - Math.PI / 2) < qe;
+      r.push({
         polygon: f,
-        polygonId: p,
+        polygonId: m,
         hitPoint: h.clone(d),
         incidenceAngle: P,
         reflectionAngle: S,
-        incomingDirection: m,
+        incomingDirection: p,
         outgoingDirection: I,
         surfaceNormal: b,
-        reflectionOrder: n.length + 1,
+        reflectionOrder: r.length + 1,
         cumulativeDistance: i,
         incomingSegmentLength: u,
-        isGrazing: x
+        isGrazing: D
       });
     } else
       i += u;
@@ -1109,20 +1110,20 @@ function je(s, e) {
     listenerPosition: t,
     sourcePosition: o,
     totalPathLength: i,
-    reflectionCount: n.length,
-    reflections: n,
-    segments: r,
+    reflectionCount: r.length,
+    reflections: r,
+    segments: n,
     simplePath: s
   };
 }
-class We {
+class Ke {
   constructor(e) {
     this.position = h.clone(e);
   }
 }
-class Ke {
+class Ze {
   constructor(e, t, o) {
-    this.source = t, this.solver = new Ve(e, t.position, o);
+    this.source = t, this.solver = new He(e, t.position, o);
   }
   /**
    * Get all valid reflection paths to a listener
@@ -1186,22 +1187,22 @@ class Ke {
     this.solver.debugBeamPath(o, t);
   }
 }
-function Ze() {
-  const s = new he();
+function Ye() {
+  const s = new le();
   s.setPoints([]);
-  const e = new de({
+  const e = new ce({
     lineWidth: 0.1,
     color: 16711680,
     sizeAttenuation: 1
   });
   return new g.Mesh(s, e);
 }
-const Ye = Q.scale(["#ff8a0b", "#000080"]).mode("lch");
+const Qe = K.scale(["#ff8a0b", "#000080"]).mode("lch");
 function C(s, e) {
-  const t = e + 1, o = Ye.colors(t), n = Math.min(s, t - 1), r = Q(o[n]);
-  return parseInt(r.hex().slice(1), 16);
+  const t = e + 1, o = Qe.colors(t), r = Math.min(s, t - 1), n = K(o[r]);
+  return parseInt(n.hex().slice(1), 16);
 }
-const Qe = {
+const Xe = {
   name: "Beam Tracer",
   uuid: "",
   roomID: "",
@@ -1215,7 +1216,7 @@ const Qe = {
   levelTimeProgression: "",
   impulseResponseResult: ""
 };
-class Xe extends ue {
+class Je extends ae {
   roomID;
   sourceIDs;
   receiverIDs;
@@ -1253,9 +1254,9 @@ class Xe extends ue {
   selectedBeamsGroup;
   constructor(e = {}) {
     super(e);
-    const t = { ...Qe, ...e };
-    if (this.kind = "beam-trace", this.uuid = t.uuid || L(), this.name = t.name, this.roomID = t.roomID, this.sourceIDs = t.sourceIDs, this.receiverIDs = t.receiverIDs, this.maxReflectionOrder = t.maxReflectionOrder, this.frequencies = t.frequencies, this._visualizationMode = t.visualizationMode, this._showAllBeams = t.showAllBeams, this._visibleOrders = t.visibleOrders.length > 0 ? t.visibleOrders : Array.from({ length: t.maxReflectionOrder + 1 }, (o, n) => n), this._plotFrequency = 1e3, this._plotOrders = Array.from({ length: t.maxReflectionOrder + 1 }, (o, n) => n), this.levelTimeProgression = t.levelTimeProgression || L(), this.impulseResponseResult = t.impulseResponseResult || L(), !this.roomID) {
-      const o = fe();
+    const t = { ...Xe, ...e };
+    if (this.kind = "beam-trace", this.uuid = t.uuid || L(), this.name = t.name, this.roomID = t.roomID, this.sourceIDs = t.sourceIDs, this.receiverIDs = t.receiverIDs, this.maxReflectionOrder = t.maxReflectionOrder, this.frequencies = t.frequencies, this._visualizationMode = t.visualizationMode, this._showAllBeams = t.showAllBeams, this._visibleOrders = t.visibleOrders.length > 0 ? t.visibleOrders : Array.from({ length: t.maxReflectionOrder + 1 }, (o, r) => r), this._plotFrequency = 1e3, this._plotOrders = Array.from({ length: t.maxReflectionOrder + 1 }, (o, r) => r), this.levelTimeProgression = t.levelTimeProgression || L(), this.impulseResponseResult = t.impulseResponseResult || L(), !this.roomID) {
+      const o = ue();
       o.length > 0 && (this.roomID = o[0].uuid);
     }
     T("ADD_RESULT", {
@@ -1282,17 +1283,17 @@ class Xe extends ue {
       name: `IR - ${this.name}`,
       uuid: this.impulseResponseResult,
       from: this.uuid
-    }), this.selectedPath = Ze(), R.markup.add(this.selectedPath), this.selectedBeamsGroup = new g.Group(), this.selectedBeamsGroup.name = "selected-beams-highlight", R.markup.add(this.selectedBeamsGroup), this.virtualSourcesGroup = new g.Group(), this.virtualSourcesGroup.name = "virtual-sources", R.markup.add(this.virtualSourcesGroup);
+    }), this.selectedPath = Ye(), R.markup.add(this.selectedPath), this.selectedBeamsGroup = new g.Group(), this.selectedBeamsGroup.name = "selected-beams-highlight", R.markup.add(this.selectedBeamsGroup), this.virtualSourcesGroup = new g.Group(), this.virtualSourcesGroup.name = "virtual-sources", R.markup.add(this.virtualSourcesGroup);
   }
   get temperature() {
     return this.room?.temperature ?? 20;
   }
   get c() {
-    return be(this.temperature);
+    return Pe(this.temperature);
   }
   save() {
     return {
-      ...pe([
+      ...he([
         "name",
         "kind",
         "uuid",
@@ -1319,10 +1320,10 @@ class Xe extends ue {
   setupClickHandler() {
     this.removeClickHandler();
     const e = R.renderer.domElement, t = (o) => {
-      const n = e.getBoundingClientRect();
+      const r = e.getBoundingClientRect();
       return new g.Vector2(
-        (o.clientX - n.left) / n.width * 2 - 1,
-        -((o.clientY - n.top) / n.height) * 2 + 1
+        (o.clientX - r.left) / r.width * 2 - 1,
+        -((o.clientY - r.top) / r.height) * 2 + 1
       );
     };
     this.hoverHandler = (o) => {
@@ -1330,15 +1331,15 @@ class Xe extends ue {
         e.style.cursor = "default";
         return;
       }
-      const n = t(o), r = new g.Raycaster();
-      r.setFromCamera(n, R.camera);
+      const r = t(o), n = new g.Raycaster();
+      n.setFromCamera(r, R.camera);
       const i = Array.from(this.virtualSourceMap.keys());
-      r.intersectObjects(i).length > 0 ? e.style.cursor = "pointer" : e.style.cursor = "default";
+      n.intersectObjects(i).length > 0 ? e.style.cursor = "pointer" : e.style.cursor = "default";
     }, this.clickHandler = (o) => {
       if (o.button !== 0 || this.virtualSourceMap.size === 0) return;
-      const n = t(o), r = new g.Raycaster();
-      r.setFromCamera(n, R.camera);
-      const i = Array.from(this.virtualSourceMap.keys()), a = r.intersectObjects(i);
+      const r = t(o), n = new g.Raycaster();
+      n.setFromCamera(r, R.camera);
+      const i = Array.from(this.virtualSourceMap.keys()), a = n.intersectObjects(i);
       if (a.length > 0) {
         const l = a[0].object, c = this.virtualSourceMap.get(l);
         c && (this.selectedVirtualSource === l ? (this.selectedVirtualSource = null, this.clearSelectedBeams()) : (this.selectedVirtualSource = l, this.highlightVirtualSourcePath(c)));
@@ -1351,47 +1352,47 @@ class Xe extends ue {
     this.selectedPath.geometry.setPoints([]), this.clearSelectedBeams();
     const t = C(e.reflectionOrder, this.maxReflectionOrder), o = new g.Vector3(e.virtualSource[0], e.virtualSource[1], e.virtualSource[2]);
     if (this.receiverIDs.length === 0) return;
-    const n = B.getState().containers[this.receiverIDs[0]];
-    if (!n) return;
-    const r = n.position.clone(), i = new g.LineDashedMaterial({
+    const r = M.getState().containers[this.receiverIDs[0]];
+    if (!r) return;
+    const n = r.position.clone(), i = new g.LineDashedMaterial({
       color: t,
       transparent: !0,
       opacity: 0.4,
       dashSize: 0.3,
       gapSize: 0.15
-    }), a = new g.BufferGeometry().setFromPoints([o, r]), l = new g.Line(a, i);
+    }), a = new g.BufferGeometry().setFromPoints([o, n]), l = new g.Line(a, i);
     l.computeLineDistances(), this.selectedBeamsGroup.add(l);
     const c = new g.SphereGeometry(0.18, 16, 16), u = new g.MeshBasicMaterial({
       color: t,
       transparent: !0,
       opacity: 0.4
-    }), p = new g.Mesh(c, u);
-    p.position.copy(o), this.selectedBeamsGroup.add(p);
+    }), m = new g.Mesh(c, u);
+    m.position.copy(o), this.selectedBeamsGroup.add(m);
     const f = e.polygonPath;
     if (!f || f.length === 0) return;
     const d = e.reflectionOrder;
-    for (const m of this.validPaths) {
-      const y = m.order;
+    for (const p of this.validPaths) {
+      const y = p.order;
       if (y !== d) continue;
       let I = !0;
       for (let b = 0; b < f.length; b++) {
         const P = y - b;
-        if (m.polygonIds[P] !== f[b]) {
+        if (p.polygonIds[P] !== f[b]) {
           I = !1;
           break;
         }
       }
       if (I) {
-        const b = m.points, P = m.order;
+        const b = p.points, P = p.order;
         for (let S = 0; S < b.length - 1; S++) {
-          const x = b[S], D = b[S + 1], E = x.distanceTo(D), A = new g.Vector3().addVectors(x, D).multiplyScalar(0.5), F = P - S, ie = F === 0 ? 16777215 : C(F, this.maxReflectionOrder), ae = new g.CylinderGeometry(0.025, 0.025, E, 8), le = new g.MeshBasicMaterial({ color: ie }), z = new g.Mesh(ae, le);
-          z.position.copy(A);
-          const ce = new g.Vector3().subVectors(D, x).normalize(), N = new g.Quaternion();
-          N.setFromUnitVectors(new g.Vector3(0, 1, 0), ce), z.setRotationFromQuaternion(N), this.selectedBeamsGroup.add(z);
+          const D = b[S], x = b[S + 1], E = D.distanceTo(x), B = new g.Vector3().addVectors(D, x).multiplyScalar(0.5), A = P - S, oe = A === 0 ? 16777215 : C(A, this.maxReflectionOrder), re = new g.CylinderGeometry(0.025, 0.025, E, 8), ne = new g.MeshBasicMaterial({ color: oe }), z = new g.Mesh(re, ne);
+          z.position.copy(B);
+          const ie = new g.Vector3().subVectors(x, D).normalize(), N = new g.Quaternion();
+          N.setFromUnitVectors(new g.Vector3(0, 1, 0), ie), z.setRotationFromQuaternion(N), this.selectedBeamsGroup.add(z);
         }
-        for (let S = 1; S < m.points.length - 1; S++) {
-          const x = P - S + 1, D = C(x, this.maxReflectionOrder), E = new g.SphereGeometry(0.08, 12, 12), A = new g.MeshBasicMaterial({ color: D }), F = new g.Mesh(E, A);
-          F.position.copy(m.points[S]), this.selectedBeamsGroup.add(F);
+        for (let S = 1; S < p.points.length - 1; S++) {
+          const D = P - S + 1, x = C(D, this.maxReflectionOrder), E = new g.SphereGeometry(0.08, 12, 12), B = new g.MeshBasicMaterial({ color: x }), A = new g.Mesh(E, B);
+          A.position.copy(p.points[S]), this.selectedBeamsGroup.add(A);
         }
         R.needsToRender = !0;
         return;
@@ -1409,37 +1410,37 @@ class Xe extends ue {
     if (!e) return [];
     const t = [];
     return this.surfaceToPolygonIndex.clear(), this.polygonToSurface.clear(), e.allSurfaces.forEach((o) => {
-      const n = this.surfaceToPolygons(o), r = t.length;
-      n.forEach((i, a) => {
-        this.polygonToSurface.set(r + a, o), t.push(i);
+      const r = this.surfaceToPolygons(o), n = t.length;
+      r.forEach((i, a) => {
+        this.polygonToSurface.set(n + a, o), t.push(i);
       }), this.surfaceToPolygonIndex.set(
         o.uuid,
-        n.map((i, a) => r + a)
+        r.map((i, a) => n + a)
       );
     }), t;
   }
   // Convert a Surface to Polygon3D objects
   surfaceToPolygons(e) {
-    const t = [], o = e.geometry, n = o.getAttribute("position");
-    if (!n) return t;
+    const t = [], o = e.geometry, r = o.getAttribute("position");
+    if (!r) return t;
     e.updateMatrixWorld(!0);
-    const r = e.matrixWorld, i = o.getIndex(), a = n.array, l = (c, u, p) => {
+    const n = e.matrixWorld, i = o.getIndex(), a = r.array, l = (c, u, m) => {
       const f = new g.Vector3(
         a[c * 3],
         a[c * 3 + 1],
         a[c * 3 + 2]
-      ).applyMatrix4(r), d = new g.Vector3(
+      ).applyMatrix4(n), d = new g.Vector3(
         a[u * 3],
         a[u * 3 + 1],
         a[u * 3 + 2]
-      ).applyMatrix4(r), m = new g.Vector3(
-        a[p * 3],
-        a[p * 3 + 1],
-        a[p * 3 + 2]
-      ).applyMatrix4(r), y = [
+      ).applyMatrix4(n), p = new g.Vector3(
+        a[m * 3],
+        a[m * 3 + 1],
+        a[m * 3 + 2]
+      ).applyMatrix4(n), y = [
         [f.x, f.y, f.z],
         [d.x, d.y, d.z],
-        [m.x, m.y, m.z]
+        [p.x, p.y, p.z]
       ], I = w.create(y);
       t.push(I);
     };
@@ -1448,7 +1449,7 @@ class Xe extends ue {
       for (let u = 0; u < c.length; u += 3)
         l(c[u], c[u + 1], c[u + 2]);
     } else {
-      const c = n.count;
+      const c = r.count;
       for (let u = 0; u < c; u += 3)
         l(u, u + 1, u + 2);
     }
@@ -1460,7 +1461,7 @@ class Xe extends ue {
       console.warn("BeamTraceSolver: No source selected");
       return;
     }
-    const e = B.getState().containers[this.sourceIDs[0]];
+    const e = M.getState().containers[this.sourceIDs[0]];
     if (!e) {
       console.warn("BeamTraceSolver: Source not found");
       return;
@@ -1473,8 +1474,8 @@ class Xe extends ue {
       e.position.x,
       e.position.y,
       e.position.z
-    ], o = new We(t);
-    this.btSolver = new Ke(this.polygons, o, {
+    ], o = new Ke(t);
+    this.btSolver = new Ze(this.polygons, o, {
       maxReflectionOrder: this.maxReflectionOrder
     }), console.log(`BeamTraceSolver: Built with ${this.polygons.length} polygons, max order ${this.maxReflectionOrder}`);
   }
@@ -1489,15 +1490,15 @@ class Xe extends ue {
       return;
     }
     switch (this.validPaths = [], this.clearVisualization(), this.receiverIDs.forEach((e) => {
-      const t = B.getState().containers[e];
+      const t = M.getState().containers[e];
       if (!t) return;
       const o = [
         t.position.x,
         t.position.y,
         t.position.z
-      ], n = this.btSolver.getPaths(o);
-      this.lastMetrics = this.btSolver.getMetrics(), n.forEach((r) => {
-        const i = this.convertPath(r);
+      ], r = this.btSolver.getPaths(o);
+      this.lastMetrics = this.btSolver.getMetrics(), r.forEach((n) => {
+        const i = this.convertPath(n);
         this.validPaths.push(i);
       });
     }), this.validPaths.sort((e, t) => e.arrivalTime - t.arrivalTime), this._visualizationMode) {
@@ -1511,34 +1512,34 @@ class Xe extends ue {
         this.drawPaths(), this.drawBeams();
         break;
     }
-    this.calculateLTP(this.c), console.log(`BeamTraceSolver: Found ${this.validPaths.length} valid paths`), this.lastMetrics && (console.log(`  Raycasts: ${this.lastMetrics.raycastCount}`), console.log(`  Cache hits: ${this.lastMetrics.failPlaneCacheHits}`), console.log(`  Buckets skipped: ${this.lastMetrics.bucketsSkipped}`)), R.needsToRender = !0;
+    this.calculateLTP(), console.log(`BeamTraceSolver: Found ${this.validPaths.length} valid paths`), this.lastMetrics && (console.log(`  Raycasts: ${this.lastMetrics.raycastCount}`), console.log(`  Cache hits: ${this.lastMetrics.failPlaneCacheHits}`), console.log(`  Buckets skipped: ${this.lastMetrics.bucketsSkipped}`)), R.needsToRender = !0;
   }
   // Convert beam-trace path to our format
   convertPath(e) {
-    const t = e.map((l) => new g.Vector3(l.position[0], l.position[1], l.position[2])), o = re(e), n = He(e), r = Ne(e), i = e.map((l) => l.polygonId);
+    const t = e.map((l) => new g.Vector3(l.position[0], l.position[1], l.position[2])), o = se(e), r = Ne(e, this.c), n = Ge(e), i = e.map((l) => l.polygonId);
     let a;
-    return t.length >= 2 ? a = new g.Vector3().subVectors(t[0], t[1]).normalize().negate() : a = new g.Vector3(0, 0, 1), { points: t, order: r, length: o, arrivalTime: n, polygonIds: i, arrivalDirection: a };
+    return t.length >= 2 ? a = new g.Vector3().subVectors(t[0], t[1]).normalize().negate() : a = new g.Vector3(0, 0, 1), { points: t, order: n, length: o, arrivalTime: r, polygonIds: i, arrivalDirection: a };
   }
   // Calculate Level Time Progression result
-  calculateLTP(e = 343) {
+  calculateLTP() {
     if (this.validPaths.length === 0) return;
-    const t = [...this.validPaths].sort((n, r) => n.arrivalTime - r.arrivalTime), o = { ...G.getState().results[this.levelTimeProgression] };
-    o.data = [], o.info = {
-      ...o.info,
+    const e = [...this.validPaths].sort((o, r) => o.arrivalTime - r.arrivalTime), t = { ...G.getState().results[this.levelTimeProgression] };
+    t.data = [], t.info = {
+      ...t.info,
       maxOrder: this.maxReflectionOrder,
       frequency: [this._plotFrequency]
     };
-    for (let n = 0; n < t.length; n++) {
-      const r = t[n], i = this.calculateArrivalPressure(o.info.initialSPL, r), a = q(i);
-      o.data.push({
+    for (let o = 0; o < e.length; o++) {
+      const r = e[o], n = this.calculateArrivalPressure(t.info.initialSPL, r), i = q(n);
+      t.data.push({
         time: r.arrivalTime,
-        pressure: a,
-        arrival: n + 1,
+        pressure: i,
+        arrival: o + 1,
         order: r.order,
-        uuid: `${this.uuid}-path-${n}`
+        uuid: `${this.uuid}-path-${o}`
       });
     }
-    T("UPDATE_RESULT", { uuid: this.levelTimeProgression, result: o });
+    T("UPDATE_RESULT", { uuid: this.levelTimeProgression, result: t });
   }
   // Clear LTP data
   clearLevelTimeProgressionData() {
@@ -1547,7 +1548,7 @@ class Xe extends ue {
   }
   // Setter for plot frequency (recalculates LTP when changed)
   set plotFrequency(e) {
-    this._plotFrequency = e, this.calculateLTP(this.c);
+    this._plotFrequency = e, this.calculateLTP();
   }
   get plotFrequency() {
     return this._plotFrequency;
@@ -1576,12 +1577,12 @@ class Xe extends ue {
   }
   drawPaths() {
     this.validPaths.filter((o) => this._visibleOrders.includes(o.order)).forEach((o) => {
-      const n = C(o.order, this.maxReflectionOrder), r = (n >> 16 & 255) / 255, i = (n >> 8 & 255) / 255, a = (n & 255) / 255, l = [r, i, a];
+      const r = C(o.order, this.maxReflectionOrder), n = (r >> 16 & 255) / 255, i = (r >> 8 & 255) / 255, a = (r & 255) / 255, l = [n, i, a];
       for (let c = 0; c < o.points.length - 1; c++) {
-        const u = o.points[c], p = o.points[c + 1];
+        const u = o.points[c], m = o.points[c + 1];
         R.markup.addLine(
           [u.x, u.y, u.z],
-          [p.x, p.y, p.z],
+          [m.x, m.y, m.z],
           l,
           l
         );
@@ -1594,31 +1595,31 @@ class Xe extends ue {
     if (!this.btSolver) return;
     this.clearVirtualSources(), this.virtualSourceMap.clear(), this.selectedVirtualSource = null;
     const e = this.validPaths, t = /* @__PURE__ */ new Map();
-    e.forEach((n) => {
-      const r = n.polygonIds.filter((i) => i !== null).join(",");
-      r && t.set(r, n);
-    }), this.btSolver.getBeamsForVisualization(this.maxReflectionOrder).forEach((n) => {
-      if (!this._visibleOrders.includes(n.reflectionOrder))
+    e.forEach((r) => {
+      const n = r.polygonIds.filter((i) => i !== null).join(",");
+      n && t.set(n, r);
+    }), this.btSolver.getBeamsForVisualization(this.maxReflectionOrder).forEach((r) => {
+      if (!this._visibleOrders.includes(r.reflectionOrder))
         return;
-      const r = this.beamHasValidPath(n, e);
-      if (!r && !this._showAllBeams)
+      const n = this.beamHasValidPath(r, e);
+      if (!n && !this._showAllBeams)
         return;
-      const i = Math.max(0.05, 0.1 - n.reflectionOrder * 0.01), a = C(n.reflectionOrder, this.maxReflectionOrder);
+      const i = Math.max(0.05, 0.1 - r.reflectionOrder * 0.01), a = C(r.reflectionOrder, this.maxReflectionOrder);
       let l = a;
-      if (!r) {
-        const d = (a >> 16 & 255) * 0.4 + 76.8, m = (a >> 8 & 255) * 0.4 + 128 * 0.6, y = (a & 255) * 0.4 + 128 * 0.6;
-        l = Math.round(d) << 16 | Math.round(m) << 8 | Math.round(y);
+      if (!n) {
+        const d = (a >> 16 & 255) * 0.4 + 76.8, p = (a >> 8 & 255) * 0.4 + 128 * 0.6, y = (a & 255) * 0.4 + 128 * 0.6;
+        l = Math.round(d) << 16 | Math.round(p) << 8 | Math.round(y);
       }
-      const c = new g.Vector3(n.virtualSource[0], n.virtualSource[1], n.virtualSource[2]), u = new g.SphereGeometry(i, 12, 12), p = new g.MeshStandardMaterial({
+      const c = new g.Vector3(r.virtualSource[0], r.virtualSource[1], r.virtualSource[2]), u = new g.SphereGeometry(i, 12, 12), m = new g.MeshStandardMaterial({
         color: l,
-        transparent: !r,
-        opacity: r ? 1 : 0.4,
+        transparent: !n,
+        opacity: n ? 1 : 0.4,
         roughness: 0.6,
         metalness: 0.1
-      }), f = new g.Mesh(u, p);
-      f.position.copy(c), this.virtualSourcesGroup.add(f), r && this.virtualSourceMap.set(f, {
-        ...n,
-        polygonPath: n.polygonPath || []
+      }), f = new g.Mesh(u, m);
+      f.position.copy(c), this.virtualSourcesGroup.add(f), n && this.virtualSourceMap.set(f, {
+        ...r,
+        polygonPath: r.polygonPath || []
       });
     }), this.setupClickHandler(), R.needsToRender = !0;
   }
@@ -1626,13 +1627,13 @@ class Xe extends ue {
   beamHasValidPath(e, t) {
     const o = e.polygonPath;
     if (!o || o.length === 0) return !1;
-    const n = e.reflectionOrder;
-    for (const r of t) {
-      if (r.order !== n) continue;
+    const r = e.reflectionOrder;
+    for (const n of t) {
+      if (n.order !== r) continue;
       let i = !0;
       for (let a = 0; a < o.length; a++) {
-        const l = n - a;
-        if (r.polygonIds[l] !== o[a]) {
+        const l = r - a;
+        if (n.polygonIds[l] !== o[a]) {
           i = !1;
           break;
         }
@@ -1659,13 +1660,13 @@ class Xe extends ue {
   async calculateImpulseResponse() {
     if (this.validPaths.length === 0)
       throw new Error("No paths calculated yet. Run calculate() first.");
-    const e = M.sampleRate, o = Array(this.frequencies.length).fill(100), n = this.validPaths[this.validPaths.length - 1].arrivalTime + 0.05, r = Math.floor(e * n) * 2, i = [];
+    const e = $.sampleRate, o = Array(this.frequencies.length).fill(100), r = this.validPaths[this.validPaths.length - 1].arrivalTime + 0.05, n = Math.floor(e * r) * 2, i = [];
     for (let c = 0; c < this.frequencies.length; c++)
-      i.push(new Float32Array(r));
+      i.push(new Float32Array(n));
     for (const c of this.validPaths) {
-      const u = Math.random() > 0.5 ? 1 : -1, p = this.calculateArrivalPressure(o, c), f = Math.floor(c.arrivalTime * e);
+      const u = Math.random() > 0.5 ? 1 : -1, m = this.calculateArrivalPressure(o, c), f = Math.floor(c.arrivalTime * e);
       for (let d = 0; d < this.frequencies.length; d++)
-        f < i[d].length && (i[d][f] += p[d] * u);
+        f < i[d].length && (i[d][f] += m[d] * u);
     }
     const l = new Worker(new URL(
       /* @vite-ignore */
@@ -1673,46 +1674,46 @@ class Xe extends ue {
       import.meta.url
     ));
     return new Promise((c, u) => {
-      l.postMessage({ samples: i }), l.onmessage = (p) => {
-        const f = p.data.samples, d = new Float32Array(f[0].length >> 1);
-        let m = 0;
+      l.postMessage({ samples: i }), l.onmessage = (m) => {
+        const f = m.data.samples, d = new Float32Array(f[0].length >> 1);
+        let p = 0;
         for (let P = 0; P < f.length; P++)
           for (let S = 0; S < d.length; S++)
-            d[S] += f[P][S], Math.abs(d[S]) > m && (m = Math.abs(d[S]));
-        const y = W(d), I = M.createOfflineContext(1, d.length, e), b = M.createBufferSource(y, I);
-        b.connect(I.destination), b.start(), M.renderContextAsync(I).then((P) => {
+            d[S] += f[P][S], Math.abs(d[S]) > p && (p = Math.abs(d[S]));
+        const y = ye(d), I = $.createOfflineContext(1, d.length, e), b = $.createBufferSource(y, I);
+        b.connect(I.destination), b.start(), $.renderContextAsync(I).then((P) => {
           this.impulseResponse = P, this.updateImpulseResponseResult(P, e), c(P);
         }).catch(u).finally(() => l.terminate());
-      }, l.onerror = (p) => {
-        l.terminate(), u(p);
+      }, l.onerror = (m) => {
+        l.terminate(), u(m);
       };
     });
   }
   // Calculate arrival pressure for a path
   calculateArrivalPressure(e, t) {
-    const o = me(U(e));
+    const o = de(U(e));
     t.polygonIds.forEach((i, a) => {
       if (i === null) return;
       const l = this.polygonToSurface.get(i);
       if (!l) return;
       let c = 0;
       if (a > 0 && a < t.points.length - 1) {
-        const u = new g.Vector3().subVectors(t.points[a + 1], t.points[a]).normalize(), p = new g.Vector3().subVectors(t.points[a - 1], t.points[a]).normalize(), f = Math.min(1, Math.max(-1, u.dot(p)));
+        const u = new g.Vector3().subVectors(t.points[a + 1], t.points[a]).normalize(), m = new g.Vector3().subVectors(t.points[a - 1], t.points[a]).normalize(), f = Math.min(1, Math.max(-1, u.dot(m)));
         c = Math.acos(f) / 2;
       }
       for (let u = 0; u < this.frequencies.length; u++) {
-        const p = Math.abs(l.reflectionFunction(this.frequencies[u], c));
-        o[u] *= p;
+        const m = Math.abs(l.reflectionFunction(this.frequencies[u], c));
+        o[u] *= m;
       }
     });
-    const n = q(ge(o)), r = Se(this.frequencies, this.temperature);
+    const r = q(fe(o)), n = ve(this.frequencies, this.temperature);
     for (let i = 0; i < this.frequencies.length; i++)
-      n[i] -= r[i] * t.length;
-    return U(n);
+      r[i] -= n[i] * t.length;
+    return U(r);
   }
   // Update the IR result with calculated data
   updateImpulseResponseResult(e, t) {
-    const o = B.getState().containers, n = this.sourceIDs.length > 0 && o[this.sourceIDs[0]]?.name || "source", r = this.receiverIDs.length > 0 && o[this.receiverIDs[0]]?.name || "receiver", i = e.getChannelData(0), a = [], l = Math.max(1, Math.floor(i.length / 2e3));
+    const o = M.getState().containers, r = this.sourceIDs.length > 0 && o[this.sourceIDs[0]]?.name || "source", n = this.receiverIDs.length > 0 && o[this.receiverIDs[0]]?.name || "receiver", i = e.getChannelData(0), a = [], l = Math.max(1, Math.floor(i.length / 2e3));
     for (let u = 0; u < i.length; u += l)
       a.push({
         time: u / t,
@@ -1724,28 +1725,34 @@ class Xe extends ue {
       data: a,
       info: {
         sampleRate: t,
-        sourceName: n,
-        receiverName: r,
+        sourceName: r,
+        receiverName: n,
         sourceId: this.sourceIDs[0] || "",
         receiverId: this.receiverIDs[0] || ""
       },
-      name: `IR: ${n} → ${r}`,
+      name: `IR: ${r} → ${n}`,
       uuid: this.impulseResponseResult,
       from: this.uuid
     };
     T("UPDATE_RESULT", { uuid: this.impulseResponseResult, result: c });
   }
   async playImpulseResponse() {
-    this.impulseResponse || await this.calculateImpulseResponse(), M.context.state === "suspended" && M.context.resume();
-    const e = M.context.createBufferSource();
-    e.buffer = this.impulseResponse, e.connect(M.context.destination), e.start(), T("BEAMTRACE_SET_PROPERTY", { uuid: this.uuid, property: "impulseResponsePlaying", value: !0 }), e.onended = () => {
-      e.stop(), e.disconnect(M.context.destination), T("BEAMTRACE_SET_PROPERTY", { uuid: this.uuid, property: "impulseResponsePlaying", value: !1 });
-    };
+    const e = await Se(
+      this.impulseResponse,
+      () => this.calculateImpulseResponse(),
+      this.uuid,
+      "BEAMTRACE_SET_PROPERTY"
+    );
+    this.impulseResponse = e.impulseResponse;
   }
-  async downloadImpulseResponse(e, t = M.sampleRate) {
-    this.impulseResponse || await this.calculateImpulseResponse();
-    const o = K([W(this.impulseResponse.getChannelData(0))], { sampleRate: t, bitDepth: 32 }), n = e.endsWith(".wav") ? "" : ".wav";
-    j.saveAs(o, e + n);
+  async downloadImpulseResponse(e, t = $.sampleRate) {
+    const o = await be(
+      this.impulseResponse,
+      () => this.calculateImpulseResponse(),
+      e,
+      t
+    );
+    this.impulseResponse = o.impulseResponse;
   }
   // Ambisonic impulse response storage
   ambisonicImpulseResponse;
@@ -1760,23 +1767,23 @@ class Xe extends ue {
   async calculateAmbisonicImpulseResponse(e = 1) {
     if (this.validPaths.length === 0)
       throw new Error("No paths calculated yet. Run calculate() first.");
-    const t = M.sampleRate, n = Array(this.frequencies.length).fill(100), r = this.validPaths[this.validPaths.length - 1].arrivalTime + 0.05;
-    if (r <= 0) throw new Error("Invalid impulse response duration");
-    const i = Math.floor(t * r) * 2;
+    const t = $.sampleRate, r = Array(this.frequencies.length).fill(100), n = this.validPaths[this.validPaths.length - 1].arrivalTime + 0.05;
+    if (n <= 0) throw new Error("Invalid impulse response duration");
+    const i = Math.floor(t * n) * 2;
     if (i < 2) throw new Error("Impulse response too short to process");
-    const a = Re(e), l = [];
+    const a = we(e), l = [];
     for (let u = 0; u < this.frequencies.length; u++) {
       l.push([]);
-      for (let p = 0; p < a; p++)
+      for (let m = 0; m < a; m++)
         l[u].push(new Float32Array(i));
     }
     for (const u of this.validPaths) {
-      const p = Math.random() > 0.5 ? 1 : -1, f = this.calculateArrivalPressure(n, u), d = Math.floor(u.arrivalTime * t);
+      const m = Math.random() > 0.5 ? 1 : -1, f = this.calculateArrivalPressure(r, u), d = Math.floor(u.arrivalTime * t);
       if (d >= i) continue;
-      const m = u.arrivalDirection, y = new Float32Array(1);
+      const p = u.arrivalDirection, y = new Float32Array(1);
       for (let I = 0; I < this.frequencies.length; I++) {
-        y[0] = f[I] * p;
-        const b = Ie(y, m.x, m.y, m.z, e, "threejs");
+        y[0] = f[I] * m;
+        const b = Re(y, p.x, p.y, p.z, e, "threejs");
         for (let P = 0; P < a; P++)
           l[I][P][d] += b[P][0];
       }
@@ -1786,57 +1793,52 @@ class Xe extends ue {
       "/assets/filter.worker-CKhUfGRZ.js",
       import.meta.url
     ));
-    return new Promise((u, p) => {
-      const f = async (d) => new Promise((m) => {
+    return new Promise((u, m) => {
+      const f = async (d) => new Promise((p) => {
         const y = [];
         for (let b = 0; b < this.frequencies.length; b++)
           y.push(l[b][d]);
         const I = c();
         I.postMessage({ samples: y }), I.onmessage = (b) => {
           const P = b.data.samples, S = new Float32Array(P[0].length >> 1);
-          for (let x = 0; x < P.length; x++)
-            for (let D = 0; D < S.length; D++)
-              S[D] += P[x][D];
-          I.terminate(), m(S);
+          for (let D = 0; D < P.length; D++)
+            for (let x = 0; x < S.length; x++)
+              S[x] += P[D][x];
+          I.terminate(), p(S);
         };
       });
       Promise.all(
-        Array.from({ length: a }, (d, m) => f(m))
+        Array.from({ length: a }, (d, p) => f(p))
       ).then((d) => {
-        let m = 0;
+        let p = 0;
         for (const P of d)
           for (let S = 0; S < P.length; S++)
-            Math.abs(P[S]) > m && (m = Math.abs(P[S]));
-        if (m > 0)
+            Math.abs(P[S]) > p && (p = Math.abs(P[S]));
+        if (p > 0)
           for (const P of d)
             for (let S = 0; S < P.length; S++)
-              P[S] /= m;
+              P[S] /= p;
         const y = d[0].length;
         if (y === 0) {
-          p(new Error("Filtered signal has zero length"));
+          m(new Error("Filtered signal has zero length"));
           return;
         }
-        const b = M.createOfflineContext(a, y, t).createBuffer(a, y, t);
+        const b = $.createOfflineContext(a, y, t).createBuffer(a, y, t);
         for (let P = 0; P < a; P++)
           b.copyToChannel(new Float32Array(d[P]), P);
         this.ambisonicImpulseResponse = b, this.ambisonicOrder = e, u(b);
-      }).catch(p);
+      }).catch(m);
     });
   }
-  /**
-   * Download the ambisonic impulse response as a multi-channel WAV file.
-   * Channels are in ACN order with N3D normalization.
-   *
-   * @param filename - Output filename (without extension)
-   * @param order - Ambisonic order (default: 1)
-   */
   async downloadAmbisonicImpulseResponse(e, t = 1) {
-    (!this.ambisonicImpulseResponse || this.ambisonicOrder !== t) && await this.calculateAmbisonicImpulseResponse(t);
-    const o = this.ambisonicImpulseResponse.numberOfChannels, n = this.ambisonicImpulseResponse.sampleRate, r = [];
-    for (let c = 0; c < o; c++)
-      r.push(this.ambisonicImpulseResponse.getChannelData(c));
-    const i = K(r, { sampleRate: n, bitDepth: 32 }), a = e.endsWith(".wav") ? "" : ".wav", l = t === 1 ? "FOA" : `HOA${t}`;
-    j.saveAs(i, `${e}_${l}${a}`);
+    const o = await Ie(
+      this.ambisonicImpulseResponse,
+      (r) => this.calculateAmbisonicImpulseResponse(r),
+      this.ambisonicOrder,
+      t,
+      e
+    );
+    this.ambisonicImpulseResponse = o.ambisonicImpulseResponse, this.ambisonicOrder = o.ambisonicOrder;
   }
   // Clear results
   reset() {
@@ -1851,13 +1853,13 @@ class Xe extends ue {
   }
   // Getters and setters
   get room() {
-    return B.getState().containers[this.roomID];
+    return M.getState().containers[this.roomID];
   }
   get sources() {
-    return this.sourceIDs.map((e) => B.getState().containers[e]).filter(Boolean);
+    return this.sourceIDs.map((e) => M.getState().containers[e]).filter(Boolean);
   }
   get receivers() {
-    return this.receiverIDs.map((e) => B.getState().containers[e]).filter(Boolean);
+    return this.receiverIDs.map((e) => M.getState().containers[e]).filter(Boolean);
   }
   get numValidPaths() {
     return this.validPaths.length;
@@ -1920,7 +1922,7 @@ class Xe extends ue {
       console.warn("BeamTraceSolver: No receiver selected for debugging.");
       return;
     }
-    const t = B.getState().containers[this.receiverIDs[0]];
+    const t = M.getState().containers[this.receiverIDs[0]];
     if (!t) {
       console.warn("BeamTraceSolver: Receiver not found.");
       return;
@@ -1942,7 +1944,7 @@ class Xe extends ue {
       return console.warn("BeamTraceSolver: No solver built. Run calculate() first."), [];
     if (this.receiverIDs.length === 0)
       return console.warn("BeamTraceSolver: No receiver selected."), [];
-    const e = B.getState().containers[this.receiverIDs[0]];
+    const e = M.getState().containers[this.receiverIDs[0]];
     if (!e)
       return console.warn("BeamTraceSolver: Receiver not found."), [];
     const t = [
@@ -1961,8 +1963,8 @@ class Xe extends ue {
     }
     const o = t[e];
     this.selectedPath.geometry.setPoints([]), this.clearSelectedBeams();
-    const n = C(o.order, this.maxReflectionOrder), r = new g.LineBasicMaterial({
-      color: n,
+    const r = C(o.order, this.maxReflectionOrder), n = new g.LineBasicMaterial({
+      color: r,
       linewidth: 2,
       transparent: !1
     });
@@ -1970,11 +1972,11 @@ class Xe extends ue {
       const a = new g.BufferGeometry().setFromPoints([
         o.points[i],
         o.points[i + 1]
-      ]), l = new g.Line(a, r);
+      ]), l = new g.Line(a, n);
       this.selectedBeamsGroup.add(l);
     }
     if (this.btSolver && this.receiverIDs.length > 0) {
-      const i = B.getState().containers[this.receiverIDs[0]];
+      const i = M.getState().containers[this.receiverIDs[0]];
       if (i) {
         const a = this.btSolver.getBeamsForVisualization(this.maxReflectionOrder), l = o.polygonIds[o.order];
         if (l !== null) {
@@ -1983,18 +1985,18 @@ class Xe extends ue {
           );
           if (c) {
             const u = new g.LineDashedMaterial({
-              color: n,
+              color: r,
               linewidth: 1,
               dashSize: 0.3,
               gapSize: 0.15,
               transparent: !0,
               opacity: 0.7
-            }), p = new g.Vector3(
+            }), m = new g.Vector3(
               c.virtualSource[0],
               c.virtualSource[1],
               c.virtualSource[2]
-            ), f = i.position.clone(), d = new g.BufferGeometry().setFromPoints([p, f]), m = new g.Line(d, u);
-            m.computeLineDistances(), this.selectedBeamsGroup.add(m);
+            ), f = i.position.clone(), d = new g.BufferGeometry().setFromPoints([m, f]), p = new g.Line(d, u);
+            p.computeLineDistances(), this.selectedBeamsGroup.add(p);
           }
         }
       }
@@ -2006,9 +2008,9 @@ class Xe extends ue {
     this.selectedPath.geometry.setPoints([]), this.clearSelectedBeams(), R.needsToRender = !0;
   }
 }
-k("BEAMTRACE_SET_PROPERTY", ve);
-k("REMOVE_BEAMTRACE", Pe);
-k("ADD_BEAMTRACE", ye(Xe));
+k("BEAMTRACE_SET_PROPERTY", me);
+k("REMOVE_BEAMTRACE", pe);
+k("ADD_BEAMTRACE", ge(Je));
 k("BEAMTRACE_CALCULATE", (s) => {
   _.getState().solvers[s].calculate(), setTimeout(() => T("BEAMTRACE_CALCULATE_COMPLETE", s), 0);
 });
@@ -2021,13 +2023,13 @@ k("BEAMTRACE_PLAY_IR", (s) => {
   });
 });
 k("BEAMTRACE_DOWNLOAD_IR", (s) => {
-  const e = _.getState().solvers[s], t = B.getState().containers, o = e.sourceIDs.length > 0 && t[e.sourceIDs[0]]?.name || "source", n = e.receiverIDs.length > 0 && t[e.receiverIDs[0]]?.name || "receiver", r = `ir-beamtrace-${o}-${n}`.replace(/[^a-zA-Z0-9-_]/g, "_");
-  e.downloadImpulseResponse(r).catch((i) => {
+  const e = _.getState().solvers[s], t = M.getState().containers, o = e.sourceIDs.length > 0 && t[e.sourceIDs[0]]?.name || "source", r = e.receiverIDs.length > 0 && t[e.receiverIDs[0]]?.name || "receiver", n = `ir-beamtrace-${o}-${r}`.replace(/[^a-zA-Z0-9-_]/g, "_");
+  e.downloadImpulseResponse(n).catch((i) => {
     window.alert(i.message || "Failed to download impulse response");
   });
 });
 k("BEAMTRACE_DOWNLOAD_AMBISONIC_IR", ({ uuid: s, order: e }) => {
-  const t = _.getState().solvers[s], o = B.getState().containers, n = t.sourceIDs.length > 0 && o[t.sourceIDs[0]]?.name || "source", r = t.receiverIDs.length > 0 && o[t.receiverIDs[0]]?.name || "receiver", i = `ir-beamtrace-ambi-${n}-${r}`.replace(/[^a-zA-Z0-9-_]/g, "_");
+  const t = _.getState().solvers[s], o = M.getState().containers, r = t.sourceIDs.length > 0 && o[t.sourceIDs[0]]?.name || "source", n = t.receiverIDs.length > 0 && o[t.receiverIDs[0]]?.name || "receiver", i = `ir-beamtrace-ambi-${r}-${n}`.replace(/[^a-zA-Z0-9-_]/g, "_");
   t.downloadAmbisonicImpulseResponse(i, e).catch((a) => {
     window.alert(a.message || "Failed to download ambisonic impulse response");
   });
@@ -2036,6 +2038,6 @@ k("SHOULD_ADD_BEAMTRACE", () => {
   T("ADD_BEAMTRACE", void 0);
 });
 export {
-  Xe as BeamTraceSolver
+  Je as BeamTraceSolver
 };
-//# sourceMappingURL=index-B81i3XB6.mjs.map
+//# sourceMappingURL=index-236T4EUi.mjs.map
