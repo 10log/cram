@@ -1,5 +1,5 @@
-import { S as I } from "./solver-BKzH4jqV.mjs";
-import { v as C, u as T, w as O, e as M, R as j, a as k, t as U, F as z, h as L, i as B, j as N, o as _, d as H, f as w, c as K, s as W } from "./index-q4iHHWia.mjs";
+import { S as I } from "./solver-BP4XtfBW.mjs";
+import { v as C, u as T, w as O, e as M, R as j, a as k, t as U, F as z, h as L, i as B, j as N, o as _, d as H, f as w, c as K, s as W } from "./index-Cm7mh5nT.mjs";
 import { a as q } from "./air-attenuation-CBIk1QMo.mjs";
 import { Matrix4 as E, Vector3 as Y, Triangle as $ } from "three";
 const P = {
@@ -13,30 +13,28 @@ class G extends I {
   volume;
   frequencies;
   roomID;
-  temperature;
   resultID;
   resultExists;
   constructor(t = P) {
     super(t), this.kind = "rt60", this.name = t.name || P.name, this.uuid = C(), this.sabine_rt = [], this.eyring_rt = [], this.ap_rt = [];
     const s = T.getState().getRooms();
-    this.roomID = s.length > 0 ? s[0].uuid : "", this.frequencies = O.slice(4, 11), this.temperature = 20, this.resultID = C(), this.resultExists = !1, this.volume = T.getState().containers[this.roomID].volumeOfMesh();
+    this.roomID = s.length > 0 ? s[0].uuid : "", this.frequencies = O.slice(4, 11), this.resultID = C(), this.resultExists = !1, this.volume = T.getState().containers[this.roomID].volumeOfMesh();
   }
   save() {
-    const { name: t, kind: s, uuid: r, autoCalculate: e, temperature: i } = this;
+    const { name: t, kind: s, uuid: r, autoCalculate: e } = this;
     return {
       name: t,
       kind: s,
       uuid: r,
-      autoCalculate: e,
-      temperature: i
+      autoCalculate: e
     };
   }
   restore(t) {
-    return super.restore(t), this.kind = t.kind, this.temperature = t.temperature ?? 20, this;
+    return super.restore(t), this.kind = t.kind, this;
   }
   calculate() {
     this.reset();
-    const s = q(this.frequencies, this.temperature).map((e) => e / (20 / Math.log(10)));
+    const s = q(this.frequencies, this.temperature, this.humidity).map((e) => e / (20 / Math.log(10)));
     this.sabine_rt = this.sabine(s), this.eyring_rt = this.eyring(s), this.ap_rt = this.arauPuchades(this.room, this.frequencies), this.resultExists || (M("ADD_RESULT", {
       kind: j.StatisticalRT60,
       data: [],
@@ -44,7 +42,7 @@ class G extends I {
         frequency: this.frequencies,
         airabsorption: !1,
         temperature: this.temperature,
-        humidity: 40
+        humidity: this.humidity
       },
       name: "Statistical RT Results",
       uuid: this.resultID,
@@ -66,30 +64,30 @@ class G extends I {
   }
   sabine(t) {
     let s = this.room;
-    const r = this.unitsConstant, e = this.volume, i = [];
+    const r = this.unitsConstant, e = this.volume, n = [];
     return this.frequencies.forEach((o, l) => {
       let a = 0;
-      s.allSurfaces.forEach((c) => {
-        a += c.getArea() * c.absorptionFunction(o);
+      s.allSurfaces.forEach((h) => {
+        a += h.getArea() * h.absorptionFunction(o);
       });
       let p = 4 * t[l] * e;
-      i.push(r * e / (a + p));
-    }), i;
+      n.push(r * e / (a + p));
+    }), n;
   }
   eyring(t) {
     let s = this.room;
-    const r = this.unitsConstant, e = this.volume, i = [];
+    const r = this.unitsConstant, e = this.volume, n = [];
     return this.frequencies.forEach((o, l) => {
       let a = 0, p = 0;
       s.allSurfaces.forEach((S) => {
         p += S.getArea(), a += S.getArea() * S.absorptionFunction(o);
       });
-      let c = Math.max(0, Math.min(a / p, 0.9999)), v = 4 * t[l] * e;
-      i.push(r * e / (-p * Math.log(1 - c) + v));
-    }), i;
+      let h = Math.max(0, Math.min(a / p, 0.9999)), v = 4 * t[l] * e;
+      n.push(r * e / (-p * Math.log(1 - h) + v));
+    }), n;
   }
   arauPuchades(t, s = U) {
-    const r = t.volumeOfMesh(), e = this.unitsConstant, i = new E().fromArray([
+    const r = t.volumeOfMesh(), e = this.unitsConstant, n = new E().fromArray([
       [0, 0, 0, 0],
       [0, 1, 0, 0],
       [0, 0, 1, 0],
@@ -104,19 +102,19 @@ class G extends I {
       [0, 1, 0, 0],
       [0, 0, 0, 0],
       [0, 0, 0, 1]
-    ].flat()), a = [i, o, l], c = t.allSurfaces.map((h) => {
-      const n = h.triangles.reduce((f, u) => {
+    ].flat()), a = [n, o, l], h = t.allSurfaces.map((c) => {
+      const i = c.triangles.reduce((f, u) => {
         const A = a.map((m) => u.map((R) => new Y().fromArray(R).applyMatrix4(m))).map((m) => new $(...m).getArea());
         return f.map((m, R) => m + A[R]);
-      }, [0, 0, 0]), g = s.map((f) => n.map((u) => h.absorptionFunction(f) * u));
-      return { area: n, sabines: g };
-    }), [[v, S], [x, F], [D, V]] = [0, 1, 2].map((h) => {
-      const n = c.reduce((u, { area: y }) => u + y[h], 0), f = s.map((u, y) => c.reduce((A, { sabines: m }) => A + m[y][h], 0)).map((u) => Math.max(0, Math.min(u / n, 0.9999)));
-      return [n, f];
+      }, [0, 0, 0]), g = s.map((f) => i.map((u) => c.absorptionFunction(f) * u));
+      return { area: i, sabines: g };
+    }), [[v, S], [x, F], [D, V]] = [0, 1, 2].map((c) => {
+      const i = h.reduce((u, { area: y }) => u + y[c], 0), f = s.map((u, y) => h.reduce((A, { sabines: m }) => A + m[y][c], 0)).map((u) => Math.max(0, Math.min(u / i, 0.9999)));
+      return [i, f];
     }), d = v + x + D;
-    return s.map((h, n) => {
-      const g = 4 * q([h])[0] * r;
-      return (e * r / (-d * Math.log(1 - S[n]) + g)) ** (v / d) * (e * r / (-d * Math.log(1 - F[n]) + g)) ** (x / d) * (e * r / (-d * Math.log(1 - V[n]) + g)) ** (D / d);
+    return s.map((c, i) => {
+      const g = 4 * q([c])[0] * r;
+      return (e * r / (-d * Math.log(1 - S[i]) + g)) ** (v / d) * (e * r / (-d * Math.log(1 - F[i]) + g)) ** (x / d) * (e * r / (-d * Math.log(1 - V[i]) + g)) ** (D / d);
     });
   }
   onParameterConfigFocus() {
@@ -138,6 +136,12 @@ class G extends I {
   // setters and getters
   get unitsConstant() {
     return L[B.getState().units];
+  }
+  get temperature() {
+    return this.room?.temperature ?? 20;
+  }
+  get humidity() {
+    return this.room?.humidity ?? 40;
   }
   get room() {
     return T.getState().containers[this.roomID];
@@ -161,4 +165,4 @@ export {
   G as RT60,
   G as default
 };
-//# sourceMappingURL=index-BG1QvDVX.mjs.map
+//# sourceMappingURL=index-DTGj6OIu.mjs.map

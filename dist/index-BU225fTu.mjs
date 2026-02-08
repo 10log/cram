@@ -1,11 +1,11 @@
-import { S as C } from "./solver-BKzH4jqV.mjs";
-import { v as y, e as v, R as V, g as M, r as P, p as k, u as m, a as A, P as O, m as F, L as T, F as q, b as U, I as H, o as f, s as G, c as z, d as j, f as R } from "./index-q4iHHWia.mjs";
+import { S as C } from "./solver-BP4XtfBW.mjs";
+import { v as y, e as v, R as V, g as M, r as P, p as k, u as m, a as A, P as O, m as F, L as T, F as q, b as U, I as H, o as f, s as G, c as z, d as j, f as R } from "./index-Cm7mh5nT.mjs";
 import * as E from "three";
 import { Vector3 as _ } from "three";
 import { MeshLine as N, MeshLineMaterial as W } from "three.meshline";
 import { a as Y } from "./air-attenuation-CBIk1QMo.mjs";
 import { s as B } from "./sound-speed-Biev-mJ1.mjs";
-import { a as g, w as $, n as K } from "./audio-engine-tlXuGUkk.mjs";
+import { a as g, w as $, n as K } from "./audio-engine-CqZtbt41.mjs";
 function Z() {
   let o = [];
   const e = new N();
@@ -156,7 +156,6 @@ class X extends C {
   levelTimeProgression;
   maxReflectionOrder;
   frequencies;
-  temperature;
   _imageSourcesVisible;
   _rayPathsVisible;
   _plotOrders;
@@ -169,7 +168,7 @@ class X extends C {
   _plotFrequency;
   isHybrid;
   constructor(e = Q, t = !1) {
-    super(e), this.uuid = e.uuid || y(), this.kind = "image-source", this.name = e.name, this.roomID = e.roomID, this.sourceIDs = e.sourceIDs, this.receiverIDs = e.receiverIDs, this.maxReflectionOrder = e.maxReflectionOrder, this.frequencies = e.frequencies, this._imageSourcesVisible = e.imageSourcesVisible, this._rayPathsVisible = e.rayPathsVisible, this._plotOrders = e.plotOrders, this.levelTimeProgression = e.levelTimeProgression || y(), this.isHybrid = t, this.temperature = e.temperature != null ? e.temperature : 20, this.impulseResponsePlaying = !1, this._plotFrequency = 1e3, this.isHybrid || v("ADD_RESULT", {
+    super(e), this.uuid = e.uuid || y(), this.kind = "image-source", this.name = e.name, this.roomID = e.roomID, this.sourceIDs = e.sourceIDs, this.receiverIDs = e.receiverIDs, this.maxReflectionOrder = e.maxReflectionOrder, this.frequencies = e.frequencies, this._imageSourcesVisible = e.imageSourcesVisible, this._rayPathsVisible = e.rayPathsVisible, this._plotOrders = e.plotOrders, this.levelTimeProgression = e.levelTimeProgression || y(), this.isHybrid = t, this.impulseResponsePlaying = !1, this._plotFrequency = 1e3, this.isHybrid || v("ADD_RESULT", {
       kind: V.LevelTimeProgression,
       data: [],
       info: {
@@ -447,6 +446,9 @@ class X extends C {
   set plotOrders(e) {
     this._plotOrders = e, this.clearRayPaths(), this.clearImageSources(), this.rayPathsVisible && this.drawRayPaths(), this.imageSourcesVisible && this.drawImageSources();
   }
+  get temperature() {
+    return this.room?.temperature ?? 20;
+  }
   get c() {
     return B(this.temperature);
   }
@@ -534,4 +536,4 @@ export {
   X as ImageSourceSolver,
   X as default
 };
-//# sourceMappingURL=index-rOw4ZKzh.mjs.map
+//# sourceMappingURL=index-BU225fTu.mjs.map

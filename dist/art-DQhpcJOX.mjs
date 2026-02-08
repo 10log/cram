@@ -1,5 +1,5 @@
-import { S as it } from "./solver-BKzH4jqV.mjs";
-import { T as rt, v as ct, u as Z, w as at, R as lt, a as ht, e as tt, o as X, d as ut, c as ft, s as dt, f as mt } from "./index-q4iHHWia.mjs";
+import { S as it } from "./solver-BP4XtfBW.mjs";
+import { T as rt, v as ct, u as Z, w as at, R as lt, a as ht, e as tt, o as X, d as ut, c as ft, s as dt, f as mt } from "./index-Cm7mh5nT.mjs";
 import { IcosahedronGeometry as gt, Vector3 as y, Triangle as xt } from "three";
 import { a as et } from "./air-attenuation-CBIk1QMo.mjs";
 import { s as pt } from "./sound-speed-Biev-mJ1.mjs";
@@ -610,8 +610,6 @@ class $t extends it {
   maxIterations;
   /** Stop when unshot/initial < threshold */
   convergenceThreshold;
-  /** Temperature in Celsius for speed of sound and air absorption */
-  temperature;
   /** Internal temporal sample rate in Hz */
   sampleRate;
   /** Octave band center frequencies to compute */
@@ -629,7 +627,7 @@ class $t extends it {
   constructor(t = ot) {
     super(t), this.kind = "art", this.name = t.name || ot.name, this.uuid = ct();
     const e = Z.getState().getRooms();
-    this.roomID = t.roomID || (e.length > 0 ? e[0].uuid : ""), this.sourceIDs = t.sourceIDs || [], this.receiverIDs = t.receiverIDs || [], this.maxEdgeLength = t.maxEdgeLength ?? 0.5, this.brdfDetail = t.brdfDetail ?? 1, this.raysPerShoot = t.raysPerShoot ?? 200, this.maxIterations = t.maxIterations ?? 100, this.convergenceThreshold = t.convergenceThreshold ?? 0.01, this.temperature = t.temperature ?? 20, this.sampleRate = t.sampleRate ?? 1e3, this.frequencies = at.slice(4, 11), this.initialEnergy = 500, this.sourceRays = 500, this.lastIterationCount = 0, this.lastPatchCount = 0, this.hasEmittedResults = !1;
+    this.roomID = t.roomID || (e.length > 0 ? e[0].uuid : ""), this.sourceIDs = t.sourceIDs || [], this.receiverIDs = t.receiverIDs || [], this.maxEdgeLength = t.maxEdgeLength ?? 0.5, this.brdfDetail = t.brdfDetail ?? 1, this.raysPerShoot = t.raysPerShoot ?? 200, this.maxIterations = t.maxIterations ?? 100, this.convergenceThreshold = t.convergenceThreshold ?? 0.01, this.sampleRate = t.sampleRate ?? 1e3, this.frequencies = at.slice(4, 11), this.initialEnergy = 500, this.sourceRays = 500, this.lastIterationCount = 0, this.lastPatchCount = 0, this.hasEmittedResults = !1;
   }
   calculate() {
     const t = Z.getState().containers, e = t[this.roomID];
@@ -759,8 +757,7 @@ class $t extends it {
       raysPerShoot: a,
       maxIterations: c,
       convergenceThreshold: m,
-      temperature: x,
-      sampleRate: g
+      sampleRate: x
     } = this;
     return {
       name: t,
@@ -775,15 +772,17 @@ class $t extends it {
       raysPerShoot: a,
       maxIterations: c,
       convergenceThreshold: m,
-      temperature: x,
-      sampleRate: g
+      sampleRate: x
     };
   }
   restore(t) {
-    return super.restore(t), this.kind = t.kind, t.roomID !== void 0 && (this.roomID = t.roomID), t.sourceIDs !== void 0 && (this.sourceIDs = t.sourceIDs), t.receiverIDs !== void 0 && (this.receiverIDs = t.receiverIDs), t.maxEdgeLength !== void 0 && (this.maxEdgeLength = t.maxEdgeLength), t.brdfDetail !== void 0 && (this.brdfDetail = t.brdfDetail), t.raysPerShoot !== void 0 && (this.raysPerShoot = t.raysPerShoot), t.maxIterations !== void 0 && (this.maxIterations = t.maxIterations), t.convergenceThreshold !== void 0 && (this.convergenceThreshold = t.convergenceThreshold), t.temperature !== void 0 && (this.temperature = t.temperature), t.sampleRate !== void 0 && (this.sampleRate = t.sampleRate), this;
+    return super.restore(t), this.kind = t.kind, t.roomID !== void 0 && (this.roomID = t.roomID), t.sourceIDs !== void 0 && (this.sourceIDs = t.sourceIDs), t.receiverIDs !== void 0 && (this.receiverIDs = t.receiverIDs), t.maxEdgeLength !== void 0 && (this.maxEdgeLength = t.maxEdgeLength), t.brdfDetail !== void 0 && (this.brdfDetail = t.brdfDetail), t.raysPerShoot !== void 0 && (this.raysPerShoot = t.raysPerShoot), t.maxIterations !== void 0 && (this.maxIterations = t.maxIterations), t.convergenceThreshold !== void 0 && (this.convergenceThreshold = t.convergenceThreshold), t.sampleRate !== void 0 && (this.sampleRate = t.sampleRate), this;
   }
   get rooms() {
     return Z.getState().getRooms();
+  }
+  get temperature() {
+    return this.room?.temperature ?? 20;
   }
   get room() {
     return Z.getState().containers[this.roomID];
@@ -803,4 +802,4 @@ export {
   $t as ART,
   $t as default
 };
-//# sourceMappingURL=art-yPh0NcMI.mjs.map
+//# sourceMappingURL=art-DQhpcJOX.mjs.map
