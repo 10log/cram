@@ -986,6 +986,7 @@ class RayTracer extends Solver {
   }
 
   start() {
+    this._isRunning = true;
     this._cachedAirAtt = ac.airAttenuation(this.frequencies, this._temperature);
     this.mapIntersectableObjects();
     if (this.edgeDiffractionEnabled && this.room) {
@@ -1005,6 +1006,7 @@ class RayTracer extends Solver {
   }
 
   stop() {
+    this._isRunning = false;
     this.__calc_time = Date.now() - this.__start_time;
     this._gpuRunning = false;
     // Defer GPU disposal to let any in-flight traceBatch/mapAsync settle,
