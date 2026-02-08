@@ -17,6 +17,8 @@ export interface RoomProps extends ContainerProps {
   originalFileName?: string;
   originalFileData?: string;
   units?: UNITS;
+  temperature?: number;
+  humidity?: number;
 }
 
 export interface RoomSaveObject {
@@ -31,6 +33,8 @@ export interface RoomSaveObject {
   position: number[];
   rotation: number[];
   scale: number[];
+  temperature?: number;
+  humidity?: number;
 }
 
 export class Room extends Container {
@@ -41,10 +45,14 @@ export class Room extends Container {
   originalFileName!: string;
   originalFileData!: string;
   surfaceMap!: KVP<Surface>;
+  temperature: number;
+  humidity: number;
 
   constructor(name?: string, props?: RoomProps) {
     super(name || "new room");
     this.kind = "room";
+    this.temperature = props?.temperature ?? 20;
+    this.humidity = props?.humidity ?? 40;
 
     props && this.init(props, true);
   }
@@ -96,7 +104,9 @@ export class Room extends Container {
       visible: this.visible,
       position: this.position.toArray(),
       rotation: this.rotation.toArray().slice(0, 3),
-      scale: this.scale.toArray()
+      scale: this.scale.toArray(),
+      temperature: this.temperature,
+      humidity: this.humidity,
     } as RoomSaveObject;
   }
   restore(state: RoomSaveObject) {
@@ -120,6 +130,8 @@ export class Room extends Container {
     this.rotation.set(state.rotation[0], state.rotation[1], state.rotation[2], "XYZ");
     this.scale.set(state.scale[0], state.scale[1], state.scale[2]);
     this.uuid = state.uuid;
+    this.temperature = state.temperature ?? 20;
+    this.humidity = state.humidity ?? 40;
     return this;
   }
 

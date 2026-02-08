@@ -38,7 +38,6 @@ export interface ARTProps extends SolverParams {
   raysPerShoot?: number;
   maxIterations?: number;
   convergenceThreshold?: number;
-  temperature?: number;
   sampleRate?: number;
 }
 
@@ -55,7 +54,6 @@ export type ARTSaveObject = {
   raysPerShoot?: number;
   maxIterations?: number;
   convergenceThreshold?: number;
-  temperature?: number;
   sampleRate?: number;
 };
 
@@ -79,8 +77,6 @@ export class ART extends Solver {
   public maxIterations: number;
   /** Stop when unshot/initial < threshold */
   public convergenceThreshold: number;
-  /** Temperature in Celsius for speed of sound and air absorption */
-  public temperature: number;
   /** Internal temporal sample rate in Hz */
   public sampleRate: number;
   /** Octave band center frequencies to compute */
@@ -114,7 +110,6 @@ export class ART extends Solver {
     this.raysPerShoot = props.raysPerShoot ?? 200;
     this.maxIterations = props.maxIterations ?? 100;
     this.convergenceThreshold = props.convergenceThreshold ?? 0.01;
-    this.temperature = props.temperature ?? 20;
     this.sampleRate = props.sampleRate ?? 1000;
 
     this.frequencies = whole_octave.slice(4, 11); // 125 Hz to 8000 Hz
@@ -330,11 +325,11 @@ export class ART extends Solver {
   save() {
     const { name, kind, uuid, autoCalculate, roomID, sourceIDs, receiverIDs,
             maxEdgeLength, brdfDetail, raysPerShoot, maxIterations,
-            convergenceThreshold, temperature, sampleRate } = this;
+            convergenceThreshold, sampleRate } = this;
     return {
       name, kind, uuid, autoCalculate, roomID, sourceIDs, receiverIDs,
       maxEdgeLength, brdfDetail, raysPerShoot, maxIterations,
-      convergenceThreshold, temperature, sampleRate,
+      convergenceThreshold, sampleRate,
     } as ARTSaveObject;
   }
 
@@ -349,13 +344,16 @@ export class ART extends Solver {
     if (state.raysPerShoot !== undefined) this.raysPerShoot = state.raysPerShoot;
     if (state.maxIterations !== undefined) this.maxIterations = state.maxIterations;
     if (state.convergenceThreshold !== undefined) this.convergenceThreshold = state.convergenceThreshold;
-    if (state.temperature !== undefined) this.temperature = state.temperature;
     if (state.sampleRate !== undefined) this.sampleRate = state.sampleRate;
     return this;
   }
 
   get rooms() {
     return useContainer.getState().getRooms();
+  }
+
+  get temperature(): number {
+    return this.room?.temperature ?? 20;
   }
 
   get room(): Room {

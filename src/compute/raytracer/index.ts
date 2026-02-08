@@ -121,7 +121,6 @@ class RayTracer extends Solver {
   bvh!: BVH;
   observed_name: Observable<string>;
 
-  _temperature: number;
   _cachedAirAtt: number[];
 
   hybrid: boolean;
@@ -176,8 +175,7 @@ class RayTracer extends Solver {
     this._isRunning = params.isRunning || defaults.isRunning;
     this._runningWithoutReceivers = params.runningWithoutReceivers || defaults.runningWithoutReceivers;
     this.frequencies = params.frequencies || defaults.frequencies;
-    this._temperature = params.temperature ?? defaults.temperature;
-    this._cachedAirAtt = ac.airAttenuation(this.frequencies, this._temperature);
+    this._cachedAirAtt = ac.airAttenuation(this.frequencies, this.temperature);
     this.intervals = [] as number[];
     this.plotData = [] as Plotly.Data[];
     this.plotStyle = params.plotStyle || defaults.plotStyle;
@@ -337,14 +335,10 @@ class RayTracer extends Solver {
   }
   update = () => {};
   get temperature(): number {
-    return this._temperature;
-  }
-  set temperature(value: number) {
-    this._temperature = value;
-    this._cachedAirAtt = ac.airAttenuation(this.frequencies, value);
+    return this.room?.temperature ?? 20;
   }
   get c(): number {
-    return ac.soundSpeed(this._temperature);
+    return ac.soundSpeed(this.temperature);
   }
 
   save() {
@@ -368,7 +362,6 @@ class RayTracer extends Solver {
       plotStyle,
       paths,
       frequencies,
-      temperature,
       convergenceThreshold,
       autoStop,
       rrThreshold,
@@ -404,7 +397,6 @@ class RayTracer extends Solver {
       plotStyle,
       paths,
       frequencies,
-      temperature,
       convergenceThreshold,
       autoStop,
       rrThreshold,
@@ -1009,7 +1001,7 @@ class RayTracer extends Solver {
 
   start() {
     this._isRunning = true;
-    this._cachedAirAtt = ac.airAttenuation(this.frequencies, this._temperature);
+    this._cachedAirAtt = ac.airAttenuation(this.frequencies, this.temperature);
     this.mapIntersectableObjects();
     if (this.edgeDiffractionEnabled && this.room) {
       this._edgeGraph = buildEdgeGraph(this.room.allSurfaces);
@@ -1117,7 +1109,7 @@ class RayTracer extends Solver {
       receiverPositions,
       this.frequencies,
       this.c,
-      this._temperature,
+      this.temperature,
       this.raycaster,
       surfaces,
     );
@@ -1514,7 +1506,6 @@ class RayTracer extends Solver {
         rayPathsVisible: false,
         plotOrders: [0, 1, 2], // all paths
         frequencies: this.frequencies,
-        temperature: this.temperature,
       };
 
       let image_source_solver = new ImageSourceSolver(isparams, true);

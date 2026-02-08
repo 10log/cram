@@ -20,7 +20,6 @@ export type RT60SaveObject = {
   name: string;
   kind: "rt60";
   autoCalculate: boolean;
-  temperature?: number;
 }
 
 const defaults = {
@@ -38,8 +37,6 @@ export class RT60 extends Solver{
   public frequencies: number[];
 
   public roomID: string;
-
-  public temperature: number;
 
   public resultID: string;
 
@@ -59,7 +56,6 @@ export class RT60 extends Solver{
     this.roomID = rooms.length > 0 ? rooms[0].uuid : ''; 
 
     this.frequencies = whole_octave.slice(4,11);
-    this.temperature = 20;
 
     this.resultID = uuid(); 
     this.resultExists = false; 
@@ -68,13 +64,12 @@ export class RT60 extends Solver{
   }
 
   save() {
-     const { name, kind, uuid, autoCalculate, temperature } = this;
+     const { name, kind, uuid, autoCalculate } = this;
      return {
        name,
        kind,
        uuid,
        autoCalculate,
-       temperature,
      } as RT60SaveObject;
   }
 
@@ -83,7 +78,6 @@ export class RT60 extends Solver{
     super.restore(state);
     // Restore RT60-specific/core identity properties
     this.kind = state.kind;
-    this.temperature = state.temperature ?? 20;
     return this;
   }
 
@@ -91,7 +85,7 @@ export class RT60 extends Solver{
 
     this.reset(); 
 
-    const airAtten = airAttenuation(this.frequencies, this.temperature);
+    const airAtten = airAttenuation(this.frequencies, this.temperature, this.humidity);
     const mValues = airAtten.map(a => a / (20 / Math.log(10))); // convert dB/m to Np/m
     this.sabine_rt = this.sabine(mValues);
     this.eyring_rt = this.eyring(mValues);
@@ -105,7 +99,7 @@ export class RT60 extends Solver{
           frequency: this.frequencies,
           airabsorption: false,
           temperature: this.temperature,
-          humidity: 40,
+          humidity: this.humidity,
         },
         name: `Statistical RT Results`,
         uuid: this.resultID,
@@ -270,8 +264,14 @@ export class RT60 extends Solver{
   get unitsConstant(){
     return RT_CONSTANTS[useAppStore.getState().units];
   }
+  get temperature(): number {
+    return this.room?.temperature ?? 20;
+  }
+  get humidity(): number {
+    return this.room?.humidity ?? 40;
+  }
   get room(){
-    return useContainer.getState().containers[this.roomID] as Room; 
+    return useContainer.getState().containers[this.roomID] as Room;
   }
   get noResults(){
     if (this.sabine_rt.length === 0 && this.eyring_rt.length === 0  && this.ap_rt.length === 0 ){

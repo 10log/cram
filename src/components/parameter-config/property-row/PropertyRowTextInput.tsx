@@ -12,6 +12,7 @@ const textInputSx: SxProps<Theme> = {
   "& .MuiInputBase-input": {
     py: 0.5,
     px: 1,
+    textAlign: "center",
   },
   "& .MuiOutlinedInput-notchedOutline": {
     borderColor: "divider",

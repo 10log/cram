@@ -4,10 +4,11 @@ import type { SxProps, Theme } from "@mui/material/styles";
 
 const propertyRowContainerSx: SxProps<Theme> = {
   display: "grid",
-  gridTemplateColumns: "3fr 8fr 2fr",
+  gridTemplateColumns: "2fr 3fr",
   userSelect: "none",
   fontSize: "0.75rem", // MUI caption size (12px)
   mb: 0.5,
+  px: 0.5,
   alignItems: "center",
   "&:last-child": {
     mb: 0,

@@ -4,6 +4,7 @@ import PropertyRow from "./property-row/PropertyRow";
 import PropertyRowLabel from "./property-row/PropertyRowLabel";
 import PropertyRowButton from "./property-row/PropertyRowButton";
 import { PropertyRowSelect } from "./property-row/PropertyRowSelect";
+import { PropertyRowNumberInput } from "./property-row/PropertyRowNumberInput";
 import { createPropertyInputs, useSolverProperty, PropertyButton } from "./SolverComponents";
 import { renderer } from "../../render/renderer";
 import SourceReceiverMatrix from "./SourceReceiverMatrix";
@@ -37,8 +38,90 @@ const toggleGroupSx: SxProps<Theme> = {
 };
 
 const toggleRowSx: SxProps<Theme> = {
-  px: 1,
+  px: 0.5,
   py: 0.5,
+};
+
+const headOrientationRowSx: SxProps<Theme> = {
+  display: "flex",
+  alignItems: "center",
+  gap: 0.25,
+  flex: 1,
+};
+
+const axisLabelSx: SxProps<Theme> = {
+  fontSize: "0.6rem",
+  color: "text.disabled",
+  minWidth: 10,
+  textAlign: "center",
+};
+
+const T30_BANDS = ["125", "250", "500", "1k", "2k", "4k", "8k"];
+
+const t30TableSx: SxProps<Theme> = {
+  display: "grid",
+  gridTemplateColumns: "repeat(7, 1fr)",
+  gap: 0,
+  px: 0.5,
+  mb: 0.5,
+};
+
+const t30HeaderSx: SxProps<Theme> = {
+  fontSize: "0.6rem",
+  color: "text.disabled",
+  textAlign: "center",
+  pb: 0.25,
+};
+
+const t30CellSx: SxProps<Theme> = {
+  fontSize: "0.7rem",
+  fontFamily: "monospace",
+  color: "text.primary",
+  textAlign: "center",
+};
+
+const dialogPaperSx: SxProps<Theme> = {
+  bgcolor: "background.paper",
+};
+
+const dialogTitleSx: SxProps<Theme> = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+};
+
+const subjectGridSx: SxProps<Theme> = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+  gap: 1.5,
+  py: 1,
+};
+
+const subjectCardSx = (selected: boolean): SxProps<Theme> => ({
+  border: 2,
+  borderColor: selected ? "primary.main" : "divider",
+  borderRadius: 2,
+  p: 1,
+  cursor: "pointer",
+  bgcolor: selected ? "action.selected" : "background.paper",
+  transition: "all 0.15s",
+  "&:hover": {
+    borderColor: selected ? "primary.main" : "text.secondary",
+  },
+});
+
+const thumbnailContainerSx: SxProps<Theme> = {
+  display: "flex",
+  gap: 0.5,
+  justifyContent: "center",
+  mb: 0.75,
+};
+
+const thumbnailImgStyle: React.CSSProperties = {
+  width: 80,
+  height: 100,
+  objectFit: "cover",
+  borderRadius: 4,
 };
 
 const HRTFSubjectDialog = ({
@@ -64,8 +147,8 @@ const HRTFSubjectDialog = ({
   }, [open]);
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth slotProps={{ paper: { sx: dialogPaperSx } }}>
+      <DialogTitle sx={dialogTitleSx}>
         Select HRTF Subject
         <IconButton onClick={onClose} size="small" aria-label="close">
           &#x2715;
@@ -73,53 +156,41 @@ const HRTFSubjectDialog = ({
       </DialogTitle>
       <DialogContent>
         {error && <div style={{ color: "red", marginBottom: 8 }}>{error}</div>}
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-          gap: 12,
-          padding: "8px 0",
-        }}>
+        <Box sx={subjectGridSx}>
           {subjects.map((subject) => (
-            <div
+            <Box
               key={subject.id}
               onClick={() => {
                 onSelect(subject.id);
                 onClose();
               }}
-              style={{
-                border: subject.id === selectedId ? "2px solid #1976d2" : "1px solid #ccc",
-                borderRadius: 8,
-                padding: 8,
-                cursor: "pointer",
-                backgroundColor: subject.id === selectedId ? "#e3f2fd" : "#fff",
-                transition: "all 0.15s",
-              }}
+              sx={subjectCardSx(subject.id === selectedId)}
             >
-              <div style={{ display: "flex", gap: 4, justifyContent: "center", marginBottom: 6 }}>
+              <Box sx={thumbnailContainerSx}>
                 {subject.thumbnailLeft && (
                   <img
                     src={getThumbnailUrl(subject.thumbnailLeft)}
                     alt={`${subject.id} left ear`}
-                    style={{ width: 80, height: 100, objectFit: "cover", borderRadius: 4 }}
+                    style={thumbnailImgStyle}
                   />
                 )}
                 {subject.thumbnailRight && (
                   <img
                     src={getThumbnailUrl(subject.thumbnailRight)}
                     alt={`${subject.id} right ear`}
-                    style={{ width: 80, height: 100, objectFit: "cover", borderRadius: 4 }}
+                    style={thumbnailImgStyle}
                   />
                 )}
-              </div>
-              <div style={{ fontWeight: 600, fontSize: 12, textAlign: "center" }}>
+              </Box>
+              <Box sx={{ fontWeight: 600, fontSize: 12, textAlign: "center" }}>
                 {subject.name}
-              </div>
-              <div style={{ fontSize: 11, color: "#666", textAlign: "center" }}>
+              </Box>
+              <Box sx={{ fontSize: 11, color: "text.secondary", textAlign: "center" }}>
                 {subject.description}
-              </div>
-            </div>
+              </Box>
+            </Box>
           ))}
-        </div>
+        </Box>
       </DialogContent>
     </Dialog>
   );
@@ -134,11 +205,25 @@ export const RayTracerTab = ({ uuid }: { uuid: string }) => {
   const [binauralPlaying] = useSolverProperty<RayTracer, "binauralPlaying">(uuid, "binauralPlaying", "RAYTRACER_SET_PROPERTY");
   const [hrtfSubjectId] = useSolverProperty<RayTracer, "hrtfSubjectId">(uuid, "hrtfSubjectId", "RAYTRACER_SET_PROPERTY");
   const [convergenceMetrics] = useSolverProperty<RayTracer, "convergenceMetrics">(uuid, "convergenceMetrics", "RAYTRACER_SET_PROPERTY");
+  const [headYaw, setHeadYaw] = useSolverProperty<RayTracer, "headYaw">(uuid, "headYaw", "RAYTRACER_SET_PROPERTY");
+  const [headPitch, setHeadPitch] = useSolverProperty<RayTracer, "headPitch">(uuid, "headPitch", "RAYTRACER_SET_PROPERTY");
+  const [headRoll, setHeadRoll] = useSolverProperty<RayTracer, "headRoll">(uuid, "headRoll", "RAYTRACER_SET_PROPERTY");
 
   const gpuAvailable = useMemo(() => isWebGPUAvailable(), []);
   const [ambiOrder, setAmbiOrder] = useState("1");
   const [binauralOrder, setBinauralOrder] = useState("1");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [subjectLabel, setSubjectLabel] = useState("");
+
+  useEffect(() => {
+    const id = hrtfSubjectId || "D1";
+    getAvailableSubjects()
+      .then((subjects) => {
+        const match = subjects.find((s) => s.id === id);
+        setSubjectLabel(match ? match.name : id);
+      })
+      .catch(() => setSubjectLabel(id));
+  }, [hrtfSubjectId]);
 
   const hasResults = !!validRayCount && validRayCount > 0;
   const isCpu = !gpuEnabled;
@@ -146,9 +231,9 @@ export const RayTracerTab = ({ uuid }: { uuid: string }) => {
   const ratioDisplay = convergenceMetrics && Number.isFinite(convergenceMetrics.convergenceRatio)
     ? (convergenceMetrics.convergenceRatio * 100).toFixed(1) + "%"
     : "--";
-  const t30Display = convergenceMetrics && convergenceMetrics.estimatedT30
-    ? convergenceMetrics.estimatedT30.map(t => t > 0 ? t.toFixed(2) + "s" : "--").join(", ")
-    : "--";
+  const t30Values = convergenceMetrics?.estimatedT30
+    ? convergenceMetrics.estimatedT30.map(t => t > 0 ? t.toFixed(2) : "--")
+    : null;
 
   const handlePlayPause = useCallback(() => {
     emit("RAYTRACER_SET_PROPERTY", { uuid, property: "isRunning", value: !isRunning });
@@ -260,12 +345,18 @@ export const RayTracerTab = ({ uuid }: { uuid: string }) => {
       <PropertyNumberInput uuid={uuid} label="RR Threshold" property="rrThreshold" tooltip="Russian Roulette termination threshold — rays with energy below this fraction of their initial energy are probabilistically terminated, keeping the estimator unbiased." elementProps={{ step: 0.01, min: 0.01, max: 1 }} />
       <PropertyRow>
         <PropertyRowLabel label="Conv. Ratio" hasToolTip tooltip="Current maximum coefficient of variation of T30 across all octave bands — decreases toward the threshold as more rays are traced" />
-        <span style={{ fontSize: "11px", fontFamily: "monospace" }}>{ratioDisplay}</span>
+        <Box sx={{ fontSize: "0.75rem", fontFamily: "monospace", px: 1, color: "text.primary", textAlign: "center" }}>{ratioDisplay}</Box>
       </PropertyRow>
-      <PropertyRow>
-        <PropertyRowLabel label="Est. T30" hasToolTip tooltip="Running T30 estimate per octave band (125 Hz – 8 kHz), computed from the energy decay curve of accumulated ray contributions" />
-        <span style={{ fontSize: "11px", fontFamily: "monospace", overflow: "hidden", textOverflow: "ellipsis" }}>{t30Display}</span>
-      </PropertyRow>
+      <SectionLabel label="Est. T30" />
+      <Box sx={t30TableSx}>
+        {T30_BANDS.map((band) => (
+          <Box key={band} sx={t30HeaderSx}>{band}</Box>
+        ))}
+        {t30Values
+          ? t30Values.map((v, i) => <Box key={i} sx={t30CellSx}>{v}</Box>)
+          : T30_BANDS.map((_, i) => <Box key={i} sx={t30CellSx}>--</Box>)
+        }
+      </Box>
 
       {/* Visualization */}
       <SectionLabel label="Visualization" />
@@ -314,15 +405,19 @@ export const RayTracerTab = ({ uuid }: { uuid: string }) => {
       </PropertyRow>
       <PropertyRow>
         <PropertyRowLabel label="HRTF Subject" hasToolTip tooltip="Head-Related Transfer Function dataset used for spatial audio rendering — different subjects have different ear geometries" />
-        <span style={{ fontSize: 11, fontFamily: "monospace" }}>{hrtfSubjectId || "D1"}</span>
+        <PropertyRowButton onClick={() => setDialogOpen(true)} label={subjectLabel || hrtfSubjectId || "D1"} />
       </PropertyRow>
       <PropertyRow>
-        <PropertyRowLabel label="" />
-        <PropertyRowButton onClick={() => setDialogOpen(true)} label="Select HRTF Subject..." />
+        <PropertyRowLabel label="Head Orientation" hasToolTip tooltip="Listener head rotation in degrees — Yaw: horizontal (positive = left), Pitch: vertical (positive = up), Roll: tilt (positive = right ear down)" />
+        <Box sx={headOrientationRowSx}>
+          <Box component="span" sx={axisLabelSx}>Y</Box>
+          <PropertyRowNumberInput value={headYaw ?? 0} onChange={({ value }) => setHeadYaw(value)} step={5} min={-180} max={180} />
+          <Box component="span" sx={axisLabelSx}>P</Box>
+          <PropertyRowNumberInput value={headPitch ?? 0} onChange={({ value }) => setHeadPitch(value)} step={5} min={-90} max={90} />
+          <Box component="span" sx={axisLabelSx}>R</Box>
+          <PropertyRowNumberInput value={headRoll ?? 0} onChange={({ value }) => setHeadRoll(value)} step={5} min={-90} max={90} />
+        </Box>
       </PropertyRow>
-      <PropertyNumberInput uuid={uuid} label="Head Yaw" property="headYaw" tooltip="Listener head rotation around the vertical axis in degrees (positive = left)" elementProps={{ step: 5, min: -180, max: 180 }} />
-      <PropertyNumberInput uuid={uuid} label="Head Pitch" property="headPitch" tooltip="Listener head tilt forward/backward in degrees (positive = up)" elementProps={{ step: 5, min: -90, max: 90 }} />
-      <PropertyNumberInput uuid={uuid} label="Head Roll" property="headRoll" tooltip="Listener head tilt side-to-side in degrees (positive = right ear down)" elementProps={{ step: 5, min: -90, max: 90 }} />
       <PropertyRow>
         <PropertyRowLabel label="" />
         <PropertyRowButton onClick={handleBinauralPlay} label="Play Binaural" disabled={!hasResults || binauralPlaying} />

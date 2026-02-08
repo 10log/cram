@@ -164,7 +164,6 @@ export type RayTracerSaveObject = {
   plotStyle: Partial<PlotData>;
   paths: KVP<RayPath[]>;
   frequencies: number[];
-  temperature?: number;
   convergenceThreshold?: number;
   autoStop?: boolean;
   rrThreshold?: number;
@@ -200,7 +199,6 @@ export interface RayTracerParams {
   uuid?: string;
   paths?: KVP<RayPath[]>;
   frequencies?: number[];
-  temperature?: number;
   convergenceThreshold?: number;
   autoStop?: boolean;
   rrThreshold?: number;
@@ -246,7 +244,6 @@ export const defaults = {
     mode: "lines"
   } as Partial<PlotData>,
   frequencies: [125, 250, 500, 1000, 2000, 4000, 8000] as number[],
-  temperature: 20,
   convergenceThreshold: 0.01,
   autoStop: true,
   rrThreshold: 0.1,

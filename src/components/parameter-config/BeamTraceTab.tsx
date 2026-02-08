@@ -249,21 +249,21 @@ export const BeamTraceTab = ({ uuid }: BeamTraceTabProps) => {
       <SectionLabel label="Statistics" />
       <PropertyRow>
         <PropertyRowLabel label="Valid Paths" />
-        <span style={{ padding: "4px 8px" }}>{numPaths}</span>
+        <Box sx={{ fontSize: "0.75rem", fontFamily: "monospace", px: 1, color: "text.primary", textAlign: "center" }}>{numPaths}</Box>
       </PropertyRow>
       {metrics && (
         <>
           <PropertyRow>
             <PropertyRowLabel label="Raycasts" />
-            <span style={{ padding: "4px 8px" }}>{metrics.raycastCount}</span>
+            <Box sx={{ fontSize: "0.75rem", fontFamily: "monospace", px: 1, color: "text.primary", textAlign: "center" }}>{metrics.raycastCount}</Box>
           </PropertyRow>
           <PropertyRow>
             <PropertyRowLabel label="Cache Hits" />
-            <span style={{ padding: "4px 8px" }}>{metrics.failPlaneCacheHits}</span>
+            <Box sx={{ fontSize: "0.75rem", fontFamily: "monospace", px: 1, color: "text.primary", textAlign: "center" }}>{metrics.failPlaneCacheHits}</Box>
           </PropertyRow>
           <PropertyRow>
             <PropertyRowLabel label="Buckets Skipped" />
-            <span style={{ padding: "4px 8px" }}>{metrics.bucketsSkipped}</span>
+            <Box sx={{ fontSize: "0.75rem", fontFamily: "monospace", px: 1, color: "text.primary", textAlign: "center" }}>{metrics.bucketsSkipped}</Box>
           </PropertyRow>
         </>
       )}

@@ -304,7 +304,6 @@ export interface ImageSourceSolverParams {
   plotOrders: number[];
   frequencies: number[];
   levelTimeProgression?: string;
-  temperature?: number;
 }
 
 const defaults = {
@@ -335,8 +334,7 @@ export class ImageSourceSolver extends Solver {
     levelTimeProgression: string;
     maxReflectionOrder: number;
     frequencies: number[];
-    temperature: number; 
-    
+
     private _imageSourcesVisible: boolean;
     private _rayPathsVisible: boolean;
     private _plotOrders: number[]; 
@@ -369,7 +367,6 @@ export class ImageSourceSolver extends Solver {
         this._plotOrders = params.plotOrders; 
         this.levelTimeProgression = params.levelTimeProgression || uuid();
         this.isHybrid = isHybrid;
-        this.temperature = params.temperature != null ? params.temperature : 20;
 
         this.impulseResponsePlaying = false; 
 
@@ -909,6 +906,10 @@ export class ImageSourceSolver extends Solver {
       this.clearImageSources(); 
       this.rayPathsVisible && this.drawRayPaths();
       this.imageSourcesVisible && this.drawImageSources(); 
+    }
+
+    get temperature(): number {
+      return this.room?.temperature ?? 20;
     }
 
     get c(): number {
