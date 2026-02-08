@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import RayTracer from "../../compute/raytracer";
 import PropertyRowFolder from "./property-row/PropertyRowFolder";
 import PropertyRow from "./property-row/PropertyRow";
@@ -10,6 +10,9 @@ import useToggle from "../hooks/use-toggle";
 import { renderer } from "../../render/renderer";
 import SourceReceiverMatrix from "./SourceReceiverMatrix";
 import { emit } from "../../messenger";
+import { Dialog, DialogTitle, DialogContent, IconButton } from "@mui/material";
+import type { HRTFSubject } from "../../compute/raytracer/binaural/hrtf-data";
+import { getAvailableSubjects, getThumbnailUrl } from "../../compute/raytracer/binaural/hrtf-data";
 
 
 const { PropertyTextInput, PropertyNumberInput, PropertyCheckboxInput } = createPropertyInputs<RayTracer>(
@@ -261,6 +264,177 @@ const AmbisonicOutput = ({uuid}: {uuid: string}) => {
   );
 }
 
+const HRTFSubjectDialog = ({
+  open,
+  onClose,
+  selectedId,
+  onSelect,
+}: {
+  open: boolean;
+  onClose: () => void;
+  selectedId: string;
+  onSelect: (id: string) => void;
+}) => {
+  const [subjects, setSubjects] = useState<HRTFSubject[]>([]);
+  const [error, setError] = useState<string>("");
+
+  useEffect(() => {
+    if (open) {
+      getAvailableSubjects()
+        .then(setSubjects)
+        .catch((err) => setError(err.message));
+    }
+  }, [open]);
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+      <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        Select HRTF Subject
+        <IconButton onClick={onClose} size="small" aria-label="close">
+          &#x2715;
+        </IconButton>
+      </DialogTitle>
+      <DialogContent>
+        {error && <div style={{ color: "red", marginBottom: 8 }}>{error}</div>}
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+          gap: 12,
+          padding: "8px 0",
+        }}>
+          {subjects.map((subject) => (
+            <div
+              key={subject.id}
+              onClick={() => {
+                onSelect(subject.id);
+                onClose();
+              }}
+              style={{
+                border: subject.id === selectedId ? "2px solid #1976d2" : "1px solid #ccc",
+                borderRadius: 8,
+                padding: 8,
+                cursor: "pointer",
+                backgroundColor: subject.id === selectedId ? "#e3f2fd" : "#fff",
+                transition: "all 0.15s",
+              }}
+            >
+              <div style={{ display: "flex", gap: 4, justifyContent: "center", marginBottom: 6 }}>
+                {subject.thumbnailLeft && (
+                  <img
+                    src={getThumbnailUrl(subject.thumbnailLeft)}
+                    alt={`${subject.id} left ear`}
+                    style={{ width: 80, height: 100, objectFit: "cover", borderRadius: 4 }}
+                  />
+                )}
+                {subject.thumbnailRight && (
+                  <img
+                    src={getThumbnailUrl(subject.thumbnailRight)}
+                    alt={`${subject.id} right ear`}
+                    style={{ width: 80, height: 100, objectFit: "cover", borderRadius: 4 }}
+                  />
+                )}
+              </div>
+              <div style={{ fontWeight: 600, fontSize: 12, textAlign: "center" }}>
+                {subject.name}
+              </div>
+              <div style={{ fontSize: 11, color: "#666", textAlign: "center" }}>
+                {subject.description}
+              </div>
+            </div>
+          ))}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+const BinauralOutput = ({ uuid }: { uuid: string }) => {
+  const [open, toggle] = useToggle(false);
+  const [order, setOrder] = useState("1");
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [validRayCount] = useSolverProperty<RayTracer, "validRayCount">(uuid, "validRayCount", "RAYTRACER_SET_PROPERTY");
+  const [binauralPlaying] = useSolverProperty<RayTracer, "binauralPlaying">(uuid, "binauralPlaying", "RAYTRACER_SET_PROPERTY");
+  const [hrtfSubjectId] = useSolverProperty<RayTracer, "hrtfSubjectId">(uuid, "hrtfSubjectId", "RAYTRACER_SET_PROPERTY");
+  const disabled = !validRayCount || validRayCount === 0;
+
+  const handlePlay = useCallback(() => {
+    emit("RAYTRACER_PLAY_BINAURAL_IR", { uuid, order: parseInt(order) });
+  }, [uuid, order]);
+
+  const handleDownload = useCallback(() => {
+    emit("RAYTRACER_DOWNLOAD_BINAURAL_IR", { uuid, order: parseInt(order) });
+  }, [uuid, order]);
+
+  const handleSubjectSelect = useCallback((id: string) => {
+    emit("RAYTRACER_SET_PROPERTY", { uuid, property: "hrtfSubjectId", value: id });
+    // Invalidate cached binaural IR when subject changes
+    emit("RAYTRACER_SET_PROPERTY", { uuid, property: "binauralImpulseResponse", value: undefined });
+  }, [uuid]);
+
+  return (
+    <PropertyRowFolder label="Binaural Output" open={open} onOpenClose={toggle}>
+      <PropertyRow>
+        <PropertyRowLabel label="Order" hasToolTip tooltip="Ambisonic order for binaural decoding (1=FOA, 2=HOA2, 3=HOA3)" />
+        <PropertyRowSelect
+          value={order}
+          onChange={({ value }) => setOrder(value)}
+          options={[
+            { value: "1", label: "1st Order (4 ch)" },
+            { value: "2", label: "2nd Order (9 ch)" },
+            { value: "3", label: "3rd Order (16 ch)" }
+          ]}
+        />
+      </PropertyRow>
+      <PropertyRow>
+        <PropertyRowLabel label="HRTF Subject" hasToolTip tooltip="Head-related transfer function subject for binaural rendering" />
+        <span style={{ fontSize: 11, fontFamily: "monospace" }}>{hrtfSubjectId || "D1"}</span>
+      </PropertyRow>
+      <PropertyRow>
+        <PropertyRowLabel label="" />
+        <PropertyRowButton
+          onClick={() => setDialogOpen(true)}
+          label="Select HRTF Subject..."
+        />
+      </PropertyRow>
+      <PropertyNumberInput
+        uuid={uuid}
+        label="Head Yaw"
+        property="headYaw"
+        tooltip="Head rotation around vertical axis in degrees (positive = left)"
+        elementProps={{ step: 5, min: -180, max: 180 }}
+      />
+      <PropertyNumberInput
+        uuid={uuid}
+        label="Head Pitch"
+        property="headPitch"
+        tooltip="Head tilt up/down in degrees (positive = up)"
+        elementProps={{ step: 5, min: -90, max: 90 }}
+      />
+      <PropertyNumberInput
+        uuid={uuid}
+        label="Head Roll"
+        property="headRoll"
+        tooltip="Head tilt left/right in degrees (positive = right ear down)"
+        elementProps={{ step: 5, min: -90, max: 90 }}
+      />
+      <PropertyRow>
+        <PropertyRowLabel label="" />
+        <PropertyRowButton onClick={handlePlay} label="Play Binaural" disabled={disabled || binauralPlaying} />
+      </PropertyRow>
+      <PropertyRow>
+        <PropertyRowLabel label="" />
+        <PropertyRowButton onClick={handleDownload} label="Download Stereo WAV" disabled={disabled} />
+      </PropertyRow>
+      <HRTFSubjectDialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        selectedId={hrtfSubjectId || "D1"}
+        onSelect={handleSubjectSelect}
+      />
+    </PropertyRowFolder>
+  );
+};
+
 export const RayTracerTab = ({ uuid }: { uuid: string }) => {
   useEffect(() => {
     const cells = renderer.overlays.global.cells;
@@ -282,6 +456,7 @@ export const RayTracerTab = ({ uuid }: { uuid: string }) => {
       <Hybrid uuid={uuid} />
       <Output uuid={uuid} />
       <AmbisonicOutput uuid={uuid} />
+      <BinauralOutput uuid={uuid} />
     </div>
   );
 };

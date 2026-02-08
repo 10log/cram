@@ -175,6 +175,10 @@ export type RayTracerSaveObject = {
   tailCrossfadeDuration?: number;
   gpuEnabled?: boolean;
   gpuBatchSize?: number;
+  hrtfSubjectId?: string;
+  headYaw?: number;
+  headPitch?: number;
+  headRoll?: number;
 }
 
 export interface RayTracerParams {
@@ -207,6 +211,10 @@ export interface RayTracerParams {
   tailCrossfadeDuration?: number;
   gpuEnabled?: boolean;
   gpuBatchSize?: number;
+  hrtfSubjectId?: string;
+  headYaw?: number;
+  headPitch?: number;
+  headRoll?: number;
 }
 export interface ConvergenceMetrics {
   totalRays: number;
