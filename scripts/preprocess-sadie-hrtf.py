@@ -48,11 +48,6 @@ try:
     USE_PYSOFA = True
 except ImportError:
     USE_PYSOFA = False
-    try:
-        import sofar
-        USE_SOFAR = True
-    except ImportError:
-        USE_SOFAR = False
 
 
 # SADIE II subjects with metadata
@@ -176,9 +171,7 @@ def compute_decoder_filters(hrir_left, hrir_right, azimuths, elevations, order):
         filters_left: (n_channels, filter_length)
         filters_right: (n_channels, filter_length)
     """
-    n_channels = (order + 1) ** 2
-
-    # Build SH matrix: (n_dirs, n_channels)
+    # Build SH matrix: (n_dirs, n_channels) where n_channels = (order+1)^2
     Y = compute_sh_matrix(azimuths, elevations, order)
 
     # Pseudo-inverse decoding: D = pinv(Y) = (Y^T Y)^{-1} Y^T

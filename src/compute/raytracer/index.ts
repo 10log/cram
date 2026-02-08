@@ -224,10 +224,10 @@ class RayTracer extends Solver {
     this.tailCrossfadeDuration = params.tailCrossfadeDuration ?? defaults.tailCrossfadeDuration;
     this.gpuEnabled = params.gpuEnabled ?? defaults.gpuEnabled;
     this.gpuBatchSize = params.gpuBatchSize ?? defaults.gpuBatchSize;
-    this.hrtfSubjectId = (params as any).hrtfSubjectId ?? "D1";
-    this.headYaw = (params as any).headYaw ?? 0;
-    this.headPitch = (params as any).headPitch ?? 0;
-    this.headRoll = (params as any).headRoll ?? 0;
+    this.hrtfSubjectId = params.hrtfSubjectId ?? "D1";
+    this.headYaw = params.headYaw ?? 0;
+    this.headPitch = params.headPitch ?? 0;
+    this.headRoll = params.headRoll ?? 0;
     this._edgeGraph = null;
     this._histogramBinWidth = HISTOGRAM_BIN_WIDTH;
     this._histogramNumBins = HISTOGRAM_NUM_BINS;
