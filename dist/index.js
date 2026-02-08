@@ -1,4 +1,4 @@
-import { C as u, B as D, O as E, D as G, B as S, G as g } from "./index-CGV1szrQ.mjs";
+import { C as u, D as E, O as G, G as H, D as S, H as g } from "./index-DtuAB2ct.mjs";
 import "react/jsx-runtime";
 import "react";
 import "@mui/material/Box";
@@ -24,9 +24,9 @@ import "@mui/icons-material/Add";
 import "@mui/icons-material/Remove";
 export {
   u as CRAMCanvas,
-  D as CRAMEditor,
-  E as ObjectsPanel,
-  G as SolversPanel,
+  E as CRAMEditor,
+  G as ObjectsPanel,
+  H as SolversPanel,
   S as default,
   g as examples
 };
