@@ -27,8 +27,12 @@ import { addSolver, removeSolver, setSolverProperty, useSolver, useContainer, us
 import { pickProps } from "../../common/helpers";
 import * as ac from "../acoustics";
 import { normalize } from "../acoustics";
-import FileSaver from 'file-saver';
 import { audioEngine } from "../../audio-engine/audio-engine";
+import {
+  playImpulseResponse as sharedPlayIR,
+  downloadImpulseResponse as sharedDownloadIR,
+  downloadAmbisonicImpulseResponse as sharedDownloadAmbisonicIR,
+} from "../shared/export-playback";
 import chroma from 'chroma-js';
 import { encodeBufferFromDirection, getAmbisonicChannelCount } from "ambisonics";
 
@@ -691,7 +695,7 @@ export class BeamTraceSolver extends Solver {
     }
 
     // Calculate LTP result
-    this.calculateLTP(this.c);
+    this.calculateLTP();
 
     console.log(`BeamTraceSolver: Found ${this.validPaths.length} valid paths`);
     if (this.lastMetrics) {
@@ -707,7 +711,7 @@ export class BeamTraceSolver extends Solver {
   private convertPath(path: ReflectionPath3D): BeamTracePath {
     const points = path.map(p => new THREE.Vector3(p.position[0], p.position[1], p.position[2]));
     const length = computePathLength(path);
-    const arrivalTime = computeArrivalTime(path);
+    const arrivalTime = computeArrivalTime(path, this.c);
     const order = getPathReflectionOrder(path);
     const polygonIds = path.map(p => p.polygonId);
 
@@ -728,7 +732,7 @@ export class BeamTraceSolver extends Solver {
   }
 
   // Calculate Level Time Progression result
-  calculateLTP(_c: number = 343) {
+  calculateLTP() {
     if (this.validPaths.length === 0) return;
 
     // Sort paths by arrival time
@@ -771,7 +775,7 @@ export class BeamTraceSolver extends Solver {
   // Setter for plot frequency (recalculates LTP when changed)
   set plotFrequency(f: number) {
     this._plotFrequency = f;
-    this.calculateLTP(this.c);
+    this.calculateLTP();
   }
 
   get plotFrequency(): number {
@@ -1144,36 +1148,17 @@ export class BeamTraceSolver extends Solver {
   }
 
   async playImpulseResponse() {
-    if (!this.impulseResponse) {
-      await this.calculateImpulseResponse();
-    }
-
-    if (audioEngine.context.state === 'suspended') {
-      audioEngine.context.resume();
-    }
-
-    const source = audioEngine.context.createBufferSource();
-    source.buffer = this.impulseResponse;
-    source.connect(audioEngine.context.destination);
-    source.start();
-
-    emit("BEAMTRACE_SET_PROPERTY", { uuid: this.uuid, property: "impulseResponsePlaying", value: true });
-
-    source.onended = () => {
-      source.stop();
-      source.disconnect(audioEngine.context.destination);
-      emit("BEAMTRACE_SET_PROPERTY", { uuid: this.uuid, property: "impulseResponsePlaying", value: false });
-    };
+    const result = await sharedPlayIR(
+      this.impulseResponse, () => this.calculateImpulseResponse(), this.uuid, "BEAMTRACE_SET_PROPERTY"
+    );
+    this.impulseResponse = result.impulseResponse;
   }
 
   async downloadImpulseResponse(filename: string, sampleRate = audioEngine.sampleRate) {
-    if (!this.impulseResponse) {
-      await this.calculateImpulseResponse();
-    }
-
-    const blob = ac.wavAsBlob([normalize(this.impulseResponse.getChannelData(0))], { sampleRate, bitDepth: 32 });
-    const extension = !filename.endsWith(".wav") ? ".wav" : "";
-    FileSaver.saveAs(blob, filename + extension);
+    const result = await sharedDownloadIR(
+      this.impulseResponse, () => this.calculateImpulseResponse(), filename, sampleRate
+    );
+    this.impulseResponse = result.impulseResponse;
   }
 
   // Ambisonic impulse response storage
@@ -1312,34 +1297,17 @@ export class BeamTraceSolver extends Solver {
     });
   }
 
-  /**
-   * Download the ambisonic impulse response as a multi-channel WAV file.
-   * Channels are in ACN order with N3D normalization.
-   *
-   * @param filename - Output filename (without extension)
-   * @param order - Ambisonic order (default: 1)
-   */
   async downloadAmbisonicImpulseResponse(
     filename: string,
     order: number = 1
   ) {
-    // Calculate if not already cached or if order changed
-    if (!this.ambisonicImpulseResponse || this.ambisonicOrder !== order) {
-      await this.calculateAmbisonicImpulseResponse(order);
-    }
-
-    const nCh = this.ambisonicImpulseResponse!.numberOfChannels;
-    const sampleRate = this.ambisonicImpulseResponse!.sampleRate;
-    const channelData: Float32Array[] = [];
-
-    for (let ch = 0; ch < nCh; ch++) {
-      channelData.push(this.ambisonicImpulseResponse!.getChannelData(ch));
-    }
-
-    const blob = ac.wavAsBlob(channelData, { sampleRate, bitDepth: 32 });
-    const extension = !filename.endsWith(".wav") ? ".wav" : "";
-    const orderLabel = order === 1 ? "FOA" : `HOA${order}`;
-    FileSaver.saveAs(blob, `${filename}_${orderLabel}${extension}`);
+    const result = await sharedDownloadAmbisonicIR(
+      this.ambisonicImpulseResponse,
+      (o: number) => this.calculateAmbisonicImpulseResponse(o),
+      this.ambisonicOrder, order, filename
+    );
+    this.ambisonicImpulseResponse = result.ambisonicImpulseResponse;
+    this.ambisonicOrder = result.ambisonicOrder;
   }
 
   // Clear results

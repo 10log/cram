@@ -201,9 +201,10 @@ describe('BeamTraceSolver temperature support', () => {
     expect(source).toContain('ac.soundSpeed(this.temperature)');
   });
 
-  it('calculateLTP called with this.c, not hardcoded 343', () => {
-    expect(source).toContain('this.calculateLTP(this.c)');
+  it('calculateLTP called without hardcoded 343, and computeArrivalTime uses this.c', () => {
+    expect(source).toContain('this.calculateLTP()');
     expect(source).not.toMatch(/this\.calculateLTP\(343\)/);
+    expect(source).toContain('computeArrivalTime(path, this.c)');
   });
 
   it('airAttenuation passes this.temperature', () => {

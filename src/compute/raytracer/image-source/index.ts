@@ -13,9 +13,11 @@ import Surface from "../../../objects/surface";
 import { addSolver, removeSolver, Result, ResultKind, ResultTypes, setSolverProperty, useResult, useSolver } from "../../../store";
 import {useContainer} from '../../../store';
 import { pickProps } from "../../../common/helpers";
-import { normalize } from "../../acoustics";
-import FileSaver from 'file-saver';
 import { audioEngine } from "../../../audio-engine/audio-engine";
+import {
+  playImpulseResponse as sharedPlayIR,
+  downloadImpulseResponse as sharedDownloadIR,
+} from "../../shared/export-playback";
 
 function createLine(){
   let points: THREE.Vector3[] = [];
@@ -741,31 +743,16 @@ export class ImageSourceSolver extends Solver {
     }
 
     async playImpulseResponse(){
-      if(!this.impulseResponse){
-        await this.calculateImpulseResponse().catch(console.error);
-      }
-      if (audioEngine.context.state === 'suspended') {
-        audioEngine.context.resume();
-      }
-      console.log(this.impulseResponse);
-      const impulseResponse = audioEngine.context.createBufferSource();
-      impulseResponse.buffer = this.impulseResponse;
-      impulseResponse.connect(audioEngine.context.destination);
-      impulseResponse.start();
-      emit("IMAGESOURCE_SET_PROPERTY", { uuid: this.uuid, property: "impulseResponsePlaying", value: true });
-      impulseResponse.onended = () => {
-        impulseResponse.stop();
-        impulseResponse.disconnect(audioEngine.context.destination);
-        emit("IMAGESOURCE_SET_PROPERTY", { uuid: this.uuid, property: "impulseResponsePlaying", value: false });
-      };
+      const result = await sharedPlayIR(
+        this.impulseResponse, () => this.calculateImpulseResponse(), this.uuid, "IMAGESOURCE_SET_PROPERTY"
+      );
+      this.impulseResponse = result.impulseResponse;
     }
     async downloadImpulseResponse(filename: string, sampleRate = 44100){
-      if(!this.impulseResponse){
-        await this.calculateImpulseResponse().catch(console.error);
-      }
-      const blob = ac.wavAsBlob([normalize(this.impulseResponse.getChannelData(0))], { sampleRate, bitDepth: 32 });
-      const extension = !filename.endsWith(".wav") ? ".wav" : "";
-      FileSaver.saveAs(blob, filename + extension);
+      const result = await sharedDownloadIR(
+        this.impulseResponse, () => this.calculateImpulseResponse(), filename, sampleRate
+      );
+      this.impulseResponse = result.impulseResponse;
     }
 
     // getters and setters
