@@ -381,7 +381,7 @@ export function PropertiesPanel() {
       "fdtd-2d": "Finite-difference time-domain",
       "energydecay": "Energy decay analysis",
       "art": "Acoustic radiance transfer",
-      "beamtrace": "Beam tracing",
+      "beam-trace": "Beam tracing",
     };
     return Object.keys(solversData).map((uuid) => ({
       uuid,
@@ -658,7 +658,7 @@ export function PropertiesPanel() {
           <Accordion defaultExpanded disableGutters sx={accordionSx}>
             <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={accordionSummarySx}>
               <Typography variant="subtitle2" sx={{ fontWeight: 600, fontSize: "0.75rem" }}>
-                {selectedObject ? `${selectedObject.name || selectedObject.kind} Properties` : selectedSolver ? `${selectedSolver.kind} Settings` : "Renderer Settings"}
+                {selectedObject ? `${selectedObject.name || selectedObject.kind} Properties` : selectedSolver ? `${selectedSolver.name} Settings` : "Renderer Settings"}
               </Typography>
             </AccordionSummary>
             <AccordionDetails sx={{ p: 0 }}>

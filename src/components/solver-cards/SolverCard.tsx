@@ -62,7 +62,7 @@ export default function SolverCard({ uuid, defaultExpanded = false }: SolverCard
   // Track calculation state for beam-trace solver
   useEffect(() => {
     if (!solver) return;
-    if (solver.kind === "beamtrace") {
+    if (solver.kind === "beam-trace") {
       const unsubStart = on("BEAMTRACE_CALCULATE", (id) => {
         if (id === uuid) setIsCalculating(true);
       });
@@ -80,7 +80,7 @@ export default function SolverCard({ uuid, defaultExpanded = false }: SolverCard
     // Duck type for solvers with sourceIDs/receiverIDs
     const s = solver as { sourceIDs?: string[]; receiverIDs?: string[] };
     switch (solver.kind) {
-      case "beamtrace":
+      case "beam-trace":
       case "image-source":
       case "ray-tracer":
         return (s.sourceIDs?.length ?? 0) > 0 && (s.receiverIDs?.length ?? 0) > 0;
@@ -95,7 +95,7 @@ export default function SolverCard({ uuid, defaultExpanded = false }: SolverCard
   const handleCalculate = useCallback(() => {
     if (!solver) return;
     switch (solver.kind) {
-      case "beamtrace":
+      case "beam-trace":
         emit("BEAMTRACE_CALCULATE", uuid);
         break;
       case "image-source":
@@ -111,7 +111,7 @@ export default function SolverCard({ uuid, defaultExpanded = false }: SolverCard
   const handleClear = useCallback(() => {
     if (!solver) return;
     switch (solver.kind) {
-      case "beamtrace":
+      case "beam-trace":
         emit("BEAMTRACE_RESET", uuid);
         break;
       case "image-source":
@@ -130,8 +130,8 @@ export default function SolverCard({ uuid, defaultExpanded = false }: SolverCard
 
   // Determine if this solver supports calculate/clear
   // RT60 relies on auto-calculate, so no manual calculate button needed
-  const supportsCalculate = ["beamtrace", "image-source", "ray-tracer"].includes(solver.kind);
-  const supportsClear = ["beamtrace", "image-source", "ray-tracer"].includes(solver.kind);
+  const supportsCalculate = ["beam-trace", "image-source", "ray-tracer"].includes(solver.kind);
+  const supportsClear = ["beam-trace", "image-source", "ray-tracer"].includes(solver.kind);
 
   const ParameterComponent = SolverComponentMap.get(solver.kind);
 

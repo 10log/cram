@@ -132,7 +132,7 @@ const SolverIconMap: Record<string, React.ElementType> = {
   "energydecay": GraphicEqIcon,
   "art": BlurOnIcon,
   "renderer": SettingsIcon,
-  "beamtrace": TimelineIcon,
+  "beam-trace": TimelineIcon,
 };
 
 export interface SolverCardHeaderProps {
