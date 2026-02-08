@@ -8972,11 +8972,11 @@ async function Yt(e, t, r) {
   return a(t, r);
 }
 lr("ray-tracer", async (e, t) => {
-  const { default: r } = await import("./index-DHC6ILmY.mjs");
+  const { default: r } = await import("./index-DnShYESV.mjs");
   return new r(t);
 });
 lr("image-source", async (e, t) => {
-  const { ImageSourceSolver: r } = await import("./index-DFra9SZI.mjs"), a = {
+  const { ImageSourceSolver: r } = await import("./index-rOw4ZKzh.mjs"), a = {
     name: "Image Source",
     roomID: "",
     sourceIDs: [],
@@ -8991,23 +8991,23 @@ lr("image-source", async (e, t) => {
   return new r(a);
 });
 lr("rt60", async (e, t) => {
-  const { default: r } = await import("./index-CGEMlz9k.mjs");
+  const { default: r } = await import("./index-BG1QvDVX.mjs");
   return new r();
 });
 lr("energydecay", async (e, t) => {
-  const { default: r } = await import("./energy-decay-BeDF6LfA.mjs");
+  const { default: r } = await import("./energy-decay-CeREPkNl.mjs");
   return new r();
 });
 lr("fdtd-2d", async (e, t) => {
-  const { default: r } = await import("./index-B-R2arPr.mjs");
+  const { default: r } = await import("./index-BLwCyWfb.mjs");
   return new r();
 });
 lr("beam-trace", async (e, t) => {
-  const { BeamTraceSolver: r } = await import("./index-DyF3BTO1.mjs");
+  const { BeamTraceSolver: r } = await import("./index-D0Vp74c0.mjs");
   return new r();
 });
 lr("art", async (e, t) => {
-  const { ART: r } = await import("./art-PV3u_g7M.mjs");
+  const { ART: r } = await import("./art-yPh0NcMI.mjs");
   return new r();
 });
 class d9 extends pc {
@@ -14134,23 +14134,23 @@ function L6() {
 async function M6(e, t) {
   switch (e) {
     case "ray-tracer": {
-      const { default: r } = await import("./index-DHC6ILmY.mjs");
+      const { default: r } = await import("./index-DnShYESV.mjs");
       return new r(t).restore(t);
     }
     case "rt60": {
-      const { default: r } = await import("./index-CGEMlz9k.mjs");
+      const { default: r } = await import("./index-BG1QvDVX.mjs");
       return new r().restore(t);
     }
     case "art": {
-      const { default: r } = await import("./art-PV3u_g7M.mjs");
+      const { default: r } = await import("./art-yPh0NcMI.mjs");
       return new r(t).restore(t);
     }
     case "image-source": {
-      const { default: r } = await import("./index-DFra9SZI.mjs");
+      const { default: r } = await import("./index-rOw4ZKzh.mjs");
       return new r(t).restore(t);
     }
     case "beam-trace": {
-      const { BeamTraceSolver: r } = await import("./index-DyF3BTO1.mjs");
+      const { BeamTraceSolver: r } = await import("./index-D0Vp74c0.mjs");
       return new r().restore(t);
     }
     default:
@@ -14158,7 +14158,7 @@ async function M6(e, t) {
   }
 }
 function N6() {
-  import("./events-aOh5IQ7g.mjs").then((e) => e.default()), ae("LOG_SOLVER", (e) => {
+  import("./events-Bi0MPQ2A.mjs").then((e) => e.default()), ae("LOG_SOLVER", (e) => {
     console.log(n0.getState().solvers[e]);
   }), ae("REMOVE_SOLVERS", (e) => {
     const t = n0.getState().solvers, r = typeof e == "string" ? [e] : e;
@@ -17833,7 +17833,7 @@ function z4() {
       "fdtd-2d": "Finite-difference time-domain",
       energydecay: "Energy decay analysis",
       art: "Acoustic radiance transfer",
-      beamtrace: "Beam tracing"
+      "beam-trace": "Beam tracing"
     };
     return Object.keys(c).map((_) => ({
       uuid: _,
@@ -18026,7 +18026,7 @@ function z4() {
     M && /* @__PURE__ */ X(A0, { children: [
       /* @__PURE__ */ l(kt, {}),
       /* @__PURE__ */ X(oi, { defaultExpanded: !0, disableGutters: !0, sx: Ni, children: [
-        /* @__PURE__ */ l(li, { expandIcon: /* @__PURE__ */ l(K0, {}), sx: Wi, children: /* @__PURE__ */ l(He, { variant: "subtitle2", sx: { fontWeight: 600, fontSize: "0.75rem" }, children: S ? `${S.name || S.kind} Properties` : g ? `${g.kind} Settings` : "Renderer Settings" }) }),
+        /* @__PURE__ */ l(li, { expandIcon: /* @__PURE__ */ l(K0, {}), sx: Wi, children: /* @__PURE__ */ l(He, { variant: "subtitle2", sx: { fontWeight: 600, fontSize: "0.75rem" }, children: S ? `${S.name || S.kind} Properties` : g ? `${g.name} Settings` : "Renderer Settings" }) }),
         /* @__PURE__ */ l(ci, { sx: { p: 0 }, children: /* @__PURE__ */ l(Q, { sx: M4, children: R() }) })
       ] })
     ] })
@@ -21253,7 +21253,7 @@ const Sg = Bt`
   energydecay: Pc,
   art: Sd,
   renderer: ys,
-  beamtrace: fd
+  "beam-trace": fd
 };
 function Eu({
   name: e,
@@ -21366,7 +21366,7 @@ function Dg({ uuid: e, defaultExpanded: t = !1 }) {
     k3(e);
   }, [e]);
   Me(() => {
-    if (s && s.kind === "beamtrace") {
+    if (s && s.kind === "beam-trace") {
       const f = ae("BEAMTRACE_CALCULATE", (w) => {
         w === e && i(!0);
       }), h = ae("BEAMTRACE_CALCULATE_COMPLETE", (w) => {
@@ -21381,7 +21381,7 @@ function Dg({ uuid: e, defaultExpanded: t = !1 }) {
     if (!s) return !1;
     const f = s;
     switch (s.kind) {
-      case "beamtrace":
+      case "beam-trace":
       case "image-source":
       case "ray-tracer":
         return (f.sourceIDs?.length ?? 0) > 0 && (f.receiverIDs?.length ?? 0) > 0;
@@ -21393,7 +21393,7 @@ function Dg({ uuid: e, defaultExpanded: t = !1 }) {
   }, [s]), d = Ee(() => {
     if (s)
       switch (s.kind) {
-        case "beamtrace":
+        case "beam-trace":
           K("BEAMTRACE_CALCULATE", e);
           break;
         case "image-source":
@@ -21406,7 +21406,7 @@ function Dg({ uuid: e, defaultExpanded: t = !1 }) {
   }, [s, e]), v = Ee(() => {
     if (s)
       switch (s.kind) {
-        case "beamtrace":
+        case "beam-trace":
           K("BEAMTRACE_RESET", e);
           break;
         case "image-source":
@@ -21419,7 +21419,7 @@ function Dg({ uuid: e, defaultExpanded: t = !1 }) {
   }, [s, e]);
   if (!s)
     return null;
-  const I = ["beamtrace", "image-source", "ray-tracer"].includes(s.kind), q = ["beamtrace", "image-source", "ray-tracer"].includes(s.kind), C = Bg.get(s.kind);
+  const I = ["beam-trace", "image-source", "ray-tracer"].includes(s.kind), q = ["beam-trace", "image-source", "ray-tracer"].includes(s.kind), C = Bg.get(s.kind);
   return /* @__PURE__ */ X(Q, { sx: kg, children: [
     /* @__PURE__ */ l(
       Eu,
@@ -21643,4 +21643,4 @@ export {
   pi as y,
   $5 as z
 };
-//# sourceMappingURL=index-GmH05fDm.mjs.map
+//# sourceMappingURL=index-q4iHHWia.mjs.map
