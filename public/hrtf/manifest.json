@@ -1,0 +1,206 @@
+{
+  "version": 1,
+  "dataset": "SADIE II",
+  "subjects": [
+    {
+      "id": "D1",
+      "name": "SADIE II \u2014 D1 (KU100)",
+      "description": "Neumann KU100 dummy head",
+      "maxOrder": 3,
+      "sampleRate": 44100,
+      "filterLength": 256,
+      "thumbnailLeft": "thumbnails/D1_L.jpg",
+      "thumbnailRight": "thumbnails/D1_R.jpg"
+    },
+    {
+      "id": "D2",
+      "name": "SADIE II \u2014 D2 (KEMAR)",
+      "description": "GRAS KEMAR dummy head",
+      "maxOrder": 3,
+      "sampleRate": 44100,
+      "filterLength": 256,
+      "thumbnailLeft": "thumbnails/D2_L.jpg",
+      "thumbnailRight": "thumbnails/D2_R.jpg"
+    },
+    {
+      "id": "H3",
+      "name": "SADIE II \u2014 H3",
+      "description": "Human subject H3",
+      "maxOrder": 3,
+      "sampleRate": 44100,
+      "filterLength": 256,
+      "thumbnailLeft": "thumbnails/H3_L.jpg",
+      "thumbnailRight": "thumbnails/H3_R.jpg"
+    },
+    {
+      "id": "H4",
+      "name": "SADIE II \u2014 H4",
+      "description": "Human subject H4",
+      "maxOrder": 3,
+      "sampleRate": 44100,
+      "filterLength": 256,
+      "thumbnailLeft": "thumbnails/H4_L.jpg",
+      "thumbnailRight": "thumbnails/H4_R.jpg"
+    },
+    {
+      "id": "H5",
+      "name": "SADIE II \u2014 H5",
+      "description": "Human subject H5",
+      "maxOrder": 3,
+      "sampleRate": 44100,
+      "filterLength": 256,
+      "thumbnailLeft": "thumbnails/H5_L.jpg",
+      "thumbnailRight": "thumbnails/H5_R.jpg"
+    },
+    {
+      "id": "H6",
+      "name": "SADIE II \u2014 H6",
+      "description": "Human subject H6",
+      "maxOrder": 3,
+      "sampleRate": 44100,
+      "filterLength": 256,
+      "thumbnailLeft": "thumbnails/H6_L.jpg",
+      "thumbnailRight": "thumbnails/H6_R.jpg"
+    },
+    {
+      "id": "H7",
+      "name": "SADIE II \u2014 H7",
+      "description": "Human subject H7",
+      "maxOrder": 3,
+      "sampleRate": 44100,
+      "filterLength": 256,
+      "thumbnailLeft": "thumbnails/H7_L.jpg",
+      "thumbnailRight": "thumbnails/H7_R.jpg"
+    },
+    {
+      "id": "H8",
+      "name": "SADIE II \u2014 H8",
+      "description": "Human subject H8",
+      "maxOrder": 3,
+      "sampleRate": 44100,
+      "filterLength": 256,
+      "thumbnailLeft": "thumbnails/H8_L.jpg",
+      "thumbnailRight": "thumbnails/H8_R.jpg"
+    },
+    {
+      "id": "H9",
+      "name": "SADIE II \u2014 H9",
+      "description": "Human subject H9",
+      "maxOrder": 3,
+      "sampleRate": 44100,
+      "filterLength": 256,
+      "thumbnailLeft": "thumbnails/H9_L.jpg",
+      "thumbnailRight": "thumbnails/H9_R.jpg"
+    },
+    {
+      "id": "H10",
+      "name": "SADIE II \u2014 H10",
+      "description": "Human subject H10",
+      "maxOrder": 3,
+      "sampleRate": 44100,
+      "filterLength": 256,
+      "thumbnailLeft": "thumbnails/H10_L.jpg",
+      "thumbnailRight": "thumbnails/H10_R.jpg"
+    },
+    {
+      "id": "H11",
+      "name": "SADIE II \u2014 H11",
+      "description": "Human subject H11",
+      "maxOrder": 3,
+      "sampleRate": 44100,
+      "filterLength": 256,
+      "thumbnailLeft": "thumbnails/H11_L.jpg",
+      "thumbnailRight": "thumbnails/H11_R.jpg"
+    },
+    {
+      "id": "H12",
+      "name": "SADIE II \u2014 H12",
+      "description": "Human subject H12",
+      "maxOrder": 3,
+      "sampleRate": 44100,
+      "filterLength": 256,
+      "thumbnailLeft": "thumbnails/H12_L.jpg",
+      "thumbnailRight": "thumbnails/H12_R.jpg"
+    },
+    {
+      "id": "H13",
+      "name": "SADIE II \u2014 H13",
+      "description": "Human subject H13",
+      "maxOrder": 3,
+      "sampleRate": 44100,
+      "filterLength": 256,
+      "thumbnailLeft": "thumbnails/H13_L.jpg",
+      "thumbnailRight": "thumbnails/H13_R.jpg"
+    },
+    {
+      "id": "H14",
+      "name": "SADIE II \u2014 H14",
+      "description": "Human subject H14",
+      "maxOrder": 3,
+      "sampleRate": 44100,
+      "filterLength": 256,
+      "thumbnailLeft": "thumbnails/H14_L.jpg",
+      "thumbnailRight": "thumbnails/H14_R.jpg"
+    },
+    {
+      "id": "H15",
+      "name": "SADIE II \u2014 H15",
+      "description": "Human subject H15",
+      "maxOrder": 3,
+      "sampleRate": 44100,
+      "filterLength": 256,
+      "thumbnailLeft": "thumbnails/H15_L.jpg",
+      "thumbnailRight": "thumbnails/H15_R.jpg"
+    },
+    {
+      "id": "H16",
+      "name": "SADIE II \u2014 H16",
+      "description": "Human subject H16",
+      "maxOrder": 3,
+      "sampleRate": 44100,
+      "filterLength": 256,
+      "thumbnailLeft": "thumbnails/H16_L.jpg",
+      "thumbnailRight": "thumbnails/H16_R.jpg"
+    },
+    {
+      "id": "H17",
+      "name": "SADIE II \u2014 H17",
+      "description": "Human subject H17",
+      "maxOrder": 3,
+      "sampleRate": 44100,
+      "filterLength": 256,
+      "thumbnailLeft": "thumbnails/H17_L.jpg",
+      "thumbnailRight": "thumbnails/H17_R.jpg"
+    },
+    {
+      "id": "H18",
+      "name": "SADIE II \u2014 H18",
+      "description": "Human subject H18",
+      "maxOrder": 3,
+      "sampleRate": 44100,
+      "filterLength": 256,
+      "thumbnailLeft": "thumbnails/H18_L.jpg",
+      "thumbnailRight": "thumbnails/H18_R.jpg"
+    },
+    {
+      "id": "H19",
+      "name": "SADIE II \u2014 H19",
+      "description": "Human subject H19",
+      "maxOrder": 3,
+      "sampleRate": 44100,
+      "filterLength": 256,
+      "thumbnailLeft": "thumbnails/H19_L.jpg",
+      "thumbnailRight": "thumbnails/H19_R.jpg"
+    },
+    {
+      "id": "H20",
+      "name": "SADIE II \u2014 H20",
+      "description": "Human subject H20",
+      "maxOrder": 3,
+      "sampleRate": 44100,
+      "filterLength": 256,
+      "thumbnailLeft": "thumbnails/H20_L.jpg",
+      "thumbnailRight": "thumbnails/H20_R.jpg"
+    }
+  ]
+}
