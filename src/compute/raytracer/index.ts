@@ -42,7 +42,9 @@ import type { TailOptions } from "./impulse-response";
 import { extractDecayParameters, synthesizeTail, assembleFinalIR } from "./tail-synthesis";
 import { reflectionLossFunction as reflectionLossFunctionFn, calculateReflectionLoss as calculateReflectionLossFn, calculateResponseByIntensity as calcResponseByIntensityFn, resampleResponseByIntensity as resampleResponseByIntensityFn, calculateT20 as calculateT20Fn, calculateT30 as calculateT30Fn, calculateT60 as calculateT60Fn } from "./response-by-intensity";
 import { pathsToLinearBuffer as pathsToLinearBufferFn, linearBufferToPaths as linearBufferToPathsFn } from "./serialization";
-import { downloadImpulses as downloadImpulsesFn, playImpulseResponse as playImpulseResponseFn, downloadImpulseResponse as downloadImpulseResponseFn, downloadAmbisonicImpulseResponse as downloadAmbisonicIRFn } from "./export-playback";
+import { downloadImpulses as downloadImpulsesFn, playImpulseResponse as playImpulseResponseFn, downloadImpulseResponse as downloadImpulseResponseFn, downloadAmbisonicImpulseResponse as downloadAmbisonicIRFn, playBinauralImpulseResponse as playBinauralIRFn, downloadBinauralImpulseResponse as downloadBinauralIRFn } from "./export-playback";
+import { loadDecoderFilters } from "./binaural/hrtf-data";
+import { decodeBinaural, rotateAmbisonicIR } from "./binaural/binaural-decoder";
 import { resetConvergenceState, updateConvergenceMetrics, addToEnergyHistogram } from "./convergence";
 import { buildEdgeGraph, findDiffractionPaths } from "./diffraction";
 import type { EdgeGraph } from "./diffraction";
@@ -148,6 +150,14 @@ class RayTracer extends Solver {
   private _gpuRunning: boolean = false;
   private _rafId: number = 0;
 
+  // Binaural output properties
+  hrtfSubjectId: string;
+  headYaw: number;
+  headPitch: number;
+  headRoll: number;
+  binauralImpulseResponse?: AudioBuffer;
+  binauralPlaying: boolean = false;
+
   constructor(params?: RayTracerParams) {
     super(params);
     this.kind = "ray-tracer";
@@ -214,6 +224,10 @@ class RayTracer extends Solver {
     this.tailCrossfadeDuration = params.tailCrossfadeDuration ?? defaults.tailCrossfadeDuration;
     this.gpuEnabled = params.gpuEnabled ?? defaults.gpuEnabled;
     this.gpuBatchSize = params.gpuBatchSize ?? defaults.gpuBatchSize;
+    this.hrtfSubjectId = (params as any).hrtfSubjectId ?? "D1";
+    this.headYaw = (params as any).headYaw ?? 0;
+    this.headPitch = (params as any).headPitch ?? 0;
+    this.headRoll = (params as any).headRoll ?? 0;
     this._edgeGraph = null;
     this._histogramBinWidth = HISTOGRAM_BIN_WIDTH;
     this._histogramNumBins = HISTOGRAM_NUM_BINS;
@@ -365,6 +379,10 @@ class RayTracer extends Solver {
       tailCrossfadeDuration,
       gpuEnabled,
       gpuBatchSize,
+      hrtfSubjectId,
+      headYaw,
+      headPitch,
+      headRoll,
     } = this;
     return {
       name,
@@ -397,6 +415,10 @@ class RayTracer extends Solver {
       tailCrossfadeDuration,
       gpuEnabled,
       gpuBatchSize,
+      hrtfSubjectId,
+      headYaw,
+      headPitch,
+      headRoll,
     };
   }
 
@@ -1814,6 +1836,51 @@ class RayTracer extends Solver {
     this.ambisonicOrder = result.ambisonicOrder;
   }
 
+  /**
+   * Calculate binaural impulse response from the ambisonic IR using HRTF decoder filters.
+   * The ambisonic IR is computed (or cached) first, then optionally rotated by head orientation,
+   * and finally decoded to stereo via HRTF convolution.
+   */
+  async calculateBinauralImpulseResponse(order: number = 1): Promise<AudioBuffer> {
+    // Get or compute ambisonic IR
+    if (!this.ambisonicImpulseResponse || this.ambisonicOrder !== order) {
+      this.ambisonicImpulseResponse = await this.calculateAmbisonicImpulseResponse(order);
+      this.ambisonicOrder = order;
+    }
+
+    // Apply head rotation if non-zero
+    let ambiIR = this.ambisonicImpulseResponse;
+    if (this.headYaw !== 0 || this.headPitch !== 0 || this.headRoll !== 0) {
+      ambiIR = rotateAmbisonicIR(ambiIR, this.headYaw, this.headPitch, this.headRoll);
+    }
+
+    // Load HRTF decoder filters
+    const filters = await loadDecoderFilters(this.hrtfSubjectId, order);
+
+    // Decode to binaural stereo
+    const result = await decodeBinaural(ambiIR, filters);
+    this.binauralImpulseResponse = result.buffer;
+    return result.buffer;
+  }
+
+  async playBinauralImpulseResponse(order: number = 1) {
+    const result = await playBinauralIRFn(
+      this.binauralImpulseResponse,
+      () => this.calculateBinauralImpulseResponse(order),
+      this.uuid
+    );
+    this.binauralImpulseResponse = result.binauralImpulseResponse;
+  }
+
+  async downloadBinauralImpulseResponse(filename: string, order: number = 1) {
+    const result = await downloadBinauralIRFn(
+      this.binauralImpulseResponse,
+      () => this.calculateBinauralImpulseResponse(order),
+      filename
+    );
+    this.binauralImpulseResponse = result.binauralImpulseResponse;
+  }
+
   /** Initialize GPU ray tracer. Returns true on success. */
   private async _initGpu(): Promise<boolean> {
     if (!isWebGPUAvailable()) {
@@ -2137,6 +2204,8 @@ declare global {
     RAYTRACER_DOWNLOAD_IR: string;
     RAYTRACER_DOWNLOAD_IR_OCTAVE: string;
     RAYTRACER_DOWNLOAD_AMBISONIC_IR: { uuid: string; order: number };
+    RAYTRACER_PLAY_BINAURAL_IR: { uuid: string; order: number };
+    RAYTRACER_DOWNLOAD_BINAURAL_IR: { uuid: string; order: number };
     RAYTRACER_CALL_METHOD: CallSolverMethod<RayTracer>;
   }
 }
@@ -2171,6 +2240,22 @@ on("RAYTRACER_DOWNLOAD_AMBISONIC_IR", ({ uuid, order }: { uuid: string; order: n
   const filename = `ir-${sourceName}-${receiverName}`.replace(/[^a-zA-Z0-9-_]/g, '_');
   solver.downloadAmbisonicImpulseResponse(filename, order).catch((err: Error) => {
     window.alert(err.message || "Failed to download ambisonic impulse response");
+  });
+});
+on("RAYTRACER_PLAY_BINAURAL_IR", ({ uuid, order }: { uuid: string; order: number }) => {
+  const solver = useSolver.getState().solvers[uuid] as RayTracer;
+  solver.playBinauralImpulseResponse(order).catch((err: Error) => {
+    window.alert(err.message || "Failed to play binaural impulse response");
+  });
+});
+on("RAYTRACER_DOWNLOAD_BINAURAL_IR", ({ uuid, order }: { uuid: string; order: number }) => {
+  const solver = useSolver.getState().solvers[uuid] as RayTracer;
+  const containers = useContainer.getState().containers;
+  const sourceName = solver.sourceIDs.length > 0 ? containers[solver.sourceIDs[0]]?.name || 'source' : 'source';
+  const receiverName = solver.receiverIDs.length > 0 ? containers[solver.receiverIDs[0]]?.name || 'receiver' : 'receiver';
+  const filename = `ir-${sourceName}-${receiverName}`.replace(/[^a-zA-Z0-9-_]/g, '_');
+  solver.downloadBinauralImpulseResponse(filename, order).catch((err: Error) => {
+    window.alert(err.message || "Failed to download binaural impulse response");
   });
 });
 

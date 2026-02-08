@@ -171,3 +171,75 @@ export async function downloadAmbisonicImpulseResponse(
   FileSaver.saveAs(blob, `${filename}_${orderLabel}${extension}`);
   return { ambisonicImpulseResponse, ambisonicOrder };
 }
+
+/**
+ * Play the binaural impulse response through the audio engine.
+ *
+ * @param binauralImpulseResponse - The stereo AudioBuffer to play (or undefined to calculate first)
+ * @param calculateBinauralImpulseResponse - Async function to calculate if needed
+ * @param uuid - The solver UUID for property events
+ */
+export async function playBinauralImpulseResponse(
+  binauralImpulseResponse: AudioBuffer | undefined,
+  calculateBinauralImpulseResponse: () => Promise<AudioBuffer>,
+  uuid: string
+): Promise<{ binauralImpulseResponse: AudioBuffer }> {
+  if (!binauralImpulseResponse) {
+    binauralImpulseResponse = await calculateBinauralImpulseResponse();
+  }
+  if (audioEngine.context.state === 'suspended') {
+    audioEngine.context.resume();
+  }
+  const source = audioEngine.context.createBufferSource();
+  source.buffer = binauralImpulseResponse;
+  source.connect(audioEngine.context.destination);
+  source.start();
+  emit("RAYTRACER_SET_PROPERTY", { uuid, property: "binauralPlaying", value: true });
+  source.onended = () => {
+    source.stop();
+    source.disconnect(audioEngine.context.destination);
+    emit("RAYTRACER_SET_PROPERTY", { uuid, property: "binauralPlaying", value: false });
+  };
+  return { binauralImpulseResponse };
+}
+
+/**
+ * Download the binaural impulse response as a stereo WAV file.
+ *
+ * @param binauralImpulseResponse - The stereo AudioBuffer (or undefined to calculate first)
+ * @param calculateBinauralImpulseResponse - Async function to calculate if needed
+ * @param filename - Output filename
+ */
+export async function downloadBinauralImpulseResponse(
+  binauralImpulseResponse: AudioBuffer | undefined,
+  calculateBinauralImpulseResponse: () => Promise<AudioBuffer>,
+  filename: string
+): Promise<{ binauralImpulseResponse: AudioBuffer }> {
+  if (!binauralImpulseResponse) {
+    binauralImpulseResponse = await calculateBinauralImpulseResponse();
+  }
+
+  const sampleRate = binauralImpulseResponse.sampleRate;
+  const left = binauralImpulseResponse.getChannelData(0);
+  const right = binauralImpulseResponse.getChannelData(1);
+
+  // Normalize stereo signal
+  let max = 0;
+  for (let i = 0; i < left.length; i++) {
+    if (Math.abs(left[i]) > max) max = Math.abs(left[i]);
+    if (Math.abs(right[i]) > max) max = Math.abs(right[i]);
+  }
+  const normLeft = new Float32Array(left.length);
+  const normRight = new Float32Array(right.length);
+  if (max > 0) {
+    for (let i = 0; i < left.length; i++) {
+      normLeft[i] = left[i] / max;
+      normRight[i] = right[i] / max;
+    }
+  }
+
+  const blob = ac.wavAsBlob([normLeft, normRight], { sampleRate, bitDepth: 32 });
+  const extension = !filename.endsWith(".wav") ? ".wav" : "";
+  FileSaver.saveAs(blob, `${filename}_binaural${extension}`);
+  return { binauralImpulseResponse };
+}
