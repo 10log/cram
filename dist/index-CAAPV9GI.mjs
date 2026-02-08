@@ -1,12 +1,12 @@
-import { S as xt } from "./solver-2Xqbhs6F.mjs";
+import { S as xt } from "./solver-BSMLX2tM.mjs";
 import * as M from "three";
 import { computeBoundsTree as It, disposeBoundsTree as St, acceleratedRaycast as _t } from "three-mesh-bvh";
-import { S as it, u as P, b as De, L as le, P as ue, I as fe, y as At, e as H, F as ze, z as Dt, r as N, m as X, a as ke, R as Le, o as j, A as wt, s as Et, c as Tt, d as Pt, f as ee } from "./index-CXm_LEs2.mjs";
-import { a as F, w as Oe, n as Mt, O as ot } from "./audio-engine-Bw0oX7Dw.mjs";
+import { S as it, u as P, b as De, L as le, P as ue, I as fe, y as At, e as H, F as ze, z as Dt, r as N, m as X, a as ke, R as Le, o as j, A as wt, s as Et, c as Tt, d as Pt, f as ee } from "./index-CGV1szrQ.mjs";
+import { a as F, w as Oe, n as Mt, O as ot } from "./audio-engine-C-iA55bw.mjs";
 import { a as W } from "./air-attenuation-CBIk1QMo.mjs";
 import { s as at } from "./sound-speed-Biev-mJ1.mjs";
 import { e as Bt, g as Ct } from "./ambisonics.es-Ci32Q6qr.mjs";
-import { ImageSourceSolver as zt } from "./index-BD3h9Uey.mjs";
+import { ImageSourceSolver as zt } from "./index-BfV5xPPR.mjs";
 function Ot(o) {
   return o.reduce((e, t) => e + t);
 }
@@ -2644,10 +2644,10 @@ class Hn extends xt {
     );
   }
   start() {
-    this._cachedAirAtt = W(this.frequencies, this._temperature), this.mapIntersectableObjects(), this.edgeDiffractionEnabled && this.room ? this._edgeGraph = Dn(this.room.allSurfaces) : this._edgeGraph = null, this.__start_time = Date.now(), this.__num_checked_paths = 0, this._resetConvergenceState(), this.gpuEnabled ? this._startGpuMonteCarlo() : this.startAllMonteCarlo();
+    this._isRunning = !0, this._cachedAirAtt = W(this.frequencies, this._temperature), this.mapIntersectableObjects(), this.edgeDiffractionEnabled && this.room ? this._edgeGraph = Dn(this.room.allSurfaces) : this._edgeGraph = null, this.__start_time = Date.now(), this.__num_checked_paths = 0, this._resetConvergenceState(), this.gpuEnabled ? this._startGpuMonteCarlo() : this.startAllMonteCarlo();
   }
   stop() {
-    this.__calc_time = Date.now() - this.__start_time, this._gpuRunning = !1, this._gpuRayTracer && setTimeout(() => this._disposeGpu(), 0), cancelAnimationFrame(this._rafId), this._rafId = 0, this.intervals.forEach((e) => {
+    this._isRunning = !1, this.__calc_time = Date.now() - this.__start_time, this._gpuRunning = !1, this._gpuRayTracer && setTimeout(() => this._disposeGpu(), 0), cancelAnimationFrame(this._rafId), this._rafId = 0, this.intervals.forEach((e) => {
       window.clearInterval(e);
     }), this.intervals = [], Object.keys(this.paths).forEach((e) => {
       const t = this.__calc_time / 1e3, s = this.paths[e].length, c = s / t, a = this.__num_checked_paths, i = a / t;
@@ -3327,4 +3327,4 @@ export {
   C as defaults,
   ve as normalize
 };
-//# sourceMappingURL=index-Bkj-5zDh.mjs.map
+//# sourceMappingURL=index-CAAPV9GI.mjs.map

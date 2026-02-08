@@ -8972,11 +8972,11 @@ async function Yt(t, e, r) {
   return a(e, r);
 }
 lr("ray-tracer", async (t, e) => {
-  const { default: r } = await import("./index-Bkj-5zDh.mjs");
+  const { default: r } = await import("./index-CAAPV9GI.mjs");
   return new r(e);
 });
 lr("image-source", async (t, e) => {
-  const { ImageSourceSolver: r } = await import("./index-BD3h9Uey.mjs"), a = {
+  const { ImageSourceSolver: r } = await import("./index-BfV5xPPR.mjs"), a = {
     name: "Image Source",
     roomID: "",
     sourceIDs: [],
@@ -8991,23 +8991,23 @@ lr("image-source", async (t, e) => {
   return new r(a);
 });
 lr("rt60", async (t, e) => {
-  const { default: r } = await import("./index-Dj88VSJ6.mjs");
+  const { default: r } = await import("./index-R6INKagV.mjs");
   return new r();
 });
 lr("energydecay", async (t, e) => {
-  const { default: r } = await import("./energy-decay-a6Cfl67M.mjs");
+  const { default: r } = await import("./energy-decay-CPagVdwE.mjs");
   return new r();
 });
 lr("fdtd-2d", async (t, e) => {
-  const { default: r } = await import("./index-CqeRS8YX.mjs");
+  const { default: r } = await import("./index-BDTQP9W_.mjs");
   return new r();
 });
 lr("beam-trace", async (t, e) => {
-  const { BeamTraceSolver: r } = await import("./index-CIpuNPks.mjs");
+  const { BeamTraceSolver: r } = await import("./index-DI5us7R1.mjs");
   return new r();
 });
 lr("art", async (t, e) => {
-  const { ART: r } = await import("./art-ez1EEa0L.mjs");
+  const { ART: r } = await import("./art-CBx5KgcY.mjs");
   return new r();
 });
 class s9 extends oc {
@@ -14134,23 +14134,23 @@ function D6() {
 async function H6(t, e) {
   switch (t) {
     case "ray-tracer": {
-      const { default: r } = await import("./index-Bkj-5zDh.mjs");
+      const { default: r } = await import("./index-CAAPV9GI.mjs");
       return new r(e).restore(e);
     }
     case "rt60": {
-      const { default: r } = await import("./index-Dj88VSJ6.mjs");
+      const { default: r } = await import("./index-R6INKagV.mjs");
       return new r().restore(e);
     }
     case "art": {
-      const { default: r } = await import("./art-ez1EEa0L.mjs");
+      const { default: r } = await import("./art-CBx5KgcY.mjs");
       return new r(e).restore(e);
     }
     case "image-source": {
-      const { default: r } = await import("./index-BD3h9Uey.mjs");
+      const { default: r } = await import("./index-BfV5xPPR.mjs");
       return new r(e).restore(e);
     }
     case "beam-trace": {
-      const { BeamTraceSolver: r } = await import("./index-CIpuNPks.mjs");
+      const { BeamTraceSolver: r } = await import("./index-DI5us7R1.mjs");
       return new r().restore(e);
     }
     default:
@@ -14158,7 +14158,7 @@ async function H6(t, e) {
   }
 }
 function q6() {
-  import("./events-B-aL0nnY.mjs").then((t) => t.default()), ae("LOG_SOLVER", (t) => {
+  import("./events-HxIA-KJj.mjs").then((t) => t.default()), ae("LOG_SOLVER", (t) => {
     console.log(n0.getState().solvers[t]);
   }), ae("REMOVE_SOLVERS", (t) => {
     const e = n0.getState().solvers, r = typeof t == "string" ? [t] : t;
@@ -21439,4 +21439,4 @@ export {
   mi as y,
   J5 as z
 };
-//# sourceMappingURL=index-CXm_LEs2.mjs.map
+//# sourceMappingURL=index-CGV1szrQ.mjs.map
