@@ -22,27 +22,27 @@ const indexSource = fs.readFileSync(
 );
 
 const diffTypesSource = fs.readFileSync(
-  path.resolve(__dirname, '..', 'diffraction', 'types.ts'),
+  path.resolve(__dirname, '..', '..', 'shared', 'diffraction', 'types.ts'),
   'utf8'
 );
 
 const edgeGraphSource = fs.readFileSync(
-  path.resolve(__dirname, '..', 'diffraction', 'edge-graph.ts'),
+  path.resolve(__dirname, '..', '..', 'shared', 'diffraction', 'edge-graph.ts'),
   'utf8'
 );
 
 const utdCoefficientSource = fs.readFileSync(
-  path.resolve(__dirname, '..', 'diffraction', 'utd-coefficient.ts'),
+  path.resolve(__dirname, '..', '..', 'shared', 'diffraction', 'utd-coefficient.ts'),
   'utf8'
 );
 
 const findPathsSource = fs.readFileSync(
-  path.resolve(__dirname, '..', 'diffraction', 'find-diffraction-paths.ts'),
+  path.resolve(__dirname, '..', '..', 'shared', 'diffraction', 'find-diffraction-paths.ts'),
   'utf8'
 );
 
 const diffIndexSource = fs.readFileSync(
-  path.resolve(__dirname, '..', 'diffraction', 'index.ts'),
+  path.resolve(__dirname, '..', '..', 'shared', 'diffraction', 'index.ts'),
   'utf8'
 );
 
@@ -53,9 +53,9 @@ const rayTracerTabSource = fs.readFileSync(
 
 // ── Import pure math functions for unit testing ───────────────────
 
-import { fresnelTransition, utdDiffractionCoefficient } from '../diffraction/utd-coefficient';
-import { findDiffractionPoint } from '../diffraction/find-diffraction-paths';
-import { buildEdgeGraph } from '../diffraction/edge-graph';
+import { fresnelTransition, utdDiffractionCoefficient } from '../../shared/diffraction/utd-coefficient';
+import { findDiffractionPoint } from '../../shared/diffraction/find-diffraction-paths';
+import { buildEdgeGraph } from '../../shared/diffraction/edge-graph';
 
 // ── Source-scanning tests ─────────────────────────────────────────
 

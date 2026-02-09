@@ -1,10 +1,9 @@
 /**
- * Edge diffraction via Uniform Theory of Diffraction (UTD).
- *
- * Barrel exports for the diffraction module.
+ * Re-exports from shared diffraction module.
+ * @deprecated Import from "../../shared/diffraction" directly.
  */
 
-export type { DiffractingEdge, DiffractionPath, EdgeGraph } from "./types";
-export { buildEdgeGraph } from "./edge-graph";
-export { fresnelTransition, computeWedgeAngles, utdDiffractionCoefficient } from "./utd-coefficient";
-export { findDiffractionPoint, hasLineOfSight, findDiffractionPaths } from "./find-diffraction-paths";
+export type { DiffractingEdge, DiffractionPath, EdgeGraph } from "../../shared/diffraction";
+export { buildEdgeGraph } from "../../shared/diffraction";
+export { fresnelTransition, computeWedgeAngles, utdDiffractionCoefficient } from "../../shared/diffraction";
+export { findDiffractionPoint, hasLineOfSight, findDiffractionPaths } from "../../shared/diffraction";

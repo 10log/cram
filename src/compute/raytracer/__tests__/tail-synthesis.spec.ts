@@ -16,13 +16,18 @@ const typesSource = fs.readFileSync(
   'utf8'
 );
 
+const sharedTypesSource = fs.readFileSync(
+  path.resolve(__dirname, '..', '..', 'shared', 'tail-synthesis-types.ts'),
+  'utf8'
+);
+
 const indexSource = fs.readFileSync(
   path.resolve(__dirname, '..', 'index.ts'),
   'utf8'
 );
 
 const tailSource = fs.readFileSync(
-  path.resolve(__dirname, '..', 'tail-synthesis.ts'),
+  path.resolve(__dirname, '..', '..', 'shared', 'tail-synthesis.ts'),
   'utf8'
 );
 
@@ -35,10 +40,10 @@ const irSource = fs.readFileSync(
 
 describe('Late Reverberation Tail Synthesis – source structure', () => {
 
-  describe('types.ts', () => {
-    it('exports DecayParameters interface with required fields', () => {
-      expect(typesSource).toMatch(/export\s+interface\s+DecayParameters/);
-      const match = typesSource.match(/export\s+interface\s+DecayParameters\s*\{([\s\S]*?)\}/);
+  describe('types.ts / shared tail-synthesis-types.ts', () => {
+    it('exports DecayParameters interface with required fields (in shared)', () => {
+      expect(sharedTypesSource).toMatch(/export\s+interface\s+DecayParameters/);
+      const match = sharedTypesSource.match(/export\s+interface\s+DecayParameters\s*\{([\s\S]*?)\}/);
       expect(match).not.toBeNull();
       const body = match![1];
       expect(body).toContain('t60: number');
@@ -46,6 +51,11 @@ describe('Late Reverberation Tail Synthesis – source structure', () => {
       expect(body).toContain('crossfadeLevel: number');
       expect(body).toContain('crossfadeTime: number');
       expect(body).toContain('endTime: number');
+    });
+
+    it('raytracer types re-exports DecayParameters from shared', () => {
+      expect(typesSource).toContain('DecayParameters');
+      expect(typesSource).toContain('tail-synthesis-types');
     });
 
     it('has lateReverbTailEnabled in defaults', () => {
@@ -72,9 +82,9 @@ describe('Late Reverberation Tail Synthesis – source structure', () => {
       expect(match![1]).toContain('lateReverbTailEnabled');
     });
 
-    it('exports MIN_TAIL_DECAY_RATE and MAX_TAIL_END_TIME constants', () => {
-      expect(typesSource).toMatch(/export\s+const\s+MIN_TAIL_DECAY_RATE/);
-      expect(typesSource).toMatch(/export\s+const\s+MAX_TAIL_END_TIME/);
+    it('exports MIN_TAIL_DECAY_RATE and MAX_TAIL_END_TIME constants (in shared)', () => {
+      expect(sharedTypesSource).toMatch(/export\s+const\s+MIN_TAIL_DECAY_RATE/);
+      expect(sharedTypesSource).toMatch(/export\s+const\s+MAX_TAIL_END_TIME/);
     });
   });
 
@@ -127,7 +137,7 @@ describe('Late Reverberation Tail Synthesis – source structure', () => {
 
 // ── Part 2: Unit tests for pure functions ────────────────────────────
 
-import { extractDecayParameters, synthesizeTail, assembleFinalIR } from '../tail-synthesis';
+import { extractDecayParameters, synthesizeTail, assembleFinalIR } from '../../shared/tail-synthesis';
 
 describe('extractDecayParameters', () => {
   const frequencies = [500, 1000];
