@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { useShallow } from 'zustand/react/shallow';
 import { Result, useResult, ResultKind } from '../../store/result-store';
 
-import { Bar } from '@visx/shape';
+import { Bar, LinePath } from '@visx/shape';
 import { Group } from '@visx/group';
 import { scaleLinear } from '@visx/scale';
 import { AxisBottom, AxisLeft } from '@visx/axis';
@@ -11,14 +11,15 @@ import { Grid } from '@visx/grid';
 import ParentSize from '@visx/responsive/lib/components/ParentSize';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
+import Slider from '@mui/material/Slider';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
+import FormControl from '@mui/material/FormControl';
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
+import ToggleButton from '@mui/material/ToggleButton';
 import type { SxProps, Theme } from '@mui/material/styles';
-import {
-  LegendOrdinal,
-  LegendItem,
-  LegendLabel,
-} from '@visx/legend';
 import { scaleOrdinal } from 'd3-scale';
-import { pickProps, unique } from '../../common/helpers';
+import { pickProps } from '../../common/helpers';
 import { emit, on } from '../../messenger';
 import chroma from 'chroma-js';
 import { ImageSourceSolver } from '../../compute/raytracer/image-source';
@@ -27,11 +28,12 @@ import { useSolver } from '../../store';
 
 // Type for solvers that can generate LTP results
 type LTPSolver = ImageSourceSolver | BeamTraceSolver;
-import PropertyRowCheckbox from "../parameter-config/property-row/PropertyRowCheckbox";
-import PropertyRowLabel from '../parameter-config/property-row/PropertyRowLabel';
 // accessors
 const getTime = (d) => d.time;
 const getPressure = (d) => d.pressure[0];
+
+type ChartMode = 'ltp' | 'etc';
+type YRange = 'auto' | 10 | 20 | 30;
 
 export type LTPChartProps = {
   uuid: string;
@@ -40,13 +42,13 @@ export type LTPChartProps = {
   events?: boolean;
   plotOrders?: number[];
   solverKind?: string;
+  chartMode?: ChartMode;
+  yRange?: YRange;
 };
 
 const range = (start: number, stop: number) => [...Array(stop-start)].map((x,i) => start + i)
 const colorScale = chroma.scale(['#ff8a0b', '#000080']).mode('lch');
 const getOrderColors = (n: number) => colorScale.colors(n);
-
-const legendGlyphSize = 12;
 
 const verticalContainerSx: SxProps<Theme> = {
   display: "flex",
@@ -58,30 +60,18 @@ const titleSx: SxProps<Theme> = {
   justifyContent: "center",
 };
 
-const horizontalContainerSx: SxProps<Theme> = {
+const toolbarSx: SxProps<Theme> = {
   display: "flex",
   flexDirection: "row",
-  flex: 1,
-};
-
-const legendContainerSx: SxProps<Theme> = {
-  display: "flex",
-  flexDirection: "column",
   alignItems: "center",
-  p: "0px 16px",
-};
-
-const frequencyContainerSx: SxProps<Theme> = {
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  p: "16px 16px",
+  gap: 3,
+  px: 2,
+  py: 0.5,
 };
 
 const graphContainerSx: SxProps<Theme> = {
   display: "flex",
-  flex: 8,
-  width: "80%",
+  flex: 1,
 };
 
 const useUpdate = () => {
@@ -89,7 +79,7 @@ const useUpdate = () => {
   return [updateCount, () => setUpdateCount(updateCount + 1)] as  [number, () => void];
 }
 
-const Chart = ({ uuid, width = 400, height = 200, events = false, plotOrders, solverKind }: LTPChartProps) => {
+const Chart = ({ uuid, width = 400, height = 200, events = false, plotOrders, solverKind, chartMode = 'ltp', yRange = 'auto' }: LTPChartProps) => {
     const {info, data: _data, from} = useResult(useShallow(state=>pickProps(["info", "data", "from"], state.results[uuid] as Result<ResultKind.LevelTimeProgression>)));
 
     const [_count, _update] = useUpdate();
@@ -129,14 +119,20 @@ const Chart = ({ uuid, width = 400, height = 200, events = false, plotOrders, so
     );
 
     const yScale = useMemo(
-      () =>
-        scaleLinear<number>({
+      () => {
+        if (!data || data.length === 0) {
+          return scaleLinear<number>({ range: [scaleHeight, 0], domain: [0, 1] });
+        }
+        const maxP = Math.max(...data.map(getPressure));
+        const minP = yRange === 'auto'
+          ? Math.min(...data.map(getPressure)) * 0.75
+          : maxP - yRange;
+        return scaleLinear<number>({
           range: [scaleHeight, 0],
-          domain: data && data.length > 0
-            ? [Math.min(...data.map(getPressure))*0.75, Math.max(...data.map(getPressure))]
-            : [0, 1],
-        }),
-      [scaleHeight, data],
+          domain: [minP, maxP],
+        });
+      },
+      [scaleHeight, data, yRange],
     );
 
     const ordinalColorScale = useMemo(
@@ -146,6 +142,12 @@ const Chart = ({ uuid, width = 400, height = 200, events = false, plotOrders, so
     ),
       [info.maxOrder]
     );
+
+    // ETC: sort filtered data by time for line plot
+    const etcData = useMemo(() => {
+      if (!filteredData) return [];
+      return [...filteredData].sort((a, b) => getTime(a) - getTime(b));
+    }, [filteredData]);
 
     // Guard against empty data - must be after all hooks
     if (!data || data.length === 0) {
@@ -160,49 +162,56 @@ const Chart = ({ uuid, width = 400, height = 200, events = false, plotOrders, so
 
     return (
       <svg width={width} height={height}>
-      {/* <rect width={width} height={height} fill={"#fff"} rx={14} /> */}
       <Grid
         xScale={xScale}
         yScale={yScale}
         width={scaleWidth}
         height={scaleHeight}
         left={scalePadding}
-        // numTicksRows={numTicksForHeight(height)}
-        // numTicksColumns={numTicksForWidth(width)}
       />
-      <Group>
-        {filteredData.map(d => {
-          const time = getTime(d);
-          const barHeight = scaleHeight - yScale(getPressure(d));
-          const barX = xScale(time) + scalePadding;
-          const barY = scaleHeight - barHeight;
-          return (
-            <Bar
-              key={`bar-${d.arrival}`}
-              x={barX}
-              y={barY}
-              width={3}
-              height={barHeight}
-              fill={ordinalColorScale(d.order)}
-              className="test-bar-class"
-              // stroke={"#ffff00"}
-              // strokeWidth={1}
-              onMouseOver={()=>{
-                
-              }}  
-              onClick={() => {
-                if (!events) return;
-                const solver = useSolver.getState().solvers[from] as LTPSolver;
-                if (solver && 'toggleRayPathHighlight' in solver) {
-                  (solver as ImageSourceSolver | BeamTraceSolver).toggleRayPathHighlight(d.uuid);
-                }
-              }}
-            />
-          );
-        })}
-      </Group>
+      {chartMode === 'etc' ? (
+        <Group left={scalePadding}>
+          <LinePath
+            data={etcData}
+            x={(d) => xScale(getTime(d))}
+            y={(d) => yScale(getPressure(d))}
+            stroke="#2563eb"
+            strokeWidth={1.5}
+          />
+        </Group>
+      ) : (
+        <Group>
+          {filteredData.map(d => {
+            const time = getTime(d);
+            const barHeight = scaleHeight - yScale(getPressure(d));
+            const barX = xScale(time) + scalePadding;
+            const barY = scaleHeight - barHeight;
+            return (
+              <Bar
+                key={`bar-${d.arrival}`}
+                x={barX}
+                y={barY}
+                width={3}
+                height={barHeight}
+                fill={ordinalColorScale(d.order)}
+                className="test-bar-class"
+                onMouseOver={()=>{
+
+                }}
+                onClick={() => {
+                  if (!events) return;
+                  const solver = useSolver.getState().solvers[from] as LTPSolver;
+                  if (solver && 'toggleRayPathHighlight' in solver) {
+                    (solver as ImageSourceSolver | BeamTraceSolver).toggleRayPathHighlight(d.uuid);
+                  }
+                }}
+              />
+            );
+          })}
+        </Group>
+      )}
       <AxisBottom {...{scale: xScale, top: scaleHeight, left: scalePadding, label: "Time (s)" }} />
-      <AxisLeft {...{scale: yScale, left: scalePadding, label: "Sound Pressure Level (dB re: 20uPa)" }} />
+      <AxisLeft {...{scale: yScale, left: scalePadding, label: chartMode === 'etc' ? "Energy (dB)" : "Sound Pressure Level (dB re: 20uPa)" }} />
     </svg>
     )
 
@@ -213,12 +222,18 @@ export const LTPChart = ({ uuid, width = 400, height = 300, events = false }: LT
 
   const {name, info, from} = useResult(useShallow(state=>pickProps(["name", "info", "from"], state.results[uuid] as Result<ResultKind.LevelTimeProgression>)));
   const solver = useSolver(state => state.solvers[from] as LTPSolver | undefined);
-  const initialPlotOrders = solver?.plotOrders ?? [];
   const frequencies = solver?.frequencies ?? [125, 250, 500, 1000, 2000, 4000, 8000];
   const solverKind = solver?.kind;
 
-  const [plotOrders, setPlotOrders] = useState(initialPlotOrders);
+  const [orderRange, setOrderRange] = useState<number[]>([0, info.maxOrder]);
   const [order, setMaxOrder] = useState(info.maxOrder);
+  const [chartMode, setChartMode] = useState<ChartMode>('ltp');
+  const [yRange, setYRange] = useState<YRange>('auto');
+
+  const plotOrders = useMemo(
+    () => Array.from({ length: orderRange[1] - orderRange[0] + 1 }, (_, i) => orderRange[0] + i),
+    [orderRange]
+  );
 
   useEffect(() => {
     return on("UPDATE_RESULT", (e) => {
@@ -226,9 +241,7 @@ export const LTPChart = ({ uuid, width = 400, height = 300, events = false }: LT
         //@ts-ignore
         const newMaxOrder = e.result.info.maxOrder;
         setMaxOrder(newMaxOrder);
-        // Auto-show all orders when maxOrder changes (new orders are added)
-        const allOrders = Array.from({ length: newMaxOrder + 1 }, (_, i) => i);
-        setPlotOrders(allOrders);
+        setOrderRange(prev => [prev[0], Math.max(prev[1], newMaxOrder)]);
       }
     });
   }, [uuid]);
@@ -236,100 +249,90 @@ export const LTPChart = ({ uuid, width = 400, height = 300, events = false }: LT
   useEffect(() => {
     const unsubImage = on("IMAGESOURCE_SET_PROPERTY", (e) => {
       if (e.uuid === from && e.property === "plotOrders") {
-        setPlotOrders(e.value as number[]);
+        const orders = e.value as number[];
+        if (orders.length > 0) {
+          setOrderRange([Math.min(...orders), Math.max(...orders)]);
+        }
       }
     });
     const unsubBeam = on("BEAMTRACE_SET_PROPERTY", (e) => {
       if (e.uuid === from && e.property === "plotOrders") {
-        setPlotOrders(e.value as number[]);
+        const orders = e.value as number[];
+        if (orders.length > 0) {
+          setOrderRange([Math.min(...orders), Math.max(...orders)]);
+        }
       }
     });
     return () => { unsubImage(); unsubBeam(); };
-  }, [from]);  
+  }, [from]);
 
-  const ordinalColorScale = useMemo(
-    () => scaleOrdinal(
-    range(0, order+1),
-    getOrderColors(order+1)
-  ),
-    [order]
-  );
+  const handleOrderRangeChange = (_event: Event, newValue: number | number[]) => {
+    const val = newValue as number[];
+    setOrderRange(val);
+    const newPlotOrders = Array.from({ length: val[1] - val[0] + 1 }, (_, i) => val[0] + i);
+    const eventType = solverKind === "beam-trace" ? "BEAMTRACE_SET_PROPERTY" : "IMAGESOURCE_SET_PROPERTY";
+    emit(eventType, { uuid: from, property: "plotOrders", value: newPlotOrders });
+  };
 
-
-  // const {from} = useResult(state=>pickProps(["from"], state.results[uuid] as Result<ResultKind.LevelTimeProgression>));
-  // let imagesourcesolver = useSolver.getState().solvers[from] as ImageSourceSolver;
-
-  // const { PropertyTextInput, PropertyNumberInput, PropertyCheckboxInput } = createPropertyInputs<ImageSourceSolver>(
-    // "IMAGESOURCE_SET_PROPERTY"
-  // );
+  const handleFrequencyChange = (event) => {
+    const eventType = solverKind === "beam-trace" ? "BEAMTRACE_SET_PROPERTY" : "IMAGESOURCE_SET_PROPERTY";
+    emit(eventType, { uuid: from, property: "plotFrequency", value: event.target.value });
+  };
 
   return width < 10 ? null : (
     <Box sx={verticalContainerSx}>
       <Typography sx={titleSx}>{name}</Typography>
-    <Box sx={horizontalContainerSx}>
+      <Box sx={toolbarSx}>
+        <ToggleButtonGroup
+          value={chartMode}
+          exclusive
+          onChange={(_e, val) => { if (val) setChartMode(val); }}
+          size="small"
+        >
+          <ToggleButton value="ltp">LTP</ToggleButton>
+          <ToggleButton value="etc">ETC</ToggleButton>
+        </ToggleButtonGroup>
+        <Typography variant="body2" sx={{ whiteSpace: "nowrap" }}>Orders</Typography>
+        <Slider
+          value={orderRange}
+          onChange={handleOrderRangeChange}
+          min={0}
+          max={order}
+          marks
+          valueLabelDisplay="auto"
+          disableSwap
+          sx={{ minWidth: 200, maxWidth: 300 }}
+        />
+        <Typography variant="body2" sx={{ whiteSpace: "nowrap" }}>Y Range</Typography>
+        <FormControl size="small">
+          <Select
+            value={yRange}
+            onChange={(e) => setYRange(e.target.value as YRange)}
+            sx={{ bgcolor: 'background.paper', minWidth: 90 }}
+          >
+            <MenuItem value="auto">Auto</MenuItem>
+            <MenuItem value={10}>10 dB</MenuItem>
+            <MenuItem value={20}>20 dB</MenuItem>
+            <MenuItem value={30}>30 dB</MenuItem>
+          </Select>
+        </FormControl>
+        <Typography variant="body2" sx={{ whiteSpace: "nowrap" }}>Octave Band</Typography>
+        <FormControl size="small">
+          <Select
+            value={info.frequency[0]}
+            onChange={handleFrequencyChange}
+            sx={{ bgcolor: 'background.paper', minWidth: 100 }}
+          >
+            {frequencies.map((f) => (
+              <MenuItem key={f} value={f}>{f} Hz</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </Box>
       <Box sx={graphContainerSx}>
         <ParentSize debounceTime={10}>
-          {({ width })=><Chart {...{ width, height, uuid, events, plotOrders, solverKind }} />}
+          {({ width })=><Chart {...{ width, height, uuid, events, plotOrders, solverKind, chartMode, yRange }} />}
         </ParentSize>
-      </Box>
-      <Box sx={verticalContainerSx}>
-        <LegendOrdinal scale={ordinalColorScale} labelFormat={label => `Order ${label}`}>
-            {labels => (
-              <Box sx={legendContainerSx}>
-                {labels.map((label, i) => (
-                  <LegendItem
-                    key={`legend-quantile-${i}`}
-                    margin="0 5px"
-                    onClick={() => {
-                      //if (events) alert(`clicked: ${JSON.stringify(label)}`);
-                    }}
-                  >
-                    <svg width={legendGlyphSize} height={legendGlyphSize}>
-                      <rect fill={label.value} width={legendGlyphSize} height={legendGlyphSize} />
-                    </svg>
-                    <LegendLabel align="left" margin="0 0 0 4px">
-                      {label.text}
-                    </LegendLabel>
-                    <PropertyRowCheckbox
-                      value={plotOrders.includes(label.datum)}
-                      onChange={(e) =>
-                        {
-                          const newPlotOrders = e.value ? unique([...plotOrders, label.datum]) : plotOrders.reduce((acc, curr) => curr === label.datum ? acc : [...acc, curr], []);
-                          const eventType = solverKind === "beam-trace" ? "BEAMTRACE_SET_PROPERTY" : "IMAGESOURCE_SET_PROPERTY";
-                          emit(eventType, { uuid: from, property: "plotOrders", value: newPlotOrders })
-                        }
-                      }
-                    />
-                  </LegendItem>
-                ))}
-              </Box>
-            )}
-          </LegendOrdinal>
-          <Box sx={frequencyContainerSx}>
-            <Typography sx={titleSx}><b>Octave Band (Hz)</b></Typography>
-            <Box sx={legendContainerSx}>
-              {frequencies.map((f)=>(
-                <LegendItem
-                  key={`freq-control-${f}`}
-                  margin="0 5px"
-                  onClick={() => {
-                    //if (events) alert(`clicked: ${JSON.stringify(label)}`);
-                }}>
-                  <PropertyRowLabel
-                    label={f.toString()}
-                  />
-                  <PropertyRowCheckbox
-                    value={(f)===(info.frequency[0])}
-                    onChange = {(_e) => {
-                      const eventType = solverKind === "beam-trace" ? "BEAMTRACE_SET_PROPERTY" : "IMAGESOURCE_SET_PROPERTY";
-                      emit(eventType, { uuid: from, property: "plotFrequency", value: f })
-                    }}
-                  />
-                </LegendItem>
-              ))}
-            </Box>
-          </Box>
-        </Box>
       </Box>
     </Box>
   );
