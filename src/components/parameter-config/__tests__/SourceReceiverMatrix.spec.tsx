@@ -3,6 +3,7 @@
  *
  * Tests for the SourceReceiverMatrix component that displays
  * a matrix grid for selecting source-receiver pairs.
+ * The component renders a table with checkmark (✓) / dot (·) symbols.
  */
 
 import React from 'react';
@@ -109,34 +110,31 @@ describe('SourceReceiverMatrix', () => {
       expect(screen.getByText('Src \\ Rec')).toBeInTheDocument();
     });
 
-    it('renders checkboxes for each source-receiver pair', () => {
+    it('renders data cells for each source-receiver pair', () => {
       mockUseSolverProperty.mockReturnValue([[], vi.fn()]);
 
       render(<SourceReceiverMatrix uuid={defaultUuid} />);
-      const checkboxes = screen.getAllByRole('checkbox');
-      // 2 sources x 2 receivers = 4 checkboxes
-      expect(checkboxes).toHaveLength(4);
+      // 2 sources x 2 receivers = 4 data cells with dot symbols
+      const dots = screen.getAllByText('\u00B7');
+      expect(dots).toHaveLength(4);
     });
 
-    it('checkboxes are unchecked when pair is not selected', () => {
+    it('cells show dot when pair is not selected', () => {
       mockUseSolverProperty.mockReturnValue([[], vi.fn()]);
 
       render(<SourceReceiverMatrix uuid={defaultUuid} />);
-      const checkboxes = screen.getAllByRole('checkbox');
-      checkboxes.forEach(checkbox => {
-        expect(checkbox).not.toBeChecked();
-      });
+      const dots = screen.getAllByText('\u00B7');
+      expect(dots.length).toBe(4);
     });
 
-    it('checkboxes are checked when pair is selected', () => {
+    it('cells show checkmark when pair is selected', () => {
       mockUseSolverProperty
         .mockReturnValueOnce([['src-1'], vi.fn()]) // sourceIDs
         .mockReturnValueOnce([['rec-1'], vi.fn()]); // receiverIDs
 
       render(<SourceReceiverMatrix uuid={defaultUuid} />);
-      const checkboxes = screen.getAllByRole('checkbox');
-      // First checkbox (src-1 + rec-1) should be checked
-      expect(checkboxes[0]).toBeChecked();
+      // First cell (src-1 + rec-1) should show checkmark
+      expect(screen.getAllByText('\u2713').length).toBeGreaterThan(0);
     });
   });
 
@@ -202,7 +200,7 @@ describe('SourceReceiverMatrix', () => {
     });
   });
 
-  describe('Checkbox Interactions', () => {
+  describe('Cell Interactions', () => {
     const mockContainers = {
       'src-1': { uuid: 'src-1', name: 'Source 1', kind: 'source' },
       'rec-1': { uuid: 'rec-1', name: 'Receiver 1', kind: 'receiver' },
@@ -215,7 +213,7 @@ describe('SourceReceiverMatrix', () => {
       });
     });
 
-    it('calls setSourceIDs and setReceiverIDs when checking a pair', () => {
+    it('calls setSourceIDs and setReceiverIDs when clicking a cell', () => {
       const setSourceIDs = vi.fn();
       const setReceiverIDs = vi.fn();
 
@@ -225,8 +223,8 @@ describe('SourceReceiverMatrix', () => {
 
       render(<SourceReceiverMatrix uuid={defaultUuid} />);
 
-      const checkbox = screen.getByRole('checkbox');
-      fireEvent.click(checkbox);
+      const cell = screen.getByTitle('Source 1 \u2192 Receiver 1');
+      fireEvent.click(cell);
 
       expect(setSourceIDs).toHaveBeenCalledWith({ value: ['src-1'] });
       expect(setReceiverIDs).toHaveBeenCalledWith({ value: ['rec-1'] });
@@ -237,8 +235,8 @@ describe('SourceReceiverMatrix', () => {
 
       render(<SourceReceiverMatrix uuid={defaultUuid} />);
 
-      // MUI Checkbox puts the title on the outer span wrapper, not the input
-      expect(screen.getByTitle('Source 1 → Receiver 1')).toBeInTheDocument();
+      // MUI Box with title on the td element
+      expect(screen.getByTitle('Source 1 \u2192 Receiver 1')).toBeInTheDocument();
     });
   });
 });

@@ -24,10 +24,10 @@ describe('Issue #41: Replace hardcoded 343 speed of sound', () => {
     expect(matches).toBeNull();
   });
 
-  test('ImageSourceSolver has a temperature property configurable via params', () => {
-    expect(source).toContain('temperature: number');
-    expect(source).toContain('temperature?: number');
-    expect(source).toMatch(/this\.temperature\s*=\s*params\.temperature/);
+  test('ImageSourceSolver has a temperature getter from Room', () => {
+    // Temperature now lives on Room and is accessed via getter
+    expect(source).toMatch(/get\s+temperature\(\):\s*number/);
+    expect(source).toContain('this.room?.temperature ?? 20');
   });
 
   test('ImageSourceSolver has a speed of sound getter using ac.soundSpeed', () => {

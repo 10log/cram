@@ -1,9 +1,11 @@
 /**
- * Tests for Phase 4: per-segment air absorption during propagation
- * and temperature support across solvers.
+ * Tests for temperature support across solvers.
+ *
+ * Temperature now lives on Room and is accessed via getter:
+ *   get temperature(): number { return this.room?.temperature ?? 20; }
  *
  * Verifies that:
- * - RayTracer has temperature property, c getter, and cached air attenuation
+ * - RayTracer has temperature/c getters and cached air attenuation
  * - Per-segment air absorption is applied during traceRay
  * - All hardcoded speed-of-sound values are replaced with this.c
  * - All airAttenuation calls pass this.temperature
@@ -20,11 +22,6 @@ describe('RayTracer temperature and per-segment air absorption', () => {
     'utf8'
   );
 
-  const typesSource = fs.readFileSync(
-    path.resolve(__dirname, '..', 'types.ts'),
-    'utf8'
-  );
-
   const rayCoreSource = fs.readFileSync(
     path.resolve(__dirname, '..', 'ray-core.ts'),
     'utf8'
@@ -35,60 +32,32 @@ describe('RayTracer temperature and per-segment air absorption', () => {
     'utf8'
   );
 
-  // --- Temperature property ---
+  // --- Temperature getter from Room ---
 
-  it('RayTracerParams includes optional temperature', () => {
-    const paramsMatch = typesSource.match(/export\s+interface\s+RayTracerParams\s*\{([\s\S]*?)\}/);
-    expect(paramsMatch).not.toBeNull();
-    expect(paramsMatch![1]).toContain('temperature');
+  it('has temperature getter that reads from room', () => {
+    expect(source).toMatch(/get\s+temperature\(\):\s*number/);
+    expect(source).toContain('this.room?.temperature ?? 20');
   });
 
-  it('defaults include temperature: 20', () => {
-    const defaultsMatch = typesSource.match(/export\s+const\s+defaults\s*=\s*\{([\s\S]*?)\};/);
-    expect(defaultsMatch).not.toBeNull();
-    expect(defaultsMatch![1]).toMatch(/temperature:\s*20/);
-  });
-
-  it('class declares temperature property', () => {
-    expect(source).toMatch(/temperature:\s*number/);
+  it('has c getter using soundSpeed(this.temperature)', () => {
+    expect(source).toMatch(/get\s+c\(\):\s*number\s*\{/);
+    expect(source).toContain('ac.soundSpeed(this.temperature)');
   });
 
   it('class declares _cachedAirAtt property', () => {
     expect(source).toContain('_cachedAirAtt');
   });
 
-  it('has c getter using soundSpeed(this._temperature)', () => {
-    expect(source).toMatch(/get\s+c\(\):\s*number\s*\{/);
-    expect(source).toContain('ac.soundSpeed(this._temperature)');
-  });
-
-  it('has temperature setter that recomputes cached air attenuation', () => {
-    expect(source).toMatch(/set\s+temperature\(value:\s*number\)/);
-    expect(source).toContain('this._cachedAirAtt = ac.airAttenuation(this.frequencies, value)');
-  });
-
-  it('save() includes temperature', () => {
-    const saveMatch = source.match(/save\(\)\s*\{([\s\S]*?)\n\s*\}/);
-    expect(saveMatch).not.toBeNull();
-    expect(saveMatch![1]).toContain('temperature');
-  });
-
-  it('RayTracerSaveObject type includes temperature', () => {
-    const saveTypeMatch = typesSource.match(/export\s+type\s+RayTracerSaveObject\s*=\s*\{([\s\S]*?)\}/);
-    expect(saveTypeMatch).not.toBeNull();
-    expect(saveTypeMatch![1]).toContain('temperature');
-  });
-
   // --- Cached air attenuation ---
 
   it('caches air attenuation in constructor', () => {
-    expect(source).toContain('this._cachedAirAtt = ac.airAttenuation(this.frequencies, this._temperature)');
+    expect(source).toContain('this._cachedAirAtt = ac.airAttenuation(this.frequencies, this.temperature)');
   });
 
   it('refreshes cached air attenuation in start()', () => {
-    const startMatch = source.match(/start\(\)\s*\{([\s\S]*?)startAllMonteCarlo/);
+    const startMatch = source.match(/start\(\)\s*\{([\s\S]*?)startAllMonteCarlo|startGpuMonteCarlo/);
     expect(startMatch).not.toBeNull();
-    expect(startMatch![1]).toContain('this._cachedAirAtt = ac.airAttenuation(this.frequencies, this._temperature)');
+    expect(startMatch![1]).toContain('this._cachedAirAtt = ac.airAttenuation(this.frequencies, this.temperature)');
   });
 
   // --- Per-segment air absorption in traceRay ---
@@ -145,8 +114,10 @@ describe('RayTracer temperature and per-segment air absorption', () => {
 
   // --- Hybrid passes temperature to image source solver ---
 
-  it('hybrid ImageSourceSolver params include temperature', () => {
-    expect(source).toContain('temperature: this.temperature,');
+  it('hybrid ImageSourceSolver uses temperature via getter', () => {
+    // The hybrid solver creates an ImageSourceSolver which has its own temperature getter
+    // Verify the solver passes this.c for speed of sound
+    expect(source).toContain('returnSortedPathsForHybrid(this.c,');
   });
 });
 
@@ -155,6 +126,16 @@ describe('ImageSourceSolver temperature in airAttenuation', () => {
     path.resolve(__dirname, '..', 'image-source', 'index.ts'),
     'utf8'
   );
+
+  it('has temperature getter that reads from room', () => {
+    expect(source).toMatch(/get\s+temperature\(\):\s*number/);
+    expect(source).toContain('this.room?.temperature ?? 20');
+  });
+
+  it('has c getter using soundSpeed(this.temperature)', () => {
+    expect(source).toContain('get c()');
+    expect(source).toContain('ac.soundSpeed(this.temperature)');
+  });
 
   it('arrivalPressure accepts temperature parameter', () => {
     expect(source).toMatch(/arrivalPressure\(initialSPL.*freqs.*temperature/);
@@ -186,14 +167,9 @@ describe('BeamTraceSolver temperature support', () => {
     'utf8'
   );
 
-  it('has temperature in params interface', () => {
-    const paramsMatch = source.match(/interface\s+BeamTraceSolverParams\s*\{([\s\S]*?)\}/);
-    expect(paramsMatch).not.toBeNull();
-    expect(paramsMatch![1]).toContain('temperature');
-  });
-
-  it('has temperature class property', () => {
-    expect(source).toMatch(/temperature:\s*number/);
+  it('has temperature getter that reads from room', () => {
+    expect(source).toMatch(/get\s+temperature\(\):\s*number/);
+    expect(source).toContain('this.room?.temperature ?? 20');
   });
 
   it('has c getter', () => {
@@ -210,16 +186,6 @@ describe('BeamTraceSolver temperature support', () => {
   it('airAttenuation passes this.temperature', () => {
     expect(source).toContain('ac.airAttenuation(this.frequencies, this.temperature)');
   });
-
-  it('save includes temperature', () => {
-    const saveMatch = source.match(/save\(\)[\s\S]*?pickProps\(\[([\s\S]*?)\]/);
-    expect(saveMatch).not.toBeNull();
-    expect(saveMatch![1]).toContain('"temperature"');
-  });
-
-  it('restore sets temperature with fallback', () => {
-    expect(source).toMatch(/this\.temperature\s*=\s*state\.temperature\s*\?\?\s*20/);
-  });
 });
 
 describe('RT60 temperature support', () => {
@@ -228,22 +194,13 @@ describe('RT60 temperature support', () => {
     'utf8'
   );
 
-  it('has temperature class property', () => {
-    expect(source).toMatch(/public\s+temperature:\s*number/);
+  it('has temperature getter that reads from room', () => {
+    expect(source).toMatch(/get\s+temperature\(\):\s*number/);
+    expect(source).toContain('this.room?.temperature ?? 20');
   });
 
   it('airAttenuation passes this.temperature', () => {
-    expect(source).toContain('airAttenuation(this.frequencies, this.temperature)');
-  });
-
-  it('save includes temperature', () => {
-    const saveMatch = source.match(/save\(\)\s*\{([\s\S]*?)\n\s*\}/);
-    expect(saveMatch).not.toBeNull();
-    expect(saveMatch![1]).toContain('temperature');
-  });
-
-  it('restore sets temperature with fallback', () => {
-    expect(source).toMatch(/this\.temperature\s*=\s*state\.temperature\s*\?\?\s*20/);
+    expect(source).toContain('airAttenuation(this.frequencies, this.temperature');
   });
 });
 
