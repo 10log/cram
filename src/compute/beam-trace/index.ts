@@ -38,6 +38,17 @@ import {
 import { calculateBinauralFromAmbisonic } from "../binaural/calculate-binaural";
 import chroma from 'chroma-js';
 import { encodeBufferFromDirection, getAmbisonicChannelCount } from "ambisonics";
+import { buildEdgeGraph, findDiffractionPaths } from "../shared/diffraction";
+import type { EdgeGraph, DiffractionPath } from "../shared/diffraction";
+import { HISTOGRAM_BIN_WIDTH, HISTOGRAM_NUM_BINS } from "../shared/tail-synthesis-types";
+import { extractDecayParameters, synthesizeTail, assembleFinalIR } from "../shared/tail-synthesis";
+import type { ResponseByIntensity, RayPathResult } from "../shared/response-by-intensity-types";
+import { DEFAULT_INTENSITY_SAMPLE_RATE } from "../shared/response-by-intensity-types";
+import { resampleResponseByIntensity } from "../shared/response-by-intensity";
+import { quickEstimateStep as sharedQuickEstimateStep } from "../shared/quick-estimate";
+import type { QuickEstimateStepResult } from "../shared/quick-estimate-types";
+import { KVP } from "../../common/key-value-pair";
+import FileSaver from "file-saver";
 
 // Helper to create a highlighted path line (same as ImageSourceSolver)
 function createHighlightLine(): THREE.Mesh {
@@ -81,6 +92,8 @@ export interface BeamTracePath {
     surfaceNormal: THREE.Vector3;
     isGrazing: boolean;
   }[];
+  /** Pre-computed per-band energy for diffraction paths (bypasses specular reflection calc) */
+  bandEnergy?: number[];
 }
 
 export type VisualizationMode = "rays" | "beams" | "both";
@@ -104,6 +117,10 @@ export interface BeamTraceSaveObject {
   headYaw?: number;
   headPitch?: number;
   headRoll?: number;
+  edgeDiffractionEnabled?: boolean;
+  lateReverbTailEnabled?: boolean;
+  tailCrossfadeTime?: number;
+  tailCrossfadeDuration?: number;
 }
 
 export interface BeamTraceSolverParams {
@@ -123,6 +140,10 @@ export interface BeamTraceSolverParams {
   headYaw?: number;
   headPitch?: number;
   headRoll?: number;
+  edgeDiffractionEnabled?: boolean;
+  lateReverbTailEnabled?: boolean;
+  tailCrossfadeTime?: number;
+  tailCrossfadeDuration?: number;
 }
 
 const defaults: Required<BeamTraceSolverParams> = {
@@ -142,6 +163,10 @@ const defaults: Required<BeamTraceSolverParams> = {
   headYaw: 0,
   headPitch: 0,
   headRoll: 0,
+  edgeDiffractionEnabled: false,
+  lateReverbTailEnabled: false,
+  tailCrossfadeTime: 0,
+  tailCrossfadeDuration: 0.05,
 };
 
 export class BeamTraceSolver extends Solver {
@@ -165,6 +190,17 @@ export class BeamTraceSolver extends Solver {
   private surfaceToPolygonIndex: Map<string, number[]> = new Map();
   private polygonToSurface: Map<number, Surface> = new Map();
 
+  // Edge diffraction
+  edgeDiffractionEnabled: boolean;
+  private _edgeGraph: EdgeGraph | null = null;
+  private _raycaster: THREE.Raycaster = new THREE.Raycaster();
+
+  // Late reverberation tail
+  lateReverbTailEnabled: boolean;
+  tailCrossfadeTime: number;
+  tailCrossfadeDuration: number;
+  private _energyHistogram: Float32Array[] | null = null;
+
   // Binaural
   hrtfSubjectId: string;
   headYaw: number;
@@ -177,6 +213,14 @@ export class BeamTraceSolver extends Solver {
   validPaths: BeamTracePath[] = [];
   impulseResponse!: AudioBuffer;
   impulseResponsePlaying: boolean = false;
+
+  // Response by intensity (per-frequency decay analysis)
+  responseByIntensity: KVP<KVP<ResponseByIntensity>> | undefined;
+
+  // Quick estimate
+  quickEstimateResults: QuickEstimateStepResult[] = [];
+  estimatedT30: number[] | null = null;
+  private _quickEstimateInterval: number | null = null;
 
   // Metrics
   lastMetrics: {
@@ -231,6 +275,10 @@ export class BeamTraceSolver extends Solver {
     this.headYaw = p.headYaw;
     this.headPitch = p.headPitch;
     this.headRoll = p.headRoll;
+    this.edgeDiffractionEnabled = p.edgeDiffractionEnabled;
+    this.lateReverbTailEnabled = p.lateReverbTailEnabled;
+    this.tailCrossfadeTime = p.tailCrossfadeTime;
+    this.tailCrossfadeDuration = p.tailCrossfadeDuration;
     this._visualizationMode = p.visualizationMode;
     this._showAllBeams = p.showAllBeams;
     this._visibleOrders = p.visibleOrders.length > 0 ? p.visibleOrders : Array.from({ length: p.maxReflectionOrder + 1 }, (_, i) => i);
@@ -318,6 +366,10 @@ export class BeamTraceSolver extends Solver {
         "headYaw",
         "headPitch",
         "headRoll",
+        "edgeDiffractionEnabled",
+        "lateReverbTailEnabled",
+        "tailCrossfadeTime",
+        "tailCrossfadeDuration",
       ], this),
       visualizationMode: this._visualizationMode,
       showAllBeams: this._showAllBeams,
@@ -343,6 +395,10 @@ export class BeamTraceSolver extends Solver {
     this.headYaw = state.headYaw ?? 0;
     this.headPitch = state.headPitch ?? 0;
     this.headRoll = state.headRoll ?? 0;
+    this.edgeDiffractionEnabled = state.edgeDiffractionEnabled ?? false;
+    this.lateReverbTailEnabled = state.lateReverbTailEnabled ?? false;
+    this.tailCrossfadeTime = state.tailCrossfadeTime ?? 0;
+    this.tailCrossfadeDuration = state.tailCrossfadeDuration ?? 0.05;
     return this;
   }
 
@@ -746,8 +802,18 @@ export class BeamTraceSolver extends Solver {
       });
     });
 
-    // Sort by arrival time
+    // Compute diffraction paths if enabled
+    if (this.edgeDiffractionEnabled && this.room) {
+      this._computeDiffractionPaths();
+    }
+
+    // Sort by arrival time (including diffraction paths)
     this.validPaths.sort((a, b) => a.arrivalTime - b.arrivalTime);
+
+    // Build energy histogram for tail synthesis
+    if (this.lateReverbTailEnabled && this.validPaths.length > 0) {
+      this._buildEnergyHistogram();
+    }
 
     // Update visualization based on current mode
     switch (this._visualizationMode) {
@@ -765,6 +831,9 @@ export class BeamTraceSolver extends Solver {
 
     // Calculate LTP result
     this.calculateLTP();
+
+    // Calculate per-frequency intensity response with T30 estimates
+    this.calculateResponseByIntensity();
 
     console.log(`BeamTraceSolver: Found ${this.validPaths.length} valid paths`);
     if (this.lastMetrics) {
@@ -929,6 +998,19 @@ export class BeamTraceSolver extends Solver {
       }
     });
 
+    // Add small spheres at diffraction points to distinguish them from direct paths
+    filteredPaths.forEach(path => {
+      if (path.bandEnergy && path.points.length === 3) {
+        const diffPt = path.points[1]; // [receiver, diffractionPoint, source]
+        const colorHex = getOrderColor(path.order, this.maxReflectionOrder);
+        const geom = new THREE.SphereGeometry(0.06, 8, 8);
+        const mat = new THREE.MeshBasicMaterial({ color: colorHex });
+        const sphere = new THREE.Mesh(geom, mat);
+        sphere.position.copy(diffPt);
+        this.virtualSourcesGroup.add(sphere);
+      }
+    });
+
     // Get buffer usage stats and store in metrics
     const usageStats = renderer.markup.getUsageStats();
     if (this.lastMetrics) {
@@ -1018,6 +1100,66 @@ export class BeamTraceSolver extends Solver {
           polygonPath: beam.polygonPath || []
         });
       }
+
+      // --- Aperture polygon rendering ---
+      const apertureVerts = beam.apertureVertices;
+      if (apertureVerts && apertureVerts.length >= 3) {
+        const aperturePoints = apertureVerts.map(
+          v => new THREE.Vector3(v[0], v[1], v[2])
+        );
+
+        // (a) Filled aperture polygon using triangle fan
+        const fillGeom = new THREE.BufferGeometry();
+        const positions = new Float32Array(aperturePoints.length * 3);
+        for (let i = 0; i < aperturePoints.length; i++) {
+          positions[i * 3] = aperturePoints[i].x;
+          positions[i * 3 + 1] = aperturePoints[i].y;
+          positions[i * 3 + 2] = aperturePoints[i].z;
+        }
+        fillGeom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+        // Triangle fan indices: (0,1,2), (0,2,3), (0,3,4), ...
+        const indices: number[] = [];
+        for (let i = 1; i < aperturePoints.length - 1; i++) {
+          indices.push(0, i, i + 1);
+        }
+        fillGeom.setIndex(indices);
+        fillGeom.computeVertexNormals();
+
+        const fillMat = new THREE.MeshBasicMaterial({
+          color: finalColor,
+          side: THREE.DoubleSide,
+          transparent: true,
+          opacity: hasValidPath ? 0.20 : 0.08,
+          depthWrite: false,
+        });
+        const fillMesh = new THREE.Mesh(fillGeom, fillMat);
+        this.virtualSourcesGroup.add(fillMesh);
+
+        // (b) Aperture edge outline
+        const outlineGeom = new THREE.BufferGeometry().setFromPoints(aperturePoints);
+        const outlineMat = new THREE.LineBasicMaterial({
+          color: finalColor,
+          transparent: true,
+          opacity: hasValidPath ? 0.50 : 0.20,
+        });
+        const outlineLine = new THREE.LineLoop(outlineGeom, outlineMat);
+        this.virtualSourcesGroup.add(outlineLine);
+
+        // (c) Cone edges: virtual source → each aperture vertex
+        const conePositions: THREE.Vector3[] = [];
+        for (const ap of aperturePoints) {
+          conePositions.push(vs.clone(), ap);
+        }
+        const coneGeom = new THREE.BufferGeometry().setFromPoints(conePositions);
+        const coneMat = new THREE.LineBasicMaterial({
+          color: finalColor,
+          transparent: true,
+          opacity: hasValidPath ? 0.35 : 0.12,
+        });
+        const coneLines = new THREE.LineSegments(coneGeom, coneMat);
+        this.virtualSourcesGroup.add(coneLines);
+      }
     });
 
     // Setup click handler for virtual source selection
@@ -1060,7 +1202,7 @@ export class BeamTraceSolver extends Solver {
     while (this.virtualSourcesGroup.children.length > 0) {
       const child = this.virtualSourcesGroup.children[0];
       this.virtualSourcesGroup.remove(child);
-      if (child instanceof THREE.Mesh) {
+      if (child instanceof THREE.Mesh || child instanceof THREE.Line) {
         child.geometry?.dispose();
         const material = child.material;
         if (Array.isArray(material)) {
@@ -1072,6 +1214,157 @@ export class BeamTraceSolver extends Solver {
         } else if (material instanceof THREE.Material) {
           material.dispose();
         }
+      }
+    }
+  }
+
+  /**
+   * Compute first-order UTD edge diffraction paths and add them to validPaths.
+   */
+  private _computeDiffractionPaths() {
+    if (!this.room) return;
+
+    const containers = useContainer.getState().containers;
+
+    // Build edge graph from room surfaces
+    this._edgeGraph = buildEdgeGraph(this.room.allSurfaces);
+    if (this._edgeGraph.edges.length === 0) return;
+
+    // Gather source positions and directivity data
+    const sourcePositions = new Map<string, [number, number, number]>();
+    const sourceDirectivity = new Map<string, { handler: any; refPressures: number[] }>();
+    for (const id of this.sourceIDs) {
+      const src = containers[id] as Source;
+      if (src) {
+        sourcePositions.set(id, [src.position.x, src.position.y, src.position.z]);
+        const dh = src.directivityHandler;
+        if (dh) {
+          const refPressures = new Array(this.frequencies.length);
+          for (let f = 0; f < this.frequencies.length; f++) {
+            refPressures[f] = dh.getPressureAtPosition(0, this.frequencies[f], 0, 0) as number;
+          }
+          sourceDirectivity.set(id, { handler: dh, refPressures });
+        }
+      }
+    }
+
+    // Gather receiver positions
+    const receiverPositions = new Map<string, [number, number, number]>();
+    for (const id of this.receiverIDs) {
+      const rec = containers[id];
+      if (rec) {
+        receiverPositions.set(id, [rec.position.x, rec.position.y, rec.position.z]);
+      }
+    }
+
+    // Get surface meshes for LOS checks
+    const surfaces: THREE.Mesh[] = [];
+    this.room.surfaces.traverse((container) => {
+      if (container['kind'] && container['kind'] === 'surface') {
+        surfaces.push((container as Surface).mesh);
+      }
+    });
+
+    const diffractionPaths = findDiffractionPaths(
+      this._edgeGraph,
+      sourcePositions,
+      receiverPositions,
+      this.frequencies,
+      this.c,
+      this.temperature,
+      this._raycaster,
+      surfaces,
+    );
+
+    // Convert DiffractionPath → BeamTracePath and add to validPaths
+    for (const dp of diffractionPaths) {
+      // Apply source directivity to band energies
+      const srcDir = sourceDirectivity.get(dp.sourceId);
+      if (srcDir) {
+        const srcPos = sourcePositions.get(dp.sourceId)!;
+        const dx = dp.diffractionPoint[0] - srcPos[0];
+        const dy = dp.diffractionPoint[1] - srcPos[1];
+        const dz = dp.diffractionPoint[2] - srcPos[2];
+        const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        if (dist > 1e-10) {
+          const theta = Math.acos(Math.max(-1, Math.min(1, dy / dist))) * (180 / Math.PI);
+          const phi = Math.atan2(dz, dx) * (180 / Math.PI);
+          for (let f = 0; f < this.frequencies.length; f++) {
+            try {
+              const dirP = srcDir.handler.getPressureAtPosition(0, this.frequencies[f], Math.abs(phi), theta);
+              const refP = srcDir.refPressures[f];
+              if (typeof dirP === "number" && typeof refP === "number" && refP > 0) {
+                dp.bandEnergy[f] *= (dirP / refP) ** 2;
+              }
+            } catch (e) {
+              // Fallback to unity gain
+            }
+          }
+        }
+      }
+
+      // Compute arrival direction: diffraction point → receiver (normalized)
+      const recPos = receiverPositions.get(dp.receiverId)!;
+      const adx = recPos[0] - dp.diffractionPoint[0];
+      const ady = recPos[1] - dp.diffractionPoint[1];
+      const adz = recPos[2] - dp.diffractionPoint[2];
+      const adLen = Math.sqrt(adx * adx + ady * ady + adz * adz);
+      const arrivalDir = adLen > 1e-10
+        ? new THREE.Vector3(adx / adLen, ady / adLen, adz / adLen)
+        : new THREE.Vector3(0, 0, 1);
+
+      const srcPos = sourcePositions.get(dp.sourceId)!;
+      const receiverVec = new THREE.Vector3(recPos[0], recPos[1], recPos[2]);
+      const diffPtVec = new THREE.Vector3(dp.diffractionPoint[0], dp.diffractionPoint[1], dp.diffractionPoint[2]);
+      const sourceVec = new THREE.Vector3(srcPos[0], srcPos[1], srcPos[2]);
+
+      const beamPath: BeamTracePath = {
+        points: [receiverVec, diffPtVec, sourceVec],
+        order: 0, // diffraction is a "direct-like" path
+        length: dp.totalDistance,
+        arrivalTime: dp.time,
+        polygonIds: [null, null, null],
+        arrivalDirection: arrivalDir,
+        reflections: [],
+        bandEnergy: dp.bandEnergy,
+      };
+
+      this.validPaths.push(beamPath);
+    }
+
+    if (diffractionPaths.length > 0) {
+      console.log(`BeamTraceSolver: Found ${diffractionPaths.length} diffraction paths`);
+    }
+  }
+
+  /**
+   * Build per-band energy histograms from all computed paths (for tail synthesis).
+   */
+  private _buildEnergyHistogram() {
+    const numBands = this.frequencies.length;
+    this._energyHistogram = [];
+    for (let f = 0; f < numBands; f++) {
+      this._energyHistogram.push(new Float32Array(HISTOGRAM_NUM_BINS));
+    }
+
+    const initialSPL = 100;
+    const spls = Array(numBands).fill(initialSPL);
+
+    const recForHist = this.receiverIDs.length > 0
+      ? useContainer.getState().containers[this.receiverIDs[0]] as Receiver
+      : null;
+
+    for (const path of this.validPaths) {
+      const bin = Math.floor(path.arrivalTime / HISTOGRAM_BIN_WIDTH);
+      if (bin < 0 || bin >= HISTOGRAM_NUM_BINS) continue;
+
+      const dir = path.arrivalDirection;
+      const recGain = recForHist ? recForHist.getGain([dir.x, dir.y, dir.z]) : 1.0;
+      const pressure = this.calculateArrivalPressure(spls, path, recGain);
+
+      for (let f = 0; f < numBands; f++) {
+        // Energy = pressure²
+        this._energyHistogram![f][bin] += pressure[f] * pressure[f];
       }
     }
   }
@@ -1113,12 +1406,24 @@ export class BeamTraceSolver extends Solver {
       }
     }
 
+    // Apply late reverberation tail synthesis
+    let finalSamples = samples;
+    if (this.lateReverbTailEnabled && this._energyHistogram) {
+      const decayParams = extractDecayParameters(
+        this._energyHistogram, this.frequencies,
+        this.tailCrossfadeTime, HISTOGRAM_BIN_WIDTH
+      );
+      const { tailSamples, tailStartSample } = synthesizeTail(decayParams, sampleRate);
+      const crossfadeDurationSamples = Math.floor(this.tailCrossfadeDuration * sampleRate);
+      finalSamples = assembleFinalIR(samples, tailSamples, tailStartSample, crossfadeDurationSamples);
+    }
+
     // Use filter worker (similar to RayTracer)
     const FilterWorker = () => new Worker(new URL('../../audio-engine/filter.worker.ts', import.meta.url));
     const worker = FilterWorker();
 
     return new Promise((resolve, reject) => {
-      worker.postMessage({ samples });
+      worker.postMessage({ samples: finalSamples });
 
       worker.onmessage = (event) => {
         const filteredSamples = event.data.samples as Float32Array[];
@@ -1160,6 +1465,17 @@ export class BeamTraceSolver extends Solver {
 
   // Calculate arrival pressure for a path
   private calculateArrivalPressure(initialSPL: number[], path: BeamTracePath, receiverGain: number = 1.0): number[] {
+    // Diffraction paths have pre-computed per-band energy — convert to pressure directly
+    if (path.bandEnergy) {
+      const initialIntensities = ac.P2I(ac.Lp2P(initialSPL)) as number[];
+      const pressures: number[] = new Array(this.frequencies.length);
+      for (let f = 0; f < this.frequencies.length; f++) {
+        const arrivalIntensity = initialIntensities[f] * path.bandEnergy[f];
+        pressures[f] = (ac.I2P([arrivalIntensity]) as number[])[0] * receiverGain;
+      }
+      return pressures;
+    }
+
     const intensities = ac.P2I(ac.Lp2P(initialSPL)) as number[];
 
     // Apply source directivity weighting
@@ -1364,6 +1680,26 @@ export class BeamTraceSolver extends Solver {
       }
     }
 
+    // Apply late reverberation tail synthesis to W-channel (channel 0) only
+    if (this.lateReverbTailEnabled && this._energyHistogram) {
+      const decayParams = extractDecayParameters(
+        this._energyHistogram, this.frequencies,
+        this.tailCrossfadeTime, HISTOGRAM_BIN_WIDTH
+      );
+      const { tailSamples, tailStartSample } = synthesizeTail(decayParams, sampleRate);
+      const crossfadeDurationSamples = Math.floor(this.tailCrossfadeDuration * sampleRate);
+      // Gather W-channel (ch=0) per-band samples
+      const wChannelSamples: Float32Array[] = [];
+      for (let f = 0; f < this.frequencies.length; f++) {
+        wChannelSamples.push(samples[f][0]);
+      }
+      const extendedW = assembleFinalIR(wChannelSamples, tailSamples, tailStartSample, crossfadeDurationSamples);
+      // Write back extended W-channel samples
+      for (let f = 0; f < this.frequencies.length; f++) {
+        samples[f][0] = extendedW[f];
+      }
+    }
+
     // Use filter worker to apply octave-band filtering
     const FilterWorker = () => new Worker(new URL('../../audio-engine/filter.worker.ts', import.meta.url));
 
@@ -1486,12 +1822,184 @@ export class BeamTraceSolver extends Solver {
     this.binauralImpulseResponse = result.binauralImpulseResponse;
   }
 
+  /**
+   * Calculate per-frequency intensity response with T20/T30/T60 decay estimates.
+   * Uses existing calculateArrivalPressure() to convert beam-trace paths into
+   * the same RayPathResult format the raytracer uses, then delegates to the
+   * shared resampleResponseByIntensity() for decay-time fitting.
+   */
+  calculateResponseByIntensity() {
+    if (this.validPaths.length === 0) return;
+    if (this.receiverIDs.length === 0 || this.sourceIDs.length === 0) return;
+
+    const recId = this.receiverIDs[0];
+    const srcId = this.sourceIDs[0];
+    const initialSPL = 100;
+    const spls = Array(this.frequencies.length).fill(initialSPL);
+
+    const recForIntensity = useContainer.getState().containers[recId] as Receiver;
+
+    const sortedPaths = [...this.validPaths].sort((a, b) => a.arrivalTime - b.arrivalTime);
+
+    const response: RayPathResult[] = [];
+
+    for (const path of sortedPaths) {
+      const dir = path.arrivalDirection;
+      const recGain = recForIntensity ? recForIntensity.getGain([dir.x, dir.y, dir.z]) : 1.0;
+      const pressure = this.calculateArrivalPressure(spls, path, recGain);
+      const level = ac.P2Lp(pressure) as number[];
+
+      response.push({
+        time: path.arrivalTime,
+        bounces: path.order,
+        level,
+      });
+    }
+
+    const rbi: KVP<KVP<ResponseByIntensity>> = {
+      [recId]: {
+        [srcId]: {
+          freqs: this.frequencies,
+          response,
+        }
+      }
+    };
+
+    this.responseByIntensity = resampleResponseByIntensity(rbi, DEFAULT_INTENSITY_SAMPLE_RATE);
+  }
+
+  /**
+   * Export per-octave-band impulse responses as individual WAV files.
+   * Skips the filter worker — writes one WAV per frequency band directly.
+   */
+  downloadOctaveBandIR(filename: string, sampleRate = audioEngine.sampleRate) {
+    if (this.validPaths.length === 0) {
+      throw new Error("No paths calculated yet. Run calculate() first.");
+    }
+
+    const initialSPL = 100;
+    const spls = Array(this.frequencies.length).fill(initialSPL);
+    const sortedPaths = [...this.validPaths].sort((a, b) => a.arrivalTime - b.arrivalTime);
+
+    const totalTime = sortedPaths[sortedPaths.length - 1].arrivalTime + 0.05;
+    const numberOfSamples = Math.floor(sampleRate * totalTime);
+
+    const samples: Float32Array[] = [];
+    for (let f = 0; f < this.frequencies.length; f++) {
+      samples.push(new Float32Array(numberOfSamples));
+    }
+
+    const recForDownload = this.receiverIDs.length > 0
+      ? useContainer.getState().containers[this.receiverIDs[0]] as Receiver
+      : null;
+
+    for (const path of sortedPaths) {
+      const randomPhase = Math.random() > 0.5 ? 1 : -1;
+      const dir = path.arrivalDirection;
+      const recGain = recForDownload ? recForDownload.getGain([dir.x, dir.y, dir.z]) : 1.0;
+      const pressure = this.calculateArrivalPressure(spls, path, recGain);
+      const roundedSample = Math.floor(path.arrivalTime * sampleRate);
+
+      for (let f = 0; f < this.frequencies.length; f++) {
+        if (roundedSample < samples[f].length) {
+          samples[f][roundedSample] += pressure[f] * randomPhase;
+        }
+      }
+    }
+
+    for (let f = 0; f < this.frequencies.length; f++) {
+      const blob = ac.wavAsBlob([normalize(samples[f])], { sampleRate, bitDepth: 32 });
+      FileSaver.saveAs(blob, `${this.frequencies[f]}_${filename}.wav`);
+    }
+  }
+
+  /**
+   * Quick RT60 estimate by shooting random rays through the room geometry.
+   * Runs in batches via setInterval to avoid blocking the UI.
+   */
+  startQuickEstimate(numRays: number = 500) {
+    // Cancel any running estimate
+    if (this._quickEstimateInterval !== null) {
+      window.clearInterval(this._quickEstimateInterval);
+      this._quickEstimateInterval = null;
+    }
+
+    if (this.sourceIDs.length === 0) return;
+    const source = useContainer.getState().containers[this.sourceIDs[0]] as Source;
+    if (!source) return;
+
+    // Gather surface meshes for raycasting (same as _computeDiffractionPaths)
+    const room = this.room;
+    if (!room) return;
+
+    const surfaceMeshes: THREE.Object3D[] = [];
+    room.surfaces.traverse((child: THREE.Object3D) => {
+      if ((child as THREE.Mesh).isMesh) {
+        surfaceMeshes.push(child);
+      }
+    });
+    if (surfaceMeshes.length === 0) return;
+
+    this.quickEstimateResults = [];
+    this.estimatedT30 = null;
+    let count = 0;
+    const batchSize = 10;
+
+    this._quickEstimateInterval = window.setInterval(() => {
+      for (let i = 0; i < batchSize && count < numRays; i++, count++) {
+        const result = sharedQuickEstimateStep(
+          this._raycaster, surfaceMeshes,
+          source.position, source.initialIntensity,
+          this.frequencies, this.temperature
+        );
+        this.quickEstimateResults.push(result);
+      }
+
+      if (count >= numRays) {
+        window.clearInterval(this._quickEstimateInterval!);
+        this._quickEstimateInterval = null;
+
+        // Average per-band RT60s
+        const numBands = this.frequencies.length;
+        const avgRt60s = Array(numBands).fill(0);
+        let validCounts = Array(numBands).fill(0);
+
+        for (const r of this.quickEstimateResults) {
+          for (let f = 0; f < numBands; f++) {
+            if (r.rt60s[f] > 0) {
+              avgRt60s[f] += r.rt60s[f];
+              validCounts[f]++;
+            }
+          }
+        }
+
+        for (let f = 0; f < numBands; f++) {
+          avgRt60s[f] = validCounts[f] > 0 ? avgRt60s[f] / validCounts[f] : 0;
+        }
+
+        this.estimatedT30 = avgRt60s;
+        emit("BEAMTRACE_QUICK_ESTIMATE_COMPLETE", this.uuid);
+      }
+    }, 5);
+  }
+
   // Clear results
   reset() {
     this.validPaths = [];
     this.clearVisualization();
     this.btSolver = null;
     this.lastMetrics = null;
+
+    // Clear response-by-intensity data
+    this.responseByIntensity = undefined;
+
+    // Clear quick estimate
+    if (this._quickEstimateInterval !== null) {
+      window.clearInterval(this._quickEstimateInterval);
+      this._quickEstimateInterval = null;
+    }
+    this.quickEstimateResults = [];
+    this.estimatedT30 = null;
 
     // Clear LTP data
     this.clearLevelTimeProgressionData();
@@ -1807,6 +2315,9 @@ declare global {
     BEAMTRACE_DOWNLOAD_AMBISONIC_IR: { uuid: string; order: number };
     BEAMTRACE_PLAY_BINAURAL_IR: { uuid: string; order: number };
     BEAMTRACE_DOWNLOAD_BINAURAL_IR: { uuid: string; order: number };
+    BEAMTRACE_DOWNLOAD_OCTAVE_IR: string;
+    BEAMTRACE_QUICK_ESTIMATE: string;
+    BEAMTRACE_QUICK_ESTIMATE_COMPLETE: string;
     SHOULD_ADD_BEAMTRACE: undefined;
   }
 }
@@ -1874,6 +2385,24 @@ on("BEAMTRACE_DOWNLOAD_BINAURAL_IR", ({ uuid, order }: { uuid: string; order: nu
   solver.downloadBinauralImpulseResponse(filename, order).catch((err: Error) => {
     window.alert(err.message || "Failed to download binaural impulse response");
   });
+});
+
+on("BEAMTRACE_DOWNLOAD_OCTAVE_IR", (uuid: string) => {
+  const solver = useSolver.getState().solvers[uuid] as BeamTraceSolver;
+  const containers = useContainer.getState().containers;
+  const sourceName = solver.sourceIDs.length > 0 ? containers[solver.sourceIDs[0]]?.name || 'source' : 'source';
+  const receiverName = solver.receiverIDs.length > 0 ? containers[solver.receiverIDs[0]]?.name || 'receiver' : 'receiver';
+  const filename = `ir-beamtrace-${sourceName}-${receiverName}`.replace(/[^a-zA-Z0-9-_]/g, '_');
+  try {
+    solver.downloadOctaveBandIR(filename);
+  } catch (err: any) {
+    window.alert(err.message || "Failed to download octave-band impulse responses");
+  }
+});
+
+on("BEAMTRACE_QUICK_ESTIMATE", (uuid: string) => {
+  const solver = useSolver.getState().solvers[uuid] as BeamTraceSolver;
+  solver.startQuickEstimate();
 });
 
 on("SHOULD_ADD_BEAMTRACE", () => {

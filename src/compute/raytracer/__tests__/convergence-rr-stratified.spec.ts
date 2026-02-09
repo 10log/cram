@@ -29,6 +29,11 @@ const rayCoreSource = fs.readFileSync(
   'utf8'
 );
 
+const quickEstimateSource = fs.readFileSync(
+  path.resolve(__dirname, '..', '..', 'shared', 'quick-estimate.ts'),
+  'utf8'
+);
+
 describe('Phase 7: Convergence, Russian Roulette, Stratified Sampling', () => {
 
   describe('7a: Convergence monitoring', () => {
@@ -213,10 +218,12 @@ describe('Phase 7: Convergence, Russian Roulette, Stratified Sampling', () => {
     });
 
     it('quickEstimateStep uses rejection sampling (no cube-normalized bias)', () => {
-      // Should NOT contain the old biased cube-normalize pattern
-      expect(source).not.toContain('new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize()');
-      // Should contain rejection sampling loop
-      expect(source).toContain('rejection sampling for uniform sphere');
+      // Should NOT contain the old biased cube-normalize pattern in either the delegating method or shared implementation
+      expect(quickEstimateSource).not.toContain('new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize()');
+      // Should contain rejection sampling loop in shared implementation
+      expect(quickEstimateSource).toContain('rejection sampling for uniform sphere');
+      // index.ts should delegate to shared
+      expect(source).toContain('sharedQuickEstimateStep');
     });
   });
 

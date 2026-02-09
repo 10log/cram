@@ -1,15 +1,13 @@
-import * as THREE from "three";
 import { KVP } from "../../common/key-value-pair";
 import { PlotData } from "plotly.js";
-import { LinearRegressionResult } from "../../common/linear-regression";
 
 // ── Named constants replacing magic numbers ──────────────────────────
 
 /** Offset along normal to avoid self-intersection when continuing a ray */
 export const SELF_INTERSECTION_OFFSET = 0.01;
 
-/** Default sample rate for intensity-based response (samples per second) */
-export const DEFAULT_INTENSITY_SAMPLE_RATE = 256;
+// Re-exported from shared response-by-intensity-types
+export { DEFAULT_INTENSITY_SAMPLE_RATE } from "../shared/response-by-intensity-types";
 
 /** Default initial SPL (dB) for impulse response calculations */
 export const DEFAULT_INITIAL_SPL = 100;
@@ -17,71 +15,34 @@ export const DEFAULT_INITIAL_SPL = 100;
 /** Extra time (seconds) appended to impulse response duration */
 export const RESPONSE_TIME_PADDING = 0.05;
 
-/** Maximum reflection order for quick estimate calculations */
-export const QUICK_ESTIMATE_MAX_ORDER = 1000;
+// Re-exported from shared quick-estimate-types
+export { QUICK_ESTIMATE_MAX_ORDER } from "../shared/quick-estimate-types";
 
 /** Maximum number of display points for downsampled IR charts */
 export const MAX_DISPLAY_POINTS = 2000;
 
-/** Intensity ratio corresponding to 60 dB decay (10^6) */
-export const RT60_DECAY_RATIO = 1e6;
+// Re-exported from shared quick-estimate-types
+export { RT60_DECAY_RATIO } from "../shared/quick-estimate-types";
 
-/** Histogram bin width in seconds (1 ms) */
-export const HISTOGRAM_BIN_WIDTH = 0.001;
-
-/** Number of histogram bins (covers up to 10 seconds) */
-export const HISTOGRAM_NUM_BINS = 10000;
+// Re-exported from shared tail-synthesis-types
+export { HISTOGRAM_BIN_WIDTH, HISTOGRAM_NUM_BINS } from "../shared/tail-synthesis-types";
 
 /** Interval in milliseconds between convergence checks */
 export const CONVERGENCE_CHECK_INTERVAL_MS = 500;
 
-/** Duration of the Hann crossfade window between ray-traced IR and synthesized tail (seconds) */
-export const DEFAULT_TAIL_CROSSFADE_DURATION = 0.05;
-
-/** Minimum decay rate in dB/s to prevent infinite tails */
-export const MIN_TAIL_DECAY_RATE = 1.0;
-
-/** Hard cap on IR length in seconds */
-export const MAX_TAIL_END_TIME = 10.0;
+// Re-exported from shared tail-synthesis-types
+export { DEFAULT_TAIL_CROSSFADE_DURATION, MIN_TAIL_DECAY_RATE, MAX_TAIL_END_TIME } from "../shared/tail-synthesis-types";
 
 // ── Interfaces and types ─────────────────────────────────────────────
 
-export interface DecayParameters {
-  /** Per-band T60 in seconds */
-  t60: number;
-  /** Decay rate in dB/s (negative) */
-  decayRate: number;
-  /** Linear energy level at crossfade point */
-  crossfadeLevel: number;
-  /** Crossfade start time in seconds */
-  crossfadeTime: number;
-  /** Time where tail reaches silence in seconds */
-  endTime: number;
-}
+// Re-exported from shared tail-synthesis-types
+export type { DecayParameters } from "../shared/tail-synthesis-types";
 
-export interface QuickEstimateStepResult {
-  rt60s: number[];
-  angle: number;
-  direction: THREE.Vector3;
-  lastIntersection: THREE.Intersection;
-  distance: number;
-}
+// Re-exported from shared quick-estimate-types
+export type { QuickEstimateStepResult } from "../shared/quick-estimate-types";
 
-export interface RayPathResult {
-  time: number;
-  bounces: number;
-  level: number[];
-}
-
-export interface ResponseByIntensity {
-  freqs: number[];
-  response: RayPathResult[];
-  sampleRate?: number;
-  resampledResponse?: Float32Array[];
-  t20?: LinearRegressionResult[];
-  t30?: LinearRegressionResult[];
-  t60?: LinearRegressionResult[];
-}
+// Re-exported from shared response-by-intensity-types
+export type { RayPathResult, ResponseByIntensity } from "../shared/response-by-intensity-types";
 
 export type BandEnergy = number[];
 

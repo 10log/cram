@@ -63,6 +63,30 @@ const axisLabelSx: SxProps<Theme> = {
   textAlign: "center",
 };
 
+const T30_BANDS = ["125", "250", "500", "1k", "2k", "4k", "8k"];
+
+const t30TableSx: SxProps<Theme> = {
+  display: "grid",
+  gridTemplateColumns: "repeat(7, 1fr)",
+  gap: 0,
+  px: 0.5,
+  mb: 0.5,
+};
+
+const t30HeaderSx: SxProps<Theme> = {
+  fontSize: "0.6rem",
+  color: "text.disabled",
+  textAlign: "center",
+  pb: 0.25,
+};
+
+const t30CellSx: SxProps<Theme> = {
+  fontSize: "0.7rem",
+  fontFamily: "monospace",
+  color: "text.primary",
+  textAlign: "center",
+};
+
 const BufferUsageBar = ({ percent, overflow }: { percent: number; overflow: boolean }) => {
   const color = overflow ? "#ff4444" : percent > 80 ? "#ffaa00" : "#44aa44";
   return (
@@ -149,6 +173,7 @@ const KeyboardShortcuts = ({ uuid }: { uuid: string }) => {
 
 export const BeamTraceTab = ({ uuid }: BeamTraceTabProps) => {
   const [calculating, setCalculating] = useState(false);
+  const [estimating, setEstimating] = useState(false);
   const [, forceUpdate] = useReducer((c) => c + 1, 0) as [never, () => void];
   const solver = useSolver(state => state.solvers[uuid] as BeamTraceSolver);
   const numPaths = solver?.numValidPaths || 0;
@@ -156,6 +181,24 @@ export const BeamTraceTab = ({ uuid }: BeamTraceTabProps) => {
   const bufferUsage = metrics?.bufferUsage;
   const hasResults = numPaths > 0;
   const disabled = !hasResults;
+
+  // Compute T30 values from response-by-intensity (preferred) or quick estimate (fallback)
+  const t30Values = (() => {
+    const rbi = solver?.responseByIntensity;
+    if (rbi) {
+      const recKey = Object.keys(rbi)[0];
+      if (recKey) {
+        const srcKey = Object.keys(rbi[recKey])[0];
+        if (srcKey && rbi[recKey][srcKey].t30) {
+          return rbi[recKey][srcKey].t30!.map(t => t.m < 0 ? (-60 / t.m).toFixed(2) : "--");
+        }
+      }
+    }
+    if (solver?.estimatedT30) {
+      return solver.estimatedT30.map(t => t > 0 ? t.toFixed(2) : "--");
+    }
+    return null;
+  })();
 
   const [mode, setMode] = useSolverProperty<BeamTraceSolver, "visualizationMode">(
     uuid, "visualizationMode", "BEAMTRACE_SET_PROPERTY"
@@ -175,6 +218,8 @@ export const BeamTraceTab = ({ uuid }: BeamTraceTabProps) => {
   const [headPitch, setHeadPitch] = useSolverProperty<BeamTraceSolver, "headPitch">(uuid, "headPitch", "BEAMTRACE_SET_PROPERTY");
   const [headRoll, setHeadRoll] = useSolverProperty<BeamTraceSolver, "headRoll">(uuid, "headRoll", "BEAMTRACE_SET_PROPERTY");
   const [binauralPlaying] = useSolverProperty<BeamTraceSolver, "binauralPlaying">(uuid, "binauralPlaying", "BEAMTRACE_SET_PROPERTY");
+  const [edgeDiffractionEnabled, setEdgeDiffractionEnabled] = useSolverProperty<BeamTraceSolver, "edgeDiffractionEnabled">(uuid, "edgeDiffractionEnabled", "BEAMTRACE_SET_PROPERTY");
+  const [lateReverbTailEnabled, setLateReverbTailEnabled] = useSolverProperty<BeamTraceSolver, "lateReverbTailEnabled">(uuid, "lateReverbTailEnabled", "BEAMTRACE_SET_PROPERTY");
 
   useEffect(() => {
     const id = hrtfSubjectId || "D1";
@@ -193,7 +238,10 @@ export const BeamTraceTab = ({ uuid }: BeamTraceTabProps) => {
     const unsub2 = on("BEAMTRACE_RESET", (id) => {
       if (id === uuid) forceUpdate();
     });
-    return () => { unsub1(); unsub2(); };
+    const unsub3 = on("BEAMTRACE_QUICK_ESTIMATE_COMPLETE", (id) => {
+      if (id === uuid) { setEstimating(false); forceUpdate(); }
+    });
+    return () => { unsub1(); unsub2(); unsub3(); };
   }, [uuid]);
 
   const handleCalculate = useCallback(() => {
@@ -216,6 +264,11 @@ export const BeamTraceTab = ({ uuid }: BeamTraceTabProps) => {
   const handleBinauralDownload = useCallback(() => {
     emit("BEAMTRACE_DOWNLOAD_BINAURAL_IR", { uuid, order: parseInt(binauralOrder) });
   }, [uuid, binauralOrder]);
+
+  const handleQuickEstimate = useCallback(() => {
+    setEstimating(true);
+    emit("BEAMTRACE_QUICK_ESTIMATE", uuid);
+  }, [uuid]);
 
   const handleSubjectSelect = useCallback((id: string) => {
     emit("BEAMTRACE_SET_PROPERTY", { uuid, property: "hrtfSubjectId", value: id });
@@ -269,6 +322,18 @@ export const BeamTraceTab = ({ uuid }: BeamTraceTabProps) => {
         property="maxReflectionOrderReset"
         tooltip="Maximum surface-unfolding depth. All valid specular paths are found deterministically and instantaneously via geometric surface unfolding — no stochastic sampling. Complexity grows with order; 1–6 recommended."
       />
+
+      <PropertyRow>
+        <PropertyRowLabel label="Edge Diffraction" hasToolTip tooltip="Uniform Theory of Diffraction (UTD) — models sound bending around convex edges, adding diffracted contributions at each room edge" />
+        <PropertyRowCheckbox
+          value={edgeDiffractionEnabled || false}
+          onChange={({ value }) => setEdgeDiffractionEnabled(value)}
+        />
+      </PropertyRow>
+      <PropertyRow>
+        <PropertyRowLabel label="" hasToolTip tooltip="Shoot 500 random rays to quickly estimate RT60 per octave band" />
+        <PropertyRowButton onClick={handleQuickEstimate} label={estimating ? "Estimating..." : "Quick Estimate"} disabled={estimating} />
+      </PropertyRow>
 
       {/* Source / Receiver Pairs */}
       <SectionLabel label="Source / Receiver Pairs" />
@@ -354,6 +419,18 @@ export const BeamTraceTab = ({ uuid }: BeamTraceTabProps) => {
         </>
       )}
 
+      {/* Est. T30 */}
+      <SectionLabel label="Est. T30" />
+      <Box sx={t30TableSx}>
+        {T30_BANDS.map((band) => (
+          <Box key={band} sx={t30HeaderSx}>{band}</Box>
+        ))}
+        {t30Values
+          ? t30Values.map((v, i) => <Box key={i} sx={t30CellSx}>{v}</Box>)
+          : T30_BANDS.map((_, i) => <Box key={i} sx={t30CellSx}>--</Box>)
+        }
+      </Box>
+
       {/* Impulse Response */}
       <SectionLabel label="Impulse Response" />
       <PropertyButton
@@ -369,6 +446,37 @@ export const BeamTraceTab = ({ uuid }: BeamTraceTabProps) => {
         label="Download"
         tooltip="Export the impulse response as a mono WAV file"
         disabled={disabled}
+      />
+      <PropertyButton
+        event="BEAMTRACE_DOWNLOAD_OCTAVE_IR"
+        args={uuid}
+        label="Download by Octave"
+        tooltip="Export per-octave-band impulse responses as individual WAV files"
+        disabled={disabled}
+      />
+
+      {/* Late Reverberation */}
+      <SectionLabel label="Late Reverberation" />
+      <PropertyRow>
+        <PropertyRowLabel label="Late Reverb Tail" hasToolTip tooltip="Synthesize a noise tail extending the IR beyond specular paths, using energy decay parameters estimated from the computed paths" />
+        <PropertyRowCheckbox
+          value={lateReverbTailEnabled || false}
+          onChange={({ value }) => setLateReverbTailEnabled(value)}
+        />
+      </PropertyRow>
+      <PropertyNumberInput
+        uuid={uuid}
+        label="Crossfade Time (s)"
+        property="tailCrossfadeTime"
+        tooltip="Time in seconds where the synthesized tail begins to crossfade with ray-traced IR. 0 = auto-detect from last path arrival."
+        elementProps={{ step: 0.1, min: 0, max: 5 }}
+      />
+      <PropertyNumberInput
+        uuid={uuid}
+        label="Crossfade Dur. (s)"
+        property="tailCrossfadeDuration"
+        tooltip="Duration in seconds of the Hann crossfade window between specular IR and synthesized tail"
+        elementProps={{ step: 0.01, min: 0.01, max: 0.5 }}
       />
 
       {/* Ambisonic Output */}

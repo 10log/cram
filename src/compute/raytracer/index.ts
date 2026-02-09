@@ -49,6 +49,7 @@ import { buildEdgeGraph, findDiffractionPaths } from "./diffraction";
 import type { EdgeGraph } from "./diffraction";
 import { isWebGPUAvailable } from "./gpu/gpu-context";
 import { GpuRayTracer } from "./gpu/gpu-ray-tracer";
+import { quickEstimateStep as sharedQuickEstimateStep } from "../shared/quick-estimate";
 
 // Re-export all types for external consumers
 export type {
@@ -584,101 +585,13 @@ class RayTracer extends Solver {
     );
   }
   quickEstimateStep(source: Source, frequencies: number[], numRays: number) {
-    const soundSpeed = this.c;
-
-    const rt60s = Array(frequencies.length).fill(0) as number[];
-
-    // source position
-    let position = source.position.clone();
-
-    // random direction (rejection sampling for uniform sphere distribution)
-    let dx: number, dy: number, dz: number, lenSq: number;
-    do {
-      dx = Math.random() * 2 - 1;
-      dy = Math.random() * 2 - 1;
-      dz = Math.random() * 2 - 1;
-      lenSq = dx * dx + dy * dy + dz * dz;
-    } while (lenSq > 1 || lenSq < 1e-6);
-    let direction = new THREE.Vector3(dx, dy, dz).normalize();
-
-    let angle = 0;
-
-    const intensities = Array(frequencies.length).fill(source.initialIntensity);
-
-    let iter = 0;
-    const maxOrder = QUICK_ESTIMATE_MAX_ORDER;
-
-    let doneDecaying = false;
-
-    let distance = 0;
-
-    // attenuation in dB/m
-    const airAttenuationdB = ac.airAttenuation(frequencies, this.temperature);
-
-    let lastIntersection = {} as THREE.Intersection;
-
-    while (!doneDecaying && iter < maxOrder) {
-      // set the starting position and direction
-      this.raycaster.ray.set(position, direction);
-
-      // find the surface that the ray intersects
-      const intersections = this.raycaster.intersectObjects(this.intersectableObjects, true);
-
-      // if there was an intersection
-      if (intersections.length > 0) {
-        // console.log("itx",intersections[0].point)
-
-        // find the incident angle
-        angle = direction.clone().multiplyScalar(-1).angleTo(intersections[0].face!.normal);
-
-        distance += intersections[0].distance;
-
-        const surface = intersections[0].object.parent as Surface;
-
-        // for each frequency
-        for (let f = 0; f < frequencies.length; f++) {
-          const freq = frequencies[f];
-          let coefficient = 1;
-          if (surface.kind === 'surface') {
-            coefficient = surface.reflectionFunction(freq, angle);
-          }
-          intensities[f] *= coefficient;
-          // const level = (ac.P2Lp(ac.I2P()) as number) - airAttenuationdB[f];
-          const freqDoneDecaying = source.initialIntensity / intensities[f] > RT60_DECAY_RATIO;
-          if (freqDoneDecaying) {
-            rt60s[f] = distance / soundSpeed;
-          }
-          doneDecaying = doneDecaying || freqDoneDecaying;
-
-          // intensities[f] = ac.P2I(ac.Lp2P(level));
-        }
-
-        if (intersections[0].object.parent instanceof Surface) {
-          intersections[0].object.parent.numHits += 1;
-        }
-
-        // get the normal direction of the intersection
-        const normal = intersections[0].face!.normal.normalize();
-
-        // find the reflected direction
-        direction.sub(normal.clone().multiplyScalar(direction.dot(normal)).multiplyScalar(2)).normalize();
-
-        position.copy(intersections[0].point);
-
-        lastIntersection = intersections[0];
-      }
-      iter += 1;
-    }
-
+    const result = sharedQuickEstimateStep(
+      this.raycaster, this.intersectableObjects,
+      source.position, source.initialIntensity,
+      frequencies, this.temperature
+    );
     (this.stats.numRaysShot.value as number)++;
-
-    return {
-      distance,
-      rt60s,
-      angle,
-      direction,
-      lastIntersection
-    };
+    return result;
   }
 
   startAllMonteCarlo() {
