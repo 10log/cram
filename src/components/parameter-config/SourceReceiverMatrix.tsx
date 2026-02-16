@@ -127,6 +127,8 @@ export const SourceReceiverMatrix = memo(({ uuid, disabled = false, eventType = 
 
   const sourceIDs = sourceIDsRaw || [];
   const receiverIDs = receiverIDsRaw || [];
+  const noPairsSelected = sources.length > 0 && receivers.length > 0
+    && (sourceIDs.length === 0 || receiverIDs.length === 0);
 
   const isPairSelected = useCallback((sourceId: string, receiverId: string) => {
     return sourceIDs.includes(sourceId) && receiverIDs.includes(receiverId);
@@ -168,7 +170,13 @@ export const SourceReceiverMatrix = memo(({ uuid, disabled = false, eventType = 
   }
 
   return (
-    <Box sx={matrixContainerSx(disabled)}>
+    <Box sx={{
+      ...matrixContainerSx(disabled),
+      ...(noPairsSelected && {
+        bgcolor: "rgba(244,67,54,0.08)",
+        borderRadius: 1,
+      }),
+    }}>
       <Box
         component="table"
         sx={tableSx}

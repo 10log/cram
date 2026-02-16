@@ -382,7 +382,7 @@ export function PropertiesPanel() {
       "fdtd-2d": "Finite-difference time-domain",
       "energydecay": "Energy decay analysis",
       "art": "Acoustic radiance transfer",
-      "beam-trace": "Beam tracing",
+      "beam-trace": "Specular beam solver",
     };
     return Object.keys(solversData).map((uuid) => ({
       uuid,
