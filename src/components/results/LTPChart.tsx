@@ -308,13 +308,13 @@ export const LTPChart = ({ uuid, width = 400, height = 300, events = false }: LT
           <Select
             value={yRange}
             onChange={(e) => setYRange(e.target.value as YRange)}
-            sx={{ bgcolor: 'background.paper', minWidth: 90 }}
+            sx={{ bgcolor: 'background.paper', minWidth: 90, fontSize: '0.75rem', height: 24, '& .MuiSelect-select': { py: 0.25, px: 1 } }}
             MenuProps={{ PaperProps: { sx: { bgcolor: "background.paper" } } }}
           >
-            <MenuItem value="auto">Auto</MenuItem>
-            <MenuItem value={10}>10 dB</MenuItem>
-            <MenuItem value={20}>20 dB</MenuItem>
-            <MenuItem value={30}>30 dB</MenuItem>
+            <MenuItem value="auto" sx={{ fontSize: '0.75rem', py: 0.5 }}>Auto</MenuItem>
+            <MenuItem value={10} sx={{ fontSize: '0.75rem', py: 0.5 }}>10 dB</MenuItem>
+            <MenuItem value={20} sx={{ fontSize: '0.75rem', py: 0.5 }}>20 dB</MenuItem>
+            <MenuItem value={30} sx={{ fontSize: '0.75rem', py: 0.5 }}>30 dB</MenuItem>
           </Select>
         </FormControl>
         <Typography variant="body2" sx={{ whiteSpace: "nowrap" }}>Octave Band</Typography>
@@ -322,11 +322,11 @@ export const LTPChart = ({ uuid, width = 400, height = 300, events = false }: LT
           <Select
             value={info.frequency[0]}
             onChange={handleFrequencyChange}
-            sx={{ bgcolor: 'background.paper', minWidth: 100 }}
+            sx={{ bgcolor: 'background.paper', minWidth: 100, fontSize: '0.75rem', height: 24, '& .MuiSelect-select': { py: 0.25, px: 1 } }}
             MenuProps={{ PaperProps: { sx: { bgcolor: "background.paper" } } }}
           >
             {frequencies.map((f) => (
-              <MenuItem key={f} value={f}>{f} Hz</MenuItem>
+              <MenuItem key={f} value={f} sx={{ fontSize: '0.75rem', py: 0.5 }}>{f} Hz</MenuItem>
             ))}
           </Select>
         </FormControl>
