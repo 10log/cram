@@ -309,6 +309,7 @@ export const LTPChart = ({ uuid, width = 400, height = 300, events = false }: LT
             value={yRange}
             onChange={(e) => setYRange(e.target.value as YRange)}
             sx={{ bgcolor: 'background.paper', minWidth: 90 }}
+            MenuProps={{ PaperProps: { sx: { bgcolor: "background.paper" } } }}
           >
             <MenuItem value="auto">Auto</MenuItem>
             <MenuItem value={10}>10 dB</MenuItem>
@@ -322,6 +323,7 @@ export const LTPChart = ({ uuid, width = 400, height = 300, events = false }: LT
             value={info.frequency[0]}
             onChange={handleFrequencyChange}
             sx={{ bgcolor: 'background.paper', minWidth: 100 }}
+            MenuProps={{ PaperProps: { sx: { bgcolor: "background.paper" } } }}
           >
             {frequencies.map((f) => (
               <MenuItem key={f} value={f}>{f} Hz</MenuItem>

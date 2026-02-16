@@ -44,6 +44,7 @@ export function ContextMenu(props: ContextMenuProps) {
                         ? { top: contextMenu.mouseY, left: contextMenu.mouseX }
                         : undefined
                 }
+                slotProps={{ paper: { sx: { bgcolor: "background.paper" } } }}
             >
                 {items.map((x, i) => {
                     if (x === "!seperator") {

@@ -18,6 +18,7 @@ const selectSx: SxProps<Theme> = {
   fontSize: "0.75rem",
   height: 24,
   minWidth: 120,
+  bgcolor: "background.paper",
   "& .MuiSelect-select": {
     py: 0.25,
     px: 1,
@@ -165,6 +166,7 @@ export const FDTD_2DTab = ({uuid}: {uuid: string}) => {
               setFDTDSourcesKeys(solver.sourceKeys);
             }}
             sx={selectSx}
+            MenuProps={{ PaperProps: { sx: { bgcolor: "background.paper" } } }}
           >
             <MenuItem value="" disabled sx={menuItemSx}>Select Source</MenuItem>
             {notIncludedSources.map((src) => (
@@ -210,6 +212,7 @@ export const FDTD_2DTab = ({uuid}: {uuid: string}) => {
               setFDTDreceiverKeys(solver.receiverKeys);
             }}
             sx={selectSx}
+            MenuProps={{ PaperProps: { sx: { bgcolor: "background.paper" } } }}
           >
             <MenuItem value="" disabled sx={menuItemSx}>Select Receiver</MenuItem>
             {notIncludedReceiver.map((rec) => (

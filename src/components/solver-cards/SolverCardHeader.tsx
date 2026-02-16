@@ -241,6 +241,7 @@ export default function SolverCardHeader({
               vertical: 'top',
               horizontal: 'right',
             }}
+            slotProps={{ paper: { sx: { bgcolor: "background.paper" } } }}
           >
             {onDuplicate && (
               <MenuItem onClick={handleDuplicate}>

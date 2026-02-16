@@ -51,6 +51,7 @@ const menuPaperProps = {
   elevation: 4,
   sx: {
     minWidth: 180,
+    bgcolor: 'background.paper',
     '& .MuiMenuItem-root': {
       fontSize: '9pt',
       py: 0.5,

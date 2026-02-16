@@ -8,6 +8,7 @@ const selectSx: SxProps<Theme> = {
   mr: 1,
   fontSize: "0.75rem",
   height: 24,
+  bgcolor: "background.paper",
   "& .MuiSelect-select": {
     py: 0.25,
     px: 1,
@@ -38,6 +39,7 @@ export const PropertyRowSelect = ({ value, onChange, options }: Props) => {
       value={value}
       onChange={(e) => onChange({ value: e.target.value })}
       sx={selectSx}
+      MenuProps={{ PaperProps: { sx: { bgcolor: "background.paper" } } }}
     >
       {options.map(({ value, label }, i) => (
         <MenuItem value={value} key={`${value}-${label}-${i}`} sx={menuItemSx}>
