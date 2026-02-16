@@ -2,17 +2,38 @@ import React, { memo, useCallback, useEffect } from "react";
 
 import { useResult, ResultStore } from "../store/result-store";
 
-import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
 import { useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { on } from "../messenger";
+
+import Box from "@mui/material/Box";
+import MuiTabs from "@mui/material/Tabs";
+import MuiTab from "@mui/material/Tab";
+import type { SxProps, Theme } from "@mui/material/styles";
 
 import LTPChart from "./results/LTPChart";
 import RT60Chart from "./results/RT60Chart";
 import ImpulseResponseChart from "./results/ImpulseResponseChart";
 import PanelEmptyText from "./panel-container/PanelEmptyText";
 
+const tabsSx: SxProps<Theme> = {
+  minHeight: 28,
+  bgcolor: "action.hover",
+  borderBottom: 1,
+  borderColor: "divider",
+  "& .MuiTabs-indicator": {
+    height: 2,
+  },
+};
 
+const tabSx: SxProps<Theme> = {
+  minHeight: 28,
+  py: 0,
+  px: 1.5,
+  fontSize: "0.75rem",
+  textTransform: "none",
+  minWidth: 0,
+};
 
 const TabTitle = memo(({ uuid }: { uuid: string }) => {
   const name = useResult((state) => state.results[uuid].name);
@@ -54,33 +75,27 @@ export const ResultsPanel = () => {
     return on("SELECT_RESULT_TAB", (uuid: string) => switchToResultTab(uuid));
   }, [switchToResultTab]);
 
+  // Clamp index if results were removed
+  const safeIndex = Math.min(index, Math.max(keys.length - 1, 0));
+  const activeKey = keys[safeIndex];
+
   return keys.length > 0 ? (
-    <div
-      style={{
-        margin: "0",
-      }}
-    >
-      <Tabs
-        selectedIndex={index}
-        onSelect={(index) => {
-          // set((store)=>{store.openTabIndex=index})
-          setIndex(index);
-        }}
+    <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
+      <MuiTabs
+        value={safeIndex}
+        onChange={(_e, newIndex) => setIndex(newIndex)}
+        variant="scrollable"
+        scrollButtons="auto"
+        sx={tabsSx}
       >
-        <TabList>
-          {keys.map((key) => (
-            <Tab key={key}>
-              <TabTitle uuid={key} />
-            </Tab>
-          ))}
-        </TabList>
         {keys.map((key) => (
-          <TabPanel key={key}>
-            <ChartSelect uuid={key} />
-          </TabPanel>
+          <MuiTab key={key} label={<TabTitle uuid={key} />} sx={tabSx} />
         ))}
-      </Tabs>
-    </div>
+      </MuiTabs>
+      <Box sx={{ flex: 1, overflow: "auto" }}>
+        {activeKey && <ChartSelect uuid={activeKey} />}
+      </Box>
+    </Box>
   ) : <PanelEmptyText>No Results Yet!</PanelEmptyText>;
 };
 

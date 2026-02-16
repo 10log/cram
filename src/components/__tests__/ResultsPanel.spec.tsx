@@ -30,18 +30,6 @@ vi.mock('../results/ImpulseResponseChart', () => ({
   default: ({ uuid }: { uuid: string }) => <div data-testid="ir-chart">{uuid}</div>,
 }));
 
-// Mock react-tabs
-vi.mock('react-tabs', () => ({
-  Tab: ({ children }: { children: React.ReactNode }) => <div role="tab">{children}</div>,
-  Tabs: ({ children, selectedIndex, onSelect }: any) => (
-    <div data-testid="tabs" data-selected={selectedIndex}>
-      {children}
-    </div>
-  ),
-  TabList: ({ children }: { children: React.ReactNode }) => <div role="tablist">{children}</div>,
-  TabPanel: ({ children }: { children: React.ReactNode }) => <div role="tabpanel">{children}</div>,
-}));
-
 // Mock messenger
 vi.mock('../../messenger', () => ({
   on: vi.fn(() => vi.fn()),
@@ -72,7 +60,7 @@ describe('ResultsPanel', () => {
 
     it('does not render tabs when no results', () => {
       render(<ResultsPanel />);
-      expect(screen.queryByTestId('tabs')).not.toBeInTheDocument();
+      expect(screen.queryByRole('tablist')).not.toBeInTheDocument();
     });
   });
 
@@ -101,7 +89,7 @@ describe('ResultsPanel', () => {
 
     it('renders tabs when results exist', () => {
       render(<ResultsPanel />);
-      expect(screen.getByTestId('tabs')).toBeInTheDocument();
+      expect(screen.getByRole('tablist')).toBeInTheDocument();
     });
 
     it('displays result name in tab', () => {
@@ -156,10 +144,10 @@ describe('ResultsPanel', () => {
       expect(screen.getByText('Impulse Response')).toBeInTheDocument();
     });
 
-    it('renders both tab panels', () => {
+    it('renders two tab buttons', () => {
       render(<ResultsPanel />);
-      const tabPanels = screen.getAllByRole('tabpanel');
-      expect(tabPanels.length).toBe(2);
+      const tabs = screen.getAllByRole('tab');
+      expect(tabs.length).toBe(2);
     });
   });
 
