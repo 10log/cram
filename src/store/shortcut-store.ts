@@ -80,7 +80,7 @@ const defaultShortcuts = [{
   {
     event: "PHASE_OUT",
     key: "escape",
-    scopes: ["EDITOR", "EDITOR_MOVING"],
+    scopes: ["EDITOR", "EDITOR_MOVING", "FIRST_PERSON"],
     name: "Phase Out",
     description: "Phase out"
   }

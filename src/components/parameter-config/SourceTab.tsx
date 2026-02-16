@@ -118,6 +118,12 @@ export const SourceTab = ({ uuid }: { uuid: string }) => {
   return (
     <div>
       <Transform uuid={uuid} />
+      <PropertyButton
+        label="First Person View"
+        tooltip="Look through this source and adjust its orientation"
+        event="ENTER_FIRST_PERSON"
+        args={{ uuid }}
+      />
       <Configuration uuid={uuid} />
       <FDTDConfig uuid={uuid} />
     </div>

@@ -41,6 +41,7 @@ import {
 } from "./orientation-control/orientation-control";
 
 import Cursor from "./Cursor";
+import FirstPersonControls from "./first-person-controls";
 import { Processes } from "../constants/processes";
 
 import { Markup } from "./Markup";
@@ -188,6 +189,7 @@ export default class Renderer {
   private isIdle: boolean = false;
 
   orientationControl!: OrientationControl;
+  firstPersonControls!: FirstPersonControls;
 
   currentProcess!: Processes;
 
@@ -476,6 +478,7 @@ export default class Renderer {
 
     // save the state of the camera (using cleanup-aware listener)
     this.addCleanupListener(window, "mouseup", (_e) => {
+      if (this.firstPersonControls?.active) return;
       this.storeCameraState();
       this.needsToRender = true;
     });
@@ -504,6 +507,7 @@ export default class Renderer {
     });
 
     this.renderer.domElement.addEventListener("mousedown", (e) => {
+      if (this.firstPersonControls?.active) return;
       hotkeys.setScope("EDITOR");
       const selection = this.pickHelper.pick(e, [this.workspace, this.interactables]);
 
@@ -586,6 +590,8 @@ export default class Renderer {
         messenger.postMessage("LOOK_ALONG_AXIS", e.target);
       }
     });
+
+    this.firstPersonControls = new FirstPersonControls(this.elt, this);
 
     const pos = this.camera.position
       .clone()
@@ -1185,6 +1191,10 @@ export default class Renderer {
       this.transformControls.dispose();
     }
 
+    if (this.firstPersonControls) {
+      this.firstPersonControls.dispose();
+    }
+
     // Traverse scene and dispose geometries/materials
     if (this.scene) {
       this.scene.traverse((object) => {
@@ -1242,6 +1252,8 @@ declare global {
     FOCUS_ON_SELECTED_OBJECTS: undefined;
     FOCUS_ON_CURSOR: undefined;
     RENDER: undefined;
+    ENTER_FIRST_PERSON: { uuid: string };
+    EXIT_FIRST_PERSON: undefined;
   }
 }
 
@@ -1257,7 +1269,9 @@ on("RENDERER_SHOULD_ANIMATE", shouldAnimate => {
 });
 
 on("PHASE_OUT", () => {
-  if (renderer.isPerformingOperation) {
+  if (renderer.firstPersonControls?.active) {
+    emit("EXIT_FIRST_PERSON");
+  } else if (renderer.isPerformingOperation) {
     emit("STOP_OPERATIONS");
     // hotkeys.setScope("EDITOR");
   } else {
@@ -1329,6 +1343,14 @@ on("FOCUS_ON_CURSOR", () => {
   };
   renderer.smoothCameraTo({ position, target, duration, onFinish, easingFunction });
   renderer.requestRender();
+});
+
+on("ENTER_FIRST_PERSON", ({ uuid }) => {
+  renderer.firstPersonControls.enter(uuid);
+});
+
+on("EXIT_FIRST_PERSON", () => {
+  renderer.firstPersonControls.exit();
 });
 
 on("THEME_CHANGED", (theme) => {

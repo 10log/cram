@@ -3,6 +3,7 @@ import Receiver, { ReceiverPattern } from "../../objects/receiver";
 import { createPropertyInputs } from "./ContainerComponents";
 import useToggle from "../hooks/use-toggle";
 import PropertyRowFolder from "./property-row/PropertyRowFolder";
+import PropertyButton from "./property-row/PropertyButton";
 import TransformTable from "./TransformTable";
 
 const { PropertySelect } = createPropertyInputs<Receiver>("RECEIVER_SET_PROPERTY");
@@ -37,6 +38,12 @@ export const ReceiverTab = ({ uuid }: { uuid: string }) => {
   return (
     <div>
       <Transform uuid={uuid} />
+      <PropertyButton
+        label="First Person View"
+        tooltip="Look through this receiver and adjust its orientation"
+        event="ENTER_FIRST_PERSON"
+        args={{ uuid }}
+      />
       <Directivity uuid={uuid} />
     </div>
   );
