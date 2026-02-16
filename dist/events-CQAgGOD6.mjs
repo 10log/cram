@@ -1,4 +1,4 @@
-import { o as s, s as a, c as n, f as o } from "./index-BMFopblh.mjs";
+import { o as s, s as a, c as n, f as o } from "./index-C0RyYTPh.mjs";
 function _() {
   s("FDTD_2D_SET_PROPERTY", a), s("REMOVE_FDTD_2D", n), s("ADD_FDTD_2D", async (e) => {
     if (e)
@@ -6,7 +6,7 @@ function _() {
         t.solvers[e.uuid] = e;
       });
     else {
-      const { FDTD_2D: t } = await import("./index-BZswEkg6.mjs"), D = new t();
+      const { FDTD_2D: t } = await import("./index-BW3MgCsc.mjs"), D = new t();
       o.getState().set((r) => {
         r.solvers[D.uuid] = D;
       });
@@ -16,4 +16,4 @@ function _() {
 export {
   _ as default
 };
-//# sourceMappingURL=events-m_WCyWPa.mjs.map
+//# sourceMappingURL=events-CQAgGOD6.mjs.map
