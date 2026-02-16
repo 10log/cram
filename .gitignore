@@ -2,6 +2,7 @@ node_modules
 *.lock
 ir
 3dtextures
+dist
 yarn-error.log
 .DS_Store
 build
