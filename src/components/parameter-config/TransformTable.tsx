@@ -3,6 +3,7 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Collapse from "@mui/material/Collapse";
 import TextField from "@mui/material/TextField";
+import InputAdornment from "@mui/material/InputAdornment";
 import type { SxProps, Theme } from "@mui/material/styles";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
@@ -107,12 +108,20 @@ interface TransformInputProps {
   event: SetPropertyEvent;
 }
 
+const RAD2DEG = 180 / Math.PI;
+const DEG2RAD = Math.PI / 180;
+
+const isRotation = (property: TransformProperty) =>
+  property === "rotationx" || property === "rotationy" || property === "rotationz";
+
 const TransformInput = ({ uuid, property, event }: TransformInputProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
-  const value = useContainer((state) => {
+  const raw = useContainer((state) => {
     void state.version;
     return (state.containers[uuid] as Container)[property] as number;
   });
+  const isRot = isRotation(property);
+  const value = isRot ? Math.round(raw * RAD2DEG * 10) / 10 : raw;
 
   // Store latest values in refs so the wheel handler always has current values
   const valueRef = useRef(value);
@@ -134,10 +143,11 @@ const TransformInput = ({ uuid, property, event }: TransformInputProps) => {
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
       const delta = e.deltaY < 0 ? 1 : -1;
-      const newValue = valueRef.current + delta;
-      if (!Number.isNaN(newValue)) {
+      const displayValue = valueRef.current + delta;
+      const emitValue = isRot ? displayValue * DEG2RAD : displayValue;
+      if (!Number.isNaN(emitValue)) {
         // @ts-ignore - property is valid for all container types
-        emit(eventRef.current, { uuid: uuidRef.current, property: propertyRef.current, value: newValue });
+        emit(eventRef.current, { uuid: uuidRef.current, property: propertyRef.current, value: emitValue });
       }
     };
 
@@ -146,10 +156,11 @@ const TransformInput = ({ uuid, property, event }: TransformInputProps) => {
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = e.currentTarget.valueAsNumber;
-    if (!Number.isNaN(newValue)) {
+    const displayValue = e.currentTarget.valueAsNumber;
+    const emitValue = isRot ? displayValue * DEG2RAD : displayValue;
+    if (!Number.isNaN(emitValue)) {
       // @ts-ignore - property is valid for all container types
-      emit(event, { uuid, property, value: newValue });
+      emit(event, { uuid, property, value: emitValue });
     }
   };
 
@@ -165,6 +176,9 @@ const TransformInput = ({ uuid, property, event }: TransformInputProps) => {
         htmlInput: {
           step: 1,
         },
+        input: isRot ? {
+          endAdornment: <InputAdornment position="end" sx={{ mr: 0, "& .MuiTypography-root": { fontSize: "0.7rem", color: "text.secondary" } }}>°</InputAdornment>,
+        } : undefined,
       }}
       sx={cellInputSx}
     />

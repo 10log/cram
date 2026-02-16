@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { emit } from "../messenger";
+import { emit, after } from "../messenger";
 import { useContainer } from "../store";
 import { addMoment, Directions } from "../history";
 import hotkeys from "hotkeys-js";
@@ -7,8 +7,7 @@ import type { SourceSaveObject } from "../objects/source";
 import type { ReceiverSaveObject } from "../objects/receiver";
 import type Renderer from "./renderer";
 
-const YAW_PITCH_SENSITIVITY = 0.003;
-const ROLL_SENSITIVITY = 0.005;
+const SENSITIVITY = 0.003;
 
 interface FirstPersonState {
   targetUuid: string;
@@ -18,21 +17,31 @@ interface FirstPersonState {
   initialContainerSave: SourceSaveObject | ReceiverSaveObject;
 }
 
-type DragMode = "yaw-pitch" | "roll" | null;
-
 export default class FirstPersonControls {
   private state: FirstPersonState | null = null;
   private canvas: HTMLCanvasElement;
   private _renderer: Renderer;
-  private dragMode: DragMode = null;
+
+  // Yaw/pitch angles (radians) — rebuilt into quaternion each frame, so roll never accumulates
+  private yaw = 0;
+  private pitch = 0;
+
+  private dragging = false;
   private lastMouseX = 0;
   private lastMouseY = 0;
+  private lastUIUpdate = 0;
 
   // Bound listeners for cleanup
   private onMouseDown: ((e: MouseEvent) => void) | null = null;
   private onMouseMove: ((e: MouseEvent) => void) | null = null;
   private onMouseUp: ((e: MouseEvent) => void) | null = null;
   private onContextMenu: ((e: MouseEvent) => void) | null = null;
+
+  // Event unsubscribers for property change listeners
+  private propertyUnsubs: (() => void)[] = [];
+
+  // Orbit button overlay
+  private orbitButton: HTMLButtonElement | null = null;
 
   constructor(canvas: HTMLCanvasElement, renderer: Renderer) {
     this.canvas = canvas;
@@ -74,8 +83,11 @@ export default class FirstPersonControls {
     // Forward = (0,0,1) rotated by container's Euler (matches receiver getGain convention)
     const forward = new THREE.Vector3(0, 0, 1).applyEuler(container.rotation);
 
-    // Build quaternion: camera looks along -Z, so we need lookAt from origin along forward
-    const targetQuat = this.forwardToQuaternion(forward);
+    // Extract yaw/pitch from forward direction
+    this.extractYawPitch(forward);
+
+    // Build quaternion from yaw/pitch (roll-free by construction)
+    const targetQuat = this.buildQuaternion();
 
     // Dispose orbit controls to prevent interference
     renderer.controls.dispose();
@@ -87,14 +99,16 @@ export default class FirstPersonControls {
       duration: 300,
       onFinish: () => {
         this.attachMouseListeners();
+        this.attachPropertyListeners();
         hotkeys.setScope("FIRST_PERSON");
       },
     });
 
-    // Show overlay
+    // Show overlays
     renderer.overlays.global.addCell("Mode", "First Person View", {
       id: "fpv-mode",
     });
+    this.showOrbitButton();
   }
 
   exit() {
@@ -104,9 +118,11 @@ export default class FirstPersonControls {
     const { targetUuid, savedCameraPosition, savedCameraQuaternion, savedControlsTarget, initialContainerSave } = this.state;
 
     this.detachMouseListeners();
+    this.detachPropertyListeners();
 
-    // Remove overlay
+    // Remove overlays
     renderer.overlays.global.removeCell("fpv-mode");
+    this.removeOrbitButton();
 
     // Create undo moment (initial vs final container save)
     const container = useContainer.getState().containers[targetUuid];
@@ -152,7 +168,39 @@ export default class FirstPersonControls {
 
   dispose() {
     this.detachMouseListeners();
+    this.detachPropertyListeners();
+    this.removeOrbitButton();
     this.state = null;
+  }
+
+  private static ROTATION_PROPS = new Set(["rotationx", "rotationy", "rotationz"]);
+
+  private handlePropertyChange = (payload: { uuid: string; property: string; value: unknown }) => {
+    if (!this.state) return;
+    if (payload.uuid !== this.state.targetUuid) return;
+    if (!FirstPersonControls.ROTATION_PROPS.has(payload.property)) return;
+
+    // Container rotation was changed externally — update yaw/pitch and camera
+    const container = useContainer.getState().containers[this.state.targetUuid];
+    if (!container) return;
+
+    const forward = new THREE.Vector3(0, 0, 1).applyEuler(container.rotation);
+    this.extractYawPitch(forward);
+    this._renderer.camera.quaternion.copy(this.buildQuaternion());
+    this.syncOrientationControl();
+    emit("RENDER");
+  };
+
+  private attachPropertyListeners() {
+    this.propertyUnsubs.push(
+      after("SOURCE_SET_PROPERTY", this.handlePropertyChange as any),
+      after("RECEIVER_SET_PROPERTY", this.handlePropertyChange as any),
+    );
+  }
+
+  private detachPropertyListeners() {
+    this.propertyUnsubs.forEach(unsub => unsub());
+    this.propertyUnsubs = [];
   }
 
   private attachMouseListeners() {
@@ -184,23 +232,19 @@ export default class FirstPersonControls {
       this.canvas.removeEventListener("contextmenu", this.onContextMenu);
       this.onContextMenu = null;
     }
-    this.dragMode = null;
+    this.dragging = false;
   }
 
   private handleMouseDown(e: MouseEvent) {
-    if (e.button === 2 || (e.button === 0 && e.shiftKey)) {
-      // Right-click or Shift+left-click: roll
-      this.dragMode = "roll";
-    } else if (e.button === 0) {
-      // Left-click: yaw/pitch
-      this.dragMode = "yaw-pitch";
+    if (e.button === 0) {
+      this.dragging = true;
+      this.lastMouseX = e.clientX;
+      this.lastMouseY = e.clientY;
     }
-    this.lastMouseX = e.clientX;
-    this.lastMouseY = e.clientY;
   }
 
   private handleMouseMove(e: MouseEvent) {
-    if (!this.dragMode || !this.state) return;
+    if (!this.dragging || !this.state) return;
 
     // Guard: check container still exists
     const container = useContainer.getState().containers[this.state.targetUuid];
@@ -209,53 +253,114 @@ export default class FirstPersonControls {
       return;
     }
 
-    const renderer = this._renderer;
-    const camera = renderer.camera;
-
     const dx = e.clientX - this.lastMouseX;
     const dy = e.clientY - this.lastMouseY;
     this.lastMouseX = e.clientX;
     this.lastMouseY = e.clientY;
 
-    if (this.dragMode === "yaw-pitch") {
-      // Yaw: rotate around world Z axis
-      const yawAngle = -dx * YAW_PITCH_SENSITIVITY;
-      const yawQuat = new THREE.Quaternion().setFromAxisAngle(
-        new THREE.Vector3(0, 0, 1),
-        yawAngle
-      );
+    // Update yaw/pitch from mouse deltas
+    this.yaw += -dx * SENSITIVITY;
+    this.pitch = Math.max(
+      -Math.PI / 2 + 0.001,
+      Math.min(Math.PI / 2 - 0.001, this.pitch + -dy * SENSITIVITY)
+    );
 
-      // Pitch: rotate around camera's local X axis
-      const pitchAngle = -dy * YAW_PITCH_SENSITIVITY;
-      const cameraRight = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
-      const pitchQuat = new THREE.Quaternion().setFromAxisAngle(cameraRight, pitchAngle);
-
-      // Apply yaw then pitch
-      camera.quaternion.premultiply(yawQuat);
-      camera.quaternion.premultiply(pitchQuat);
-      camera.quaternion.normalize();
-    } else if (this.dragMode === "roll") {
-      // Roll: rotate around camera's local Z (look direction)
-      const rollAngle = dx * ROLL_SENSITIVITY;
-      const lookDir = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
-      const rollQuat = new THREE.Quaternion().setFromAxisAngle(lookDir, rollAngle);
-
-      camera.quaternion.premultiply(rollQuat);
-      camera.quaternion.normalize();
-    }
+    // Rebuild camera quaternion from yaw/pitch (roll-free by construction)
+    this._renderer.camera.quaternion.copy(this.buildQuaternion());
 
     // Write camera orientation back to container
     this.syncCameraToContainer(container);
+    this.syncOrientationControl();
 
-    // Trigger re-render and UI update
-    useContainer.getState().set(store => {
-      store.version++;
-    });
+    // Throttle React UI updates (TransformTable) to ~30fps; camera stays real-time
+    const now = performance.now();
+    if (now - this.lastUIUpdate > 33) {
+      this.lastUIUpdate = now;
+      useContainer.getState().set(store => {
+        store.version++;
+      });
+    }
     emit("RENDER");
   }
 
   private handleMouseUp() {
-    this.dragMode = null;
+    if (this.dragging) {
+      this.dragging = false;
+      // Flush final UI update so TransformTable shows accurate values
+      useContainer.getState().set(store => {
+        store.version++;
+      });
+    }
+  }
+
+  private showOrbitButton() {
+    const parent = this.canvas.parentElement;
+    if (!parent) return;
+
+    const btn = document.createElement("button");
+    btn.textContent = "Back to Orbit";
+    Object.assign(btn.style, {
+      position: "absolute",
+      bottom: "12px",
+      left: "50%",
+      transform: "translateX(-50%)",
+      padding: "6px 20px",
+      fontSize: "13px",
+      fontFamily: "inherit",
+      color: "#fff",
+      background: "rgba(255,255,255,0.12)",
+      border: "1px solid rgba(255,255,255,0.25)",
+      borderRadius: "4px",
+      cursor: "pointer",
+      zIndex: "10",
+      backdropFilter: "blur(4px)",
+    } satisfies Partial<CSSStyleDeclaration>);
+    btn.addEventListener("mouseenter", () => {
+      btn.style.background = "rgba(255,255,255,0.25)";
+    });
+    btn.addEventListener("mouseleave", () => {
+      btn.style.background = "rgba(255,255,255,0.12)";
+    });
+    btn.addEventListener("click", () => {
+      emit("EXIT_FIRST_PERSON");
+    });
+
+    parent.appendChild(btn);
+    this.orbitButton = btn;
+  }
+
+  private removeOrbitButton() {
+    if (this.orbitButton) {
+      this.orbitButton.remove();
+      this.orbitButton = null;
+    }
+  }
+
+  /**
+   * Extract yaw (azimuth around Z) and pitch (elevation) from a forward direction vector.
+   */
+  private extractYawPitch(forward: THREE.Vector3) {
+    const f = forward.clone().normalize();
+    this.yaw = Math.atan2(f.y, f.x);
+    this.pitch = Math.asin(Math.max(-1, Math.min(1, f.z)));
+  }
+
+  /**
+   * Build a forward direction vector from yaw/pitch (spherical coords, Z-up).
+   */
+  private buildForward(): THREE.Vector3 {
+    return new THREE.Vector3(
+      Math.cos(this.pitch) * Math.cos(this.yaw),
+      Math.cos(this.pitch) * Math.sin(this.yaw),
+      Math.sin(this.pitch)
+    );
+  }
+
+  /**
+   * Build a roll-free camera quaternion from the current yaw/pitch.
+   */
+  private buildQuaternion(): THREE.Quaternion {
+    return this.forwardToQuaternion(this.buildForward());
   }
 
   /**
@@ -263,16 +368,19 @@ export default class FirstPersonControls {
    * Camera looks along its local -Z, but container forward is (0,0,1) rotated by its Euler.
    */
   private syncCameraToContainer(container: THREE.Object3D) {
-    const camera = this._renderer.camera;
-
-    // Camera forward is its local -Z direction
-    const cameraForward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
-
-    // Container forward convention is (0,0,1) rotated by its Euler
-    // We need to find an Euler such that Vector3(0,0,1).applyEuler(euler) === cameraForward
-    const containerQuat = this.forwardToQuaternion(cameraForward);
+    const containerQuat = this.forwardToQuaternion(this.buildForward());
     const euler = new THREE.Euler().setFromQuaternion(containerQuat, "XYZ");
     container.rotation.copy(euler);
+  }
+
+  /**
+   * Update the orientation control cube to match the current camera quaternion.
+   */
+  private syncOrientationControl() {
+    const renderer = this._renderer;
+    const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(renderer.camera.quaternion);
+    const pos = dir.negate().normalize().multiplyScalar(renderer.orientationControl.cameraDistance);
+    renderer.orientationControl.setCameraTransforms(pos, renderer.camera.quaternion);
   }
 
   /**
