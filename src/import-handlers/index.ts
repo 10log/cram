@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { STLLoader as THREESTLLoader } from "three/examples/jsm/loaders/STLLoader";
-import { TDSLoader } from "three/examples/jsm/loaders/TDSLoader"; 
+import { TDSLoader } from "three/examples/jsm/loaders/TDSLoader";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { STLLoader } from "./stl";
 import { OBJLoader } from "./obj";
 import { TGALoader } from "./tga";
@@ -117,3 +118,24 @@ export function dae(data: string) {
 }
 
 export {dxf} from './dxf';
+
+export function gltf(data: ArrayBuffer): Promise<Model[]> {
+  return new Promise((resolve, reject) => {
+    const loader = new GLTFLoader();
+    loader.parse(data, "", (result) => {
+      const models: Model[] = [];
+      result.scene.traverse((child) => {
+        if ((child as THREE.Mesh).isMesh) {
+          const mesh = child as THREE.Mesh;
+          const geometry = mesh.geometry.clone();
+          // Apply mesh world transform to geometry
+          geometry.applyMatrix4(mesh.matrixWorld);
+          models.push({ name: mesh.name || `mesh-${models.length}`, geometry });
+        }
+      });
+      resolve(models);
+    }, (error) => {
+      reject(error);
+    });
+  });
+}

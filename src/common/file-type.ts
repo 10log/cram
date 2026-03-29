@@ -20,6 +20,8 @@ export const allowed = {
 	obj: true,
 	dae: true,
 	dxf: true,
+	glb: true,
+	gltf: true,
 }
 export const assoc = {
 	html: ICONS.CODE,

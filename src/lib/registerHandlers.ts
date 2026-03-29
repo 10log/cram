@@ -420,6 +420,19 @@ export function registerMessageHandlers(
               console.log(models);
             }
             break;
+          case "glb":
+          case "gltf":
+            {
+              const binary = await (await fetch(objectURL)).arrayBuffer();
+              const models = await importHandlers.gltf(binary);
+              for (const m of models) {
+                const model = new Model(m.name || "imported model", { bufferGeometry: m.geometry });
+                cram.state.containers[model.uuid] = model;
+                cram.state.renderer.addModel(model);
+                msg.postMessage("ADDED_MODEL", model);
+              }
+            }
+            break;
           case "wav":
             try {
               const result = await (await fetch(objectURL)).arrayBuffer();
