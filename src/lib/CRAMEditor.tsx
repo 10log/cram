@@ -147,6 +147,10 @@ export const CRAMEditor = forwardRef<CRAMEditorRef, CRAMEditorProps>(
         messenger.postMessage('RESTORE', { json: state });
       },
 
+      openExample: (name: string) => {
+        emit('OPEN_EXAMPLE', name as never);
+      },
+
       importFile: async (file: File): Promise<void> => {
         return new Promise((resolve, reject) => {
           try {

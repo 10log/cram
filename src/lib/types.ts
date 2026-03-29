@@ -58,8 +58,10 @@ export interface CRAMEditorRef {
   save: () => SaveState;
   /** Load a project state */
   load: (state: SaveState) => void;
-  /** Import a file (OBJ, STL, DXF, DAE) */
+  /** Import a file (OBJ, STL, DXF, DAE, GLTF, GLB) */
   importFile: (file: File) => Promise<void>;
+  /** Open a built-in example project */
+  openExample: (name: string) => void;
 
   // Scene operations (replaces Add menu)
   /** Add a sound source to the scene */
