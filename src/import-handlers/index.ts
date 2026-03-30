@@ -63,40 +63,62 @@ export function obj(data: string) {
   const loader = new OBJLoader(data);
   const res = loader.parse();
 
-  console.log(res);
-
+  // Collect all vertices/normals/texCoords across models (OBJ indices are global)
   const [vertices, vertexNormals, textureCoords] = res.models.reduce(
     (a, b) => [
-      a[0].concat(b.vertices), 
-      a[1].concat(b.vertexNormals), 
+      a[0].concat(b.vertices),
+      a[1].concat(b.vertexNormals),
       a[2].concat(b.textureCoords)
     ],
     [[] as any[], [] as any[], [] as any[]]
   );
+
   const models = [] as Model[];
+
   res.models.forEach((model) => {
-    const buffer = new THREE.BufferGeometry();
-    const verts = [] as number[];
-    const vertNormals = [] as number[];
-    const texCoords = [] as number[];
+    // Group faces by their group name (from 'g' directive) or material name
+    const groups = new Map<string, typeof model.faces>();
     model.faces.forEach((face) => {
-      face.vertices.forEach((vertex) => {
-        const v = vertices[vertex.vertexIndex - 1];
-        v && verts.push(v.x, v.y, v.z);
-        const vn = vertexNormals[vertex.vertexNormalIndex - 1];
-        vn && vertNormals.push(vn.x, vn.y, vn.z);
-        const tc = textureCoords[vertex.textureCoordsIndex - 1];
-        tc && texCoords.push(tc.u, tc.v, tc.w);
-      });
+      const key = face.group || face.material || model.name || "default";
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(face);
     });
-    buffer.setAttribute("position", new THREE.BufferAttribute(new Float32Array(verts), 3, false));
-    buffer.setAttribute("normals", new THREE.BufferAttribute(new Float32Array(vertNormals), 3, false));
-    buffer.setAttribute("texCoords", new THREE.BufferAttribute(new Float32Array(texCoords), 3, false));
-    const newModel = {
-      name: model.name,
-      geometry: buffer
-    } as Model;
-    models.push(newModel);
+
+    // Create one Model per group (like DXF layers → surfaces)
+    for (const [groupName, faces] of groups) {
+      const verts = [] as number[];
+      const vertNormals = [] as number[];
+      const texCoords = [] as number[];
+
+      faces.forEach((face) => {
+        face.vertices.forEach((vertex) => {
+          const v = vertices[vertex.vertexIndex - 1];
+          v && verts.push(v.x, v.y, v.z);
+          const vn = vertexNormals[vertex.vertexNormalIndex - 1];
+          vn && vertNormals.push(vn.x, vn.y, vn.z);
+          const tc = textureCoords[vertex.textureCoordsIndex - 1];
+          tc && texCoords.push(tc.u, tc.v, tc.w);
+        });
+      });
+
+      if (verts.length === 0) continue;
+
+      const buffer = new THREE.BufferGeometry();
+      buffer.setAttribute("position", new THREE.BufferAttribute(new Float32Array(verts), 3, false));
+      if (vertNormals.length > 0) {
+        buffer.setAttribute("normals", new THREE.BufferAttribute(new Float32Array(vertNormals), 3, false));
+      } else {
+        buffer.computeVertexNormals();
+        buffer.setAttribute("normals", buffer.getAttribute("normal")!);
+      }
+      if (texCoords.length > 0) {
+        buffer.setAttribute("texCoords", new THREE.BufferAttribute(new Float32Array(texCoords), 3, false));
+      }
+
+      // Use group name, falling back to model name
+      const surfaceName = groups.size > 1 ? groupName : model.name || groupName;
+      models.push({ name: surfaceName, geometry: buffer });
+    }
   });
 
   return models;
