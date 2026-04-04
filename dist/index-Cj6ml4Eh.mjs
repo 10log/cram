@@ -9173,11 +9173,11 @@ async function z0(r, e, t) {
   return a(e, t);
 }
 cr("ray-tracer", async (r, e) => {
-  const { default: t } = await import("./index-Dcciq-dv.mjs");
+  const { default: t } = await import("./index-CReqMCID.mjs");
   return new t(e);
 });
 cr("image-source", async (r, e) => {
-  const { ImageSourceSolver: t } = await import("./index-uK-2cZwm.mjs"), a = {
+  const { ImageSourceSolver: t } = await import("./index-BpkQnUbs.mjs"), a = {
     name: "Image Source",
     roomID: "",
     sourceIDs: [],
@@ -9192,23 +9192,23 @@ cr("image-source", async (r, e) => {
   return new t(a);
 });
 cr("rt60", async (r, e) => {
-  const { default: t } = await import("./index-BLiiiRtp.mjs");
+  const { default: t } = await import("./index-B7bQiMUf.mjs");
   return new t();
 });
 cr("energydecay", async (r, e) => {
-  const { default: t } = await import("./energy-decay-BE813m3I.mjs");
+  const { default: t } = await import("./energy-decay-Y8aQH6YM.mjs");
   return new t();
 });
 cr("fdtd-2d", async (r, e) => {
-  const { default: t } = await import("./index-CyJx9Ci5.mjs");
+  const { default: t } = await import("./index-CSAgWheZ.mjs");
   return new t();
 });
 cr("beam-trace", async (r, e) => {
-  const { BeamTraceSolver: t } = await import("./index-Czc86f1V.mjs");
+  const { BeamTraceSolver: t } = await import("./index-BL5J_Jsi.mjs");
   return new t();
 });
 cr("art", async (r, e) => {
-  const { ART: t } = await import("./art-CsQHZfzt.mjs");
+  const { ART: t } = await import("./art-CkLASgGU.mjs");
   return new t();
 });
 class m9 extends as {
@@ -16077,23 +16077,23 @@ function Sm() {
 async function Cm(r, e) {
   switch (r) {
     case "ray-tracer": {
-      const { default: t } = await import("./index-Dcciq-dv.mjs");
+      const { default: t } = await import("./index-CReqMCID.mjs");
       return new t(e).restore(e);
     }
     case "rt60": {
-      const { default: t } = await import("./index-BLiiiRtp.mjs");
+      const { default: t } = await import("./index-B7bQiMUf.mjs");
       return new t().restore(e);
     }
     case "art": {
-      const { default: t } = await import("./art-CsQHZfzt.mjs");
+      const { default: t } = await import("./art-CkLASgGU.mjs");
       return new t(e).restore(e);
     }
     case "image-source": {
-      const { default: t } = await import("./index-uK-2cZwm.mjs");
+      const { default: t } = await import("./index-BpkQnUbs.mjs");
       return new t(e).restore(e);
     }
     case "beam-trace": {
-      const { BeamTraceSolver: t } = await import("./index-Czc86f1V.mjs");
+      const { BeamTraceSolver: t } = await import("./index-BL5J_Jsi.mjs");
       return new t().restore(e);
     }
     default:
@@ -16101,7 +16101,7 @@ async function Cm(r, e) {
   }
 }
 function wm() {
-  import("./events-DL6khJK6.mjs").then((r) => r.default()), ne("LOG_SOLVER", (r) => {
+  import("./events-BvmAexyk.mjs").then((r) => r.default()), ne("LOG_SOLVER", (r) => {
     console.log(lt.getState().solvers[r]);
   }), ne("REMOVE_SOLVERS", (r) => {
     const e = lt.getState().solvers, t = typeof r == "string" ? [r] : r;
@@ -21882,6 +21882,9 @@ const Pb = uc(
       redo: () => {
         we.postMessage("REDO");
       },
+      openExample: (y) => {
+        J("OPEN_EXAMPLE", y);
+      },
       toggleResultsPanel: () => {
         J("TOGGLE_RESULTS_PANEL", void 0);
       }
@@ -22704,4 +22707,4 @@ export {
   Cb as y,
   Ou as z
 };
-//# sourceMappingURL=index-BYjce-7m.mjs.map
+//# sourceMappingURL=index-Cj6ml4Eh.mjs.map
