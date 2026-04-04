@@ -4,7 +4,6 @@
     "strict": true,
     "allowJs": true,
     "noFallthroughCasesInSwitch": true,
-    "downlevelIteration": true,
     "strictNullChecks": true,
     "strictPropertyInitialization": true,
     "forceConsistentCasingInFileNames": true,
@@ -12,9 +11,11 @@
     "jsx": "react-jsx",
     "target": "esnext",
     "module": "esnext",
-    "moduleResolution": "node",
-    "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true,
+    "moduleResolution": "bundler",
+    "noUncheckedSideEffectImports": false,
+    "paths": {
+      "three/examples/jsm/*": ["./node_modules/@types/three/examples/jsm/*"]
+    },
     "removeComments": false,
     "preserveConstEnums": true,
     "sourceMap": true,
@@ -30,6 +31,7 @@
       "@types/semver",
       "@types/d3",
       "@types/plotly.js",
+      "@types/three",
       "@types/zip.js",
       "@webgpu/types"
     ],
