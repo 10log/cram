@@ -241,6 +241,10 @@ export const CRAMCanvas = forwardRef<CRAMEditorRef, CRAMEditorProps>(
         messenger.postMessage('REDO');
       },
 
+      openExample: (name: string) => {
+        emit('OPEN_EXAMPLE', name as never);
+      },
+
       toggleResultsPanel: () => {
         emit('TOGGLE_RESULTS_PANEL', undefined);
       },

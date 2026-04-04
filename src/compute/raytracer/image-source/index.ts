@@ -744,13 +744,13 @@ export class ImageSourceSolver extends Solver {
 
     async playImpulseResponse(){
       const result = await sharedPlayIR(
-        this.impulseResponse, () => this.calculateImpulseResponse(), this.uuid, "IMAGESOURCE_SET_PROPERTY"
+        this.impulseResponse, () => this.calculateImpulseResponse() as Promise<AudioBuffer>, this.uuid, "IMAGESOURCE_SET_PROPERTY"
       );
       this.impulseResponse = result.impulseResponse;
     }
     async downloadImpulseResponse(filename: string, sampleRate = 44100){
       const result = await sharedDownloadIR(
-        this.impulseResponse, () => this.calculateImpulseResponse(), filename, sampleRate
+        this.impulseResponse, () => this.calculateImpulseResponse() as Promise<AudioBuffer>, filename, sampleRate
       );
       this.impulseResponse = result.impulseResponse;
     }

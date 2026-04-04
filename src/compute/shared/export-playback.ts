@@ -28,11 +28,11 @@ export async function playImpulseResponse(
   source.buffer = impulseResponse;
   source.connect(audioEngine.context.destination);
   source.start();
-  emit(eventName, { uuid, property: "impulseResponsePlaying", value: true });
+  emit(eventName as keyof EventTypes, { uuid, property: "impulseResponsePlaying", value: true } as never);
   source.onended = () => {
     source.stop();
     source.disconnect(audioEngine.context.destination);
-    emit(eventName, { uuid, property: "impulseResponsePlaying", value: false });
+    emit(eventName as keyof EventTypes, { uuid, property: "impulseResponsePlaying", value: false } as never);
   };
   return { impulseResponse };
 }
@@ -123,11 +123,11 @@ export async function playBinauralImpulseResponse(
   source.buffer = binauralImpulseResponse;
   source.connect(audioEngine.context.destination);
   source.start();
-  emit(eventName, { uuid, property: "binauralPlaying", value: true });
+  emit(eventName as keyof EventTypes, { uuid, property: "binauralPlaying", value: true } as never);
   source.onended = () => {
     source.stop();
     source.disconnect(audioEngine.context.destination);
-    emit(eventName, { uuid, property: "binauralPlaying", value: false });
+    emit(eventName as keyof EventTypes, { uuid, property: "binauralPlaying", value: false } as never);
   };
   return { binauralImpulseResponse };
 }
