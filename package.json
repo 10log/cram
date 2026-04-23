@@ -94,7 +94,7 @@
     "three-mesh-bvh": "^0.9.4",
     "three.meshline": "^1.4.0",
     "uplot": "^1.0.8",
-    "uuid": "^13.0.0",
+    "uuid": "^14.0.0",
     "zustand": "^5.0.9"
   },
   "devDependencies": {
@@ -128,7 +128,6 @@
     "babel-loader": "^10.0.0",
     "babel-plugin-named-asset-import": "^0.3.0",
     "babel-preset-react-app": "^10.0.0",
-    "bfj": "^7.1.0",
     "case-sensitive-paths-webpack-plugin": "^2.4.0",
     "chalk": "^4.1.2",
     "css-loader": "^7.1.2",
@@ -168,6 +167,11 @@
     "webpack-cli": "^6.0.1",
     "webpack-dev-server": "^5.1.0",
     "webpack-manifest-plugin": "^6.0.1"
+  },
+  "overrides": {
+    "sockjs": {
+      "uuid": "^14.0.0"
+    }
   },
   "browserslist": [
     ">0.2%",
