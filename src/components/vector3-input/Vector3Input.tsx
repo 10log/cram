@@ -22,9 +22,9 @@ export interface Vector3InputState {
 const clamp = (v: number, a: number, b: number) => (v < a ? a : v > b ? b : v);
 
 export default class Vector3Input extends React.Component<Vector3InputProps, Vector3InputState> {
-  inputX: React.RefObject<HTMLInputElement>;
-  inputY: React.RefObject<HTMLInputElement>;
-  inputZ: React.RefObject<HTMLInputElement>;
+  inputX: React.RefObject<HTMLInputElement | null>;
+  inputY: React.RefObject<HTMLInputElement | null>;
+  inputZ: React.RefObject<HTMLInputElement | null>;
 
   constructor(props: Vector3InputProps) {
     super(props);
