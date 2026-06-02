@@ -12,6 +12,8 @@
 .flexlayout__layout {
   --font-size: 13px;
   --font-family: 'Segoe UI', 'Roboto', 'Arial', sans-serif;
+  /* v0.9 replaced the global `splitterSize` model attribute with a CSS var */
+  --splitter-size: 4px;
 }
 
 /* Dark mode overrides - matches CRAM DarkTheme ui colors */

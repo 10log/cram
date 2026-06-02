@@ -11,6 +11,7 @@ import {
   Layout,
   Model,
   Actions,
+  type ILayoutApi,
   type TabNode,
   type IJsonModel,
 } from 'flexlayout-react';
@@ -46,7 +47,7 @@ function loadLayout(): IJsonModel {
 }
 
 export function WorkbenchLayout() {
-  const layoutRef = useRef<Layout>(null);
+  const layoutRef = useRef<ILayoutApi>(null);
 
   // Initialize model once from stored layout or default
   const modelRef = useRef<Model | null>(null);
@@ -108,8 +109,12 @@ export function WorkbenchLayout() {
       // Replace model with fresh default
       const freshModel = Model.fromJson(DEFAULT_LAYOUT);
       modelRef.current = freshModel;
-      // Force re-render by updating the Layout ref
-      layoutRef.current?.props.model && window.location.reload();
+      // Force re-render with the default layout via a full reload.
+      // v0.9's Layout ref (ILayoutApi) no longer exposes `.props`; guard on
+      // the ref being mounted instead.
+      if (layoutRef.current) {
+        window.location.reload();
+      }
     });
   }, []);
 
