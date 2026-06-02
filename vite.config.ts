@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import dts from 'vite-plugin-dts';
 import path from 'path';
 import { copyFileSync, mkdirSync, existsSync } from 'fs';
 
@@ -26,7 +27,32 @@ export default defineConfig(({ command, mode }) => {
   // Library build mode (npm run build:lib)
   if (mode === 'lib') {
     return {
-      plugins: [react(), copyJscadModelingBundle()],
+      plugins: [
+        react(),
+        copyJscadModelingBundle(),
+        // Emit type declarations so consumers resolve `cram`'s types to
+        // dist/**/*.d.ts instead of type-checking cram's raw source tree.
+        // Per-file emit (not rollupTypes): cram has declaration-blocking JS
+        // (OrbitControls.js, bvhtree_old.js) that api-extractor can't bundle,
+        // but per-file .d.ts emit succeeds and consumers skipLibCheck them.
+        // Output lands under dist/src/** (entry -> dist/src/lib/index.d.ts),
+        // which package.json "types"/"exports" point at.
+        dts({
+          include: ['src'],
+          exclude: [
+            'src/**/*.spec.ts',
+            'src/**/*.spec.tsx',
+            'src/**/*.test.ts',
+            'src/**/*.test.tsx',
+            'src/__tests__/**',
+            'src/__mocks__/**',
+            'src/__fixtures__/**',
+            'src/setupTests.ts',
+            'src/test-utils/**',
+            'e2e/**',
+          ],
+        }),
+      ],
       resolve: {
         alias: {
           'react-native': 'react-native-web',

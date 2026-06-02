@@ -1,0 +1,2 @@
+export declare function kindOf(val: unknown): string;
+export default kindOf;
