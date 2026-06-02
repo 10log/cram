@@ -12,7 +12,7 @@ export declare function useSolverProperty<T extends RayTracer | FDTD_2D | ImageS
 type PropertyRowInputElement = ({ value, onChange }: {
     value: any;
     onChange: any;
-}) => JSX.Element;
+}) => React.JSX.Element;
 type Props<T extends RayTracer | FDTD_2D | ImageSourceSolver | RT60 | EnergyDecay | ART | BeamTraceSolver, K extends keyof T> = {
     uuid: string;
     property: K;

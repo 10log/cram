@@ -15,9 +15,9 @@ export interface Vector3InputState {
     stagedValue: number[];
 }
 export default class Vector3Input extends React.Component<Vector3InputProps, Vector3InputState> {
-    inputX: React.RefObject<HTMLInputElement>;
-    inputY: React.RefObject<HTMLInputElement>;
-    inputZ: React.RefObject<HTMLInputElement>;
+    inputX: React.RefObject<HTMLInputElement | null>;
+    inputY: React.RefObject<HTMLInputElement | null>;
+    inputZ: React.RefObject<HTMLInputElement | null>;
     constructor(props: Vector3InputProps);
     componentDidMount(): void;
     emitChange(): void;
