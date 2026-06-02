@@ -9151,11 +9151,11 @@ async function z0(r, e, t) {
   return n(e, t);
 }
 cr("ray-tracer", async (r, e) => {
-  const { default: t } = await import("./index-CFYl86Jp.mjs");
+  const { default: t } = await import("./index-DGS3F2C8.mjs");
   return new t(e);
 });
 cr("image-source", async (r, e) => {
-  const { ImageSourceSolver: t } = await import("./index-SOfSsO0Q.mjs"), n = {
+  const { ImageSourceSolver: t } = await import("./index-tSyjk9YF.mjs"), n = {
     name: "Image Source",
     roomID: "",
     sourceIDs: [],
@@ -9170,23 +9170,23 @@ cr("image-source", async (r, e) => {
   return new t(n);
 });
 cr("rt60", async (r, e) => {
-  const { default: t } = await import("./index-DutEfSmN.mjs");
+  const { default: t } = await import("./index-yJQTprtg.mjs");
   return new t();
 });
 cr("energydecay", async (r, e) => {
-  const { default: t } = await import("./energy-decay-ClaV7Uzl.mjs");
+  const { default: t } = await import("./energy-decay-KYRkRdHU.mjs");
   return new t();
 });
 cr("fdtd-2d", async (r, e) => {
-  const { default: t } = await import("./index--6jlJd0G.mjs");
+  const { default: t } = await import("./index-BKAHuwk3.mjs");
   return new t();
 });
 cr("beam-trace", async (r, e) => {
-  const { BeamTraceSolver: t } = await import("./index-eZqABKTn.mjs");
+  const { BeamTraceSolver: t } = await import("./index-sgkml8V_.mjs");
   return new t();
 });
 cr("art", async (r, e) => {
-  const { ART: t } = await import("./art-hWit7Ucl.mjs");
+  const { ART: t } = await import("./art-DDuiktIX.mjs");
   return new t();
 });
 class f9 extends ns {
@@ -16056,23 +16056,23 @@ function ym() {
 async function Sm(r, e) {
   switch (r) {
     case "ray-tracer": {
-      const { default: t } = await import("./index-CFYl86Jp.mjs");
+      const { default: t } = await import("./index-DGS3F2C8.mjs");
       return new t(e).restore(e);
     }
     case "rt60": {
-      const { default: t } = await import("./index-DutEfSmN.mjs");
+      const { default: t } = await import("./index-yJQTprtg.mjs");
       return new t().restore(e);
     }
     case "art": {
-      const { default: t } = await import("./art-hWit7Ucl.mjs");
+      const { default: t } = await import("./art-DDuiktIX.mjs");
       return new t(e).restore(e);
     }
     case "image-source": {
-      const { default: t } = await import("./index-SOfSsO0Q.mjs");
+      const { default: t } = await import("./index-tSyjk9YF.mjs");
       return new t(e).restore(e);
     }
     case "beam-trace": {
-      const { BeamTraceSolver: t } = await import("./index-eZqABKTn.mjs");
+      const { BeamTraceSolver: t } = await import("./index-sgkml8V_.mjs");
       return new t().restore(e);
     }
     default:
@@ -16080,7 +16080,7 @@ async function Sm(r, e) {
   }
 }
 function Cm() {
-  import("./events-DFl2Onuv.mjs").then((r) => r.default()), ae("LOG_SOLVER", (r) => {
+  import("./events-dSU7k8Qu.mjs").then((r) => r.default()), ae("LOG_SOLVER", (r) => {
     console.log(lt.getState().solvers[r]);
   }), ae("REMOVE_SOLVERS", (r) => {
     const e = lt.getState().solvers, t = typeof r == "string" ? [r] : r;
@@ -17575,8 +17575,10 @@ const Ap = (r, e) => r < e ? r : e, Iu = {
                 value: r,
                 onChange: (s) => a(s.target.value),
                 sx: { mb: 1 },
-                InputProps: {
-                  startAdornment: /* @__PURE__ */ u(pc, { position: "start", children: /* @__PURE__ */ u(_2, { fontSize: "small", color: "action" }) })
+                slotProps: {
+                  input: {
+                    startAdornment: /* @__PURE__ */ u(pc, { position: "start", children: /* @__PURE__ */ u(_2, { fontSize: "small", color: "action" }) })
+                  }
                 }
               }
             ),
@@ -18012,7 +18014,7 @@ const Lp = {
     value: r,
     onChange: (n) => e({ value: n.target.value }),
     sx: Up,
-    MenuProps: { PaperProps: { sx: { bgcolor: "background.paper" } } },
+    MenuProps: { slotProps: { paper: { sx: { bgcolor: "background.paper" } } } },
     children: t.map(({ value: n, label: a }, i) => /* @__PURE__ */ u(Nt, { value: n, sx: jp, children: a }, `${n}-${a}-${i}`))
   }
 );
@@ -18408,7 +18410,7 @@ function w4({ uuid: r, name: e, type: t, visible: n, selected: a, onSelect: i, o
           aa,
           {
             primary: e,
-            primaryTypographyProps: { fontSize: "0.75rem", noWrap: !0 }
+            slotProps: { primary: { noWrap: !0, sx: { fontSize: "0.75rem" } } }
           }
         )
       ] })
@@ -18470,7 +18472,7 @@ function P4() {
         return /* @__PURE__ */ u(Fe, { variant: "body2", color: "text.secondary", children: "Unknown object type" });
     }
   }, P = (b, p, A, T = !1) => p.length === 0 ? null : /* @__PURE__ */ X(At, { children: [
-    /* @__PURE__ */ u(us, { sx: v4, children: /* @__PURE__ */ X(Fe, { variant: "caption", color: "text.secondary", fontWeight: 600, children: [
+    /* @__PURE__ */ u(us, { sx: v4, children: /* @__PURE__ */ X(Fe, { variant: "caption", color: "text.secondary", sx: { fontWeight: 600 }, children: [
       b,
       " (",
       p.length,
@@ -18494,7 +18496,7 @@ function P4() {
     ))
   ] });
   return /* @__PURE__ */ X(U, { sx: A4, children: [
-    i === 0 ? /* @__PURE__ */ u(U, { sx: y4, children: /* @__PURE__ */ u(Fe, { variant: "body2", color: "text.secondary", fontSize: "0.75rem", children: "No objects. Import a model or add from menu." }) }) : /* @__PURE__ */ X(ls, { dense: !0, disablePadding: !0, children: [
+    i === 0 ? /* @__PURE__ */ u(U, { sx: y4, children: /* @__PURE__ */ u(Fe, { variant: "body2", color: "text.secondary", sx: { fontSize: "0.75rem" }, children: "No objects. Import a model or add from menu." }) }) : /* @__PURE__ */ X(ls, { dense: !0, disablePadding: !0, children: [
       P("ROOMS", a.rooms, "room"),
       P("SOURCES", a.sources, "source"),
       P("RECEIVERS", a.receivers, "receiver"),
@@ -20153,8 +20155,10 @@ function p8({ uuid: r, name: e, type: t, selected: n, onSelect: a, onRun: i, onD
           {
             primary: e,
             secondary: t,
-            primaryTypographyProps: { fontSize: "0.75rem", noWrap: !0 },
-            secondaryTypographyProps: { fontSize: "0.625rem" }
+            slotProps: {
+              primary: { noWrap: !0, sx: { fontSize: "0.75rem" } },
+              secondary: { sx: { fontSize: "0.625rem" } }
+            }
           }
         )
       ] })
@@ -22687,4 +22691,4 @@ export {
   Sb as y,
   Lu as z
 };
-//# sourceMappingURL=index-BaFtZgJ0.mjs.map
+//# sourceMappingURL=index-AHMJCjvG.mjs.map
