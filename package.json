@@ -114,10 +114,10 @@
   },
   "devDependencies": {
     "@babel/core": "^7.28.5",
-    "@babel/eslint-parser": "^7.28.5",
     "@babel/preset-env": "^7.28.5",
     "@babel/preset-react": "^7.28.5",
     "@babel/preset-typescript": "^7.28.5",
+    "@eslint/js": "^9.39.4",
     "@jscad/modeling": "^2.12.6",
     "@microsoft/api-extractor": "^7.58.7",
     "@playwright/test": "^1.59.1",
@@ -142,15 +142,14 @@
     "@webgpu/types": "^0.1.40",
     "babel-preset-react-app": "^10.0.0",
     "esbuild": "^0.28.0",
-    "eslint": "^8.57.1",
-    "eslint-config-react-app": "^7.0.1",
-    "eslint-plugin-flowtype": "^8.0.3",
+    "eslint": "^9.39.4",
     "eslint-plugin-import": "^2.32.0",
-    "eslint-plugin-jsx-a11y": "^6.10.2",
     "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-unused-imports": "^4.3.0",
     "fast-check": "^4.6.0",
     "fs-extra": "^11.3.3",
+    "globals": "^17.6.0",
     "jsdom": "^29.1.1",
     "postcss": "^8.5.8",
     "react": "^18.3.1",
@@ -158,6 +157,7 @@
     "react-is": "^18.3.1",
     "resolve": "^1.22.11",
     "typescript": "^6.0.2",
+    "typescript-eslint": "^8.60.1",
     "vite": "^6.2.0",
     "vite-plugin-dts": "^5.0.2",
     "vitest": "^4.1.2"
@@ -172,29 +172,5 @@
     "presets": [
       "react-app"
     ]
-  },
-  "eslintConfig": {
-    "extends": "react-app",
-    "plugins": [
-      "unused-imports"
-    ],
-    "rules": {
-      "no-unused-expressions": "off",
-      "no-restricted-globals": "off",
-      "@typescript-eslint/no-unused-expressions": "off",
-      "import/no-anonymous-default-export": "off",
-      "@typescript-eslint/no-unused-vars": "off",
-      "no-unused-vars": "off",
-      "unused-imports/no-unused-imports": "warn",
-      "unused-imports/no-unused-vars": [
-        "warn",
-        {
-          "vars": "all",
-          "varsIgnorePattern": "^_",
-          "args": "after-used",
-          "argsIgnorePattern": "^_"
-        }
-      ]
-    }
   }
 }
