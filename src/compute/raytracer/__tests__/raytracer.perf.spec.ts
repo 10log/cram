@@ -5,7 +5,7 @@
  * Run with: npm run test:perf
  */
 
-import { benchmark, BenchmarkResult } from '../../../test-utils/benchmark';
+import { benchmark } from '../../../test-utils/benchmark';
 
 // Mock dependencies that would be needed
 vi.mock('../../../render/renderer', () => ({

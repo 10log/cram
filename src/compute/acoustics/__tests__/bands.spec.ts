@@ -1,7 +1,6 @@
 import { Octave, ThirdOctave, Flower, Fupper } from '../bands';
 import {
   ISO_OCTAVE_BANDS,
-  ISO_THIRD_OCTAVE_BANDS,
 } from '../../../__fixtures__/acoustic-references';
 
 describe('Octave', () => {

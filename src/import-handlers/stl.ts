@@ -190,7 +190,7 @@ export class STLLoader {
 	ensureString(buf: ArrayBuffer | string): string {
 		if (typeof buf !== "string") {
 			var array_buffer = new Uint8Array(buf);
-			var strArray = [] as String[];
+			var strArray = [] as string[];
 			for (var i = 0; i < buf.byteLength; i++) {
 				strArray.push(String.fromCharCode(array_buffer[i])); // implicitly assumes little-endian
 			}

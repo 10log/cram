@@ -9,12 +9,10 @@
  */
 
 import { v4 as uuid } from 'uuid';
-import hotkeys from "hotkeys-js";
 import * as THREE from "three";
 
 import Messenger, { emit, messenger } from "../messenger";
 import { history, Directions, addMoment } from "../history";
-import Renderer from "../render/renderer";
 
 // Objects
 import Container from "../objects/container";
@@ -41,11 +39,9 @@ import { Processes } from "../constants/processes";
 import { AcousticMaterial } from "../db/acoustic-material";
 
 // Store
-import { useAppStore } from "../store";
 
 // Types
-import type { State, Cram } from "../index";
-import type { KeyValuePair } from "../common/key-value-pair";
+import type { Cram } from "../index";
 
 /**
  * Register all message handlers on the given messenger instance.

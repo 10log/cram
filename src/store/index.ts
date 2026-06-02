@@ -1,3 +1,12 @@
+// Import reset functions for the combined reset function
+import { resetContainerStore } from './container-store';
+import { resetSolverStore } from './solver-store';
+import { resetMaterialStore } from './material-store';
+import { resetResultStore } from './result-store';
+import { resetAppStore } from './app-store';
+import { resetSettingsStore } from './settings-store';
+import { resetThemeStore } from './theme-store';
+
 export * from './container-store';
 export * from './settings-store';
 export * from './history-store';
@@ -8,15 +17,6 @@ export * from './solver-store';
 export * from './app-store';
 export * from './theme-store';
 export * from './io';
-
-// Import reset functions for the combined reset function
-import { resetContainerStore } from './container-store';
-import { resetSolverStore } from './solver-store';
-import { resetMaterialStore } from './material-store';
-import { resetResultStore } from './result-store';
-import { resetAppStore } from './app-store';
-import { resetSettingsStore } from './settings-store';
-import { resetThemeStore } from './theme-store';
 
 /**
  * Reset all stores to their initial state.

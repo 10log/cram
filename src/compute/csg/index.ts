@@ -21,8 +21,6 @@ import {
   transforms,
   color as colorModule,
   utils,
-  split,
-  bsp,
   Tree,
   PolygonTreeNode,
   Node,

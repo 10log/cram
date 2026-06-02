@@ -1,4 +1,6 @@
 // Mock Three.js first before any imports
+import Source, { SourceSaveObject, SignalSource, DirectivityHandler } from '../source';
+
 vi.mock('three', async () => {
   const actual = await vi.importActual('../../__mocks__/three');
   return actual;
@@ -54,8 +56,6 @@ vi.mock('../../compute/acoustics', () => ({
   P2I: vi.fn().mockReturnValue(1),
   Lp2P: vi.fn().mockReturnValue(1),
 }));
-
-import Source, { SourceSaveObject, SignalSource, DirectivityHandler } from '../source';
 
 describe('Source', () => {
   describe('constructor', () => {

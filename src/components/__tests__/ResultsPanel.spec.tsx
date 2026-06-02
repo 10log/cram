@@ -10,7 +10,6 @@
 
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { ResultsPanel } from '../ResultsPanel';
 import { useResult, ResultKind } from '../../store/result-store';
 

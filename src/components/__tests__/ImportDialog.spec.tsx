@@ -9,7 +9,7 @@
  */
 
 import React from 'react';
-import { render, screen, fireEvent, cleanup } from '@testing-library/react';
+import { render, screen, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ImportDialog, { DROP_ALLOWED } from '../ImportDialog';
 import { useAppStore } from '../../store/app-store';

@@ -1,4 +1,6 @@
 // Mock Three.js first before any imports
+import Receiver, { ReceiverSaveObject, ReceiverPattern, receiverPatternGain } from '../receiver';
+
 vi.mock('three', async () => {
   const actual = await vi.importActual('../../__mocks__/three');
   return actual;
@@ -47,8 +49,6 @@ vi.mock('../asset-store', () => ({
 vi.mock('file-saver', () => ({
   saveAs: vi.fn(),
 }));
-
-import Receiver, { ReceiverSaveObject, ReceiverPattern, receiverPatternGain } from '../receiver';
 
 describe('Receiver', () => {
   describe('constructor', () => {

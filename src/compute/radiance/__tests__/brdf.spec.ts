@@ -1,11 +1,11 @@
 // Mock Three.js before any imports
+import { Vector3 } from 'three';
+import { BRDF } from '../brdf';
+
 vi.mock('three', async () => {
   const actual = await vi.importActual('../../../__mocks__/three');
   return actual;
 });
-
-import { Vector3 } from 'three';
-import { BRDF } from '../brdf';
 
 describe('Radiance BRDF', () => {
   describe('constructor', () => {

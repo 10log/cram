@@ -289,7 +289,7 @@ export default function browerReport(userAgent?: string) {
 	/*
 	 * helper function to safely log warning messages
 	 */
-	/* eslint-disable no-console */
+	 
 	function warning(msg: string) {
 		if (window.console) {
 			if (console.warn) {
@@ -299,7 +299,7 @@ export default function browerReport(userAgent?: string) {
 			}
 		}
 	}
-	/* eslint-enable no-console */
+	 
 
 	// deprecate report.browser.size
 	if (definePropertySupported) {

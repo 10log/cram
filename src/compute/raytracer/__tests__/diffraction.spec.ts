@@ -9,6 +9,12 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
+// ── Import pure math functions for unit testing ───────────────────
+
+import { fresnelTransition, utdDiffractionCoefficient } from '../../shared/diffraction/utd-coefficient';
+import { findDiffractionPoint } from '../../shared/diffraction/find-diffraction-paths';
+import { buildEdgeGraph } from '../../shared/diffraction/edge-graph';
+
 // ── Source-scanning: read source files as strings ──────────────────
 
 const typesSource = fs.readFileSync(
@@ -50,12 +56,6 @@ const rayTracerTabSource = fs.readFileSync(
   path.resolve(__dirname, '..', '..', '..', 'components', 'parameter-config', 'RayTracerTab.tsx'),
   'utf8'
 );
-
-// ── Import pure math functions for unit testing ───────────────────
-
-import { fresnelTransition, utdDiffractionCoefficient } from '../../shared/diffraction/utd-coefficient';
-import { findDiffractionPoint } from '../../shared/diffraction/find-diffraction-paths';
-import { buildEdgeGraph } from '../../shared/diffraction/edge-graph';
 
 // ── Source-scanning tests ─────────────────────────────────────────
 

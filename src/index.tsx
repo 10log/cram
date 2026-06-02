@@ -37,9 +37,6 @@ import { KeyValuePair } from "./common/key-value-pair";
 import { layout as defaultLayout } from "./default-storage";
 import storage, { setStoragePrefix } from "./lib/storage";
 
-// Set default storage prefix for standalone mode
-setStoragePrefix('cram');
-
 // constants
 import { EditorModes } from "./constants/editor-modes";
 import { Processes } from "./constants/processes";
@@ -64,6 +61,9 @@ import examples from './examples';
 import chroma from 'chroma-js';
 
 import registerAllEvents from './events';
+
+// Set default storage prefix for standalone mode
+setStoragePrefix('cram');
 enableMapSet();
 
 

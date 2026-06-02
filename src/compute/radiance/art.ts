@@ -29,6 +29,9 @@ import {
   gatherAtReceiver,
 } from "./form-factor";
 
+// need this import at the end to avoid circular dependency issues
+import { useSolver } from "../../store";
+
 export interface ARTProps extends SolverParams {
   roomID?: string;
   sourceIDs?: string[];
@@ -389,6 +392,3 @@ on("CALCULATE_ART", (uuid: string) => {
   const solver = useSolver.getState().solvers[uuid] as ART;
   if (solver) solver.calculate();
 });
-
-// need this import at the end to avoid circular dependency issues
-import { useSolver } from "../../store";

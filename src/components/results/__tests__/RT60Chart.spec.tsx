@@ -8,7 +8,7 @@
  */
 
 import React from 'react';
-import { render, screen, act, cleanup } from '@testing-library/react';
+import { render, screen, cleanup } from '@testing-library/react';
 import { RT60Chart, Chart, RTData } from '../RT60Chart';
 import { useResult, ResultKind } from '../../../store/result-store';
 

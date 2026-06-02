@@ -1,4 +1,10 @@
 // Mock Three.js first before any imports
+// Import mock THREE for use in test helpers
+import * as THREE_MOCK from '../../__mocks__/three';
+
+import Surface, { SurfaceSaveObject } from '../surface';
+import { AcousticMaterial } from '../../db/acoustic-material';
+
 vi.mock('three', async () => {
   const actual = await vi.importActual('../../__mocks__/three');
   return actual;
@@ -91,9 +97,6 @@ vi.mock('../surface-element', () => ({
   default: vi.fn().mockImplementation(function () {}),
 }));
 
-// Import mock THREE for use in test helpers
-import * as THREE_MOCK from '../../__mocks__/three';
-
 // Create mock geometry before importing Surface
 const createMockGeometry = () => {
   const THREE = THREE_MOCK;
@@ -107,9 +110,6 @@ const createMockGeometry = () => {
   geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
   return geometry;
 };
-
-import Surface, { SurfaceSaveObject } from '../surface';
-import { AcousticMaterial } from '../../db/acoustic-material';
 
 // Mock acoustic material
 const mockAcousticMaterial: AcousticMaterial = {

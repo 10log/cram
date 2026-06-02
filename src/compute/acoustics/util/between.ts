@@ -1,5 +1,5 @@
 export const between = (min: number, max: number) => (
   value: number
-): Boolean => {
+): boolean => {
   return value <= max && value >= min;
 };

@@ -62,20 +62,20 @@ describe('Phase 9: Performance Optimizations', () => {
 
   describe('9d: Batched GPU upload flags', () => {
     it('appendRay does not set needsUpdate', () => {
-      const appendRayMatch = indexSource.match(/appendRay\([\s\S]*?\n  \}/);
+      const appendRayMatch = indexSource.match(/appendRay\([\s\S]*?\n {2}\}/);
       expect(appendRayMatch).not.toBeNull();
       expect(appendRayMatch![0]).not.toContain('needsUpdate');
     });
 
     it('flushRayBuffer method exists and sets needsUpdate', () => {
       expect(indexSource).toContain('flushRayBuffer()');
-      const flushMatch = indexSource.match(/flushRayBuffer\(\)\s*\{([\s\S]*?)\n  \}/);
+      const flushMatch = indexSource.match(/flushRayBuffer\(\)\s*\{([\s\S]*?)\n {2}\}/);
       expect(flushMatch).not.toBeNull();
       expect(flushMatch![1]).toContain('needsUpdate = true');
     });
 
     it('startAllMonteCarlo calls flushRayBuffer', () => {
-      const monteCarloMatch = indexSource.match(/startAllMonteCarlo\(\)\s*\{([\s\S]*?)\n  \}/);
+      const monteCarloMatch = indexSource.match(/startAllMonteCarlo\(\)\s*\{([\s\S]*?)\n {2}\}/);
       expect(monteCarloMatch).not.toBeNull();
       expect(monteCarloMatch![1]).toContain('this.flushRayBuffer()');
     });
@@ -99,7 +99,7 @@ describe('Phase 9: Performance Optimizations', () => {
     });
 
     it('save() includes maxStoredPaths', () => {
-      const saveMatch = indexSource.match(/save\(\)\s*\{([\s\S]*?)\n  \}/);
+      const saveMatch = indexSource.match(/save\(\)\s*\{([\s\S]*?)\n {2}\}/);
       expect(saveMatch).not.toBeNull();
       expect(saveMatch![1]).toContain('maxStoredPaths');
     });
@@ -112,19 +112,19 @@ describe('Phase 9: Performance Optimizations', () => {
 
   describe('9b: requestAnimationFrame in startAllMonteCarlo', () => {
     it('startAllMonteCarlo uses requestAnimationFrame', () => {
-      const monteCarloMatch = indexSource.match(/startAllMonteCarlo\(\)\s*\{([\s\S]*?)\n  \}/);
+      const monteCarloMatch = indexSource.match(/startAllMonteCarlo\(\)\s*\{([\s\S]*?)\n {2}\}/);
       expect(monteCarloMatch).not.toBeNull();
       expect(monteCarloMatch![1]).toContain('requestAnimationFrame');
     });
 
     it('startAllMonteCarlo does not use setInterval', () => {
-      const monteCarloMatch = indexSource.match(/startAllMonteCarlo\(\)\s*\{([\s\S]*?)\n  \}/);
+      const monteCarloMatch = indexSource.match(/startAllMonteCarlo\(\)\s*\{([\s\S]*?)\n {2}\}/);
       expect(monteCarloMatch).not.toBeNull();
       expect(monteCarloMatch![1]).not.toContain('setInterval');
     });
 
     it('stop() calls cancelAnimationFrame', () => {
-      const stopMatch = indexSource.match(/stop\(\)\s*\{([\s\S]*?)\n  \}/);
+      const stopMatch = indexSource.match(/stop\(\)\s*\{([\s\S]*?)\n {2}\}/);
       expect(stopMatch).not.toBeNull();
       expect(stopMatch![1]).toContain('cancelAnimationFrame');
     });

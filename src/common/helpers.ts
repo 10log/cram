@@ -403,7 +403,7 @@ export const addIfUnique = <T>(set: Set<T>) => (item: T) => !set.has(item) && se
 
 export type Values<T> = T extends unknown[] ? T[number] : T[keyof T];
 
-export const pickProps = <T extends Object, K extends keyof T>(props: K[], obj: T) => {
+export const pickProps = <T extends object, K extends keyof T>(props: K[], obj: T) => {
   return props.reduce(
     (acc, prop) => ({ ...acc, [prop]: obj[prop] }),
     {} as {
@@ -412,7 +412,7 @@ export const pickProps = <T extends Object, K extends keyof T>(props: K[], obj: 
   );
 };
 
-export const omit = <T extends Object, K extends keyof T>(props: K[], obj: T) => {
+export const omit = <T extends object, K extends keyof T>(props: K[], obj: T) => {
   const keys =  Object.keys(obj) as K[];
   return keys.filter(key => !props.includes(key)).reduce(
     (acc, prop) => ({ ...acc, [prop]: obj[prop] }),

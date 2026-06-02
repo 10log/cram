@@ -6,6 +6,15 @@
  */
 
 // Re-export everything from the V2 compatibility layer
+// Split module for backwards compatibility
+import { splitPolygonByPlane, splitLineSegmentByPlane } from './bsp';
+
+// BSP module for backwards compatibility
+import { Tree, PolygonTreeNode, Node } from './bsp';
+
+// Default export for backwards compatibility
+import * as v2 from './v2';
+
 export * from './v2';
 
 // Re-export BSP tree classes and split functions
@@ -16,24 +25,15 @@ export {
   splitPolygonByPlane,
   splitLineSegmentByPlane,
 } from './bsp';
-
-// Split module for backwards compatibility
-import { splitPolygonByPlane, splitLineSegmentByPlane } from './bsp';
 export const split = {
   polygonByPlane: splitPolygonByPlane,
   lineSegmentByPlane: splitLineSegmentByPlane,
 };
-
-// BSP module for backwards compatibility
-import { Tree, PolygonTreeNode, Node } from './bsp';
 export const bsp = {
   Tree,
   PolygonTreeNode,
   Node,
 };
-
-// Default export for backwards compatibility
-import * as v2 from './v2';
 export default {
   ...v2,
   split,

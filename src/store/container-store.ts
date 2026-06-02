@@ -1,15 +1,15 @@
 import { create } from 'zustand';
 import { produce, enableMapSet } from 'immer';
 import * as THREE from 'three';
-
-// Enable Immer's MapSet plugin for Set/Map support in store
-enableMapSet();
 import { KeyValuePair } from "../common/key-value-pair";
 import Container from "../objects/container";
 import { AllowedNames, omit, reach } from '../common/helpers';
 import { Room } from "../objects";
 import Solver from "../compute/solver";
 import { emit } from "../messenger";
+
+// Enable Immer's MapSet plugin for Set/Map support in store
+enableMapSet();
 
 export type ContainerStore = {
   containers: KeyValuePair<Container>;
@@ -141,7 +141,7 @@ export const resetContainerStore = () => {
 };
 
 declare global {
-  type CallMethodArgs<T extends Object, K extends AllowedNames<T, Function>> = {
+  type CallMethodArgs<T extends object, K extends AllowedNames<T, Function>> = {
     uuid: string;
     method: K;
     isAsync?: boolean;

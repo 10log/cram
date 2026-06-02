@@ -9,6 +9,10 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
+// ── Part 2: Unit tests for pure functions ────────────────────────────
+
+import { extractDecayParameters, synthesizeTail, assembleFinalIR } from '../../shared/tail-synthesis';
+
 // ── Source code for scanning tests ───────────────────────────────────
 
 const typesSource = fs.readFileSync(
@@ -134,10 +138,6 @@ describe('Late Reverberation Tail Synthesis – source structure', () => {
     });
   });
 });
-
-// ── Part 2: Unit tests for pure functions ────────────────────────────
-
-import { extractDecayParameters, synthesizeTail, assembleFinalIR } from '../../shared/tail-synthesis';
 
 describe('extractDecayParameters', () => {
   const frequencies = [500, 1000];

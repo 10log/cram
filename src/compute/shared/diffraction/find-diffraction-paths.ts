@@ -9,7 +9,7 @@
 import * as THREE from "three";
 import * as ac from "../../acoustics";
 import { utdDiffractionCoefficient, computeWedgeAngles } from "./utd-coefficient";
-import type { DiffractingEdge, DiffractionPath, EdgeGraph } from "./types";
+import type { DiffractionPath, EdgeGraph } from "./types";
 
 /**
  * Find the diffraction point on an edge segment using Fermat's principle.

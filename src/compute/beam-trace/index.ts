@@ -39,7 +39,7 @@ import { calculateBinauralFromAmbisonic } from "../binaural/calculate-binaural";
 import chroma from 'chroma-js';
 import { encodeBufferFromDirection, getAmbisonicChannelCount } from "ambisonics";
 import { buildEdgeGraph, findDiffractionPaths } from "../shared/diffraction";
-import type { EdgeGraph, DiffractionPath } from "../shared/diffraction";
+import type { EdgeGraph } from "../shared/diffraction";
 import { HISTOGRAM_BIN_WIDTH, HISTOGRAM_NUM_BINS } from "../shared/tail-synthesis-types";
 import { extractDecayParameters, synthesizeTail, assembleFinalIR } from "../shared/tail-synthesis";
 import type { ResponseByIntensity, RayPathResult } from "../shared/response-by-intensity-types";

@@ -9,10 +9,10 @@ import {
   RayPath, RayPathResult, ResponseByIntensity, ChartData, EnergyTime, ReceiverData,
 } from "./types";
 
+import { resampleResponseByIntensity } from "../shared/response-by-intensity";
+
 // Re-export shared functions
 export { resampleResponseByIntensity, calculateT20, calculateT30, calculateT60 } from "../shared/response-by-intensity";
-
-import { resampleResponseByIntensity } from "../shared/response-by-intensity";
 
 const { abs } = Math;
 
