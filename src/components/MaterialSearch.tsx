@@ -247,12 +247,14 @@ export const MaterialSearch = () => {
             value={query}
             onChange={e => setQuery(e.target.value)}
             sx={{ mb: 1 }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon fontSize="small" color="action" />
-                </InputAdornment>
-              ),
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon fontSize="small" color="action" />
+                  </InputAdornment>
+                ),
+              },
             }}
           />
 

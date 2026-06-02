@@ -227,7 +227,7 @@ function ObjectItem({ uuid, name, type, visible, selected, onSelect, onToggleVis
         </ListItemIcon>
         <ListItemText
           primary={name}
-          primaryTypographyProps={{ fontSize: "0.75rem", noWrap: true }}
+          slotProps={{ primary: { noWrap: true, sx: { fontSize: "0.75rem" } } }}
         />
       </ListItemButton>
     </ListItem>
@@ -271,8 +271,10 @@ function SolverItem({ uuid, name, type, selected, onSelect, onRun, onDelete }: S
         <ListItemText
           primary={name}
           secondary={type}
-          primaryTypographyProps={{ fontSize: "0.75rem", noWrap: true }}
-          secondaryTypographyProps={{ fontSize: "0.625rem" }}
+          slotProps={{
+            primary: { noWrap: true, sx: { fontSize: "0.75rem" } },
+            secondary: { sx: { fontSize: "0.625rem" } },
+          }}
         />
       </ListItemButton>
     </ListItem>
@@ -298,8 +300,10 @@ function RendererItem({ selected, onSelect }: RendererItemProps) {
         <ListItemText
           primary="Renderer"
           secondary="Display settings"
-          primaryTypographyProps={{ fontSize: "0.75rem" }}
-          secondaryTypographyProps={{ fontSize: "0.625rem" }}
+          slotProps={{
+            primary: { sx: { fontSize: "0.75rem" } },
+            secondary: { sx: { fontSize: "0.625rem" } },
+          }}
         />
       </ListItemButton>
     </ListItem>
@@ -499,7 +503,7 @@ export function PropertiesPanel() {
         <AccordionDetails sx={accordionDetailsSx}>
           {objectCount === 0 ? (
             <Box sx={emptyStateSx}>
-              <Typography variant="body2" color="text.secondary" fontSize="0.75rem">
+              <Typography variant="body2" color="text.secondary" sx={{ fontSize: "0.75rem" }}>
                 No objects. Import a model or add from menu.
               </Typography>
             </Box>
@@ -509,7 +513,7 @@ export function PropertiesPanel() {
               {objectsByKind.rooms.length > 0 && (
                 <>
                   <ListItem sx={categoryHeaderSx}>
-                    <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
                       ROOMS ({objectsByKind.rooms.length})
                     </Typography>
                   </ListItem>
@@ -533,7 +537,7 @@ export function PropertiesPanel() {
               {objectsByKind.sources.length > 0 && (
                 <>
                   <ListItem sx={categoryHeaderSx}>
-                    <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
                       SOURCES ({objectsByKind.sources.length})
                     </Typography>
                   </ListItem>
@@ -557,7 +561,7 @@ export function PropertiesPanel() {
               {objectsByKind.receivers.length > 0 && (
                 <>
                   <ListItem sx={categoryHeaderSx}>
-                    <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
                       RECEIVERS ({objectsByKind.receivers.length})
                     </Typography>
                   </ListItem>
@@ -581,7 +585,7 @@ export function PropertiesPanel() {
               {objectsByKind.surfaces.length > 0 && (
                 <>
                   <ListItem sx={categoryHeaderSx}>
-                    <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
                       SURFACES ({objectsByKind.surfaces.length})
                     </Typography>
                   </ListItem>

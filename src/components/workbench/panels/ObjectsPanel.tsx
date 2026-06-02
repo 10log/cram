@@ -126,7 +126,7 @@ function ObjectItem({ uuid, name, type, visible, selected, onSelect, onToggleVis
         </ListItemIcon>
         <ListItemText
           primary={name}
-          primaryTypographyProps={{ fontSize: '0.75rem', noWrap: true }}
+          slotProps={{ primary: { noWrap: true, sx: { fontSize: '0.75rem' } } }}
         />
       </ListItemButton>
     </ListItem>
@@ -223,7 +223,7 @@ export function ObjectsPanel() {
     return (
       <>
         <ListItem sx={categoryHeaderSx}>
-          <Typography variant="caption" color="text.secondary" fontWeight={600}>
+          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
             {label} ({items.length})
           </Typography>
         </ListItem>
@@ -250,7 +250,7 @@ export function ObjectsPanel() {
     <Box sx={panelContainerSx}>
       {objectCount === 0 ? (
         <Box sx={emptyStateSx}>
-          <Typography variant="body2" color="text.secondary" fontSize="0.75rem">
+          <Typography variant="body2" color="text.secondary" sx={{ fontSize: "0.75rem" }}>
             No objects. Import a model or add from menu.
           </Typography>
         </Box>

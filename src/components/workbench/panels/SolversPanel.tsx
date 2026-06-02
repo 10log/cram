@@ -147,8 +147,10 @@ function SolverItem({ uuid, name, type, selected, onSelect, onRun, onDelete }: S
         <ListItemText
           primary={name}
           secondary={type}
-          primaryTypographyProps={{ fontSize: '0.75rem', noWrap: true }}
-          secondaryTypographyProps={{ fontSize: '0.625rem' }}
+          slotProps={{
+            primary: { noWrap: true, sx: { fontSize: '0.75rem' } },
+            secondary: { sx: { fontSize: '0.625rem' } },
+          }}
         />
       </ListItemButton>
     </ListItem>

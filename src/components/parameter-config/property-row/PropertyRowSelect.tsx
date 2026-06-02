@@ -39,7 +39,7 @@ export const PropertyRowSelect = ({ value, onChange, options }: Props) => {
       value={value}
       onChange={(e) => onChange({ value: e.target.value })}
       sx={selectSx}
-      MenuProps={{ PaperProps: { sx: { bgcolor: "background.paper" } } }}
+      MenuProps={{ slotProps: { paper: { sx: { bgcolor: "background.paper" } } } }}
     >
       {options.map(({ value, label }, i) => (
         <MenuItem value={value} key={`${value}-${label}-${i}`} sx={menuItemSx}>
