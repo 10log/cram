@@ -1,3 +1,4 @@
+import { default as React } from 'react';
 type ChartMode = 'ltp' | 'etc';
 type YRange = 'auto' | 10 | 20 | 30;
 export type LTPChartProps = {
@@ -10,5 +11,5 @@ export type LTPChartProps = {
     chartMode?: ChartMode;
     yRange?: YRange;
 };
-export declare const LTPChart: ({ uuid, width, height, events }: LTPChartProps) => import("react/jsx-runtime").JSX.Element | null;
+export declare const LTPChart: ({ uuid, width, height, events }: LTPChartProps) => React.JSX.Element | null;
 export default LTPChart;

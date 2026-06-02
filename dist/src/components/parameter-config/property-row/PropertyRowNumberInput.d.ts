@@ -1,3 +1,4 @@
+import { default as React } from 'react';
 interface Props {
     value: number;
     onChange: ({ value }: {
@@ -7,5 +8,5 @@ interface Props {
     min?: number;
     max?: number;
 }
-export declare const PropertyRowNumberInput: ({ value, onChange, step, min, max }: Props) => import("react/jsx-runtime").JSX.Element;
+export declare const PropertyRowNumberInput: ({ value, onChange, step, min, max }: Props) => React.JSX.Element;
 export default PropertyRowNumberInput;

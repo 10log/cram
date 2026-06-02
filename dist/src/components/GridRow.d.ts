@@ -5,4 +5,4 @@ export interface GridRowProps {
     span?: number;
     style?: React.CSSProperties;
 }
-export default function GridRow(props: GridRowProps): import("react/jsx-runtime").JSX.Element;
+export default function GridRow(props: GridRowProps): React.JSX.Element;

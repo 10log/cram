@@ -13,5 +13,5 @@ export interface NumberInputProps {
     onChange: (e: ObjectPropertyInputEvent) => void;
     verifier?: (val: string | number) => boolean;
 }
-export declare function NumberInput(props: NumberInputProps): import("react/jsx-runtime").JSX.Element;
+export declare function NumberInput(props: NumberInputProps): React.JSX.Element;
 export default NumberInput;

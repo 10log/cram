@@ -1,3 +1,4 @@
+import { default as React } from 'react';
 export type BarGroupProps = {
     uuid: string;
     width?: number;
@@ -17,6 +18,6 @@ export interface RTData {
     ap: number;
 }
 export declare const background = "#612efb";
-export declare const Chart: ({ uuid, width, height, events, }: BarGroupProps) => import("react/jsx-runtime").JSX.Element | null;
-export declare const RT60Chart: ({ uuid, width, height, events, }: BarGroupProps) => import("react/jsx-runtime").JSX.Element | null;
+export declare const Chart: ({ uuid, width, height, events, }: BarGroupProps) => React.JSX.Element | null;
+export declare const RT60Chart: ({ uuid, width, height, events, }: BarGroupProps) => React.JSX.Element | null;
 export default RT60Chart;

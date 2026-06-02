@@ -8,4 +8,4 @@ export interface SliderInputProps {
     className?: string;
     onChange: (e: React.FormEvent) => void;
 }
-export default function SliderInput(props: SliderInputProps): import("react/jsx-runtime").JSX.Element;
+export default function SliderInput(props: SliderInputProps): React.JSX.Element;

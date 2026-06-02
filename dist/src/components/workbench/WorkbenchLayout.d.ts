@@ -1,4 +1,4 @@
-export declare function WorkbenchLayout(): import("react/jsx-runtime").JSX.Element;
+export declare function WorkbenchLayout(): import("react").JSX.Element;
 export default WorkbenchLayout;
 declare global {
     interface EventTypes {

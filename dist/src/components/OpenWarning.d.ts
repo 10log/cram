@@ -5,6 +5,6 @@ export interface OpenWarningProps {
     onDiscard: (e?: React.MouseEvent<HTMLElement, MouseEvent>) => void;
     onSave: (e?: React.MouseEvent<HTMLElement, MouseEvent>) => void;
 }
-declare function OpenWarning(props: OpenWarningProps): import("react/jsx-runtime").JSX.Element;
+declare function OpenWarning(props: OpenWarningProps): React.JSX.Element;
 export { OpenWarning };
 export default OpenWarning;

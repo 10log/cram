@@ -1,4 +1,4 @@
 export declare function PanelEmptyText({ children }: {
     children?: React.ReactNode;
-}): import("react/jsx-runtime").JSX.Element;
+}): import("react").JSX.Element;
 export default PanelEmptyText;

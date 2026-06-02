@@ -1,3 +1,4 @@
+import { default as React } from 'react';
 import { ObjectPropertyInputEvent } from '.';
 import { default as Receiver } from '../../objects/receiver';
 import { default as Messenger } from '../../messenger';
@@ -8,4 +9,4 @@ export interface ReceiverPropertiesProps {
     onPropertyValueChangeAsNumber: (id: string, prop: string, valueAsNumber: number) => void;
     onPropertyValueChangeAsString: (id: string, prop: string, valueAsString: string) => void;
 }
-export default function ReceiverProperties(props: ReceiverPropertiesProps): import("react/jsx-runtime").JSX.Element;
+export default function ReceiverProperties(props: ReceiverPropertiesProps): React.JSX.Element;

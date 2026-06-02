@@ -10,4 +10,4 @@ export interface RT60PropertiesProps {
     onPropertyValueChangeAsString: (id: string, prop: string, valueAsString: string) => void;
     onButtonClick: (e: React.MouseEvent<HTMLElement, MouseEvent>) => void;
 }
-export default function RT60Properties(props: RT60PropertiesProps): import("react/jsx-runtime").JSX.Element;
+export default function RT60Properties(props: RT60PropertiesProps): React.JSX.Element;

@@ -1,4 +1,5 @@
+import { default as React } from 'react';
 export declare const SourceTab: ({ uuid }: {
     uuid: string;
-}) => import("react/jsx-runtime").JSX.Element;
+}) => React.JSX.Element;
 export default SourceTab;

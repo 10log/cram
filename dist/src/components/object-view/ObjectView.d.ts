@@ -6,4 +6,4 @@ export interface MapChildrenProps {
     expanded: string[];
     setExpanded: (value: React.SetStateAction<string[]>) => void;
 }
-export default function ObjectView(): import("react/jsx-runtime").JSX.Element;
+export default function ObjectView(): React.JSX.Element;

@@ -7,5 +7,5 @@ export interface ColorInputProps {
     disabled?: boolean;
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
-export declare function ColorInput(props: ColorInputProps): import("react/jsx-runtime").JSX.Element;
+export declare function ColorInput(props: ColorInputProps): React.JSX.Element;
 export default ColorInput;

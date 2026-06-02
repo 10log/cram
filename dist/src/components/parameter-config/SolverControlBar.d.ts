@@ -1,3 +1,4 @@
+import { default as React } from 'react';
 export interface SolverControlBarProps {
     onPlayPause?: () => void;
     onStop?: () => void;
@@ -6,4 +7,4 @@ export interface SolverControlBarProps {
     canRun?: boolean;
     hasResults?: boolean;
 }
-export default function SolverControlBar({ onPlayPause, onStop, onReset, isRunning, canRun, hasResults, }: SolverControlBarProps): import("react/jsx-runtime").JSX.Element;
+export default function SolverControlBar({ onPlayPause, onStop, onReset, isRunning, canRun, hasResults, }: SolverControlBarProps): React.JSX.Element;

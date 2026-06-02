@@ -103,10 +103,10 @@ declare class Surface extends Container {
     unhover(): void;
     resetHits(): void;
     getArea(): number;
-    getEdges(): THREE.LineSegments<THREE.BufferGeometry<THREE.NormalBufferAttributes, THREE.BufferGeometryEventMap>, THREE.Material | THREE.Material[], THREE.Object3DEventMap>;
+    getEdges(): THREE.LineSegments<THREE.BufferGeometry<THREE.NormalBufferAttributes, THREE.BufferGeometryEventMap>, THREE.Material<THREE.MaterialEventMap> | THREE.Material<THREE.MaterialEventMap>[], THREE.Object3DEventMap>;
     calculateEdgeLoop(): THREE.Vector3[];
     mergeSurfaces(surfaces: Surface[]): Surface;
-    tessellate(tessellateModifier: TessellateModifier): THREE.Mesh<THREE.BufferGeometry<THREE.NormalBufferAttributes, THREE.BufferGeometryEventMap>, THREE.Material | THREE.Material[], THREE.Object3DEventMap>;
+    tessellate(tessellateModifier: TessellateModifier): THREE.Mesh<THREE.BufferGeometry<THREE.NormalBufferAttributes, THREE.BufferGeometryEventMap>, THREE.Material<THREE.MaterialEventMap> | THREE.Material<THREE.MaterialEventMap>[], THREE.Object3DEventMap>;
     get edgesVisible(): boolean;
     set edgesVisible(visible: boolean);
     get acousticMaterial(): AcousticMaterial;

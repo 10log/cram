@@ -8,7 +8,7 @@ var __commonJS = (cb, mod) => function __require() {
 // node_modules/@jscad/modeling/src/utils/flatten.js
 var require_flatten = __commonJS({
   "node_modules/@jscad/modeling/src/utils/flatten.js"(exports, module) {
-    var flatten = /* @__PURE__ */ __name((arr) => arr.reduce((acc, val) => Array.isArray(val) ? acc.concat(flatten(val)) : acc.concat(val), []), "flatten");
+    var flatten = /* @__PURE__ */ __name((arr) => arr.flat(Infinity), "flatten");
     module.exports = flatten;
   }
 });
@@ -4222,6 +4222,51 @@ var require_isA3 = __commonJS({
   }
 });
 
+// node_modules/@jscad/modeling/src/geometries/geom3/isConvex.js
+var require_isConvex2 = __commonJS({
+  "node_modules/@jscad/modeling/src/geometries/geom3/isConvex.js"(exports, module) {
+    var { EPS } = require_constants();
+    var vec3 = require_vec3();
+    var geom3 = require_isA3();
+    var toPolygons = require_toPolygons();
+    var poly3 = require_poly3();
+    var isConvex = /* @__PURE__ */ __name((geometry) => {
+      if (!geom3(geometry)) {
+        throw new Error("isConvex requires a geom3 geometry");
+      }
+      const polygons = toPolygons(geometry);
+      if (polygons.length === 0) {
+        return true;
+      }
+      const vertices = [];
+      const found = /* @__PURE__ */ new Set();
+      for (let i = 0; i < polygons.length; i++) {
+        const verts = polygons[i].vertices;
+        for (let j = 0; j < verts.length; j++) {
+          const v = verts[j];
+          const key = `${v[0]},${v[1]},${v[2]}`;
+          if (!found.has(key)) {
+            found.add(key);
+            vertices.push(v);
+          }
+        }
+      }
+      for (let i = 0; i < polygons.length; i++) {
+        const plane = poly3.plane(polygons[i]);
+        for (let j = 0; j < vertices.length; j++) {
+          const v = vertices[j];
+          const distance = vec3.dot(plane, v) - plane[3];
+          if (distance > EPS) {
+            return false;
+          }
+        }
+      }
+      return true;
+    }, "isConvex");
+    module.exports = isConvex;
+  }
+});
+
 // node_modules/@jscad/modeling/src/geometries/geom3/toPoints.js
 var require_toPoints3 = __commonJS({
   "node_modules/@jscad/modeling/src/geometries/geom3/toPoints.js"(exports, module) {
@@ -4373,6 +4418,7 @@ var require_geom3 = __commonJS({
       fromCompactBinary: require_fromCompactBinary2(),
       invert: require_invert3(),
       isA: require_isA3(),
+      isConvex: require_isConvex2(),
       toPoints: require_toPoints3(),
       toPolygons: require_toPolygons(),
       toString: require_toString7(),
@@ -4562,7 +4608,7 @@ var require_appendArc = __commonJS({
         } else if (sweepFlag && deltatheta < 0) {
           deltatheta += TAU;
         }
-        let numsteps = Math.ceil(Math.abs(deltatheta) / TAU * segments) + 1;
+        let numsteps = Math.floor(segments * (Math.abs(deltatheta) / TAU));
         if (numsteps < 1) numsteps = 1;
         for (let step = 1; step < numsteps; step++) {
           const theta = theta1 + step / numsteps * deltatheta;
@@ -6939,7 +6985,7 @@ var require_arc = __commonJS({
         vec2.add(point, point, centerv);
         pointArray.push(point);
       } else {
-        const numsteps = Math.max(1, Math.floor(segments * (rotation / TAU))) + 1;
+        const numsteps = Math.floor(segments * (Math.abs(rotation) / TAU));
         let edgestepsize = numsteps * 0.5 / rotation;
         if (edgestepsize > 0.25) edgestepsize = 0.25;
         const totalsteps = makeTangent ? numsteps + 2 : numsteps;
@@ -8935,9 +8981,10 @@ var require_extrudeWalls = __commonJS({
         return edges;
       }
       const divisor = vec3.fromValues(multiple, multiple, multiple);
+      const increment = vec3.create();
       const newEdges = [];
       edges.forEach((edge) => {
-        const increment = vec3.subtract(vec3.create(), edge[1], edge[0]);
+        vec3.subtract(increment, edge[1], edge[0]);
         vec3.divide(increment, increment, divisor);
         let prev = edge[0];
         for (let i = 1; i <= multiple; ++i) {
@@ -9015,7 +9062,10 @@ var require_extrudeFromSlices = __commonJS({
           const edges = slice.toEdges(currentSlice);
           if (edges.length === 0) throw new Error("the callback function must return slices with one or more edges");
           if (prevSlice) {
-            polygons = polygons.concat(extrudeWalls(prevSlice, currentSlice));
+            const walls = extrudeWalls(prevSlice, currentSlice);
+            for (let i = 0; i < walls.length; i++) {
+              polygons.push(walls[i]);
+            }
           }
           if (s === 0) startSlice = currentSlice;
           if (s === numberOfSlices - 1) endSlice = currentSlice;
@@ -9024,15 +9074,22 @@ var require_extrudeFromSlices = __commonJS({
       }
       if (capEnd) {
         const endPolygons = slice.toPolygons(endSlice);
-        polygons = polygons.concat(endPolygons);
+        for (let i = 0; i < endPolygons.length; i++) {
+          polygons.push(endPolygons[i]);
+        }
       }
       if (capStart) {
         const startPolygons = slice.toPolygons(startSlice).map(poly3.invert);
-        polygons = polygons.concat(startPolygons);
+        for (let i = 0; i < startPolygons.length; i++) {
+          polygons.push(startPolygons[i]);
+        }
       }
       if (!capStart && !capEnd) {
         if (close && !slice.equals(endSlice, startSlice)) {
-          polygons = polygons.concat(extrudeWalls(endSlice, startSlice));
+          const walls = extrudeWalls(endSlice, startSlice);
+          for (let i = 0; i < walls.length; i++) {
+            polygons.push(walls[i]);
+          }
         }
       }
       return geom3.create(polygons);
@@ -9107,12 +9164,15 @@ var require_extrudeRotate = __commonJS({
       const baseSlice = slice.fromSides(geom2.toSides(geometry));
       slice.reverse(baseSlice, baseSlice);
       const matrix = mat4.create();
+      const xRotationMatrix = mat4.fromXRotation(mat4.create(), TAU / 4);
+      const zRotationMatrix = mat4.create();
       const createSlice = /* @__PURE__ */ __name((progress, index, base) => {
         let Zrotation = rotationPerSlice * index + startAngle;
         if (totalRotation === TAU && index === segments) {
           Zrotation = startAngle;
         }
-        mat4.multiply(matrix, mat4.fromZRotation(matrix, Zrotation), mat4.fromXRotation(mat4.create(), TAU / 4));
+        mat4.fromZRotation(zRotationMatrix, Zrotation);
+        mat4.multiply(matrix, zRotationMatrix, xRotationMatrix);
         return slice.transform(matrix, base);
       }, "createSlice");
       options = {
@@ -9980,6 +10040,7 @@ var require_reTesselateCoplanarPolygons = __commonJS({
         const newoutpolygonrow = [];
         const ycoordinate = ycoordinates[yindex];
         const polygonindexeswithcorner = ycoordinatetopolygonindexes.get(ycoordinate);
+        let removeCount = 0;
         for (let activepolygonindex = 0; activepolygonindex < activepolygons.length; ++activepolygonindex) {
           const activepolygon = activepolygons[activepolygonindex];
           const polygonindex = activepolygon.polygonindex;
@@ -10000,8 +10061,8 @@ var require_reTesselateCoplanarPolygons = __commonJS({
               newrightvertexindex = nextrightvertexindex;
             }
             if (newleftvertexindex !== activepolygon.leftvertexindex && newleftvertexindex === newrightvertexindex) {
-              activepolygons.splice(activepolygonindex, 1);
-              --activepolygonindex;
+              activepolygon._remove = true;
+              removeCount++;
             } else {
               activepolygon.leftvertexindex = newleftvertexindex;
               activepolygon.rightvertexindex = newrightvertexindex;
@@ -10015,6 +10076,9 @@ var require_reTesselateCoplanarPolygons = __commonJS({
               activepolygon.bottomright = vertices2d[nextrightvertexindex2];
             }
           }
+        }
+        if (removeCount > 0) {
+          activepolygons = activepolygons.filter((p) => !p._remove);
         }
         let nextycoordinate;
         if (yindex >= ycoordinates.length - 1) {
@@ -10190,8 +10254,10 @@ var require_retessellate = __commonJS({
       const destPolygons = [];
       classified.forEach((group) => {
         if (Array.isArray(group)) {
-          const reTessellateCoplanarPolygons = reTesselateCoplanarPolygons(group);
-          destPolygons.push(...reTessellateCoplanarPolygons);
+          const coplanarPolygons = reTesselateCoplanarPolygons(group);
+          for (let i = 0; i < coplanarPolygons.length; i++) {
+            destPolygons.push(coplanarPolygons[i]);
+          }
         } else {
           destPolygons.push(group);
         }
@@ -10422,6 +10488,19 @@ var require_splitPolygonByPlane = __commonJS({
     var vec3 = require_vec3();
     var poly3 = require_poly3();
     var splitLineSegmentByPlane = require_splitLineSegmentByPlane();
+    var EPS_SQUARED = EPS * EPS;
+    var removeConsecutiveDuplicates = /* @__PURE__ */ __name((vertices) => {
+      const result = [];
+      let prevvertex = vertices[vertices.length - 1];
+      for (let i = 0; i < vertices.length; i++) {
+        const vertex = vertices[i];
+        if (vec3.squaredDistance(vertex, prevvertex) >= EPS_SQUARED) {
+          result.push(vertex);
+        }
+        prevvertex = vertex;
+      }
+      return result;
+    }, "removeConsecutiveDuplicates");
     var splitPolygonByPlane = /* @__PURE__ */ __name((splane, polygon) => {
       const result = {
         type: null,
@@ -10483,34 +10562,17 @@ var require_splitPolygonByPlane = __commonJS({
             }
             isback = nextisback;
           }
-          const EPS_SQUARED = EPS * EPS;
-          if (backvertices.length >= 3) {
-            let prevvertex = backvertices[backvertices.length - 1];
-            for (let vertexindex = 0; vertexindex < backvertices.length; vertexindex++) {
-              const vertex = backvertices[vertexindex];
-              if (vec3.squaredDistance(vertex, prevvertex) < EPS_SQUARED) {
-                backvertices.splice(vertexindex, 1);
-                vertexindex--;
-              }
-              prevvertex = vertex;
+          if (frontvertices.length >= 3) {
+            const frontFiltered = removeConsecutiveDuplicates(frontvertices);
+            if (frontFiltered.length >= 3) {
+              result.front = poly3.fromPointsAndPlane(frontFiltered, pplane);
             }
           }
-          if (frontvertices.length >= 3) {
-            let prevvertex = frontvertices[frontvertices.length - 1];
-            for (let vertexindex = 0; vertexindex < frontvertices.length; vertexindex++) {
-              const vertex = frontvertices[vertexindex];
-              if (vec3.squaredDistance(vertex, prevvertex) < EPS_SQUARED) {
-                frontvertices.splice(vertexindex, 1);
-                vertexindex--;
-              }
-              prevvertex = vertex;
-            }
-          }
-          if (frontvertices.length >= 3) {
-            result.front = poly3.fromPointsAndPlane(frontvertices, pplane);
-          }
           if (backvertices.length >= 3) {
-            result.back = poly3.fromPointsAndPlane(backvertices, pplane);
+            const backFiltered = removeConsecutiveDuplicates(backvertices);
+            if (backFiltered.length >= 3) {
+              result.back = poly3.fromPointsAndPlane(backFiltered, pplane);
+            }
           }
         }
       }
@@ -10553,10 +10615,6 @@ var require_PolygonTreeNode = __commonJS({
         if (!this.removed) {
           this.removed = true;
           this.polygon = null;
-          const parentschildren = this.parent.children;
-          const i = parentschildren.indexOf(this);
-          if (i < 0) throw new Error("Assertion failed");
-          parentschildren.splice(i, 1);
           this.parent.recursivelyInvalidatePolygon();
         }
       }
@@ -10576,6 +10634,13 @@ var require_PolygonTreeNode = __commonJS({
         return this.polygon;
       }
       getPolygons(result) {
+        if (this.isRootNode() && this.children.length > 0) {
+          const compacted = [];
+          for (let i2 = 0; i2 < this.children.length; i2++) {
+            if (!this.children[i2].removed) compacted.push(this.children[i2]);
+          }
+          this.children = compacted;
+        }
         let children = [this];
         const queue = [children];
         let i, j, l, node;
@@ -10886,6 +10951,201 @@ var require_intersect2 = __commonJS({
   }
 });
 
+// node_modules/@jscad/modeling/src/operations/hulls/hullPoints3.js
+var require_hullPoints3 = __commonJS({
+  "node_modules/@jscad/modeling/src/operations/hulls/hullPoints3.js"(exports, module) {
+    var poly3 = require_poly3();
+    var quickhull = require_quickhull();
+    var hullPoints3 = /* @__PURE__ */ __name((uniquePoints) => {
+      const faces = quickhull(uniquePoints, { skipTriangulation: true });
+      const polygons = faces.map((face) => {
+        const vertices = face.map((index) => uniquePoints[index]);
+        return poly3.create(vertices);
+      });
+      return polygons;
+    }, "hullPoints3");
+    module.exports = hullPoints3;
+  }
+});
+
+// node_modules/@jscad/modeling/src/operations/booleans/unionGeom3Sub.js
+var require_unionGeom3Sub = __commonJS({
+  "node_modules/@jscad/modeling/src/operations/booleans/unionGeom3Sub.js"(exports, module) {
+    var geom3 = require_geom3();
+    var mayOverlap = require_mayOverlap();
+    var { Tree } = require_trees();
+    var unionSub = /* @__PURE__ */ __name((geometry1, geometry2) => {
+      if (!mayOverlap(geometry1, geometry2)) {
+        return unionForNonIntersecting(geometry1, geometry2);
+      }
+      const a = new Tree(geom3.toPolygons(geometry1));
+      const b = new Tree(geom3.toPolygons(geometry2));
+      a.clipTo(b, false);
+      b.clipTo(a);
+      b.invert();
+      b.clipTo(a);
+      b.invert();
+      const newpolygons = a.allPolygons().concat(b.allPolygons());
+      const result = geom3.create(newpolygons);
+      return result;
+    }, "unionSub");
+    var unionForNonIntersecting = /* @__PURE__ */ __name((geometry1, geometry2) => {
+      let newpolygons = geom3.toPolygons(geometry1);
+      newpolygons = newpolygons.concat(geom3.toPolygons(geometry2));
+      return geom3.create(newpolygons);
+    }, "unionForNonIntersecting");
+    module.exports = unionSub;
+  }
+});
+
+// node_modules/@jscad/modeling/src/operations/booleans/unionGeom3.js
+var require_unionGeom3 = __commonJS({
+  "node_modules/@jscad/modeling/src/operations/booleans/unionGeom3.js"(exports, module) {
+    var flatten = require_flatten();
+    var retessellate = require_retessellate();
+    var unionSub = require_unionGeom3Sub();
+    var union = /* @__PURE__ */ __name((...geometries) => {
+      geometries = flatten(geometries);
+      let i;
+      for (i = 1; i < geometries.length; i += 2) {
+        geometries.push(unionSub(geometries[i - 1], geometries[i]));
+      }
+      let newgeometry = geometries[i - 1];
+      newgeometry = retessellate(newgeometry);
+      return newgeometry;
+    }, "union");
+    module.exports = union;
+  }
+});
+
+// node_modules/@jscad/modeling/src/operations/minkowski/minkowskiSum.js
+var require_minkowskiSum = __commonJS({
+  "node_modules/@jscad/modeling/src/operations/minkowski/minkowskiSum.js"(exports, module) {
+    var flatten = require_flatten();
+    var geom3 = require_geom3();
+    var poly3 = require_poly3();
+    var hullPoints3 = require_hullPoints3();
+    var unionGeom3 = require_unionGeom3();
+    var minkowskiSum = /* @__PURE__ */ __name((...geometries) => {
+      geometries = flatten(geometries);
+      if (geometries.length !== 2) {
+        throw new Error("minkowskiSum requires exactly two geometries");
+      }
+      const [geomA, geomB] = geometries;
+      if (!geom3.isA(geomA) || !geom3.isA(geomB)) {
+        throw new Error("minkowskiSum requires geom3 geometries");
+      }
+      const aConvex = geom3.isConvex(geomA);
+      const bConvex = geom3.isConvex(geomB);
+      if (aConvex && bConvex) {
+        return minkowskiSumConvex(geomA, geomB);
+      }
+      if (!aConvex && bConvex) {
+        return minkowskiSumNonConvexConvex(geomA, geomB);
+      }
+      if (aConvex && !bConvex) {
+        return minkowskiSumNonConvexConvex(geomB, geomA);
+      }
+      throw new Error("minkowskiSum of two non-convex geometries is not yet supported");
+    }, "minkowskiSum");
+    var minkowskiSumNonConvexConvex = /* @__PURE__ */ __name((geomA, geomB) => {
+      const tetrahedra = decomposeIntoTetrahedra(geomA);
+      if (tetrahedra.length === 0) {
+        return geom3.create();
+      }
+      const parts = tetrahedra.map((tet) => minkowskiSumConvex(tet, geomB));
+      if (parts.length === 1) {
+        return parts[0];
+      }
+      return unionGeom3(parts);
+    }, "minkowskiSumNonConvexConvex");
+    var decomposeIntoTetrahedra = /* @__PURE__ */ __name((geometry) => {
+      const polygons = geom3.toPolygons(geometry);
+      if (polygons.length === 0) {
+        return [];
+      }
+      const tetrahedra = [];
+      for (let i = 0; i < polygons.length; i++) {
+        const polygon = polygons[i];
+        const vertices = polygon.vertices;
+        let cx = 0, cy = 0, cz = 0;
+        for (let k = 0; k < vertices.length; k++) {
+          cx += vertices[k][0];
+          cy += vertices[k][1];
+          cz += vertices[k][2];
+        }
+        cx /= vertices.length;
+        cy /= vertices.length;
+        cz /= vertices.length;
+        const plane = poly3.plane(polygon);
+        const nx = plane[0], ny = plane[1], nz = plane[2];
+        const offset = 0.1;
+        const apex = [
+          // Vertex used as apex in tetrahedron polygons below
+          cx - nx * offset,
+          cy - ny * offset,
+          cz - nz * offset
+        ];
+        for (let j = 1; j < vertices.length - 1; j++) {
+          const v0 = vertices[0];
+          const v1 = vertices[j];
+          const v2 = vertices[j + 1];
+          const tetPolygons = createTetrahedronPolygons(apex, v0, v1, v2);
+          tetrahedra.push(geom3.create(tetPolygons));
+        }
+      }
+      return tetrahedra;
+    }, "decomposeIntoTetrahedra");
+    var createTetrahedronPolygons = /* @__PURE__ */ __name((p0, p1, p2, p3) => {
+      return [
+        poly3.create([p0, p2, p1]),
+        // base seen from p3
+        poly3.create([p0, p1, p3]),
+        // face opposite p2
+        poly3.create([p1, p2, p3]),
+        // face opposite p0
+        poly3.create([p2, p0, p3])
+        // face opposite p1
+      ];
+    }, "createTetrahedronPolygons");
+    var minkowskiSumConvex = /* @__PURE__ */ __name((geomA, geomB) => {
+      const pointsA = extractUniqueVertices(geomA);
+      const pointsB = extractUniqueVertices(geomB);
+      if (pointsA.length === 0 || pointsB.length === 0) {
+        return geom3.create();
+      }
+      const summedPoints = [];
+      for (let i = 0; i < pointsA.length; i++) {
+        const a = pointsA[i];
+        for (let j = 0; j < pointsB.length; j++) {
+          const b = pointsB[j];
+          summedPoints.push([a[0] + b[0], a[1] + b[1], a[2] + b[2]]);
+        }
+      }
+      const hullPolygons = hullPoints3(summedPoints);
+      return geom3.create(hullPolygons);
+    }, "minkowskiSumConvex");
+    var extractUniqueVertices = /* @__PURE__ */ __name((geometry) => {
+      const found = /* @__PURE__ */ new Set();
+      const unique = [];
+      const polygons = geom3.toPolygons(geometry);
+      for (let i = 0; i < polygons.length; i++) {
+        const vertices = polygons[i].vertices;
+        for (let j = 0; j < vertices.length; j++) {
+          const v = vertices[j];
+          const key = `${v[0]},${v[1]},${v[2]}`;
+          if (!found.has(key)) {
+            found.add(key);
+            unique.push(v);
+          }
+        }
+      }
+      return unique;
+    }, "extractUniqueVertices");
+    module.exports = minkowskiSum;
+  }
+});
+
 // node_modules/@jscad/modeling/src/operations/booleans/scissionGeom3.js
 var require_scissionGeom3 = __commonJS({
   "node_modules/@jscad/modeling/src/operations/booleans/scissionGeom3.js"(exports, module) {
@@ -11068,56 +11328,6 @@ var require_subtract4 = __commonJS({
   }
 });
 
-// node_modules/@jscad/modeling/src/operations/booleans/unionGeom3Sub.js
-var require_unionGeom3Sub = __commonJS({
-  "node_modules/@jscad/modeling/src/operations/booleans/unionGeom3Sub.js"(exports, module) {
-    var geom3 = require_geom3();
-    var mayOverlap = require_mayOverlap();
-    var { Tree } = require_trees();
-    var unionSub = /* @__PURE__ */ __name((geometry1, geometry2) => {
-      if (!mayOverlap(geometry1, geometry2)) {
-        return unionForNonIntersecting(geometry1, geometry2);
-      }
-      const a = new Tree(geom3.toPolygons(geometry1));
-      const b = new Tree(geom3.toPolygons(geometry2));
-      a.clipTo(b, false);
-      b.clipTo(a);
-      b.invert();
-      b.clipTo(a);
-      b.invert();
-      const newpolygons = a.allPolygons().concat(b.allPolygons());
-      const result = geom3.create(newpolygons);
-      return result;
-    }, "unionSub");
-    var unionForNonIntersecting = /* @__PURE__ */ __name((geometry1, geometry2) => {
-      let newpolygons = geom3.toPolygons(geometry1);
-      newpolygons = newpolygons.concat(geom3.toPolygons(geometry2));
-      return geom3.create(newpolygons);
-    }, "unionForNonIntersecting");
-    module.exports = unionSub;
-  }
-});
-
-// node_modules/@jscad/modeling/src/operations/booleans/unionGeom3.js
-var require_unionGeom3 = __commonJS({
-  "node_modules/@jscad/modeling/src/operations/booleans/unionGeom3.js"(exports, module) {
-    var flatten = require_flatten();
-    var retessellate = require_retessellate();
-    var unionSub = require_unionGeom3Sub();
-    var union = /* @__PURE__ */ __name((...geometries) => {
-      geometries = flatten(geometries);
-      let i;
-      for (i = 1; i < geometries.length; i += 2) {
-        geometries.push(unionSub(geometries[i - 1], geometries[i]));
-      }
-      let newgeometry = geometries[i - 1];
-      newgeometry = retessellate(newgeometry);
-      return newgeometry;
-    }, "union");
-    module.exports = union;
-  }
-});
-
 // node_modules/@jscad/modeling/src/operations/booleans/unionGeom2.js
 var require_unionGeom2 = __commonJS({
   "node_modules/@jscad/modeling/src/operations/booleans/unionGeom2.js"(exports, module) {
@@ -11167,6 +11377,7 @@ var require_booleans = __commonJS({
   "node_modules/@jscad/modeling/src/operations/booleans/index.js"(exports, module) {
     module.exports = {
       intersect: require_intersect2(),
+      minkowski: require_minkowskiSum(),
       scission: require_scission(),
       subtract: require_subtract4(),
       union: require_union()
@@ -12182,23 +12393,6 @@ var require_hullGeom2 = __commonJS({
   }
 });
 
-// node_modules/@jscad/modeling/src/operations/hulls/hullPoints3.js
-var require_hullPoints3 = __commonJS({
-  "node_modules/@jscad/modeling/src/operations/hulls/hullPoints3.js"(exports, module) {
-    var poly3 = require_poly3();
-    var quickhull = require_quickhull();
-    var hullPoints3 = /* @__PURE__ */ __name((uniquePoints) => {
-      const faces = quickhull(uniquePoints, { skipTriangulation: true });
-      const polygons = faces.map((face) => {
-        const vertices = face.map((index) => uniquePoints[index]);
-        return poly3.create(vertices);
-      });
-      return polygons;
-    }, "hullPoints3");
-    module.exports = hullPoints3;
-  }
-});
-
 // node_modules/@jscad/modeling/src/operations/hulls/hullGeom3.js
 var require_hullGeom3 = __commonJS({
   "node_modules/@jscad/modeling/src/operations/hulls/hullGeom3.js"(exports, module) {
@@ -12270,6 +12464,15 @@ var require_hulls = __commonJS({
       hullChain: require_hullChain(),
       hullPoints2: require_hullPoints2(),
       hullPoints3: require_hullPoints3()
+    };
+  }
+});
+
+// node_modules/@jscad/modeling/src/operations/minkowski/index.js
+var require_minkowski = __commonJS({
+  "node_modules/@jscad/modeling/src/operations/minkowski/index.js"(exports, module) {
+    module.exports = {
+      minkowskiSum: require_minkowskiSum()
     };
   }
 });
@@ -13101,6 +13304,7 @@ var require_index = __commonJS({
       expansions: require_expansions(),
       extrusions: require_extrusions(),
       hulls: require_hulls(),
+      minkowski: require_minkowski(),
       modifiers: require_modifiers(),
       transforms: require_transforms()
     };

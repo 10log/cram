@@ -1,3 +1,4 @@
+import { default as React } from 'react';
 interface Props {
     value: string;
     onChange: ({ value }: {
@@ -8,5 +9,5 @@ interface Props {
         label: string;
     }[];
 }
-export declare const PropertyRowSelect: ({ value, onChange, options }: Props) => import("react/jsx-runtime").JSX.Element;
+export declare const PropertyRowSelect: ({ value, onChange, options }: Props) => React.JSX.Element;
 export default PropertyRowSelect;

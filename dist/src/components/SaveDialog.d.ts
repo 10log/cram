@@ -1,2 +1,3 @@
-export declare const SaveDialog: () => import("react/jsx-runtime").JSX.Element;
+import { default as React } from 'react';
+export declare const SaveDialog: () => React.JSX.Element;
 export default SaveDialog;

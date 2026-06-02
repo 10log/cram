@@ -1,6 +1,6 @@
-import { l as B, u as k, r as T, n as X, E as D, o as j, q as N, x as z } from "./index-z72Pn19b.mjs";
+import { l as B, u as k, r as T, n as X, E as D, o as j, q as N, x as z } from "./index-BFvQmsdC.mjs";
 import { NearestFilter as y, ShaderMaterial as U, WebGLRenderTarget as A, FloatType as L, RGBAFormat as F, DataTexture as Y, ClampToEdgeWrapping as V, PlaneGeometry as P, MeshBasicMaterial as G, MeshLambertMaterial as O, DoubleSide as M, Mesh as W, UniformsUtils as q, UniformsLib as v, Color as K, Vector2 as E, UnsignedByteType as Q } from "three";
-import { S as J } from "./solver-BQ2ABuC5.mjs";
+import { S as J } from "./solver-n_4jebWv.mjs";
 class Z {
   /**
    * Constructs a new GPU computation renderer.
@@ -85,6 +85,7 @@ uniform sampler2D ` + p.name + `;
         const d = o.renderTargets;
         for (let c = 0; c < d.length; c++)
           d[c].dispose();
+        o.material.dispose();
       }
     };
     function h(s) {
@@ -824,4 +825,4 @@ export {
   C as FDTD_2D_Defaults,
   he as default
 };
-//# sourceMappingURL=index-3ZCjjNAV.mjs.map
+//# sourceMappingURL=index-BW8531Fo.mjs.map

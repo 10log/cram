@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { default as React, Component } from 'react';
 type Props = {
     data: any[];
     onUpdateCb: (updatedData: any, depth: number) => void;
@@ -32,12 +32,12 @@ declare class TreeViewComponent extends Component<Props, State> {
     handleCheckToggle(node: any, e: any): void;
     handleDelete(node: any): void;
     handleExpandToggle(node: any): void;
-    printCheckbox(node: any, ...args: any[]): import("react/jsx-runtime").JSX.Element | undefined;
-    printDeleteButton(node: any, ...args: any[]): import("react/jsx-runtime").JSX.Element | undefined;
-    printExpandButton(node: any, ...args: any[]): import("react/jsx-runtime").JSX.Element;
-    printNoChildrenMessage(): import("react/jsx-runtime").JSX.Element;
-    printNodes(nodeArray: any): import("react/jsx-runtime").JSX.Element;
-    printChildren(node: any): import("react/jsx-runtime").JSX.Element | null;
-    render(): import("react/jsx-runtime").JSX.Element;
+    printCheckbox(node: any, ...args: any[]): React.JSX.Element | undefined;
+    printDeleteButton(node: any, ...args: any[]): React.JSX.Element | undefined;
+    printExpandButton(node: any, ...args: any[]): React.JSX.Element;
+    printNoChildrenMessage(): React.JSX.Element;
+    printNodes(nodeArray: any): React.JSX.Element;
+    printChildren(node: any): React.JSX.Element | null;
+    render(): React.JSX.Element;
 }
 export default TreeViewComponent;

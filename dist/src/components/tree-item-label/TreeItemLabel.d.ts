@@ -6,5 +6,5 @@ export interface TreeItemLabelProps {
     meta?: string;
     onClick?: (e: ClickEvent) => void;
 }
-export default function TreeItemLabel(props: TreeItemLabelProps): import("react/jsx-runtime").JSX.Element;
+export default function TreeItemLabel(props: TreeItemLabelProps): React.JSX.Element;
 export {};

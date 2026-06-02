@@ -1,1 +1,2 @@
-export default function ObjectInspector(): import("react/jsx-runtime").JSX.Element | null;
+import { default as React } from 'react';
+export default function ObjectInspector(): React.JSX.Element | null;

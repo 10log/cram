@@ -4,5 +4,5 @@ export interface ContextMenuProps {
     items?: string[];
     children?: React.ReactNode;
 }
-export declare function ContextMenu(props: ContextMenuProps): import("react/jsx-runtime").JSX.Element;
+export declare function ContextMenu(props: ContextMenuProps): React.JSX.Element;
 export default ContextMenu;

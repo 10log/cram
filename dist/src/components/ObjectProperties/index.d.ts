@@ -1,3 +1,4 @@
+import { default as React } from 'react';
 export interface ObjectPropertyInputEvent {
     name: string;
     type: string;
@@ -5,5 +6,5 @@ export interface ObjectPropertyInputEvent {
     checked?: boolean;
     id?: string;
 }
-export declare const ObjectProperties: () => import("react/jsx-runtime").JSX.Element;
+export declare const ObjectProperties: () => React.JSX.Element;
 export default ObjectProperties;

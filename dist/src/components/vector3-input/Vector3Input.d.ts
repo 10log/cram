@@ -24,5 +24,5 @@ export default class Vector3Input extends React.Component<Vector3InputProps, Vec
     handleSubmit(event: React.FormEvent<HTMLFormElement>): void;
     handleWheel(event: React.WheelEvent<HTMLInputElement>): void;
     handleChange(): void;
-    render(): import("react/jsx-runtime").JSX.Element;
+    render(): React.JSX.Element;
 }

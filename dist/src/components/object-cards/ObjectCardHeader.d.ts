@@ -12,4 +12,4 @@ export interface ObjectCardHeaderProps {
     onMouseEnter?: () => void;
     onMouseLeave?: () => void;
 }
-export default function ObjectCardHeader({ name, kind, expanded, selected, visible, onToggle, onSelect, onVisibilityToggle, onNameChange, onMouseEnter, onMouseLeave, }: ObjectCardHeaderProps): import("react/jsx-runtime").JSX.Element;
+export default function ObjectCardHeader({ name, kind, expanded, selected, visible, onToggle, onSelect, onVisibilityToggle, onNameChange, onMouseEnter, onMouseLeave, }: ObjectCardHeaderProps): React.JSX.Element;

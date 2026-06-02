@@ -219,7 +219,7 @@ declare class RayTracer extends Solver {
     /** Destroy GPU ray tracer if initialized. */
     private _disposeGpu;
     get sources(): Container[];
-    get receivers(): THREE.Mesh<THREE.BufferGeometry<THREE.NormalBufferAttributes, THREE.BufferGeometryEventMap>, THREE.Material | THREE.Material[], THREE.Object3DEventMap>[];
+    get receivers(): THREE.Mesh<THREE.BufferGeometry<THREE.NormalBufferAttributes, THREE.BufferGeometryEventMap>, THREE.Material<THREE.MaterialEventMap> | THREE.Material<THREE.MaterialEventMap>[], THREE.Object3DEventMap>[];
     get room(): Room;
     get precheck(): boolean;
     get indexedPaths(): KVP<KVP<RayPath[]>>;

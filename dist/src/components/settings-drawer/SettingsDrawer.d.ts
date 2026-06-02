@@ -6,4 +6,4 @@ export interface SettingsDrawerProps {
     children?: React.ReactNode | React.ReactNode[];
     onSubmit?: (((event: React.MouseEvent<HTMLElement, MouseEvent>) => void) & ((event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void));
 }
-export default function SettingsDrawer(props: SettingsDrawerProps): import("react/jsx-runtime").JSX.Element;
+export default function SettingsDrawer(props: SettingsDrawerProps): React.JSX.Element;

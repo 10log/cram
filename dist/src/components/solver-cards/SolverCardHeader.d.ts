@@ -1,3 +1,4 @@
+import { default as React } from 'react';
 export interface SolverCardHeaderProps {
     name: string;
     kind: string;
@@ -10,4 +11,4 @@ export interface SolverCardHeaderProps {
     onDelete?: () => void;
     onDuplicate?: () => void;
 }
-export default function SolverCardHeader({ name, kind, expanded, canCalculate, isCalculating, onToggle, onCalculate, onClear, onDelete, onDuplicate, }: SolverCardHeaderProps): import("react/jsx-runtime").JSX.Element;
+export default function SolverCardHeader({ name, kind, expanded, canCalculate, isCalculating, onToggle, onCalculate, onClear, onDelete, onDuplicate, }: SolverCardHeaderProps): React.JSX.Element;

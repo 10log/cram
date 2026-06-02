@@ -9,7 +9,7 @@ export declare function stl(data: ArrayBuffer | string): Model[];
 export declare function obj(data: string): Model[];
 export declare function tga(data: ArrayBuffer): HTMLCanvasElement | ImageBitmap;
 export declare function dae(data: string): {
-    scene: THREE.Scene;
+    scene: THREE.Scene<THREE.Object3DEventMap>;
     animations?: undefined;
     kinematics?: undefined;
     library?: undefined;

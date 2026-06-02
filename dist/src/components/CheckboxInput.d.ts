@@ -14,5 +14,5 @@ export interface CheckboxInputProps {
     uncheckedNode?: React.ReactNode;
     onChange: (e: CheckboxChangeEvent) => void;
 }
-export declare function CheckboxInput(props: CheckboxInputProps): import("react/jsx-runtime").JSX.Element;
+export declare function CheckboxInput(props: CheckboxInputProps): React.JSX.Element;
 export default CheckboxInput;

@@ -1,3 +1,4 @@
+import { default as React } from 'react';
 export declare const PropertyButton: <T extends keyof EventTypes>({ args, event, label, tooltip, buttonLabel, disabled }: {
     args: EventTypes[T];
     event: T;
@@ -5,5 +6,5 @@ export declare const PropertyButton: <T extends keyof EventTypes>({ args, event,
     tooltip: string;
     buttonLabel?: string;
     disabled?: boolean;
-}) => import("react/jsx-runtime").JSX.Element;
+}) => React.JSX.Element;
 export default PropertyButton;

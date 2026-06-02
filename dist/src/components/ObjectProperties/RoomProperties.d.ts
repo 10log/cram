@@ -1,3 +1,4 @@
+import { default as React } from 'react';
 import { ObjectPropertyInputEvent } from '.';
 import { default as Room } from '../../objects/room';
 export interface RoomPropertiesProps {
@@ -6,4 +7,4 @@ export interface RoomPropertiesProps {
     onPropertyValueChangeAsNumber: (id: string, prop: string, valueAsNumber: number) => void;
     onPropertyValueChangeAsString: (id: string, prop: string, valueAsString: string) => void;
 }
-export default function RoomProperties(props: RoomPropertiesProps): import("react/jsx-runtime").JSX.Element;
+export default function RoomProperties(props: RoomPropertiesProps): React.JSX.Element;

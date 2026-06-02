@@ -7,4 +7,4 @@ export interface GridRowSeperatorProps {
     marginTop?: string;
     marginBottom?: string;
 }
-export default function GridRowSeperator(props: GridRowSeperatorProps): import("react/jsx-runtime").JSX.Element;
+export default function GridRowSeperator(props: GridRowSeperatorProps): React.JSX.Element;

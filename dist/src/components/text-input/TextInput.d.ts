@@ -10,5 +10,5 @@ export interface TextInputProps {
     style?: React.CSSProperties;
     onChange: (e: ObjectPropertyInputEvent) => void;
 }
-export declare function TextInput(props: TextInputProps): import("react/jsx-runtime").JSX.Element;
+export declare function TextInput(props: TextInputProps): React.JSX.Element;
 export default TextInput;

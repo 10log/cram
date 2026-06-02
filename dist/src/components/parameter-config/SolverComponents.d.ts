@@ -1,3 +1,4 @@
+import { default as React } from 'react';
 import { default as RayTracer } from '../../compute/raytracer';
 import { default as FDTD_2D } from '../../compute/2d-fdtd';
 import { AllowedNames } from '../../common/helpers';
@@ -21,11 +22,11 @@ type Props<T extends RayTracer | FDTD_2D | ImageSourceSolver | RT60 | EnergyDeca
         [key: string]: any;
     };
 };
-export declare const createPropertyInput: <T extends RayTracer | FDTD_2D | ImageSourceSolver | RT60 | EnergyDecay | ART | BeamTraceSolver>(event: SetPropertyEventTypes, Element: PropertyRowInputElement) => <K extends keyof T>({ uuid, property, label, tooltip, elementProps }: Props<T, K>) => import("react/jsx-runtime").JSX.Element;
+export declare const createPropertyInput: <T extends RayTracer | FDTD_2D | ImageSourceSolver | RT60 | EnergyDecay | ART | BeamTraceSolver>(event: SetPropertyEventTypes, Element: PropertyRowInputElement) => <K extends keyof T>({ uuid, property, label, tooltip, elementProps }: Props<T, K>) => React.JSX.Element;
 export declare const createPropertyInputs: <T extends RayTracer | FDTD_2D | ImageSourceSolver | RT60 | EnergyDecay | ART | BeamTraceSolver>(event: SetPropertyEventTypes) => {
-    PropertyTextInput: <K extends keyof T>({ uuid, property, label, tooltip, elementProps }: Props<T, K>) => import("react/jsx-runtime").JSX.Element;
-    PropertyNumberInput: <K extends keyof T>({ uuid, property, label, tooltip, elementProps }: Props<T, K>) => import("react/jsx-runtime").JSX.Element;
-    PropertyCheckboxInput: <K extends keyof T>({ uuid, property, label, tooltip, elementProps }: Props<T, K>) => import("react/jsx-runtime").JSX.Element;
+    PropertyTextInput: <K extends keyof T>({ uuid, property, label, tooltip, elementProps }: Props<T, K>) => React.JSX.Element;
+    PropertyNumberInput: <K extends keyof T>({ uuid, property, label, tooltip, elementProps }: Props<T, K>) => React.JSX.Element;
+    PropertyCheckboxInput: <K extends keyof T>({ uuid, property, label, tooltip, elementProps }: Props<T, K>) => React.JSX.Element;
 };
 export declare const PropertyButton: <T extends keyof EventTypes>({ args, event, label, tooltip, disabled, }: {
     args: EventTypes[T];
@@ -33,5 +34,5 @@ export declare const PropertyButton: <T extends keyof EventTypes>({ args, event,
     label: string;
     tooltip: string;
     disabled?: boolean;
-}) => import("react/jsx-runtime").JSX.Element;
+}) => React.JSX.Element;
 export {};

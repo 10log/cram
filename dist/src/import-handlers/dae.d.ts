@@ -7,7 +7,7 @@ import * as THREE from "three";
 export declare class DAELoader extends THREE.Loader {
     load(url: any, onLoad: any, onProgress: any, onError: any): void;
     parse(text: any, path: any): {
-        scene: THREE.Scene;
+        scene: THREE.Scene<THREE.Object3DEventMap>;
         animations?: undefined;
         kinematics?: undefined;
         library?: undefined;

@@ -18,7 +18,7 @@ export default class Model extends Container {
     mesh: THREE.Mesh;
     constructor(name: string, props: ModelProps);
     init(props: ModelProps, _fromConstructor?: boolean): void;
-    get vertexBuffer(): THREE.BufferAttribute | THREE.InterleavedBufferAttribute;
+    get vertexBuffer(): THREE.BufferAttribute<THREE.BufferAttributeEventMap> | THREE.InterleavedBufferAttribute;
     setVertexPosition(index: number, x: number, y: number, z: number): void;
     save(): ModelSaveObject;
     restore(state: ModelSaveObject): this;

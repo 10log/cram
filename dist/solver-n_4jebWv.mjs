@@ -1,4 +1,4 @@
-import { v as u } from "./index-z72Pn19b.mjs";
+import { v as u } from "./index-BFvQmsdC.mjs";
 class n {
   params;
   name;
@@ -40,4 +40,4 @@ class n {
 export {
   n as S
 };
-//# sourceMappingURL=solver-BQ2ABuC5.mjs.map
+//# sourceMappingURL=solver-n_4jebWv.mjs.map

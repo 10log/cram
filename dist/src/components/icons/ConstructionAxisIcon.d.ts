@@ -1,2 +1,3 @@
+import { default as React } from 'react';
 import { SvgIconProps } from '@mui/material';
-export declare function ConstructionAxisIcon(props: SvgIconProps): import("react/jsx-runtime").JSX.Element;
+export declare function ConstructionAxisIcon(props: SvgIconProps): React.JSX.Element;

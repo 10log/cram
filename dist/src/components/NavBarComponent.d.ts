@@ -1,3 +1,4 @@
+import { default as React } from 'react';
 type NavBarStore = {
     openMenu: string | null;
     anchorEl: HTMLElement | null;
@@ -5,11 +6,11 @@ type NavBarStore = {
     closeMenu: () => void;
 };
 export declare const useNavBarStore: import('zustand').UseBoundStore<import('zustand').StoreApi<NavBarStore>>;
-export declare function FileMenu(): import("react/jsx-runtime").JSX.Element;
-export declare function EditMenu(): import("react/jsx-runtime").JSX.Element;
-export declare function AddMenu(): import("react/jsx-runtime").JSX.Element;
-export declare function ViewMenu(): import("react/jsx-runtime").JSX.Element;
-export declare function ToolMenu(): import("react/jsx-runtime").JSX.Element;
-export declare function ExamplesMenu(): import("react/jsx-runtime").JSX.Element;
-export declare function NavBarComponent(): import("react/jsx-runtime").JSX.Element;
+export declare function FileMenu(): React.JSX.Element;
+export declare function EditMenu(): React.JSX.Element;
+export declare function AddMenu(): React.JSX.Element;
+export declare function ViewMenu(): React.JSX.Element;
+export declare function ToolMenu(): React.JSX.Element;
+export declare function ExamplesMenu(): React.JSX.Element;
+export declare function NavBarComponent(): React.JSX.Element;
 export default NavBarComponent;

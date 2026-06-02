@@ -6,4 +6,4 @@ export interface PropertyRowFolderProps {
     id?: string;
     onOpenClose: (id?: string) => void;
 }
-export default function PropertyRowFolder(props: PropertyRowFolderProps): import("react/jsx-runtime").JSX.Element;
+export default function PropertyRowFolder(props: PropertyRowFolderProps): React.JSX.Element;

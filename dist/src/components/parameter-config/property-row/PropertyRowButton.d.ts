@@ -7,4 +7,4 @@ export interface PropertyRowButtonProps {
     name?: string;
     [key: string]: unknown;
 }
-export default function PropertyRowButton({ label, onClick, disabled, ...rest }: PropertyRowButtonProps): import("react/jsx-runtime").JSX.Element;
+export default function PropertyRowButton({ label, onClick, disabled, ...rest }: PropertyRowButtonProps): React.JSX.Element;

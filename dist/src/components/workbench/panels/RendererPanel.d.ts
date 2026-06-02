@@ -5,5 +5,5 @@
  * before rendering RendererTab, since its hooks read renderer
  * properties that are only set during init().
  */
-export declare function RendererPanel(): import("react/jsx-runtime").JSX.Element | null;
+export declare function RendererPanel(): import("react").JSX.Element | null;
 export default RendererPanel;
