@@ -37,7 +37,7 @@ export declare const getContainerKeys: () => string[];
  */
 export declare const resetContainerStore: () => void;
 declare global {
-    type CallMethodArgs<T extends Object, K extends AllowedNames<T, Function>> = {
+    type CallMethodArgs<T extends object, K extends AllowedNames<T, Function>> = {
         uuid: string;
         method: K;
         isAsync?: boolean;

@@ -1,9 +1,4 @@
 import { Tree, PolygonTreeNode, Node } from './bsp';
-/**
- * CSG module using @jscad/modeling v2
- * This is a compatibility layer that provides the same API as the old @jscad/csg
- * based implementation, but uses the modern ES modules from @jscad/modeling.
- */
 export * from './v2';
 export { Tree, PolygonTreeNode, Node, splitPolygonByPlane, splitLineSegmentByPlane, } from './bsp';
 export declare const split: {

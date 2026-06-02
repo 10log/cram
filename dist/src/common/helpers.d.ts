@@ -144,8 +144,8 @@ export declare const fromEntries: <T extends [PropertyKey, any]>(entries: Iterab
  */
 export declare const addIfUnique: <T>(set: Set<T>) => (item: T) => false | Set<T>;
 export type Values<T> = T extends unknown[] ? T[number] : T[keyof T];
-export declare const pickProps: <T extends Object, K extends keyof T>(props: K[], obj: T) => { [key in K]: T[key]; };
-export declare const omit: <T extends Object, K extends keyof T>(props: K[], obj: T) => { [key in K]: T[key]; };
+export declare const pickProps: <T extends object, K extends keyof T>(props: K[], obj: T) => { [key in K]: T[key]; };
+export declare const omit: <T extends object, K extends keyof T>(props: K[], obj: T) => { [key in K]: T[key]; };
 export declare const ensureArray: <T>(value: T | T[]) => T[];
 export declare const curry: <T extends (...args: unknown[]) => unknown>(func: T) => (this: unknown, ...args: unknown[]) => unknown;
 export {};
