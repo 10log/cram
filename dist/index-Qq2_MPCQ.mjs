@@ -6626,68 +6626,68 @@ class Ps {
   }
 }
 var Cn = /* @__PURE__ */ ((r) => (r.PICKING_SURFACE = "PICKING_SURFACE", r.PICKING_SOURCE = "PICKING_SOURCE", r.PICKING_RECEIVER = "PICKING_RECEIVER", r.PICKING_PLANAR_SURFACE = "PICKING_PLANAR_SURFACE", r.PICKING_AXIS = "PICKING_AXIS", r.PICKING_VERTEX = "PICKING_VERTEX", r.SMOOTHING_CAMERA = "SMOOTHING_CAMERA", r.NONE = "NONE", r))(Cn || {});
-const E5 = `attribute vec3 color;\r
-varying vec3 vColor;\r
-uniform float pointScale;\r
-void main() {\r
-  vColor = color;\r
-  vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );\r
-  gl_PointSize = pointScale;\r
-  gl_Position = projectionMatrix * mvPosition;\r
-  \r
-}`, T5 = `varying vec3 vColor;\r
-vec3 hsl2rgb(vec3 c){\r
-    vec3 rgb = clamp( abs(mod(c.x*6.0+vec3(0.0,4.0,2.0),6.0)-3.0)-1.0, 0.0, 1.0 );\r
-\r
-    return c.z + c.y * (rgb-0.5)*(1.0-abs(2.0*c.z-1.0));\r
-}\r
-\r
-vec3 rgb2hsl( vec3 c ){\r
-  float h = 0.0;\r
-	float s = 0.0;\r
-	float l = 0.0;\r
-	float r = c.r;\r
-	float g = c.g;\r
-	float b = c.b;\r
-	float cMin = min( r, min( g, b ) );\r
-	float cMax = max( r, max( g, b ) );\r
-\r
-	l = ( cMax + cMin ) / 2.0;\r
-	if ( cMax > cMin ) {\r
-		float cDelta = cMax - cMin;\r
-        \r
-        //s = l < .05 ? cDelta / ( cMax + cMin ) : cDelta / ( 2.0 - ( cMax + cMin ) ); Original\r
-		s = l < .0 ? cDelta / ( cMax + cMin ) : cDelta / ( 2.0 - ( cMax + cMin ) );\r
-        \r
-		if ( r == cMax ) {\r
-			h = ( g - b ) / cDelta;\r
-		} else if ( g == cMax ) {\r
-			h = 2.0 + ( b - r ) / cDelta;\r
-		} else {\r
-			h = 4.0 + ( r - g ) / cDelta;\r
-		}\r
-\r
-		if ( h < 0.0) {\r
-			h += 6.0;\r
-		}\r
-		h = h / 6.0;\r
-	}\r
-	return vec3( h, s, l );\r
-}\r
-\r
-void main() {\r
-  // Render as circle/sphere instead of square\r
-  vec2 center = gl_PointCoord - vec2(0.5);\r
-  float dist = length(center);\r
-\r
-  // Discard pixels outside the circle\r
-  if (dist > 0.5) {\r
-    discard;\r
-  }\r
-\r
-  // Add slight shading for 3D sphere effect\r
-  float shade = 1.0 - dist * 0.5;\r
-  gl_FragColor = vec4(vColor * shade, 1.0);\r
+const E5 = `attribute vec3 color;
+varying vec3 vColor;
+uniform float pointScale;
+void main() {
+  vColor = color;
+  vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+  gl_PointSize = pointScale;
+  gl_Position = projectionMatrix * mvPosition;
+  
+}`, T5 = `varying vec3 vColor;
+vec3 hsl2rgb(vec3 c){
+    vec3 rgb = clamp( abs(mod(c.x*6.0+vec3(0.0,4.0,2.0),6.0)-3.0)-1.0, 0.0, 1.0 );
+
+    return c.z + c.y * (rgb-0.5)*(1.0-abs(2.0*c.z-1.0));
+}
+
+vec3 rgb2hsl( vec3 c ){
+  float h = 0.0;
+	float s = 0.0;
+	float l = 0.0;
+	float r = c.r;
+	float g = c.g;
+	float b = c.b;
+	float cMin = min( r, min( g, b ) );
+	float cMax = max( r, max( g, b ) );
+
+	l = ( cMax + cMin ) / 2.0;
+	if ( cMax > cMin ) {
+		float cDelta = cMax - cMin;
+        
+        //s = l < .05 ? cDelta / ( cMax + cMin ) : cDelta / ( 2.0 - ( cMax + cMin ) ); Original
+		s = l < .0 ? cDelta / ( cMax + cMin ) : cDelta / ( 2.0 - ( cMax + cMin ) );
+        
+		if ( r == cMax ) {
+			h = ( g - b ) / cDelta;
+		} else if ( g == cMax ) {
+			h = 2.0 + ( b - r ) / cDelta;
+		} else {
+			h = 4.0 + ( r - g ) / cDelta;
+		}
+
+		if ( h < 0.0) {
+			h += 6.0;
+		}
+		h = h / 6.0;
+	}
+	return vec3( h, s, l );
+}
+
+void main() {
+  // Render as circle/sphere instead of square
+  vec2 center = gl_PointCoord - vec2(0.5);
+  float dist = length(center);
+
+  // Discard pixels outside the circle
+  if (dist > 0.5) {
+    discard;
+  }
+
+  // Add slight shading for 3D sphere effect
+  float shade = 1.0 - dist * 0.5;
+  gl_FragColor = vec4(vColor * shade, 1.0);
 }`, Jo = {
   vs: E5,
   fs: T5
@@ -9151,11 +9151,11 @@ async function z0(r, e, t) {
   return n(e, t);
 }
 cr("ray-tracer", async (r, e) => {
-  const { default: t } = await import("./index-BRvUvRRt.mjs");
+  const { default: t } = await import("./index-a8ABa3D6.mjs");
   return new t(e);
 });
 cr("image-source", async (r, e) => {
-  const { ImageSourceSolver: t } = await import("./index-CuAv3Rmc.mjs"), n = {
+  const { ImageSourceSolver: t } = await import("./index-pGth8rrN.mjs"), n = {
     name: "Image Source",
     roomID: "",
     sourceIDs: [],
@@ -9170,23 +9170,23 @@ cr("image-source", async (r, e) => {
   return new t(n);
 });
 cr("rt60", async (r, e) => {
-  const { default: t } = await import("./index-dM2ymI2e.mjs");
+  const { default: t } = await import("./index-CmdGxy6U.mjs");
   return new t();
 });
 cr("energydecay", async (r, e) => {
-  const { default: t } = await import("./energy-decay-K6TswLlB.mjs");
+  const { default: t } = await import("./energy-decay-CNNLZrI2.mjs");
   return new t();
 });
 cr("fdtd-2d", async (r, e) => {
-  const { default: t } = await import("./index-BRMOKi5R.mjs");
+  const { default: t } = await import("./index-BESMEO9P.mjs");
   return new t();
 });
 cr("beam-trace", async (r, e) => {
-  const { BeamTraceSolver: t } = await import("./index-Fw1SGP0R.mjs");
+  const { BeamTraceSolver: t } = await import("./index-Digb27bB.mjs");
   return new t();
 });
 cr("art", async (r, e) => {
-  const { ART: t } = await import("./art-CE5jaA7e.mjs");
+  const { ART: t } = await import("./art-DvoMZr7c.mjs");
   return new t();
 });
 class f9 extends ns {
@@ -16056,23 +16056,23 @@ function ym() {
 async function Sm(r, e) {
   switch (r) {
     case "ray-tracer": {
-      const { default: t } = await import("./index-BRvUvRRt.mjs");
+      const { default: t } = await import("./index-a8ABa3D6.mjs");
       return new t(e).restore(e);
     }
     case "rt60": {
-      const { default: t } = await import("./index-dM2ymI2e.mjs");
+      const { default: t } = await import("./index-CmdGxy6U.mjs");
       return new t().restore(e);
     }
     case "art": {
-      const { default: t } = await import("./art-CE5jaA7e.mjs");
+      const { default: t } = await import("./art-DvoMZr7c.mjs");
       return new t(e).restore(e);
     }
     case "image-source": {
-      const { default: t } = await import("./index-CuAv3Rmc.mjs");
+      const { default: t } = await import("./index-pGth8rrN.mjs");
       return new t(e).restore(e);
     }
     case "beam-trace": {
-      const { BeamTraceSolver: t } = await import("./index-Fw1SGP0R.mjs");
+      const { BeamTraceSolver: t } = await import("./index-Digb27bB.mjs");
       return new t().restore(e);
     }
     default:
@@ -16080,7 +16080,7 @@ async function Sm(r, e) {
   }
 }
 function Cm() {
-  import("./events-SjP1U8xN.mjs").then((r) => r.default()), ae("LOG_SOLVER", (r) => {
+  import("./events-DXfTEULZ.mjs").then((r) => r.default()), ae("LOG_SOLVER", (r) => {
     console.log(lt.getState().solvers[r]);
   }), ae("REMOVE_SOLVERS", (r) => {
     const e = lt.getState().solvers, t = typeof r == "string" ? [r] : r;
@@ -22691,4 +22691,4 @@ export {
   Sb as y,
   Lu as z
 };
-//# sourceMappingURL=index--vKOn3aE.mjs.map
+//# sourceMappingURL=index-Qq2_MPCQ.mjs.map
