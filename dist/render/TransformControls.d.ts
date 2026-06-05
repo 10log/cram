@@ -1,4 +1,6 @@
 import { Object3D, Camera } from 'three';
+
+
 export class TransformControls {
   constructor(camera: Camera, domElement?: HTMLElement | null);
 

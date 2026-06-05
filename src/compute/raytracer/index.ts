@@ -2023,6 +2023,15 @@ class RayTracer extends Solver {
     return this.running;
   }
   set isRunning(isRunning: boolean) {
+    // Re-map room/source/receiver IDs from the live scene before checking
+    // precheck. A project loaded from a save or built-in example restores the
+    // solver without re-running findIDs(), so this.roomID can point at a stale
+    // container and `this.room` resolves to undefined — making precheck (and
+    // therefore the whole run) silently fail with 0 valid rays. Re-scanning the
+    // current containers here makes Run robust right after a restore.
+    if (isRunning) {
+      this.findIDs();
+    }
     this.running = this.precheck && isRunning;
     if (this.running) {
       this.start();
