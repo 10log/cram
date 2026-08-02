@@ -85,7 +85,7 @@
     "fast-fuzzy": "^1.9.1",
     "fast-sort": "^3.4.1",
     "file-saver": "^2.0.2",
-    "flexlayout-react": "^0.9.1",
+    "flexlayout-react": "^0.10.0",
     "hotkeys-js": "^4.0.4",
     "immer": "^11.1.0",
     "lodash": "^4.17.21",
