@@ -8,7 +8,7 @@ import { Group } from '@visx/group';
 import { scaleLinear } from '@visx/scale';
 import { AxisBottom, AxisLeft } from '@visx/axis';
 import { Grid } from '@visx/grid';
-import ParentSize from '@visx/responsive/lib/components/ParentSize';
+import { ParentSize } from '@visx/responsive';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Slider from '@mui/material/Slider';

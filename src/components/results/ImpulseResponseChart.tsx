@@ -11,7 +11,7 @@ import type { SxProps, Theme } from "@mui/material/styles";
 import { Result, ResultKind, useResult } from "../../store/result-store";
 import { pickProps } from "../../common/helpers";
 import { on } from "../../messenger";
-import ParentSize from "@visx/responsive/lib/components/ParentSize";
+import { ParentSize } from "@visx/responsive";
 
 export type ImpulseResponseChartProps = {
   uuid: string;
