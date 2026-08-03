@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { Font } from "three/examples/jsm/loaders/FontLoader.js";
 import PickHelper from "../pick-helper";
-import fontjson from "three/examples/fonts/helvetiker_regular.typeface.json";
+import fontjson from "./helvetiker_regular.typeface.json";
 import Container from '../../objects/container';
 import { v4 as uuid } from 'uuid';
 import {helperArrow} from './helper-arrows';
