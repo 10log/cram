@@ -38,6 +38,7 @@ export default defineConfig(({ command, mode }) => {
         // Output lands under dist/src/** (entry -> dist/src/lib/index.d.ts),
         // which package.json "types"/"exports" point at.
         dts({
+          entryRoot: '.',
           include: ['src'],
           exclude: [
             'src/**/*.spec.ts',
