@@ -24,6 +24,7 @@ import { CanvasPanel } from './panels/CanvasPanel';
 import { ObjectsPanel } from './panels/ObjectsPanel';
 import { SolversPanel } from './panels/SolversPanel';
 import { RendererPanel } from './panels/RendererPanel';
+import { SketchPanel } from './panels/SketchPanel';
 import { ResultsPanelWrapper } from './panels/ResultsPanelWrapper';
 
 import storage from '../../lib/storage';
@@ -69,6 +70,8 @@ export function WorkbenchLayout() {
         return <SolversPanel />;
       case 'RendererPanel':
         return <RendererPanel />;
+      case 'SketchPanel':
+        return <SketchPanel />;
       case 'ResultsPanel':
         return <ResultsPanelWrapper />;
       default:

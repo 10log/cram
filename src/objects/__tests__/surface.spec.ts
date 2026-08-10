@@ -238,6 +238,49 @@ describe('Surface', () => {
     });
   });
 
+  describe('mesh face id', () => {
+    // Persisted so a reloaded project can still be reconciled against its
+    // RoomMesh; without it a restored room renders but cannot be edited.
+    const build = () =>
+      new Surface('Test', {
+        geometry: createMockGeometry(),
+        acousticMaterial: mockAcousticMaterial,
+      });
+
+    it('is omitted for a surface that has none', () => {
+      expect(build().save().faceId).toBeUndefined();
+    });
+
+    it('is dropped by JSON when absent, leaving old saves unchanged', () => {
+      const saved = JSON.parse(JSON.stringify(build().save()));
+      expect('faceId' in saved).toBe(false);
+    });
+
+    it('is saved when the surface carries one', () => {
+      const surface = build();
+      surface.userData.cramFaceId = 'wall-2';
+      expect(surface.save().faceId).toBe('wall-2');
+    });
+
+    it('is restored from a save object', () => {
+      const surface = build();
+      surface.userData.cramFaceId = 'ceiling';
+      const saved = JSON.parse(JSON.stringify(surface.save()));
+
+      const revived = new Surface('Revived');
+      revived.restore(saved);
+
+      expect(revived.userData.cramFaceId).toBe('ceiling');
+    });
+
+    it('leaves a restored surface untagged when the save has no faceId', () => {
+      const saved = JSON.parse(JSON.stringify(build().save()));
+      const revived = new Surface('Revived');
+      revived.restore(saved);
+      expect(revived.userData.cramFaceId).toBeUndefined();
+    });
+  });
+
   describe('save', () => {
     it('returns a serializable object', () => {
       const geometry = createMockGeometry();

@@ -17,6 +17,7 @@ import {scatteringFunction} from '../compute/acoustics/scattering-function';
 import { TessellateModifier } from "../compute/radiance/TessellateModifier";
 import { Float32BufferAttribute } from "three";
 import SurfaceElement from "./surface-element";
+import { getFaceId, setFaceId } from "./mesh-userdata";
 
 /** Vector3 as an array (i.e. [x,y,z]) */
 export type Vector3A = [number, number, number];
@@ -184,6 +185,8 @@ export interface SurfaceSaveObject {
   fillSurface: boolean;
   displayVertexNormals: boolean;
   scatteringCoefficient: number;
+  /** Set when this Surface represents a face of an editable RoomMesh. */
+  faceId?: string;
 }
 
 interface KeepLine {
@@ -436,7 +439,10 @@ class Surface extends Container {
       position: this.position.toArray(),
       rotation: this.rotation.toArray().slice(0, 3) as [number, number, number],
       scale: this.scale.toArray(),
-      uuid: this.uuid
+      uuid: this.uuid,
+      // Undefined for imported surfaces; JSON.stringify drops it, so old and
+      // non-sketched save files are unaffected.
+      faceId: getFaceId(this)
     } as SurfaceSaveObject;
   }
 
@@ -458,6 +464,7 @@ class Surface extends Container {
     this.position.set(surfaceState.position[0], surfaceState.position[1], surfaceState.position[2]);
     this.rotation.set(surfaceState.rotation[0], surfaceState.rotation[1], surfaceState.rotation[2], "XYZ");
     this.scale.set(surfaceState.scale[0], surfaceState.scale[1], surfaceState.scale[2]);
+    if (surfaceState.faceId) setFaceId(this, surfaceState.faceId);
     return this;
   }
   select() {

@@ -60,6 +60,14 @@ export const DEFAULT_LAYOUT: IJsonModel = {
           enableClose: false,
           enablePopout: false,
         },
+        {
+          type: 'tab',
+          id: 'sketch',
+          name: 'Sketch',
+          component: 'SketchPanel',
+          enableClose: false,
+          enablePopout: false,
+        },
       ],
     },
   ],
@@ -118,5 +126,6 @@ export const PANEL_IDS = {
   OBJECTS: 'objects',
   SOLVERS: 'solvers',
   RENDERER: 'renderer',
+  SKETCH: 'sketch',
   RESULTS: 'results',
 } as const;

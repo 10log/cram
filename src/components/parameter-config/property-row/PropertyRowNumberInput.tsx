@@ -34,9 +34,12 @@ interface Props {
   step?: number;
   min?: number;
   max?: number;
+  /** Applied to the underlying input, for form semantics and testing. */
+  name?: string;
+  disabled?: boolean;
 }
 
-export const PropertyRowNumberInput = ({ value, onChange, step = 1, min, max }: Props) => {
+export const PropertyRowNumberInput = ({ value, onChange, step = 1, min, max, name, disabled }: Props) => {
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Store latest values in refs so the wheel handler always has current values
@@ -45,6 +48,7 @@ export const PropertyRowNumberInput = ({ value, onChange, step = 1, min, max }: 
   const minRef = useRef(min);
   const maxRef = useRef(max);
   const onChangeRef = useRef(onChange);
+  const disabledRef = useRef(disabled);
 
   // Keep refs in sync
   valueRef.current = value;
@@ -52,6 +56,7 @@ export const PropertyRowNumberInput = ({ value, onChange, step = 1, min, max }: 
   minRef.current = min;
   maxRef.current = max;
   onChangeRef.current = onChange;
+  disabledRef.current = disabled;
 
   // Use non-passive wheel listener to allow preventDefault
   useEffect(() => {
@@ -59,6 +64,7 @@ export const PropertyRowNumberInput = ({ value, onChange, step = 1, min, max }: 
     if (!input) return;
 
     const handleWheel = (e: WheelEvent) => {
+      if (disabledRef.current) return;
       e.preventDefault();
       const delta = e.deltaY < 0 ? stepRef.current : -stepRef.current;
       let newValue = valueRef.current + delta;
@@ -91,11 +97,13 @@ export const PropertyRowNumberInput = ({ value, onChange, step = 1, min, max }: 
       variant="outlined"
       value={value}
       onChange={handleChange}
+      disabled={disabled}
       slotProps={{
         htmlInput: {
           step,
           min,
           max,
+          name,
         },
       }}
       sx={numberInputSx}
