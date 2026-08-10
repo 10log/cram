@@ -1,7 +1,23 @@
 /* @import url(https://fonts.googleapis.com/css?family=Roboto:300,400,500&display=swap); */
-@import url(https://fonts.googleapis.com/css?family=Lato:300,400,700,300italic,400italic);
+
+/*
+ * The UI font stack, matching the MUI theme so unstyled elements agree with
+ * Typography.
+ *
+ * This previously pulled Lato from Google Fonts and declared `font-family:
+ * "Lato"` with no fallback. Host apps block that request under their CSP, so
+ * Lato never arrived and every element the rules below match fell back to the
+ * browser default — a serif face — while MUI components kept the sans stack.
+ * That is what produced serif flexlayout tab labels, "No Results Yet!" and the
+ * Heap/FPS readout over the canvas.
+ */
+:root {
+  --cram-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+}
+
 .App {
-  font-family: "Lato", sans-serif;
+  font-family: var(--cram-font-family);
   text-align: center;
 }
 body {
@@ -17,7 +33,7 @@ body {
 }
 
 * {
-  font-family: "Lato";
+  font-family: var(--cram-font-family);
 }
 
 #renderer-canvas{

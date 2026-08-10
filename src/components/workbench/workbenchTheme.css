@@ -11,7 +11,18 @@
 /* Font and sizing to match MUI compact theme */
 .flexlayout__layout {
   --font-size: 13px;
-  --font-family: 'Segoe UI', 'Roboto', 'Arial', sans-serif;
+  /* Shares the app-wide stack from css/styles.css, with a literal fallback in
+     case flexlayout's styles are consumed without it. */
+  --font-family: var(
+    --cram-font-family,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Arial,
+    sans-serif
+  );
   /* v0.9 replaced the global `splitterSize` model attribute with a CSS var */
   --splitter-size: 4px;
 }
