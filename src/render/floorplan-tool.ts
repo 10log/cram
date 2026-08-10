@@ -29,7 +29,15 @@ import type { Point2 } from '../compute/geometry/floorplan';
 
 export interface FloorplanToolOptions {
   domElement: HTMLElement;
-  camera: THREE.Camera;
+  /**
+   * The viewport camera, or a getter for it.
+   *
+   * Renderer.setOrtho *replaces* renderer.camera with a new instance when the
+   * projection is toggled, so a tool holding the original would keep
+   * raycasting through a camera the user can no longer see. Pass a getter to
+   * stay current.
+   */
+  camera: THREE.Camera | (() => THREE.Camera);
   /** Where preview objects are parented — typically the renderer's overlay group. */
   parent: THREE.Object3D;
   /** Elevation of the drawing plane. Defaults to 0. */
@@ -64,7 +72,7 @@ function isEditableTarget(target: EventTarget | null): boolean {
 
 export class FloorplanTool {
   private readonly domElement: HTMLElement;
-  private readonly camera: THREE.Camera;
+  private readonly getCamera: () => THREE.Camera;
   private readonly parent: THREE.Object3D;
   private readonly baseZ: number;
   private readonly plane: THREE.Plane;
@@ -83,7 +91,8 @@ export class FloorplanTool {
 
   constructor(options: FloorplanToolOptions) {
     this.domElement = options.domElement;
-    this.camera = options.camera;
+    this.getCamera =
+      typeof options.camera === 'function' ? options.camera : () => options.camera as THREE.Camera;
     this.parent = options.parent;
     this.baseZ = options.baseZ ?? 0;
     this.settings = { ...DEFAULT_SNAP, ...options.settings };
@@ -194,7 +203,7 @@ export class FloorplanTool {
       -((event.clientY - rect.top) / rect.height) * 2 + 1
     );
 
-    this.raycaster.setFromCamera(ndc, this.camera);
+    this.raycaster.setFromCamera(ndc, this.getCamera());
 
     const ray = this.raycaster.ray;
     if (Math.abs(ray.direction.dot(this.plane.normal)) < MIN_RAY_PLANE_COS) return null;

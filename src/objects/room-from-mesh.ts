@@ -120,11 +120,25 @@ export function syncRoomFromMesh(
     mesh.faces.map((f) => f.id)
   );
 
+  // Every geometry is built before anything is mutated. A face that
+  // triangulates to nothing — a vertex dragged until its face is degenerate —
+  // leaves Surface.init dereferencing `_triangles[0]`, and failing halfway
+  // through would leave the room in a half-reconciled state.
+  const geometries = new Map<FaceId, THREE.BufferGeometry>();
+  for (const face of mesh.faces) {
+    const geometry = geometryForFace(mesh, face);
+    if ((geometry.getAttribute('position')?.count ?? 0) === 0) {
+      geometries.forEach((g) => g.dispose());
+      geometry.dispose();
+      throw new Error(`face "${face.id}" produced no triangles — the outline is degenerate`);
+    }
+    geometries.set(face.id, geometry);
+  }
+
   for (const id of plan.updated) {
     const surface = byFaceId.get(id)!;
-    const face = findFace(mesh, id)!;
     surface.init({
-      geometry: geometryForFace(mesh, face),
+      geometry: geometries.get(id)!,
       acousticMaterial: surface.acousticMaterial,
     });
     setFaceId(surface, id);
@@ -132,7 +146,11 @@ export function syncRoomFromMesh(
 
   for (const id of plan.added) {
     const face = findFace(mesh, id)!;
-    const surface = surfaceForFace(mesh, face, options.acousticMaterial);
+    const surface = new Surface(face.name, {
+      geometry: geometries.get(id)!,
+      acousticMaterial: options.acousticMaterial,
+    });
+    setFaceId(surface, id);
     room.surfaces.add(surface);
     emit('ADD_SURFACE', surface);
   }
@@ -146,6 +164,11 @@ export function syncRoomFromMesh(
   // Keep the Room's record current, so the next diff is against what is
   // actually on screen. This is also what lets undo/redo be a plain re-sync.
   setRoomMesh(room, mesh);
+
+  // Room caches surfaceMap, boundingBox and volume at init time. Reconciling
+  // surfaces behind its back leaves all three stale — surfaceMap fatally so,
+  // since the raytracer indexes it for every hit.
+  room.refreshDerivedGeometry();
 
   return plan;
 }

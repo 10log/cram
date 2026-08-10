@@ -18,6 +18,7 @@ import {
   isRoomMesh,
   setFaceId,
   setRoomMesh,
+  faceIdsAreConsistent,
 } from '../mesh-userdata';
 import { floorplanToMesh, type Point2 } from '../../compute/geometry/floorplan';
 import { applyEdit, faceNormal, findFace } from '../../compute/geometry/room-mesh';
@@ -210,5 +211,32 @@ describe('surviving a save file', () => {
     const revived = roundTrip(mesh()) as ReturnType<typeof mesh>;
     const moved = applyEdit(revived, { kind: 'move-vertex', id: 0, to: [-2, -2, 0] });
     expect(moved.vertices[0]).toEqual([-2, -2, 0]);
+  });
+});
+
+describe('faceIdsAreConsistent', () => {
+  const tagged = (...ids: (string | undefined)[]) =>
+    ids.map((id) => (id === undefined ? { userData: {} } : { userData: { [FACE_ID_KEY]: id } }));
+
+  it('accepts one surface per face', () => {
+    expect(faceIdsAreConsistent(tagged('floor', 'ceiling', 'wall-0'))).toBe(true);
+  });
+
+  it('rejects two surfaces claiming the same face', () => {
+    // The reconciler would update one and leave the other overlapping it.
+    expect(faceIdsAreConsistent(tagged('floor', 'wall-0', 'floor'))).toBe(false);
+  });
+
+  it('tolerates untagged surfaces', () => {
+    expect(faceIdsAreConsistent(tagged('floor', undefined, 'wall-0'))).toBe(true);
+  });
+
+  it('tolerates faces with no surface, since deleting a wall is legitimate', () => {
+    // Fewer surfaces than mesh faces is fine — the reconciler restores them.
+    expect(faceIdsAreConsistent(tagged('floor'))).toBe(true);
+  });
+
+  it('accepts an empty room', () => {
+    expect(faceIdsAreConsistent([])).toBe(true);
   });
 });

@@ -17,6 +17,7 @@ import {
   type Vec3,
 } from '../room-mesh';
 import { floorplanToMesh, type Point2 } from '../floorplan';
+import { floorplanSource } from '../room-mesh';
 
 const SHOEBOX: Point2[] = [
   { x: 0, y: 0 },
@@ -209,5 +210,60 @@ describe('applyEdit — set-floorplan', () => {
     expect(() =>
       applyEdit(shoebox(), { kind: 'set-floorplan', params: { points: SHOEBOX, height: 0 } })
     ).toThrow(/invalid floorplan/);
+  });
+});
+
+describe('floorplanSource', () => {
+  it('returns the plan for a floorplan-sourced mesh', () => {
+    const source = floorplanSource(shoebox(3))!;
+    expect(source.detached).toBe(false);
+    expect(source.params.height).toBe(3);
+  });
+
+  it('returns null for a manual mesh', () => {
+    expect(floorplanSource({ vertices: [], faces: [], source: { kind: 'manual' } })).toBeNull();
+  });
+
+  describe('malformed provenance, which would crash the panel', () => {
+    // draftFromPoints dereferences p.x, so anything that slips through here
+    // takes the Sketch panel down instead of leaving the room non-editable.
+    const withParams = (params: unknown): RoomMesh =>
+      ({
+        vertices: [],
+        faces: [],
+        source: { kind: 'floorplan', params, detached: false },
+      }) as unknown as RoomMesh;
+
+    it.each([
+      ['a NaN height', { points: SHOEBOX, height: NaN }],
+      ['an infinite height', { points: SHOEBOX, height: Infinity }],
+      ['a NaN baseZ', { points: SHOEBOX, height: 3, baseZ: NaN }],
+      ['a null point', { points: [null], height: 3 }],
+      ['a point missing y', { points: [{ x: 1 }], height: 3 }],
+      ['a NaN coordinate', { points: [{ x: NaN, y: 0 }], height: 3 }],
+      ['no params at all', undefined],
+      ['points that are not an array', { points: 'nope', height: 3 }],
+    ])('returns null for %s', (_name, params) => {
+      expect(floorplanSource(withParams(params))).toBeNull();
+    });
+  });
+});
+
+describe('applyEdit — move-vertex destination validation', () => {
+  it.each([
+    ['NaN', [NaN, 0, 0]],
+    ['Infinity', [0, Infinity, 0]],
+    ['too few components', [0, 0]],
+  ])('rejects a destination containing %s', (_name, to) => {
+    expect(() =>
+      applyEdit(shoebox(), { kind: 'move-vertex', id: 0, to: to as Vec3 })
+    ).toThrow(TypeError);
+  });
+
+  it('leaves the mesh untouched when the destination is rejected', () => {
+    const mesh = shoebox();
+    const before = JSON.stringify(mesh);
+    expect(() => applyEdit(mesh, { kind: 'move-vertex', id: 0, to: [NaN, 0, 0] })).toThrow();
+    expect(JSON.stringify(mesh)).toBe(before);
   });
 });

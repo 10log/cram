@@ -70,6 +70,8 @@ export class FakeRoom {
   uuid = `room-${Math.random().toString(36).slice(2)}`;
   userData: Record<string, unknown> = {};
   surfaces = new FakeSurfaceChildren();
+  surfaceMap: Record<string, FakeSurface> = {};
+  derivedRefreshCount = 0;
 
   constructor(name: string, props?: { surfaces: FakeSurface[] }) {
     this.name = name;
@@ -78,6 +80,12 @@ export class FakeRoom {
 
   get allSurfaces() {
     return this.surfaces.children;
+  }
+
+  /** Mirrors the real Room, which caches fields derived from its surfaces. */
+  refreshDerivedGeometry() {
+    this.derivedRefreshCount += 1;
+    this.surfaceMap = Object.fromEntries(this.allSurfaces.map((s) => [s.uuid, s]));
   }
 
   /** Find a surface by the face id the adapter tagged it with. */

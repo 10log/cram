@@ -93,6 +93,11 @@ export function applyEdit(mesh: RoomMesh, edit: MeshEdit): RoomMesh {
           `move-vertex: no vertex ${edit.id} (mesh has ${mesh.vertices.length})`
         );
       }
+      // A non-finite destination would poison every face touching this vertex
+      // and only surface much later, as NaN vertices in a BufferGeometry.
+      if (!edit.to || edit.to.length !== 3 || !edit.to.every((n) => Number.isFinite(n))) {
+        throw new TypeError(`move-vertex: destination must be three finite numbers`);
+      }
       const vertices = mesh.vertices.map(
         (v, i): Vec3 => (i === edit.id ? [edit.to[0], edit.to[1], edit.to[2]] : v)
       );
@@ -154,7 +159,15 @@ export function floorplanSource(
   if (!source || source.kind !== 'floorplan') return null;
 
   const params = source.params;
-  if (!params || !Array.isArray(params.points) || typeof params.height !== 'number') return null;
+  if (!params || !Array.isArray(params.points)) return null;
+
+  // `typeof NaN === 'number'`, so a shape-only check lets NaN through, and
+  // unchecked entries let `points: [null]` through. Either reaches
+  // draftFromPoints, which dereferences `p.x` and takes the panel down —
+  // the opposite of leaving the room quietly non-editable.
+  if (!Number.isFinite(params.height)) return null;
+  if (params.baseZ !== undefined && !Number.isFinite(params.baseZ)) return null;
+  if (!params.points.every((p) => p && Number.isFinite(p.x) && Number.isFinite(p.y))) return null;
 
   return { params, detached: source.detached === true };
 }

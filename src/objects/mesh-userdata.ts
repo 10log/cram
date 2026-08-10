@@ -83,3 +83,26 @@ export function isRoomMesh(value: unknown): value is RoomMesh {
       f.loop.every((i) => Number.isInteger(i) && i >= 0 && i < vertexCount)
   );
 }
+
+/**
+ * Whether a room's surfaces can be reconciled against a mesh.
+ *
+ * Two surfaces claiming the same face is corruption: the reconciler would
+ * update one and leave the other overlapping it, giving duplicate coincident
+ * geometry and wrong ray intersections.
+ *
+ * Faces with no surface are deliberately tolerated — deleting a wall from the
+ * object tree is a legitimate thing to have done, and the reconciler puts it
+ * back on the next edit. Rejecting that would make a room permanently
+ * non-editable after an ordinary action.
+ */
+export function faceIdsAreConsistent(surfaces: HasUserData[]): boolean {
+  const seen = new Set<FaceId>();
+  for (const surface of surfaces) {
+    const id = getFaceId(surface);
+    if (id === undefined) continue;
+    if (seen.has(id)) return false;
+    seen.add(id);
+  }
+  return true;
+}

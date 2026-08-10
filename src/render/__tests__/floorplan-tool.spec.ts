@@ -145,6 +145,34 @@ describe('screenToGround', () => {
   });
 });
 
+describe('camera replacement', () => {
+  // Renderer.setOrtho swaps renderer.camera for a new instance, so a tool
+  // holding the original would keep raycasting through an invisible camera.
+  it('follows a camera getter when the camera is replaced', () => {
+    let current = makeCamera();
+    const following = makeTool({ camera: () => current });
+
+    const before = following.screenToGround({ clientX: SIZE, clientY: 0 })!;
+    expect(before.x).toBeCloseTo(5);
+
+    // A wider frustum, as a projection toggle would produce.
+    const wider = new THREE.OrthographicCamera(-10, 10, 10, -10, 0.1, 100);
+    wider.position.set(0, 0, 10);
+    wider.lookAt(0, 0, 0);
+    wider.updateMatrixWorld(true);
+    current = wider;
+
+    const after = following.screenToGround({ clientX: SIZE, clientY: 0 })!;
+    expect(after.x).toBeCloseTo(10);
+    following.dispose();
+  });
+
+  it('still accepts a plain camera', () => {
+    tool = makeTool({ camera: makeCamera() });
+    expect(tool.screenToGround({ clientX: 50, clientY: 50 })!.x).toBeCloseTo(0);
+  });
+});
+
 describe('pointer interaction', () => {
   beforeEach(() => {
     tool = makeTool();

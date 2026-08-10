@@ -269,3 +269,67 @@ describe('syncRoomFromMesh', () => {
     expect(fake.allSurfaces).toHaveLength(6);
   });
 });
+
+describe('keeping Room derived state current', () => {
+  // Room caches surfaceMap/boundingBox/volume at init. surfaceMap is indexed
+  // for every ray hit, so a surface missing from it fails a solve.
+  it('refreshes derived geometry after a sync', () => {
+    const room = roomFromMesh(mesh(), opts);
+    const fake = asRoom(room) as FakeRoom;
+    const before = fake.derivedRefreshCount;
+
+    syncRoomFromMesh(room, mesh(SHOEBOX, 4), opts);
+
+    expect(fake.derivedRefreshCount).toBeGreaterThan(before);
+  });
+
+  it('has every surface in surfaceMap after a wall is added', () => {
+    const room = roomFromMesh(mesh(), opts);
+    const fake = asRoom(room) as FakeRoom;
+
+    syncRoomFromMesh(room, mesh([...SHOEBOX, { x: -1, y: 1.5 }]), opts);
+
+    const mapped = Object.keys(fake.surfaceMap).sort();
+    expect(mapped).toEqual(fake.allSurfaces.map((s) => s.uuid).sort());
+  });
+
+  it('drops a removed surface from surfaceMap', () => {
+    const room = roomFromMesh(mesh(), opts);
+    const fake = asRoom(room) as FakeRoom;
+    const doomed = fake.byFaceId(FACE_ID_KEY, 'wall-3')!;
+
+    syncRoomFromMesh(room, mesh(SHOEBOX.slice(0, 3)), opts);
+
+    expect(Object.keys(fake.surfaceMap)).not.toContain(doomed.uuid);
+  });
+});
+
+describe('degenerate faces', () => {
+  /** A mesh whose floor collapses to a line. */
+  const degenerate = () => {
+    const m = mesh();
+    const collapsed = JSON.parse(JSON.stringify(m));
+    // Drag every floor corner onto one line so the floor has no area.
+    collapsed.vertices[0] = [0, 0, 0];
+    collapsed.vertices[1] = [1, 0, 0];
+    collapsed.vertices[2] = [2, 0, 0];
+    collapsed.vertices[3] = [3, 0, 0];
+    return collapsed;
+  };
+
+  it('refuses rather than letting Surface.init dereference an empty triangle list', () => {
+    const room = roomFromMesh(mesh(), opts);
+    expect(() => syncRoomFromMesh(room, degenerate(), opts)).toThrow(/no triangles/);
+  });
+
+  it('leaves the room untouched when it refuses', () => {
+    const room = roomFromMesh(mesh(), opts);
+    const fake = asRoom(room) as FakeRoom;
+    const before = fake.allSurfaces.map((s) => s.uuid);
+
+    expect(() => syncRoomFromMesh(room, degenerate(), opts)).toThrow();
+
+    expect(fake.allSurfaces.map((s) => s.uuid)).toEqual(before);
+    expect(fake.allSurfaces.every((s) => s.initCalls.length === 0)).toBe(true);
+  });
+});

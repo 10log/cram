@@ -127,7 +127,9 @@ export function SketchPanel() {
 
     const tool = new FloorplanTool({
       domElement: renderer.renderer.domElement,
-      camera: renderer.camera,
+      // Getter, not a snapshot: toggling ortho/perspective replaces
+      // renderer.camera with a new instance.
+      camera: () => renderer.camera,
       parent: renderer.workspace,
       settings: { gridSize, ortho },
       onChange: (next) => {
