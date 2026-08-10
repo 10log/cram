@@ -159,7 +159,11 @@ export function SketchPanel() {
 
   // Rooms arrive asynchronously — a project load replaces the whole container
   // store — so this watches the store rather than running once on mount.
-  const containerVersion = useContainer((state) => state.version);
+  //
+  // Subscribes to `containers` rather than `version`: addContainer and
+  // removeContainer replace the containers map without bumping version, so a
+  // version subscription would never see a room arrive.
+  const containers = useContainer((state) => state.containers);
 
   useEffect(() => {
     if (room || adoptionDismissed) return;
@@ -182,7 +186,7 @@ export function SketchPanel() {
       }
       return;
     }
-  }, [containerVersion, room, adoptionDismissed, applyDraft]);
+  }, [containers, room, adoptionDismissed, applyDraft]);
 
   const toggleDrawing = useCallback(() => {
     const tool = toolRef.current;
@@ -210,16 +214,6 @@ export function SketchPanel() {
     else setDraft((d) => closeDraft(d));
   }, []);
 
-  const handlePointChange = useCallback(
-    (index: number, axis: 'x' | 'y', value: number) => {
-      applyDraft({
-        ...draft,
-        points: draft.points.map((p, i) => (i === index ? { ...p, [axis]: value } : p)),
-      });
-    },
-    [draft, applyDraft]
-  );
-
   /** Re-extrude the room already on screen, preserving its materials. */
   const reextrude = useCallback(
     (nextHeight: number, nextDraft: SketchDraft) => {
@@ -236,6 +230,20 @@ export function SketchPanel() {
       }
     },
     [room, detached]
+  );
+
+  const handlePointChange = useCallback(
+    (index: number, axis: 'x' | 'y', value: number) => {
+      const next = {
+        ...draft,
+        points: draft.points.map((p, i) => (i === index ? { ...p, [axis]: value } : p)),
+      };
+      applyDraft(next);
+      // Moving a point has to reach the room too, not just the preview.
+      // reextrude is a no-op while the outline is open or no room exists.
+      reextrude(height, next);
+    },
+    [draft, applyDraft, reextrude, height]
   );
 
   const handleHeightChange = useCallback(

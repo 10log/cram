@@ -238,6 +238,57 @@ describe('Surface', () => {
     });
   });
 
+  describe('geometry disposal on re-init', () => {
+    // init() detaches the old objects but previously never freed their GPU
+    // buffers, so every restore or live geometry edit leaked a set per surface.
+    const build = () =>
+      new Surface('Test', {
+        geometry: createMockGeometry(),
+        acousticMaterial: mockAcousticMaterial,
+      });
+
+    it('disposes the replaced mesh geometry', () => {
+      const surface = build();
+      const old = surface.mesh.geometry;
+      const spy = vi.spyOn(old, 'dispose');
+
+      surface.init({ geometry: createMockGeometry(), acousticMaterial: mockAcousticMaterial });
+
+      expect(spy).toHaveBeenCalled();
+    });
+
+    it('disposes the shared mesh/wire geometry exactly once', () => {
+      const surface = build();
+      const old = surface.mesh.geometry;
+      expect(surface.wire.geometry).toBe(old);
+      const spy = vi.spyOn(old, 'dispose');
+
+      surface.init({ geometry: createMockGeometry(), acousticMaterial: mockAcousticMaterial });
+
+      expect(spy).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not dispose the incoming geometry', () => {
+      const surface = build();
+      const incoming = createMockGeometry();
+      const spy = vi.spyOn(incoming, 'dispose');
+
+      surface.init({ geometry: incoming, acousticMaterial: mockAcousticMaterial });
+
+      expect(spy).not.toHaveBeenCalled();
+    });
+
+    it('survives being handed back its own geometry', () => {
+      const surface = build();
+      const same = surface.mesh.geometry;
+      const spy = vi.spyOn(same, 'dispose');
+
+      surface.init({ geometry: same, acousticMaterial: mockAcousticMaterial });
+
+      expect(spy).not.toHaveBeenCalled();
+    });
+  });
+
   describe('mesh face id', () => {
     // Persisted so a reloaded project can still be reconciled against its
     // RoomMesh; without it a restored room renders but cannot be edited.

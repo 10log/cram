@@ -54,6 +54,14 @@ const MARKER_COLOR = 0xffffff;
  */
 const MIN_RAY_PLANE_COS = 1e-6;
 
+/** Whether an event came from somewhere the user is typing. */
+function isEditableTarget(target: EventTarget | null): boolean {
+  if (!target || !(target instanceof HTMLElement)) return false;
+  if (target.isContentEditable) return true;
+  const tag = target.tagName;
+  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+}
+
 export class FloorplanTool {
   private readonly domElement: HTMLElement;
   private readonly camera: THREE.Camera;
@@ -212,6 +220,12 @@ export class FloorplanTool {
   };
 
   private handleKeyDown = (event: KeyboardEvent): void => {
+    // The listener is on window so shortcuts work with the viewport focused,
+    // which also puts it in front of every form field. Without this guard,
+    // backspacing a digit out of a coordinate input would delete a sketch
+    // point instead of editing the number.
+    if (isEditableTarget(event.target)) return;
+
     switch (event.key) {
       case 'Escape':
         this.reset();

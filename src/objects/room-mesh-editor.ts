@@ -17,6 +17,7 @@
 
 import type Room from './room';
 import { addMoment, type Directions } from '../history';
+import { emit } from '../messenger';
 import {
   getRoomMesh,
   syncRoomFromMesh,
@@ -57,11 +58,17 @@ export function commitMeshEdit(
 
   syncRoomFromMesh(room, after, options);
 
+  // A geometry-only edit changes no containers, so nothing downstream marks the
+  // project dirty and the unsaved-changes prompt would not appear. Topology
+  // changes happen to emit it via add/removeContainer; this covers the rest.
+  emit('MARK_DIRTY', undefined);
+
   addMoment({
     category: CATEGORY[edit.kind],
     objectId: room.uuid,
     recallFunction: (direction?: keyof Directions) => {
       syncRoomFromMesh(room, direction === 'UNDO' ? before : after, options);
+      emit('MARK_DIRTY', undefined);
     },
   });
 

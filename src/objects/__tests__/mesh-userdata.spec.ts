@@ -107,6 +107,42 @@ describe('isRoomMesh', () => {
   it('accepts an empty but well-formed mesh', () => {
     expect(isRoomMesh({ vertices: [], faces: [] })).toBe(true);
   });
+
+  describe('malformed data that would crash downstream', () => {
+    const verts = [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]];
+
+    it.each([
+      ['a string vertex component', { vertices: [['0', 0, 0]], faces: [] }],
+      ['a NaN vertex component', { vertices: [[NaN, 0, 0]], faces: [] }],
+      ['an infinite vertex component', { vertices: [[Infinity, 0, 0]], faces: [] }],
+    ])('rejects %s', (_name, value) => {
+      expect(isRoomMesh(value)).toBe(false);
+    });
+
+    it('rejects a loop index past the end of the vertex list', () => {
+      expect(isRoomMesh({ vertices: verts, faces: [{ id: 'f', loop: [0, 1, 99] }] })).toBe(false);
+    });
+
+    it('rejects a negative loop index', () => {
+      expect(isRoomMesh({ vertices: verts, faces: [{ id: 'f', loop: [0, 1, -1] }] })).toBe(false);
+    });
+
+    it('rejects a fractional loop index', () => {
+      expect(isRoomMesh({ vertices: verts, faces: [{ id: 'f', loop: [0, 1, 1.5] }] })).toBe(false);
+    });
+
+    it('rejects a NaN loop index', () => {
+      expect(isRoomMesh({ vertices: verts, faces: [{ id: 'f', loop: [0, 1, NaN] }] })).toBe(false);
+    });
+
+    it('rejects a face with fewer than three vertices', () => {
+      expect(isRoomMesh({ vertices: verts, faces: [{ id: 'f', loop: [0, 1] }] })).toBe(false);
+    });
+
+    it('still accepts a well-formed face', () => {
+      expect(isRoomMesh({ vertices: verts, faces: [{ id: 'f', loop: [0, 1, 2] }] })).toBe(true);
+    });
+  });
 });
 
 describe('surviving a save file', () => {

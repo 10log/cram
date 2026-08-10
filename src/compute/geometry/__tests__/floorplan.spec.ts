@@ -125,6 +125,33 @@ describe('validateFloorplan', () => {
     expect(dup?.message).toMatch(/closes automatically/);
   });
 
+  it.each([
+    ['NaN x', [{ x: NaN, y: 0 }, { x: 4, y: 0 }, { x: 4, y: 3 }]],
+    ['Infinite y', [{ x: 0, y: Infinity }, { x: 4, y: 0 }, { x: 4, y: 3 }]],
+    ['a missing coordinate', [{ x: 0 } as Point2, { x: 4, y: 0 }, { x: 4, y: 3 }]],
+  ])('rejects %s', (_name, points) => {
+    expect(validateFloorplan(plan(points as Point2[])).map((i) => i.code)).toContain('non-finite');
+  });
+
+  it('reports which point is non-finite', () => {
+    const issues = validateFloorplan(
+      plan([{ x: 0, y: 0 }, { x: NaN, y: 0 }, { x: 4, y: 3 }])
+    );
+    expect(issues.find((i) => i.code === 'non-finite')).toMatchObject({ index: 1 });
+  });
+
+  it('rejects a non-finite baseZ', () => {
+    const issues = validateFloorplan({ points: SHOEBOX, height: 2.5, baseZ: NaN });
+    expect(issues.map((i) => i.code)).toContain('non-finite');
+  });
+
+  it('does not emit NaN geometry for a non-finite outline', () => {
+    // Without the finiteness check these flowed through to BufferGeometry.
+    expect(() =>
+      floorplanToMesh(plan([{ x: NaN, y: 0 }, { x: 4, y: 0 }, { x: 4, y: 3 }]))
+    ).toThrow(/numeric coordinates/);
+  });
+
   it('rejects a collinear outline as enclosing no area', () => {
     const issues = validateFloorplan(
       plan([{ x: 0, y: 0 }, { x: 1, y: 1 }, { x: 2, y: 2 }])

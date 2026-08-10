@@ -252,6 +252,48 @@ describe('keyboard', () => {
     expect(tool.draft.points).toHaveLength(3);
   });
 
+  describe('does not hijack typing', () => {
+    // The listener sits on window so shortcuts work with the viewport focused,
+    // which also puts it in front of every form field on the page.
+    const dispatchFrom = (el: HTMLElement, key: string) => {
+      document.body.appendChild(el);
+      el.focus();
+      el.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
+      el.remove();
+    };
+
+    it('ignores Backspace from a number input', () => {
+      const input = document.createElement('input');
+      input.type = 'number';
+      dispatchFrom(input, 'Backspace');
+      expect(tool.draft.points).toHaveLength(3);
+    });
+
+    it('ignores Escape from a text input', () => {
+      const input = document.createElement('input');
+      dispatchFrom(input, 'Escape');
+      expect(tool.draft.points).toHaveLength(3);
+    });
+
+    it('ignores Enter from a textarea', () => {
+      dispatchFrom(document.createElement('textarea'), 'Enter');
+      expect(tool.draft.closed).toBe(false);
+    });
+
+    it('ignores Delete from a contenteditable element', () => {
+      const div = document.createElement('div');
+      div.contentEditable = 'true';
+      Object.defineProperty(div, 'isContentEditable', { value: true });
+      dispatchFrom(div, 'Delete');
+      expect(tool.draft.points).toHaveLength(3);
+    });
+
+    it('still responds to keys from elsewhere on the page', () => {
+      dispatchFrom(document.createElement('div'), 'Enter');
+      expect(tool.draft.closed).toBe(true);
+    });
+  });
+
   it('stops listening once disabled', () => {
     tool.disable();
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));

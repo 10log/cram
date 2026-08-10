@@ -22,6 +22,7 @@ import {
   roomFromMesh,
 } from '../room-from-mesh';
 import { history } from '../../history';
+import { emit } from '../../messenger';
 import { floorplanToMesh, type Point2 } from '../../compute/geometry/floorplan';
 import { FakeRoom, FakeSurface, resetSurfaceCounter } from '../../test-utils/room-fakes';
 import * as THREE from 'three';
@@ -139,6 +140,47 @@ describe('commitMeshEdit', () => {
       expect(() => setFloorplan(room, { points: SHOEBOX, height: 0 }, opts)).toThrow();
       expect(history.timeline).toHaveLength(0);
     });
+  });
+});
+
+describe('marking the project dirty', () => {
+  // A geometry-only edit changes no containers, so nothing else in the app
+  // would flag unsaved changes and the Open/New warning would not appear.
+  it('emits MARK_DIRTY after a height change', () => {
+    const { room } = makeRoom(SHOEBOX, 2.5);
+    vi.mocked(emit).mockClear();
+
+    setFloorplan(room, { points: SHOEBOX, height: 4 }, opts);
+
+    expect(emit).toHaveBeenCalledWith('MARK_DIRTY', undefined);
+  });
+
+  it('emits MARK_DIRTY after a vertex move', () => {
+    const { room } = makeRoom();
+    vi.mocked(emit).mockClear();
+
+    moveVertex(room, 0, [-2, -2, 0], opts);
+
+    expect(emit).toHaveBeenCalledWith('MARK_DIRTY', undefined);
+  });
+
+  it('emits MARK_DIRTY on undo, which is also an unsaved change', () => {
+    const { room } = makeRoom(SHOEBOX, 2.5);
+    setFloorplan(room, { points: SHOEBOX, height: 4 }, opts);
+    vi.mocked(emit).mockClear();
+
+    history.undo();
+
+    expect(emit).toHaveBeenCalledWith('MARK_DIRTY', undefined);
+  });
+
+  it('does not emit for a rejected edit', () => {
+    const { room } = makeRoom();
+    vi.mocked(emit).mockClear();
+
+    expect(() => setFloorplan(room, { points: SHOEBOX, height: 0 }, opts)).toThrow();
+
+    expect(emit).not.toHaveBeenCalledWith('MARK_DIRTY', undefined);
   });
 });
 

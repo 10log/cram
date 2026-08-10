@@ -19,7 +19,7 @@ import {
 // Import FlexLayout base styles + our overrides
 import './workbenchTheme.css';
 
-import { DEFAULT_LAYOUT, PANEL_IDS } from './defaultLayout';
+import { DEFAULT_LAYOUT, PANEL_IDS, ensureSketchTab } from './defaultLayout';
 import { CanvasPanel } from './panels/CanvasPanel';
 import { ObjectsPanel } from './panels/ObjectsPanel';
 import { SolversPanel } from './panels/SolversPanel';
@@ -39,7 +39,9 @@ function loadLayout(): IJsonModel {
   try {
     const stored = storage.getItem(STORAGE_KEY);
     if (stored) {
-      return JSON.parse(stored);
+      // Stored layouts are restored verbatim, so panels added after a user's
+      // layout was saved have to be patched in.
+      return ensureSketchTab(JSON.parse(stored));
     }
   } catch (e) {
     console.warn('[WorkbenchLayout] Failed to parse stored layout:', e);

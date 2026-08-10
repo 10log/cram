@@ -303,13 +303,20 @@ describe('editing an existing room', () => {
     expect(params.height).toBe(3.5);
   });
 
-  it('re-extrudes when a point is edited numerically', () => {
+  it('re-extrudes on a point edit alone, with no other change', () => {
     createRoom();
     fireEvent.change(numberInput('point-1-x'), { target: { value: '6' } });
-    fireEvent.change(numberInput('height'), { target: { value: '3' } });
 
-    const [, params] = vi.mocked(setFloorplan).mock.calls.at(-1)!;
+    expect(setFloorplan).toHaveBeenCalledTimes(1);
+    const [, params] = vi.mocked(setFloorplan).mock.calls[0];
     expect(params.points[1].x).toBe(6);
+  });
+
+  it('does not re-extrude a point edit while the outline is open', () => {
+    render(<SketchPanel />);
+    drawSquare();
+    fireEvent.change(numberInput('point-1-x'), { target: { value: '6' } });
+    expect(setFloorplan).not.toHaveBeenCalled();
   });
 
   it('does not re-extrude before a room exists', () => {
@@ -418,10 +425,10 @@ const SQUARE = [
 /** A minimal stand-in for a Room restored from a save file. */
 function seedRoom(userData: Record<string, unknown>, kind = 'room') {
   const roomLike = { uuid: 'restored-room', name: 'sketched room', kind, userData };
-  useContainer.setState({
-    containers: { 'restored-room': roomLike } as never,
-    version: 1,
-  });
+  // Deliberately does not touch `version`: addContainer/removeContainer do not
+  // bump it either, so setting it here would hide a subscription that never
+  // observes real room arrivals.
+  useContainer.setState({ containers: { 'restored-room': roomLike } as never });
   return roomLike;
 }
 

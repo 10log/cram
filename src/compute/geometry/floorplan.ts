@@ -43,6 +43,7 @@ export type FloorplanIssue =
   | { code: 'invalid-height'; message: string }
   | { code: 'duplicate-point'; message: string; index: number }
   | { code: 'zero-area'; message: string }
+  | { code: 'non-finite'; message: string; index?: number }
   | { code: 'self-intersecting'; message: string; edges: [number, number] };
 
 const EPS = 1e-9;
@@ -131,6 +132,27 @@ export function validateFloorplan(params: FloorplanParams): FloorplanIssue[] {
     issues.push({
       code: 'invalid-height',
       message: `height must be a positive number, got ${params.height}`,
+    });
+  }
+
+  // Checked before anything geometric. NaN propagates silently through the
+  // shoelace and duplicate tests — comparisons against NaN are simply false —
+  // and would reach BufferGeometry as NaN vertices rather than an error.
+  for (let i = 0; i < points.length; i++) {
+    const point = points[i];
+    if (!point || !Number.isFinite(point.x) || !Number.isFinite(point.y)) {
+      issues.push({
+        code: 'non-finite',
+        index: i,
+        message: `point ${i + 1} does not have numeric coordinates`,
+      });
+    }
+  }
+
+  if (params.baseZ !== undefined && !Number.isFinite(params.baseZ)) {
+    issues.push({
+      code: 'non-finite',
+      message: `floor elevation must be a number, got ${params.baseZ}`,
     });
   }
 

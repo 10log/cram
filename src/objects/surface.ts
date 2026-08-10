@@ -250,12 +250,29 @@ class Surface extends Container {
   init(props: SurfaceProps, fromConstructor: boolean = false) {
 
     // if the call isn't coming from the constructor it's probably being restored
-    if (!fromConstructor) { 
+    if (!fromConstructor) {
       this.remove(this.mesh);
       this.remove(this.wire);
       this.remove(this.edges);
       this.remove(this.vertexNormals);
       this.destroyEvents();
+
+      // Release the GPU buffers behind the objects just detached. Removing them
+      // from the group does not free anything, so every re-init — a restore, or
+      // a live geometry edit — otherwise leaks a set of buffers per surface.
+      // A Set dedupes mesh and wire, which deliberately share one geometry.
+      // Materials are module-level singletons and must not be disposed here.
+      // Anything handed back in as the new geometry is left alone.
+      const stale = new Set<THREE.BufferGeometry>();
+      for (const object of [this.mesh, this.wire, this.edges, this.vertexNormals]) {
+        const geometry = object?.geometry as THREE.BufferGeometry | undefined;
+        // Helpers such as VertexNormalsHelper are supplied by three/examples,
+        // so do not assume every attached geometry is disposable.
+        if (geometry && geometry !== props.geometry && typeof geometry.dispose === 'function') {
+          stale.add(geometry);
+        }
+      }
+      stale.forEach((geometry) => geometry.dispose());
     }
 
     // merge the incoming props with the default props

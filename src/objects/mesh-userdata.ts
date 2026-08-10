@@ -62,12 +62,24 @@ export function isRoomMesh(value: unknown): value is RoomMesh {
   if (!value || typeof value !== 'object') return false;
   const mesh = value as Partial<RoomMesh>;
   if (!Array.isArray(mesh.vertices) || !Array.isArray(mesh.faces)) return false;
-  if (!mesh.vertices.every((v) => Array.isArray(v) && v.length === 3)) return false;
+
+  // Vertex components must actually be numbers. A stringified or NaN component
+  // survives a shape-only check and reaches BufferGeometry intact.
+  const vertexCount = mesh.vertices.length;
+  const verticesOk = mesh.vertices.every(
+    (v) => Array.isArray(v) && v.length === 3 && v.every((n) => Number.isFinite(n))
+  );
+  if (!verticesOk) return false;
+
+  // Loop entries must be integer indices that exist, and a face needs at least
+  // three of them. Anything else makes triangulation and undo dereference
+  // undefined — the crash this validator exists to prevent.
   return mesh.faces.every(
     (f) =>
       !!f &&
       typeof f.id === 'string' &&
       Array.isArray(f.loop) &&
-      f.loop.every((i) => typeof i === 'number')
+      f.loop.length >= 3 &&
+      f.loop.every((i) => Number.isInteger(i) && i >= 0 && i < vertexCount)
   );
 }
