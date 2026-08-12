@@ -363,9 +363,20 @@ export function registerMessageHandlers(
           case "dxf":
             {
               const result = await (await fetch(objectURL)).text();
-              const room = importHandlers.dxf(result);
-              emit("ADD_ROOM", room);
-              console.log(room);
+              try {
+                const room = importHandlers.dxf(result);
+                emit("ADD_ROOM", room);
+                console.log(room);
+              } catch (err) {
+                const detail = err instanceof Error ? err.message : String(err);
+                console.error(detail);
+                // See the matching handler in index.tsx for why this is "warning".
+                msg.postMessage("SHOW_TOAST", {
+                  message: detail,
+                  intent: "warning",
+                  timeout: 4000
+                });
+              }
             } break;
           case "obj":
             {

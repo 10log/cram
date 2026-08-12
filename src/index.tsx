@@ -471,12 +471,25 @@ messenger.addMessageHandler("IMPORT_FILE", (acc, ...args) => {
     if (allowed[fileType(file.name)]) {
       const objectURL = URL.createObjectURL(file);
       switch (fileType(file.name)) {
-        case "dxf": 
+        case "dxf":
         {
           const result = await (await fetch(objectURL)).text();
-          const room = importHandlers.dxf(result);
-          emit("ADD_ROOM", room);
-          console.log(room);
+          try {
+            const room = importHandlers.dxf(result);
+            emit("ADD_ROOM", room);
+            console.log(room);
+          } catch (err) {
+            const detail = err instanceof Error ? err.message : String(err);
+            console.error(detail);
+            // "warning" rather than an error-flavoured intent: the toast is rendered by
+            // the consuming app, and "warning" is the only problem intent already in use
+            // here, so it is the one value known to be understood.
+            messenger.postMessage("SHOW_TOAST", {
+              message: detail,
+              intent: "warning",
+              timeout: 4000
+            });
+          }
         } break;
         case "obj":
           {
