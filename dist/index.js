@@ -5630,18 +5630,40 @@ var wo = yo, To = (e, t, n) => {
 	return r.setAttribute("position", new we(new Float32Array(e), 3, !1)), t && r.setAttribute("normals", new we(new Float32Array(t), 3, !1)), n && r.setAttribute("texCoords", new we(new Float32Array(n), 3, !1)), r;
 };
 function Eo(e) {
-	let t = [...te.getState().materials.values()][0], n = new wo().parseSync(e), r = /* @__PURE__ */ new Map();
-	return n.entities.filter((e) => e.type === "POLYLINE").forEach((e, n) => {
+	let t = [...te.getState().materials.values()][0], n;
+	try {
+		n = new wo().parseSync(e);
+	} catch (e) {
+		let t = e instanceof Error ? e.message : String(e);
+		throw Error(`Could not parse DXF file: ${t}`);
+	}
+	if (!n) throw Error("Could not parse DXF file: the parser returned no data.");
+	let r = n;
+	if (!Array.isArray(r.entities)) throw Error("Could not read DXF file: no ENTITIES section was found.");
+	let i = /* @__PURE__ */ new Map();
+	return r.entities.filter((e) => e.type === "POLYLINE").forEach((e, n) => {
 		e.materialObjectHandle;
-		let i = e.layer;
-		r.has(i) || r.set(i, new ee(i));
+		let r = e.layer;
+		i.has(r) || i.set(r, new ee(r));
 		let a = [], o = [];
 		e.vertices.forEach((e) => {
-			e.faceA ? o.push([
-				e.faceA,
-				e.faceB,
-				e.faceC
-			].map(Math.abs).map((e) => e - 1)) : a.push([
+			if (e.faceA) {
+				let [t, n, r, i] = [
+					e.faceA,
+					e.faceB,
+					e.faceC,
+					e.faceD
+				].map((e) => e ? Math.abs(e) - 1 : -1);
+				o.push([
+					t,
+					n,
+					r
+				]), i >= 0 && i !== r && o.push([
+					t,
+					r,
+					i
+				]);
+			} else a.push([
 				e.x,
 				e.y,
 				e.z
@@ -5653,8 +5675,8 @@ function Eo(e) {
 			acousticMaterial: c,
 			geometry: s
 		});
-		r.get(i).add(l);
-	}), new me("new room", { surfaces: [...r.values()] });
+		i.get(r).add(l);
+	}), new me("new room", { surfaces: [...i.values()] });
 }
 //#endregion
 //#region src/import-handlers/index.ts
@@ -6259,8 +6281,18 @@ function Io(t, n = h) {
 				switch (Po(e.name)) {
 					case "dxf":
 						{
-							let e = Eo(await (await fetch(n)).text());
-							f("ADD_ROOM", e), console.log(e);
+							let e = await (await fetch(n)).text();
+							try {
+								let t = Eo(e);
+								f("ADD_ROOM", t), console.log(t);
+							} catch (e) {
+								let t = e instanceof Error ? e.message : String(e);
+								console.error(t), r.postMessage("SHOW_TOAST", {
+									message: t,
+									intent: "warning",
+									timeout: 4e3
+								});
+							}
 						}
 						break;
 					case "obj":

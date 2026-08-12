@@ -70,6 +70,8 @@ export interface Vertex {
     faceA?: number;
     faceB?: number;
     faceC?: number;
+    /** Fourth index of a polyface quad (group code 74); absent on triangular faces. */
+    faceD?: number;
 }
 export type VertexType = "VERTEX";
 export interface Extmax {
