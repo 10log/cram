@@ -16,8 +16,27 @@ const makeBufferGeometry = (position: number[], _normals?: number[], _texCoords?
 
 export function dxf(data: string){
   const defaultMaterial = [...useMaterial.getState().materials.values()][0];
-  const parsedData: unknown = new DxfParser().parseSync(data);
+
+  // dxf-parser throws a bare scanner error on any group code it doesn't recognise, and
+  // returns null for input it can't make sense of at all. Both callers invoke this from an
+  // async handler with no catch, so an unguarded failure surfaces as nothing whatsoever —
+  // no room, no message. Attribute the failure instead.
+  let parsedData: unknown;
+  try {
+    parsedData = new DxfParser().parseSync(data);
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : String(err);
+    throw new Error(`Could not parse DXF file: ${detail}`);
+  }
+  if (!parsedData) {
+    throw new Error("Could not parse DXF file: the parser returned no data.");
+  }
+
   const parsed = parsedData as Dxf;
+  if (!Array.isArray(parsed.entities)) {
+    throw new Error("Could not read DXF file: no ENTITIES section was found.");
+  }
+
   const layerMap = new Map<string, Container>();
   parsed.entities.filter(x=>x.type==="POLYLINE").forEach((polyline,i)=>{
     const _material = polyline.materialObjectHandle;
@@ -30,7 +49,17 @@ export function dxf(data: string){
     const indices = [] as number[][];
     polyline.vertices.forEach(vertex=>{
       if(vertex["faceA"]){
-        indices.push([vertex["faceA"]!, vertex["faceB"]!, vertex["faceC"]!].map(Math.abs).map(x=>x-1));
+        // Face indices are 1-based, and negative when the edge leading away from that
+        // vertex is invisible — so take the magnitude before converting to 0-based.
+        const [a, b, c, d] = [vertex.faceA, vertex.faceB, vertex.faceC, vertex.faceD]
+          .map(index => (index ? Math.abs(index) - 1 : -1));
+        indices.push([a, b, c]);
+        // A polyface quad carries a fourth index (group code 74); triangles leave it
+        // absent, zero, or repeating the third vertex. Without this the second half of
+        // every quad was dropped, leaving a hole.
+        if (d >= 0 && d !== c) {
+          indices.push([a, c, d]);
+        }
       } else {
         vertices.push([vertex.x,vertex.y,vertex.z!]);
       }
@@ -134,6 +163,8 @@ export interface Vertex {
   faceA?:                number;
   faceB?:                number;
   faceC?:                number;
+  /** Fourth index of a polyface quad (group code 74); absent on triangular faces. */
+  faceD?:                number;
 }
 
 export type VertexType = "VERTEX";
