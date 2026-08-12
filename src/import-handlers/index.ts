@@ -139,7 +139,7 @@ export function dae(data: string) {
   return res;
 }
 
-export {dxf} from './dxf';
+export {dxf, dxfAsync} from './dxf';
 
 export function gltf(data: ArrayBuffer): Promise<Model[]> {
   return new Promise((resolve, reject) => {

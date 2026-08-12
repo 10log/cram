@@ -475,7 +475,7 @@ messenger.addMessageHandler("IMPORT_FILE", (acc, ...args) => {
         {
           const result = await (await fetch(objectURL)).text();
           try {
-            const room = importHandlers.dxf(result);
+            const room = await importHandlers.dxfAsync(result);
             emit("ADD_ROOM", room);
             console.log(room);
           } catch (err) {
