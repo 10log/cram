@@ -2,7 +2,7 @@ import { C as e, _ as t, a as n, b as r, c as i, d as a, i as o, k as s, l as c,
 import { a as g, c as _, d as v, i as y, l as b, n as x, o as S, r as C, s as w, t as T, u as ee } from "./renderer-BeKP35ez.mjs";
 import { a as E, c as te, d as ne, f as re, g as D, h as ie, l as ae, m as oe, n as se, o as O, p as ce, t as le, u as ue } from "./store-DRnKXLf0.mjs";
 import "./acoustics-BPdIidDA.mjs";
-import { o as de, r as fe, s as pe, t as me } from "./room-A7P4P3BC.mjs";
+import { o as de, r as fe, s as pe, t as me } from "./room-ioMGbMK5.mjs";
 import { n as he, t as ge } from "./editor-modes-Dl6UXVU3.mjs";
 import "./css-B48fe771.mjs";
 import { n as _e, t as ve } from "./hrtf-data-D6qGJN2M.mjs";
@@ -583,10 +583,10 @@ async function Qr(e, t, n) {
 	return r(t, n);
 }
 Zr("ray-tracer", async (e, t) => {
-	let { default: n } = await import("./raytracer-XqI2RTYb.mjs");
+	let { default: n } = await import("./raytracer-qIAUrZbA.mjs");
 	return new n(t);
 }), Zr("image-source", async (e, t) => {
-	let { ImageSourceSolver: n } = await import("./image-source-CbxRbsuS.mjs");
+	let { ImageSourceSolver: n } = await import("./image-source-DIB8cdrD.mjs");
 	return new n({
 		name: "Image Source",
 		roomID: "",
@@ -621,7 +621,7 @@ Zr("ray-tracer", async (e, t) => {
 	let { default: n } = await import("./2d-fdtd-CmktSjMz.mjs");
 	return new n();
 }), Zr("beam-trace", async (e, t) => {
-	let { BeamTraceSolver: n } = await import("./beam-trace-Cey9-j_n.mjs");
+	let { BeamTraceSolver: n } = await import("./beam-trace-DTmovrdD.mjs");
 	return new n();
 }), Zr("art", async (e, t) => {
 	let { ART: n } = await import("./art-wPfPn5ZC.mjs");
@@ -6529,7 +6529,7 @@ function Lo() {
 async function Ro(e, t) {
 	switch (e) {
 		case "ray-tracer": {
-			let { default: e } = await import("./raytracer-XqI2RTYb.mjs");
+			let { default: e } = await import("./raytracer-qIAUrZbA.mjs");
 			return new e(t).restore(t);
 		}
 		case "rt60": {
@@ -6541,11 +6541,11 @@ async function Ro(e, t) {
 			return new e(t).restore(t);
 		}
 		case "image-source": {
-			let { default: e } = await import("./image-source-CbxRbsuS.mjs");
+			let { default: e } = await import("./image-source-DIB8cdrD.mjs");
 			return new e(t).restore(t);
 		}
 		case "beam-trace": {
-			let { BeamTraceSolver: e } = await import("./beam-trace-Cey9-j_n.mjs");
+			let { BeamTraceSolver: e } = await import("./beam-trace-DTmovrdD.mjs");
 			return new e().restore(t);
 		}
 		default: throw Error(`Unknown solver kind: ${e}`);

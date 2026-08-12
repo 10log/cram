@@ -3,7 +3,7 @@ import { t as l } from "./renderer-BeKP35ez.mjs";
 import { a as u, g as d, i as f } from "./store-DRnKXLf0.mjs";
 import { t as p } from "./audio-engine-BVaMF_Iu.mjs";
 import "./acoustics-BPdIidDA.mjs";
-import { a as m, c as h, n as g, o as _, s as v } from "./room-A7P4P3BC.mjs";
+import { a as m, c as h, n as g, o as _, s as v } from "./room-ioMGbMK5.mjs";
 import { t as y } from "./air-attenuation-DrZYpv8D.mjs";
 import { t as b } from "./sound-speed-CfEkirc1.mjs";
 import { t as x } from "./solver-DCp-VMaM.mjs";
@@ -540,4 +540,4 @@ n("IMAGESOURCE_SET_PROPERTY", o), n("REMOVE_IMAGESOURCE", t), n("ADD_IMAGESOURCE
 //#endregion
 export { M as t };
 
-//# sourceMappingURL=image-source-ld0CE3JU.mjs.map
+//# sourceMappingURL=image-source-Csr4Kim9.mjs.map

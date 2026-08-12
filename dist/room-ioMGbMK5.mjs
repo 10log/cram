@@ -1287,10 +1287,10 @@ var $ = class e extends o {
 			e.x,
 			e.y,
 			e.z
-		])), l = X.math.plane.fromPoints(c[0], c[1], c[2]);
+		])), l = X.math.plane.fromPoints(X.math.plane.create(), c[0], c[1], c[2]);
 		this.polygon = X.geometry.poly3.fromPointsAndPlane(c, l);
 		let u = _t(1e-6), d = (e, t) => !u(e.x, t[0]) || !u(e.y, t[1]) || !u(e.z, t[2]);
-		d(this.normal, this.polygon.plane) && (this.polygon = X.geometry.poly3.fromPointsAndPlane(c, X.math.plane.fromPoints(c[2], c[1], c[0])), d(this.normal, this.polygon.plane));
+		d(this.normal, this.polygon.plane) && (this.polygon = X.geometry.poly3.fromPointsAndPlane(c, X.math.plane.fromPoints(X.math.plane.create(), c[2], c[1], c[0])), d(this.normal, this.polygon.plane));
 	}
 	dispose() {
 		this.parent && this.parent.remove(this);
@@ -1608,4 +1608,4 @@ var Et = () => i("room");
 //#endregion
 export { me as a, de as c, _t as i, Et as n, fe as o, $ as r, pe as s, Tt as t };
 
-//# sourceMappingURL=room-A7P4P3BC.mjs.map
+//# sourceMappingURL=room-ioMGbMK5.mjs.map
