@@ -151,6 +151,31 @@ describe('Complex', () => {
     });
   });
 
+  describe('angle', () => {
+    it('is zero along the positive real axis', () => {
+      expect(new Complex({ real: 5, imag: 0 }).angle()).toBe(0);
+    });
+
+    it('is a quarter turn along the positive imaginary axis', () => {
+      expect(new Complex({ real: 0, imag: 5 }).angle()).toBeCloseTo(Math.PI / 2, 12);
+    });
+
+    it('is pi along the negative real axis', () => {
+      expect(new Complex({ real: -5, imag: 0 }).angle()).toBeCloseTo(Math.PI, 12);
+    });
+
+    it('resolves the quadrant rather than folding onto a half plane', () => {
+      // atan(imag/real) alone cannot tell these apart; atan2 can.
+      expect(new Complex({ real: -1, imag: -1 }).angle()).toBeCloseTo(-3 * Math.PI / 4, 12);
+      expect(new Complex({ real: 1, imag: 1 }).angle()).toBeCloseTo(Math.PI / 4, 12);
+    });
+
+    it('agrees with the polar form it was built from', () => {
+      const arg = 0.7;
+      expect(new Complex({ radius: 2, arg }).angle()).toBeCloseTo(arg, 12);
+    });
+  });
+
   describe('swap', () => {
     it('swaps real and imaginary parts', () => {
       const c = new Complex({ real: 3, imag: 4 });

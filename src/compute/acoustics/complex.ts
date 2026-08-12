@@ -46,6 +46,14 @@ export class Complex {
   }
 
   /**
+   * The argument of the complex number — its phase angle in radians, measured from the
+   * positive real axis and in the range (-pi, pi].
+   */
+  public angle(): number {
+    return Math.atan2(this.imag, this.real);
+  }
+
+  /**
    * Swaps the real part and the imaginary part.
    */
   public swap(): Complex {
