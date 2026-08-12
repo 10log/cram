@@ -32,28 +32,30 @@ vi.mock('../../store', () => ({
   setContainerProperty: vi.fn(),
 }));
 
-// Mock CSG
-vi.mock('../../compute/csg', () => ({
-  __esModule: true,
-  default: {
+// CSG, backed by the real @jscad/modeling.
+//
+// The genuine module (src/compute/csg -> ../modeling -> v2.ts) cannot be imported here:
+// v2.ts top-level-awaits a browser URL (window.location.origin + '/compute/modeling/
+// jscad-modeling-bundle.js') that jsdom cannot resolve. So we rebuild the small slice of
+// that surface which Surface actually touches on top of the real package, mirroring the
+// wrappers in v2.ts. Stubbing these with fixed return values instead would hide real
+// defects — a stubbed plane.fromPoints previously masked a call site that omitted the
+// out-parameter and silently produced degenerate planes.
+vi.mock('../../compute/csg', async () => {
+  const { maths, geometries } = await vi.importActual<any>('@jscad/modeling');
+  const csg = {
     math: {
+      ...maths,
+      // v2.ts layers fromArray on top of the real vec3
       vec3: {
-        fromArray: vi.fn((arr: number[]) => arr),
-      },
-      plane: {
-        fromPoints: vi.fn(() => [0, 0, 1, 0]),
+        ...maths.vec3,
+        fromArray: (arr: number[]) => maths.vec3.fromValues(arr[0], arr[1], arr[2]),
       },
     },
-    geometry: {
-      poly3: {
-        fromPointsAndPlane: vi.fn(() => ({
-          vertices: [],
-          plane: [0, 0, 1, 0],
-        })),
-      },
-    },
-  },
-}));
+    geometry: { ...geometries },
+  };
+  return { __esModule: true, default: csg, ...csg };
+});
 
 // Mock BRDF
 vi.mock('../../compute/raytracer/brdf', () => ({
@@ -200,6 +202,54 @@ describe('Surface', () => {
 
       expect(Array.isArray(surface._triangles)).toBe(true);
       expect(surface._triangles.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('polygon', () => {
+    const buildSurface = () =>
+      new Surface('Poly', {
+        geometry: createMockGeometry(),
+        acousticMaterial: mockAcousticMaterial,
+      });
+
+    it('derives a unit-length plane normal from the edge loop', () => {
+      const [nx, ny, nz] = buildSurface().polygon.plane;
+
+      expect(Math.hypot(nx, ny, nz)).toBeCloseTo(1, 10);
+    });
+
+    it('agrees with the surface normal', () => {
+      const surface = buildSurface();
+      const [nx, ny, nz] = surface.polygon.plane;
+
+      expect(nx).toBeCloseTo(surface.normal.x, 10);
+      expect(ny).toBeCloseTo(surface.normal.y, 10);
+      expect(nz).toBeCloseTo(surface.normal.z, 10);
+    });
+
+    // Regression: plane.fromPoints takes the receiving plane as its first argument. The
+    // call sites used to omit it, so a vertex was used as the output buffer and rewritten
+    // in place as a 4-component plane.
+    it('leaves every vertex a 3-component point', () => {
+      const { vertices } = buildSurface().polygon;
+
+      expect(vertices.length).toBeGreaterThan(2);
+      vertices.forEach((vertex) => expect(vertex).toHaveLength(3));
+    });
+
+    it('keeps the vertices equal to the edge loop', () => {
+      const surface = buildSurface();
+
+      expect(surface.polygon.vertices).toEqual(surface.edgeLoop.map((v) => [v.x, v.y, v.z]));
+    });
+
+    it('places every vertex on the plane', () => {
+      const surface = buildSurface();
+      const [nx, ny, nz, w] = surface.polygon.plane;
+
+      surface.polygon.vertices.forEach((vertex) => {
+        expect(vertex[0] * nx + vertex[1] * ny + vertex[2] * nz - w).toBeCloseTo(0, 10);
+      });
     });
   });
 

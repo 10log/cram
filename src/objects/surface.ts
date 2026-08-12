@@ -382,7 +382,10 @@ class Surface extends Container {
     this.edgeLoop = this.calculateEdgeLoop();
 
     const points = this.edgeLoop.map((x) => csg.math.vec3.fromArray([x.x, x.y, x.z]));
-    const plane = csg.math.plane.fromPoints(points[0], points[1], points[2]);
+    // NOTE: plane.fromPoints takes the receiving plane as its first argument. Omitting it
+    // makes the first vertex the output buffer, which both corrupts that vertex and yields
+    // a degenerate plane (only two vertices are left to derive the normal from).
+    const plane = csg.math.plane.fromPoints(csg.math.plane.create(), points[0], points[1], points[2]);
     // console.log("points", points);
     // console.log("plane", plane);
     this.polygon = csg.geometry.poly3.fromPointsAndPlane(points, plane);
@@ -393,7 +396,7 @@ class Surface extends Container {
 
     if (normalAlmostEqualsPlane(this.normal, this.polygon.plane)) {
       // console.warn(new Error(`Surface '${this.name}' has a normal vector issue`));
-      this.polygon = csg.geometry.poly3.fromPointsAndPlane(points, csg.math.plane.fromPoints(points[2], points[1], points[0]));
+      this.polygon = csg.geometry.poly3.fromPointsAndPlane(points, csg.math.plane.fromPoints(csg.math.plane.create(), points[2], points[1], points[0]));
       // console.log("flipping", this.normal.toArray(), [...this.polygon.plane]);
         if (normalAlmostEqualsPlane(this.normal, this.polygon.plane)) {
           // console.log("still not equal", this.normal.toArray(), [...this.polygon.plane]);
