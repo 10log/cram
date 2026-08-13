@@ -1,58 +1,13 @@
-import DxfParser from 'dxf-parser';
 import {BufferGeometry, BufferAttribute} from 'three';
 import Container from '../objects/container';
 import Room from '../objects/room';
 import Surface from '../objects/surface';
 import {useMaterial} from '../store/material-store';
+import { decodeDxf } from './dxf-decode';
+import type { DecodedDxf } from './dxf-decode';
+import type { DxfWorkerResponse } from './dxf.worker';
 
-
-/**
- * Largest positional error we are willing to bake into the geometry, in model units.
- * A millimetre is far below anything acoustically meaningful — the shortest wavelength
- * in the 8 kHz band is roughly 43 mm.
- */
-const POSITION_TOLERANCE = 1e-3;
-
-/** Worst error introduced by storing these coordinates as float32. */
-const worstFloat32Error = (positions: number[]) => {
-  let worst = 0;
-  for (const value of positions) {
-    const error = Math.abs(Math.fround(value) - value);
-    if (error > worst) worst = error;
-  }
-  return worst;
-};
-
-/**
- * Centre of the axis-aligned bounds, or null when float32 already represents the file
- * faithfully.
- *
- * Vertex positions reach WebGL as float32, which carries about seven significant digits.
- * DXF files drawn on a site grid — UTM, state plane — put coordinates in the millions,
- * where consecutive float32 values are half a metre apart, so distinct walls collapse
- * onto each other. Shifting the geometry to the origin and carrying the displacement on
- * the Room's transform keeps the detail, because Object3D.position is float64.
- */
-const recenteringOffset = (positions: number[]): [number, number, number] | null => {
-  if (positions.length === 0) return null;
-  if (worstFloat32Error(positions) <= POSITION_TOLERANCE) return null;
-
-  const min = [Infinity, Infinity, Infinity];
-  const max = [-Infinity, -Infinity, -Infinity];
-  for (let i = 0; i < positions.length; i += 3) {
-    for (let axis = 0; axis < 3; axis++) {
-      const value = positions[i + axis];
-      if (value < min[axis]) min[axis] = value;
-      if (value > max[axis]) max[axis] = value;
-    }
-  }
-  return [0, 1, 2].map((axis) => (min[axis] + max[axis]) / 2) as [number, number, number];
-};
-
-const applyOffset = (positions: number[], offset: [number, number, number] | null) =>
-  offset ? positions.map((value, i) => value - offset[i % 3]) : positions;
-
-const makeBufferGeometry = (position: number[], _normals?: number[], _texCoords?: number[]) => {
+const makeBufferGeometry = (position: ArrayLike<number>, _normals?: number[], _texCoords?: number[]) => {
   const buffer = new BufferGeometry();
   buffer.setAttribute("position", new BufferAttribute(new Float32Array(position), 3, false));
   if(_normals) buffer.setAttribute("normals", new BufferAttribute(new Float32Array(_normals), 3, false));
@@ -60,57 +15,10 @@ const makeBufferGeometry = (position: number[], _normals?: number[], _texCoords?
   return buffer;
 }
 
-export function dxf(data: string){
+/** Assemble scene objects from decoded geometry. Must run on the main thread. */
+function buildRoom(decoded: { meshes: Array<{ layer: string; positions: ArrayLike<number> }>; offset: DecodedDxf["offset"] }) {
   const defaultMaterial = [...useMaterial.getState().materials.values()][0];
-
-  // dxf-parser throws a bare scanner error on any group code it doesn't recognise, and
-  // returns null for input it can't make sense of at all. Both callers invoke this from an
-  // async handler with no catch, so an unguarded failure surfaces as nothing whatsoever —
-  // no room, no message. Attribute the failure instead.
-  let parsedData: unknown;
-  try {
-    parsedData = new DxfParser().parseSync(data);
-  } catch (err) {
-    const detail = err instanceof Error ? err.message : String(err);
-    throw new Error(`Could not parse DXF file: ${detail}`);
-  }
-  if (!parsedData) {
-    throw new Error("Could not parse DXF file: the parser returned no data.");
-  }
-
-  const parsed = parsedData as Dxf;
-  if (!Array.isArray(parsed.entities)) {
-    throw new Error("Could not read DXF file: no ENTITIES section was found.");
-  }
-
-  // Decode every polyface mesh before building any geometry: the recentring offset has to
-  // be shared by all of them, since a per-surface offset would scatter the model.
-  const meshes = parsed.entities.filter(x=>x.type==="POLYLINE").map(polyline=>{
-    const vertices = [] as number[][];
-    const indices = [] as number[][];
-    polyline.vertices.forEach(vertex=>{
-      if(vertex["faceA"]){
-        // Face indices are 1-based, and negative when the edge leading away from that
-        // vertex is invisible — so take the magnitude before converting to 0-based.
-        const [a, b, c, d] = [vertex.faceA, vertex.faceB, vertex.faceC, vertex.faceD]
-          .map(index => (index ? Math.abs(index) - 1 : -1));
-        indices.push([a, b, c]);
-        // A polyface quad carries a fourth index (group code 74); triangles leave it
-        // absent, zero, or repeating the third vertex. Without this the second half of
-        // every quad was dropped, leaving a hole.
-        if (d >= 0 && d !== c) {
-          indices.push([a, c, d]);
-        }
-      } else {
-        vertices.push([vertex.x,vertex.y,vertex.z!]);
-      }
-    });
-
-    const positions = (indices.flat().reverse() as number[]).map(index=>vertices[index]).flat() as number[];
-    return { layer: polyline.layer, positions };
-  });
-
-  const offset = recenteringOffset(meshes.flatMap(mesh=>mesh.positions));
+  const { meshes, offset } = decoded;
 
   const layerMap = new Map<string, Container>();
   meshes.forEach(({layer, positions}, i)=>{
@@ -118,7 +26,7 @@ export function dxf(data: string){
       layerMap.set(layer, new Container(layer));
     }
 
-    const geometry = makeBufferGeometry(applyOffset(positions, offset));
+    const geometry = makeBufferGeometry(positions);
     geometry.computeVertexNormals();
     geometry.setAttribute("normals", geometry.getAttribute("normal"));
 
@@ -146,7 +54,64 @@ export function dxf(data: string){
   }
 
   return room;
+}
 
+/**
+ * Synchronous import. Parsing a large drawing blocks the thread it runs on, so prefer
+ * {@link dxfAsync} from anything the user is looking at; this remains for callers that
+ * cannot await, and backs the fallback path when workers are unavailable.
+ */
+export function dxf(data: string){
+  return buildRoom(decodeDxf(data));
+}
+
+/**
+ * Import off the main thread.
+ *
+ * Whole-file DXF parsing is the expensive part of the import and used to run
+ * synchronously on the UI thread, freezing the app for its duration on any large
+ * drawing. Only the parse and geometry decode move to the worker — scene objects need
+ * THREE and the renderer, so the Room is still assembled here.
+ *
+ * Falls back to parsing in place when the environment has no Worker, or when the worker
+ * cannot be started: a frozen tab beats a failed import.
+ */
+export function dxfAsync(data: string): Promise<ReturnType<typeof buildRoom>> {
+  if (typeof Worker === "undefined") {
+    return Promise.resolve(dxf(data));
+  }
+
+  let worker: Worker;
+  try {
+    worker = new Worker(new URL('./dxf.worker.ts', import.meta.url), { type: 'module' });
+  } catch {
+    return Promise.resolve(dxf(data));
+  }
+
+  return new Promise((resolve, reject) => {
+    worker.addEventListener("message", (event: MessageEvent<DxfWorkerResponse>) => {
+      worker.terminate();
+      const response = event.data;
+      if (!response.ok) {
+        reject(new Error(response.message));
+        return;
+      }
+      resolve(buildRoom({ meshes: response.meshes, offset: response.offset }));
+    });
+
+    worker.addEventListener("error", (event) => {
+      worker.terminate();
+      // The worker failed to start or threw outside the handler — the file itself may be
+      // perfectly good, so parse it here rather than failing the import.
+      try {
+        resolve(dxf(data));
+      } catch (err) {
+        reject(err instanceof Error ? err : new Error(String(event.message)));
+      }
+    });
+
+    worker.postMessage({ data });
+  });
 }
 
 export interface Dxf {

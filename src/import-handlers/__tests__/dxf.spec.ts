@@ -1,4 +1,4 @@
-import { dxf } from '../dxf';
+import { dxf, dxfAsync } from '../dxf';
 
 vi.mock('three', async () => await vi.importActual('../../__mocks__/three'));
 
@@ -244,6 +244,124 @@ describe('dxf import handler', () => {
       expect(room.position.y).toBe(0);
       expect(room.position.z).toBe(0);
       expect(createdSurfaces[0].positions).toContain(1); // untouched, not shifted to -0.5
+    });
+  });
+
+  describe('dxfAsync', () => {
+    /** Stands in for a real Worker: jsdom has none, and we want to drive the responses. */
+    class FakeWorker {
+      static last: FakeWorker | null = null;
+      listeners: Record<string, Array<(event: any) => void>> = {};
+      posted: any[] = [];
+      terminate = vi.fn();
+
+      constructor(public url: unknown, public options?: unknown) {
+        FakeWorker.last = this;
+      }
+      addEventListener(type: string, fn: (event: any) => void) {
+        (this.listeners[type] ||= []).push(fn);
+      }
+      postMessage(message: any) {
+        this.posted.push(message);
+      }
+      emit(type: string, event: any) {
+        (this.listeners[type] || []).forEach((fn) => fn(event));
+      }
+    }
+
+    const withFakeWorker = async (run: () => Promise<any>) => {
+      (globalThis as any).Worker = FakeWorker;
+      try {
+        return await run();
+      } finally {
+        delete (globalThis as any).Worker;
+        FakeWorker.last = null;
+      }
+    };
+
+    const quad = () => polyfaceDxf(unitQuad, [faceRecord(1, 2, 3, 4)]);
+
+    it('falls back to parsing in place when the environment has no Worker', async () => {
+      expect(typeof (globalThis as any).Worker).toBe('undefined');
+
+      const room: any = await dxfAsync(quad());
+
+      expect(room.surfaces).toHaveLength(1);
+      expect(createdSurfaces[0].positions).toHaveLength(18);
+    });
+
+    it('hands the file to the worker rather than parsing on this thread', async () => {
+      await withFakeWorker(async () => {
+        const pending = dxfAsync(quad());
+        const worker = FakeWorker.last!;
+
+        expect(worker.posted).toEqual([{ data: quad() }]);
+
+        // Positions the parser could never produce from that input, so a pass proves the
+        // room was built from the worker's reply and not re-parsed here.
+        worker.emit('message', {
+          data: {
+            ok: true,
+            meshes: [{ layer: 'from-worker', positions: new Float32Array([7, 7, 7, 8, 8, 8, 9, 9, 9]) }],
+            offset: null,
+          },
+        });
+
+        const room: any = await pending;
+        expect(room.surfaces).toHaveLength(1);
+        expect(createdSurfaces[0].positions).toEqual([7, 7, 7, 8, 8, 8, 9, 9, 9]);
+      });
+    });
+
+    it('applies the offset the worker reports', async () => {
+      await withFakeWorker(async () => {
+        const pending = dxfAsync(quad());
+        FakeWorker.last!.emit('message', {
+          data: {
+            ok: true,
+            meshes: [{ layer: 'walls', positions: new Float32Array([0, 0, 0, 1, 0, 0, 1, 1, 0]) }],
+            offset: [500000, 4500000, 0],
+          },
+        });
+
+        const room: any = await pending;
+        expect(room.position.x).toBe(500000);
+        expect(room.position.y).toBe(4500000);
+      });
+    });
+
+    it('rejects with the parser message when the worker reports failure', async () => {
+      await withFakeWorker(async () => {
+        const pending = dxfAsync('not a dxf');
+        FakeWorker.last!.emit('message', {
+          data: { ok: false, message: 'Could not parse DXF file: Empty file' },
+        });
+
+        await expect(pending).rejects.toThrow(/Could not parse DXF file/);
+      });
+    });
+
+    it('parses in place when the worker itself fails to run', async () => {
+      await withFakeWorker(async () => {
+        const pending = dxfAsync(quad());
+        FakeWorker.last!.emit('error', { message: 'worker failed to start' });
+
+        // A broken worker says nothing about the file, so the import should still succeed.
+        const room: any = await pending;
+        expect(room.surfaces).toHaveLength(1);
+        expect(createdSurfaces[0].positions).toHaveLength(18);
+      });
+    });
+
+    it('terminates the worker once it has replied', async () => {
+      await withFakeWorker(async () => {
+        const pending = dxfAsync(quad());
+        const worker = FakeWorker.last!;
+        worker.emit('message', { data: { ok: true, meshes: [], offset: null } });
+        await pending;
+
+        expect(worker.terminate).toHaveBeenCalled();
+      });
     });
   });
 
