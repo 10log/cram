@@ -8,8 +8,8 @@ export interface RigidBackedPorousAbsorberParams {
 export declare function rigidBackedPorousAbsorber(params: RigidBackedPorousAbsorberParams): {
     frequency: number[];
     reflection: {
-        magnitude: any[];
-        phase: any[];
+        magnitude: number[];
+        phase: number[];
     };
     absorption: number[];
 };

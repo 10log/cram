@@ -11,6 +11,11 @@ export declare class Complex {
      */
     absolute(): number;
     /**
+     * The argument of the complex number — its phase angle in radians, measured from the
+     * positive real axis and in the range (-pi, pi].
+     */
+    angle(): number;
+    /**
      * Swaps the real part and the imaginary part.
      */
     swap(): Complex;
