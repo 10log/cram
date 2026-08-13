@@ -169,7 +169,7 @@ export interface ExtendedData {
 
 export type ApplicationName = string;
 
-export type EntityType = "LINE"|"LWPOLYLINE"|"POLYLINE";
+export type EntityType = "LINE"|"LWPOLYLINE"|"POLYLINE"|"3DFACE";
 
 export interface Vertex {
   x:                     number;

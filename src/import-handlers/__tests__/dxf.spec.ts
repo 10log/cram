@@ -247,6 +247,97 @@ describe('dxf import handler', () => {
     });
   });
 
+  describe('3DFACE', () => {
+    /** A 3DFACE entity; corner n uses group codes 10+n / 20+n / 30+n. */
+    const face3d = (
+      corners: Array<[number, number, number]>,
+      layer = 'walls',
+      trailing: Array<[number, string | number]> = []
+    ) => {
+      const codes: Array<[number, string | number]> = [[0, '3DFACE'], [8, layer]];
+      corners.forEach(([x, y, z], i) => codes.push([10 + i, x], [20 + i, y], [30 + i, z]));
+      return group(codes.concat(trailing));
+    };
+
+    const triangle: Array<[number, number, number]> = [[0, 0, 0], [1, 0, 0], [1, 1, 0]];
+    const quad: Array<[number, number, number]> = [...triangle, [0, 1, 0]];
+
+    it('imports a triangular face', () => {
+      dxf(entitiesDxf(face3d(triangle)));
+
+      expect(createdSurfaces).toHaveLength(1);
+      expect(createdSurfaces[0].positions).toHaveLength(9);
+    });
+
+    it('splits a quad face into two triangles', () => {
+      dxf(entitiesDxf(face3d(quad)));
+
+      expect(createdSurfaces[0].positions).toHaveLength(18);
+    });
+
+    it('discards the empty trailing vertex the parser appends', () => {
+      // dxf-parser pads the vertex list with {}; taken at face value it becomes a NaN
+      // corner and poisons the geometry.
+      dxf(entitiesDxf(face3d(triangle)));
+
+      expect(createdSurfaces[0].positions.every((n) => Number.isFinite(n))).toBe(true);
+    });
+
+    it('merges faces on the same layer into one surface', () => {
+      // One Surface per face would leave thousands of one-triangle surfaces that no
+      // material could sensibly be assigned to.
+      dxf(entitiesDxf(face3d(triangle), face3d([[2, 0, 0], [3, 0, 0], [3, 1, 0]])));
+
+      expect(createdSurfaces).toHaveLength(1);
+      expect(createdSurfaces[0].positions).toHaveLength(18);
+    });
+
+    it('keeps separate layers as separate surfaces', () => {
+      dxf(entitiesDxf(face3d(triangle, 'walls'), face3d(triangle, 'ceiling')));
+
+      expect(createdSurfaces).toHaveLength(2);
+    });
+
+    it('imports alongside polyface meshes', () => {
+      dxf(entitiesDxf(polylineEntity(unitQuad, [faceRecord(1, 2, 3, 4)]), face3d(triangle, 'ceiling')));
+
+      expect(createdSurfaces).toHaveLength(2);
+    });
+
+    // Known upstream limitation: dxf-parser drops the fourth vertex of a 3DFACE when a
+    // non-vertex group code follows it, which is what Revit exports look like
+    // (gdsestimating/dxf-parser#112). The data is gone before we see it, so a quad
+    // arrives as a triangle. This test pins that so it stays visible — if it starts
+    // failing, upstream has fixed the bug and this can go.
+    it('loses the fourth corner of a quad carrying trailing xdata (upstream #112)', () => {
+      dxf(entitiesDxf(face3d(quad, 'walls', [[1001, 'REVIT'], [1000, 'payload']])));
+
+      expect(createdSurfaces[0].positions).toHaveLength(9); // would be 18 if parsed fully
+    });
+  });
+
+  describe('files with nothing importable', () => {
+    it('names the entity types it found instead of importing an empty room', () => {
+      const linesOnly = entitiesDxf(
+        group([[0, 'LINE'], [8, 'plan'], [10, 0], [20, 0], [30, 0], [11, 1], [21, 1], [31, 0]])
+      );
+
+      expect(() => dxf(linesOnly)).toThrow(/No importable geometry.*LINE/s);
+    });
+
+    it('says what the importer does read', () => {
+      const linesOnly = entitiesDxf(
+        group([[0, 'LINE'], [8, 'plan'], [10, 0], [20, 0], [30, 0], [11, 1], [21, 1], [31, 0]])
+      );
+
+      expect(() => dxf(linesOnly)).toThrow(/POLYLINE and 3DFACE/);
+    });
+
+    it('reports an entities section with nothing in it', () => {
+      expect(() => dxf(entitiesDxf())).toThrow(/no entities to import/);
+    });
+  });
+
   describe('dxfAsync', () => {
     /** Stands in for a real Worker: jsdom has none, and we want to drive the responses. */
     class FakeWorker {
