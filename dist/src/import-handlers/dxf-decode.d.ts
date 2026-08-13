@@ -28,8 +28,8 @@ export declare const worstFloat32Error: (positions: number[]) => number;
 export declare const recenteringOffset: (positions: number[]) => [number, number, number] | null;
 export declare const applyOffset: (positions: number[], offset: [number, number, number] | null) => number[];
 /**
- * Parse a DXF document and flatten its polyface meshes into triangle vertices, recentred
- * if the file's coordinates outrun float32.
+ * Parse a DXF document and flatten its meshes into triangle vertices, recentred if the
+ * file's coordinates outrun float32.
  *
  * Throws a descriptive Error for input that cannot be read: dxf-parser raises a bare
  * scanner error on any group code it doesn't recognise and returns null for input it
