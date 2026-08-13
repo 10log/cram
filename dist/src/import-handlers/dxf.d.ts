@@ -1,5 +1,31 @@
 import { default as Room } from '../objects/room';
+import { DecodedDxf } from './dxf-decode';
+/** Assemble scene objects from decoded geometry. Must run on the main thread. */
+declare function buildRoom(decoded: {
+    meshes: Array<{
+        layer: string;
+        positions: ArrayLike<number>;
+    }>;
+    offset: DecodedDxf["offset"];
+}): Room;
+/**
+ * Synchronous import. Parsing a large drawing blocks the thread it runs on, so prefer
+ * {@link dxfAsync} from anything the user is looking at; this remains for callers that
+ * cannot await, and backs the fallback path when workers are unavailable.
+ */
 export declare function dxf(data: string): Room;
+/**
+ * Import off the main thread.
+ *
+ * Whole-file DXF parsing is the expensive part of the import and used to run
+ * synchronously on the UI thread, freezing the app for its duration on any large
+ * drawing. Only the parse and geometry decode move to the worker — scene objects need
+ * THREE and the renderer, so the Room is still assembled here.
+ *
+ * Falls back to parsing in place when the environment has no Worker, or when the worker
+ * cannot be started: a frozen tab beats a failed import.
+ */
+export declare function dxfAsync(data: string): Promise<ReturnType<typeof buildRoom>>;
 export interface Dxf {
     header: Header;
     tables: Tables;
@@ -418,3 +444,4 @@ export interface ViewPortElement {
     defaultLightingOn: boolean;
     ambientColor: number;
 }
+export {};

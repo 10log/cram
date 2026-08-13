@@ -34,5 +34,5 @@ export declare function dae(data: string): {
     };
     scene: any;
 } | null;
-export { dxf } from './dxf';
+export { dxf, dxfAsync } from './dxf';
 export declare function gltf(data: ArrayBuffer): Promise<Model[]>;
