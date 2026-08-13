@@ -1,21 +1,5 @@
 // Type declarations for modules without types
 
-declare module 'complex' {
-  export default class Complex {
-    real: number;
-    imag: number;
-    constructor(real?: number, imag?: number);
-    static from(obj: { real: number; imag: number }): Complex;
-    add(other: Complex): Complex;
-    sub(other: Complex): Complex;
-    mul(other: Complex): Complex;
-    div(other: Complex): Complex;
-    abs(): number;
-    arg(): number;
-    conjugate(): Complex;
-  }
-}
-
 declare module 'three.meshline' {
   import * as THREE from 'three';
 
