@@ -26,13 +26,11 @@
       "@types/node",
       "@types/object-hash",
       "@types/react",
-      "@types/react-color",
       "@types/react-dom",
       "@types/semver",
       "@types/d3",
       "@types/plotly.js",
       "@types/three",
-      "@types/zip.js",
       "@webgpu/types"
     ],
 
