@@ -13,14 +13,14 @@ import { Vector3 as T } from "three";
 import { MeshLine as E, MeshLineMaterial as D } from "three.meshline";
 //#region src/compute/raytracer/image-source/index.ts
 function O() {
-	let e = [], t = new E();
-	t.setPoints(e);
-	let n = new D({
+	let e = new E();
+	e.setPoints(/* @__PURE__ */ new Float32Array());
+	let t = new D({
 		lineWidth: .1,
 		color: 16711680,
 		sizeAttenuation: 1
 	});
-	return new w.Mesh(t, n);
+	return new w.Mesh(e, t);
 }
 var k = class {
 	baseSource;
@@ -540,4 +540,4 @@ n("IMAGESOURCE_SET_PROPERTY", o), n("REMOVE_IMAGESOURCE", t), n("ADD_IMAGESOURCE
 //#endregion
 export { M as t };
 
-//# sourceMappingURL=image-source-Csr4Kim9.mjs.map
+//# sourceMappingURL=image-source-CoLdYskD.mjs.map

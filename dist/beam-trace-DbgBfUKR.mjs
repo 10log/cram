@@ -991,7 +991,7 @@ var Ne = class {
 }, Fe = /* @__PURE__ */ i(c());
 function Ie() {
 	let e = new me();
-	e.setPoints([]);
+	e.setPoints(/* @__PURE__ */ new Float32Array());
 	let t = new he({
 		lineWidth: .1,
 		color: 16711680,
@@ -1189,7 +1189,7 @@ var Re = {
 		}, e.addEventListener("click", this.clickHandler), e.addEventListener("mousemove", this.hoverHandler);
 	}
 	highlightVirtualSourcePath(e) {
-		this.selectedPath.geometry.setPoints([]), this.clearSelectedBeams();
+		this.selectedPath.geometry.setPoints(/* @__PURE__ */ new Float32Array()), this.clearSelectedBeams();
 		let t = Q(e.reflectionOrder, this.maxReflectionOrder), n = new O.Vector3(e.virtualSource[0], e.virtualSource[1], e.virtualSource[2]);
 		if (this.receiverIDs.length === 0) return;
 		let r = f.getState().containers[this.receiverIDs[0]];
@@ -1908,7 +1908,7 @@ var Re = {
 		}, 5);
 	}
 	reset() {
-		this.validPaths = [], this.clearVisualization(), this.btSolver = null, this.lastMetrics = null, this.responseByIntensity = void 0, this._quickEstimateInterval !== null && (window.clearInterval(this._quickEstimateInterval), this._quickEstimateInterval = null), this.quickEstimateResults = [], this.estimatedT30 = null, this.clearLevelTimeProgressionData(), this.selectedPath.geometry.setPoints([]), this.clearSelectedBeams(), u.needsToRender = !0;
+		this.validPaths = [], this.clearVisualization(), this.btSolver = null, this.lastMetrics = null, this.responseByIntensity = void 0, this._quickEstimateInterval !== null && (window.clearInterval(this._quickEstimateInterval), this._quickEstimateInterval = null), this.quickEstimateResults = [], this.estimatedT30 = null, this.clearLevelTimeProgressionData(), this.selectedPath.geometry.setPoints(/* @__PURE__ */ new Float32Array()), this.clearSelectedBeams(), u.needsToRender = !0;
 	}
 	clearSelectedBeams() {
 		for (; this.selectedBeamsGroup.children.length > 0;) {
@@ -2013,7 +2013,7 @@ var Re = {
 			return;
 		}
 		let n = t[e];
-		this.selectedPath.geometry.setPoints([]), this.clearSelectedBeams();
+		this.selectedPath.geometry.setPoints(/* @__PURE__ */ new Float32Array()), this.clearSelectedBeams();
 		let r = Q(n.order, this.maxReflectionOrder), i = new O.LineBasicMaterial({
 			color: r,
 			linewidth: 2,
@@ -2046,7 +2046,7 @@ var Re = {
 		console.log(`BeamTraceSolver: Highlighting path ${e} with order ${n.order}, arrival time ${n.arrivalTime.toFixed(4)}s`), u.needsToRender = !0;
 	}
 	clearPathHighlight() {
-		this.selectedPath.geometry.setPoints([]), this.clearSelectedBeams(), u.needsToRender = !0;
+		this.selectedPath.geometry.setPoints(/* @__PURE__ */ new Float32Array()), this.clearSelectedBeams(), u.needsToRender = !0;
 	}
 };
 n("BEAMTRACE_SET_PROPERTY", s), n("REMOVE_BEAMTRACE", t), n("ADD_BEAMTRACE", o($)), n("BEAMTRACE_CALCULATE", (e) => {
@@ -2091,4 +2091,4 @@ n("BEAMTRACE_SET_PROPERTY", s), n("REMOVE_BEAMTRACE", t), n("ADD_BEAMTRACE", o($
 //#endregion
 export { $ as BeamTraceSolver, $ as default };
 
-//# sourceMappingURL=beam-trace-DTmovrdD.mjs.map
+//# sourceMappingURL=beam-trace-DbgBfUKR.mjs.map

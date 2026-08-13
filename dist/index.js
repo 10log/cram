@@ -583,10 +583,10 @@ async function Qr(e, t, n) {
 	return r(t, n);
 }
 Zr("ray-tracer", async (e, t) => {
-	let { default: n } = await import("./raytracer-qIAUrZbA.mjs");
+	let { default: n } = await import("./raytracer-Dv60CXES.mjs");
 	return new n(t);
 }), Zr("image-source", async (e, t) => {
-	let { ImageSourceSolver: n } = await import("./image-source-DIB8cdrD.mjs");
+	let { ImageSourceSolver: n } = await import("./image-source-HP0YQr3R.mjs");
 	return new n({
 		name: "Image Source",
 		roomID: "",
@@ -621,7 +621,7 @@ Zr("ray-tracer", async (e, t) => {
 	let { default: n } = await import("./2d-fdtd-CmktSjMz.mjs");
 	return new n();
 }), Zr("beam-trace", async (e, t) => {
-	let { BeamTraceSolver: n } = await import("./beam-trace-DTmovrdD.mjs");
+	let { BeamTraceSolver: n } = await import("./beam-trace-DbgBfUKR.mjs");
 	return new n();
 }), Zr("art", async (e, t) => {
 	let { ART: n } = await import("./art-wPfPn5ZC.mjs");
@@ -6561,7 +6561,7 @@ function Lo() {
 async function Ro(e, t) {
 	switch (e) {
 		case "ray-tracer": {
-			let { default: e } = await import("./raytracer-qIAUrZbA.mjs");
+			let { default: e } = await import("./raytracer-Dv60CXES.mjs");
 			return new e(t).restore(t);
 		}
 		case "rt60": {
@@ -6573,11 +6573,11 @@ async function Ro(e, t) {
 			return new e(t).restore(t);
 		}
 		case "image-source": {
-			let { default: e } = await import("./image-source-DIB8cdrD.mjs");
+			let { default: e } = await import("./image-source-HP0YQr3R.mjs");
 			return new e(t).restore(t);
 		}
 		case "beam-trace": {
-			let { BeamTraceSolver: e } = await import("./beam-trace-DTmovrdD.mjs");
+			let { BeamTraceSolver: e } = await import("./beam-trace-DbgBfUKR.mjs");
 			return new e().restore(t);
 		}
 		default: throw Error(`Unknown solver kind: ${e}`);

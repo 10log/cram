@@ -10,7 +10,7 @@ import { t as ue } from "./sound-speed-CfEkirc1.mjs";
 import { n as de, t as fe } from "./gpu-context-BQmqThE1.mjs";
 import { t as pe } from "./solver-DCp-VMaM.mjs";
 import { a as me, i as he, n as ge, r as _e, t as ve } from "./export-playback-BtFAijfR.mjs";
-import { t as ye } from "./image-source-Csr4Kim9.mjs";
+import { t as ye } from "./image-source-CoLdYskD.mjs";
 import * as A from "three";
 import { acceleratedRaycast as be, computeBoundsTree as xe, disposeBoundsTree as Se } from "three-mesh-bvh";
 //#endregion
@@ -2049,4 +2049,4 @@ t("RAYTRACER_CALL_METHOD", a), t("RAYTRACER_SET_PROPERTY", o), t("REMOVE_RAYTRAC
 //#endregion
 export { kt as default };
 
-//# sourceMappingURL=raytracer-qIAUrZbA.mjs.map
+//# sourceMappingURL=raytracer-Dv60CXES.mjs.map
