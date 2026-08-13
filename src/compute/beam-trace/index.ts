@@ -53,7 +53,7 @@ import FileSaver from "file-saver";
 // Helper to create a highlighted path line (same as ImageSourceSolver)
 function createHighlightLine(): THREE.Mesh {
   const line = new MeshLine();
-  line.setPoints([]);
+  line.setPoints(new Float32Array(0));
   const material = new MeshLineMaterial({
     lineWidth: 0.1,
     color: 0xff0000,
@@ -486,7 +486,7 @@ export class BeamTraceSolver extends Solver {
   // beam contains polygonPath which is the sequence of polygon IDs for reflections
   private highlightVirtualSourcePath(beam: BeamVisualizationData & { polygonPath: number[] }) {
     // Clear previous selections
-    (this.selectedPath.geometry as MeshLine).setPoints([]);
+    (this.selectedPath.geometry as MeshLine).setPoints(new Float32Array(0));
     this.clearSelectedBeams();
 
     const colorHex = getOrderColor(beam.reflectionOrder, this.maxReflectionOrder);
@@ -2005,7 +2005,7 @@ export class BeamTraceSolver extends Solver {
     this.clearLevelTimeProgressionData();
 
     // Clear highlighted path and beams
-    (this.selectedPath.geometry as MeshLine).setPoints([]);
+    (this.selectedPath.geometry as MeshLine).setPoints(new Float32Array(0));
     this.clearSelectedBeams();
 
     renderer.needsToRender = true;
@@ -2224,7 +2224,7 @@ export class BeamTraceSolver extends Solver {
     const path = sortedPaths[pathIndex];
 
     // Clear previous selections
-    (this.selectedPath.geometry as MeshLine).setPoints([]);
+    (this.selectedPath.geometry as MeshLine).setPoints(new Float32Array(0));
     this.clearSelectedBeams();
 
     // Get the order-based color for this path
@@ -2293,7 +2293,7 @@ export class BeamTraceSolver extends Solver {
 
   // Clear the current path highlight
   clearPathHighlight() {
-    (this.selectedPath.geometry as MeshLine).setPoints([]);
+    (this.selectedPath.geometry as MeshLine).setPoints(new Float32Array(0));
     this.clearSelectedBeams();
     renderer.needsToRender = true;
   }

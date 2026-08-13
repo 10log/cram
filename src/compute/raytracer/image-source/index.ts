@@ -20,9 +20,8 @@ import {
 } from "../../shared/export-playback";
 
 function createLine(){
-  let points: THREE.Vector3[] = [];
   const line = new MeshLine();
-  line.setPoints(points);
+  line.setPoints(new Float32Array(0));
   const material = new MeshLineMaterial({
     lineWidth: 0.1,
     color: 0xff0000,
