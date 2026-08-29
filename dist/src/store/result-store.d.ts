@@ -3,7 +3,9 @@ export declare enum ResultKind {
     LevelTimeProgression = "linear-time-progression",
     Default = "default",
     StatisticalRT60 = "statisticalRT60",
-    ImpulseResponse = "impulseResponse"
+    ImpulseResponse = "impulseResponse",
+    /** Broadband energy envelope (not a convolutable pressure IR). */
+    EnergyDecay = "energyDecay"
 }
 export interface ResultTypes {
     [ResultKind.Default]: {
@@ -41,6 +43,21 @@ export interface ResultTypes {
     [ResultKind.ImpulseResponse]: {
         info: {
             sampleRate: number;
+            sourceName: string;
+            receiverName: string;
+            sourceId?: string;
+            receiverId?: string;
+        };
+        data: {
+            time: number;
+            amplitude: number;
+        }[];
+    };
+    [ResultKind.EnergyDecay]: {
+        info: {
+            /** Energy-bin rate in Hz — not an audio sample rate. */
+            binRate: number;
+            units: "energy";
             sourceName: string;
             receiverName: string;
             sourceId?: string;

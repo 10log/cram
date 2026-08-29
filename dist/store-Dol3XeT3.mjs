@@ -810,7 +810,7 @@ var Be = () => {
 		hasUnsavedChanges: !1
 	}), console.log("[AppStore] Reset complete");
 }, Ve = /* @__PURE__ */ function(e) {
-	return e.LevelTimeProgression = "linear-time-progression", e.Default = "default", e.StatisticalRT60 = "statisticalRT60", e.ImpulseResponse = "impulseResponse", e;
+	return e.LevelTimeProgression = "linear-time-progression", e.Default = "default", e.StatisticalRT60 = "statisticalRT60", e.ImpulseResponse = "impulseResponse", e.EnergyDecay = "energyDecay", e;
 }({}), B = h((e) => ({
 	results: {},
 	openTabIndex: 0,
@@ -828,9 +828,9 @@ m("ADD_RESULT", (e) => {
 var He = (e, t, n) => {
 	B.getState().set((r) => {
 		Object.values(r.results).forEach((r) => {
-			if (r.kind === "impulseResponse") {
-				let i = r.info;
-				n === "source" && i.sourceId === e ? (i.sourceName = t, r.name = `IR: ${t} → ${i.receiverName}`) : n === "receiver" && i.receiverId === e && (i.receiverName = t, r.name = `IR: ${i.sourceName} → ${t}`);
+			if (r.kind === "impulseResponse" || r.kind === "energyDecay") {
+				let i = r.info, a = r.kind === "energyDecay" ? "ART energy" : "IR";
+				n === "source" && i.sourceId === e ? (i.sourceName = t, r.name = `${a}: ${t} → ${i.receiverName}`) : n === "receiver" && i.receiverId === e && (i.receiverName = t, r.name = `${a}: ${i.sourceName} → ${t}`);
 			}
 		});
 	});
@@ -2463,4 +2463,4 @@ var Ot = () => {
 //#endregion
 export { B as a, Le as c, b as d, C as f, y as g, S as h, Ve as i, Ie as l, x as m, $ as n, z as o, w as p, Je as r, ze as s, Ot as t, Fe as u };
 
-//# sourceMappingURL=store-CAL1R5s7.mjs.map
+//# sourceMappingURL=store-Dol3XeT3.mjs.map
