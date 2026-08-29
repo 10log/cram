@@ -47,7 +47,7 @@ function j(e, t, n, r = 20) {
 //#endregion
 //#region src/compute/raytracer/image-source/selection.ts
 function M(e, t) {
-	return e || (t[0] ?? "");
+	return e && t.includes(e) ? e : t[0] ?? "";
 }
 function N(e, t) {
 	if (!t.length) return e;
@@ -674,6 +674,6 @@ n("IMAGESOURCE_SET_PROPERTY", o), n("REMOVE_IMAGESOURCE", t), n("ADD_IMAGESOURCE
 	t.downloadImpulseResponse(i).catch(console.error);
 });
 //#endregion
-export { G as t };
+export { M as n, G as t };
 
-//# sourceMappingURL=image-source-LJhck_5K.mjs.map
+//# sourceMappingURL=image-source-DyQZnUPB.mjs.map
