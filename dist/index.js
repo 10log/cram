@@ -622,7 +622,7 @@ Yr("ray-tracer", async (e, t) => {
 	let { default: n } = await import("./energy-decay-B7jvteJw.mjs");
 	return new n();
 }), Yr("fdtd-2d", async (e, t) => {
-	let { default: n } = await import("./2d-fdtd-DwiRpzEr.mjs");
+	let { default: n } = await import("./2d-fdtd-BK6gLUKi.mjs");
 	return new n();
 }), Yr("beam-trace", async (e, t) => {
 	let { BeamTraceSolver: n } = await import("./beam-trace-BVrpuQ_a.mjs");
@@ -6703,7 +6703,7 @@ async function Jo(e, t) {
 	}
 }
 function Yo() {
-	import("./events-JJMiwKSP.mjs").then((e) => e.default()), h("LOG_SOLVER", (e) => {
+	import("./events-ByFMoZkG.mjs").then((e) => e.default()), h("LOG_SOLVER", (e) => {
 		console.log(d.getState().solvers[e]);
 	}), h("REMOVE_SOLVERS", (e) => {
 		let t = d.getState().solvers, n = typeof e == "string" ? [e] : e;
@@ -11331,7 +11331,7 @@ var fd = {
 				id: "damping",
 				label: "Damping",
 				labelPosition: "left",
-				tooltipText: "Damping Coefficient",
+				tooltipText: "Numerical sponge on velocity — not air absorption and not a surface material",
 				min: .7,
 				max: 1,
 				step: .001,
