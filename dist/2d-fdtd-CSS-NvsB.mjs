@@ -141,7 +141,18 @@ function M(e, t) {
 		v: e.y
 	};
 }
-function N(e, t) {
+function N(e, t, n) {
+	let r = M(e, t), i = Math.round((r.u - n.offsetX) / n.cellSize), a = Math.round((r.v - n.offsetY) / n.cellSize);
+	return i < 0 || a < 0 || i >= n.nx || a >= n.ny ? null : {
+		x: i,
+		y: a
+	};
+}
+function P(e, t, n) {
+	let r = N(e, t, n);
+	return r ? 4 * (r.y * n.nx + r.x) : null;
+}
+function F(e, t) {
 	let n = {
 		dx: e.max.x - e.min.x,
 		dy: e.max.y - e.min.y,
@@ -156,38 +167,38 @@ function N(e, t) {
 		sliceHeight: r === "xz" ? e.min.y : 0
 	};
 }
-function P(e, t) {
+function I(e, t) {
 	t.slice === "xz" ? (e.rotateX(Math.PI / 2), e.translate(t.width / 2, t.sliceHeight, t.height / 2), e.translate(t.offsetX, 0, t.offsetY)) : (e.translate(t.width / 2, t.height / 2, 0), e.translate(t.offsetX, t.offsetY, 0));
 }
 //#endregion
 //#region src/compute/2d-fdtd/field-encoding.ts
-var F = 127.5;
-function I(e) {
-	return F + e * 8;
+var L = 127.5;
+function R(e) {
+	return L + e * 8;
 }
-function L() {
+function z() {
 	return {
-		pressure: F,
+		pressure: L,
 		velocity: 0,
 		alpha: 1
 	};
 }
-function R(e) {
+function B(e) {
 	return {
-		pressure: I(e),
+		pressure: R(e),
 		velocity: 0,
 		alpha: 0
 	};
 }
-function z() {
-	return L();
+function V() {
+	return z();
 }
-function B(e, t, n) {
+function H(e, t, n) {
 	e[t + 0] = n.pressure, e[t + 1] = n.velocity, e[t + 3] = n.alpha;
 }
 //#endregion
 //#region src/compute/2d-fdtd/dispose-gpu.ts
-function V(e) {
+function U(e) {
 	if (!e) return;
 	let t = e.variables ?? [];
 	for (let e of t) e.renderTargets?.forEach((e) => e.dispose()), e.material?.dispose?.();
@@ -195,7 +206,7 @@ function V(e) {
 }
 //#endregion
 //#region src/compute/2d-fdtd/rasterize-line.ts
-function H(e, t, n, r) {
+function W(e, t, n, r) {
 	let i = [], a, o, s, c, l, u, d, f, p, m, h;
 	if (s = n - e, c = r - t, l = Math.abs(s), u = Math.abs(c), d = 2 * u - l, f = 2 * l - u, u <= l) for (s >= 0 ? (a = e, o = t, p = n) : (a = n, o = r, p = e), i.push([a, o]), h = 0; a < p; h++) a += 1, d < 0 ? d += 2 * u : (s < 0 && c < 0 || s > 0 && c > 0 ? o += 1 : --o, d += 2 * (u - l)), i.push([a, o]);
 	else for (c >= 0 ? (a = e, o = t, m = r) : (a = n, o = r, m = t), i.push([a, o]), h = 0; o < m; h++) o += 1, f <= 0 ? f += 2 * l : (s < 0 && c < 0 || s > 0 && c > 0 ? a += 1 : --a, f += 2 * (l - u)), i.push([a, o]);
@@ -203,7 +214,7 @@ function H(e, t, n, r) {
 }
 //#endregion
 //#region src/compute/2d-fdtd/fdtd-wall.ts
-var U = class {
+var G = class {
 	enabled;
 	x1;
 	y1;
@@ -213,27 +224,27 @@ var U = class {
 	previousCells;
 	shouldClearPreviousCells;
 	constructor(e) {
-		this.x1 = e.x1, this.y1 = e.y1, this.x2 = e.x2, this.y2 = e.y2, this.cells = H(this.x1, this.y1, this.x2, this.y2), this.previousCells = this.cells, this.shouldClearPreviousCells = !1, this.enabled = !0;
+		this.x1 = e.x1, this.y1 = e.y1, this.x2 = e.x2, this.y2 = e.y2, this.cells = W(this.x1, this.y1, this.x2, this.y2), this.previousCells = this.cells, this.shouldClearPreviousCells = !1, this.enabled = !0;
 	}
 	move(e) {
-		this.previousCells = this.cells, this.x1 = e.x1, this.y1 = e.y1, this.x2 = e.x2, this.y2 = e.y2, this.cells = H(this.x1, this.y1, this.x2, this.y2), this.shouldClearPreviousCells = !0;
+		this.previousCells = this.cells, this.x1 = e.x1, this.y1 = e.y1, this.x2 = e.x2, this.y2 = e.y2, this.cells = W(this.x1, this.y1, this.x2, this.y2), this.shouldClearPreviousCells = !0;
 	}
 };
 //#endregion
 //#region src/common/clamp.ts
-function W(e, t, n) {
+function K(e, t, n) {
 	return e < t ? t : e > n ? n : e;
 }
 //#endregion
 //#region src/compute/2d-fdtd/index.ts
-var G = 256, K = {
+var q = 256, J = {
 	width: 10,
 	height: 10,
-	cellSize: 10 / G,
+	cellSize: 10 / q,
 	offsetX: 0,
 	offsetY: 0,
 	slice: "xz"
-}, q = class extends l {
+}, Y = class extends l {
 	gpuCompute;
 	nx;
 	ny;
@@ -278,7 +289,7 @@ var G = 256, K = {
 			let e = o.mesh.geometry.boundingBox;
 			if (e) {
 				let n = e.min.clone().applyMatrix4(o.mesh.matrixWorld), r = e.max.clone().applyMatrix4(o.mesh.matrixWorld);
-				s = N({
+				s = F({
 					min: {
 						x: n.x,
 						y: n.y,
@@ -292,10 +303,10 @@ var G = 256, K = {
 				}, t.slice), t.width = s.width, t.height = s.height, t.offsetX = s.offsetX, t.offsetY = s.offsetY, t.slice = s.slice;
 			}
 		}
-		let c = t && t.width || K.width, l = t && t.height || K.height;
-		this.offsetX = t && t.offsetX || K.offsetX, this.offsetY = t && t.offsetY || K.offsetY, this.slice = t && t.slice || s?.slice || K.slice, this.sliceHeight = s?.sliceHeight ?? 0, this.cellSize = t && t.cellSize || Math.max(c, l) / G, this.nx = Math.ceil(c / this.cellSize), this.ny = Math.ceil(l / this.cellSize), this.width = this.nx * this.cellSize, this.height = this.ny * this.cellSize, this.dt = A(this.cellSize, this.waveSpeed), this.sources = {}, this.sourceKeys = [], this.receivers = {}, this.receiverKeys = [], this.walls = [], this.messageHandlers = [], this.eventListeners = [];
+		let c = t && t.width || J.width, l = t && t.height || J.height;
+		this.offsetX = t && t.offsetX || J.offsetX, this.offsetY = t && t.offsetY || J.offsetY, this.slice = t && t.slice || s?.slice || J.slice, this.sliceHeight = s?.sliceHeight ?? 0, this.cellSize = t && t.cellSize || Math.max(c, l) / q, this.nx = Math.ceil(c / this.cellSize), this.ny = Math.ceil(l / this.cellSize), this.width = this.nx * this.cellSize, this.height = this.ny * this.cellSize, this.dt = A(this.cellSize, this.waveSpeed), this.sources = {}, this.sourceKeys = [], this.receivers = {}, this.receiverKeys = [], this.walls = [], this.messageHandlers = [], this.eventListeners = [];
 		let u = new y(this.width, this.height, 1, 1);
-		P(u, {
+		I(u, {
 			slice: this.slice,
 			width: this.width,
 			height: this.height,
@@ -340,7 +351,7 @@ var G = 256, K = {
 	init() {
 		this.disposeGpu();
 		let e = new y(this.width, this.height, this.nx - 1, this.ny - 1);
-		e.name = "fdtd-2d-plane-geometry", P(e, {
+		e.name = "fdtd-2d-plane-geometry", I(e, {
 			slice: this.slice,
 			width: this.width,
 			height: this.height,
@@ -404,7 +415,7 @@ var G = 256, K = {
 			let e = this.mesh.material;
 			Array.isArray(e) ? e.forEach((e) => e.dispose()) : e.dispose();
 		}
-		this.readLevelRenderTarget?.dispose(), this.sourcemap?.dispose(), this.clearShader?.dispose(), this.readLevelShader?.dispose(), V(this.gpuCompute);
+		this.readLevelRenderTarget?.dispose(), this.sourcemap?.dispose(), this.clearShader?.dispose(), this.readLevelShader?.dispose(), U(this.gpuCompute);
 	}
 	dispose() {
 		if (this.stop(), this.disposeGpu(), this.editMesh) {
@@ -448,12 +459,19 @@ var G = 256, K = {
 		t && (this.vacateSourceCell(t.position), delete this.sources[e], this.sourceKeys = this.sourceKeys.filter((t) => t !== e));
 	}
 	planeCellIndex(e) {
-		let t = M(e, this.slice), n = Math.round((t.u - this.offsetX) / this.cellSize);
-		return 4 * (Math.round((t.v - this.offsetY) / this.cellSize) * this.nx + n);
+		return P(e, this.slice, {
+			offsetX: this.offsetX,
+			offsetY: this.offsetY,
+			cellSize: this.cellSize,
+			nx: this.nx,
+			ny: this.ny
+		});
 	}
 	vacateSourceCell(e) {
 		let t = this.sourcemap?.image?.data;
-		t && (B(t, this.planeCellIndex(e), z()), this.sourcemap.needsUpdate = !0);
+		if (!t) return;
+		let n = this.planeCellIndex(e);
+		n != null && (H(t, n, V()), this.sourcemap.needsUpdate = !0);
 	}
 	addReceiver(e) {
 		this.receiverKeys = [...new Set(this.receiverKeys.concat(e.uuid))], this.receivers[e.uuid] = e;
@@ -462,8 +480,8 @@ var G = 256, K = {
 		this.receivers[e] && (delete this.receivers[e], this.receiverKeys = this.receiverKeys.filter((t) => t !== e));
 	}
 	addWall(e) {
-		let t = W(Math.floor((e.x1 - this.offsetX) / this.cellSize), 0, this.nx - 1), n = W(Math.floor((e.y1 - this.offsetY) / this.cellSize), 0, this.ny - 1), r = W(Math.floor((e.x2 - this.offsetX) / this.cellSize), 0, this.nx - 1), i = W(Math.floor((e.y2 - this.offsetY) / this.cellSize), 0, this.ny - 1);
-		this.walls.push(new U({
+		let t = K(Math.floor((e.x1 - this.offsetX) / this.cellSize), 0, this.nx - 1), n = K(Math.floor((e.y1 - this.offsetY) / this.cellSize), 0, this.ny - 1), r = K(Math.floor((e.x2 - this.offsetX) / this.cellSize), 0, this.nx - 1), i = K(Math.floor((e.y2 - this.offsetY) / this.cellSize), 0, this.ny - 1);
+		this.walls.push(new G({
 			x1: t,
 			y1: n,
 			x2: r,
@@ -477,8 +495,8 @@ var G = 256, K = {
 		let n = t.geometry.getAttribute("position"), r = new E(), i = new E();
 		for (let e = 0; e < n.count; e += 2) {
 			r.fromBufferAttribute(n, e).applyMatrix4(t.matrixWorld), i.fromBufferAttribute(n, e + 1).applyMatrix4(t.matrixWorld);
-			let a = M(r, this.slice), o = M(i, this.slice), s = W(Math.floor((a.u - this.offsetX) / this.cellSize), 0, this.nx - 1), c = W(Math.floor((a.v - this.offsetY) / this.cellSize), 0, this.ny - 1), l = W(Math.floor((o.u - this.offsetX) / this.cellSize), 0, this.nx - 1), u = W(Math.floor((o.v - this.offsetY) / this.cellSize), 0, this.ny - 1);
-			this.walls.push(new U({
+			let a = M(r, this.slice), o = M(i, this.slice), s = K(Math.floor((a.u - this.offsetX) / this.cellSize), 0, this.nx - 1), c = K(Math.floor((a.v - this.offsetY) / this.cellSize), 0, this.ny - 1), l = K(Math.floor((o.u - this.offsetX) / this.cellSize), 0, this.nx - 1), u = K(Math.floor((o.v - this.offsetY) / this.cellSize), 0, this.ny - 1);
+			this.walls.push(new G({
 				x1: s,
 				y1: c,
 				x2: l,
@@ -491,7 +509,7 @@ var G = 256, K = {
 		let e = this.sourcemap.image.data;
 		if (!e) return;
 		let t = 0;
-		for (let n = 0; n < this.ny; n++) for (let n = 0; n < this.nx; n++) e[t + 0] = F, e[t + 1] = 0, e[t + 2] = 1, e[t + 3] = 1, t += 4;
+		for (let n = 0; n < this.ny; n++) for (let n = 0; n < this.nx; n++) e[t + 0] = L, e[t + 1] = 0, e[t + 2] = 1, e[t + 3] = 1, t += 4;
 	}
 	toggleWall(e) {
 		this.walls[e] && (this.walls[e].enabled = !this.walls[e].enabled, this.updateWalls());
@@ -524,11 +542,16 @@ var G = 256, K = {
 		if (e) {
 			for (let t = 0; t < this.sourceKeys.length; t++) {
 				let n = this.sources[this.sourceKeys[t]];
-				n.updateWave(this.time, this.frame, this.dt), B(e, this.planeCellIndex(n.position), R(n.value)), n.shouldClearPreviousPosition && (B(e, this.planeCellIndex({
-					x: n.previousX,
-					y: n.previousY,
-					z: n.previousZ
-				}), z()), n.shouldClearPreviousPosition = !1, n.updatePreviousPosition());
+				n.updateWave(this.time, this.frame, this.dt);
+				let r = this.planeCellIndex(n.position);
+				if (r != null && H(e, r, B(n.value)), n.shouldClearPreviousPosition) {
+					let t = this.planeCellIndex({
+						x: n.previousX,
+						y: n.previousY,
+						z: n.previousZ
+					});
+					t != null && H(e, t, V()), n.shouldClearPreviousPosition = !1, n.updatePreviousPosition();
+				}
 			}
 			this.sourcemap.needsUpdate = !0;
 		}
@@ -537,7 +560,7 @@ var G = 256, K = {
 		let t = e.image.data;
 		if (!t) return;
 		let n = 0;
-		for (let e = 0; e < this.ny; e++) for (let e = 0; e < this.nx; e++) t[n + 0] = F, t[n + 1] = 0, t[n + 2] = 1, t[n + 3] = 1, n += 4;
+		for (let e = 0; e < this.ny; e++) for (let e = 0; e < this.nx; e++) t[n + 0] = L, t[n + 1] = 0, t[n + 2] = 1, t[n + 3] = 1, n += 4;
 	}
 	readReceiverLevels() {
 		let e = this.gpuCompute.getCurrentRenderTarget(this.heightmapVariable);
@@ -578,6 +601,6 @@ var G = 256, K = {
 	onParameterConfigBlur() {}
 };
 //#endregion
-export { q as FDTD_2D, q as default };
+export { Y as FDTD_2D, Y as default };
 
-//# sourceMappingURL=2d-fdtd-BVfMdj3k.mjs.map
+//# sourceMappingURL=2d-fdtd-CSS-NvsB.mjs.map

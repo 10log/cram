@@ -38,6 +38,23 @@ export interface SliceDomain {
 }
 export declare function inferSlice(size: AxisAlignedSize): FdtdSlice;
 export declare function worldToPlane(p: WorldPoint, slice: FdtdSlice): PlanePoint;
+export interface GridSize {
+    offsetX: number;
+    offsetY: number;
+    cellSize: number;
+    nx: number;
+    ny: number;
+}
+/**
+ * Map a world point onto the FDTD grid. `null` if the cell is outside
+ * the domain — callers must skip the write instead of clamping to the
+ * rim (a source off-grid is not a boundary driver).
+ */
+export declare function gridCell(p: WorldPoint, slice: FdtdSlice, grid: GridSize): {
+    x: number;
+    y: number;
+} | null;
+export declare function gridCellIndex(p: WorldPoint, slice: FdtdSlice, grid: GridSize): number | null;
 export declare function planeSeparation(a: WorldPoint, b: WorldPoint, slice: FdtdSlice): number;
 export declare function domainFromBox(box: {
     min: WorldPoint;

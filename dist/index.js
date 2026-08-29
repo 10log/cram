@@ -622,7 +622,7 @@ Qr("ray-tracer", async (e, t) => {
 	let { default: n } = await import("./energy-decay-B7jvteJw.mjs");
 	return new n();
 }), Qr("fdtd-2d", async (e, t) => {
-	let { default: n } = await import("./2d-fdtd-BVfMdj3k.mjs");
+	let { default: n } = await import("./2d-fdtd-CSS-NvsB.mjs");
 	return new n();
 }), Qr("beam-trace", async (e, t) => {
 	let { BeamTraceSolver: n } = await import("./beam-trace-BVrpuQ_a.mjs");
@@ -6703,7 +6703,7 @@ async function Xo(e, t) {
 	}
 }
 function Zo() {
-	import("./events-DKMdEhuo.mjs").then((e) => e.default()), h("LOG_SOLVER", (e) => {
+	import("./events-COEIMi75.mjs").then((e) => e.default()), h("LOG_SOLVER", (e) => {
 		console.log(d.getState().solvers[e]);
 	}), h("REMOVE_SOLVERS", (e) => {
 		let t = d.getState().solvers, n = typeof e == "string" ? [e] : e;
@@ -11274,7 +11274,7 @@ var md = {
 	fontSize: "0.75rem",
 	py: .5
 }, gd = ({ uuid: e }) => {
-	let t = zr(), n = Gr(), r = d((t) => t.solvers[e]), [i, a] = F(r.uniforms.colorBrightness.value), [o, s] = F(r.mesh.scale.z), [c, l] = F(r.heightmapVariable.material.uniforms.damping.value), [u, f] = F(r.numPasses), [p, m] = F(r.running), [h, g] = F(r.recording), [_, v] = F(r.getWireframeVisible()), [y, b] = F(!1), [x, S] = F(!1), [C, w] = F(!1), [T, ee] = F(r.sourceKeys), E = t.filter((e) => !r.sources[e.uuid]), [te, ne] = F(!1), [re, D] = F(r.receiverKeys), ie = n.filter((e) => !r.receiverKeys[e.uuid]);
+	let t = zr(), n = Gr(), r = d((t) => t.solvers[e]), [i, a] = F(r.uniforms.colorBrightness.value), [o, s] = F(r.mesh.scale.z), [c, l] = F(r.heightmapVariable.material.uniforms.damping.value), [u, f] = F(r.numPasses), [p, m] = F(r.running), [h, g] = F(r.recording), [_, v] = F(r.getWireframeVisible()), [y, b] = F(!1), [x, S] = F(!1), [C, w] = F(!1), [T, ee] = F(r.sourceKeys), E = t.filter((e) => !r.sources[e.uuid]), [te, ne] = F(!1), [re, D] = F(r.receiverKeys), ie = n.filter((e) => !r.receivers[e.uuid]);
 	return /* @__PURE__ */ z("div", { children: [
 		/* @__PURE__ */ z(zc, {
 			id: "view",
