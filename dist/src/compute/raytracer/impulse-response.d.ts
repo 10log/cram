@@ -7,7 +7,7 @@ export interface TailOptions {
     frequencies: number[];
 }
 export declare function arrivalPressure(initialSPL: number[], freqs: number[], path: RayPath, receiverGain?: number, temperature?: number): number[];
-export declare function calculateImpulseResponseForPair(sourceId: string, receiverId: string, paths: RayPath[], initialSPL: number | undefined, frequencies: number[], temperature: number, sampleRate?: number, tailOptions?: TailOptions): Promise<{
+export declare function calculateImpulseResponseForPair(sourceId: string, receiverId: string, paths: RayPath[], initialSPL: number | undefined, frequencies: number[], temperature: number, sampleRate?: number, tailOptions?: TailOptions, numRays?: number): Promise<{
     signal: Float32Array;
     normalizedSignal: Float32Array;
 }>;

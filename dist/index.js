@@ -589,7 +589,7 @@ async function ti(e, t, n) {
 	return r(t, n);
 }
 ei("ray-tracer", async (e, t) => {
-	let { default: n } = await import("./raytracer-B-vWgrWF.mjs");
+	let { default: n } = await import("./raytracer-BuJPSqcP.mjs");
 	return new n(t);
 }), ei("image-source", async (e, t) => {
 	let { ImageSourceSolver: n } = await import("./image-source-BFv9Es5X.mjs");
@@ -6683,7 +6683,7 @@ function Zo() {
 async function Qo(e, t) {
 	switch (e) {
 		case "ray-tracer": {
-			let { default: e } = await import("./raytracer-B-vWgrWF.mjs");
+			let { default: e } = await import("./raytracer-BuJPSqcP.mjs");
 			return new e(t).restore(t);
 		}
 		case "rt60": {
