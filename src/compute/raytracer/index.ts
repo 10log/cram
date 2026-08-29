@@ -38,6 +38,7 @@ import {
 import { traceRay as traceRayFn, inFrontOf as inFrontOfFn } from "./ray-core";
 import { arrivalPressure as arrivalPressureFn, calculateImpulseResponseForPair as calcIRForPairFn, calculateImpulseResponseForDisplay as calcIRForDisplayFn } from "./impulse-response";
 import { hybridStochasticPaths, hybridImageSourcePaths } from "./hybrid-ir";
+import { resolveReceiverId, stampRayPathTiming } from "./path-timing";
 import type { TailOptions } from "./impulse-response";
 import { extractDecayParameters, synthesizeTail, assembleFinalIR, applyAmbisonicTail } from "./tail-synthesis";
 import { reflectionLossFunction as reflectionLossFunctionFn, calculateReflectionLoss as calculateReflectionLossFn, calculateResponseByIntensity as calcResponseByIntensityFn, resampleResponseByIntensity as resampleResponseByIntensityFn, calculateT20 as calculateT20Fn, calculateT30 as calculateT30Fn, calculateT60 as calculateT60Fn } from "./response-by-intensity";
@@ -740,6 +741,7 @@ class RayTracer extends Solver {
 
   /** Push a path onto the paths array, evicting oldest if over maxStoredPaths */
   _pushPathWithEviction(index: string, path: RayPath) {
+    stampRayPathTiming(path, this.c);
     const cap = Math.max(1, this.maxStoredPaths | 0);
     if (!this.paths[index]) {
       this.paths[index] = [path];
@@ -1226,18 +1228,19 @@ class RayTracer extends Solver {
     return calcIRForPairFn(sourceId, receiverId, paths, initialSPL, frequencies, this.temperature, sampleRate, tailOptions);
   }
 
-  async calculateImpulseResponseForDisplay(initialSPL = DEFAULT_INITIAL_SPL, frequencies = this.frequencies, sampleRate = audioEngine.sampleRate): Promise<{ signal: Float32Array; normalizedSignal: Float32Array }> {
+  async calculateImpulseResponseForDisplay(initialSPL = DEFAULT_INITIAL_SPL, frequencies = this.frequencies, sampleRate = audioEngine.sampleRate, receiverId?: string): Promise<{ signal: Float32Array; normalizedSignal: Float32Array }> {
+    const recId = resolveReceiverId(this.receiverIDs, this.paths, receiverId);
     let tailOptions: TailOptions | undefined;
-    if (this.lateReverbTailEnabled && this.receiverIDs.length > 0 && this._energyHistogram[this.receiverIDs[0]]) {
+    if (this.lateReverbTailEnabled && this._energyHistogram[recId]) {
       tailOptions = {
-        energyHistogram: this._energyHistogram[this.receiverIDs[0]],
+        energyHistogram: this._energyHistogram[recId],
         crossfadeTime: this.tailCrossfadeTime,
         crossfadeDuration: this.tailCrossfadeDuration,
         histogramBinWidth: this._histogramBinWidth,
         frequencies,
       };
     }
-    return calcIRForDisplayFn(this.receiverIDs, this.sourceIDs, this.paths, initialSPL, frequencies, this.temperature, sampleRate, tailOptions);
+    return calcIRForDisplayFn(this.receiverIDs, this.sourceIDs, this.paths, initialSPL, frequencies, this.temperature, sampleRate, tailOptions, recId);
   }
   clearRays() {
     if (this.room) {
@@ -1375,12 +1378,11 @@ class RayTracer extends Solver {
   arrivalPressure(initialSPL: number[], freqs: number[], path: RayPath, receiverGain: number = 1.0): number[] {
     return arrivalPressureFn(initialSPL, freqs, path, receiverGain, this.temperature);
   }
-  async calculateImpulseResponse(initialSPL = DEFAULT_INITIAL_SPL, frequencies = this.frequencies, sampleRate = audioEngine.sampleRate): Promise<AudioBuffer> {
-    if(this.receiverIDs.length === 0) throw Error("No receivers have been assigned to the raytracer");
+  async calculateImpulseResponse(initialSPL = DEFAULT_INITIAL_SPL, frequencies = this.frequencies, sampleRate = audioEngine.sampleRate, receiverId?: string): Promise<AudioBuffer> {
     if(this.sourceIDs.length === 0) throw Error("No sources have been assigned to the raytracer");
-    if(!this.paths[this.receiverIDs[0]] || this.paths[this.receiverIDs[0]].length === 0) throw Error("No rays have been traced yet");
+    const recId = resolveReceiverId(this.receiverIDs, this.paths, receiverId);
 
-    const storedPaths = this.paths[this.receiverIDs[0]];
+    const storedPaths = this.paths[recId];
     const sortedForTime = storedPaths.slice().sort((a,b)=>a.time - b.time) as RayPath[];
     let sorted = sortedForTime;
 
@@ -1430,7 +1432,7 @@ class RayTracer extends Solver {
     }
   
     // add in raytracer paths (apply receiver directivity)
-    const recForIR = useContainer.getState().containers[this.receiverIDs[0]] as Receiver;
+    const recForIR = useContainer.getState().containers[recId] as Receiver;
     for(let i = 0; i<sorted.length; i++){
       const randomPhase = coinFlip() ? 1 : -1;
       const t = sorted[i].time;
@@ -1445,9 +1447,9 @@ class RayTracer extends Solver {
     }
 
     // Apply late reverberation tail synthesis if enabled
-    if (this.lateReverbTailEnabled && this._energyHistogram[this.receiverIDs[0]]) {
+    if (this.lateReverbTailEnabled && this._energyHistogram[recId]) {
       const decayParams = extractDecayParameters(
-        this._energyHistogram[this.receiverIDs[0]], frequencies,
+        this._energyHistogram[recId], frequencies,
         this.tailCrossfadeTime, this._histogramBinWidth
       );
       const { tailSamples, tailStartSample } = synthesizeTail(
@@ -1520,13 +1522,13 @@ class RayTracer extends Solver {
     order: number = 1,
     initialSPL = DEFAULT_INITIAL_SPL,
     frequencies = this.frequencies,
-    sampleRate = audioEngine.sampleRate
+    sampleRate = audioEngine.sampleRate,
+    receiverId?: string,
   ): Promise<AudioBuffer> {
-    if (this.receiverIDs.length === 0) throw Error("No receivers have been assigned to the raytracer");
     if (this.sourceIDs.length === 0) throw Error("No sources have been assigned to the raytracer");
-    if (!this.paths[this.receiverIDs[0]] || this.paths[this.receiverIDs[0]].length === 0) throw Error("No rays have been traced yet. Run the raytracer first.");
+    const recId = resolveReceiverId(this.receiverIDs, this.paths, receiverId);
 
-    const sorted = this.paths[this.receiverIDs[0]].sort((a, b) => a.time - b.time) as RayPath[];
+    const sorted = this.paths[recId].slice().sort((a, b) => a.time - b.time) as RayPath[];
     if (sorted.length === 0) throw Error("No valid ray paths found");
 
     const totalTime = sorted[sorted.length - 1].time + RESPONSE_TIME_PADDING;
@@ -1549,7 +1551,7 @@ class RayTracer extends Solver {
     }
 
     // Process each ray path (apply receiver directivity)
-    const recForAmbi = useContainer.getState().containers[this.receiverIDs[0]] as Receiver;
+    const recForAmbi = useContainer.getState().containers[recId] as Receiver;
     for (let i = 0; i < sorted.length; i++) {
       const path = sorted[i];
       const randomPhase = coinFlip() ? 1 : -1;
@@ -1579,9 +1581,9 @@ class RayTracer extends Solver {
     }
 
     // Diffuse late reverb: independent noise of the same envelope on every HOA channel.
-    if (this.lateReverbTailEnabled && this._energyHistogram[this.receiverIDs[0]]) {
+    if (this.lateReverbTailEnabled && this._energyHistogram[recId]) {
       const decayParams = extractDecayParameters(
-        this._energyHistogram[this.receiverIDs[0]], frequencies,
+        this._energyHistogram[recId], frequencies,
         this.tailCrossfadeTime, this._histogramBinWidth
       );
       const crossfadeDurationSamples = floor(this.tailCrossfadeDuration * sampleRate);
@@ -1687,9 +1689,9 @@ class RayTracer extends Solver {
   impulseResponse!: AudioBuffer;
   impulseResponsePlaying = false;
 
-  async playImpulseResponse(){
+  async playImpulseResponse(receiverId?: string){
     const result = await playImpulseResponseFn(
-      this.impulseResponse, () => this.calculateImpulseResponse(), this.uuid
+      this.impulseResponse, () => this.calculateImpulseResponse(undefined, undefined, undefined, receiverId), this.uuid
     );
     this.impulseResponse = result.impulseResponse;
   }
@@ -1700,20 +1702,21 @@ class RayTracer extends Solver {
       filename, initialSPL, frequencies, sampleRate
     );
   }
-  async downloadImpulseResponse(filename: string, sampleRate = audioEngine.sampleRate){
+  async downloadImpulseResponse(filename: string, sampleRate = audioEngine.sampleRate, receiverId?: string){
     const result = await downloadImpulseResponseFn(
-      this.impulseResponse, () => this.calculateImpulseResponse(), filename, sampleRate
+      this.impulseResponse, () => this.calculateImpulseResponse(undefined, undefined, undefined, receiverId), filename, sampleRate
     );
     this.impulseResponse = result.impulseResponse;
   }
 
   async downloadAmbisonicImpulseResponse(
     filename: string,
-    order: number = 1
+    order: number = 1,
+    receiverId?: string,
   ) {
     const result = await downloadAmbisonicIRFn(
       this.ambisonicImpulseResponse,
-      (o: number) => this.calculateAmbisonicImpulseResponse(o),
+      (o: number) => this.calculateAmbisonicImpulseResponse(o, undefined, undefined, undefined, receiverId),
       this.ambisonicOrder, order, filename
     );
     this.ambisonicImpulseResponse = result.ambisonicImpulseResponse;
@@ -1725,10 +1728,10 @@ class RayTracer extends Solver {
    * The ambisonic IR is computed (or cached) first, then optionally rotated by head orientation,
    * and finally decoded to stereo via HRTF convolution.
    */
-  async calculateBinauralImpulseResponse(order: number = 1): Promise<AudioBuffer> {
+  async calculateBinauralImpulseResponse(order: number = 1, receiverId?: string): Promise<AudioBuffer> {
     // Get or compute ambisonic IR
     if (!this.ambisonicImpulseResponse || this.ambisonicOrder !== order) {
-      this.ambisonicImpulseResponse = await this.calculateAmbisonicImpulseResponse(order);
+      this.ambisonicImpulseResponse = await this.calculateAmbisonicImpulseResponse(order, undefined, undefined, undefined, receiverId);
       this.ambisonicOrder = order;
     }
 

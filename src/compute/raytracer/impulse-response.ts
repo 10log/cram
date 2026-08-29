@@ -166,12 +166,14 @@ export async function calculateImpulseResponseForDisplay(
   temperature: number,
   sampleRate = audioEngine.sampleRate,
   tailOptions?: TailOptions,
+  receiverId?: string,
 ): Promise<{ signal: Float32Array; normalizedSignal: Float32Array }> {
   if (receiverIDs.length == 0) throw Error("No receivers have been assigned to the raytracer");
   if (sourceIDs.length == 0) throw Error("No sources have been assigned to the raytracer");
-  if (paths[receiverIDs[0]].length == 0) throw Error("No rays have been traced yet");
+  const recId = receiverId ?? receiverIDs[0];
+  if (!paths[recId] || paths[recId].length == 0) throw Error("No rays have been traced yet");
 
-  let sorted = paths[receiverIDs[0]].sort((a, b) => a.time - b.time) as RayPath[];
+  let sorted = paths[recId].slice().sort((a, b) => a.time - b.time) as RayPath[];
 
   const totalTime = sorted[sorted.length - 1].time + RESPONSE_TIME_PADDING;
 
@@ -185,7 +187,7 @@ export async function calculateImpulseResponseForDisplay(
   }
 
   // add in raytracer paths (apply receiver directivity)
-  const recForDisplay = useContainer.getState().containers[receiverIDs[0]] as Receiver;
+  const recForDisplay = useContainer.getState().containers[recId] as Receiver;
   for (let i = 0; i < sorted.length; i++) {
     const randomPhase = coinFlip() ? 1 : -1;
     const t = sorted[i].time;
