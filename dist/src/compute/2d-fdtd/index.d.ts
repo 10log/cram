@@ -24,6 +24,8 @@ export interface FDTD_2D_Props {
     offsetY?: number;
     /** Floor plan (`xz`) or vertical sketch (`xy`). Inferred from the selected surface when omitted. */
     slice?: FdtdSlice;
+    /** Air temperature in °C. Default 20, matching the other solvers. */
+    temperature?: number;
 }
 export interface Uniforms {
     [uniform: string]: IUniform;
@@ -69,6 +71,7 @@ declare class FDTD_2D extends Solver {
     cellSize: number;
     numPasses: number;
     waveSpeed: number;
+    _temperature: number;
     recording: boolean;
     lastTickMs: number | null;
     clearShader: ShaderMaterial;
@@ -86,6 +89,11 @@ declare class FDTD_2D extends Solver {
     dispose(): void;
     run(): void;
     stop(): void;
+    get temperature(): number;
+    set temperature(value: number);
+    get c(): number;
+    /** Keep waveSpeed, dt, and courantSq on the CFL 1/√2 locus. */
+    applyWaveSpeed(): void;
     get sampleRate(): number;
     startRecording(): void;
     stopRecording(): void;
