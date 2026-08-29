@@ -56,6 +56,7 @@ export declare class Source extends Container {
     private _initialSPL;
     private _initialIntensity;
     fdtdSamples: number[];
+    fdtdSampleRate?: number;
     directivityHandler: DirectivityHandler;
     constructor(name?: string, props?: SourceProps);
     dispose(): void;

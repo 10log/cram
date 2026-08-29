@@ -1,1 +1,0 @@
-{"version":3,"file":"editor-modes-DTSuNg6Q.mjs","names":[],"sources":["../src/constants/editor-modes.ts"],"sourcesContent":["export enum EditorModes {\n  OBJECT = \"OBJECT\",\n  SKETCH = \"SKETCH\",\n  EDIT = \"EDIT\"\n}\n\n"],"mappings":";AAAA,IAAY,IAAL,yBAAA,GAAA;QACL,EAAA,SAAA,UACA,EAAA,SAAA,UACA,EAAA,OAAA;AACF,EAAA,CAAA,CAAA"}

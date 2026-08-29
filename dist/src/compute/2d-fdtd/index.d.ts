@@ -70,6 +70,7 @@ declare class FDTD_2D extends Solver {
     numPasses: number;
     waveSpeed: number;
     recording: boolean;
+    lastTickMs: number | null;
     clearShader: ShaderMaterial;
     frame: number;
     messageHandlers: string[][];
@@ -84,6 +85,9 @@ declare class FDTD_2D extends Solver {
     dispose(): void;
     run(): void;
     stop(): void;
+    get sampleRate(): number;
+    startRecording(): void;
+    stopRecording(): void;
     setWireframeVisible(show: boolean): void;
     getWireframeVisible(): boolean;
     addSource(source: Source): void;
@@ -101,7 +105,7 @@ declare class FDTD_2D extends Solver {
     fillTexture(texture: DataTexture): void;
     readReceiverLevels(): void;
     clear(): void;
-    render(): void;
+    render(nowMs?: number): void;
     onParameterConfigFocus(): void;
     onParameterConfigBlur(): void;
 }

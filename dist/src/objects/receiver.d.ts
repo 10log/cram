@@ -27,6 +27,7 @@ export declare class Receiver extends Container {
     selectedMaterial: THREE.MeshMatcapMaterial;
     normalMaterial: THREE.MeshMatcapMaterial;
     fdtdSamples: number[];
+    fdtdSampleRate?: number;
     directivityPattern: ReceiverPattern;
     constructor(name?: string, _props?: ReceiverProps);
     /**
