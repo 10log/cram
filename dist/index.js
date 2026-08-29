@@ -589,10 +589,10 @@ async function ti(e, t, n) {
 	return r(t, n);
 }
 ei("ray-tracer", async (e, t) => {
-	let { default: n } = await import("./raytracer-URQLcezO.mjs");
+	let { default: n } = await import("./raytracer-CUWMavCU.mjs");
 	return new n(t);
 }), ei("image-source", async (e, t) => {
-	let { ImageSourceSolver: n } = await import("./image-source-BeqQ1TbD.mjs");
+	let { ImageSourceSolver: n } = await import("./image-source-CTe-JY2X.mjs");
 	return new n({
 		name: "Image Source",
 		roomID: "",
@@ -625,10 +625,10 @@ ei("ray-tracer", async (e, t) => {
 	let { default: n } = await import("./energy-decay-gODdDHP9.mjs");
 	return new n();
 }), ei("fdtd-2d", async (e, t) => {
-	let { default: n } = await import("./2d-fdtd-Bqtq5IJW.mjs");
+	let { default: n } = await import("./2d-fdtd-Cv3UztGp.mjs");
 	return new n();
 }), ei("beam-trace", async (e, t) => {
-	let { BeamTraceSolver: n } = await import("./beam-trace-CUbaGt8Z.mjs");
+	let { BeamTraceSolver: n } = await import("./beam-trace-Daz4X9cy.mjs");
 	return new n();
 }), ei("art", async (e, t) => {
 	let { ART: n } = await import("./art-B1LA1FSI.mjs");
@@ -6683,7 +6683,7 @@ function Zo() {
 async function Qo(e, t) {
 	switch (e) {
 		case "ray-tracer": {
-			let { default: e } = await import("./raytracer-URQLcezO.mjs");
+			let { default: e } = await import("./raytracer-CUWMavCU.mjs");
 			return new e(t).restore(t);
 		}
 		case "rt60": {
@@ -6695,18 +6695,18 @@ async function Qo(e, t) {
 			return new e(t).restore(t);
 		}
 		case "image-source": {
-			let { default: e } = await import("./image-source-BeqQ1TbD.mjs");
+			let { default: e } = await import("./image-source-CTe-JY2X.mjs");
 			return new e(t).restore(t);
 		}
 		case "beam-trace": {
-			let { BeamTraceSolver: e } = await import("./beam-trace-CUbaGt8Z.mjs");
+			let { BeamTraceSolver: e } = await import("./beam-trace-Daz4X9cy.mjs");
 			return new e().restore(t);
 		}
 		default: throw Error(`Unknown solver kind: ${e}`);
 	}
 }
 function $o() {
-	import("./events-zfIBXKAh.mjs").then((e) => e.default()), r("LOG_SOLVER", (e) => {
+	import("./events-B2lInp82.mjs").then((e) => e.default()), r("LOG_SOLVER", (e) => {
 		console.log(i.getState().solvers[e]);
 	}), r("REMOVE_SOLVERS", (e) => {
 		let t = i.getState().solvers, n = typeof e == "string" ? [e] : e;

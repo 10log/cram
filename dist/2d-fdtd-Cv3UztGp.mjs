@@ -306,7 +306,7 @@ var J = 256, Y = {
 			}
 		}
 		let l = e && e.width || Y.width, u = e && e.height || Y.height;
-		this.offsetX = e && e.offsetX || Y.offsetX, this.offsetY = e && e.offsetY || Y.offsetY, this.slice = e && e.slice || c?.slice || Y.slice, this.sliceHeight = c?.sliceHeight ?? 0, this.cellSize = e && e.cellSize || Math.max(l, u) / J, this.nx = Math.ceil(l / this.cellSize), this.ny = Math.ceil(u / this.cellSize), this.width = this.nx * this.cellSize, this.height = this.ny * this.cellSize, this.applyWaveSpeed(), this.sources = {}, this.sourceKeys = [], this.receivers = {}, this.receiverKeys = [], this.walls = [], this.messageHandlers = [], this.eventListeners = [];
+		this.offsetX = e && e.offsetX || Y.offsetX, this.offsetY = e && e.offsetY || Y.offsetY, this.slice = e && e.slice || c?.slice || Y.slice, this.sliceHeight = c?.sliceHeight ?? 0, this.cellSize = e && e.cellSize || Math.max(l, u) / J, this.nx = Math.ceil(l / this.cellSize), this.ny = Math.ceil(u / this.cellSize), this.width = this.nx * this.cellSize, this.height = this.ny * this.cellSize, this.dt = 0, this.applyWaveSpeed(), this.sources = {}, this.sourceKeys = [], this.receivers = {}, this.receiverKeys = [], this.walls = [], this.messageHandlers = [], this.eventListeners = [];
 		let d = new b(this.width, this.height, 1, 1);
 		L(d, {
 			slice: this.slice,
@@ -619,4 +619,4 @@ var J = 256, Y = {
 //#endregion
 export { X as FDTD_2D, X as default };
 
-//# sourceMappingURL=2d-fdtd-Bqtq5IJW.mjs.map
+//# sourceMappingURL=2d-fdtd-Cv3UztGp.mjs.map

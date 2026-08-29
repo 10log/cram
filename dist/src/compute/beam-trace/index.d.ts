@@ -8,6 +8,7 @@ import { QuickEstimateStepResult } from '../shared/quick-estimate-types';
 import { KVP } from '../../common/key-value-pair';
 import { BeamTraceSaveObject, BeamTraceSolverParams } from './types';
 import { BeamTracePath, VisualizationMode } from './paths';
+import * as THREE from "three";
 export type { BeamTracePath, VisualizationMode } from './paths';
 export type { BeamTraceSaveObject, BeamTraceSolverParams } from './types';
 export { calculateArrivalPressure, directivityBandEnergy } from './arrival-pressure';
@@ -30,7 +31,7 @@ export declare class BeamTraceSolver extends Solver {
     private polygonToSurface;
     edgeDiffractionEnabled: boolean;
     private _edgeGraph;
-    private _raycaster;
+    _raycaster: THREE.Raycaster;
     lateReverbTailEnabled: boolean;
     tailCrossfadeTime: number;
     tailCrossfadeDuration: number;
@@ -47,7 +48,7 @@ export declare class BeamTraceSolver extends Solver {
     responseByIntensity: KVP<KVP<ResponseByIntensity>> | undefined;
     quickEstimateResults: QuickEstimateStepResult[];
     estimatedT30: number[] | null;
-    private _quickEstimateInterval;
+    _quickEstimateInterval: number | null;
     lastMetrics: {
         validPathCount: number;
         raycastCount: number;

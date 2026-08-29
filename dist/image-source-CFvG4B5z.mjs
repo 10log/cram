@@ -330,14 +330,15 @@ var B = class {
 			}
 			return;
 		}
-		let n = this.validRayPaths;
-		n?.sort((t, n) => t.arrivalTime(e) > n.arrivalTime(e) ? 1 : -1);
+		let n = this.validRayPaths ?? [];
+		n.sort((t, n) => t.arrivalTime(e) > n.arrivalTime(e) ? 1 : -1);
 		let r = { ...u.getState().results[this.levelTimeProgression] };
-		if (r.data = [], r.info = {
+		r.data = [], r.info = {
 			...r.info,
 			maxOrder: this.maxReflectionOrder,
 			frequency: [this._plotFrequency]
-		}, n !== void 0) for (let i = 0; i < n?.length; i++) {
+		};
+		for (let i = 0; i < n.length; i++) {
 			let a = n[i].arrivalTime(e), o = n[i].arrivalPressure(r.info.initialSPL, r.info.frequency, this.temperature);
 			t && console.log("Arrival: " + (i + 1) + " | Arrival Time: (s) " + a + " | Arrival Pressure(1000Hz): " + o + " | Order " + n[i].order), r.data.push({
 				time: a,
@@ -590,4 +591,4 @@ n("IMAGESOURCE_SET_PROPERTY", o), n("REMOVE_IMAGESOURCE", t), n("ADD_IMAGESOURCE
 //#endregion
 export { U as t };
 
-//# sourceMappingURL=image-source-XvnSMXcM.mjs.map
+//# sourceMappingURL=image-source-CFvG4B5z.mjs.map

@@ -1203,10 +1203,11 @@ function Ye(e) {
 			level: _(t)
 		});
 	}
-	return b({ [i]: { [r]: {
+	let u = { [i]: { [r]: {
 		freqs: n,
 		response: l
-	} } }, 256);
+	} } };
+	return b(u, 256) ?? u;
 }
 //#endregion
 //#region src/compute/beam-trace/quick-estimate.ts
@@ -2277,4 +2278,4 @@ Ze($);
 //#endregion
 export { $ as BeamTraceSolver, $ as default };
 
-//# sourceMappingURL=beam-trace-CUbaGt8Z.mjs.map
+//# sourceMappingURL=beam-trace-Daz4X9cy.mjs.map
