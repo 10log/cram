@@ -135,7 +135,7 @@ export const FDTD_2DTab = ({uuid}: {uuid: string}) => {
           id="numPasses"
           label="Passes"
           labelPosition="left"
-          tooltipText="Number of passes per frame"
+          tooltipText="Display steps per frame. Recording uses wall-clock / dt, not this slider."
           min={1}
           max={30}
           step={1}
@@ -238,6 +238,12 @@ export const FDTD_2DTab = ({uuid}: {uuid: string}) => {
         })}
       </PropertyRowFolder>
       <PropertyRow>
+        <PropertyRowLabel
+          label={`Simulated ${Number(solver.time).toFixed(4)} s · ${Math.round(1 / solver.dt)} Hz`}
+          tooltip="Simulated time and FDTD sample rate (1/dt). Independent of monitor refresh."
+        />
+      </PropertyRow>
+      <PropertyRow>
         <PropertyRowLabel label="Run/Pause" tooltip="Runs or pauses the simulation" />
         <PropertyRowButton
           onClick={(_e) => {
@@ -257,10 +263,10 @@ export const FDTD_2DTab = ({uuid}: {uuid: string}) => {
         <PropertyRowButton
           onClick={(_e) => {
             if (solver.recording) {
-              solver.recording = false;
+              solver.stopRecording();
               setRecording(false);
             } else {
-              solver.recording = true;
+              solver.startRecording();
               setRecording(true);
             }
           }}
