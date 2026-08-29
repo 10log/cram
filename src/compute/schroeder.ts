@@ -9,24 +9,18 @@
  * Reverberation Time." JASA 37(3), 409–412.
  */
 
-function sum(data: Float32Array): number {
-  return data.reduce((acc, v) => acc + v, 0);
-}
-
-function cumsum(data: Float32Array): Float32Array {
-  const cumulativeSum = ((s: number) => (value: number) => s += value)(0);
-  return data.map(cumulativeSum);
-}
-
 export function schroederBackwardsIntegration(data: Float32Array): Float32Array {
-  const data_reversed = new Float32Array(data).reverse();
-  const data_reversed_sq = data_reversed.map((x) => x ** 2);
-  const data_reversed_sq_cumsum = cumsum(data_reversed_sq);
-
-  const data_sq = data.map((x) => x ** 2);
-  const data_sq_sum = sum(data_sq);
-
-  const normalized = data_reversed_sq_cumsum.map((x) => x / data_sq_sum);
-
-  return normalized.map((x) => (x !== 0 ? 10 * Math.log10(x) : 0));
+  const n = data.length;
+  const e = new Float32Array(n);
+  let acc = 0;
+  for (let i = n - 1; i >= 0; i--) {
+    acc += data[i] * data[i];
+    e[i] = acc;
+  }
+  const E = e[0] || 1;
+  const out = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    out[i] = e[i] > 0 ? 10 * Math.log10(e[i] / E) : Number.NEGATIVE_INFINITY;
+  }
+  return out;
 }
