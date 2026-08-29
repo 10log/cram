@@ -40,6 +40,8 @@ import { traceRay as traceRayFn, inFrontOf as inFrontOfFn } from "./ray-core";
 import { arrivalPressure as arrivalPressureFn, calculateImpulseResponseForPair as calcIRForPairFn, calculateImpulseResponseForDisplay as calcIRForDisplayFn } from "./impulse-response";
 import { hybridStochasticPaths, hybridImageSourcePaths } from "./hybrid-ir";
 import { resolveReceiverId, stampRayPathTiming } from "./path-timing";
+import { idsOfKind, keepAssignedIds } from "./assignment";
+import { resolveRoomID } from "./image-source/selection";
 import { extraLengthToReceiverCenter, monteCarloSign, monteCarloWeight, rayOrderFromChain } from "./ir-scale";
 import type { TailOptions } from "./impulse-response";
 import { extractDecayParameters, synthesizeTail, assembleFinalIR, applyAmbisonicTail } from "./tail-synthesis";
@@ -446,13 +448,13 @@ class RayTracer extends Solver {
   }
   addSource(source: Source) {
     useContainer.getState().containers[source.uuid] = source;
+    if (!this.sourceIDs.includes(source.uuid)) this.sourceIDs.push(source.uuid);
     this.findIDs();
-    this.mapIntersectableObjects();
   }
   addReceiver(rec: Receiver) {
     useContainer.getState().containers[rec.uuid] = rec;
+    if (!this.receiverIDs.includes(rec.uuid)) this.receiverIDs.push(rec.uuid);
     this.findIDs();
-    this.mapIntersectableObjects();
   }
 
   mapIntersectableObjects() {
@@ -472,20 +474,11 @@ class RayTracer extends Solver {
   }
 
   findIDs() {
-    this.sourceIDs = [];
-    this.receiverIDs = [];
-    this.surfaceIDs = [];
-    for (const key in useContainer.getState().containers) {
-      if (useContainer.getState().containers[key].kind === "room") {
-        this.roomID = key;
-      } else if (useContainer.getState().containers[key].kind === "source") {
-        this.sourceIDs.push(key);
-      } else if (useContainer.getState().containers[key].kind === "receiver") {
-        this.receiverIDs.push(key);
-      } else if (useContainer.getState().containers[key].kind === "surface") {
-        this.surfaceIDs.push(key);
-      }
-    }
+    const containers = useContainer.getState().containers;
+    this.sourceIDs = keepAssignedIds(this.sourceIDs, idsOfKind(containers, "source"));
+    this.receiverIDs = keepAssignedIds(this.receiverIDs, idsOfKind(containers, "receiver"));
+    this.surfaceIDs = keepAssignedIds(this.surfaceIDs, idsOfKind(containers, "surface"));
+    this.roomID = resolveRoomID(this.roomID, idsOfKind(containers, "room"));
     this.mapIntersectableObjects();
   }
 

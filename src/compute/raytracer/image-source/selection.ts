@@ -4,7 +4,7 @@
  * when non-empty. Occlusion still uses the full room surface list.
  */
 export function resolveRoomID(requested: string | undefined | null, roomUuids: string[]): string {
-  if (requested) return requested;
+  if (requested && roomUuids.includes(requested)) return requested;
   return roomUuids[0] ?? "";
 }
 
