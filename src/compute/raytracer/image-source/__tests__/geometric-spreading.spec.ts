@@ -4,22 +4,13 @@
  * Issue #99 (also #122): Image-source arrivalPressure omits geometric
  * spreading — arrival levels independent of path length.
  *
- * arrivalPressure() converted initialSPL to intensity, applied reflection
- * and air absorption, but never scaled by 1/r^2, so near and far receivers
- * arrived at essentially the same level.
- *
- * The fix uses ac.spreadingFactor(r) (src/compute/acoustics/geometric-spreading.ts),
- * the same pure, side-effect-free helper shared with the beam-trace solver.
- * This spec runs it end to end through the real acoustic conversion pipeline
- * (ac.P2I/I2P/Lp2P/P2Lp) rather than re-deriving the math, so it fails if the
- * formula, its exponent, or its 1 m reference changes.
- *
- * ImageSourceSolver's module graph cannot be instantiated in this test
- * environment (a pre-existing native-ESM resolution issue unrelated to this
- * fix — see isvalid-occlusion.spec.ts). spreadingFactor has no such
- * dependency and is imported directly here.
+ * Helper physics lives in ac.spreadingFactor. These tests (1) run that
+ * helper through the real P2I/I2P pipeline and (2) assert arrivalPressure
+ * calls spreadingFactor(this.totalLength), so deleting that line would fail.
  */
 
+import * as fs from 'fs';
+import * as path from 'path';
 import * as ac from '../../../acoustics';
 import { spreadingFactor } from '../../../acoustics/geometric-spreading';
 
@@ -66,5 +57,12 @@ describe('Issue #99/#122: geometric spreading in image-source arrivalPressure', 
     const airAttenuationdB = ac.airAttenuation(frequencies, temperature)[0];
     const expectedDrop = 20 * Math.log10(10) + airAttenuationdB * (10 - 1);
     expect(spl1 - spl10).toBeCloseTo(expectedDrop, 1);
+  });
+
+  test('arrivalPressure calls spreadingFactor(this.totalLength)', () => {
+    const source = fs.readFileSync(path.resolve(__dirname, '../index.ts'), 'utf-8');
+    const match = source.match(/arrivalPressure\(initialSPL[\s\S]*?^\s{2}\}/m);
+    expect(match).not.toBeNull();
+    expect(match![0]).toMatch(/spreadingFactor\(\s*this\.totalLength\s*\)/);
   });
 });

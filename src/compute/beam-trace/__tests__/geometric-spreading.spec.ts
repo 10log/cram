@@ -4,24 +4,14 @@
  * Issue #99: Beam tracer omits geometric spreading — arrival levels
  * independent of path length.
  *
- * calculateArrivalPressure() converted initialSPL to intensity, applied
- * directivity/reflection/air-absorption, but never scaled by 1/r^2, so a
- * 1 m and a 20 m path arrived at essentially the same level.
- *
- * The fix uses ac.spreadingFactor(r) (src/compute/acoustics/geometric-spreading.ts),
- * a pure, side-effect-free function shared with the image-source solver. This
- * spec runs the actual production helper end to end through the real acoustic
- * conversion pipeline (ac.P2I/I2P/Lp2P/P2Lp) rather than re-deriving the math,
- * so it fails if the formula, its exponent, or its 1 m reference changes.
- *
- * BeamTraceSolver itself cannot be instantiated in this test environment — its
- * constructor pulls in the `beam-trace` npm package, which ships extensionless
- * relative ESM imports that fail under Vitest's native ESM resolution (a
- * pre-existing, unrelated issue — see angle-dependent-reflection.spec.ts for
- * the established precedent). spreadingFactor has no such dependency and is
- * imported directly here.
+ * Helper physics lives in ac.spreadingFactor. These tests (1) run that
+ * helper through the real P2I/I2P pipeline and (2) assert the production
+ * call sites in calculateArrivalPressure, so deleting the two
+ * spreadingFactor(...) lines would fail.
  */
 
+import * as fs from 'fs';
+import * as path from 'path';
 import * as ac from '../../acoustics';
 import { spreadingFactor } from '../../acoustics/geometric-spreading';
 
@@ -37,6 +27,13 @@ describe('Issue #99: geometric spreading in beam-trace calculateArrivalPressure'
     const airAttenuationdB = ac.airAttenuation(frequencies, temperature)[0];
     arrivalLp[0] -= airAttenuationdB * r;
     return arrivalLp[0];
+  }
+
+  function calculateArrivalPressureBody(): string {
+    const source = fs.readFileSync(path.resolve(__dirname, '../index.ts'), 'utf-8');
+    const match = source.match(/private calculateArrivalPressure\([\s\S]*?^\s{2}\}/m);
+    expect(match).not.toBeNull();
+    return match![0];
   }
 
   test('spreadingFactor(1) is 1 — the 1 m reference is reproduced unchanged', () => {
@@ -73,5 +70,29 @@ describe('Issue #99: geometric spreading in beam-trace calculateArrivalPressure'
     const airAttenuationdB = ac.airAttenuation(frequencies, temperature)[0];
     const expectedDrop = 20 * Math.log10(10) + airAttenuationdB * (10 - 1);
     expect(spl1 - spl10).toBeCloseTo(expectedDrop, 1);
+  });
+
+  test('specular branch calls spreadingFactor(path.length)', () => {
+    const body = calculateArrivalPressureBody();
+    expect(body).toMatch(/spreadingFactor\(\s*path\.length\s*\)/);
+  });
+
+  test('diffraction branch uses spreadingFactor(sPrime), not total path length', () => {
+    const body = calculateArrivalPressureBody();
+    expect(body).toMatch(/spreadingFactor\(\s*sPrime\s*\)/);
+    expect(body).not.toMatch(/bandEnergy\[f\]\s*\*\s*spreading\b/);
+    // total-length 1/r² on UTD would double-count A²
+    const diffractionBranch = body.split('if (path.bandEnergy)')[1]?.split('return pressures')[0] ?? '';
+    expect(diffractionBranch).not.toMatch(/spreadingFactor\(\s*path\.length\s*\)/);
+  });
+
+  test('UTD incident spreading is 1/s\'², not 1/(s\'+s)²', () => {
+    const sPrime = 4;
+    const s = 4;
+    expect(spreadingFactor(sPrime)).toBeCloseTo(1 / 16, 6);
+    expect(spreadingFactor(sPrime + s)).toBeCloseTo(1 / 64, 6);
+    // using total length is 6 dB too quiet vs incident-only
+    const ratio = spreadingFactor(sPrime + s) / spreadingFactor(sPrime);
+    expect(10 * Math.log10(ratio)).toBeCloseTo(-6, 1);
   });
 });
