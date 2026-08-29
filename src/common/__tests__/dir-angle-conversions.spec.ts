@@ -5,11 +5,15 @@
  * conversion and two mutually inconsistent spherical conventions.
  *
  * These tests exercise the real production helpers against real three.js
- * rotation math — no source scanning, no re-derived formulas.
+ * rotation math — no source scanning, no re-derived formulas. The cardioid and
+ * two-axis tests call `worldDirToCramAngles`, the helper beam-trace and the
+ * raytracer both use in production.
  */
 
+import * as fs from 'fs';
+import * as path from 'path';
 import * as THREE from 'three';
-import { cramangle2threejsangle, threejsdir2cramangle } from '../dir-angle-conversions';
+import { cramangle2threejsangle, threejsdir2cramangle, worldDirToCramAngles } from '../dir-angle-conversions';
 
 /** Forward path exactly as the ray tracer launches rays (raytracer/index.ts:672). */
 function cramToLocalDir(phiCRAM: number, thetaCRAM: number): THREE.Vector3 {
@@ -69,6 +73,7 @@ describe('Issue #101: CRAM <-> three.js direction conversions', () => {
 
   test('returns [0, 0] for a degenerate zero-length direction', () => {
     expect(threejsdir2cramangle(0, 0, 0)).toEqual([0, 0]);
+    expect(worldDirToCramAngles(new THREE.Vector3(0, 0, 0), new THREE.Quaternion())).toEqual([0, 0]);
   });
 
   test('phi is normalized into [0, 360)', () => {
@@ -118,18 +123,14 @@ describe('Issue #101: undoing a source rotation', () => {
     expect(negatedEuler.distanceTo(quaternionInverse)).toBeCloseTo(0, 6);
   });
 
-  test('combined yaw+pitch: world->local->CRAM matches the unrotated reference angles', () => {
-    // A source with a two-axis pose, aimed along some CRAM direction. Undoing the
-    // rotation must recover exactly the CRAM angles the direction was built from.
+  test('combined yaw+pitch: worldDirToCramAngles recovers the unrotated reference angles', () => {
     const rotation = new THREE.Euler(0.35, -0.8, 0, 'XYZ');
     const quaternion = new THREE.Quaternion().setFromEuler(rotation);
 
     for (const [phiCRAM, thetaCRAM] of [[30, 60], [200, 120], [315, 45]]) {
       const localDir = cramToLocalDir(phiCRAM, thetaCRAM);
       const worldDir = localDir.clone().applyQuaternion(quaternion);
-
-      const recovered = worldDir.clone().applyQuaternion(quaternion.clone().invert());
-      const [phi, theta] = threejsdir2cramangle(recovered.x, recovered.y, recovered.z);
+      const [phi, theta] = worldDirToCramAngles(worldDir, quaternion);
 
       expect(theta).toBeCloseTo(thetaCRAM, 4);
       expect(azimuthDelta(phi, phiCRAM)).toBeCloseTo(0, 4);
@@ -143,11 +144,10 @@ describe('Issue #101: acceptance — a rotated cardioid aims where it is pointed
     return (1 + Math.cos(thetaCRAMdeg * (Math.PI / 180))) / 2;
   }
 
-  /** What the fixed beam-trace helper computes for a source pose and a receiver. */
+  /** Production helper: worldDirToCramAngles is what beam-trace and the raytracer call. */
   function directivityPressure(rotation: THREE.Euler, worldDir: THREE.Vector3): number {
     const quaternion = new THREE.Quaternion().setFromEuler(rotation);
-    const localDir = worldDir.clone().normalize().applyQuaternion(quaternion.clone().invert());
-    const [, theta] = threejsdir2cramangle(localDir.x, localDir.y, localDir.z);
+    const [, theta] = worldDirToCramAngles(worldDir, quaternion);
     return cardioidPressure(theta);
   }
 
@@ -184,5 +184,21 @@ describe('Issue #101: acceptance — a rotated cardioid aims where it is pointed
     expect(directivityPressure(rotation, target)).toBeCloseTo(1, 6);
     // And the opposite direction is the null.
     expect(directivityPressure(rotation, target.clone().negate())).toBeCloseTo(0, 6);
+  });
+});
+
+describe('Issue #101: production call sites', () => {
+  test('beam-trace _directivityBandEnergy calls worldDirToCramAngles', () => {
+    const source = fs.readFileSync(path.resolve(__dirname, '../../compute/beam-trace/index.ts'), 'utf-8');
+    const match = source.match(/private _directivityBandEnergy\([\s\S]*?^\s{2}\}/m);
+    expect(match).not.toBeNull();
+    expect(match![0]).toMatch(/worldDirToCramAngles\(\s*worldDir,\s*quaternion\s*\)/);
+    expect(source).toMatch(/this\._directivityBandEnergy\(/);
+  });
+
+  test('raytracer diffraction uses worldDirToCramAngles, not Math.abs(phi)', () => {
+    const source = fs.readFileSync(path.resolve(__dirname, '../../compute/raytracer/index.ts'), 'utf-8');
+    expect(source).toMatch(/worldDirToCramAngles\(/);
+    expect(source).not.toMatch(/Math\.abs\(\s*phi\s*\)/);
   });
 });

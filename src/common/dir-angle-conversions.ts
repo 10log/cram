@@ -1,3 +1,5 @@
+import * as THREE from "three";
+
 export function cramangle2threejsangle(phiCRAM: number, thetaCRAM: number): number[]{
 
     // converts CRAM angle convention (in DEGREES) to ThreeJS angle convention (in RADIANS)
@@ -41,4 +43,24 @@ export function threejsdir2cramangle(x: number, y: number, z: number): number[]{
 
     return [phiCRAM, thetaCRAM];
 
+}
+
+/**
+ * World-space leaving direction → CRAM (phi, theta) degrees in the source frame.
+ *
+ * Undoes `sourceQuaternion` with the inverse quaternion (negating Euler angles
+ * in the same order is NOT the inverse for two or more non-zero components),
+ * then maps with `threejsdir2cramangle`. Shared by beam-trace and the raytracer
+ * so they cannot drift apart.
+ */
+export function worldDirToCramAngles(
+  worldDir: THREE.Vector3,
+  sourceQuaternion: THREE.Quaternion,
+): [number, number] {
+  if (worldDir.lengthSq() < 1e-20) {
+    return [0, 0];
+  }
+  const localDir = worldDir.clone().normalize().applyQuaternion(sourceQuaternion.clone().invert());
+  const [phi, theta] = threejsdir2cramangle(localDir.x, localDir.y, localDir.z);
+  return [phi, theta];
 }

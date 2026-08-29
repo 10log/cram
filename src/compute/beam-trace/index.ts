@@ -25,7 +25,7 @@ import { emit, on } from "../../messenger";
 import { renderer } from "../../render/renderer";
 import { addSolver, removeSolver, setSolverProperty, useSolver, useContainer, useResult, ResultKind, Result } from "../../store";
 import { pickProps } from "../../common/helpers";
-import { threejsdir2cramangle } from "../../common/dir-angle-conversions";
+import { worldDirToCramAngles } from "../../common/dir-angle-conversions";
 import * as ac from "../acoustics";
 import { normalize } from "../acoustics";
 import { audioEngine } from "../../audio-engine/audio-engine";
@@ -1465,7 +1465,7 @@ export class BeamTraceSolver extends Solver {
    * undo the source's rotation with the inverse quaternion (negating Euler angles
    * in the same order is NOT the inverse rotation for two or more non-zero
    * components), then map the source-local direction to CRAM (phi, theta) degrees
-   * with `threejsdir2cramangle` — the same convention the ray tracer launches with.
+   * with `worldDirToCramAngles` — the same convention the ray tracer launches with.
    */
   private _directivityBandEnergy(
     handler: Source["directivityHandler"],
@@ -1476,8 +1476,7 @@ export class BeamTraceSolver extends Solver {
     const scale = new Array(this.frequencies.length).fill(1);
     if (worldDir.lengthSq() < 1e-20) return scale;
 
-    const localDir = worldDir.clone().normalize().applyQuaternion(quaternion.clone().invert());
-    const [phi, theta] = threejsdir2cramangle(localDir.x, localDir.y, localDir.z);
+    const [phi, theta] = worldDirToCramAngles(worldDir, quaternion);
 
     for (let f = 0; f < this.frequencies.length; f++) {
       try {
