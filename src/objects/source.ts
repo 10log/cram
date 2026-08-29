@@ -12,6 +12,7 @@ import { addContainer, callContainerMethod, removeContainer, setContainerPropert
 import {CLFResult} from "../import-handlers/CLFParser";
 import {dirinterp, dirDataPoint} from "../common/dir-interpolation";
 import { renderer } from "../render/renderer";
+import { encodeWavPcm16, formatSampleText } from "../compute/2d-fdtd/recording";
 
 const defaults = {
   color: 0xa2c982
@@ -89,6 +90,7 @@ export class Source extends Container {
   private _initialSPL: number;
   private _initialIntensity: number;
   fdtdSamples: number[];
+  fdtdSampleRate?: number;
   public directivityHandler: DirectivityHandler; 
 
   constructor(name?: string, props?: SourceProps) {
@@ -288,12 +290,15 @@ export class Source extends Container {
     this.fdtdSamples = [] as number[];
   }
   saveSamples() {
-    if (this.fdtdSamples.length > 0) {
-      const blob = new Blob([this.fdtdSamples.join("\n")], {
-        type: "text/plain;charset=utf-8"
-      });
-      FileSaver.saveAs(blob, `fdtdsamples-source-${this.name}.txt`);
-    } else return;
+    if (this.fdtdSamples.length === 0) return;
+    const text = formatSampleText(this.fdtdSamples, this.fdtdSampleRate);
+    FileSaver.saveAs(new Blob([text], { type: "text/plain;charset=utf-8" }), `fdtdsamples-source-${this.name}.txt`);
+    if (this.fdtdSampleRate && this.fdtdSampleRate > 0) {
+      FileSaver.saveAs(
+        new Blob([encodeWavPcm16(this.fdtdSamples, this.fdtdSampleRate)], { type: "audio/wav" }),
+        `fdtdsamples-source-${this.name}.wav`,
+      );
+    }
   }
   getColorAsNumber() {
     return (this.mesh.material as THREE.MeshBasicMaterial).color.getHex();

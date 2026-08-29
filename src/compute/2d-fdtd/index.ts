@@ -41,6 +41,7 @@ import {
   vacatedSourcePixel,
   writeFieldPixel,
 } from "./field-encoding";
+import { passesForElapsed, sampleRateFromDt } from "./recording";
 
 import Source from "../../objects/source";
 import Receiver from "../../objects/receiver";
@@ -124,6 +125,7 @@ class FDTD_2D extends Solver {
   numPasses: number;
   waveSpeed: number;
   recording: boolean;
+  lastTickMs: number | null;
   clearShader!: ShaderMaterial;
   frame: number;
   messageHandlers: string[][];
@@ -137,6 +139,7 @@ class FDTD_2D extends Solver {
     this.numPasses = 1;
     this.waveSpeed = 340.29;
     this.recording = false;
+    this.lastTickMs = null;
 
     const surfaces = [...useContainer.getState().selectedObjects.values()].filter(x=>x.kind==="surface") as Surface[];
     let surface: Surface|null = null;
@@ -397,11 +400,33 @@ class FDTD_2D extends Solver {
   }
   run() {
     this.running = true;
+    this.lastTickMs = null;
     renderer.fdtd2drunning = true;
   }
   stop() {
     this.running = false;
+    this.lastTickMs = null;
     renderer.fdtd2drunning = false;
+  }
+
+  get sampleRate() {
+    return sampleRateFromDt(this.dt);
+  }
+
+  startRecording() {
+    this.recording = true;
+    this.lastTickMs = null;
+    const rate = this.sampleRate;
+    for (const key of this.sourceKeys) {
+      if (this.sources[key]) this.sources[key].fdtdSampleRate = rate;
+    }
+    for (const key of this.receiverKeys) {
+      if (this.receivers[key]) this.receivers[key].fdtdSampleRate = rate;
+    }
+  }
+
+  stopRecording() {
+    this.recording = false;
   }
   // save() {
   //   return pickProps(["name", "uuid", "width", "height", "offsetX", "offsetY", "cellSize"], this);
@@ -596,9 +621,18 @@ class FDTD_2D extends Solver {
     this.gpuCompute.doRenderTarget(this.clearShader, currentRenderTarget);
     this.time = 0;
     this.frame = 0;
+    this.lastTickMs = null;
   }
-  render() {
-    for (let i = 0; i < this.numPasses; i++) {
+  render(nowMs: number = (typeof performance !== "undefined" ? performance.now() : 0)) {
+    const wallDt = this.lastTickMs == null ? 0 : (nowMs - this.lastTickMs) / 1000;
+    this.lastTickMs = nowMs;
+    const passes = passesForElapsed({
+      wallDt,
+      dt: this.dt,
+      displayPasses: this.numPasses,
+      recording: this.recording,
+    });
+    for (let i = 0; i < passes; i++) {
       this.updateSourceTexture();
 
       this.heightmapVariable.material["uniforms"]["sourcemap"].value = this.sourcemap;

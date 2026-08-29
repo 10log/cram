@@ -7,6 +7,7 @@ import { EditorModes } from "../constants/editor-modes";
 import { on } from "../messenger";
 import { addContainer, removeContainer, setContainerProperty } from "../store";
 import { renderer } from "../render/renderer";
+import { encodeWavPcm16, formatSampleText } from "../compute/2d-fdtd/recording";
 // import { vs, fs } from '../render/shaders/glow';
 
 export enum ReceiverPattern {
@@ -51,6 +52,7 @@ export class Receiver extends Container {
   selectedMaterial: THREE.MeshMatcapMaterial;
   normalMaterial: THREE.MeshMatcapMaterial;
   fdtdSamples: number[];
+  fdtdSampleRate?: number;
   directivityPattern: ReceiverPattern = ReceiverPattern.OMNIDIRECTIONAL;
   constructor(name?: string, _props?: ReceiverProps) {
     super(name||"new receiver");
@@ -157,12 +159,15 @@ export class Receiver extends Container {
     this.fdtdSamples = [] as number[];
   }
   saveSamples() {
-    if (this.fdtdSamples.length > 0) {
-      const blob = new Blob([this.fdtdSamples.join("\n")], {
-        type: "text/plain;charset=utf-8"
-      });
-      FileSaver.saveAs(blob, `fdtdsamples-receiver-${this.name}.txt`);
-    } else return;
+    if (this.fdtdSamples.length === 0) return;
+    const text = formatSampleText(this.fdtdSamples, this.fdtdSampleRate);
+    FileSaver.saveAs(new Blob([text], { type: "text/plain;charset=utf-8" }), `fdtdsamples-receiver-${this.name}.txt`);
+    if (this.fdtdSampleRate && this.fdtdSampleRate > 0) {
+      FileSaver.saveAs(
+        new Blob([encodeWavPcm16(this.fdtdSamples, this.fdtdSampleRate)], { type: "audio/wav" }),
+        `fdtdsamples-receiver-${this.name}.wav`,
+      );
+    }
   }
 
   getColorAsNumber() {
