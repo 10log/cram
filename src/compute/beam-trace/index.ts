@@ -755,12 +755,20 @@ export class BeamTraceSolver extends Solver {
     console.log(`BeamTraceSolver: Built with ${this.polygons.length} polygons, max order ${this.maxReflectionOrder}`);
   }
 
-  // Calculate paths to all receivers
+  // Calculate paths for the active source/receiver pair
   calculate() {
     if (this.sourceIDs.length === 0 || this.receiverIDs.length === 0) {
       console.warn("BeamTraceSolver: Need at least one source and one receiver");
       return;
     }
+    if (this.sourceIDs.length > 1) {
+      console.warn(`BeamTraceSolver: ${this.sourceIDs.length} sources selected; using only the first (${this.sourceIDs[0]})`);
+    }
+    if (this.receiverIDs.length > 1) {
+      console.warn(`BeamTraceSolver: ${this.receiverIDs.length} receivers selected; using only the first (${this.receiverIDs[0]})`);
+    }
+
+    const receiverID = this.receiverIDs[0];
 
     // Only rebuild beam tree if source, room, or reflection order changed.
     // If only the listener moved, reuse the existing beam tree (much faster).
@@ -781,27 +789,24 @@ export class BeamTraceSolver extends Solver {
     this.validPaths = [];
     this.clearVisualization();
 
-    // Process each receiver
-    this.receiverIDs.forEach(receiverID => {
-      const receiver = useContainer.getState().containers[receiverID] as Receiver;
-      if (!receiver) return;
+    const receiver = useContainer.getState().containers[receiverID] as Receiver;
+    if (!receiver) {
+      console.warn("BeamTraceSolver: Receiver not found");
+      return;
+    }
 
-      const listenerPos: BT_Vector3 = [
-        receiver.position.x,
-        receiver.position.y,
-        receiver.position.z
-      ];
-      // Get paths and detailed paths from beam-trace solver
-      const paths = this.btSolver!.getPaths(listenerPos);
-      this.lastMetrics = this.btSolver!.getMetrics();
-      const detailedPaths = this.btSolver!.getDetailedPaths(listenerPos);
+    const listenerPos: BT_Vector3 = [
+      receiver.position.x,
+      receiver.position.y,
+      receiver.position.z
+    ];
+    const paths = this.btSolver!.getPaths(listenerPos);
+    this.lastMetrics = this.btSolver!.getMetrics();
+    const detailedPaths = this.btSolver!.getDetailedPaths(listenerPos);
 
-      // Convert to our format, using detailed paths for pre-computed angles
-      paths.forEach((path, i) => {
-        const detailed = i < detailedPaths.length ? detailedPaths[i] : undefined;
-        const btPath = this.convertPath(path, detailed);
-        this.validPaths.push(btPath);
-      });
+    paths.forEach((path, i) => {
+      const detailed = i < detailedPaths.length ? detailedPaths[i] : undefined;
+      this.validPaths.push(this.convertPath(path, detailed));
     });
 
     // Compute diffraction paths if enabled
@@ -1229,31 +1234,28 @@ export class BeamTraceSolver extends Solver {
     this._edgeGraph = buildEdgeGraph(this.room.allSurfaces);
     if (this._edgeGraph.edges.length === 0) return;
 
-    // Gather source positions and directivity data
+    // Active pair only (issue #103) — extra IDs are warned in calculate()
     const sourcePositions = new Map<string, [number, number, number]>();
     const sourceDirectivity = new Map<string, { handler: any; refPressures: number[]; quaternion: THREE.Quaternion }>();
-    for (const id of this.sourceIDs) {
-      const src = containers[id] as Source;
-      if (src) {
-        sourcePositions.set(id, [src.position.x, src.position.y, src.position.z]);
-        const dh = src.directivityHandler;
-        if (dh) {
-          const refPressures = new Array(this.frequencies.length);
-          for (let f = 0; f < this.frequencies.length; f++) {
-            refPressures[f] = dh.getPressureAtPosition(0, this.frequencies[f], 0, 0) as number;
-          }
-          sourceDirectivity.set(id, { handler: dh, refPressures, quaternion: src.quaternion.clone() });
+    const sourceId = this.sourceIDs[0];
+    const src = containers[sourceId] as Source;
+    if (src) {
+      sourcePositions.set(sourceId, [src.position.x, src.position.y, src.position.z]);
+      const dh = src.directivityHandler;
+      if (dh) {
+        const refPressures = new Array(this.frequencies.length);
+        for (let f = 0; f < this.frequencies.length; f++) {
+          refPressures[f] = dh.getPressureAtPosition(0, this.frequencies[f], 0, 0) as number;
         }
+        sourceDirectivity.set(sourceId, { handler: dh, refPressures, quaternion: src.quaternion.clone() });
       }
     }
 
-    // Gather receiver positions
     const receiverPositions = new Map<string, [number, number, number]>();
-    for (const id of this.receiverIDs) {
-      const rec = containers[id];
-      if (rec) {
-        receiverPositions.set(id, [rec.position.x, rec.position.y, rec.position.z]);
-      }
+    const receiverId = this.receiverIDs[0];
+    const rec = containers[receiverId];
+    if (rec) {
+      receiverPositions.set(receiverId, [rec.position.x, rec.position.y, rec.position.z]);
     }
 
     // Get surface meshes for LOS checks
