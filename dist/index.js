@@ -629,7 +629,7 @@ Qr("ray-tracer", async (e, t) => {
 	let { BeamTraceSolver: n } = await import("./beam-trace-5UOleGTi.mjs");
 	return new n();
 }), Qr("art", async (e, t) => {
-	let { ART: n } = await import("./art-BT9t8pLP.mjs");
+	let { ART: n } = await import("./art-7vt0Vmby.mjs");
 	return new n();
 });
 //#endregion
@@ -6689,7 +6689,7 @@ async function Zo(e, t) {
 			return new e().restore(t);
 		}
 		case "art": {
-			let { default: e } = await import("./art-BT9t8pLP.mjs");
+			let { default: e } = await import("./art-7vt0Vmby.mjs");
 			return new e(t).restore(t);
 		}
 		case "image-source": {
