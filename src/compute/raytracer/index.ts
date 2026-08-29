@@ -39,6 +39,7 @@ import { traceRay as traceRayFn, inFrontOf as inFrontOfFn } from "./ray-core";
 import { arrivalPressure as arrivalPressureFn, calculateImpulseResponseForPair as calcIRForPairFn, calculateImpulseResponseForDisplay as calcIRForDisplayFn } from "./impulse-response";
 import { hybridStochasticPaths, hybridImageSourcePaths } from "./hybrid-ir";
 import { resolveReceiverId, stampRayPathTiming } from "./path-timing";
+import { extraLengthToReceiverCenter, monteCarloSign, monteCarloWeight, rayOrderFromChain } from "./ir-scale";
 import type { TailOptions } from "./impulse-response";
 import { extractDecayParameters, synthesizeTail, assembleFinalIR, applyAmbisonicTail } from "./tail-synthesis";
 import { reflectionLossFunction as reflectionLossFunctionFn, calculateReflectionLoss as calculateReflectionLossFn, calculateResponseByIntensity as calcResponseByIntensityFn, resampleResponseByIntensity as resampleResponseByIntensityFn, calculateT20 as calculateT20Fn, calculateT30 as calculateT30Fn, calculateT60 as calculateT60Fn } from "./response-by-intensity";
@@ -741,7 +742,12 @@ class RayTracer extends Solver {
 
   /** Push a path onto the paths array, evicting oldest if over maxStoredPaths */
   _pushPathWithEviction(index: string, path: RayPath) {
-    stampRayPathTiming(path, this.c);
+    const rec = useContainer.getState().containers[index];
+    const last = path.chain[path.chain.length - 1];
+    const extra = rec?.position && last?.point
+      ? extraLengthToReceiverCenter(last.point, rec.position)
+      : 0;
+    stampRayPathTiming(path, this.c, extra);
     const cap = Math.max(1, this.maxStoredPaths | 0);
     if (!this.paths[index]) {
       this.paths[index] = [path];
@@ -1225,7 +1231,8 @@ class RayTracer extends Solver {
         frequencies,
       };
     }
-    return calcIRForPairFn(sourceId, receiverId, paths, initialSPL, frequencies, this.temperature, sampleRate, tailOptions);
+    const launched = Number(this.stats.numRaysShot?.value) || paths.length;
+    return calcIRForPairFn(sourceId, receiverId, paths, initialSPL, frequencies, this.temperature, sampleRate, tailOptions, launched);
   }
 
   async calculateImpulseResponseForDisplay(initialSPL = DEFAULT_INITIAL_SPL, frequencies = this.frequencies, sampleRate = audioEngine.sampleRate, receiverId?: string): Promise<{ signal: Float32Array; normalizedSignal: Float32Array }> {
@@ -1433,12 +1440,14 @@ class RayTracer extends Solver {
   
     // add in raytracer paths (apply receiver directivity)
     const recForIR = useContainer.getState().containers[recId] as Receiver;
+    const launched = Number(this.stats.numRaysShot?.value) || storedPaths.length;
+    const mcWeight = monteCarloWeight(launched);
     for(let i = 0; i<sorted.length; i++){
-      const randomPhase = coinFlip() ? 1 : -1;
+      const sign = monteCarloSign(rayOrderFromChain(sorted[i]));
       const t = sorted[i].time;
       const dir = sorted[i].arrivalDirection || [0, 0, 1] as [number, number, number];
       const recGain = recForIR.getGain(dir as [number, number, number]);
-      const p = this.arrivalPressure(spls, frequencies, sorted[i], recGain).map(x => x * randomPhase);
+      const p = this.arrivalPressure(spls, frequencies, sorted[i], recGain).map(x => x * sign * mcWeight);
       const roundedSample = floor(t * sampleRate);
 
       for(let f = 0; f<frequencies.length; f++){
@@ -1491,11 +1500,9 @@ class RayTracer extends Solver {
           }
         }
 
-        const normalizedSignal = normalize(signal);
-
         const offlineContext = audioEngine.createOfflineContext(1, signal.length, sampleRate);
 
-        const source = audioEngine.createBufferSource(normalizedSignal, offlineContext);
+        const source = audioEngine.createBufferSource(signal, offlineContext);
 
         source.connect(offlineContext.destination);
         source.start();
@@ -1552,13 +1559,15 @@ class RayTracer extends Solver {
 
     // Process each ray path (apply receiver directivity)
     const recForAmbi = useContainer.getState().containers[recId] as Receiver;
+    const launched = Number(this.stats.numRaysShot?.value) || sorted.length;
+    const mcWeight = monteCarloWeight(launched);
     for (let i = 0; i < sorted.length; i++) {
       const path = sorted[i];
-      const randomPhase = coinFlip() ? 1 : -1;
+      const sign = monteCarloSign(rayOrderFromChain(path));
       const t = path.time;
       const dir = path.arrivalDirection || [0, 0, 1] as [number, number, number];
       const recGain = recForAmbi.getGain(dir as [number, number, number]);
-      const p = this.arrivalPressure(spls, frequencies, path, recGain).map(x => x * randomPhase);
+      const p = this.arrivalPressure(spls, frequencies, path, recGain).map(x => x * sign * mcWeight);
       const roundedSample = floor(t * sampleRate);
 
       if (roundedSample >= numberOfSamples) continue;
