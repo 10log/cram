@@ -110,6 +110,7 @@ const ChartSelect = memo(({ uuid }: { uuid: string }) => {
       return <RT60Chart uuid={uuid} events />
 
     case "impulseResponse":
+    case "energyDecay":
       return <ImpulseResponseChart uuid={uuid} events />
 
     default:

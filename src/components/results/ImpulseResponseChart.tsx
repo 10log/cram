@@ -140,11 +140,15 @@ export const ImpulseResponseChart = ({
   height = 300,
   events = false,
 }: ImpulseResponseChartProps) => {
-  const { name, info } = useResult(
+  const { name, info, kind } = useResult(
     useShallow((state) =>
-      pickProps(["name", "info"], state.results[uuid] as Result<ResultKind.ImpulseResponse>)
+      pickProps(["name", "info", "kind"], state.results[uuid] as Result<ResultKind.ImpulseResponse | ResultKind.EnergyDecay>)
     )
   );
+  const isEnergy = kind === ResultKind.EnergyDecay;
+  const rate = isEnergy
+    ? (info as Result<ResultKind.EnergyDecay>["info"]).binRate
+    : (info as Result<ResultKind.ImpulseResponse>["info"]).sampleRate;
 
   return width < 10 ? null : (
     <Box sx={verticalContainerSx}>
@@ -163,8 +167,13 @@ export const ImpulseResponseChart = ({
             <b>Receiver:</b> {info.receiverName}
           </div>
           <div>
-            <b>Sample Rate:</b> {info.sampleRate} Hz
+            <b>{isEnergy ? "Energy bin rate" : "Sample Rate"}:</b> {rate} Hz
           </div>
+          {isEnergy && (
+            <div>
+              Broadband energy envelope — not a convolutable IR
+            </div>
+          )}
         </Box>
       </Box>
     </Box>

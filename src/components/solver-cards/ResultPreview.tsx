@@ -88,6 +88,7 @@ const ResultIconMap: Record<string, React.ElementType> = {
   [ResultKind.LevelTimeProgression]: TimelineIcon,
   [ResultKind.StatisticalRT60]: BarChartIcon,
   [ResultKind.ImpulseResponse]: GraphicEqIcon,
+  [ResultKind.EnergyDecay]: GraphicEqIcon,
   [ResultKind.Default]: BarChartIcon,
 };
 
@@ -279,6 +280,7 @@ export default function ResultPreview({ uuid }: ResultPreviewProps) {
       case ResultKind.StatisticalRT60:
         return <MiniRT60Chart data={data} />;
       case ResultKind.ImpulseResponse:
+      case ResultKind.EnergyDecay:
         return <MiniIRChart data={data} />;
       default:
         return <Box sx={noDataTextSx}>Preview not available</Box>;

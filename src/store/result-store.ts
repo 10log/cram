@@ -12,7 +12,9 @@ export enum ResultKind {
   LevelTimeProgression = "linear-time-progression",
   Default = "default",
   StatisticalRT60 = "statisticalRT60",
-  ImpulseResponse = "impulseResponse"
+  ImpulseResponse = "impulseResponse",
+  /** Broadband energy envelope (not a convolutable pressure IR). */
+  EnergyDecay = "energyDecay",
 }
 
 
@@ -52,6 +54,21 @@ export interface ResultTypes {
   [ResultKind.ImpulseResponse]: {
     info: {
       sampleRate: number;
+      sourceName: string;
+      receiverName: string;
+      sourceId?: string;
+      receiverId?: string;
+    };
+    data: {
+      time: number;
+      amplitude: number;
+    }[];
+  }
+  [ResultKind.EnergyDecay]: {
+    info: {
+      /** Energy-bin rate in Hz — not an audio sample rate. */
+      binRate: number;
+      units: "energy";
       sourceName: string;
       receiverName: string;
       sourceId?: string;
@@ -142,14 +159,15 @@ on("REMOVE_RESULT", (uuid) => {
 const updateResultNamesForContainer = (containerId: string, newName: string, containerType: 'source' | 'receiver') => {
   useResult.getState().set((store) => {
     Object.values(store.results).forEach((result) => {
-      if (result.kind === ResultKind.ImpulseResponse) {
-        const info = result.info as ResultTypes[ResultKind.ImpulseResponse]["info"];
+      if (result.kind === ResultKind.ImpulseResponse || result.kind === ResultKind.EnergyDecay) {
+        const info = result.info as { sourceId?: string; receiverId?: string; sourceName: string; receiverName: string };
+        const prefix = result.kind === ResultKind.EnergyDecay ? "ART energy" : "IR";
         if (containerType === 'source' && info.sourceId === containerId) {
           info.sourceName = newName;
-          result.name = `IR: ${newName} → ${info.receiverName}`;
+          result.name = `${prefix}: ${newName} → ${info.receiverName}`;
         } else if (containerType === 'receiver' && info.receiverId === containerId) {
           info.receiverName = newName;
-          result.name = `IR: ${info.sourceName} → ${newName}`;
+          result.name = `${prefix}: ${info.sourceName} → ${newName}`;
         }
       }
     });
