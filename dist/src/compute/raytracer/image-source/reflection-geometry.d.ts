@@ -7,6 +7,11 @@ export declare function reflectPointAcrossPlane(point: Vector3, pointOnPlane: Ve
  * and the world normal, folded into [0, π/2] for reflectionCoefficient.
  */
 export declare function incidenceAngle(worldRayDir: Vector3, normalWorld: Vector3): number;
+/**
+ * True if `point` is in front of or on the plane n · (x − p0) = 0.
+ * Used to skip reflectors behind the previous wall (#127).
+ */
+export declare function pointInFrontOfPlane(point: Vector3, planePoint: Vector3, planeNormal: Vector3, eps?: number): boolean;
 export declare function hitWorldNormal(hit: {
     normal?: Vector3 | null;
     face?: {
