@@ -27,7 +27,8 @@ describe('Issue #65: angle-dependent reflection in image source arrivalPressure'
     expect(source).not.toMatch(/\/\/.*reflectionFunction/);
   });
 
-  test('reflectionFunction result is wrapped with Math.abs', () => {
-    expect(source).toMatch(/Math\.abs\(.*reflectionFunction/);
+  test('energy path multiplies intensity by reflectionFunction (R²), not abs()', () => {
+    expect(source).toMatch(/intensity\[f\] \*= hit\.reflectingSurface\.reflectionFunction/);
+    expect(source).not.toMatch(/Math\.abs\(.*reflectionFunction/);
   });
 });

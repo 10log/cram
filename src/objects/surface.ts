@@ -5,7 +5,7 @@ import { chunk } from "../common/chunk";
 import roundTo from "../common/round-to";
 import { KeyValuePair } from "../common/key-value-pair";
 import interpolateAlpha from "../compute/acoustics/interpolate-alpha";
-import reflectionCoefficient from "../compute/acoustics/reflection-coefficient";
+import reflectionCoefficient, { pressureReflectionCoefficient } from "../compute/acoustics/reflection-coefficient";
 import { AcousticMaterial } from "../db/acoustic-material";
 import { BRDF } from "../compute/raytracer/brdf";
 import Room from "./room";
@@ -221,6 +221,7 @@ class Surface extends Container {
   absorptionFunction!: (freq: number) => number;
   reflection!: number[];
   reflectionFunction!: (freq: number, theta: number) => number;
+  pressureReflectionFunction!: (freq: number, theta: number) => number;
   _scatteringCoefficient!: number;
   scatteringFunction!: (f: number) => number;
   _acousticMaterial!: AcousticMaterial;
@@ -375,6 +376,7 @@ class Surface extends Container {
     const freq = [63, 125, 250, 500, 1000, 2000, 4000, 8000];
     this.absorptionFunction = interpolateAlpha(this.absorption, freq);
     this.reflectionFunction = (freq, theta) => reflectionCoefficient(this.absorptionFunction(freq), theta);
+    this.pressureReflectionFunction = (freq, theta) => pressureReflectionCoefficient(this.absorptionFunction(freq), theta);
     this.scatteringCoefficient = props.scatteringCoefficient || defaults.scatteringCoefficient;
     this.acousticMaterial = props.acousticMaterial;
     this.getArea();
@@ -607,6 +609,7 @@ class Surface extends Container {
     this.absorption = freq.map((x) => (this._acousticMaterial.absorption as Record<string, number>)[String(x)]);
     this.absorptionFunction = interpolateAlpha(this.absorption, freq);
     this.reflectionFunction = (freq, theta) => reflectionCoefficient(this.absorptionFunction(freq), theta);
+    this.pressureReflectionFunction = (freq, theta) => pressureReflectionCoefficient(this.absorptionFunction(freq), theta);
     if (material.scattering) {
       const scFreqs = Object.keys(material.scattering).map(Number);
       const scVals = scFreqs.map(f => material.scattering![String(f) as keyof typeof material.scattering]!);

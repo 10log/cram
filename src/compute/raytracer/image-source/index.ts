@@ -18,7 +18,7 @@ import {
   playImpulseResponse as sharedPlayIR,
   downloadImpulseResponse as sharedDownloadIR,
 } from "../../shared/export-playback";
-import { imageSourceArrivalPressure } from "./arrival-pressure";
+import { imageSourceArrivalPressure, imageSourceArrivalPressureIR } from "./arrival-pressure";
 import { resolveRoomID, selectedReflectors } from "./selection";
 
 function createLine(){
@@ -648,7 +648,8 @@ export class ImageSourceSolver extends Solver {
     }
 
     async calculateImpulseResponse(){
-      const initialSPL = 100; //PLACEHOLDER
+      const src = useContainer.getState().containers[this.sourceIDs[0]] as Source | undefined;
+      const initialSPL = src?.initialSPL ?? 100;
       const freqs = this.frequencies;
       const sampleRate = 44100;
       const spls = Array(freqs.length).fill(initialSPL);
@@ -674,9 +675,7 @@ export class ImageSourceSolver extends Solver {
 
         for(let i = 0; i<sortedPath.length; i++){
           let t = sortedPath[i].arrivalTime(c);
-          let p = sortedPath[i].arrivalPressure(spls, this.frequencies, this.temperature);
-
-          (Math.random() > 0.5) && (p=p.map(x=>-x)); 
+          let p = imageSourceArrivalPressureIR(spls, this.frequencies, sortedPath[i].path, this.temperature); 
 
           let roundedSample = Math.floor(t*sampleRate);
 
