@@ -8,6 +8,8 @@ import {
   planeSeparation,
   domainFromBox,
   applySliceTransform,
+  gridCell,
+  gridCellIndex,
 } from "../slice";
 
 describe("Issue #109: FDTD 2D slice mapping", () => {
@@ -125,5 +127,34 @@ describe("Issue #109: production wiring", () => {
   test("surface edges use world-space vertices, not local getY only", () => {
     expect(source).toMatch(/addWallsFromSurfaceEdges/);
     expect(source).toMatch(/matrixWorld/);
+  });
+});
+
+describe("Issue #114: source cells stay in-grid", () => {
+  const grid = { offsetX: 0, offsetY: 0, cellSize: 1, nx: 10, ny: 8 };
+
+  test("an in-grid source maps to a sourcemap index", () => {
+    expect(gridCell({ x: 2.4, y: 1, z: 3.6 }, "xz", grid)).toEqual({ x: 2, y: 4 });
+    expect(gridCellIndex({ x: 2.4, y: 1, z: 3.6 }, "xz", grid)).toBe(4 * (4 * 10 + 2));
+  });
+
+  test("a source outside the slab is skipped, not clamped to the rim", () => {
+    expect(gridCell({ x: -1, y: 1, z: 2 }, "xz", grid)).toBeNull();
+    expect(gridCell({ x: 2, y: 1, z: 20 }, "xz", grid)).toBeNull();
+    expect(gridCellIndex({ x: 100, y: 0, z: 0 }, "xz", grid)).toBeNull();
+  });
+
+  test("index.ts skips a null cell instead of writing OOB", () => {
+    const fs = require("fs");
+    const path = require("path");
+    const src = fs.readFileSync(path.resolve(__dirname, "../index.ts"), "utf8");
+    expect(src).toMatch(/gridCellIndex/);
+    expect(src).toMatch(/index == null|index != null/);
+    const tab = fs.readFileSync(
+      path.resolve(__dirname, "../../../components/parameter-config/FDTD_2DTab.tsx"),
+      "utf8",
+    );
+    expect(tab).toMatch(/!solver\.receivers\[rec\.uuid\]/);
+    expect(tab).not.toMatch(/!solver\.receiverKeys\[rec\.uuid\]/);
   });
 });

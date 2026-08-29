@@ -32,6 +32,7 @@ import {
   applySliceTransform,
   domainFromBox,
   worldToPlane,
+  gridCellIndex,
   type FdtdSlice,
 } from "./slice";
 import {
@@ -475,16 +476,21 @@ class FDTD_2D extends Solver {
   }
 
   private planeCellIndex(point: { x: number; y: number; z: number }) {
-    const plane = worldToPlane(point, this.slice);
-    const x = Math.round((plane.u - this.offsetX) / this.cellSize);
-    const y = Math.round((plane.v - this.offsetY) / this.cellSize);
-    return 4 * (y * this.nx + x);
+    return gridCellIndex(point, this.slice, {
+      offsetX: this.offsetX,
+      offsetY: this.offsetY,
+      cellSize: this.cellSize,
+      nx: this.nx,
+      ny: this.ny,
+    });
   }
 
   private vacateSourceCell(point: { x: number; y: number; z: number }) {
     const pixels = this.sourcemap?.image?.data;
     if (!pixels) return;
-    writeFieldPixel(pixels, this.planeCellIndex(point), vacatedSourcePixel());
+    const index = this.planeCellIndex(point);
+    if (index == null) return;
+    writeFieldPixel(pixels, index, vacatedSourcePixel());
     this.sourcemap.needsUpdate = true;
   }
   addReceiver(receiver: Receiver) {
@@ -580,18 +586,20 @@ class FDTD_2D extends Solver {
     for (let i = 0; i < this.sourceKeys.length; i++) {
       const source = this.sources[this.sourceKeys[i]];
       source.updateWave(this.time, this.frame, this.dt);
-      writeFieldPixel(pixels, this.planeCellIndex(source.position), dirichletSourcePixel(source.value));
+      const index = this.planeCellIndex(source.position);
+      if (index != null) {
+        writeFieldPixel(pixels, index, dirichletSourcePixel(source.value));
+      }
 
       if (source.shouldClearPreviousPosition) {
-        writeFieldPixel(
-          pixels,
-          this.planeCellIndex({
-            x: source.previousX,
-            y: source.previousY,
-            z: source.previousZ,
-          }),
-          vacatedSourcePixel(),
-        );
+        const prevIndex = this.planeCellIndex({
+          x: source.previousX,
+          y: source.previousY,
+          z: source.previousZ,
+        });
+        if (prevIndex != null) {
+          writeFieldPixel(pixels, prevIndex, vacatedSourcePixel());
+        }
         source.shouldClearPreviousPosition = false;
         source.updatePreviousPosition();
       }
