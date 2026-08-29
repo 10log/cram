@@ -86,6 +86,22 @@ describe('applyAmbisonicTail', () => {
     }
   });
 
+  test('FOA stereo decode of the tail is not mono-correlated L=R', () => {
+    const samples = earlySamples();
+    applyAmbisonicTail(samples, decay, sampleRate, crossfadeDurationSamples);
+    const W = samples[0][0];
+    const Y = samples[0][1];
+    const len = W.length;
+    const start = Math.floor(len * 0.6);
+    const L = new Float32Array(len);
+    const R = new Float32Array(len);
+    for (let i = start; i < len; i++) {
+      L[i] = W[i] + Y[i];
+      R[i] = W[i] - Y[i];
+    }
+    expect(Math.abs(correlation(L, R, start, len))).toBeLessThan(0.5);
+  });
+
   test('zero decay leaves early buffers unchanged in length when there is no tail', () => {
     const silent: DecayParameters[] = [{
       t60: 0, decayRate: 0, crossfadeLevel: 0, crossfadeTime: 0, endTime: 0,
@@ -118,5 +134,6 @@ describe('Issue #106/#132: production call sites', () => {
     expect(match).not.toBeNull();
     expect(match![0]).toMatch(/applyAmbisonicTail\(/);
     expect(match![0]).not.toMatch(/W channel \(ch=0\) only/);
+    expect(source).not.toMatch(/only the omnidirectional channel needs extension/);
   });
 });
