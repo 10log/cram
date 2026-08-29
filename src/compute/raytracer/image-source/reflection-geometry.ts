@@ -31,6 +31,19 @@ export function incidenceAngle(worldRayDir: Vector3, normalWorld: Vector3): numb
   return theta;
 }
 
+/**
+ * True if `point` is in front of or on the plane n · (x − p0) = 0.
+ * Used to skip reflectors behind the previous wall (#127).
+ */
+export function pointInFrontOfPlane(
+  point: Vector3,
+  planePoint: Vector3,
+  planeNormal: Vector3,
+  eps: number = 1e-6,
+): boolean {
+  return planeNormal.clone().normalize().dot(point.clone().sub(planePoint)) >= -eps;
+}
+
 export function hitWorldNormal(
   hit: { normal?: Vector3 | null; face?: { normal: Vector3 } | null },
   matrixWorld: Matrix4,
