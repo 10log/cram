@@ -1,0 +1,593 @@
+import { C as e, a as t, b as n, c as r, m as i, n as a, s as o, v as s, y as c } from "./FileSaver.min-BS9rdHrk.mjs";
+import { t as l } from "./renderer-Cj8dxF6d.mjs";
+import { a as u, g as d, i as f } from "./store-CUhn0IQy.mjs";
+import { t as p } from "./audio-engine-Cfjjb4lc.mjs";
+import "./acoustics-SIlOec_Y.mjs";
+import { a as m, i as h, n as g, r as _ } from "./TessellateModifier-C1tXMs2g.mjs";
+import { n as v } from "./air-attenuation-BJnoHmX2.mjs";
+import { t as y } from "./geometric-spreading-RO5977E6.mjs";
+import { t as b } from "./sound-speed-CfEkirc1.mjs";
+import { n as x } from "./room-Be5invjN.mjs";
+import { t as S } from "./solver-DCp-VMaM.mjs";
+import { a as C, r as w } from "./export-playback-DJ-xd6_v.mjs";
+import * as T from "three";
+import { Vector3 as E } from "three";
+import { MeshLine as D, MeshLineMaterial as O } from "three.meshline";
+//#region src/compute/raytracer/image-source/arrival-pressure.ts
+function k(e) {
+	let t = 0;
+	for (let n = 1; n < e.length; n++) t += e[n - 1].point.distanceTo(e[n].point);
+	return t;
+}
+function A(e, t, n, r = 20) {
+	let i = h(_(e)), a = k(n), o = y(a);
+	for (let e = 0; e < i.length; e++) i[e] *= o;
+	for (let e of n) {
+		if (!e.reflectingSurface) continue;
+		let n = e.angle ?? 0;
+		for (let r = 0; r < t.length; r++) i[r] *= e.reflectingSurface.reflectionFunction(t[r], n);
+	}
+	let s = m(g(i)), c = v(t, r);
+	for (let e = 0; e < t.length; e++) s[e] -= c[e] * a;
+	return _(s);
+}
+function j(e, t, n, r = 20) {
+	let i = A(e, t, n, r).slice();
+	for (let e = 0; e < t.length; e++) {
+		let r = 1;
+		for (let i of n) {
+			if (!i.reflectingSurface?.pressureReflectionFunction) continue;
+			let n = i.reflectingSurface.pressureReflectionFunction(t[e], i.angle ?? 0);
+			r *= n < 0 ? -1 : 1;
+		}
+		i[e] *= r;
+	}
+	return i;
+}
+//#endregion
+//#region src/compute/raytracer/image-source/selection.ts
+function M(e, t) {
+	return e || (t[0] ?? "");
+}
+function N(e, t) {
+	if (!t.length) return e;
+	let n = new Set(t);
+	return e.filter((e) => n.has(e.uuid));
+}
+function P(e) {
+	return e === null;
+}
+//#endregion
+//#region src/compute/raytracer/image-source/reflection-geometry.ts
+function F(e, t) {
+	return e.clone().transformDirection(t).normalize();
+}
+function I(e, t, n) {
+	let r = n.clone().normalize(), i = r.dot(e.clone().sub(t));
+	return e.clone().sub(r.multiplyScalar(2 * i));
+}
+function L(e, t) {
+	let n = e.clone().normalize().negate(), r = t.clone().normalize(), i = n.angleTo(r);
+	return i > Math.PI / 2 && (i = Math.PI - i), i;
+}
+function R(e, t, n) {
+	return e.normal && e.normal.lengthSq() > 0 ? e.normal.clone().normalize() : e.face ? F(e.face.normal, t) : F(n, t);
+}
+//#endregion
+//#region src/compute/raytracer/image-source/index.ts
+function z() {
+	let e = new D();
+	e.setPoints(/* @__PURE__ */ new Float32Array());
+	let t = new O({
+		lineWidth: .1,
+		color: 16711680,
+		sizeAttenuation: 1
+	});
+	return new T.Mesh(e, t);
+}
+var B = class {
+	baseSource;
+	children;
+	parent;
+	reflector;
+	order;
+	position;
+	room;
+	uuid;
+	constructor(t) {
+		this.baseSource = t.baseSource, this.reflector = t.reflector, this.order = t.order, this.position = t.position, this.children = [], this.parent = t.parent, this.room = t.room, this.uuid = e();
+	}
+	constructPathsForAllDescendents(e, t = !0) {
+		let n = [];
+		if (t) {
+			let t = G(this, e);
+			t !== null && n.push(t);
+		}
+		for (let t = 0; t < this.children.length; t++) {
+			let r = G(this.children[t], e);
+			r !== null && n.push(r), this.children[t].hasChildren && (n = n.concat(this.children[t].constructPathsForAllDescendents(e, !1)));
+		}
+		return n;
+	}
+	markupAllDescendents() {
+		for (let e = 0; e < this.children.length; e++) {
+			let t = this.children[e].position.clone();
+			l.markup.addPoint([
+				t.x,
+				t.y,
+				t.z
+			], [
+				0,
+				0,
+				0
+			]), this.children[e].hasChildren && this.children[e].markupAllDescendents();
+		}
+	}
+	markup() {
+		let e = this.position.clone();
+		l.markup.addPoint([
+			e.x,
+			e.y,
+			e.z
+		], [
+			0,
+			0,
+			0
+		]);
+	}
+	getTotalDescendents() {
+		let e = 0;
+		for (let t = 0; t < this.children.length; t++) e++, this.children[t].hasChildren && (e += this.children[t].getTotalDescendents());
+		return e;
+	}
+	getChildrenOfOrder(e) {
+		let t = [];
+		this.order === e && this.order === 0 && t.push(this);
+		for (let n = 0; n < this.children.length; n++) if (this.children[n].order === e && t.push(this.children[n]), this.children[n].hasChildren) {
+			let r = this.children[n].getChildrenOfOrder(e);
+			t = t.concat(r);
+		}
+		return t;
+	}
+	get hasChildren() {
+		return this.children.length > 0;
+	}
+}, V = class {
+	path;
+	uuid;
+	highlight;
+	constructor(t) {
+		this.path = t, this.uuid = e(), this.highlight = !1;
+	}
+	markup() {
+		for (let e = 0; e < this.path.length - 1; e++) {
+			let t = this.path[e].point.clone(), n = this.path[e + 1].point.clone();
+			l.markup.addLine([
+				t.x,
+				t.y,
+				t.z
+			], [
+				n.x,
+				n.y,
+				n.z
+			]);
+		}
+	}
+	isvalid(e) {
+		for (let t = 1; t <= this.order + 1; t++) {
+			let n = this.path[t - 1].point, r = this.path[t].point, i = this.path[t - 1].reflectingSurface, a = this.path[t].reflectingSurface;
+			for (let t = 0; t < e.length; t++) if (e[t] !== i && e[t] !== a) {
+				let i = new E(0, 0, 0);
+				i.subVectors(r, n), i.normalize();
+				let a = new T.Raycaster();
+				a.set(n, i);
+				let o;
+				o = a.intersectObject(e[t].mesh, !0);
+				let s = [];
+				for (let e = 0; e < o.length; e++) n.distanceTo(o[e].point) < n.distanceTo(r) && s.push(o[e]);
+				if (s.length > 0) return !1;
+			}
+		}
+		return !0;
+	}
+	get order() {
+		return this.path.length - 2;
+	}
+	get totalLength() {
+		let e = 0, t, n;
+		for (let r = 1; r < this.path.length; r++) t = this.path[r - 1].point, n = this.path[r].point, e += t.distanceTo(n);
+		return e;
+	}
+	arrivalPressure(e, t, n = 20) {
+		return A(e, t, this.path, n);
+	}
+	arrivalTime(e) {
+		return this.totalLength / e;
+	}
+}, H = {
+	name: "Image Source",
+	roomID: "",
+	sourceIDs: [],
+	surfaceIDs: [],
+	receiverIDs: [],
+	maxReflectionOrder: 2,
+	imageSourcesVisible: !0,
+	rayPathsVisible: !0,
+	plotOrders: [
+		0,
+		1,
+		2
+	],
+	frequencies: [
+		125,
+		250,
+		500,
+		1e3,
+		2e3,
+		4e3,
+		8e3
+	]
+}, U = class extends S {
+	sourceIDs;
+	receiverIDs;
+	roomID;
+	surfaceIDs;
+	uuid;
+	levelTimeProgression;
+	maxReflectionOrder;
+	frequencies;
+	_imageSourcesVisible;
+	_rayPathsVisible;
+	_plotOrders;
+	impulseResponse;
+	impulseResponsePlaying;
+	rootImageSource;
+	validRayPaths;
+	allRayPaths;
+	selectedImageSourcePath;
+	_plotFrequency;
+	isHybrid;
+	constructor(t = H, n = !1) {
+		super(t), this.uuid = t.uuid || e(), this.kind = "image-source", this.name = t.name, this.roomID = t.roomID, this.sourceIDs = t.sourceIDs, this.receiverIDs = t.receiverIDs, this.maxReflectionOrder = t.maxReflectionOrder, this.frequencies = t.frequencies, this._imageSourcesVisible = t.imageSourcesVisible, this._rayPathsVisible = t.rayPathsVisible, this._plotOrders = t.plotOrders, this.levelTimeProgression = t.levelTimeProgression || e(), this.isHybrid = n, this.impulseResponsePlaying = !1, this._plotFrequency = 1e3, this.isHybrid || s("ADD_RESULT", {
+			kind: f.LevelTimeProgression,
+			data: [],
+			info: {
+				initialSPL: [100],
+				frequency: [this._plotFrequency],
+				maxOrder: this.maxReflectionOrder
+			},
+			name: `LTP - ${this.name}`,
+			uuid: this.levelTimeProgression,
+			from: this.uuid
+		}), this.surfaceIDs = t.surfaceIDs ?? [], this.rootImageSource = null, this.allRayPaths = null, this.validRayPaths = null, this.roomID = M(this.roomID, x().map((e) => e.uuid)), this.selectedImageSourcePath = z(), l.markup.add(this.selectedImageSourcePath);
+	}
+	save() {
+		return i([
+			"name",
+			"kind",
+			"uuid",
+			"autoCalculate",
+			"roomID",
+			"sourceIDs",
+			"surfaceIDs",
+			"receiverIDs",
+			"maxReflectionOrder",
+			"imageSourcesVisible",
+			"rayPathsVisible",
+			"plotOrders",
+			"levelTimeProgression"
+		], this);
+	}
+	dispose() {
+		l.markup.remove(this.selectedImageSourcePath), this.reset(), s("REMOVE_RESULT", this.levelTimeProgression);
+	}
+	updateSelectedImageSourcePath(e) {
+		this.selectedImageSourcePath.geometry.setPoints(new Float32Array(e.path.map((e) => e.point.toArray()).flat())), console.log(e.path.map((e) => e.point.toArray()).flat());
+	}
+	updateImageSourceCalculation() {
+		this.clearRayPaths(), this.clearImageSources();
+		let e = d.getState().containers, t = this.room.allSurfaces, n = N(t, this.surfaceIDs), r = [], i = [], a = null;
+		for (let o of this.sourceIDs) {
+			let s = e[o];
+			if (!s) continue;
+			let c = W(new B({
+				baseSource: s,
+				position: s.position.clone(),
+				room: this.room,
+				reflector: null,
+				parent: null,
+				order: 0
+			}), this.maxReflectionOrder, n);
+			if (a ||= c, c) for (let n of this.receiverIDs) {
+				let a = e[n];
+				if (!a) continue;
+				let o = c.constructPathsForAllDescendents(a);
+				r.push(...o);
+				for (let e of o) e.isvalid(t) && i.push(e);
+			}
+		}
+		this.rootImageSource = a, this.allRayPaths = r, this.validRayPaths = i, this._imageSourcesVisible && this.drawImageSources(), this._rayPathsVisible && this.drawRayPaths(), this.isHybrid || this.calculateLTP();
+	}
+	returnSortedPathsForHybrid(e, t, n) {
+		this.updateImageSourceCalculation();
+		let r = this.validRayPaths;
+		r?.sort((t, n) => t.arrivalTime(e) > n.arrivalTime(e) ? 1 : -1);
+		let i = [];
+		if (r != null) for (let a = 0; a < r.length; a++) {
+			let o = {
+				time: r[a].arrivalTime(e),
+				pressure: r[a].arrivalPressure(t, n, this.temperature)
+			};
+			i.push(o);
+		}
+		return i;
+	}
+	calculateLTP(e = this.c, t = !1) {
+		if (P(this.validRayPaths)) {
+			if (this.sourceIDs.length > 0 && this.receiverIDs.length > 0) {
+				this.updateImageSourceCalculation();
+				return;
+			}
+			return;
+		}
+		let n = this.validRayPaths;
+		n?.sort((t, n) => t.arrivalTime(e) > n.arrivalTime(e) ? 1 : -1);
+		let r = { ...u.getState().results[this.levelTimeProgression] };
+		if (r.data = [], r.info = {
+			...r.info,
+			maxOrder: this.maxReflectionOrder,
+			frequency: [this._plotFrequency]
+		}, n !== void 0) for (let i = 0; i < n?.length; i++) {
+			let a = n[i].arrivalTime(e), o = n[i].arrivalPressure(r.info.initialSPL, r.info.frequency, this.temperature);
+			t && console.log("Arrival: " + (i + 1) + " | Arrival Time: (s) " + a + " | Arrival Pressure(1000Hz): " + o + " | Order " + n[i].order), r.data.push({
+				time: a,
+				pressure: m(o),
+				arrival: i + 1,
+				order: n[i].order,
+				uuid: n[i].uuid
+			});
+		}
+		s("UPDATE_RESULT", {
+			uuid: this.levelTimeProgression,
+			result: r
+		});
+	}
+	getPathsOfOrder(e) {
+		let t = [];
+		if (this.validRayPaths !== null) for (let n = 0; n < this.validRayPaths?.length; n++) this.validRayPaths[n].order === e && t.push(this.validRayPaths[n]);
+		return t;
+	}
+	test() {
+		let e = c.postMessage("FETCH_SOURCE", this.sourceIDs[0])[0], t = W(new B({
+			baseSource: e.clone(),
+			position: e.position.clone(),
+			room: this.room,
+			reflector: null,
+			parent: null,
+			order: 0
+		}), 1);
+		t?.markup(), console.log(t);
+		let n = this.receivers[0];
+		console.log(n);
+		let r;
+		if (t !== null) {
+			r = t.constructPathsForAllDescendents(n);
+			let e = [
+				100,
+				100,
+				100,
+				100,
+				100,
+				100
+			], i = 0;
+			for (let t = 0; t < r.length; t++) r[t].isvalid(this.room.allSurfaces) && (r[t].markup(), console.log(r[t]), console.log(r[t].totalLength), console.log(r[t].arrivalTime(this.c)), console.log(_(e)), i++);
+			console.log(i + " out of " + r.length + " paths are valid");
+		}
+	}
+	clearLevelTimeProgressionData() {
+		let e = { ...u.getState().results[this.levelTimeProgression] };
+		e.data = [], s("UPDATE_RESULT", {
+			uuid: this.levelTimeProgression,
+			result: e
+		});
+	}
+	reset() {
+		this.rootImageSource = null, this.allRayPaths = null, this.validRayPaths = null, this.plotOrders = this.possibleOrders.map((e) => e.value), this.selectedImageSourcePath.geometry.setPoints(/* @__PURE__ */ new Float32Array()), this.clearImageSources(), this.clearRayPaths(), this.clearLevelTimeProgressionData();
+	}
+	drawImageSources() {
+		this.clearImageSources();
+		for (let e = 0; e < this.plotOrders.length; e++) {
+			let t = this.rootImageSource?.getChildrenOfOrder(this.plotOrders[e]);
+			for (let e = 0; e < t?.length; e++) t[e].markup();
+		}
+	}
+	clearImageSources() {
+		l.markup.clearPoints();
+	}
+	drawRayPaths(e) {
+		this.clearRayPaths();
+		for (let e = 0; e < this.plotOrders.length; e++) {
+			let t = this.getPathsOfOrder(this.plotOrders[e]);
+			for (let e = 0; e < t.length; e++) t[e].markup();
+		}
+	}
+	clearRayPaths() {
+		l.markup.clearLines();
+	}
+	toggleRayPathHighlight(e) {
+		if (this.validRayPaths != null) {
+			for (let t = 0; t < this.validRayPaths.length; t++) if (e === this.validRayPaths[t].uuid) {
+				this.updateSelectedImageSourcePath(this.validRayPaths[t]), console.log("WILL HIGHLIGHT RAY PATH WITH ARRIVAL SPL " + m(this.validRayPaths[t].arrivalPressure([100], [1e3], this.temperature)) + " AND ARRIVAL TIME " + this.validRayPaths[t].arrivalTime(this.c));
+				break;
+			}
+		}
+	}
+	async calculateImpulseResponse() {
+		let e = d.getState().containers[this.sourceIDs[0]]?.initialSPL ?? 100, t = this.frequencies, n = 44100, r = Array(t.length).fill(e);
+		if (this.receiverIDs.length === 0) throw Error("No receivers have been assigned to the raytracer");
+		if (this.sourceIDs.length === 0) throw Error("No sources have been assigned to the raytracer");
+		if (this.validRayPaths?.length === 0) throw Error("No rays have been traced yet");
+		let i = this.c, a = this.validRayPaths;
+		if (a?.sort((e, t) => e.arrivalTime(i) > t.arrivalTime(i) ? 1 : -1), console.log(a), a != null) {
+			let e = n * (a[a.length - 1].arrivalTime(i) + .05), t = [];
+			for (let n = 0; n < this.frequencies.length; n++) t.push(new Float32Array(Math.floor(e)));
+			for (let e = 0; e < a.length; e++) {
+				let o = a[e].arrivalTime(i), s = j(r, this.frequencies, a[e].path, this.temperature), c = Math.floor(o * n);
+				for (let e = 0; e < this.frequencies.length; e++) t[e][c] += s[e];
+			}
+			let o = p.createOfflineContext(1, e, n), s = Array(this.frequencies.length);
+			for (let e = 0; e < this.frequencies.length; e++) s[e] = p.createFilteredSource(t[e], this.frequencies[e], 1.414, 1, o);
+			console.log(s);
+			let c = p.createMerger(s.length, o);
+			for (let e = 0; e < s.length; e++) s[e].source.connect(c, 0, e);
+			return c.connect(o.destination), s.forEach((e) => e.source.start()), this.impulseResponse = await p.renderContextAsync(o), this.impulseResponse;
+		}
+	}
+	async playImpulseResponse() {
+		let e = await C(this.impulseResponse, () => this.calculateImpulseResponse(), this.uuid, "IMAGESOURCE_SET_PROPERTY");
+		this.impulseResponse = e.impulseResponse;
+	}
+	async downloadImpulseResponse(e, t = 44100) {
+		let n = await w(this.impulseResponse, () => this.calculateImpulseResponse(), e, t);
+		this.impulseResponse = n.impulseResponse;
+	}
+	get sources() {
+		return this.sourceIDs.length > 0 ? this.sourceIDs.map((e) => d.getState().containers[e]) : [];
+	}
+	get receivers() {
+		return this.receiverIDs.length > 0 && Object.keys(d.getState().containers).length > 0 ? this.receiverIDs.map((e) => d.getState().containers[e]) : [];
+	}
+	get room() {
+		return d.getState().containers[this.roomID];
+	}
+	get numValidRays() {
+		let e = this.validRayPaths?.length;
+		return e === void 0 ? 0 : e;
+	}
+	get numTotalRays() {
+		let e = this.allRayPaths?.length;
+		return e === void 0 ? 0 : e;
+	}
+	set maxReflectionOrderReset(e) {
+		this.maxReflectionOrder = e, this.reset();
+	}
+	get maxReflectionOrderReset() {
+		return this.maxReflectionOrder;
+	}
+	set rayPathsVisible(e) {
+		e === this._rayPathsVisible || (e ? this.drawRayPaths() : this.clearRayPaths()), this._rayPathsVisible = e;
+	}
+	get rayPathsVisible() {
+		return this._rayPathsVisible;
+	}
+	set imageSourcesVisible(e) {
+		e === this._imageSourcesVisible || (e ? this.drawImageSources() : this.clearImageSources()), this._imageSourcesVisible = e;
+	}
+	get imageSourcesVisible() {
+		return this._imageSourcesVisible;
+	}
+	get possibleOrders() {
+		let e = [];
+		for (let t = 0; t <= this.maxReflectionOrder; t++) {
+			let n = {
+				value: t,
+				label: t.toString()
+			};
+			e.push(n);
+		}
+		return e;
+	}
+	get selectedPlotOrders() {
+		let e = [];
+		for (let t = 0; t < this.plotOrders.length; t++) {
+			let n = {
+				value: this.plotOrders[t],
+				label: this.plotOrders[t].toString()
+			};
+			e.push(n);
+		}
+		return e;
+	}
+	set toggleOrder(e) {
+		e > this.maxReflectionOrder || (this.plotOrders.includes(e) ? this.plotOrders.splice(this.plotOrders.indexOf(e), 1) : this.plotOrders.push(e)), this.clearRayPaths(), this.clearImageSources(), this.drawRayPaths(), this.drawImageSources();
+	}
+	get plotOrders() {
+		return this._plotOrders;
+	}
+	set plotOrders(e) {
+		this._plotOrders = e, this.clearRayPaths(), this.clearImageSources(), this.rayPathsVisible && this.drawRayPaths(), this.imageSourcesVisible && this.drawImageSources();
+	}
+	get temperature() {
+		return this.room?.temperature ?? 20;
+	}
+	get c() {
+		return b(this.temperature);
+	}
+	set plotFrequency(e) {
+		this._plotFrequency = e, this.calculateLTP();
+	}
+};
+function W(e, t, n) {
+	if (t < 0) return null;
+	if (t === 0) return e;
+	let r = n ?? e.room.allSurfaces;
+	for (let n = 0; n < r.length; n++) {
+		let i = e.reflector === null || e.reflector !== r[n], a;
+		if (a = e.reflector === null || K(r[n], e.reflector), i && a) {
+			let i = new B({
+				baseSource: e.baseSource,
+				position: q(e.position.clone(), r[n]).clone(),
+				room: e.room,
+				reflector: r[n],
+				parent: e,
+				order: e.order + 1
+			});
+			e.children.push(i), t > 0 && W(i, t - 1, r);
+		}
+	}
+	return e;
+}
+function G(e, t) {
+	let n = [], r = e.order, i = {
+		point: t.position.clone(),
+		reflectingSurface: null,
+		angle: null
+	};
+	n[r + 1] = i;
+	let a = new T.Raycaster();
+	for (let t = r; t >= 1; t--) {
+		let r = e.position.clone(), i = n[t + 1].point.clone(), o = new E(0, 0, 0);
+		if (o.subVectors(r, i), o.normalize(), a.set(i, o), e.reflector === null) return null;
+		let s = a.intersectObject(e.reflector.mesh, !0);
+		if (s.length > 0) {
+			let r = {
+				point: s[0].point,
+				reflectingSurface: e.reflector,
+				angle: L(o, R(s[0], e.reflector.matrixWorld, e.reflector.normal))
+			};
+			n[t] = r;
+		} else return null;
+		e.parent !== null && (e = e.parent);
+	}
+	return n[0] = {
+		point: e.position.clone(),
+		reflectingSurface: null,
+		angle: null
+	}, new V(n);
+}
+function K(e, t) {
+	let n = F(e.normal, e.matrixWorld), r = F(t.normal, t.matrixWorld);
+	return n.dot(r) <= 0;
+}
+function q(e, t) {
+	let n = new E(t.polygon.vertices[0][0], t.polygon.vertices[0][1], t.polygon.vertices[0][2]);
+	return I(e, t.localToWorld(n), F(t.normal, t.matrixWorld));
+}
+n("IMAGESOURCE_SET_PROPERTY", o), n("REMOVE_IMAGESOURCE", t), n("ADD_IMAGESOURCE", a(U)), n("UPDATE_IMAGESOURCE", (e) => void r.getState().solvers[e].updateImageSourceCalculation()), n("RESET_IMAGESOURCE", (e) => void r.getState().solvers[e].reset()), n("CALCULATE_LTP", (e) => void r.getState().solvers[e].calculateLTP()), n("IMAGESOURCE_PLAY_IR", (e) => void r.getState().solvers[e].playImpulseResponse().catch(console.error)), n("IMAGESOURCE_DOWNLOAD_IR", (e) => {
+	let t = r.getState().solvers[e], n = d.getState().containers, i = `ir-imagesource-${t.sourceIDs.length > 0 && n[t.sourceIDs[0]]?.name || "source"}-${t.receiverIDs.length > 0 && n[t.receiverIDs[0]]?.name || "receiver"}`.replace(/[^a-zA-Z0-9-_]/g, "_");
+	t.downloadImpulseResponse(i).catch(console.error);
+});
+//#endregion
+export { U as t };
+
+//# sourceMappingURL=image-source-XvnSMXcM.mjs.map
