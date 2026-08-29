@@ -6,7 +6,13 @@ function e(e, t = 20, n = 40, r = 101325) {
 		d.push(20 * t / Math.log(10));
 	}), d;
 }
+function t(e, t) {
+	return 10 ** (-e * t / 10);
+}
+function n(e) {
+	return e / (10 / Math.LN10);
+}
 //#endregion
-export { e as t };
+export { e as n, t as r, n as t };
 
-//# sourceMappingURL=air-attenuation-DrZYpv8D.mjs.map
+//# sourceMappingURL=air-attenuation-BJnoHmX2.mjs.map

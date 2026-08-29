@@ -3,8 +3,7 @@
  * this formulation — adding `initialEnergy` into every octave buffer and
  * then summing makes the direct bin N_bands times too large (#116).
  *
- * Air conversion matches the current ART shoot/gather (pressure 20 log).
- * Energy-vs-pressure air is #118.
+ * Air on this energy path uses 10 log₁₀ (#118), not the pressure 20 log.
  */
 export declare const DIRECT_AIR_FREQUENCY_HZ = 1000;
 export declare function pickDirectAirFrequency(frequencies: number[]): number;

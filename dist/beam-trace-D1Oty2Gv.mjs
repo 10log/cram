@@ -4,7 +4,7 @@ import { a as useResult, g as useContainer, i as ResultKind } from "./store-Dol3
 import { n as normalize$1, r as wavAsBlob, t as audioEngine } from "./audio-engine-CmA_oANp.mjs";
 import { a as I2P, c as P2Lp, i as numbersEqualWithinTolerence, n as getRooms, o as Lp2P, r as Surface, s as P2I } from "./room-B7DOQicQ.mjs";
 import "./acoustics-DtDxi75Z.mjs";
-import { t as airAttenuation } from "./air-attenuation-DrZYpv8D.mjs";
+import { n as airAttenuation } from "./air-attenuation-BJnoHmX2.mjs";
 import { a as playImpulseResponse, i as playBinauralImpulseResponse, n as downloadBinauralImpulseResponse, o as spreadingFactor, r as downloadImpulseResponse, t as downloadAmbisonicImpulseResponse } from "./export-playback-CgbEgL1N.mjs";
 import { t as soundSpeed } from "./sound-speed-CfEkirc1.mjs";
 import { r as loadDecoderFilters } from "./hrtf-data-D6qGJN2M.mjs";
@@ -18925,4 +18925,4 @@ registerBeamTraceEvents(BeamTraceSolver);
 //#endregion
 export { BeamTraceSolver, BeamTraceSolver as default };
 
-//# sourceMappingURL=beam-trace-56yMYt0z.mjs.map
+//# sourceMappingURL=beam-trace-D1Oty2Gv.mjs.map

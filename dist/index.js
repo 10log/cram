@@ -590,7 +590,7 @@ Qr("ray-tracer", async (e, t) => {
 	let { default: n } = await import("./raytracer-3ICWYPE3.mjs");
 	return new n(t);
 }), Qr("image-source", async (e, t) => {
-	let { ImageSourceSolver: n } = await import("./image-source-Bd14WaHB.mjs");
+	let { ImageSourceSolver: n } = await import("./image-source-BRteP51L.mjs");
 	return new n({
 		name: "Image Source",
 		roomID: "",
@@ -616,7 +616,7 @@ Qr("ray-tracer", async (e, t) => {
 		]
 	});
 }), Qr("rt60", async (e, t) => {
-	let { default: n } = await import("./rt-D0RecoFi.mjs");
+	let { default: n } = await import("./rt-BQh7u5Wb.mjs");
 	return new n();
 }), Qr("energydecay", async (e, t) => {
 	let { default: n } = await import("./energy-decay-B7jvteJw.mjs");
@@ -625,10 +625,10 @@ Qr("ray-tracer", async (e, t) => {
 	let { default: n } = await import("./2d-fdtd-F8WJ7MwT.mjs");
 	return new n();
 }), Qr("beam-trace", async (e, t) => {
-	let { BeamTraceSolver: n } = await import("./beam-trace-56yMYt0z.mjs");
+	let { BeamTraceSolver: n } = await import("./beam-trace-D1Oty2Gv.mjs");
 	return new n();
 }), Qr("art", async (e, t) => {
-	let { ART: n } = await import("./art-B40Cytt9.mjs");
+	let { ART: n } = await import("./art-Br7jkuWi.mjs");
 	return new n();
 });
 //#endregion
@@ -6684,19 +6684,19 @@ async function Zo(e, t) {
 			return new e(t).restore(t);
 		}
 		case "rt60": {
-			let { default: e } = await import("./rt-D0RecoFi.mjs");
+			let { default: e } = await import("./rt-BQh7u5Wb.mjs");
 			return new e().restore(t);
 		}
 		case "art": {
-			let { default: e } = await import("./art-B40Cytt9.mjs");
+			let { default: e } = await import("./art-Br7jkuWi.mjs");
 			return new e(t).restore(t);
 		}
 		case "image-source": {
-			let { default: e } = await import("./image-source-Bd14WaHB.mjs");
+			let { default: e } = await import("./image-source-BRteP51L.mjs");
 			return new e(t).restore(t);
 		}
 		case "beam-trace": {
-			let { BeamTraceSolver: e } = await import("./beam-trace-56yMYt0z.mjs");
+			let { BeamTraceSolver: e } = await import("./beam-trace-D1Oty2Gv.mjs");
 			return new e().restore(t);
 		}
 		default: throw Error(`Unknown solver kind: ${e}`);
