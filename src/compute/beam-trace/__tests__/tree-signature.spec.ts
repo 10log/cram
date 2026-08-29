@@ -66,7 +66,8 @@ describe('Issue #104: production wiring', () => {
   });
 
   test('currentTreeSignature includes source.uuid and surface matrixWorld', () => {
-    const match = source.match(/currentTreeSignature\(\)[\s\S]*?^  \}/m);
+    const geometry = fs.readFileSync(path.resolve(__dirname, '../geometry.ts'), 'utf-8');
+    const match = geometry.match(/export function currentTreeSignature\([\s\S]*?^\}\n/m);
     expect(match).not.toBeNull();
     expect(match![0]).toMatch(/source\.uuid/);
     expect(match![0]).toMatch(/matrixWorld/);
