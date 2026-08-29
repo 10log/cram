@@ -19,6 +19,7 @@ import { renderer } from "../../render/renderer";
 import { addSolver, callSolverMethod, removeSolver, setSolverProperty, useContainer, useSolver } from "../../store";
 import { ResultKind, useResult } from "../../store/result-store";
 import {cramangle2threejsangle, worldDirToCramAngles} from "../../common/dir-angle-conversions";
+import { lookingBackArrivalDirection } from "../../common/arrival-direction";
 import { audioEngine } from "../../audio-engine/audio-engine";
 import observe, { Observable } from "../../common/observable";
 import { encodeBufferFromDirection, getAmbisonicChannelCount } from "ambisonics";
@@ -1062,15 +1063,11 @@ class RayTracer extends Solver {
       // Compute mean energy across bands (consistent with ray-core.ts)
       const meanEnergy = dp.bandEnergy.reduce((a, b) => a + b, 0) / dp.bandEnergy.length;
 
-      // Compute arrival direction: edge→receiver (normalized)
       const recPos = receiverPositions.get(dp.receiverId)!;
-      const adx = recPos[0] - dp.diffractionPoint[0];
-      const ady = recPos[1] - dp.diffractionPoint[1];
-      const adz = recPos[2] - dp.diffractionPoint[2];
-      const adLen = Math.sqrt(adx * adx + ady * ady + adz * adz);
-      const arrivalDirection: [number, number, number] = adLen > 1e-10
-        ? [adx / adLen, ady / adLen, adz / adLen]
-        : [0, 0, 1];
+      const arrivalDirection = lookingBackArrivalDirection(
+        { x: recPos[0], y: recPos[1], z: recPos[2] },
+        { x: dp.diffractionPoint[0], y: dp.diffractionPoint[1], z: dp.diffractionPoint[2] },
+      );
 
       // Compute individual leg distances for chain
       const srcPos = sourcePositions.get(dp.sourceId)!;
