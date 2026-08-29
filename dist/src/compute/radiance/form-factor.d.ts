@@ -22,6 +22,11 @@ export interface ShootingContext {
     raysPerShoot: number;
 }
 /**
+ * Incoming Lambert factor at a hit: max(0, n · −d) for a ray traveling
+ * along `rayDir`. Grazing and back-facing patches receive no flux (#120).
+ */
+export declare function incomingLambert(normal: Vector3, rayDir: Vector3): number;
+/**
  * Select the patch with the most unshot energy.
  */
 export declare function selectShootingPatch(unshotEnergy: DirectionalResponse[]): number;
