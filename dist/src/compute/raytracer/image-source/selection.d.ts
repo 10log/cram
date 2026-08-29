@@ -7,3 +7,8 @@ export declare function resolveRoomID(requested: string | undefined | null, room
 export declare function selectedReflectors<T extends {
     uuid: string;
 }>(all: T[], surfaceIDs: string[]): T[];
+/**
+ * `null` means the tree has never run — Calculate should build it once.
+ * `[]` means it ran and nothing was valid — do not re-enter (#125).
+ */
+export declare function shouldRebuildImageSourceTree(validRayPaths: unknown[] | null): boolean;

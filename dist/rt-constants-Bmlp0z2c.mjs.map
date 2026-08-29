@@ -1,0 +1,1 @@
+{"version":3,"file":"rt-constants-Bmlp0z2c.mjs","names":[],"sources":["../src/constants/rt-constants.ts"],"sourcesContent":["import { UNITS } from \"../enums/units\";\n\nexport const RT_CONSTANTS = {\n  [UNITS.INCHES]: 0.00415,\n  [UNITS.FEET]: 0.049,\n  [UNITS.METERS]: 0.161\n};"],"mappings":";;AAEA,IAAa,IAAe;EACzB,EAAM,SAAS;EACf,EAAM,OAAO;EACb,EAAM,SAAS;AAClB"}

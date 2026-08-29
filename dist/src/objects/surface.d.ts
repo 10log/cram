@@ -81,6 +81,7 @@ declare class Surface extends Container {
     absorptionFunction: (freq: number) => number;
     reflection: number[];
     reflectionFunction: (freq: number, theta: number) => number;
+    pressureReflectionFunction: (freq: number, theta: number) => number;
     _scatteringCoefficient: number;
     scatteringFunction: (f: number) => number;
     _acousticMaterial: AcousticMaterial;
