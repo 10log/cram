@@ -7,13 +7,28 @@ import { t as f } from "./sound-speed-CfEkirc1.mjs";
 import { t as p } from "./TessellateModifier-DlSgA920.mjs";
 import { t as m } from "./solver-DovuaY8D.mjs";
 import { IcosahedronGeometry as h, Triangle as g, Vector3 as _ } from "three";
+//#region src/compute/radiance/direct-path.ts
+var v = 1e3;
+function y(e) {
+	return e.includes(1e3) || e.length === 0 ? v : e[Math.floor(e.length / 2)];
+}
+function b(e) {
+	let { energy: t, distance: n, airAbsDbPerMeter: r } = e;
+	if (!(n > 1e-6)) return 0;
+	let i = r / (20 / Math.LN10);
+	return t * Math.exp(-i * n) / (n * n);
+}
+function x(e, t, n) {
+	return Math.round(e / t * n);
+}
+//#endregion
 //#region src/compute/radiance/brdf.ts
-var v = 1, y = class {
+var S = 1, C = class {
 	detail;
 	directions;
 	nSlots;
 	coefficients;
-	constructor(e = v) {
+	constructor(e = S) {
 		this.detail = e;
 		let t = new h(1, this.detail).getAttribute("position"), n = /* @__PURE__ */ new Set(), r = [];
 		for (let e = 0; e < t.count; e++) {
@@ -43,14 +58,14 @@ var v = 1, y = class {
 		return t;
 	}
 	getDirectionIndex(e, t) {
-		let n = b(e, t);
+		let n = w(e, t);
 		return n.z < 0 && (n.z = 0), n.lengthSq() < 1e-10 ? 0 : (n.normalize(), this.findNearestSlot(n));
 	}
 	getOutgoingWeights(e) {
 		return this.coefficients[e];
 	}
 };
-function b(e, t) {
+function w(e, t) {
 	let n = t.clone().normalize(), r = new _(1, 0, 0);
 	Math.abs(n.dot(r)) > .9 && (r = new _(0, 1, 0));
 	let i = new _().crossVectors(n, r).normalize(), a = new _().crossVectors(n, i).normalize();
@@ -58,7 +73,7 @@ function b(e, t) {
 }
 //#endregion
 //#region src/compute/radiance/response.ts
-var x = class {
+var T = class {
 	buffer;
 	constructor(e) {
 		this.buffer = new Float32Array(e);
@@ -85,12 +100,12 @@ var x = class {
 		r > this.buffer.length && this.extend(r);
 		for (let r = 0; r < e.buffer.length; r++) this.buffer[r + t] += e.buffer[r] * n;
 	}
-}, S = class {
+}, E = class {
 	n;
 	responses;
 	constructor(e, t) {
 		this.n = e, this.responses = [];
-		for (let n = 0; n < e; n++) this.responses[n] = new x(t);
+		for (let n = 0; n < e; n++) this.responses[n] = new T(t);
 	}
 	clear() {
 		this.responses.forEach((e) => e.clear());
@@ -104,7 +119,7 @@ var x = class {
 	accumulateFrom(e) {
 		for (let t = 0; t < this.n; t++) this.responses[t].buffer[0] = e.responses[t].sum();
 	}
-}, C = class e {
+}, D = class e {
 	extentsMin;
 	extentsMax;
 	startIndex;
@@ -137,7 +152,7 @@ var x = class {
 	get children() {
 		return [this.node0, this.node1];
 	}
-}, w = class e {
+}, O = class e {
 	x = 0;
 	y = 0;
 	z = 0;
@@ -184,7 +199,7 @@ var x = class {
 		if (t.x !== void 0 && t.x !== null) return new e(t.x, t.y, t.z);
 		throw TypeError("Couldn't convert to BVHVector3.");
 	}
-}, T = class e {
+}, k = class e {
 	rootNode;
 	bboxArray;
 	trianglesArray;
@@ -193,11 +208,11 @@ var x = class {
 	}
 	intersectRay(t, n, r = !0) {
 		try {
-			t = w.fromAny(t), n = w.fromAny(n);
+			t = O.fromAny(t), n = O.fromAny(n);
 		} catch {
 			throw TypeError("Origin or Direction couldn't be converted to a BVHVector3.");
 		}
-		let i = [this.rootNode], a = [], o = [], s = new w(1 / n.x, 1 / n.y, 1 / n.z);
+		let i = [this.rootNode], a = [], o = [], s = new O(1 / n.x, 1 / n.y, 1 / n.z);
 		for (; i.length > 0;) {
 			let n = i.pop();
 			if (n && e.intersectNodeBox(t, s, n)) {
@@ -205,7 +220,7 @@ var x = class {
 				for (let e = n.startIndex; e < n.endIndex; e++) a.push(this.bboxArray[e * 7]);
 			}
 		}
-		let c = new w(), l = new w(), u = new w();
+		let c = new O(), l = new O(), u = new O();
 		for (let i = 0; i < a.length; i++) {
 			let s = a[i];
 			c.setFromArray(this.trianglesArray, s * 9), l.setFromArray(this.trianglesArray, s * 9 + 3), u.setFromArray(this.trianglesArray, s * 9 + 6);
@@ -228,7 +243,7 @@ var x = class {
 		return !(i > l || c > a || ((l < a || a !== a) && (a = l), a < 0));
 	}
 	static intersectRayTriangle(e, t, n, r, i, a) {
-		var o = new w(), s = new w(), c = new w(), l = new w();
+		var o = new O(), s = new O(), c = new O(), l = new O();
 		s.subVectors(t, e), c.subVectors(n, e), l.crossVectors(s, c);
 		let u = i.dot(l);
 		if (u === 0 || u > 0 && a) return null;
@@ -241,28 +256,28 @@ var x = class {
 		let m = -d * o.dot(l);
 		return m < 0 ? null : i.clone().multiplyScalar(m / u).add(r);
 	}
-}, E = 1e-6;
-function D(e, t = 10) {
+}, A = 1e-6;
+function j(e, t = 10) {
 	if (typeof t != "number") throw Error(`maxTrianglesPerNode must be of type number, got: ${typeof t}`);
 	if (t < 1) throw Error(`maxTrianglesPerNode must be greater than or equal to 1, got: ${t}`);
 	if (Number.isNaN(t)) throw Error("maxTrianglesPerNode is NaN");
 	Number.isInteger(t) || console.warn(`maxTrianglesPerNode is expected to be an integer, got: ${t}`);
 	let n;
-	if (Array.isArray(e) && e.length === 0 && console.warn("triangles appears to be an array with 0 elements."), F(e)) n = M(e);
+	if (Array.isArray(e) && e.length === 0 && console.warn("triangles appears to be an array with 0 elements."), z(e)) n = I(e);
 	else if (e instanceof Float32Array) n = e;
-	else if (I(e)) n = new Float32Array(e);
+	else if (B(e)) n = new Float32Array(e);
 	else throw Error(`triangles must be of type Vector[][] | number[] | Float32Array, got: ${typeof e}`);
-	let r = j(n), i = new Float32Array(r.length);
+	let r = F(n), i = new Float32Array(r.length);
 	i.set(r);
-	var a = n.length / 9, o = A(r, 0, a, E);
-	let s = new C(o[0], o[1], 0, a, 0), c = [s], l;
+	var a = n.length / 9, o = P(r, 0, a, A);
+	let s = new D(o[0], o[1], 0, a, 0), c = [s], l;
 	for (; l = c.pop();) {
-		let e = O(l, t, r, i);
+		let e = M(l, t, r, i);
 		c.push(...e);
 	}
-	return new T(s, r, n);
+	return new k(s, r, n);
 }
-function O(e, t, n, r) {
+function M(e, t, n, r) {
 	let i = e.elementCount();
 	if (i <= t || i === 0) return [];
 	let a = e.startIndex, o = e.endIndex, s = [
@@ -305,20 +320,20 @@ function O(e, t, n, r) {
 		}
 	}
 	var _ = a, v = _ + m.length, y = v, b = o;
-	k(m, h, e.startIndex, n, r);
+	N(m, h, e.startIndex, n, r);
 	var x = r.subarray(e.startIndex * 7, e.endIndex * 7);
 	n.set(x, e.startIndex * 7);
-	var S = A(n, _, v, E), w = A(n, y, b, E), T = new C(S[0], S[1], _, v, e.level + 1), D = new C(w[0], w[1], y, b, e.level + 1);
-	return e.node0 = T, e.node1 = D, e.clearShapes(), [T, D];
+	var S = P(n, _, v, A), C = P(n, y, b, A), w = new D(S[0], S[1], _, v, e.level + 1), T = new D(C[0], C[1], y, b, e.level + 1);
+	return e.node0 = w, e.node1 = T, e.clearShapes(), [w, T];
 }
-function k(e, t, n, r, i) {
+function N(e, t, n, r, i) {
 	var a = e.concat(t), o = n;
 	for (let e = 0; e < a.length; e++) {
 		let t = a[e];
-		P(r, t, i, o), o++;
+		R(r, t, i, o), o++;
 	}
 }
-function A(e, t, n, r = 0) {
+function P(e, t, n, r = 0) {
 	if (t >= n) return [[
 		0,
 		0,
@@ -343,15 +358,15 @@ function A(e, t, n, r = 0) {
 		l + r
 	]];
 }
-function j(e) {
+function F(e) {
 	let t = e.length / 9, n = new Float32Array(t * 7);
 	for (let r = 0; r < t; r++) {
 		let t = r * 9, i = e[t++], a = e[t++], o = e[t++], s = e[t++], c = e[t++], l = e[t++], u = e[t++], d = e[t++], f = e[t];
-		N(n, r, r, Math.min(i, s, u), Math.min(a, c, d), Math.min(o, l, f), Math.max(i, s, u), Math.max(a, c, d), Math.max(o, l, f));
+		L(n, r, r, Math.min(i, s, u), Math.min(a, c, d), Math.min(o, l, f), Math.max(i, s, u), Math.max(a, c, d), Math.max(o, l, f));
 	}
 	return n;
 }
-function M(e) {
+function I(e) {
 	let t = new Float32Array(e.length * 9);
 	for (let n = 0; n < e.length; n++) {
 		let r = e[n][0], i = e[n][1], a = e[n][2], o = n * 9;
@@ -359,15 +374,15 @@ function M(e) {
 	}
 	return t;
 }
-function N(e, t, n, r, i, a, o, s, c) {
+function L(e, t, n, r, i, a, o, s, c) {
 	let l = t * 7;
 	e[l++] = n, e[l++] = r, e[l++] = i, e[l++] = a, e[l++] = o, e[l++] = s, e[l] = c;
 }
-function P(e, t, n, r) {
+function R(e, t, n, r) {
 	let i = r * 7, a = t * 7;
 	n[i++] = e[a++], n[i++] = e[a++], n[i++] = e[a++], n[i++] = e[a++], n[i++] = e[a++], n[i++] = e[a++], n[i] = e[a];
 }
-function F(e) {
+function z(e) {
 	if (!Array.isArray(e)) return !1;
 	for (let t = 0; t < e.length; t++) {
 		let n = e[t];
@@ -379,14 +394,14 @@ function F(e) {
 	}
 	return !0;
 }
-function I(e) {
+function B(e) {
 	if (!Array.isArray(e)) return !1;
 	for (let t = 0; t < e.length; t++) if (typeof e[t] != "number") return !1;
 	return !0;
 }
 //#endregion
 //#region src/compute/radiance/patch.ts
-function L(e, t) {
+function V(e, t) {
 	let n = e.allSurfaces, r = [], i = [], a = [], o = new p(t, 6);
 	for (let e = 0; e < n.length; e++) {
 		let t = n[e], s = t.geometry.clone(), c = o.modify(s).getAttribute("position").array, l = c.length / 9;
@@ -428,11 +443,11 @@ function L(e, t) {
 	for (let e = 0; e < i.length; e++) for (let t = 0; t < 9; t++) s[e * 9 + t] = i[e][t];
 	return {
 		patches: r,
-		bvh: D(s),
+		bvh: j(s),
 		triangleToPatch: a
 	};
 }
-function R(e) {
+function H(e) {
 	let t = Math.random(), n = Math.random();
 	t + n > 1 && (t = 1 - t, n = 1 - n);
 	let r = 1 - t - n;
@@ -440,7 +455,7 @@ function R(e) {
 }
 //#endregion
 //#region src/compute/radiance/form-factor.ts
-function z(e) {
+function U(e) {
 	let t = -1, n = 0;
 	for (let r = 0; r < e.length; r++) {
 		let i = e[r].sum();
@@ -448,12 +463,12 @@ function z(e) {
 	}
 	return n;
 }
-function B(e) {
+function W(e) {
 	let t = 0;
 	for (let n = 0; n < e.length; n++) t += e[n].sum();
 	return t;
 }
-function V(e, t) {
+function G(e, t) {
 	let { patchSet: n, unshotEnergy: r, totalEnergy: i, brdf: a, airAbsNepers: o, speedOfSound: s, sampleRate: c, raysPerShoot: l } = e, { patches: u, bvh: d, triangleToPatch: f } = n, p = u[t], m = r[t], h = [], g = 0;
 	for (let e = 0; e < a.nSlots; e++) {
 		let t = m.responses[e].sum();
@@ -464,7 +479,7 @@ function V(e, t) {
 			if (h[n] < 1e-20) continue;
 			let _ = h[n] / g, v = Math.max(1, Math.round(_ * l)), y = 1 / v;
 			for (let l = 0; l < v; l++) {
-				let l = R(p), h = K(G(a, n), p.normal), g = d.intersectRay(l, h, !1);
+				let l = H(p), h = X(Y(a, n), p.normal), g = d.intersectRay(l, h, !1);
 				if (!g || g.length === 0) continue;
 				let _ = null, v = Infinity;
 				for (let e of g) {
@@ -485,10 +500,10 @@ function V(e, t) {
 		m.clear();
 	}
 }
-function H(e, t, n, r = 500) {
+function K(e, t, n, r = 500) {
 	let { patchSet: i, unshotEnergy: a, totalEnergy: o, brdf: s, airAbsNepers: c, speedOfSound: l, sampleRate: u } = n, { patches: d, bvh: f, triangleToPatch: p } = i, m = t / r;
 	for (let t = 0; t < r; t++) {
-		let t = W(), r = f.intersectRay(e, t, !1);
+		let t = J(), r = f.intersectRay(e, t, !1);
 		if (!r || r.length === 0) continue;
 		let i = null, h = Infinity;
 		for (let t of r) {
@@ -496,18 +511,18 @@ function H(e, t, n, r = 500) {
 			s < h && (h = s, i = t);
 		}
 		if (!i || h < 1e-6) continue;
-		let g = p[i.triangleIndex], _ = d[g], v = h / l * u, y = Math.exp(-c * h), b = t.clone().negate(), S = s.getDirectionIndex(b, _.normal), C = n.absorptions[g], w = n.scatterings[g];
-		s.computeCoefficients(C, w);
-		let T = s.getOutgoingWeights(S), E = new x(1);
+		let g = p[i.triangleIndex], _ = d[g], v = h / l * u, y = Math.exp(-c * h), b = t.clone().negate(), x = s.getDirectionIndex(b, _.normal), S = n.absorptions[g], C = n.scatterings[g];
+		s.computeCoefficients(S, C);
+		let w = s.getOutgoingWeights(x), E = new T(1);
 		E.buffer[0] = m * y;
 		for (let e = 0; e < s.nSlots; e++) {
-			let t = T[e];
+			let t = w[e];
 			t < 1e-20 || (a[g].responses[e].delayMultiplyAdd(E, v, t), o[g].responses[e].delayMultiplyAdd(E, v, t));
 		}
 	}
 }
-function U(e, t) {
-	let { patchSet: n, totalEnergy: r, brdf: i, airAbsNepers: a, speedOfSound: o, sampleRate: s } = t, { patches: c, bvh: l, triangleToPatch: u } = n, d = new x(1);
+function q(e, t) {
+	let { patchSet: n, totalEnergy: r, brdf: i, airAbsNepers: a, speedOfSound: o, sampleRate: s } = t, { patches: c, bvh: l, triangleToPatch: u } = n, d = new T(1);
 	for (let t = 0; t < c.length; t++) {
 		let n = c[t], f = new _().subVectors(e, n.centroid), p = f.length();
 		if (p < 1e-6) continue;
@@ -529,17 +544,17 @@ function U(e, t) {
 	}
 	return d;
 }
-function W() {
+function J() {
 	let e = Math.acos(2 * Math.random() - 1), t = 2 * Math.PI * Math.random();
 	return new _(Math.sin(e) * Math.cos(t), Math.sin(e) * Math.sin(t), Math.cos(e));
 }
-function G(e, t) {
+function Y(e, t) {
 	let n = e.directions[t], r = Math.acos(Math.sqrt(Math.random())) * .5, i = 2 * Math.PI * Math.random(), a = new _(1, 0, 0);
 	Math.abs(n.dot(a)) > .9 && (a = new _(0, 1, 0));
 	let o = new _().crossVectors(n, a).normalize(), s = new _().crossVectors(n, o).normalize(), c = Math.sin(r), l = Math.cos(r), u = new _().addScaledVector(n, l).addScaledVector(o, c * Math.cos(i)).addScaledVector(s, c * Math.sin(i));
 	return u.normalize(), u.z < 0 && (u.z = -u.z), u.normalize(), u;
 }
-function K(e, t) {
+function X(e, t) {
 	let n = t.clone().normalize(), r = new _(1, 0, 0);
 	Math.abs(n.dot(r)) > .9 && (r = new _(0, 1, 0));
 	let i = new _().crossVectors(n, r).normalize(), a = new _().crossVectors(n, i).normalize();
@@ -547,7 +562,7 @@ function K(e, t) {
 }
 //#endregion
 //#region src/compute/radiance/art.ts
-var q = { name: "Acoustic Radiance Transfer" }, J = class extends m {
+var Z = { name: "Acoustic Radiance Transfer" }, Q = class extends m {
 	uuid;
 	roomID;
 	sourceIDs;
@@ -564,8 +579,8 @@ var q = { name: "Acoustic Radiance Transfer" }, J = class extends m {
 	lastIterationCount;
 	lastPatchCount;
 	hasEmittedResults;
-	constructor(t = q) {
-		super(t), this.kind = "art", this.name = t.name || q.name, this.uuid = e();
+	constructor(t = Z) {
+		super(t), this.kind = "art", this.name = t.name || Z.name, this.uuid = e();
 		let n = c.getState().getRooms();
 		this.roomID = t.roomID || (n.length > 0 ? n[0].uuid : ""), this.sourceIDs = t.sourceIDs || [], this.receiverIDs = t.receiverIDs || [], this.maxEdgeLength = t.maxEdgeLength ?? .5, this.brdfDetail = t.brdfDetail ?? 1, this.raysPerShoot = t.raysPerShoot ?? 200, this.maxIterations = t.maxIterations ?? 100, this.convergenceThreshold = t.convergenceThreshold ?? .01, this.sampleRate = t.sampleRate ?? 1e3, this.frequencies = u.slice(4, 11), this.initialEnergy = 500, this.sourceRays = 500, this.lastIterationCount = 0, this.lastPatchCount = 0, this.hasEmittedResults = !1;
 	}
@@ -588,12 +603,12 @@ var q = { name: "Acoustic Radiance Transfer" }, J = class extends m {
 			console.warn("ART: Need at least one source and one receiver");
 			return;
 		}
-		let a = f(this.temperature), o = L(n, this.maxEdgeLength), u = o.patches.length;
+		let a = f(this.temperature), o = V(n, this.maxEdgeLength), u = o.patches.length;
 		if (this.lastPatchCount = u, u === 0) {
 			console.error("ART: Tessellation produced no patches");
 			return;
 		}
-		let p = new y(this.brdfDetail), m = Math.ceil(this.sampleRate * 5);
+		let p = new C(this.brdfDetail), m = Math.ceil(this.sampleRate * 5);
 		for (let e of r) {
 			let n = new _();
 			e.getWorldPosition(n);
@@ -605,7 +620,7 @@ var q = { name: "Acoustic Radiance Transfer" }, J = class extends m {
 					let t = [], r = [];
 					for (let n of o.patches) t.push(n.absorption(e)), r.push(n.scattering(e));
 					let s = d([e], this.temperature)[0] / (20 / Math.LN10), l = [], f = [];
-					for (let e = 0; e < u; e++) l[e] = new S(p.nSlots, m), f[e] = new S(p.nSlots, m);
+					for (let e = 0; e < u; e++) l[e] = new E(p.nSlots, m), f[e] = new E(p.nSlots, m);
 					let h = {
 						patchSet: o,
 						unshotEnergy: l,
@@ -618,62 +633,63 @@ var q = { name: "Acoustic Radiance Transfer" }, J = class extends m {
 						sampleRate: this.sampleRate,
 						raysPerShoot: this.raysPerShoot
 					};
-					H(n, this.initialEnergy, h, this.sourceRays);
-					let g = B(l), _ = 0;
+					K(n, this.initialEnergy, h, this.sourceRays);
+					let g = W(l), _ = 0;
 					for (; _ < this.maxIterations;) {
-						let e = B(l);
+						let e = W(l);
 						if (g > 0 && e / g < this.convergenceThreshold) break;
-						let t = z(l);
+						let t = U(l);
 						if (l[t].sum() < 1e-20) break;
-						V(h, t), _++;
+						G(h, t), _++;
 					}
 					this.lastIterationCount = _;
-					let v = U(i, h);
+					let v = q(i, h);
 					c.push(v);
 				}
-				let f = n.distanceTo(i);
-				if (f > 1e-6) {
-					let e = f / a * this.sampleRate, t = Math.round(e);
-					for (let e = 0; e < c.length; e++) {
-						let n = d([this.frequencies[e]], this.temperature)[0] / (20 / Math.LN10), r = Math.exp(-n * f) / (f * f);
-						t < c[e].buffer.length && (c[e].buffer[t] += this.initialEnergy * r);
-					}
+				let f = 0;
+				for (let e of c) e.buffer.length > f && (f = e.buffer.length);
+				let h = new Float32Array(f);
+				for (let e of c) for (let t = 0; t < e.buffer.length; t++) h[t] += e.buffer[t];
+				let g = n.distanceTo(i);
+				if (g > 1e-6 && h.length > 0) {
+					let e = y(this.frequencies), t = d([e], this.temperature)[0], n = x(g, a, this.sampleRate);
+					n >= 0 && n < h.length && (h[n] += b({
+						energy: this.initialEnergy,
+						distance: g,
+						airAbsDbPerMeter: t
+					}));
 				}
-				let h = 0;
-				for (let e of c) e.buffer.length > h && (h = e.buffer.length);
-				let g = new Float32Array(h);
-				for (let e of c) for (let t = 0; t < e.buffer.length; t++) g[t] += e.buffer[t];
 				let v = 0;
-				for (let e = 0; e < g.length; e++) Math.abs(g[e]) > v && (v = Math.abs(g[e]));
-				if (v > 0) for (let e = 0; e < g.length; e++) g[e] /= v;
-				let y = [], b = Math.max(1, Math.floor(g.length / 2e3));
-				for (let e = 0; e < g.length; e += b) y.push({
+				for (let e = 0; e < h.length; e++) Math.abs(h[e]) > v && (v = Math.abs(h[e]));
+				if (v > 0) for (let e = 0; e < h.length; e++) h[e] /= v;
+				let S = [], C = Math.max(1, Math.floor(h.length / 2e3));
+				for (let e = 0; e < h.length; e += C) S.push({
 					time: e / this.sampleRate,
-					amplitude: g[e]
+					amplitude: h[e]
 				});
-				let x = y.length - 1;
-				for (; x > 0 && Math.abs(y[x].amplitude) < 1e-10;) x--;
-				let C = y.slice(0, x + 1), w = e.name || "source", T = r.name || "receiver", E = `${this.uuid}-art-ir-${e.uuid}-${r.uuid}`, D = {
+				let w = S.length - 1;
+				for (; w > 0 && Math.abs(S[w].amplitude) < 1e-10;) w--;
+				let T = S.slice(0, w + 1), D = e.name || "source", O = r.name || "receiver", k = `${this.uuid}-art-ir-${e.uuid}-${r.uuid}`, A = {
 					kind: l.ImpulseResponse,
-					name: `ART IR: ${w} → ${T}`,
-					uuid: E,
+					name: `ART IR: ${D} → ${O}`,
+					uuid: k,
 					from: this.uuid,
 					info: {
 						sampleRate: this.sampleRate,
-						sourceName: w,
-						receiverName: T,
+						sourceName: D,
+						receiverName: O,
 						sourceId: e.uuid,
 						receiverId: r.uuid
 					},
-					data: C.length > 0 ? C : [{
+					data: T.length > 0 ? T : [{
 						time: 0,
 						amplitude: 0
 					}]
 				};
-				s.getState().results[E] ? t("UPDATE_RESULT", {
-					uuid: E,
-					result: D
-				}) : t("ADD_RESULT", D), this.hasEmittedResults = !0;
+				s.getState().results[k] ? t("UPDATE_RESULT", {
+					uuid: k,
+					result: A
+				}) : t("ADD_RESULT", A), this.hasEmittedResults = !0;
 			}
 		}
 	}
@@ -711,11 +727,11 @@ var q = { name: "Acoustic Radiance Transfer" }, J = class extends m {
 		return !this.hasEmittedResults;
 	}
 };
-o("ADD_ART", r(J)), o("REMOVE_ART", n), o("ART_SET_PROPERTY", i), o("CALCULATE_ART", (e) => {
+o("ADD_ART", r(Q)), o("REMOVE_ART", n), o("ART_SET_PROPERTY", i), o("CALCULATE_ART", (e) => {
 	let t = a.getState().solvers[e];
 	t && t.calculate();
 });
 //#endregion
-export { J as ART, J as default };
+export { Q as ART, Q as default };
 
-//# sourceMappingURL=art-D9Z4II0r.mjs.map
+//# sourceMappingURL=art-DjZl2FCF.mjs.map

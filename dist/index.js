@@ -628,7 +628,7 @@ Qr("ray-tracer", async (e, t) => {
 	let { BeamTraceSolver: n } = await import("./beam-trace-BVrpuQ_a.mjs");
 	return new n();
 }), Qr("art", async (e, t) => {
-	let { ART: n } = await import("./art-D9Z4II0r.mjs");
+	let { ART: n } = await import("./art-DjZl2FCF.mjs");
 	return new n();
 });
 //#endregion
@@ -6688,7 +6688,7 @@ async function Xo(e, t) {
 			return new e().restore(t);
 		}
 		case "art": {
-			let { default: e } = await import("./art-D9Z4II0r.mjs");
+			let { default: e } = await import("./art-DjZl2FCF.mjs");
 			return new e(t).restore(t);
 		}
 		case "image-source": {
