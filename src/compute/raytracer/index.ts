@@ -37,6 +37,7 @@ import {
 // Extracted module imports
 import { traceRay as traceRayFn, inFrontOf as inFrontOfFn } from "./ray-core";
 import { arrivalPressure as arrivalPressureFn, calculateImpulseResponseForPair as calcIRForPairFn, calculateImpulseResponseForDisplay as calcIRForDisplayFn } from "./impulse-response";
+import { hybridStochasticPaths, hybridImageSourcePaths } from "./hybrid-ir";
 import type { TailOptions } from "./impulse-response";
 import { extractDecayParameters, synthesizeTail, assembleFinalIR, applyAmbisonicTail } from "./tail-synthesis";
 import { reflectionLossFunction as reflectionLossFunctionFn, calculateReflectionLoss as calculateReflectionLossFn, calculateResponseByIntensity as calcResponseByIntensityFn, resampleResponseByIntensity as resampleResponseByIntensityFn, calculateT20 as calculateT20Fn, calculateT30 as calculateT30Fn, calculateT60 as calculateT60Fn } from "./response-by-intensity";
@@ -1379,9 +1380,11 @@ class RayTracer extends Solver {
     if(this.sourceIDs.length === 0) throw Error("No sources have been assigned to the raytracer");
     if(!this.paths[this.receiverIDs[0]] || this.paths[this.receiverIDs[0]].length === 0) throw Error("No rays have been traced yet");
 
-    let sorted = this.paths[this.receiverIDs[0]].sort((a,b)=>a.time - b.time) as RayPath[];
+    const storedPaths = this.paths[this.receiverIDs[0]];
+    const sortedForTime = storedPaths.slice().sort((a,b)=>a.time - b.time) as RayPath[];
+    let sorted = sortedForTime;
 
-    const totalTime = sorted[sorted.length - 1].time + RESPONSE_TIME_PADDING;
+    const totalTime = sortedForTime[sortedForTime.length - 1].time + RESPONSE_TIME_PADDING;
 
     const spls = Array(frequencies.length).fill(initialSPL);
 
@@ -1396,12 +1399,7 @@ class RayTracer extends Solver {
     if(this.hybrid){
       console.log("Hybrid Calculation...");
 
-      // remove raytracer paths under transition order
-      for(let i=0; i<sorted.length; i++){
-        if(sorted[i].chainLength-1 <= this.transitionOrder){
-          sorted.splice(i,1); 
-        }
-      }
+      sorted = hybridStochasticPaths(storedPaths, this.transitionOrder);
 
       let isparams: ImageSourceSolverParams = {name: "HybridHelperIS",
         roomID: this.roomID,
@@ -1411,21 +1409,22 @@ class RayTracer extends Solver {
         maxReflectionOrder: this.transitionOrder,
         imageSourcesVisible: false,
         rayPathsVisible: false,
-        plotOrders: [0, 1, 2], // all paths
+        plotOrders: Array.from({ length: this.transitionOrder + 1 }, (_, i) => i),
         frequencies: this.frequencies,
       };
 
       let image_source_solver = new ImageSourceSolver(isparams, true);
-      let is_raypaths = image_source_solver.returnSortedPathsForHybrid(this.c,spls,frequencies);
+      let is_raypaths = hybridImageSourcePaths(
+        image_source_solver.returnSortedPathsForHybrid(this.c,spls,frequencies),
+        this.transitionOrder,
+      );
 
-      // add in hybrid paths 
       for(let i = 0; i<is_raypaths.length; i++){
-        const randomPhase = coinFlip() ? 1 : -1;
         const t = is_raypaths[i].time; 
         const roundedSample = floor(t * sampleRate);
   
         for(let f = 0; f<frequencies.length; f++){
-            samples[f][roundedSample] += is_raypaths[i].pressure[f]*randomPhase;
+            samples[f][roundedSample] += is_raypaths[i].pressure[f];
         }
       }
     }
