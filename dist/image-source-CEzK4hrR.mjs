@@ -13,8 +13,27 @@ import { a as C, r as w } from "./export-playback-BZxoZ2U1.mjs";
 import * as T from "three";
 import { Vector3 as E } from "three";
 import { MeshLine as D, MeshLineMaterial as O } from "three.meshline";
+//#region src/compute/raytracer/image-source/arrival-pressure.ts
+function k(e) {
+	let t = 0;
+	for (let n = 1; n < e.length; n++) t += e[n - 1].point.distanceTo(e[n].point);
+	return t;
+}
+function A(e, t, n, r = 20) {
+	let i = h(_(e)), a = k(n), o = y(a);
+	for (let e = 0; e < i.length; e++) i[e] *= o;
+	for (let e of n) {
+		if (!e.reflectingSurface) continue;
+		let n = e.angle ?? 0;
+		for (let r = 0; r < t.length; r++) i[r] *= Math.abs(e.reflectingSurface.reflectionFunction(t[r], n));
+	}
+	let s = m(g(i)), c = v(t, r);
+	for (let e = 0; e < t.length; e++) s[e] -= c[e] * a;
+	return _(s);
+}
+//#endregion
 //#region src/compute/raytracer/image-source/index.ts
-function k() {
+function j() {
 	let e = new D();
 	e.setPoints(/* @__PURE__ */ new Float32Array());
 	let t = new O({
@@ -24,7 +43,7 @@ function k() {
 	});
 	return new T.Mesh(e, t);
 }
-var A = class {
+var M = class {
 	baseSource;
 	children;
 	parent;
@@ -39,11 +58,11 @@ var A = class {
 	constructPathsForAllDescendents(e, t = !0) {
 		let n = [];
 		if (t) {
-			let t = F(this, e);
+			let t = L(this, e);
 			t !== null && n.push(t);
 		}
 		for (let t = 0; t < this.children.length; t++) {
-			let r = F(this.children[t], e);
+			let r = L(this.children[t], e);
 			r !== null && n.push(r), this.children[t].hasChildren && (n = n.concat(this.children[t].constructPathsForAllDescendents(e, !1)));
 		}
 		return n;
@@ -91,7 +110,7 @@ var A = class {
 	get hasChildren() {
 		return this.children.length > 0;
 	}
-}, j = class {
+}, N = class {
 	path;
 	uuid;
 	highlight;
@@ -138,23 +157,12 @@ var A = class {
 		return e;
 	}
 	arrivalPressure(e, t, n = 20) {
-		let r = h(_(e)), i = y(this.totalLength);
-		for (let e = 0; e < r.length; e++) r[e] = r[e] * i;
-		for (let e = 0; e < this.path.length; e++) {
-			let n = this.path[e];
-			if (n.reflectingSurface !== null) for (let e = 0; e < t.length; e++) {
-				let i = Math.abs(n.reflectingSurface.reflectionFunction(t[e], n.angle));
-				r[e] = r[e] * i;
-			}
-		}
-		let a = m(g(r)), o = v(t, n);
-		for (let e = 0; e < t.length; e++) a[e] = a[e] - o[e] * this.totalLength;
-		return _(a);
+		return A(e, t, this.path, n);
 	}
 	arrivalTime(e) {
 		return this.totalLength / e;
 	}
-}, M = {
+}, P = {
 	name: "Image Source",
 	roomID: "",
 	sourceIDs: [],
@@ -177,7 +185,7 @@ var A = class {
 		4e3,
 		8e3
 	]
-}, N = class extends S {
+}, F = class extends S {
 	sourceIDs;
 	receiverIDs;
 	roomID;
@@ -197,7 +205,7 @@ var A = class {
 	selectedImageSourcePath;
 	_plotFrequency;
 	isHybrid;
-	constructor(n = M, r = !1) {
+	constructor(n = P, r = !1) {
 		super(n), this.uuid = n.uuid || e(), this.kind = "image-source", this.name = n.name, this.roomID = n.roomID, this.sourceIDs = n.sourceIDs, this.receiverIDs = n.receiverIDs, this.maxReflectionOrder = n.maxReflectionOrder, this.frequencies = n.frequencies, this._imageSourcesVisible = n.imageSourcesVisible, this._rayPathsVisible = n.rayPathsVisible, this._plotOrders = n.plotOrders, this.levelTimeProgression = n.levelTimeProgression || e(), this.isHybrid = r, this.impulseResponsePlaying = !1, this._plotFrequency = 1e3, this.isHybrid || t("ADD_RESULT", {
 			kind: f.LevelTimeProgression,
 			data: [],
@@ -211,7 +219,7 @@ var A = class {
 			from: this.uuid
 		}), this.surfaceIDs = [], this.rootImageSource = null, this.allRayPaths = null, this.validRayPaths = null;
 		let i = x();
-		this.roomID = i[0].uuid, this.selectedImageSourcePath = k(), l.markup.add(this.selectedImageSourcePath);
+		this.roomID = i[0].uuid, this.selectedImageSourcePath = j(), l.markup.add(this.selectedImageSourcePath);
 	}
 	save() {
 		return a([
@@ -238,7 +246,7 @@ var A = class {
 	}
 	updateImageSourceCalculation() {
 		this.clearRayPaths(), this.clearImageSources();
-		let e = P(new A({
+		let e = I(new M({
 			baseSource: d.getState().containers[this.sourceIDs[0]],
 			position: d.getState().containers[this.sourceIDs[0]].position.clone(),
 			room: this.room,
@@ -304,7 +312,7 @@ var A = class {
 		return t;
 	}
 	test() {
-		let e = s.postMessage("FETCH_SOURCE", this.sourceIDs[0])[0], t = P(new A({
+		let e = s.postMessage("FETCH_SOURCE", this.sourceIDs[0])[0], t = I(new M({
 			baseSource: e.clone(),
 			position: e.position.clone(),
 			room: this.room,
@@ -475,26 +483,26 @@ var A = class {
 		this._plotFrequency = e, this.calculateLTP();
 	}
 };
-function P(e, t) {
+function I(e, t) {
 	let n = e.room.allSurfaces;
 	if (t == 0) return null;
 	for (let r = 0; r < n.length; r++) {
 		let i = e.reflector === null || e.reflector !== n[r], a;
-		if (a = e.reflector === null || I(n[r], e.reflector), i && a) {
-			let i = new A({
+		if (a = e.reflector === null || R(n[r], e.reflector), i && a) {
+			let i = new M({
 				baseSource: e.baseSource,
-				position: L(e.position.clone(), n[r]).clone(),
+				position: z(e.position.clone(), n[r]).clone(),
 				room: e.room,
 				reflector: n[r],
 				parent: e,
 				order: e.order + 1
 			});
-			e.children.push(i), t > 0 && P(i, t - 1);
+			e.children.push(i), t > 0 && I(i, t - 1);
 		}
 	}
 	return e;
 }
-function F(e, t) {
+function L(e, t) {
 	let n = [], r = e.order, i = {
 		point: t.position.clone(),
 		reflectingSurface: null,
@@ -520,13 +528,13 @@ function F(e, t) {
 		point: e.position.clone(),
 		reflectingSurface: null,
 		angle: null
-	}, new j(n);
+	}, new N(n);
 }
-function I(e, t) {
+function R(e, t) {
 	let n = e.normal.clone(), r = t.normal.clone();
 	return n.dot(r) <= 0;
 }
-function L(e, t) {
+function z(e, t) {
 	let n = new E(t.polygon.vertices[0][0], t.polygon.vertices[0][1], t.polygon.vertices[0][2]), r = t.localToWorld(n), i = t.normal.clone(), a = i.clone();
 	a.multiplyScalar(-1);
 	let o = r.dot(a), s = i.clone();
@@ -536,11 +544,11 @@ function L(e, t) {
 	let l = s;
 	return l.multiplyScalar(-1), l.add(c), l;
 }
-c("IMAGESOURCE_SET_PROPERTY", i), c("REMOVE_IMAGESOURCE", n), c("ADD_IMAGESOURCE", r(N)), c("UPDATE_IMAGESOURCE", (e) => void o.getState().solvers[e].updateImageSourceCalculation()), c("RESET_IMAGESOURCE", (e) => void o.getState().solvers[e].reset()), c("CALCULATE_LTP", (e) => void o.getState().solvers[e].calculateLTP()), c("IMAGESOURCE_PLAY_IR", (e) => void o.getState().solvers[e].playImpulseResponse().catch(console.error)), c("IMAGESOURCE_DOWNLOAD_IR", (e) => {
+c("IMAGESOURCE_SET_PROPERTY", i), c("REMOVE_IMAGESOURCE", n), c("ADD_IMAGESOURCE", r(F)), c("UPDATE_IMAGESOURCE", (e) => void o.getState().solvers[e].updateImageSourceCalculation()), c("RESET_IMAGESOURCE", (e) => void o.getState().solvers[e].reset()), c("CALCULATE_LTP", (e) => void o.getState().solvers[e].calculateLTP()), c("IMAGESOURCE_PLAY_IR", (e) => void o.getState().solvers[e].playImpulseResponse().catch(console.error)), c("IMAGESOURCE_DOWNLOAD_IR", (e) => {
 	let t = o.getState().solvers[e], n = d.getState().containers, r = `ir-imagesource-${t.sourceIDs.length > 0 && n[t.sourceIDs[0]]?.name || "source"}-${t.receiverIDs.length > 0 && n[t.receiverIDs[0]]?.name || "receiver"}`.replace(/[^a-zA-Z0-9-_]/g, "_");
 	t.downloadImpulseResponse(r).catch(console.error);
 });
 //#endregion
-export { N as ImageSourceSolver, N as default };
+export { F as ImageSourceSolver, F as default };
 
-//# sourceMappingURL=image-source-ayxZMzzr.mjs.map
+//# sourceMappingURL=image-source-CEzK4hrR.mjs.map
