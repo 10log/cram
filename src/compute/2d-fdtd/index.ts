@@ -34,10 +34,16 @@ import {
   worldToPlane,
   type FdtdSlice,
 } from "./slice";
+import {
+  REST_PRESSURE,
+  REST_VELOCITY,
+  dirichletSourcePixel,
+  vacatedSourcePixel,
+  writeFieldPixel,
+} from "./field-encoding";
 
 import Source from "../../objects/source";
 import Receiver from "../../objects/receiver";
-import map from "../../common/map";
 import FDTDWall, { FDTDWallProps } from "./fdtd-wall";
 import Surface from "../../objects/surface";
 import { KeyValuePair } from "../../common/key-value-pair";
@@ -409,10 +415,25 @@ class FDTD_2D extends Solver {
     this.sources[source.uuid] = source;
   }
   removeSource(id: string) {
-    if (this.sources[id]) {
-      delete this.sources[id];
-      this.sourceKeys = this.sourceKeys.filter((x) => x !== id);
-    }
+    const source = this.sources[id];
+    if (!source) return;
+    this.vacateSourceCell(source.position);
+    delete this.sources[id];
+    this.sourceKeys = this.sourceKeys.filter((x) => x !== id);
+  }
+
+  private planeCellIndex(point: { x: number; y: number; z: number }) {
+    const plane = worldToPlane(point, this.slice);
+    const x = Math.round((plane.u - this.offsetX) / this.cellSize);
+    const y = Math.round((plane.v - this.offsetY) / this.cellSize);
+    return 4 * (y * this.nx + x);
+  }
+
+  private vacateSourceCell(point: { x: number; y: number; z: number }) {
+    const pixels = this.sourcemap?.image?.data;
+    if (!pixels) return;
+    writeFieldPixel(pixels, this.planeCellIndex(point), vacatedSourcePixel());
+    this.sourcemap.needsUpdate = true;
   }
   addReceiver(receiver: Receiver) {
     this.receiverKeys = [...new Set(this.receiverKeys.concat(receiver.uuid))];
@@ -459,8 +480,8 @@ class FDTD_2D extends Solver {
     let p = 0;
     for (let j = 0; j < this.ny; j++) {
       for (let i = 0; i < this.nx; i++) {
-        pixels[p + 0] = 0;
-        pixels[p + 1] = 0;
+        pixels[p + 0] = REST_PRESSURE;
+        pixels[p + 1] = REST_VELOCITY;
         pixels[p + 2] = 1;
         pixels[p + 3] = 1;
         p += 4;
@@ -506,29 +527,19 @@ class FDTD_2D extends Solver {
     if (!pixels) return;
     for (let i = 0; i < this.sourceKeys.length; i++) {
       const source = this.sources[this.sourceKeys[i]];
-      const plane = worldToPlane(source.position, this.slice);
-      const x = Math.round((plane.u - this.offsetX) / this.cellSize);
-      const y = Math.round((plane.v - this.offsetY) / this.cellSize);
-      const index = 4 * (y * this.nx + x);
       source.updateWave(this.time, this.frame, this.dt);
-      const value = source.value;
-      const vel = source.velocity;
-      pixels[index + 0] = map(value, -2, 2, 0, 255);
-      pixels[index + 1] = map(vel, -2, 2, 0, 255);
-      pixels[index + 3] = 0;
+      writeFieldPixel(pixels, this.planeCellIndex(source.position), dirichletSourcePixel(source.value));
 
       if (source.shouldClearPreviousPosition) {
-        const prev = worldToPlane({
-          x: source.previousX,
-          y: source.previousY,
-          z: source.previousZ,
-        }, this.slice);
-        const px = Math.round((prev.u - this.offsetX) / this.cellSize);
-        const py = Math.round((prev.v - this.offsetY) / this.cellSize);
-        const previndex = 4 * (py * this.nx + px);
-        pixels[previndex + 0] = 0;
-        pixels[previndex + 1] = 0;
-        pixels[previndex + 3] = 1;
+        writeFieldPixel(
+          pixels,
+          this.planeCellIndex({
+            x: source.previousX,
+            y: source.previousY,
+            z: source.previousZ,
+          }),
+          vacatedSourcePixel(),
+        );
         source.shouldClearPreviousPosition = false;
         source.updatePreviousPosition();
       }
@@ -541,11 +552,8 @@ class FDTD_2D extends Solver {
     let p = 0;
     for (let j = 0; j < this.ny; j++) {
       for (let i = 0; i < this.nx; i++) {
-        // const value = Math.sin(n * Math.PI * x) * Math.cos(n * Math.PI * y);
-        const value = 0;
-
-        pixels[p + 0] = map(value, -2, 2, 0, 255);
-        pixels[p + 1] = 0;
+        pixels[p + 0] = REST_PRESSURE;
+        pixels[p + 1] = REST_VELOCITY;
         pixels[p + 2] = 1;
         pixels[p + 3] = 1;
         p += 4;
