@@ -10,6 +10,8 @@ import { emit, on } from "../messenger";
 import { addContainer, removeContainer, setContainerProperty } from "../store";
 import { renderer } from "../render/renderer";
 import { TessellateModifier } from "../compute/radiance/TessellateModifier";
+import { faceIdsAreConsistent, getRoomMesh, isRoomMesh, setRoomMesh } from "./mesh-userdata";
+import type { RoomMesh } from "../compute/geometry/room-mesh";
 
 export interface RoomProps extends ContainerProps {
   surfaces: (Surface|Container)[];
@@ -35,6 +37,12 @@ export interface RoomSaveObject {
   scale: number[];
   temperature?: number;
   humidity?: number;
+  /**
+   * The editable mesh this room was generated from, when it came from the
+   * sketch editor. Absent for imported geometry, which is what makes such a
+   * room non-editable rather than editable-but-broken.
+   */
+  mesh?: RoomMesh;
 }
 
 export class Room extends Container {
@@ -78,13 +86,26 @@ export class Room extends Container {
       this.surfaces.add(surface);
     });
     this.add(this.surfaces);
+    this.refreshDerivedGeometry();
+    renderer.add(this);
+  }
+  /**
+   * Recompute the fields derived from the current surface set.
+   *
+   * init() builds these once, but surfaces can be reconciled in place
+   * afterwards (see objects/room-from-mesh.ts). `surfaceMap` is indexed for
+   * every ray hit by reflectionLossFunction
+   * (compute/raytracer/response-by-intensity.ts), so a surface missing from it
+   * fails a solve outright; `volume` feeds the statistical solvers, so a stale
+   * one is quietly wrong rather than loud.
+   */
+  refreshDerivedGeometry() {
     this.calculateBoundingBox();
     this.volume = this.volumeOfMesh();
     this.surfaceMap = this.allSurfaces.reduce((a, b) => {
       a[b.uuid] = b as Surface;
       return a;
     }, {} as KVP<Surface>);
-    renderer.add(this);
   }
   dispose(){
     renderer.remove(this);
@@ -107,6 +128,9 @@ export class Room extends Container {
       scale: this.scale.toArray(),
       temperature: this.temperature,
       humidity: this.humidity,
+      // Undefined for imported rooms; JSON.stringify drops it, so existing
+      // save files round-trip unchanged.
+      mesh: getRoomMesh(this),
     } as RoomSaveObject;
   }
   restore(state: RoomSaveObject) {
@@ -132,6 +156,12 @@ export class Room extends Container {
     this.uuid = state.uuid;
     this.temperature = state.temperature ?? 20;
     this.humidity = state.humidity ?? 40;
+    // Validated rather than trusted: a save file is user-supplied and may be
+    // old or hand-edited. A malformed mesh leaves the room non-editable
+    // instead of failing the whole restore.
+    if (isRoomMesh(state.mesh) && faceIdsAreConsistent(this.allSurfaces)) {
+      setRoomMesh(this, state.mesh);
+    }
     return this;
   }
 

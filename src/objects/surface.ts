@@ -17,6 +17,7 @@ import {scatteringFunction} from '../compute/acoustics/scattering-function';
 import { TessellateModifier } from "../compute/radiance/TessellateModifier";
 import { Float32BufferAttribute } from "three";
 import SurfaceElement from "./surface-element";
+import { getFaceId, setFaceId } from "./mesh-userdata";
 
 /** Vector3 as an array (i.e. [x,y,z]) */
 export type Vector3A = [number, number, number];
@@ -184,6 +185,8 @@ export interface SurfaceSaveObject {
   fillSurface: boolean;
   displayVertexNormals: boolean;
   scatteringCoefficient: number;
+  /** Set when this Surface represents a face of an editable RoomMesh. */
+  faceId?: string;
 }
 
 interface KeepLine {
@@ -247,12 +250,29 @@ class Surface extends Container {
   init(props: SurfaceProps, fromConstructor: boolean = false) {
 
     // if the call isn't coming from the constructor it's probably being restored
-    if (!fromConstructor) { 
+    if (!fromConstructor) {
       this.remove(this.mesh);
       this.remove(this.wire);
       this.remove(this.edges);
       this.remove(this.vertexNormals);
       this.destroyEvents();
+
+      // Release the GPU buffers behind the objects just detached. Removing them
+      // from the group does not free anything, so every re-init — a restore, or
+      // a live geometry edit — otherwise leaks a set of buffers per surface.
+      // A Set dedupes mesh and wire, which deliberately share one geometry.
+      // Materials are module-level singletons and must not be disposed here.
+      // Anything handed back in as the new geometry is left alone.
+      const stale = new Set<THREE.BufferGeometry>();
+      for (const object of [this.mesh, this.wire, this.edges, this.vertexNormals]) {
+        const geometry = object?.geometry as THREE.BufferGeometry | undefined;
+        // Helpers such as VertexNormalsHelper are supplied by three/examples,
+        // so do not assume every attached geometry is disposable.
+        if (geometry && geometry !== props.geometry && typeof geometry.dispose === 'function') {
+          stale.add(geometry);
+        }
+      }
+      stale.forEach((geometry) => geometry.dispose());
     }
 
     // merge the incoming props with the default props
@@ -439,7 +459,10 @@ class Surface extends Container {
       position: this.position.toArray(),
       rotation: this.rotation.toArray().slice(0, 3) as [number, number, number],
       scale: this.scale.toArray(),
-      uuid: this.uuid
+      uuid: this.uuid,
+      // Undefined for imported surfaces; JSON.stringify drops it, so old and
+      // non-sketched save files are unaffected.
+      faceId: getFaceId(this)
     } as SurfaceSaveObject;
   }
 
@@ -461,6 +484,7 @@ class Surface extends Container {
     this.position.set(surfaceState.position[0], surfaceState.position[1], surfaceState.position[2]);
     this.rotation.set(surfaceState.rotation[0], surfaceState.rotation[1], surfaceState.rotation[2], "XYZ");
     this.scale.set(surfaceState.scale[0], surfaceState.scale[1], surfaceState.scale[2]);
+    if (surfaceState.faceId) setFaceId(this, surfaceState.faceId);
     return this;
   }
   select() {
