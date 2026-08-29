@@ -42,27 +42,25 @@ void main()	{
     float l_wall = texture2D( sourcemap, uv - rl_offset ).b;
     
     
-    // float u_pos = u_wall == 0 ? d.r : u.r;
-    // float d_pos = d_wall == 0 ? u.r : d.r;
-    // float r_pos = r_wall == 0 ? l.r : r.r;
-    // float l_pos = l_wall == 0 ? r.r : l.r;
+    // Rigid wall (Neumann): ghost pressure equals this cell.
+    // Opposite-neighbor sampling is neither Dirichlet nor rigid (#111).
+    // TODO: locally-reacting impedance from Surface.absorptionFunction.
+    float u_pos = u.r;
+    float d_pos = d.r;
+    float r_pos = r.r;
+    float l_pos = l.r;
 
-    float u_pos =  u.r;
-    float d_pos =  d.r;
-    float r_pos =  r.r;
-    float l_pos =  l.r;
-    
-    if(u_wall == 0.0){
-      u_pos = texture2D( heightmap, uv - ud_offset ).r;
+    if (u_wall == 0.0) {
+      u_pos = pos;
     }
-    if(d_wall == 0.0){
-      d_pos = texture2D( heightmap, uv + ud_offset ).r;
+    if (d_wall == 0.0) {
+      d_pos = pos;
     }
-    if(r_wall == 0.0){
-      r_pos = texture2D( heightmap, uv - rl_offset ).r;
+    if (r_wall == 0.0) {
+      r_pos = pos;
     }
-    if(l_wall == 0.0){
-      l_pos = texture2D( heightmap, uv + rl_offset ).r;
+    if (l_wall == 0.0) {
+      l_pos = pos;
     }
 
     float mid = 0.25*(u_pos+d_pos+r_pos+l_pos);

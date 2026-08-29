@@ -336,6 +336,8 @@ class FDTD_2D extends Solver {
 
     (this.heightmapVariable.material as ShaderMaterial).uniforms["mouseSize"] = { value: 0.0 };
 
+    // Numerical sponge on velocity — not air absorption and not a Surface material.
+    // Walls in height-map.frag are perfectly rigid (Neumann) until impedance exists.
     (this.heightmapVariable.material as ShaderMaterial).uniforms["damping"] = { value: 0.9999 };
 
     (this.heightmapVariable.material as ShaderMaterial).uniforms["courantSq"] = { value: (this.waveSpeed * this.dt / this.cellSize) ** 2 };
