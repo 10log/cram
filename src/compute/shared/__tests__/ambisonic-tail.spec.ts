@@ -105,8 +105,8 @@ describe('applyAmbisonicTail', () => {
 
 describe('Issue #106/#132: production call sites', () => {
   test('beam-trace calculateAmbisonicImpulseResponse calls applyAmbisonicTail', () => {
-    const source = fs.readFileSync(path.resolve(__dirname, '../../beam-trace/index.ts'), 'utf-8');
-    const match = source.match(/async calculateAmbisonicImpulseResponse\([\s\S]*?^\s{2}\}/m);
+    const source = fs.readFileSync(path.resolve(__dirname, '../../beam-trace/impulse-response.ts'), 'utf-8');
+    const match = source.match(/export async function calculateAmbisonicImpulseResponse\([\s\S]*?^\}\n/m);
     expect(match).not.toBeNull();
     expect(match![0]).toMatch(/applyAmbisonicTail\(/);
     expect(match![0]).not.toMatch(/W-channel \(channel 0\) only/);
