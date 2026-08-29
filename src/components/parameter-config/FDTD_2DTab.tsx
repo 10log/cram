@@ -59,7 +59,7 @@ export const FDTD_2DTab = ({uuid}: {uuid: string}) => {
 
   const [receiverFolderOpen, setReceiverFolderOpen] = useState(false);
   const [FDTDreceiverKeys, setFDTDreceiverKeys] = useState(solver.receiverKeys);
-  const notIncludedReceiver = receivers.filter((rec) => !solver.receiverKeys[rec.uuid]);
+  const notIncludedReceiver = receivers.filter((rec) => !solver.receivers[rec.uuid]);
 
   return (
     <div>

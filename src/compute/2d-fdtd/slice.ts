@@ -52,6 +52,33 @@ export function worldToPlane(p: WorldPoint, slice: FdtdSlice): PlanePoint {
   return slice === "xz" ? { u: p.x, v: p.z } : { u: p.x, v: p.y };
 }
 
+export interface GridSize {
+  offsetX: number;
+  offsetY: number;
+  cellSize: number;
+  nx: number;
+  ny: number;
+}
+
+/**
+ * Map a world point onto the FDTD grid. `null` if the cell is outside
+ * the domain — callers must skip the write instead of clamping to the
+ * rim (a source off-grid is not a boundary driver).
+ */
+export function gridCell(p: WorldPoint, slice: FdtdSlice, grid: GridSize): { x: number; y: number } | null {
+  const plane = worldToPlane(p, slice);
+  const x = Math.round((plane.u - grid.offsetX) / grid.cellSize);
+  const y = Math.round((plane.v - grid.offsetY) / grid.cellSize);
+  if (x < 0 || y < 0 || x >= grid.nx || y >= grid.ny) return null;
+  return { x, y };
+}
+
+export function gridCellIndex(p: WorldPoint, slice: FdtdSlice, grid: GridSize): number | null {
+  const cell = gridCell(p, slice, grid);
+  if (!cell) return null;
+  return 4 * (cell.y * grid.nx + cell.x);
+}
+
 export function planeSeparation(a: WorldPoint, b: WorldPoint, slice: FdtdSlice): number {
   const pa = worldToPlane(a, slice);
   const pb = worldToPlane(b, slice);
