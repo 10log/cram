@@ -24,6 +24,15 @@ export interface ShootingContext {
 }
 
 /**
+ * Incoming Lambert factor at a hit: max(0, n · −d) for a ray traveling
+ * along `rayDir`. Grazing and back-facing patches receive no flux (#120).
+ */
+export function incomingLambert(normal: Vector3, rayDir: Vector3): number {
+  const cos = -normal.dot(rayDir);
+  return cos > 0 ? cos : 0;
+}
+
+/**
  * Select the patch with the most unshot energy.
  */
 export function selectShootingPatch(unshotEnergy: DirectionalResponse[]): number {
@@ -110,6 +119,8 @@ export function shootFromPatch(ctx: ShootingContext, patchIdx: number): void {
 
       const rcvPatchIdx = triangleToPatch[closestHit.triangleIndex];
       const rcvPatch = patches[rcvPatchIdx];
+      const recvCos = incomingLambert(rcvPatch.normal, worldDir);
+      if (recvCos <= 0) continue;
 
       // Propagation delay in samples
       const delaySamples = (closestDist / speedOfSound) * sampleRate;
@@ -129,7 +140,7 @@ export function shootFromPatch(ctx: ShootingContext, patchIdx: number): void {
 
       // Deposit energy at receiver patch
       const sourceResponse = srcEnergy.responses[k];
-      const scaledGain = gain * airAtten;
+      const scaledGain = gain * airAtten * recvCos;
 
       for (let outSlot = 0; outSlot < brdf.nSlots; outSlot++) {
         const weight = outgoingWeights[outSlot] * scaledGain;
@@ -189,6 +200,8 @@ export function injectSourceEnergy(
 
     const patchIdx = triangleToPatch[closestHit.triangleIndex];
     const patch = patches[patchIdx];
+    const recvCos = incomingLambert(patch.normal, dir);
+    if (recvCos <= 0) continue;
 
     const delaySamples = (closestDist / speedOfSound) * sampleRate;
     const airAtten = Math.exp(-airAbsNepers * closestDist);
@@ -205,7 +218,7 @@ export function injectSourceEnergy(
 
     // Create a unit impulse as the source emission
     const impulse = new Response(1);
-    impulse.buffer[0] = gain * airAtten * (rayWeight ? rayWeight(dir) : 1);
+    impulse.buffer[0] = gain * airAtten * recvCos * (rayWeight ? rayWeight(dir) : 1);
 
     for (let outSlot = 0; outSlot < brdf.nSlots; outSlot++) {
       const w = outWeights[outSlot];
