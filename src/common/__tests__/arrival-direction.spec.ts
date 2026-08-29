@@ -56,14 +56,11 @@ describe('lookingBackArrivalDirection', () => {
 
 describe('Issue #102: production call sites', () => {
   test('beam-trace convertPath and diffraction both call lookingBackArrivalDirection', () => {
-    const source = fs.readFileSync(path.resolve(__dirname, '../../compute/beam-trace/index.ts'), 'utf-8');
-    const convert = source.match(/private convertPath\([\s\S]*?^  \}/m);
-    const diffraction = source.match(/private _computeDiffractionPaths\(\)[\s\S]*?^  \}/m);
-    expect(convert).not.toBeNull();
-    expect(diffraction).not.toBeNull();
-    expect(convert![0]).toMatch(/lookingBackArrivalDirection\(\s*points\[0\],\s*points\[1\]\s*\)/);
-    expect(diffraction![0]).toMatch(/lookingBackArrivalDirection\(\s*rec,\s*diffPt\s*\)/);
-    expect(diffraction![0]).not.toMatch(/recPos\[0\]\s*-\s*dp\.diffractionPoint\[0\]/);
+    const paths = fs.readFileSync(path.resolve(__dirname, '../../compute/beam-trace/paths.ts'), 'utf-8');
+    const diffraction = fs.readFileSync(path.resolve(__dirname, '../../compute/beam-trace/diffraction.ts'), 'utf-8');
+    expect(paths).toMatch(/lookingBackArrivalDirection\(\s*points\[0\],\s*points\[1\]\s*\)/);
+    expect(diffraction).toMatch(/lookingBackArrivalDirection\(\s*recPt,\s*diffPt\s*\)/);
+    expect(diffraction).not.toMatch(/recPos\[0\]\s*-\s*dp\.diffractionPoint\[0\]/);
   });
 
   test('Receiver.getGain JSDoc describes looking-back, not travel', () => {
