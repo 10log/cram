@@ -10,6 +10,7 @@ export interface ImageSourceArrivalHit {
   point: Vector3;
   reflectingSurface: {
     reflectionFunction: (freq: number, theta: number) => number;
+    pressureReflectionFunction?: (freq: number, theta: number) => number;
   } | null;
   angle: number | null;
 }
@@ -39,7 +40,7 @@ export function imageSourceArrivalPressure(
     if (!hit.reflectingSurface) continue;
     const angle = hit.angle ?? 0;
     for (let f = 0; f < freqs.length; f++) {
-      intensity[f] *= Math.abs(hit.reflectingSurface.reflectionFunction(freqs[f], angle));
+      intensity[f] *= hit.reflectingSurface.reflectionFunction(freqs[f], angle);
     }
   }
 
@@ -49,4 +50,28 @@ export function imageSourceArrivalPressure(
     arrivalLp[f] -= airAttenuationdB[f] * r;
   }
   return ac.Lp2P(arrivalLp) as number[];
+}
+
+/**
+ * Coherent IR arrival: same magnitude as LTP, times ∏ sign(R_pressure).
+ * Direct path (no bounce) stays positive. Hard wall (α = 0) → R = −1.
+ */
+export function imageSourceArrivalPressureIR(
+  initialSPL: number[],
+  freqs: number[],
+  path: ImageSourceArrivalHit[],
+  temperature: number = 20,
+): number[] {
+  const magnitude = imageSourceArrivalPressure(initialSPL, freqs, path, temperature);
+  const signed = magnitude.slice();
+  for (let f = 0; f < freqs.length; f++) {
+    let sign = 1;
+    for (const hit of path) {
+      if (!hit.reflectingSurface?.pressureReflectionFunction) continue;
+      const R = hit.reflectingSurface.pressureReflectionFunction(freqs[f], hit.angle ?? 0);
+      sign *= R < 0 ? -1 : 1;
+    }
+    signed[f] *= sign;
+  }
+  return signed;
 }
