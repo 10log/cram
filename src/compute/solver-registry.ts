@@ -49,7 +49,7 @@ registerSolverFactory("ray-tracer", async (_cram, props) => {
   return new RayTracer(props);
 });
 
-registerSolverFactory("image-source", async (_cram, _props) => {
+registerSolverFactory("image-source", async (_cram, props) => {
   const { ImageSourceSolver } = await import("./raytracer/image-source");
   const defaults = {
     name: "Image Source",
@@ -63,7 +63,7 @@ registerSolverFactory("image-source", async (_cram, _props) => {
     plotOrders: [0, 1, 2],
     frequencies: [125, 250, 500, 1000, 2000, 4000, 8000],
   };
-  return new ImageSourceSolver(defaults);
+  return new ImageSourceSolver({ ...defaults, ...props });
 });
 
 registerSolverFactory("rt60", async (_cram, _props) => {

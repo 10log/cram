@@ -19,6 +19,7 @@ import {
   downloadImpulseResponse as sharedDownloadIR,
 } from "../../shared/export-playback";
 import { imageSourceArrivalPressure } from "./arrival-pressure";
+import { resolveRoomID, selectedReflectors } from "./selection";
 
 function createLine(){
   const line = new MeshLine();
@@ -361,16 +362,13 @@ export class ImageSourceSolver extends Solver {
           } as Result<ResultKind.LevelTimeProgression>);
         }
 
-        this.surfaceIDs = []; 
+        this.surfaceIDs = params.surfaceIDs ?? [];
         
         this.rootImageSource = null;
         this.allRayPaths = null;  
         this.validRayPaths = null; 
 
-        const rooms = getRooms();
-
-        // get room 
-        this.roomID = rooms[0].uuid;
+        this.roomID = resolveRoomID(this.roomID, getRooms().map((r) => r.uuid));
 
         // //@ts-ignore
         this.selectedImageSourcePath = createLine();
@@ -420,35 +418,40 @@ export class ImageSourceSolver extends Solver {
 
       // add in checking to make sure only 1 source and 1 receiver are selected
 
-      let is_params: ImageSourceParams = {
-        baseSource: useContainer.getState().containers[this.sourceIDs[0]] as Source,
-        position: (useContainer.getState().containers[this.sourceIDs[0]] as Source).position.clone(), 
-        room: this.room, 
-        reflector: null,
-        parent: null, 
-        order: 0, 
-      };
-      
-      let is_base: ImageSource = new ImageSource(is_params);
-      let is_calculated: ImageSource | null = computeImageSources(is_base,this.maxReflectionOrder); 
+      const containers = useContainer.getState().containers;
+      const occluders = this.room.allSurfaces as Surface[];
+      const reflectors = selectedReflectors(occluders, this.surfaceIDs);
+      const allPaths: ImageSourcePath[] = [];
+      const valid_paths: ImageSourcePath[] = [];
+      let root: ImageSource | null = null;
 
-      this.rootImageSource = is_calculated; 
-
-      // construct all possible paths
-      let paths: ImageSourcePath[];
-      let valid_paths: ImageSourcePath[] = [];
-      if(is_calculated !== null){
-        paths = is_calculated.constructPathsForAllDescendents(useContainer.getState().containers[this.receiverIDs[0]] as Receiver);
-
-        this.allRayPaths = paths; 
-
-        // get valid paths
-        for(let i = 0; i<paths?.length; i++){
-          if(paths[i].isvalid(this.room.allSurfaces as Surface[])){
-            valid_paths.push(paths[i]); 
+      for (const sourceId of this.sourceIDs) {
+        const src = containers[sourceId] as Source;
+        if (!src) continue;
+        const is_base = new ImageSource({
+          baseSource: src,
+          position: src.position.clone(),
+          room: this.room,
+          reflector: null,
+          parent: null,
+          order: 0,
+        });
+        const tree = computeImageSources(is_base, this.maxReflectionOrder, reflectors);
+        if (!root) root = tree;
+        if (!tree) continue;
+        for (const receiverId of this.receiverIDs) {
+          const rcv = containers[receiverId] as Receiver;
+          if (!rcv) continue;
+          const paths = tree.constructPathsForAllDescendents(rcv);
+          allPaths.push(...paths);
+          for (const path of paths) {
+            if (path.isvalid(occluders)) valid_paths.push(path);
           }
         }
       }
+
+      this.rootImageSource = root;
+      this.allRayPaths = allPaths;
       this.validRayPaths = valid_paths; 
       (this._imageSourcesVisible) && (this.drawImageSources());
       (this._rayPathsVisible) && (this.drawRayPaths()); 
@@ -885,19 +888,17 @@ export class ImageSourceSolver extends Solver {
 
 export default ImageSourceSolver;
 
-function computeImageSources(is: ImageSource, maxOrder: number): ImageSource | null {
+function computeImageSources(is: ImageSource, maxOrder: number, surfaces?: Surface[]): ImageSource | null {
 
-  let surfaces: any[] = is.room.allSurfaces; 
-    
-  // end recursion
-  if(maxOrder==0){
-    return null;
-  }
+  if (maxOrder < 0) return null;
+  if (maxOrder === 0) return is;
 
-  for(let i=0; i<surfaces.length; i++){
+  const reflectors = surfaces ?? (is.room.allSurfaces as Surface[]);
+
+  for(let i=0; i<reflectors.length; i++){
   
     // returns true if current image source's previous reflector is either null (direct sound) or not the current reflector.
-    let reflectorCondition: boolean = (is.reflector === null || is.reflector !== surfaces[i]);
+    let reflectorCondition: boolean = (is.reflector === null || is.reflector !== reflectors[i]);
 
     // returns true if reflecting surface is in front of previous surface
     let inFrontOf: boolean = true; 
@@ -905,7 +906,7 @@ function computeImageSources(is: ImageSource, maxOrder: number): ImageSource | n
     // check if facing each other
     let facingEachOther: boolean;
     if(is.reflector!==null){
-      facingEachOther = surfacesFacingEachother(surfaces[i], is.reflector);
+      facingEachOther = surfacesFacingEachother(reflectors[i], is.reflector);
     }else{
       facingEachOther = true;
     }
@@ -914,9 +915,9 @@ function computeImageSources(is: ImageSource, maxOrder: number): ImageSource | n
 
       let is_reflect_params: ImageSourceParams = {
         baseSource: is.baseSource,
-        position: reflectPointAcrossSurface(is.position.clone(),surfaces[i]).clone(), 
+        position: reflectPointAcrossSurface(is.position.clone(),reflectors[i]).clone(), 
         room: is.room, 
-        reflector: surfaces[i],
+        reflector: reflectors[i],
         parent: is, 
         order: is.order+1, 
       };
@@ -926,7 +927,7 @@ function computeImageSources(is: ImageSource, maxOrder: number): ImageSource | n
       is.children.push(reflectedSource);
 
       if(maxOrder > 0){
-        computeImageSources(reflectedSource,maxOrder-1);
+        computeImageSources(reflectedSource,maxOrder-1, reflectors);
       }
     }
   }
