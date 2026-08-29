@@ -617,7 +617,7 @@ Xr("ray-tracer", async (e, t) => {
 	let { default: n } = await import("./energy-decay-B7jvteJw.mjs");
 	return new n();
 }), Xr("fdtd-2d", async (e, t) => {
-	let { default: n } = await import("./2d-fdtd-W2b1L3NX.mjs");
+	let { default: n } = await import("./2d-fdtd-iM3iSx6D.mjs");
 	return new n();
 }), Xr("beam-trace", async (e, t) => {
 	let { BeamTraceSolver: n } = await import("./beam-trace-BVrpuQ_a.mjs");
@@ -6698,7 +6698,7 @@ async function Jo(e, t) {
 	}
 }
 function Yo() {
-	import("./events-BQyGh7xr.mjs").then((e) => e.default()), h("LOG_SOLVER", (e) => {
+	import("./events-BfBUcQiz.mjs").then((e) => e.default()), h("LOG_SOLVER", (e) => {
 		console.log(d.getState().solvers[e]);
 	}), h("REMOVE_SOLVERS", (e) => {
 		let t = d.getState().solvers, n = typeof e == "string" ? [e] : e;

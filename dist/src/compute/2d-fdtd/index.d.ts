@@ -1,6 +1,7 @@
 import { ShaderMaterial, Mesh, DataTexture, IUniform, WebGLRenderTarget } from 'three';
 import { GPUComputationRenderer, Variable } from '../../../node_modules/@types/three/examples/jsm/misc/GPUComputationRenderer.js';
 import { default as Solver } from '../solver';
+import { FdtdSlice } from './slice';
 import { default as Source } from '../../objects/source';
 import { default as Receiver } from '../../objects/receiver';
 import { default as FDTDWall, FDTDWallProps } from './fdtd-wall';
@@ -13,6 +14,7 @@ export declare const FDTD_2D_Defaults: {
     cellSize: number;
     offsetX: number;
     offsetY: number;
+    slice: FdtdSlice;
 };
 export interface FDTD_2D_Props {
     width?: number;
@@ -20,6 +22,8 @@ export interface FDTD_2D_Props {
     cellSize?: number;
     offsetX?: number;
     offsetY?: number;
+    /** Floor plan (`xz`) or vertical sketch (`xy`). Inferred from the selected surface when omitted. */
+    slice?: FdtdSlice;
 }
 export interface Uniforms {
     [uniform: string]: IUniform;
@@ -36,6 +40,8 @@ declare class FDTD_2D extends Solver {
     ny: number;
     offsetX: number;
     offsetY: number;
+    slice: FdtdSlice;
+    sliceHeight: number;
     uniforms: Uniforms;
     mesh: Mesh;
     editMesh: Mesh;
