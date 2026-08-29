@@ -13,12 +13,11 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 describe('Issue #65: angle-dependent reflection in beam tracer calculateArrivalPressure', () => {
-  const filePath = path.resolve(__dirname, '../index.ts');
+  const filePath = path.resolve(__dirname, '../arrival-pressure.ts');
   const source = fs.readFileSync(filePath, 'utf-8');
 
-  // Match the method definition (not call sites) by anchoring on the private keyword and signature
   function getMethodBody(): string {
-    const methodMatch = source.match(/private calculateArrivalPressure\(initialSPL[\s\S]*?^\s{2}\}/m);
+    const methodMatch = source.match(/export function calculateArrivalPressure\([\s\S]*?^\}\n/m);
     expect(methodMatch).not.toBeNull();
     return methodMatch![0];
   }
@@ -26,19 +25,14 @@ describe('Issue #65: angle-dependent reflection in beam tracer calculateArrivalP
   test('calculateArrivalPressure uses reflectionFunction instead of 1 - absorptionFunction', () => {
     const methodBody = getMethodBody();
 
-    // Should use reflectionFunction
     expect(methodBody).toContain('reflectionFunction(');
-
-    // Should NOT use the old 1 - absorptionFunction pattern
     expect(methodBody).not.toMatch(/1\s*-\s*.*absorptionFunction/);
   });
 
   test('calculateArrivalPressure computes incidence angle from path geometry', () => {
     const methodBody = getMethodBody();
 
-    // Should compute angle from path points
     expect(methodBody).toContain('path.points');
-    // Should use Math.acos for angle computation
     expect(methodBody).toContain('Math.acos');
   });
 

@@ -30,8 +30,8 @@ describe('Issue #99: geometric spreading in beam-trace calculateArrivalPressure'
   }
 
   function calculateArrivalPressureBody(): string {
-    const source = fs.readFileSync(path.resolve(__dirname, '../index.ts'), 'utf-8');
-    const match = source.match(/private calculateArrivalPressure\([\s\S]*?^\s{2}\}/m);
+    const source = fs.readFileSync(path.resolve(__dirname, '../arrival-pressure.ts'), 'utf-8');
+    const match = source.match(/export function calculateArrivalPressure\([\s\S]*?^\}\n/m);
     expect(match).not.toBeNull();
     return match![0];
   }
@@ -81,7 +81,6 @@ describe('Issue #99: geometric spreading in beam-trace calculateArrivalPressure'
     const body = calculateArrivalPressureBody();
     expect(body).toMatch(/spreadingFactor\(\s*sPrime\s*\)/);
     expect(body).not.toMatch(/bandEnergy\[f\]\s*\*\s*spreading\b/);
-    // total-length 1/r² on UTD would double-count A²
     const diffractionBranch = body.split('if (path.bandEnergy)')[1]?.split('return pressures')[0] ?? '';
     expect(diffractionBranch).not.toMatch(/spreadingFactor\(\s*path\.length\s*\)/);
   });
@@ -91,7 +90,6 @@ describe('Issue #99: geometric spreading in beam-trace calculateArrivalPressure'
     const s = 4;
     expect(spreadingFactor(sPrime)).toBeCloseTo(1 / 16, 6);
     expect(spreadingFactor(sPrime + s)).toBeCloseTo(1 / 64, 6);
-    // using total length is 6 dB too quiet vs incident-only
     const ratio = spreadingFactor(sPrime + s) / spreadingFactor(sPrime);
     expect(10 * Math.log10(ratio)).toBeCloseTo(-6, 1);
   });
