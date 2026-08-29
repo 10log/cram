@@ -99,6 +99,7 @@ export declare class ImageSourceSolver extends Solver {
     validRayPaths: ImageSourcePath[] | null;
     allRayPaths: ImageSourcePath[] | null;
     selectedImageSourcePath: THREE.Mesh;
+    private overlay;
     private _plotFrequency;
     isHybrid: boolean;
     constructor(params?: ImageSourceSolverParams, isHybrid?: boolean);

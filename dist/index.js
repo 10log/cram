@@ -589,10 +589,10 @@ async function ti(e, t, n) {
 	return r(t, n);
 }
 ei("ray-tracer", async (e, t) => {
-	let { default: n } = await import("./raytracer-shKd8pv-.mjs");
+	let { default: n } = await import("./raytracer-CM_Ol-sJ.mjs");
 	return new n(t);
 }), ei("image-source", async (e, t) => {
-	let { ImageSourceSolver: n } = await import("./image-source-OV1hB_W3.mjs");
+	let { ImageSourceSolver: n } = await import("./image-source-athdMAaf.mjs");
 	return new n({
 		name: "Image Source",
 		roomID: "",
@@ -6683,7 +6683,7 @@ function Zo() {
 async function Qo(e, t) {
 	switch (e) {
 		case "ray-tracer": {
-			let { default: e } = await import("./raytracer-shKd8pv-.mjs");
+			let { default: e } = await import("./raytracer-CM_Ol-sJ.mjs");
 			return new e(t).restore(t);
 		}
 		case "rt60": {
@@ -6695,7 +6695,7 @@ async function Qo(e, t) {
 			return new e(t).restore(t);
 		}
 		case "image-source": {
-			let { default: e } = await import("./image-source-OV1hB_W3.mjs");
+			let { default: e } = await import("./image-source-athdMAaf.mjs");
 			return new e(t).restore(t);
 		}
 		case "beam-trace": {
