@@ -101,7 +101,8 @@ export function calculateResponseByIntensity(params: {
     });
   }
 
-  return resampleResponseByIntensity({
+  const raw: KVP<KVP<ResponseByIntensity>> = {
     [receiverId]: { [sourceId]: { freqs: frequencies, response } },
-  }, DEFAULT_INTENSITY_SAMPLE_RATE);
+  };
+  return resampleResponseByIntensity(raw, DEFAULT_INTENSITY_SAMPLE_RATE) ?? raw;
 }

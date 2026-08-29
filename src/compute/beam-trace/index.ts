@@ -92,7 +92,7 @@ export class BeamTraceSolver extends Solver {
 
   edgeDiffractionEnabled: boolean;
   private _edgeGraph: EdgeGraph | null = null;
-  private _raycaster: THREE.Raycaster = new THREE.Raycaster();
+  _raycaster: THREE.Raycaster = new THREE.Raycaster();
 
   lateReverbTailEnabled: boolean;
   tailCrossfadeTime: number;
@@ -114,7 +114,7 @@ export class BeamTraceSolver extends Solver {
 
   quickEstimateResults: QuickEstimateStepResult[] = [];
   estimatedT30: number[] | null = null;
-  private _quickEstimateInterval: number | null = null;
+  _quickEstimateInterval: number | null = null;
 
   lastMetrics: {
     validPathCount: number;
@@ -273,7 +273,7 @@ export class BeamTraceSolver extends Solver {
 
   private clickHost() {
     const host: {
-      virtualSourceMap: typeof this.virtualSourceMap;
+      virtualSourceMap: Map<THREE.Mesh, BeamVisualizationData & { polygonPath: number[] }>;
       selectedVirtualSource: THREE.Mesh | null;
       clickHandler: ((event: MouseEvent) => void) | null;
       hoverHandler: ((event: MouseEvent) => void) | null;
