@@ -1465,21 +1465,21 @@ export class BeamTraceSolver extends Solver {
 
   // Calculate arrival pressure for a path
   private calculateArrivalPressure(initialSPL: number[], path: BeamTracePath, receiverGain: number = 1.0): number[] {
-    // initialSPL is referenced at 1 m; scale intensity by 1/r^2 for spherical spreading beyond that.
-    const r = Math.max(path.length, 1e-3);
-    const spreading = 1 / (r * r);
-
-    // Diffraction paths have pre-computed per-band energy — convert to pressure directly
+    // Diffraction paths have pre-computed per-band UTD energy — utdDiffractionCoefficient
+    // already folds in the source-to-edge-to-receiver spreading factor A² = s'/(s(s+s')),
+    // so no additional 1/r^2 term is applied here (that would double-count spreading).
     if (path.bandEnergy) {
       const initialIntensities = ac.P2I(ac.Lp2P(initialSPL)) as number[];
       const pressures: number[] = new Array(this.frequencies.length);
       for (let f = 0; f < this.frequencies.length; f++) {
-        const arrivalIntensity = initialIntensities[f] * path.bandEnergy[f] * spreading;
+        const arrivalIntensity = initialIntensities[f] * path.bandEnergy[f];
         pressures[f] = (ac.I2P([arrivalIntensity]) as number[])[0] * receiverGain;
       }
       return pressures;
     }
 
+    // initialSPL is referenced at 1 m; scale intensity by 1/r^2 for spherical spreading beyond that.
+    const spreading = ac.spreadingFactor(path.length);
     const intensities = ac.P2I(ac.Lp2P(initialSPL)) as number[];
     for (let f = 0; f < intensities.length; f++) {
       intensities[f] *= spreading;

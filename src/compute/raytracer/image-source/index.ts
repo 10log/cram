@@ -242,8 +242,7 @@ class ImageSourcePath{
     let intensity = ac.P2I(ac.Lp2P(initialSPL)) as number[];
 
     // initialSPL is referenced at 1 m; scale intensity by 1/r^2 for spherical spreading beyond that.
-    const r = Math.max(this.totalLength, 1e-3);
-    const spreading = 1 / (r * r);
+    const spreading = ac.spreadingFactor(this.totalLength);
     for(let f = 0; f<intensity.length; f++){
       intensity[f] = intensity[f]*spreading;
     }

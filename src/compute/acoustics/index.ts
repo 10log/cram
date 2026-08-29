@@ -7,6 +7,7 @@ export * from './std';
 export * from './fft';
 export * from './dbaddition';
 export { airAttenuation } from './air-attenuation';
+export { spreadingFactor } from './geometric-spreading';
 export { soundSpeed } from './sound-speed';
 export { wavAsBlob, decode, encode } from './util/wav';
 export * from './fft/fft';
