@@ -27,6 +27,7 @@ import { addSolver, removeSolver, setSolverProperty, useSolver, useContainer, us
 import { pickProps } from "../../common/helpers";
 import { worldDirToCramAngles } from "../../common/dir-angle-conversions";
 import { lookingBackArrivalDirection } from "../../common/arrival-direction";
+import { beamTreeSignature } from "./tree-signature";
 import * as ac from "../acoustics";
 import { normalize } from "../acoustics";
 import { audioEngine } from "../../audio-engine/audio-engine";
@@ -257,9 +258,7 @@ export class BeamTraceSolver extends Solver {
   private selectedBeamsGroup: THREE.Group;
 
   // Incremental update tracking: skip full beam tree rebuild when only the listener moved
-  private _lastSourcePos: THREE.Vector3 | null = null;
-  private _lastRoomID: string = "";
-  private _lastMaxOrder: number = -1;
+  private _lastTreeSignature: string | null = null;
 
   constructor(params: BeamTraceSolverParams = {}) {
     super(params);
@@ -700,18 +699,36 @@ export class BeamTraceSolver extends Solver {
     return polygons;
   }
 
-  // Check if the beam tree needs to be rebuilt (source moved, room changed, or order changed)
+  private currentTreeSignature(): string | null {
+    if (this.sourceIDs.length === 0) return null;
+    const source = useContainer.getState().containers[this.sourceIDs[0]] as Source | undefined;
+    const room = this.room;
+    if (!source || !room) return null;
+    const surfaces = room.allSurfaces as Surface[];
+    const surfaceWorlds: number[] = [];
+    for (const surface of surfaces) {
+      surface.updateMatrixWorld(true);
+      const e = surface.matrixWorld.elements;
+      for (let i = 0; i < 16; i++) surfaceWorlds.push(e[i]);
+    }
+    return beamTreeSignature({
+      sourceId: source.uuid,
+      sourceX: source.position.x,
+      sourceY: source.position.y,
+      sourceZ: source.position.z,
+      roomID: this.roomID,
+      maxOrder: this.maxReflectionOrder,
+      surfaceCount: surfaces.length,
+      surfaceWorlds,
+    });
+  }
+
+  // Rebuild unless only the listener moved (signature excludes receiver position).
   private needsBeamTreeRebuild(): boolean {
     if (!this.btSolver) return true;
-    if (this._lastRoomID !== this.roomID) return true;
-    if (this._lastMaxOrder !== this.maxReflectionOrder) return true;
-    if (this.sourceIDs.length === 0) return true;
-
-    const source = useContainer.getState().containers[this.sourceIDs[0]] as Source;
-    if (!source) return true;
-    if (!this._lastSourcePos || !this._lastSourcePos.equals(source.position)) return true;
-
-    return false;
+    const sig = this.currentTreeSignature();
+    if (sig === null) return true;
+    return sig !== this._lastTreeSignature;
   }
 
   // Build/rebuild the beam-trace solver
@@ -748,9 +765,7 @@ export class BeamTraceSolver extends Solver {
     });
 
     // Record the state used for this build (for incremental update detection)
-    this._lastSourcePos = source.position.clone();
-    this._lastRoomID = this.roomID;
-    this._lastMaxOrder = this.maxReflectionOrder;
+    this._lastTreeSignature = this.currentTreeSignature();
 
     console.log(`BeamTraceSolver: Built with ${this.polygons.length} polygons, max order ${this.maxReflectionOrder}`);
   }
@@ -2024,6 +2039,7 @@ export class BeamTraceSolver extends Solver {
     this.validPaths = [];
     this.clearVisualization();
     this.btSolver = null;
+    this._lastTreeSignature = null;
     this.lastMetrics = null;
 
     // Clear response-by-intensity data
