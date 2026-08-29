@@ -5,6 +5,7 @@ import { useContainer } from "../../store";
 import { audioEngine } from "../../audio-engine/audio-engine";
 import { RayPath, normalize, RESPONSE_TIME_PADDING, DEFAULT_INITIAL_SPL } from "./types";
 import { extractDecayParameters, synthesizeTail, assembleFinalIR } from "./tail-synthesis";
+import { monteCarloSign, monteCarloWeight, rayOrderFromChain } from "./ir-scale";
 
 export interface TailOptions {
   energyHistogram: Float32Array[];
@@ -15,7 +16,6 @@ export interface TailOptions {
 }
 
 const { floor, abs, max: mathMax } = Math;
-const coinFlip = () => Math.random() > 0.5;
 
 // Webpack 5 native worker support
 const FilterWorker = () => new Worker(new URL('../../audio-engine/filter.worker.ts', import.meta.url));
@@ -75,10 +75,11 @@ export async function calculateImpulseResponseForPair(
   temperature: number,
   sampleRate = audioEngine.sampleRate,
   tailOptions?: TailOptions,
+  numRays?: number,
 ): Promise<{ signal: Float32Array; normalizedSignal: Float32Array }> {
   if (paths.length === 0) throw Error("No rays have been traced for this pair");
 
-  let sorted = paths.sort((a, b) => a.time - b.time) as RayPath[];
+  let sorted = paths.slice().sort((a, b) => a.time - b.time) as RayPath[];
 
   const totalTime = sorted[sorted.length - 1].time + RESPONSE_TIME_PADDING;
 
@@ -93,12 +94,13 @@ export async function calculateImpulseResponseForPair(
 
   // add in raytracer paths (apply receiver directivity)
   const recForPair = useContainer.getState().containers[receiverId] as Receiver;
+  const mcWeight = monteCarloWeight(numRays ?? sorted.length);
   for (let i = 0; i < sorted.length; i++) {
-    const randomPhase = coinFlip() ? 1 : -1;
+    const sign = monteCarloSign(rayOrderFromChain(sorted[i]));
     const t = sorted[i].time;
     const dir = sorted[i].arrivalDirection || [0, 0, 1] as [number, number, number];
     const recGain = recForPair.getGain(dir as [number, number, number]);
-    const p = arrivalPressure(spls, frequencies, sorted[i], recGain, temperature).map(x => x * randomPhase);
+    const p = arrivalPressure(spls, frequencies, sorted[i], recGain, temperature).map(x => x * sign * mcWeight);
     const roundedSample = floor(t * sampleRate);
 
     for (let f = 0; f < frequencies.length; f++) {
@@ -188,12 +190,13 @@ export async function calculateImpulseResponseForDisplay(
 
   // add in raytracer paths (apply receiver directivity)
   const recForDisplay = useContainer.getState().containers[recId] as Receiver;
+  const mcWeight = monteCarloWeight(sorted.length);
   for (let i = 0; i < sorted.length; i++) {
-    const randomPhase = coinFlip() ? 1 : -1;
+    const sign = monteCarloSign(rayOrderFromChain(sorted[i]));
     const t = sorted[i].time;
     const dir = sorted[i].arrivalDirection || [0, 0, 1] as [number, number, number];
     const recGain = recForDisplay.getGain(dir as [number, number, number]);
-    const p = arrivalPressure(spls, frequencies, sorted[i], recGain, temperature).map(x => x * randomPhase);
+    const p = arrivalPressure(spls, frequencies, sorted[i], recGain, temperature).map(x => x * sign * mcWeight);
     const roundedSample = floor(t * sampleRate);
 
     for (let f = 0; f < frequencies.length; f++) {

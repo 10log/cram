@@ -4,6 +4,7 @@ import Receiver from "../../objects/receiver";
 import FileSaver from "file-saver";
 import { KVP } from "../../common/key-value-pair";
 import { RayPath, DEFAULT_INITIAL_SPL, RESPONSE_TIME_PADDING } from "./types";
+import { monteCarloSign, monteCarloWeight, rayOrderFromChain } from "./ir-scale";
 import {
   playImpulseResponse as sharedPlayIR,
   downloadImpulseResponse as sharedDownloadIR,
@@ -12,8 +13,7 @@ import {
   downloadBinauralImpulseResponse as sharedDownloadBinauralIR,
 } from "../shared/export-playback";
 
-const { floor, abs } = Math;
-const coinFlip = () => Math.random() > 0.5;
+const { floor } = Math;
 
 const RAYTRACER_EVENT = "RAYTRACER_SET_PROPERTY";
 
@@ -45,26 +45,23 @@ export function downloadImpulses(
   for(let f = 0; f<frequencies.length; f++){
     samples.push(new Float32Array(numberOfSamples));
   }
-  let max = 0;
   const recForDownload = useContainer.getState().containers[receiverIDs[0]] as Receiver;
+  const mcWeight = monteCarloWeight(sorted.length);
   for(let i = 0; i<sorted.length; i++){
-    const randomPhase = coinFlip() ? 1 : -1;
+    const sign = monteCarloSign(rayOrderFromChain(sorted[i]));
     const t = sorted[i].time;
     const dir = sorted[i].arrivalDirection || [0, 0, 1] as [number, number, number];
     const recGain = recForDownload.getGain(dir as [number, number, number]);
-    const p = arrivalPressureFn(spls, frequencies, sorted[i], recGain).map(x => x * randomPhase);
+    const p = arrivalPressureFn(spls, frequencies, sorted[i], recGain).map(x => x * sign * mcWeight);
     const roundedSample = floor(t * sampleRate);
 
     for(let f = 0; f<frequencies.length; f++){
       samples[f][roundedSample] += p[f];
-      if(abs(samples[f][roundedSample]) > max){
-        max = abs(samples[f][roundedSample]);
-      }
     }
   }
 
   for(let f = 0; f<frequencies.length; f++){
-    const blob = ac.wavAsBlob([ac.normalize(samples[f])], { sampleRate, bitDepth: 32 });
+    const blob = ac.wavAsBlob([samples[f]], { sampleRate, bitDepth: 32 });
     FileSaver.saveAs(blob, `${frequencies[f]}_${filename}.wav`);
   }
 }

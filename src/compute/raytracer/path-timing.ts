@@ -1,10 +1,12 @@
 /**
  * Stamp RayPath.time / totalLength when the path is stored, not only in stop() (#131).
+ * extraLength is the mesh-hit → receiver-centre remainder (#133).
  */
 
 export function stampRayPathTiming<T extends { chain: { distance: number }[]; time?: number; totalLength?: number }>(
   path: T,
   speedOfSound: number,
+  extraLength: number = 0,
 ): T {
   let totalLength = 0;
   let time = 0;
@@ -13,6 +15,8 @@ export function stampRayPathTiming<T extends { chain: { distance: number }[]; ti
     totalLength += step.distance;
     time += step.distance / c;
   }
+  totalLength += extraLength;
+  time += extraLength / c;
   path.totalLength = totalLength;
   path.time = time;
   return path;

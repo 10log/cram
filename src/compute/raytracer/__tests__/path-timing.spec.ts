@@ -41,7 +41,7 @@ describe("Issue #131: production wiring", () => {
   const source = fs.readFileSync(path.resolve(__dirname, "../index.ts"), "utf8");
 
   test("paths are stamped on store; IR methods take receiverId", () => {
-    expect(source).toMatch(/stampRayPathTiming\(path, this\.c\)/);
+    expect(source).toMatch(/stampRayPathTiming\(path, this\.c/);
     expect(source).toMatch(/calculateImpulseResponse\([^)]*receiverId/);
     expect(source).toMatch(/calculateAmbisonicImpulseResponse\([\s\S]*receiverId/);
   });
