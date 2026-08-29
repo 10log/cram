@@ -33,3 +33,11 @@ export declare function synthesizeTail(decayParams: DecayParameters[], sampleRat
  * @returns Extended per-band impulse response samples
  */
 export declare function assembleFinalIR(rayTracedSamples: Float32Array[], tailSamples: Float32Array[], crossfadeStartSample: number, crossfadeDurationSamples: number): Float32Array[];
+/**
+ * Extend every HOA channel with an independent noise tail of the same envelope.
+ *
+ * Diffuse late reverb is uncorrelated equal energy in all channels (SN3D:
+ * E{W²} ≈ E{Y²} ≈ E{Z²} ≈ E{X²}), not energy in W only. `samples` is
+ * [band][channel]. Mutates and returns it so every channel has the same length.
+ */
+export declare function applyAmbisonicTail(samples: Float32Array[][], decayParams: DecayParameters[], sampleRate: number, crossfadeDurationSamples: number): Float32Array[][];

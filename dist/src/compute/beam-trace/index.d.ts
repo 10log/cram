@@ -13,7 +13,7 @@ export interface BeamTracePath {
     length: number;
     arrivalTime: number;
     polygonIds: (number | null)[];
-    /** Direction from which the path arrives at the receiver (normalized) */
+    /** Unit vector at the receiver pointing toward the last bounce (looking-back). Matches Receiver.getGain. */
     arrivalDirection: THREE.Vector3;
     reflections?: {
         polygonId: number;
@@ -131,9 +131,7 @@ export declare class BeamTraceSolver extends Solver {
     private hoverHandler;
     private selectedPath;
     private selectedBeamsGroup;
-    private _lastSourcePos;
-    private _lastRoomID;
-    private _lastMaxOrder;
+    private _lastTreeSignature;
     constructor(params?: BeamTraceSolverParams);
     get temperature(): number;
     get c(): number;
@@ -145,6 +143,7 @@ export declare class BeamTraceSolver extends Solver {
     private removeClickHandler;
     private extractPolygons;
     private surfaceToPolygons;
+    private currentTreeSignature;
     private needsBeamTreeRebuild;
     buildSolver(): void;
     calculate(): void;
@@ -170,6 +169,17 @@ export declare class BeamTraceSolver extends Solver {
      */
     private _buildEnergyHistogram;
     calculateImpulseResponse(): Promise<AudioBuffer>;
+    /**
+     * Per-band energy weighting from a source's directivity for energy leaving the
+     * source along `worldDir`.
+     *
+     * Shared by the specular and diffraction paths so both use one convention:
+     * undo the source's rotation with the inverse quaternion (negating Euler angles
+     * in the same order is NOT the inverse rotation for two or more non-zero
+     * components), then map the source-local direction to CRAM (phi, theta) degrees
+     * with `worldDirToCramAngles` — the same convention the ray tracer launches with.
+     */
+    private _directivityBandEnergy;
     private calculateArrivalPressure;
     private updateImpulseResponseResult;
     playImpulseResponse(): Promise<void>;

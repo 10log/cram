@@ -31,7 +31,10 @@ export declare class Receiver extends Container {
     constructor(name?: string, _props?: ReceiverProps);
     /**
      * Compute directivity gain for a ray arriving from the given direction.
-     * @param arrivalDirection - unit vector [x,y,z] pointing FROM the source/reflection toward the receiver
+     * @param arrivalDirection - unit vector [x,y,z] pointing FROM the receiver
+     *   TOWARD the last bounce / source (looking-back). A cardioid looking +Z
+     *   peaks when this vector is +Z. Specular raytracer paths already store
+     *   this (`rd.negate()`); diffracted paths must too.
      * @returns pressure gain factor (-1..1); negative values possible for figure-8 and supercardioid
      */
     getGain(arrivalDirection: [number, number, number]): number;
