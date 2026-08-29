@@ -2,6 +2,7 @@ import * as THREE from "three";
 import Surface from "../../objects/surface";
 import { probability } from '../../common/probability';
 import { BandEnergy, Chain, RayPath, SELF_INTERSECTION_OFFSET } from "./types";
+import { reflectDirection, worldHitNormal } from "./world-normal";
 
 const { abs } = Math;
 
@@ -66,8 +67,8 @@ export function traceRay(
 
     //check to see if the intersection was with a receiver
     if (intersections[0].object.userData?.kind === 'receiver') {
-      // find the incident angle
-      const angle = intersections[0].face && _negRd.copy(rd).multiplyScalar(-1).angleTo(intersections[0].face.normal);
+      const nWorld = worldHitNormal(intersections[0], _normalCopy);
+      const angle = nWorld && _negRd.copy(rd).multiplyScalar(-1).angleTo(nWorld);
 
       // apply air absorption for the final segment to the receiver
       const receiverSegmentDist = intersections[0].distance;
@@ -84,11 +85,13 @@ export function traceRay(
         object: intersections[0].object.parent!.uuid,
         angle: angle!,
         distance: intersections[0].distance,
-        faceNormal: [
-          intersections[0].face!.normal.x,
-          intersections[0].face!.normal.y,
-          intersections[0].face!.normal.z
-        ],
+        faceNormal: nWorld
+          ? [nWorld.x, nWorld.y, nWorld.z]
+          : [
+              intersections[0].face!.normal.x,
+              intersections[0].face!.normal.y,
+              intersections[0].face!.normal.z
+            ],
         faceMaterialIndex: intersections[0].face!.materialIndex,
         faceIndex: intersections[0].faceIndex!,
         point: [intersections[0].point.x, intersections[0].point.y, intersections[0].point.z],
@@ -114,19 +117,17 @@ export function traceRay(
         arrivalDirection,
       } as RayPath;
     } else {
-      // find the incident angle
-      const angle = intersections[0].face && _negRd.copy(rd).multiplyScalar(-1).angleTo(intersections[0].face.normal);
+      const nWorld = worldHitNormal(intersections[0], _normalCopy);
+      const angle = nWorld && _negRd.copy(rd).multiplyScalar(-1).angleTo(nWorld);
 
       // push the intersection onto the chain
       chain.push({
         object: intersections[0].object.parent!.uuid,
         angle: angle!,
         distance: intersections[0].distance,
-        faceNormal: [
-          intersections[0].face!.normal.x,
-          intersections[0].face!.normal.y,
-          intersections[0].face!.normal.z
-        ],
+        faceNormal: nWorld
+          ? [nWorld.x, nWorld.y, nWorld.z]
+          : [0, 0, 0],
         faceMaterialIndex: intersections[0].face!.materialIndex,
         faceIndex: intersections[0].faceIndex!,
         point: [intersections[0].point.x, intersections[0].point.y, intersections[0].point.z],
@@ -137,14 +138,9 @@ export function traceRay(
         intersections[0].object.parent.numHits += 1;
       }
 
-      // get the normal direction of the intersection (copy to avoid mutating mesh data)
-      const normal = intersections[0].face && _normalCopy.copy(intersections[0].face.normal).normalize();
+      const normal = nWorld;
 
-      // find the reflected direction
-      let rr =
-        normal &&
-        intersections[0].face &&
-        _reflectedDir.copy(rd).sub(_normalScaled.copy(normal).multiplyScalar(rd.dot(normal)).multiplyScalar(2));
+      let rr = normal && reflectDirection(rd, normal, _reflectedDir);
 
       // compute energy-weighted broadband scattering for directional decision
       const surface = intersections[0].object.parent as Surface;
