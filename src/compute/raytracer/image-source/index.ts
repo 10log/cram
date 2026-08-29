@@ -18,6 +18,7 @@ import {
   playImpulseResponse as sharedPlayIR,
   downloadImpulseResponse as sharedDownloadIR,
 } from "../../shared/export-playback";
+import { imageSourceArrivalPressure } from "./arrival-pressure";
 
 function createLine(){
   const line = new MeshLine();
@@ -238,41 +239,7 @@ class ImageSourcePath{
   }
   
   public arrivalPressure(initialSPL: number[], freqs: number[], temperature: number = 20): number[]{
-
-    let intensity = ac.P2I(ac.Lp2P(initialSPL)) as number[];
-
-    // initialSPL is referenced at 1 m; scale intensity by 1/r^2 for spherical spreading beyond that.
-    const spreading = ac.spreadingFactor(this.totalLength);
-    for(let f = 0; f<intensity.length; f++){
-      intensity[f] = intensity[f]*spreading;
-    }
-
-    for(let s = 0; s<this.path.length; s++){
-
-      let intersection = this.path[s];
-      if(intersection.reflectingSurface === null){
-        // either source or a receiver
-        // do nothing to intensity levels
-      }else{
-        // intersected with a surface
-        for(let findex = 0; findex<freqs.length; findex++){
-          const reflectionCoefficient = Math.abs((intersection.reflectingSurface as Surface).reflectionFunction(freqs[findex], intersection.angle!));
-          intensity[findex] = intensity[findex]*reflectionCoefficient;
-        }
-      }
-    }
-
-    // convert back to SPL
-    let arrivalLp = ac.P2Lp(ac.I2P(intensity)) as number[];
-
-    // apply air absorption (dB/m)
-    const airAttenuationdB = ac.airAttenuation(freqs, temperature);
-    for(let f = 0; f<freqs.length; f++){
-      arrivalLp[f] = arrivalLp[f] - airAttenuationdB[f]*this.totalLength;
-    }
-
-    // convert back to pressure
-    return ac.Lp2P(arrivalLp) as number[];
+    return imageSourceArrivalPressure(initialSPL, freqs, this.path, temperature);
   }
 
   public arrivalTime(c: number): number{

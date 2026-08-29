@@ -11,8 +11,10 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { Vector3 } from 'three';
 import * as ac from '../../../acoustics';
 import { spreadingFactor } from '../../../acoustics/geometric-spreading';
+import { imageSourceArrivalPressure } from '../arrival-pressure';
 
 describe('Issue #99/#122: geometric spreading in image-source arrivalPressure', () => {
   const frequencies = [1000];
@@ -59,10 +61,24 @@ describe('Issue #99/#122: geometric spreading in image-source arrivalPressure', 
     expect(spl1 - spl10).toBeCloseTo(expectedDrop, 1);
   });
 
-  test('arrivalPressure calls spreadingFactor(this.totalLength)', () => {
+  test('imageSourceArrivalPressure drops ~6 dB per doubling (1 m / 2 m / 4 m)', () => {
+    function splAt(r: number): number {
+      const path = [
+        { point: new Vector3(0, 0, 0), reflectingSurface: null, angle: null },
+        { point: new Vector3(r, 0, 0), reflectingSurface: null, angle: null },
+      ];
+      const p = imageSourceArrivalPressure([100], [1000], path, 20);
+      return ac.P2Lp(p) as number;
+    }
+    const air = ac.airAttenuation([1000], 20)[0];
+    expect(splAt(1) - splAt(2)).toBeCloseTo(20 * Math.log10(2) + air * 1, 1);
+    expect(splAt(2) - splAt(4)).toBeCloseTo(20 * Math.log10(2) + air * 2, 1);
+  });
+
+  test('ImageSourcePath.arrivalPressure delegates to imageSourceArrivalPressure', () => {
     const source = fs.readFileSync(path.resolve(__dirname, '../index.ts'), 'utf-8');
-    const match = source.match(/arrivalPressure\(initialSPL[\s\S]*?^\s{2}\}/m);
-    expect(match).not.toBeNull();
-    expect(match![0]).toMatch(/spreadingFactor\(\s*this\.totalLength\s*\)/);
+    expect(source).toMatch(/imageSourceArrivalPressure\(/);
+    const helper = fs.readFileSync(path.resolve(__dirname, '../arrival-pressure.ts'), 'utf-8');
+    expect(helper).toMatch(/spreadingFactor\(/);
   });
 });
