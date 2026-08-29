@@ -42,6 +42,7 @@ import {
   writeFieldPixel,
 } from "./field-encoding";
 import { passesForElapsed, sampleRateFromDt } from "./recording";
+import { disposeGpuCompute } from "./dispose-gpu";
 
 import Source from "../../objects/source";
 import Receiver from "../../objects/receiver";
@@ -224,6 +225,10 @@ class FDTD_2D extends Solver {
     
     
     this.init();
+
+    this.eventListeners.push(on("RENDERER_UPDATED", () => {
+      if (this.running) this.render();
+    }));
     
     this.onModeChange(postMessage("GET_EDITOR_MODE")[0]);
 
@@ -265,7 +270,7 @@ class FDTD_2D extends Solver {
   }
   
   init() {
-    this.dispose();
+    this.disposeGpu();
     const geometry = new PlaneGeometry(this.width, this.height, this.nx - 1, this.ny - 1);
     geometry.name = "fdtd-2d-plane-geometry";
     applySliceTransform(geometry, {
@@ -380,22 +385,42 @@ class FDTD_2D extends Solver {
     });
     
 
-    this.eventListeners.push(on("RENDERER_UPDATED", ()=>{
-      if (this.running) this.render();
-    }));
     this.render();
     this.clear();
   }
   editSize() {
     // this.mesh.visible = false;
   }
-  dispose() {
-    this.eventListeners.forEach(dispose => dispose());
-
-    for (let i = 0; i < this.messageHandlers.length; i++) {
-      removeMessageHandler(this.messageHandlers[i][0], this.messageHandlers[i][1]); 
+  disposeGpu() {
+    if (this.mesh) {
+      renderer.fdtdItems.remove(this.mesh);
+      this.mesh.geometry.dispose();
+      const material = this.mesh.material;
+      if (Array.isArray(material)) material.forEach((m) => m.dispose());
+      else material.dispose();
     }
-    this.mesh && renderer.fdtdItems.remove(this.mesh);
+    this.readLevelRenderTarget?.dispose();
+    this.sourcemap?.dispose();
+    this.clearShader?.dispose();
+    this.readLevelShader?.dispose();
+    disposeGpuCompute(this.gpuCompute);
+  }
+
+  dispose() {
+    this.stop();
+    this.disposeGpu();
+    if (this.editMesh) {
+      renderer.fdtdItems.remove(this.editMesh);
+      this.editMesh.geometry.dispose();
+      const material = this.editMesh.material;
+      if (Array.isArray(material)) material.forEach((m) => m.dispose());
+      else material.dispose();
+    }
+    this.eventListeners.forEach((fn) => fn());
+    this.eventListeners = [];
+    for (let i = 0; i < this.messageHandlers.length; i++) {
+      removeMessageHandler(this.messageHandlers[i][0], this.messageHandlers[i][1]);
+    }
     this.messageHandlers = [] as string[][];
   }
   run() {
