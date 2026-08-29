@@ -20,6 +20,12 @@ import {
 } from "../../shared/export-playback";
 import { imageSourceArrivalPressure, imageSourceArrivalPressureIR } from "./arrival-pressure";
 import { resolveRoomID, selectedReflectors, shouldRebuildImageSourceTree } from "./selection";
+import {
+  hitWorldNormal,
+  incidenceAngle,
+  reflectPointAcrossPlane,
+  worldSurfaceNormal,
+} from "./reflection-geometry";
 
 function createLine(){
   const line = new MeshLine();
@@ -969,7 +975,10 @@ function constructImageSourcePath(is: ImageSource, listener: Receiver): ImageSou
       let intersect: IntersectionPoint = {
         point: intersections[0].point,
         reflectingSurface: is.reflector,
-        angle: direction.clone().multiplyScalar(-1).angleTo(intersections[0].face!.normal),
+        angle: incidenceAngle(
+          direction,
+          hitWorldNormal(intersections[0], is.reflector.matrixWorld, is.reflector.normal),
+        ),
       };
 
       path[order] = intersect;
@@ -1000,8 +1009,8 @@ function isInFrontOf(surface1: Surface, surface2: Surface): boolean{
 }
 
 function surfacesFacingEachother(surface1: Surface, surface2: Surface): boolean{
-  let normal1: Vector3 = surface1.normal.clone(); 
-  let normal2: Vector3 = surface2.normal.clone(); 
+  let normal1: Vector3 = worldSurfaceNormal(surface1.normal, surface1.matrixWorld);
+  let normal2: Vector3 = worldSurfaceNormal(surface2.normal, surface2.matrixWorld); 
 
   if(normal1.dot(normal2) <= 0){
     return true;
@@ -1011,30 +1020,14 @@ function surfacesFacingEachother(surface1: Surface, surface2: Surface): boolean{
 }
 
 function reflectPointAcrossSurface(point: Vector3, surface: Surface): Vector3{
-
-  // SEE https://gamedev.stackexchange.com/questions/43615/how-can-i-reflect-a-point-with-respect-to-the-plane
-
-  let a: Vector3 = new Vector3(surface.polygon.vertices[0][0], surface.polygon.vertices[0][1], surface.polygon.vertices[0][2]);
-
-  let a_global: Vector3 = surface.localToWorld(a);
-
-  let normal = surface.normal.clone();
-  let negnormal = normal.clone(); 
-  negnormal.multiplyScalar(-1);
-
-  let d = a_global.dot(negnormal);
-  
-  let u = normal.clone(); 
-  u.multiplyScalar(point.dot(normal)+d); 
-  
-  let v = point.clone(); 
-  v.sub(u);
-
-  let mirror = u; 
-  mirror.multiplyScalar(-1);
-  mirror.add(v);
-
-  return mirror; 
+  const a = new Vector3(
+    surface.polygon.vertices[0][0],
+    surface.polygon.vertices[0][1],
+    surface.polygon.vertices[0][2],
+  );
+  const pointOnPlane = surface.localToWorld(a);
+  const normalWorld = worldSurfaceNormal(surface.normal, surface.matrixWorld);
+  return reflectPointAcrossPlane(point, pointOnPlane, normalWorld);
 }
 
 
