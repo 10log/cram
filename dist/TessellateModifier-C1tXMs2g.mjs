@@ -1,6 +1,31 @@
 import { BufferGeometry as e, Color as t, Float32BufferAttribute as n, Vector2 as r, Vector3 as i } from "three";
+//#region src/compute/acoustics/util/allowMultiple.ts
+function a(e, t) {
+	return t instanceof Array ? t.map((t) => e(t)) : e(t);
+}
+//#endregion
+//#region src/compute/acoustics/std/constants.ts
+var o = {
+	value: 2e-5,
+	units: "Pa"
+};
+//#endregion
+//#region src/compute/acoustics/convert.ts
+function s(e) {
+	return a((e) => 20 * Math.log10(e / o.value), e);
+}
+function c(e) {
+	return a((e) => 10 ** (e / 20) * o.value, e);
+}
+function l(e, t = 400) {
+	return a((e) => e ** 2 / t, e);
+}
+function u(e, t = 400) {
+	return a((e) => Math.sqrt(e * t), e);
+}
+//#endregion
 //#region src/compute/radiance/TessellateModifier.ts
-var a = class {
+var d = class {
 	maxEdgeLength;
 	maxIterations;
 	constructor(e = .1, t = 6) {
@@ -67,6 +92,6 @@ var a = class {
 	}
 };
 //#endregion
-export { a as t };
+export { s as a, l as i, u as n, c as r, d as t };
 
-//# sourceMappingURL=TessellateModifier-DlSgA920.mjs.map
+//# sourceMappingURL=TessellateModifier-C1tXMs2g.mjs.map

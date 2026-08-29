@@ -2,12 +2,14 @@ import { S as e, _ as t, i as n, n as r, o as i, p as a, s as o, v as s, y as c 
 import { t as l } from "./renderer-CQRXHm3p.mjs";
 import { a as u, g as d, i as f } from "./store-Dol3XeT3.mjs";
 import { t as p } from "./audio-engine-CmA_oANp.mjs";
-import { a as m, c as h, n as g, o as _, s as v } from "./room-B7DOQicQ.mjs";
+import { a as m, i as h, n as g, r as _ } from "./TessellateModifier-C1tXMs2g.mjs";
 import "./acoustics-DtDxi75Z.mjs";
-import { n as y } from "./air-attenuation-BJnoHmX2.mjs";
-import { a as b, o as x, r as S } from "./export-playback-CgbEgL1N.mjs";
-import { t as C } from "./sound-speed-CfEkirc1.mjs";
-import { t as w } from "./solver-DovuaY8D.mjs";
+import { n as v } from "./air-attenuation-BJnoHmX2.mjs";
+import { t as y } from "./geometric-spreading-RO5977E6.mjs";
+import { t as b } from "./sound-speed-CfEkirc1.mjs";
+import { n as x } from "./room-BkgInsAr.mjs";
+import { t as S } from "./solver-DovuaY8D.mjs";
+import { a as C, r as w } from "./export-playback-BZxoZ2U1.mjs";
 import * as T from "three";
 import { Vector3 as E } from "three";
 import { MeshLine as D, MeshLineMaterial as O } from "three.meshline";
@@ -136,7 +138,7 @@ var A = class {
 		return e;
 	}
 	arrivalPressure(e, t, n = 20) {
-		let r = v(_(e)), i = x(this.totalLength);
+		let r = h(_(e)), i = y(this.totalLength);
 		for (let e = 0; e < r.length; e++) r[e] = r[e] * i;
 		for (let e = 0; e < this.path.length; e++) {
 			let n = this.path[e];
@@ -145,7 +147,7 @@ var A = class {
 				r[e] = r[e] * i;
 			}
 		}
-		let a = h(m(r)), o = y(t, n);
+		let a = m(g(r)), o = v(t, n);
 		for (let e = 0; e < t.length; e++) a[e] = a[e] - o[e] * this.totalLength;
 		return _(a);
 	}
@@ -175,7 +177,7 @@ var A = class {
 		4e3,
 		8e3
 	]
-}, N = class extends w {
+}, N = class extends S {
 	sourceIDs;
 	receiverIDs;
 	roomID;
@@ -208,7 +210,7 @@ var A = class {
 			uuid: this.levelTimeProgression,
 			from: this.uuid
 		}), this.surfaceIDs = [], this.rootImageSource = null, this.allRayPaths = null, this.validRayPaths = null;
-		let i = g();
+		let i = x();
 		this.roomID = i[0].uuid, this.selectedImageSourcePath = k(), l.markup.add(this.selectedImageSourcePath);
 	}
 	save() {
@@ -285,7 +287,7 @@ var A = class {
 			let a = r[t].arrivalTime(e), o = r[t].arrivalPressure(i.info.initialSPL, i.info.frequency, this.temperature);
 			n && console.log("Arrival: " + (t + 1) + " | Arrival Time: (s) " + a + " | Arrival Pressure(1000Hz): " + o + " | Order " + r[t].order), i.data.push({
 				time: a,
-				pressure: h(o),
+				pressure: m(o),
 				arrival: t + 1,
 				order: r[t].order,
 				uuid: r[t].uuid
@@ -361,7 +363,7 @@ var A = class {
 	toggleRayPathHighlight(e) {
 		if (this.validRayPaths != null) {
 			for (let t = 0; t < this.validRayPaths.length; t++) if (e === this.validRayPaths[t].uuid) {
-				this.updateSelectedImageSourcePath(this.validRayPaths[t]), console.log("WILL HIGHLIGHT RAY PATH WITH ARRIVAL SPL " + h(this.validRayPaths[t].arrivalPressure([100], [1e3], this.temperature)) + " AND ARRIVAL TIME " + this.validRayPaths[t].arrivalTime(this.c));
+				this.updateSelectedImageSourcePath(this.validRayPaths[t]), console.log("WILL HIGHLIGHT RAY PATH WITH ARRIVAL SPL " + m(this.validRayPaths[t].arrivalPressure([100], [1e3], this.temperature)) + " AND ARRIVAL TIME " + this.validRayPaths[t].arrivalTime(this.c));
 				break;
 			}
 		}
@@ -390,11 +392,11 @@ var A = class {
 		}
 	}
 	async playImpulseResponse() {
-		let e = await b(this.impulseResponse, () => this.calculateImpulseResponse(), this.uuid, "IMAGESOURCE_SET_PROPERTY");
+		let e = await C(this.impulseResponse, () => this.calculateImpulseResponse(), this.uuid, "IMAGESOURCE_SET_PROPERTY");
 		this.impulseResponse = e.impulseResponse;
 	}
 	async downloadImpulseResponse(e, t = 44100) {
-		let n = await S(this.impulseResponse, () => this.calculateImpulseResponse(), e, t);
+		let n = await w(this.impulseResponse, () => this.calculateImpulseResponse(), e, t);
 		this.impulseResponse = n.impulseResponse;
 	}
 	get sources() {
@@ -467,7 +469,7 @@ var A = class {
 		return this.room?.temperature ?? 20;
 	}
 	get c() {
-		return C(this.temperature);
+		return b(this.temperature);
 	}
 	set plotFrequency(e) {
 		this._plotFrequency = e, this.calculateLTP();
@@ -541,4 +543,4 @@ c("IMAGESOURCE_SET_PROPERTY", i), c("REMOVE_IMAGESOURCE", n), c("ADD_IMAGESOURCE
 //#endregion
 export { N as ImageSourceSolver, N as default };
 
-//# sourceMappingURL=image-source-BRteP51L.mjs.map
+//# sourceMappingURL=image-source-ayxZMzzr.mjs.map

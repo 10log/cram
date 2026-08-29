@@ -2,13 +2,15 @@ import { O as __toESM, S as v4, _ as emit, i as removeSolver, n as addSolver, o 
 import { f as lerp, t as renderer } from "./renderer-CQRXHm3p.mjs";
 import { a as useResult, g as useContainer, i as ResultKind } from "./store-Dol3XeT3.mjs";
 import { n as normalize$1, r as wavAsBlob, t as audioEngine } from "./audio-engine-CmA_oANp.mjs";
-import { a as I2P, c as P2Lp, i as numbersEqualWithinTolerence, n as getRooms, o as Lp2P, r as Surface, s as P2I } from "./room-B7DOQicQ.mjs";
+import { a as P2Lp } from "./TessellateModifier-C1tXMs2g.mjs";
 import "./acoustics-DtDxi75Z.mjs";
 import { n as airAttenuation } from "./air-attenuation-BJnoHmX2.mjs";
-import { a as playImpulseResponse, i as playBinauralImpulseResponse, n as downloadBinauralImpulseResponse, o as spreadingFactor, r as downloadImpulseResponse, t as downloadAmbisonicImpulseResponse } from "./export-playback-CgbEgL1N.mjs";
 import { t as soundSpeed } from "./sound-speed-CfEkirc1.mjs";
+import { i as numbersEqualWithinTolerence, n as getRooms, r as Surface } from "./room-BkgInsAr.mjs";
 import { r as loadDecoderFilters } from "./hrtf-data-D6qGJN2M.mjs";
 import { t as Solver } from "./solver-DovuaY8D.mjs";
+import { a as playImpulseResponse, i as playBinauralImpulseResponse, n as downloadBinauralImpulseResponse, r as downloadImpulseResponse, t as downloadAmbisonicImpulseResponse } from "./export-playback-BZxoZ2U1.mjs";
+import { n as directivityBandEnergy, t as calculateArrivalPressure } from "./arrival-pressure-Da2OR1wk.mjs";
 import * as THREE from "three";
 import chroma from "chroma-js";
 import { MeshLine, MeshLineMaterial } from "three.meshline";
@@ -17637,76 +17639,6 @@ function registerBeamTraceEvents(e) {
 	});
 }
 //#endregion
-//#region src/common/dir-angle-conversions.ts
-function threejsdir2cramangle(e, t, n) {
-	let r = Math.sqrt(e * e + t * t + n * n);
-	if (r < 1e-10) return [0, 0];
-	let i = Math.acos(Math.min(1, Math.max(-1, t / r))), a = Math.atan2(e, n), o = 180 / Math.PI * i;
-	return [((360 - 180 / Math.PI * a) % 360 + 360) % 360, o];
-}
-function worldDirToCramAngles(e, t) {
-	if (e.lengthSq() < 1e-20) return [0, 0];
-	let n = e.clone().normalize().applyQuaternion(t.clone().invert()), [r, i] = threejsdir2cramangle(n.x, n.y, n.z);
-	return [r, i];
-}
-//#endregion
-//#region src/compute/beam-trace/arrival-pressure.ts
-function directivityBandEnergy(e, t, n, r, i) {
-	let a = Array(i.length).fill(1);
-	if (r.lengthSq() < 1e-20) return a;
-	let [o, s] = worldDirToCramAngles(r, n);
-	for (let n = 0; n < i.length; n++) try {
-		let r = e.getPressureAtPosition(0, i[n], o, s), c = t[n];
-		typeof r == "number" && typeof c == "number" && c > 0 && (a[n] = (r / c) ** 2);
-	} catch {}
-	return a;
-}
-function calculateArrivalPressure(e, t, n) {
-	let { frequencies: r, temperature: i, receiverGain: a = 1, source: o = null, polygonToSurface: s } = n;
-	if (t.bandEnergy) {
-		let n = P2I(Lp2P(e)), i = t.points.length - 1, o = i >= 1 ? t.points[i].distanceTo(t.points[i - 1]) : t.length, s = spreadingFactor(o), c = Array(r.length);
-		for (let e = 0; e < r.length; e++) {
-			let r = n[e] * t.bandEnergy[e] * s;
-			c[e] = I2P([r])[0] * a;
-		}
-		return c;
-	}
-	let c = spreadingFactor(t.length), l = P2I(Lp2P(e));
-	for (let e = 0; e < l.length; e++) l[e] *= c;
-	let u = t.points.length - 1;
-	if (u >= 1 && o?.directivityHandler) {
-		let e = t.points[u], n = t.points[u - 1], i = new THREE.Vector3().subVectors(n, e), a = Array(r.length);
-		for (let e = 0; e < r.length; e++) a[e] = o.directivityHandler.getPressureAtPosition(0, r[e], 0, 0);
-		let s = directivityBandEnergy(o.directivityHandler, a, o.quaternion, i, r);
-		for (let e = 0; e < r.length; e++) l[e] *= s[e];
-	}
-	let d = 0;
-	t.polygonIds.forEach((e, n) => {
-		if (e === null) return;
-		let i = s?.get(e);
-		if (!i) {
-			d++;
-			return;
-		}
-		let a = 0;
-		if (t.reflections && d < t.reflections.length) a = t.reflections[d].incidenceAngle;
-		else if (n > 0 && n < t.points.length - 1) {
-			let e = new THREE.Vector3().subVectors(t.points[n + 1], t.points[n]).normalize(), r = new THREE.Vector3().subVectors(t.points[n - 1], t.points[n]).normalize(), i = Math.min(1, Math.max(-1, e.dot(r)));
-			a = Math.acos(i) / 2;
-		}
-		d++;
-		for (let e = 0; e < r.length; e++) {
-			let t = Math.abs(i.reflectionFunction(r[e], a));
-			l[e] *= t;
-		}
-	});
-	let f = P2Lp(I2P(l)), p = airAttenuation(r, i);
-	for (let e = 0; e < r.length; e++) f[e] -= p[e] * t.length;
-	let m = Lp2P(f);
-	if (a !== 1) for (let e = 0; e < m.length; e++) m[e] *= a;
-	return m;
-}
-//#endregion
 //#region src/common/arrival-direction.ts
 function lookingBackArrivalDirection(e, t) {
 	let n = t.x - e.x, r = t.y - e.y, i = t.z - e.z, a = Math.hypot(n, r, i);
@@ -18925,4 +18857,4 @@ registerBeamTraceEvents(BeamTraceSolver);
 //#endregion
 export { BeamTraceSolver, BeamTraceSolver as default };
 
-//# sourceMappingURL=beam-trace-D1Oty2Gv.mjs.map
+//# sourceMappingURL=beam-trace-5UOleGTi.mjs.map

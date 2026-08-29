@@ -36,7 +36,7 @@ export declare function shootFromPatch(ctx: ShootingContext, patchIdx: number): 
 /**
  * Inject source emission into visible patches.
  */
-export declare function injectSourceEnergy(sourcePosition: Vector3, initialEnergy: number, ctx: ShootingContext, nRays?: number): void;
+export declare function injectSourceEnergy(sourcePosition: Vector3, initialEnergy: number, ctx: ShootingContext, nRays?: number, rayWeight?: (dir: Vector3) => number): void;
 /**
  * Gather energy at a receiver position from all visible patches.
  * Returns a single time-domain response buffer (the impulse response).
