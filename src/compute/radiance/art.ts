@@ -13,6 +13,7 @@ import { ResultKind, Result } from "../../store/result-store";
 import { whole_octave } from "../acoustics";
 import { soundSpeed } from "../acoustics/sound-speed";
 import { airAttenuation } from "../acoustics/air-attenuation";
+import { directPathEnergy, directPathSampleIndex, pickDirectAirFrequency } from "./direct-path";
 import Room from "../../objects/room";
 import Source from "../../objects/source";
 import Receiver from "../../objects/receiver";
@@ -238,23 +239,7 @@ export class ART extends Solver {
           bandResponses.push(bandResponse);
         }
 
-        // Step 7: Add direct path contribution (source → receiver)
-        const directDist = sourcePos.distanceTo(receiverPos);
-        if (directDist > 1e-6) {
-          const directDelaySamples = (directDist / c) * this.sampleRate;
-          const directIdx = Math.round(directDelaySamples);
-          // Sum air attenuation across all frequency bands for broadband direct path
-          for (let b = 0; b < bandResponses.length; b++) {
-            const airAbsDb = airAttenuation([this.frequencies[b]], this.temperature)[0];
-            const airAbsNepers = airAbsDb / (20 / Math.LN10);
-            const directAtten = Math.exp(-airAbsNepers * directDist) / (directDist * directDist);
-            if (directIdx < bandResponses[b].buffer.length) {
-              bandResponses[b].buffer[directIdx] += this.initialEnergy * directAtten;
-            }
-          }
-        }
-
-        // Step 8: Combine frequency bands by summing
+        // Step 7: Combine frequency bands (reflected energy only)
         let maxLen = 0;
         for (const br of bandResponses) {
           if (br.buffer.length > maxLen) maxLen = br.buffer.length;
@@ -264,6 +249,21 @@ export class ART extends Solver {
         for (const br of bandResponses) {
           for (let i = 0; i < br.buffer.length; i++) {
             combined[i] += br.buffer[i];
+          }
+        }
+
+        // Step 8: Direct path once onto the broadband sum — not once per band.
+        const directDist = sourcePos.distanceTo(receiverPos);
+        if (directDist > 1e-6 && combined.length > 0) {
+          const directFreq = pickDirectAirFrequency(this.frequencies);
+          const airAbsDb = airAttenuation([directFreq], this.temperature)[0];
+          const directIdx = directPathSampleIndex(directDist, c, this.sampleRate);
+          if (directIdx >= 0 && directIdx < combined.length) {
+            combined[directIdx] += directPathEnergy({
+              energy: this.initialEnergy,
+              distance: directDist,
+              airAbsDbPerMeter: airAbsDb,
+            });
           }
         }
 
