@@ -51,6 +51,10 @@ describe('useResult', () => {
     it('has ImpulseResponse kind', () => {
       expect(ResultKind.ImpulseResponse).toBe('impulseResponse');
     });
+
+    it('has EnergyDecay kind', () => {
+      expect(ResultKind.EnergyDecay).toBe('energyDecay');
+    });
   });
 
   describe('set() with Immer', () => {

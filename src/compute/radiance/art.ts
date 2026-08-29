@@ -14,6 +14,7 @@ import { whole_octave } from "../acoustics";
 import { soundSpeed } from "../acoustics/sound-speed";
 import { airAttenuation } from "../acoustics/air-attenuation";
 import { directPathEnergy, directPathSampleIndex, pickDirectAirFrequency } from "./direct-path";
+import { downsampleEnergyEnvelope } from "./energy-decay";
 import Room from "../../objects/room";
 import Source from "../../objects/source";
 import Receiver from "../../objects/receiver";
@@ -267,45 +268,20 @@ export class ART extends Solver {
           }
         }
 
-        // Normalize to max amplitude
-        let maxVal = 0;
-        for (let i = 0; i < combined.length; i++) {
-          if (Math.abs(combined[i]) > maxVal) maxVal = Math.abs(combined[i]);
-        }
-        if (maxVal > 0) {
-          for (let i = 0; i < combined.length; i++) {
-            combined[i] /= maxVal;
-          }
-        }
-
-        // Step 9: Emit result
-        const displayData: { time: number; amplitude: number }[] = [];
-        const step = Math.max(1, Math.floor(combined.length / 2000));
-        for (let i = 0; i < combined.length; i += step) {
-          displayData.push({
-            time: i / this.sampleRate,
-            amplitude: combined[i],
-          });
-        }
-
-        // Trim trailing silence
-        let lastNonZero = displayData.length - 1;
-        while (lastNonZero > 0 && Math.abs(displayData[lastNonZero].amplitude) < 1e-10) {
-          lastNonZero--;
-        }
-        const trimmedData = displayData.slice(0, lastNonZero + 1);
+        const trimmedData = downsampleEnergyEnvelope(combined, this.sampleRate);
 
         const sourceName = source.name || 'source';
         const receiverName = receiver.name || 'receiver';
-        const resultUuid = `${this.uuid}-art-ir-${source.uuid}-${receiver.uuid}`;
+        const resultUuid = `${this.uuid}-art-edc-${source.uuid}-${receiver.uuid}`;
 
-        const result: Result<ResultKind.ImpulseResponse> = {
-          kind: ResultKind.ImpulseResponse,
-          name: `ART IR: ${sourceName} → ${receiverName}`,
+        const result: Result<ResultKind.EnergyDecay> = {
+          kind: ResultKind.EnergyDecay,
+          name: `ART energy: ${sourceName} → ${receiverName}`,
           uuid: resultUuid,
           from: this.uuid,
           info: {
-            sampleRate: this.sampleRate,
+            binRate: this.sampleRate,
+            units: "energy",
             sourceName,
             receiverName,
             sourceId: source.uuid,
