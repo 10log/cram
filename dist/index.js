@@ -589,7 +589,7 @@ async function ti(e, t, n) {
 	return r(t, n);
 }
 ei("ray-tracer", async (e, t) => {
-	let { default: n } = await import("./raytracer-BuJPSqcP.mjs");
+	let { default: n } = await import("./raytracer-BaAt_D5l.mjs");
 	return new n(t);
 }), ei("image-source", async (e, t) => {
 	let { ImageSourceSolver: n } = await import("./image-source-BFv9Es5X.mjs");
@@ -628,7 +628,7 @@ ei("ray-tracer", async (e, t) => {
 	let { default: n } = await import("./2d-fdtd-Cv3UztGp.mjs");
 	return new n();
 }), ei("beam-trace", async (e, t) => {
-	let { BeamTraceSolver: n } = await import("./beam-trace-Daz4X9cy.mjs");
+	let { BeamTraceSolver: n } = await import("./beam-trace-CoFca5Js.mjs");
 	return new n();
 }), ei("art", async (e, t) => {
 	let { ART: n } = await import("./art-B1LA1FSI.mjs");
@@ -6683,7 +6683,7 @@ function Zo() {
 async function Qo(e, t) {
 	switch (e) {
 		case "ray-tracer": {
-			let { default: e } = await import("./raytracer-BuJPSqcP.mjs");
+			let { default: e } = await import("./raytracer-BaAt_D5l.mjs");
 			return new e(t).restore(t);
 		}
 		case "rt60": {
@@ -6699,7 +6699,7 @@ async function Qo(e, t) {
 			return new e(t).restore(t);
 		}
 		case "beam-trace": {
-			let { BeamTraceSolver: e } = await import("./beam-trace-Daz4X9cy.mjs");
+			let { BeamTraceSolver: e } = await import("./beam-trace-CoFca5Js.mjs");
 			return new e().restore(t);
 		}
 		default: throw Error(`Unknown solver kind: ${e}`);

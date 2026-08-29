@@ -16372,6 +16372,20 @@ function quickEstimateStep(e, t, n, r, i, a, o = QUICK_ESTIMATE_MAX_ORDER) {
 	};
 }
 //#endregion
+//#region src/common/arrival-direction.ts
+function lookingBackArrivalDirection(e, t) {
+	let n = t.x - e.x, r = t.y - e.y, i = t.z - e.z, a = Math.hypot(n, r, i);
+	return a < 1e-10 ? [
+		0,
+		0,
+		1
+	] : [
+		n / a,
+		r / a,
+		i / a
+	];
+}
+//#endregion
 //#region src/compute/shared/diffraction/edge-graph.ts
 function hashPointKeys(e, t, n, r) {
 	let i = e / r, a = t / r, o = n / r, s = Math.floor(i), c = Math.floor(a), l = Math.floor(o), u = [`${s},${c},${l}`], d = [
@@ -16586,6 +16600,6 @@ function findDiffractionPaths(e, t, n, r, i, a, o, s) {
 	return c;
 }
 //#endregion
-export { linearRegression as _, RT60_DECAY_RATIO as a, assembleFinalIR as c, encodeBufferFromDirection as d, getAmbisonicChannelCount as f, resampleResponseByIntensity as g, calculateT60 as h, QUICK_ESTIMATE_MAX_ORDER as i, extractDecayParameters as l, calculateT30 as m, buildEdgeGraph as n, calculateBinauralFromAmbisonic as o, calculateT20 as p, quickEstimateStep as r, applyAmbisonicTail as s, findDiffractionPaths as t, synthesizeTail as u, HISTOGRAM_BIN_WIDTH as v, HISTOGRAM_NUM_BINS as y };
+export { resampleResponseByIntensity as _, QUICK_ESTIMATE_MAX_ORDER as a, HISTOGRAM_NUM_BINS as b, applyAmbisonicTail as c, synthesizeTail as d, encodeBufferFromDirection as f, calculateT60 as g, calculateT30 as h, quickEstimateStep as i, assembleFinalIR as l, calculateT20 as m, buildEdgeGraph as n, RT60_DECAY_RATIO as o, getAmbisonicChannelCount as p, lookingBackArrivalDirection as r, calculateBinauralFromAmbisonic as s, findDiffractionPaths as t, extractDecayParameters as u, linearRegression as v, HISTOGRAM_BIN_WIDTH as y };
 
-//# sourceMappingURL=diffraction-CtLn0to_.mjs.map
+//# sourceMappingURL=diffraction-CWqEMcSR.mjs.map

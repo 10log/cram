@@ -4,15 +4,15 @@ import { a as d, g as f, i as p } from "./store-CUhn0IQy.mjs";
 import { n as m, r as h, t as g } from "./audio-engine-Cfjjb4lc.mjs";
 import "./acoustics-SIlOec_Y.mjs";
 import { a as _ } from "./TessellateModifier-C1tXMs2g.mjs";
-import { c as v, d as y, f as ee, g as b, l as x, n as S, o as C, r as te, s as ne, t as re, u as w, v as T, y as ie } from "./diffraction-CtLn0to_.mjs";
-import { t as ae } from "./sound-speed-CfEkirc1.mjs";
-import { n as oe } from "./room-Be5invjN.mjs";
-import { t as se } from "./solver-DCp-VMaM.mjs";
-import { a as ce, i as le, n as ue, r as de, t as fe } from "./export-playback-DJ-xd6_v.mjs";
-import { n as pe, t as me } from "./arrival-pressure-DNCFL7pm.mjs";
+import { _ as v, b as y, c as ee, d as b, f as te, i as x, l as ne, n as re, p as ie, r as S, s as ae, t as oe, u as C, y as w } from "./diffraction-CWqEMcSR.mjs";
+import { t as se } from "./sound-speed-CfEkirc1.mjs";
+import { n as ce } from "./room-Be5invjN.mjs";
+import { t as le } from "./solver-DCp-VMaM.mjs";
+import { a as ue, i as de, n as fe, r as pe, t as T } from "./export-playback-DJ-xd6_v.mjs";
+import { n as me, t as he } from "./arrival-pressure-DNCFL7pm.mjs";
 import * as E from "three";
 import D from "chroma-js";
-import { MeshLine as he, MeshLineMaterial as ge } from "three.meshline";
+import { MeshLine as ge, MeshLineMaterial as _e } from "three.meshline";
 Math.PI / 2 - 5 * Math.PI / 180;
 //#endregion
 //#region node_modules/beam-trace/dist/core/vector3.js
@@ -373,7 +373,7 @@ var O = {
 };
 //#endregion
 //#region node_modules/beam-trace/dist/geometry/polygon-split.js
-function _e(e, t, n = 1e-4) {
+function ve(e, t, n = 1e-4) {
 	let r = A.classify(e, t, n);
 	if (r === "front" || r === "coplanar") return {
 		front: e,
@@ -398,7 +398,7 @@ function _e(e, t, n = 1e-4) {
 }
 //#endregion
 //#region node_modules/beam-trace/dist/geometry/clipping3d.js
-function ve(e, t, n = 1e-4) {
+function ye(e, t, n = 1e-4) {
 	let r = e.vertices, i = [];
 	if (r.length < 3) return null;
 	for (let e = 0; e < r.length; e++) {
@@ -410,15 +410,15 @@ function ve(e, t, n = 1e-4) {
 	}
 	return i.length < 3 ? null : A.createWithPlane(i, e.plane, e.materialId);
 }
-function ye(e, t, n = 1e-4) {
+function be(e, t, n = 1e-4) {
 	let r = e;
 	for (let e of t) {
 		if (!r) return null;
-		r = ve(r, e, n);
+		r = ye(r, e, n);
 	}
 	return r;
 }
-function be(e, t, n = 1e-4) {
+function j(e, t, n = 1e-4) {
 	for (let r of t) {
 		let t = !0;
 		for (let i of e.vertices) if (k.signedDistance(i, r) >= -n) {
@@ -431,18 +431,18 @@ function be(e, t, n = 1e-4) {
 }
 //#endregion
 //#region node_modules/beam-trace/dist/structures/bsp3d.js
-function xe(e) {
-	return e.length === 0 ? null : j(e.map((e, t) => ({
+function M(e) {
+	return e.length === 0 ? null : N(e.map((e, t) => ({
 		polygon: e,
 		originalId: t
 	})));
 }
-function j(e) {
+function N(e) {
 	if (e.length === 0) return null;
-	let t = M(e), n = e[t], r = n.polygon.plane, i = [], a = [];
+	let t = xe(e), n = e[t], r = n.polygon.plane, i = [], a = [];
 	for (let n = 0; n < e.length; n++) {
 		if (n === t) continue;
-		let o = e[n], { front: s, back: c } = _e(o.polygon, r);
+		let o = e[n], { front: s, back: c } = ve(o.polygon, r);
 		s && i.push({
 			polygon: s,
 			originalId: o.originalId
@@ -455,11 +455,11 @@ function j(e) {
 		plane: r,
 		polygon: n.polygon,
 		polygonId: n.originalId,
-		front: j(i),
-		back: j(a)
+		front: N(i),
+		back: N(a)
 	};
 }
-function M(e) {
+function xe(e) {
 	if (e.length <= 3) return 0;
 	let t = 0, n = Infinity, r = Math.min(e.length, 10), i = Math.max(1, Math.floor(e.length / r));
 	for (let r = 0; r < e.length; r += i) {
@@ -474,7 +474,7 @@ function M(e) {
 	}
 	return t;
 }
-function N(e, t, n, r = 0, i = Infinity, a = -1) {
+function P(e, t, n, r = 0, i = Infinity, a = -1) {
 	if (!n) return null;
 	let o = k.signedDistance(e, n.plane), s = k.normal(n.plane), c = O.dot(s, t), l, u;
 	o >= 0 ? (l = n.front, u = n.back) : (l = n.back, u = n.front);
@@ -482,7 +482,7 @@ function N(e, t, n, r = 0, i = Infinity, a = -1) {
 	Math.abs(c) > 1e-10 && (d = -o / c);
 	let f = null;
 	if (d === null || d < r) {
-		if (f = N(e, t, l, r, i, a), !f && n.polygonId !== a) {
+		if (f = P(e, t, l, r, i, a), !f && n.polygonId !== a) {
 			let a = A.rayIntersection(e, t, n.polygon);
 			a && a.t >= r && a.t <= i && (f = {
 				t: a.t,
@@ -491,9 +491,9 @@ function N(e, t, n, r = 0, i = Infinity, a = -1) {
 				polygon: n.polygon
 			});
 		}
-		f ||= N(e, t, u, r, i, a);
+		f ||= P(e, t, u, r, i, a);
 	} else if (d > i) {
-		if (f = N(e, t, l, r, i, a), !f && n.polygonId !== a) {
+		if (f = P(e, t, l, r, i, a), !f && n.polygonId !== a) {
 			let a = A.rayIntersection(e, t, n.polygon);
 			a && a.t >= r && a.t <= i && (f = {
 				t: a.t,
@@ -502,9 +502,9 @@ function N(e, t, n, r = 0, i = Infinity, a = -1) {
 				polygon: n.polygon
 			});
 		}
-		f ||= N(e, t, u, r, i, a);
+		f ||= P(e, t, u, r, i, a);
 	} else {
-		if (f = N(e, t, l, r, d, a), !f && n.polygonId !== a) {
+		if (f = P(e, t, l, r, d, a), !f && n.polygonId !== a) {
 			let a = A.rayIntersection(e, t, n.polygon);
 			a && a.t >= r && a.t <= i && (f = {
 				t: a.t,
@@ -513,21 +513,21 @@ function N(e, t, n, r = 0, i = Infinity, a = -1) {
 				polygon: n.polygon
 			});
 		}
-		f ||= N(e, t, u, d, i, a);
+		f ||= P(e, t, u, d, i, a);
 	}
 	return f;
 }
-var P = 0;
-function F(e, t, n, r, i, a) {
+var F = 0;
+function I(e, t, n, r, i, a) {
 	if (!n) return null;
-	"  ".repeat(P);
+	"  ".repeat(F);
 	let o = k.signedDistance(e, n.plane), s = k.normal(n.plane), c = O.dot(s, t), l, u;
 	o >= 0 ? (l = n.front, u = n.back) : (l = n.back, u = n.front);
 	let d = null;
 	Math.abs(c) > 1e-10 && (d = -o / c);
 	let f = null;
 	if (d === null || d < r) {
-		if (P++, f = F(e, t, l, r, i, a), P--, !f && !a.has(n.polygonId)) {
+		if (F++, f = I(e, t, l, r, i, a), F--, !f && !a.has(n.polygonId)) {
 			let a = A.rayIntersection(e, t, n.polygon);
 			a && a.t >= r && a.t <= i && (f = {
 				t: a.t,
@@ -536,9 +536,9 @@ function F(e, t, n, r, i, a) {
 				polygon: n.polygon
 			});
 		}
-		f || (P++, f = F(e, t, u, r, i, a), P--);
+		f || (F++, f = I(e, t, u, r, i, a), F--);
 	} else if (d > i) {
-		if (P++, f = F(e, t, l, r, i, a), P--, !f && !a.has(n.polygonId)) {
+		if (F++, f = I(e, t, l, r, i, a), F--, !f && !a.has(n.polygonId)) {
 			let a = A.rayIntersection(e, t, n.polygon);
 			a && a.t >= r && a.t <= i && (f = {
 				t: a.t,
@@ -547,9 +547,9 @@ function F(e, t, n, r, i, a) {
 				polygon: n.polygon
 			});
 		}
-		f || (P++, f = F(e, t, u, r, i, a), P--);
+		f || (F++, f = I(e, t, u, r, i, a), F--);
 	} else {
-		if (P++, f = F(e, t, l, r, d, a), P--, !f && !a.has(n.polygonId)) {
+		if (F++, f = I(e, t, l, r, d, a), F--, !f && !a.has(n.polygonId)) {
 			let a = A.rayIntersection(e, t, n.polygon);
 			a && a.t >= r && a.t <= i && (f = {
 				t: a.t,
@@ -558,13 +558,13 @@ function F(e, t, n, r, i, a) {
 				polygon: n.polygon
 			});
 		}
-		f || (P++, f = F(e, t, u, d, i, a), P--);
+		f || (F++, f = I(e, t, u, d, i, a), F--);
 	}
 	return f;
 }
 //#endregion
 //#region node_modules/beam-trace/dist/structures/beam3d.js
-function I(e, t) {
+function L(e, t) {
 	let n = [], r = A.edges(t), i = A.centroid(t);
 	for (let [t, a] of r) {
 		let r = k.fromPoints(e, t, a);
@@ -573,10 +573,10 @@ function I(e, t) {
 	let a = t.plane;
 	return k.signedDistance(e, a) > 0 && (a = k.flip(a)), n.push(a), n;
 }
-function L(e, t) {
+function R(e, t) {
 	return k.mirrorPoint(e, t.plane);
 }
-function R(e, t) {
+function z(e, t) {
 	let n = A.centroid(e), r = O.subtract(t, n), i = k.normal(e.plane);
 	return O.dot(i, r) > 0;
 }
@@ -592,8 +592,8 @@ function Ce(e, t, n) {
 	};
 	if (n >= 1) for (let i = 0; i < t.length; i++) {
 		let a = t[i];
-		if (!R(a, e)) continue;
-		let o = L(e, a), s = I(o, a), c = {
+		if (!z(a, e)) continue;
+		let o = R(e, a), s = L(o, a), c = {
 			id: i,
 			parent: r,
 			virtualSource: o,
@@ -601,24 +601,24 @@ function Ce(e, t, n) {
 			boundaryPlanes: s,
 			children: []
 		};
-		r.children.push(c), n > 1 && z(c, t, 2, n);
+		r.children.push(c), n > 1 && B(c, t, 2, n);
 	}
 	let i = [];
-	return B(r, i), {
+	return V(r, i), {
 		root: r,
 		leafNodes: i,
 		polygons: t,
 		maxReflectionOrder: n
 	};
 }
-function z(e, t, n, r) {
+function B(e, t, n, r) {
 	if (!(n > r) && !(!e.boundaryPlanes || !e.aperture)) for (let i = 0; i < t.length; i++) {
 		if (i === e.id) continue;
 		let a = t[i];
-		if (be(a, e.boundaryPlanes) || !R(a, e.virtualSource)) continue;
-		let o = ye(a, e.boundaryPlanes);
+		if (j(a, e.boundaryPlanes) || !z(a, e.virtualSource)) continue;
+		let o = be(a, e.boundaryPlanes);
 		if (!o || A.area(o) < Se) continue;
-		let s = L(e.virtualSource, a), c = I(s, o), l = {
+		let s = R(e.virtualSource, a), c = L(s, o), l = {
 			id: i,
 			parent: e,
 			virtualSource: s,
@@ -626,19 +626,19 @@ function z(e, t, n, r) {
 			boundaryPlanes: c,
 			children: []
 		};
-		e.children.push(l), n < r && z(l, t, n + 1, r);
+		e.children.push(l), n < r && B(l, t, n + 1, r);
 	}
 }
-function B(e, t) {
+function V(e, t) {
 	e.children.length === 0 && e.id !== -1 && t.push(e);
-	for (let n of e.children) B(n, t);
+	for (let n of e.children) V(n, t);
 }
 function we(e) {
-	V(e.root);
+	H(e.root);
 }
-function V(e) {
+function H(e) {
 	e.failPlane = void 0, e.failPlaneType = void 0;
-	for (let t of e.children) V(t);
+	for (let t of e.children) H(t);
 }
 //#endregion
 //#region node_modules/beam-trace/dist/optimization/failplane3d.js
@@ -648,7 +648,7 @@ function Te(e, t, n) {
 	if (k.signedDistance(t.virtualSource, r) < 0 && (r = k.flip(r)), k.signedDistance(e, r) < 0) return {
 		plane: r,
 		type: "polygon",
-		nodeDepth: H(t)
+		nodeDepth: U(t)
 	};
 	let i = t.boundaryPlanes.length - 1;
 	for (let n = 0; n < t.boundaryPlanes.length; n++) {
@@ -656,12 +656,12 @@ function Te(e, t, n) {
 		if (k.signedDistance(e, r) < 0) return {
 			plane: r,
 			type: n < i ? "edge" : "aperture",
-			nodeDepth: H(t)
+			nodeDepth: U(t)
 		};
 	}
 	return null;
 }
-function H(e) {
+function U(e) {
 	let t = 0, n = e;
 	for (; n && n.id !== -1;) t++, n = n.parent;
 	return t;
@@ -696,7 +696,7 @@ function Ae(e, t) {
 		radius: n
 	};
 }
-function U(e) {
+function W(e) {
 	e.skipSphere = null;
 }
 function je(e) {
@@ -707,7 +707,7 @@ function je(e) {
 var Me = class {
 	constructor(e, t, n = {}) {
 		let r = n.maxReflectionOrder ?? 5, i = n.bucketSize ?? 16;
-		this.polygons = e, this.sourcePosition = O.clone(t), this.epsilon = n.epsilon ?? 1e-4, this.bspRoot = xe(e), this.beamTree = Ce(t, e, r), this.buckets = De(this.beamTree.leafNodes, i), this.metrics = this.createEmptyMetrics(), this.metrics.totalLeafNodes = this.beamTree.leafNodes.length, this.metrics.bucketsTotal = this.buckets.length;
+		this.polygons = e, this.sourcePosition = O.clone(t), this.epsilon = n.epsilon ?? 1e-4, this.bspRoot = M(e), this.beamTree = Ce(t, e, r), this.buckets = De(this.beamTree.leafNodes, i), this.metrics = this.createEmptyMetrics(), this.metrics.totalLeafNodes = this.beamTree.leafNodes.length, this.metrics.bucketsTotal = this.buckets.length;
 	}
 	getPaths(e) {
 		this.resetMetrics();
@@ -721,7 +721,7 @@ var Me = class {
 				this.metrics.bucketsSkipped++;
 				continue;
 			}
-			r === "outside" && (U(n), je(n)), this.metrics.bucketsChecked++;
+			r === "outside" && (W(n), je(n)), this.metrics.bucketsChecked++;
 			let i = !0, a = !0;
 			for (let r of n.nodes) {
 				if (r.failPlane && Ee(e, r.failPlane)) {
@@ -737,12 +737,12 @@ var Me = class {
 		return this.metrics.validPathCount = t.length, t;
 	}
 	getDetailedPaths(e) {
-		return this.getPaths(e).map((e) => Re(e, this.polygons));
+		return this.getPaths(e).map((e) => Le(e, this.polygons));
 	}
 	validateDirectPath(e) {
 		let t = O.subtract(this.sourcePosition, e), n = O.length(t), r = O.normalize(t);
 		this.metrics.raycastCount++;
-		let i = N(e, r, this.bspRoot, 0, n, -1);
+		let i = P(e, r, this.bspRoot, 0, n, -1);
 		return i && i.t < n - this.epsilon ? null : [{
 			position: O.clone(e),
 			polygonId: null
@@ -772,7 +772,7 @@ var Me = class {
 			let e = this.polygons[s.id], t = s.virtualSource, i = O.normalize(O.subtract(t, o)), a = A.rayIntersection(o, i, e);
 			if (!a) return n && console.log(`  [Segment ${l}] FAIL: No intersection with polygon ${s.id}`), null;
 			n && (console.log(`  [Segment ${l}] Ray from [${o[0].toFixed(3)}, ${o[1].toFixed(3)}, ${o[2].toFixed(3)}]`), console.log(`    Direction: [${i[0].toFixed(3)}, ${i[1].toFixed(3)}, ${i[2].toFixed(3)}]`), console.log(`    Hit polygon ${s.id} at t=${a.t.toFixed(3)}, point=[${a.point[0].toFixed(3)}, ${a.point[1].toFixed(3)}, ${a.point[2].toFixed(3)}]`)), c.add(s.id), this.metrics.raycastCount++;
-			let u = F(o, i, this.bspRoot, this.epsilon, a.t - this.epsilon, c);
+			let u = I(o, i, this.bspRoot, this.epsilon, a.t - this.epsilon, c);
 			if (u) return n && (console.log(`    OCCLUDED by polygon ${u.polygonId} at t=${u.t.toFixed(3)}, point=[${u.point[0].toFixed(3)}, ${u.point[1].toFixed(3)}, ${u.point[2].toFixed(3)}]`), console.log(`    ignoreIds: [${Array.from(c).join(", ")}]`)), null;
 			n && console.log(`    OK - no occlusion (ignoreIds: [${Array.from(c).join(", ")}])`), r.push({
 				position: O.clone(a.point),
@@ -796,7 +796,7 @@ var Me = class {
 				}
 			}
 			this.metrics.raycastCount++;
-			let i = this.epsilon, a = t - this.epsilon, l = F(o, e, this.bspRoot, i, a, c);
+			let i = this.epsilon, a = t - this.epsilon, l = I(o, e, this.bspRoot, i, a, c);
 			if (l) return n && console.log(`    OCCLUDED by polygon ${l.polygonId} at t=${l.t.toFixed(3)}, point=[${l.point[0].toFixed(3)}, ${l.point[1].toFixed(3)}, ${l.point[2].toFixed(3)}]`), null;
 			n && console.log("    OK - path valid!"), r.push({
 				position: O.clone(s.virtualSource),
@@ -844,7 +844,7 @@ var Me = class {
 	}
 	clearCache() {
 		we(this.beamTree);
-		for (let e of this.buckets) U(e);
+		for (let e of this.buckets) W(e);
 	}
 	getLeafNodeCount() {
 		return this.beamTree.leafNodes.length;
@@ -888,27 +888,27 @@ var Me = class {
 		this.metrics = this.createEmptyMetrics(), this.metrics.totalLeafNodes = e, this.metrics.bucketsTotal = t;
 	}
 };
-function W(e) {
+function G(e) {
 	let t = 0;
 	for (let n = 1; n < e.length; n++) t += O.distance(e[n - 1].position, e[n].position);
 	return t;
 }
 function Ne(e, t = 343) {
-	return W(e) / t;
+	return G(e) / t;
 }
-function Pe(e) {
+function K(e) {
 	return e.filter((e) => e.polygonId !== null).length;
 }
-var Fe = .05;
-function Ie(e, t) {
+var Pe = .05;
+function Fe(e, t) {
 	let n = Math.abs(O.dot(O.negate(e), t));
 	return Math.acos(Math.max(-1, Math.min(1, n)));
 }
-function Le(e, t) {
+function Ie(e, t) {
 	let n = k.normal(e.plane);
 	return O.dot(t, n) > 0 ? O.negate(n) : O.clone(n);
 }
-function Re(e, t) {
+function Le(e, t) {
 	if (e.length < 2) throw Error("Path must have at least 2 points (listener and source)");
 	let n = O.clone(e[0].position), r = O.clone(e[e.length - 1].position), i = [], a = [], o = 0;
 	for (let n = 0; n < e.length - 1; n++) {
@@ -923,9 +923,9 @@ function Re(e, t) {
 		if (l !== null) {
 			let a = t[l], s = e[n + 1].position, u = O.normalize(O.subtract(s, r)), d = e[n + 2]?.position, f;
 			f = d ? O.normalize(O.subtract(d, s)) : O.reflect(u, k.normal(a.plane));
-			let p = Le(a, u), m = Ie(u, p), h = m;
+			let p = Ie(a, u), m = Fe(u, p), h = m;
 			o += c;
-			let g = Math.abs(m - Math.PI / 2) < Fe;
+			let g = Math.abs(m - Math.PI / 2) < Pe;
 			i.push({
 				polygon: a,
 				polygonId: l,
@@ -954,7 +954,7 @@ function Re(e, t) {
 }
 //#endregion
 //#region node_modules/beam-trace/dist/beamtrace3d.js
-var G = class {
+var Re = class {
 	constructor(e) {
 		this.position = O.clone(e);
 	}
@@ -1023,12 +1023,12 @@ var G = class {
 	lateReverbTailEnabled: !1,
 	tailCrossfadeTime: 0,
 	tailCrossfadeDuration: .05
-}, Ve = /* @__PURE__ */ i(c()), K = () => new Worker(new URL(
+}, Ve = /* @__PURE__ */ i(c()), q = () => new Worker(new URL(
 	/* @vite-ignore */
 	"/assets/filter.worker-B2fYKvk6.js",
 	"" + import.meta.url
 ));
-function q(e, t) {
+function J(e, t) {
 	if (!e) return 1;
 	let n = t.arrivalDirection;
 	return e.getGain([
@@ -1043,25 +1043,25 @@ async function He(e) {
 	let u = g.sampleRate, d = Array(n.length).fill(100), f = t[t.length - 1].arrivalTime + .05, p = Math.floor(u * f) * 2, h = [];
 	for (let e = 0; e < n.length; e++) h.push(new Float32Array(p));
 	for (let e of t) {
-		let t = Math.random() > .5 ? 1 : -1, a = i(d, e, q(r, e)), o = Math.floor(e.arrivalTime * u);
+		let t = Math.random() > .5 ? 1 : -1, a = i(d, e, J(r, e)), o = Math.floor(e.arrivalTime * u);
 		for (let e = 0; e < n.length; e++) o < h[e].length && (h[e][o] += a[e] * t);
 	}
 	let _ = h;
 	if (a && o) {
-		let e = x(o, n, s, T), { tailSamples: t, tailStartSample: r } = w(e, u), i = Math.floor(c * u);
-		_ = v(h, t, r, i);
+		let e = C(o, n, s, w), { tailSamples: t, tailStartSample: r } = b(e, u), i = Math.floor(c * u);
+		_ = ne(h, t, r, i);
 	}
-	let y = K();
+	let v = q();
 	return new Promise((e, t) => {
-		y.postMessage({ samples: _ }), y.onmessage = (n) => {
+		v.postMessage({ samples: _ }), v.onmessage = (n) => {
 			let r = n.data.samples, i = new Float32Array(r[0].length >> 1), a = 0;
 			for (let e = 0; e < r.length; e++) for (let t = 0; t < i.length; t++) i[t] += r[e][t], Math.abs(i[t]) > a && (a = Math.abs(i[t]));
 			let o = m(i), s = g.createOfflineContext(1, i.length, u), c = g.createBufferSource(o, s);
 			c.connect(s.destination), c.start(), g.renderContextAsync(s).then((t) => {
 				l(t, u), e(t);
-			}).catch(t).finally(() => y.terminate());
-		}, y.onerror = (e) => {
-			y.terminate(), t(e);
+			}).catch(t).finally(() => v.terminate());
+		}, v.onerror = (e) => {
+			v.terminate(), t(e);
 		};
 	});
 }
@@ -1098,45 +1098,45 @@ async function We(e) {
 	if (f <= 0) throw Error("Invalid impulse response duration");
 	let p = Math.floor(u * f) * 2;
 	if (p < 2) throw Error("Impulse response too short to process");
-	let m = ee(l), h = [];
+	let m = ie(l), h = [];
 	for (let e = 0; e < n.length; e++) {
 		h.push([]);
 		for (let t = 0; t < m; t++) h[e].push(new Float32Array(p));
 	}
 	for (let e of t) {
-		let t = Math.random() > .5 ? 1 : -1, a = i(d, e, q(r, e)), o = Math.floor(e.arrivalTime * u);
+		let t = Math.random() > .5 ? 1 : -1, a = i(d, e, J(r, e)), o = Math.floor(e.arrivalTime * u);
 		if (o >= p) continue;
 		let s = /* @__PURE__ */ new Float32Array(1), c = e.arrivalDirection;
 		for (let e = 0; e < n.length; e++) {
 			s[0] = a[e] * t;
-			let n = y(s, c.x, c.y, c.z, l, "threejs");
+			let n = te(s, c.x, c.y, c.z, l, "threejs");
 			for (let t = 0; t < m; t++) h[e][t][o] += n[t][0];
 		}
 	}
 	if (a && o) {
-		let e = x(o, n, s, T), t = Math.floor(c * u);
-		ne(h, e, u, t);
+		let e = C(o, n, s, w), t = Math.floor(c * u);
+		ee(h, e, u, t);
 	}
 	let _ = async (e) => new Promise((t) => {
 		let r = [];
 		for (let t = 0; t < n.length; t++) r.push(h[t][e]);
-		let i = K();
+		let i = q();
 		i.postMessage({ samples: r }), i.onmessage = (e) => {
 			let n = e.data.samples, r = new Float32Array(n[0].length >> 1);
 			for (let e = 0; e < n.length; e++) for (let t = 0; t < r.length; t++) r[t] += n[e][t];
 			i.terminate(), t(r);
 		};
-	}), v = await Promise.all(Array.from({ length: m }, (e, t) => _(t))), b = 0;
-	for (let e of v) for (let t = 0; t < e.length; t++) Math.abs(e[t]) > b && (b = Math.abs(e[t]));
-	if (b > 0) for (let e of v) for (let t = 0; t < e.length; t++) e[t] /= b;
-	let S = v[0].length;
-	if (S === 0) throw Error("Filtered signal has zero length");
-	let C = g.createOfflineContext(m, S, u).createBuffer(m, S, u);
-	for (let e = 0; e < m; e++) C.copyToChannel(new Float32Array(v[e]), e);
-	return C;
+	}), v = await Promise.all(Array.from({ length: m }, (e, t) => _(t))), y = 0;
+	for (let e of v) for (let t = 0; t < e.length; t++) Math.abs(e[t]) > y && (y = Math.abs(e[t]));
+	if (y > 0) for (let e of v) for (let t = 0; t < e.length; t++) e[t] /= y;
+	let b = v[0].length;
+	if (b === 0) throw Error("Filtered signal has zero length");
+	let x = g.createOfflineContext(m, b, u).createBuffer(m, b, u);
+	for (let e = 0; e < m; e++) x.copyToChannel(new Float32Array(v[e]), e);
+	return x;
 }
 async function Ge(e) {
-	return C(e);
+	return ae(e);
 }
 function Ke(e) {
 	let { validPaths: t, frequencies: n, receiver: r, arrivalPressure: i, filename: a } = e, o = e.sampleRate ?? g.sampleRate;
@@ -1144,7 +1144,7 @@ function Ke(e) {
 	let s = Array(n.length).fill(100), c = [...t].sort((e, t) => e.arrivalTime - t.arrivalTime), l = c[c.length - 1].arrivalTime + .05, u = Math.floor(o * l), d = [];
 	for (let e = 0; e < n.length; e++) d.push(new Float32Array(u));
 	for (let e of c) {
-		let t = Math.random() > .5 ? 1 : -1, a = i(s, e, q(r, e)), c = Math.floor(e.arrivalTime * o);
+		let t = Math.random() > .5 ? 1 : -1, a = i(s, e, J(r, e)), c = Math.floor(e.arrivalTime * o);
 		for (let e = 0; e < n.length; e++) c < d[e].length && (d[e][c] += a[e] * t);
 	}
 	for (let e = 0; e < n.length; e++) {
@@ -1159,12 +1159,12 @@ function Ke(e) {
 //#region src/compute/beam-trace/results.ts
 function qe(e) {
 	let { validPaths: t, frequencies: n, receiver: r, arrivalPressure: i } = e, a = n.length, o = [];
-	for (let e = 0; e < a; e++) o.push(new Float32Array(ie));
+	for (let e = 0; e < a; e++) o.push(new Float32Array(y));
 	let s = Array(a).fill(100);
 	for (let e of t) {
-		let t = Math.floor(e.arrivalTime / T);
+		let t = Math.floor(e.arrivalTime / w);
 		if (t < 0 || t >= 1e4) continue;
-		let n = i(s, e, q(r, e));
+		let n = i(s, e, J(r, e));
 		for (let e = 0; e < a; e++) o[e][t] += n[e] * n[e];
 	}
 	return o;
@@ -1179,7 +1179,7 @@ function Je(e) {
 		frequency: [r]
 	};
 	for (let e = 0; e < c.length; e++) {
-		let t = c[e], n = q(o, t), r = s(u.info.initialSPL, t, n), i = _(r);
+		let t = c[e], n = J(o, t), r = s(u.info.initialSPL, t, n), i = _(r);
 		u.data.push({
 			time: t.arrivalTime,
 			pressure: i,
@@ -1196,7 +1196,7 @@ function Je(e) {
 function Ye(e) {
 	let { validPaths: t, frequencies: n, sourceId: r, receiverId: i, receiver: a, arrivalPressure: o } = e, s = Array(n.length).fill(100), c = [...t].sort((e, t) => e.arrivalTime - t.arrivalTime), l = [];
 	for (let e of c) {
-		let t = o(s, e, q(a, e));
+		let t = o(s, e, J(a, e));
 		l.push({
 			time: e.arrivalTime,
 			bounces: e.order,
@@ -1207,7 +1207,7 @@ function Ye(e) {
 		freqs: n,
 		response: l
 	} } };
-	return b(u, 256) ?? u;
+	return v(u, 256) ?? u;
 }
 //#endregion
 //#region src/compute/beam-trace/quick-estimate.ts
@@ -1220,7 +1220,7 @@ function Xe(e, t, n = 500) {
 	e.quickEstimateResults = [], e.estimatedT30 = null;
 	let i = 0;
 	e._quickEstimateInterval = window.setInterval(() => {
-		for (let a = 0; a < 10 && i < n; a++, i++) e.quickEstimateResults.push(te(e._raycaster, r, t.position, t.initialIntensity, e.frequencies, e.temperature));
+		for (let a = 0; a < 10 && i < n; a++, i++) e.quickEstimateResults.push(x(e._raycaster, r, t.position, t.initialIntensity, e.frequencies, e.temperature));
 		if (i >= n) {
 			window.clearInterval(e._quickEstimateInterval), e._quickEstimateInterval = null;
 			let t = e.frequencies.length, n = Array(t).fill(0), r = Array(t).fill(0);
@@ -1274,25 +1274,11 @@ function Ze(e) {
 	});
 }
 //#endregion
-//#region src/common/arrival-direction.ts
-function J(e, t) {
-	let n = t.x - e.x, r = t.y - e.y, i = t.z - e.z, a = Math.hypot(n, r, i);
-	return a < 1e-10 ? [
-		0,
-		0,
-		1
-	] : [
-		n / a,
-		r / a,
-		i / a
-	];
-}
-//#endregion
 //#region src/compute/beam-trace/paths.ts
 function Qe(e, t, n) {
-	let r = e.map((e) => new E.Vector3(e.position[0], e.position[1], e.position[2])), i = W(e), a = Ne(e, n), o = Pe(e), s = e.map((e) => e.polygonId), c;
+	let r = e.map((e) => new E.Vector3(e.position[0], e.position[1], e.position[2])), i = G(e), a = Ne(e, n), o = K(e), s = e.map((e) => e.polygonId), c;
 	if (r.length >= 2) {
-		let [e, t, n] = J(r[0], r[1]);
+		let [e, t, n] = S(r[0], r[1]);
 		c = new E.Vector3(e, t, n);
 	} else c = new E.Vector3(0, 0, 1);
 	let l = t?.reflections.map((e) => ({
@@ -1397,7 +1383,7 @@ function nt(e) {
 //#endregion
 //#region src/compute/beam-trace/diffraction.ts
 function rt(e) {
-	let { room: t, sourceId: n, receiverId: r, frequencies: i, speedOfSound: a, temperature: o, containers: s, raycaster: c } = e, l = S(t.allSurfaces);
+	let { room: t, sourceId: n, receiverId: r, frequencies: i, speedOfSound: a, temperature: o, containers: s, raycaster: c } = e, l = re(t.allSurfaces);
 	if (l.edges.length === 0) return {
 		paths: [],
 		edgeGraph: l
@@ -1430,27 +1416,27 @@ function rt(e) {
 	t.surfaces.traverse((e) => {
 		e.kind && e.kind === "surface" && h.push(e.mesh);
 	});
-	let g = re(l, u, p, i, a, o, c, h), _ = [];
+	let g = oe(l, u, p, i, a, o, c, h), _ = [];
 	for (let e of g) {
 		let t = d.get(e.sourceId);
 		if (t) {
-			let n = u.get(e.sourceId), r = new E.Vector3(e.diffractionPoint[0] - n[0], e.diffractionPoint[1] - n[1], e.diffractionPoint[2] - n[2]), a = pe(t.handler, t.refPressures, t.quaternion, r, i);
+			let n = u.get(e.sourceId), r = new E.Vector3(e.diffractionPoint[0] - n[0], e.diffractionPoint[1] - n[1], e.diffractionPoint[2] - n[2]), a = me(t.handler, t.refPressures, t.quaternion, r, i);
 			for (let t = 0; t < i.length; t++) e.bandEnergy[t] *= a[t];
 		}
 		let n = p.get(e.receiverId), r = {
 			x: e.diffractionPoint[0],
 			y: e.diffractionPoint[1],
 			z: e.diffractionPoint[2]
-		}, [a, o, s] = J({
+		}, a = {
 			x: n[0],
 			y: n[1],
 			z: n[2]
-		}, r), c = new E.Vector3(a, o, s), l = u.get(e.sourceId), f = new E.Vector3(n[0], n[1], n[2]), m = new E.Vector3(e.diffractionPoint[0], e.diffractionPoint[1], e.diffractionPoint[2]), h = new E.Vector3(l[0], l[1], l[2]);
+		}, [o, s, c] = S(a, r), l = new E.Vector3(o, s, c), f = u.get(e.sourceId), m = new E.Vector3(n[0], n[1], n[2]), h = new E.Vector3(e.diffractionPoint[0], e.diffractionPoint[1], e.diffractionPoint[2]), g = new E.Vector3(f[0], f[1], f[2]);
 		_.push({
 			points: [
-				f,
 				m,
-				h
+				h,
+				g
 			],
 			order: 0,
 			length: e.totalDistance,
@@ -1460,7 +1446,7 @@ function rt(e) {
 				null,
 				null
 			],
-			arrivalDirection: c,
+			arrivalDirection: l,
 			reflections: [],
 			bandEnergy: e.bandEnergy
 		});
@@ -1478,9 +1464,9 @@ function Y(e, t) {
 	return parseInt(a.hex().slice(1), 16);
 }
 function at() {
-	let e = new he();
+	let e = new ge();
 	e.setPoints(/* @__PURE__ */ new Float32Array());
-	let t = new ge({
+	let t = new _e({
 		lineWidth: .1,
 		color: 16711680,
 		sizeAttenuation: 1
@@ -1738,7 +1724,7 @@ function pt(e) {
 }
 //#endregion
 //#region src/compute/beam-trace/index.ts
-var $ = class extends se {
+var $ = class extends le {
 	roomID;
 	sourceIDs;
 	receiverIDs;
@@ -1791,7 +1777,7 @@ var $ = class extends se {
 			...t
 		};
 		if (this.kind = "beam-trace", this.uuid = n.uuid || e(), this.name = n.name, this.roomID = n.roomID, this.sourceIDs = n.sourceIDs, this.receiverIDs = n.receiverIDs, this.maxReflectionOrder = n.maxReflectionOrder, this.frequencies = n.frequencies, this.hrtfSubjectId = n.hrtfSubjectId, this.headYaw = n.headYaw, this.headPitch = n.headPitch, this.headRoll = n.headRoll, this.edgeDiffractionEnabled = n.edgeDiffractionEnabled, this.lateReverbTailEnabled = n.lateReverbTailEnabled, this.tailCrossfadeTime = n.tailCrossfadeTime, this.tailCrossfadeDuration = n.tailCrossfadeDuration, this._visualizationMode = n.visualizationMode, this._showAllBeams = n.showAllBeams, this._visibleOrders = n.visibleOrders.length > 0 ? n.visibleOrders : Array.from({ length: n.maxReflectionOrder + 1 }, (e, t) => t), this._plotFrequency = 1e3, this._plotOrders = Array.from({ length: n.maxReflectionOrder + 1 }, (e, t) => t), this.levelTimeProgression = n.levelTimeProgression || e(), this.impulseResponseResult = n.impulseResponseResult || e(), !this.roomID) {
-			let e = oe();
+			let e = ce();
 			e.length > 0 && (this.roomID = e[0].uuid);
 		}
 		l("ADD_RESULT", {
@@ -1824,7 +1810,7 @@ var $ = class extends se {
 		return this.room?.temperature ?? 20;
 	}
 	get c() {
-		return ae(this.temperature);
+		return se(this.temperature);
 	}
 	save() {
 		return {
@@ -1939,7 +1925,7 @@ var $ = class extends se {
 			e.position.y,
 			e.position.z
 		];
-		this.btSolver = new ze(this.polygons, new G(t), { maxReflectionOrder: this.maxReflectionOrder }), this._lastTreeSignature = this.currentTreeSignature(), console.log(`BeamTraceSolver: Built with ${this.polygons.length} polygons, max order ${this.maxReflectionOrder}`);
+		this.btSolver = new ze(this.polygons, new Re(t), { maxReflectionOrder: this.maxReflectionOrder }), this._lastTreeSignature = this.currentTreeSignature(), console.log(`BeamTraceSolver: Built with ${this.polygons.length} polygons, max order ${this.maxReflectionOrder}`);
 	}
 	calculate() {
 		if (this.sourceIDs.length === 0 || this.receiverIDs.length === 0) {
@@ -2071,7 +2057,7 @@ var $ = class extends se {
 	}
 	calculateArrivalPressure(e, t, n = 1) {
 		let r = this.sourceIDs.length > 0 ? f.getState().containers[this.sourceIDs[0]] : null;
-		return me(e, t, {
+		return he(e, t, {
 			frequencies: this.frequencies,
 			temperature: this.temperature,
 			receiverGain: n,
@@ -2103,11 +2089,11 @@ var $ = class extends se {
 		return this.impulseResponse = t, t;
 	}
 	async playImpulseResponse() {
-		let e = await ce(this.impulseResponse, () => this.calculateImpulseResponse(), this.uuid, "BEAMTRACE_SET_PROPERTY");
+		let e = await ue(this.impulseResponse, () => this.calculateImpulseResponse(), this.uuid, "BEAMTRACE_SET_PROPERTY");
 		this.impulseResponse = e.impulseResponse;
 	}
 	async downloadImpulseResponse(e, t = g.sampleRate) {
-		let n = await de(this.impulseResponse, () => this.calculateImpulseResponse(), e, t);
+		let n = await pe(this.impulseResponse, () => this.calculateImpulseResponse(), e, t);
 		this.impulseResponse = n.impulseResponse;
 	}
 	ambisonicImpulseResponse;
@@ -2127,7 +2113,7 @@ var $ = class extends se {
 		return this.ambisonicImpulseResponse = n, this.ambisonicOrder = e, n;
 	}
 	async downloadAmbisonicImpulseResponse(e, t = 1) {
-		let n = await fe(this.ambisonicImpulseResponse, (e) => this.calculateAmbisonicImpulseResponse(e), this.ambisonicOrder, t, e);
+		let n = await T(this.ambisonicImpulseResponse, (e) => this.calculateAmbisonicImpulseResponse(e), this.ambisonicOrder, t, e);
 		this.ambisonicImpulseResponse = n.ambisonicImpulseResponse, this.ambisonicOrder = n.ambisonicOrder;
 	}
 	async calculateBinauralImpulseResponse(e = 1) {
@@ -2141,11 +2127,11 @@ var $ = class extends se {
 		}), this.binauralImpulseResponse;
 	}
 	async playBinauralImpulseResponse(e = 1) {
-		let t = await le(this.binauralImpulseResponse, () => this.calculateBinauralImpulseResponse(e), this.uuid, "BEAMTRACE_SET_PROPERTY");
+		let t = await de(this.binauralImpulseResponse, () => this.calculateBinauralImpulseResponse(e), this.uuid, "BEAMTRACE_SET_PROPERTY");
 		this.binauralImpulseResponse = t.binauralImpulseResponse;
 	}
 	async downloadBinauralImpulseResponse(e, t = 1) {
-		let n = await ue(this.binauralImpulseResponse, () => this.calculateBinauralImpulseResponse(t), e);
+		let n = await fe(this.binauralImpulseResponse, () => this.calculateBinauralImpulseResponse(t), e);
 		this.binauralImpulseResponse = n.binauralImpulseResponse;
 	}
 	calculateResponseByIntensity() {
@@ -2278,4 +2264,4 @@ Ze($);
 //#endregion
 export { $ as BeamTraceSolver, $ as default };
 
-//# sourceMappingURL=beam-trace-Daz4X9cy.mjs.map
+//# sourceMappingURL=beam-trace-CoFca5Js.mjs.map
