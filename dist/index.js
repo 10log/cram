@@ -622,7 +622,7 @@ Qr("ray-tracer", async (e, t) => {
 	let { default: n } = await import("./energy-decay-B7jvteJw.mjs");
 	return new n();
 }), Qr("fdtd-2d", async (e, t) => {
-	let { default: n } = await import("./2d-fdtd-MBZysyHB.mjs");
+	let { default: n } = await import("./2d-fdtd-BVfMdj3k.mjs");
 	return new n();
 }), Qr("beam-trace", async (e, t) => {
 	let { BeamTraceSolver: n } = await import("./beam-trace-BVrpuQ_a.mjs");
@@ -6703,7 +6703,7 @@ async function Xo(e, t) {
 	}
 }
 function Zo() {
-	import("./events-DEzWOBFX.mjs").then((e) => e.default()), h("LOG_SOLVER", (e) => {
+	import("./events-DKMdEhuo.mjs").then((e) => e.default()), h("LOG_SOLVER", (e) => {
 		console.log(d.getState().solvers[e]);
 	}), h("REMOVE_SOLVERS", (e) => {
 		let t = d.getState().solvers, n = typeof e == "string" ? [e] : e;

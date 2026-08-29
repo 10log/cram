@@ -82,6 +82,7 @@ declare class FDTD_2D extends Solver {
     setDimmensions(width: number, height: number): void;
     init(): void;
     editSize(): void;
+    disposeGpu(): void;
     dispose(): void;
     run(): void;
     stop(): void;
