@@ -49,19 +49,19 @@ describe('Schroeder backwards integration - input mutation', () => {
     result.forEach(v => expect(Number.isFinite(v)).toBe(true));
   });
 
-  it('ends at 0 dB (full energy at cumulative end)', () => {
+  it('starts at 0 dB (full remaining energy at t=0)', () => {
     const input = new Float32Array([1, 0.8, 0.6, 0.4, 0.2, 0.1, 0.05]);
     const result = schroederBackwardsIntegration(input);
 
-    expect(result[result.length - 1]).toBeCloseTo(0, 1);
+    expect(result[0]).toBeCloseTo(0, 1);
   });
 
-  it('output is monotonically non-decreasing (cumulative property)', () => {
+  it('output is monotonically non-increasing (forward EDC)', () => {
     const input = new Float32Array([1, 0.9, 0.7, 0.5, 0.3, 0.1, 0.05, 0.01]);
     const result = schroederBackwardsIntegration(input);
 
     for (let i = 1; i < result.length; i++) {
-      expect(result[i]).toBeGreaterThanOrEqual(result[i - 1]);
+      expect(result[i]).toBeLessThanOrEqual(result[i - 1]);
     }
   });
 });
