@@ -4,7 +4,7 @@ import { a as te, c as ne, d as re, f as ie, g as E, h as ae, i as oe, l as se, 
 import { i as pe, r as me } from "./TessellateModifier-C1tXMs2g.mjs";
 import "./acoustics-DtDxi75Z.mjs";
 import { a as he, n as ge, t as _e } from "./recording-D5dcOUYq.mjs";
-import { r as ve, t as ye } from "./room-BkgInsAr.mjs";
+import { r as ve, t as ye } from "./room-CAL7Miyq.mjs";
 import "./css-B48fe771.mjs";
 import { n as be, t as xe } from "./hrtf-data-D6qGJN2M.mjs";
 import * as O from "three";
@@ -591,7 +591,7 @@ Qr("ray-tracer", async (e, t) => {
 	let { default: n } = await import("./raytracer-3ICWYPE3.mjs");
 	return new n(t);
 }), Qr("image-source", async (e, t) => {
-	let { ImageSourceSolver: n } = await import("./image-source-AZdQoLrj.mjs");
+	let { ImageSourceSolver: n } = await import("./image-source-D2qQTWiF.mjs");
 	return new n({
 		name: "Image Source",
 		roomID: "",
@@ -627,7 +627,7 @@ Qr("ray-tracer", async (e, t) => {
 	let { default: n } = await import("./2d-fdtd-F8WJ7MwT.mjs");
 	return new n();
 }), Qr("beam-trace", async (e, t) => {
-	let { BeamTraceSolver: n } = await import("./beam-trace-5UOleGTi.mjs");
+	let { BeamTraceSolver: n } = await import("./beam-trace-gxA3CV0T.mjs");
 	return new n();
 }), Qr("art", async (e, t) => {
 	let { ART: n } = await import("./art-7vt0Vmby.mjs");
@@ -6694,11 +6694,11 @@ async function Zo(e, t) {
 			return new e(t).restore(t);
 		}
 		case "image-source": {
-			let { default: e } = await import("./image-source-AZdQoLrj.mjs");
+			let { default: e } = await import("./image-source-D2qQTWiF.mjs");
 			return new e(t).restore(t);
 		}
 		case "beam-trace": {
-			let { BeamTraceSolver: e } = await import("./beam-trace-5UOleGTi.mjs");
+			let { BeamTraceSolver: e } = await import("./beam-trace-gxA3CV0T.mjs");
 			return new e().restore(t);
 		}
 		default: throw Error(`Unknown solver kind: ${e}`);

@@ -56,9 +56,13 @@ function g(e, t) {
 }
 //#endregion
 //#region src/compute/acoustics/reflection-coefficient.ts
+function _(e, t) {
+	let n = Math.sqrt(Math.max(0, 1 - e)), r = (1 - n) / (1 + n) * Math.abs(Math.cos(t));
+	return (r - 1) / (r + 1);
+}
 function pe(e, t) {
-	let n = Math.sqrt(1 - e), r = (1 - n) / (1 + n) * Math.abs(Math.cos(t));
-	return ((r - 1) / (r + 1)) ** 2;
+	let n = _(e, t);
+	return n * n;
 }
 //#endregion
 //#region src/common/discretize.ts
@@ -101,51 +105,26 @@ var he = class {
 	}
 }, ge = /* @__PURE__ */ e({
 	booleans: () => Ae,
-	color: () => W,
-	colorModule: () => W,
+	color: () => G,
+	colorModule: () => G,
 	connectors: () => nt,
 	expansions: () => qe,
 	extrusions: () => Ge,
-	geometry: () => j,
+	geometry: () => M,
 	hulls: () => Ye,
-	math: () => T,
+	math: () => E,
 	measurements: () => We,
 	primitives: () => De,
 	text: () => Ze,
 	transforms: () => Ue,
 	utils: () => et
-}), _ = await import(
+}), v = await import(
 	/* @vite-ignore */
 	(typeof window < "u" ? window.location.origin : "") + "/compute/modeling/jscad-modeling-bundle.js"
-).then((e) => e.default), { maths: _e } = _, { vec2: v, vec3: y, mat4: b, plane: x, line2: S, line3: C } = _e, ve = {
-	...v,
-	create: (e) => e ? v.fromValues(e[0] || 0, e[1] || 0) : v.create(),
-	fromArray: (e) => v.fromValues(e[0], e[1]),
-	fromValues: v.fromValues,
-	clone: v.clone,
-	add: v.add,
-	subtract: v.subtract,
-	scale: v.scale,
-	dot: v.dot,
-	cross: v.cross,
-	length: v.length,
-	normalize: v.normalize,
-	distance: v.distance,
-	equals: v.equals,
-	transform: v.transform,
-	negate: v.negate,
-	rotate: v.rotate,
-	angle: v.angle,
-	lerp: v.lerp,
-	min: v.min,
-	max: v.max,
-	abs: v.abs,
-	squaredLength: v.squaredLength,
-	squaredDistance: v.squaredDistance
-}, w = {
+).then((e) => e.default), { maths: _e } = v, { vec2: y, vec3: b, mat4: x, plane: S, line2: C, line3: w } = _e, ve = {
 	...y,
-	create: (e) => e ? y.fromValues(e[0] || 0, e[1] || 0, e[2] || 0) : y.create(),
-	fromArray: (e) => y.fromValues(e[0], e[1], e[2]),
+	create: (e) => e ? y.fromValues(e[0] || 0, e[1] || 0) : y.create(),
+	fromArray: (e) => y.fromValues(e[0], e[1]),
 	fromValues: y.fromValues,
 	clone: y.clone,
 	add: y.add,
@@ -159,67 +138,80 @@ var he = class {
 	equals: y.equals,
 	transform: y.transform,
 	negate: y.negate,
+	rotate: y.rotate,
 	angle: y.angle,
 	lerp: y.lerp,
 	min: y.min,
 	max: y.max,
 	abs: y.abs,
 	squaredLength: y.squaredLength,
-	squaredDistance: y.squaredDistance,
-	unit: y.normalize
+	squaredDistance: y.squaredDistance
 }, T = {
+	...b,
+	create: (e) => e ? b.fromValues(e[0] || 0, e[1] || 0, e[2] || 0) : b.create(),
+	fromArray: (e) => b.fromValues(e[0], e[1], e[2]),
+	fromValues: b.fromValues,
+	clone: b.clone,
+	add: b.add,
+	subtract: b.subtract,
+	scale: b.scale,
+	dot: b.dot,
+	cross: b.cross,
+	length: b.length,
+	normalize: b.normalize,
+	distance: b.distance,
+	equals: b.equals,
+	transform: b.transform,
+	negate: b.negate,
+	angle: b.angle,
+	lerp: b.lerp,
+	min: b.min,
+	max: b.max,
+	abs: b.abs,
+	squaredLength: b.squaredLength,
+	squaredDistance: b.squaredDistance,
+	unit: b.normalize
+}, E = {
 	vec2: ve,
-	vec3: w,
+	vec3: T,
 	mat4: {
-		...b,
-		create: b.create,
-		clone: b.clone,
-		identity: b.identity,
-		fromValues: b.fromValues,
-		fromTranslation: b.fromTranslation,
-		fromScaling: b.fromScaling,
-		fromRotation: b.fromRotation,
-		fromXRotation: b.fromXRotation,
-		fromYRotation: b.fromYRotation,
-		fromZRotation: b.fromZRotation,
-		fromTaitBryanRotation: b.fromTaitBryanRotation,
-		multiply: b.multiply,
-		translate: b.translate,
-		rotate: b.rotate,
-		rotateX: b.rotateX,
-		rotateY: b.rotateY,
-		rotateZ: b.rotateZ,
-		scale: b.scale,
-		invert: b.invert,
-		equals: b.equals,
-		mirrorByPlane: b.mirrorByPlane,
-		transform: b.transform
-	},
-	plane: {
 		...x,
 		create: x.create,
 		clone: x.clone,
+		identity: x.identity,
+		fromValues: x.fromValues,
+		fromTranslation: x.fromTranslation,
+		fromScaling: x.fromScaling,
+		fromRotation: x.fromRotation,
+		fromXRotation: x.fromXRotation,
+		fromYRotation: x.fromYRotation,
+		fromZRotation: x.fromZRotation,
+		fromTaitBryanRotation: x.fromTaitBryanRotation,
+		multiply: x.multiply,
+		translate: x.translate,
+		rotate: x.rotate,
+		rotateX: x.rotateX,
+		rotateY: x.rotateY,
+		rotateZ: x.rotateZ,
+		scale: x.scale,
+		invert: x.invert,
 		equals: x.equals,
-		flip: x.flip,
-		fromPoints: x.fromPoints,
-		fromNormalAndPoint: x.fromNormalAndPoint,
-		signedDistanceToPoint: x.signedDistanceToPoint,
-		transform: x.transform,
-		fromPointsRandom: (e, t, n) => x.fromPoints(x.create(), e, t, n)
+		mirrorByPlane: x.mirrorByPlane,
+		transform: x.transform
 	},
-	line2: {
+	plane: {
 		...S,
 		create: S.create,
 		clone: S.clone,
 		equals: S.equals,
+		flip: S.flip,
 		fromPoints: S.fromPoints,
-		direction: S.direction,
-		origin: S.origin,
-		closestPoint: S.closestPoint,
-		distanceToPoint: S.distanceToPoint,
-		transform: S.transform
+		fromNormalAndPoint: S.fromNormalAndPoint,
+		signedDistanceToPoint: S.signedDistanceToPoint,
+		transform: S.transform,
+		fromPointsRandom: (e, t, n) => S.fromPoints(S.create(), e, t, n)
 	},
-	line3: {
+	line2: {
 		...C,
 		create: C.create,
 		clone: C.clone,
@@ -231,70 +223,82 @@ var he = class {
 		distanceToPoint: C.distanceToPoint,
 		transform: C.transform
 	},
+	line3: {
+		...w,
+		create: w.create,
+		clone: w.clone,
+		equals: w.equals,
+		fromPoints: w.fromPoints,
+		direction: w.direction,
+		origin: w.origin,
+		closestPoint: w.closestPoint,
+		distanceToPoint: w.distanceToPoint,
+		transform: w.transform
+	},
 	constants: _e.constants
-}, { geometries: ye } = _, { geom2: E, geom3: D, path2: O, poly3: k } = ye, be = {
-	...E,
-	create: E.create,
-	clone: E.clone,
-	isA: E.isA,
-	toOutlines: E.toOutlines,
-	toPoints: E.toPoints,
-	transform: E.transform,
-	reverse: E.reverse
-}, A = {
+}, { geometries: ye } = v, { geom2: D, geom3: O, path2: k, poly3: A } = ye, be = {
 	...D,
 	create: D.create,
 	clone: D.clone,
 	isA: D.isA,
-	toPolygons: D.toPolygons,
+	toOutlines: D.toOutlines,
+	toPoints: D.toPoints,
 	transform: D.transform,
-	fromPolygons: (e) => {
-		let t = e.map((e) => k.isA(e) ? e : e.vertices ? k.create(e.vertices) : k.create(e));
-		return D.create(t);
-	}
+	reverse: D.reverse
 }, j = {
+	...O,
+	create: O.create,
+	clone: O.clone,
+	isA: O.isA,
+	toPolygons: O.toPolygons,
+	transform: O.transform,
+	fromPolygons: (e) => {
+		let t = e.map((e) => A.isA(e) ? e : e.vertices ? A.create(e.vertices) : A.create(e));
+		return O.create(t);
+	}
+}, M = {
 	geom2: be,
-	geom3: A,
+	geom3: j,
 	path2: {
-		...O,
-		create: O.create,
-		clone: O.clone,
-		isA: O.isA,
-		toPoints: O.toPoints,
-		transform: O.transform,
-		close: O.close,
-		concat: O.concat,
-		fromPoints: O.fromPoints,
-		appendPoints: O.appendPoints,
-		appendArc: O.appendArc,
-		appendBezier: O.appendBezier,
-		equals: O.equals,
-		reverse: O.reverse
-	},
-	poly3: {
 		...k,
 		create: k.create,
 		clone: k.clone,
 		isA: k.isA,
-		fromPoints: k.fromPoints,
-		toPoints: (e) => e.vertices || k.toVertices(e),
-		toVertices: k.toVertices,
+		toPoints: k.toPoints,
 		transform: k.transform,
+		close: k.close,
+		concat: k.concat,
+		fromPoints: k.fromPoints,
+		appendPoints: k.appendPoints,
+		appendArc: k.appendArc,
+		appendBezier: k.appendBezier,
+		equals: k.equals,
+		reverse: k.reverse
+	},
+	poly3: {
+		...A,
+		create: A.create,
+		clone: A.clone,
+		isA: A.isA,
+		fromPoints: A.fromPoints,
+		toPoints: (e) => e.vertices || A.toVertices(e),
+		toVertices: A.toVertices,
+		transform: A.transform,
 		plane: (e) => {
 			if (e.plane) return e.plane;
-			let t = e.vertices || k.toVertices(e);
-			return t.length >= 3 ? x.fromPoints(x.create(), t[0], t[1], t[2]) : x.create();
+			let t = e.vertices || A.toVertices(e);
+			return t.length >= 3 ? S.fromPoints(S.create(), t[0], t[1], t[2]) : S.create();
 		},
 		flip: (e) => ({
-			vertices: (e.vertices || k.toVertices(e)).slice().reverse(),
-			plane: e.plane ? x.flip(x.create(), e.plane) : null
+			vertices: (e.vertices || A.toVertices(e)).slice().reverse(),
+			plane: e.plane ? S.flip(S.create(), e.plane) : null
 		}),
 		fromPointsAndPlane: (e, t) => ({
 			vertices: e,
 			plane: t
 		}),
 		measureBoundingSphere: (e) => {
-			let t = e.vertices || k.toVertices(e);
+			let t = e.vertices || A.toVertices(e);
 			if (t.length === 0) return [[
 				0,
 				0,
@@ -315,34 +319,34 @@ var he = class {
 			return [n, Math.sqrt(r)];
 		}
 	}
-}, { primitives: M } = _, N = (e) => e.reduce((e, t) => Array.isArray(t) ? e.concat(N(t)) : e.concat(t), []), xe = (e = {}) => {
+}, { primitives: N } = v, P = (e) => e.reduce((e, t) => Array.isArray(t) ? e.concat(P(t)) : e.concat(t), []), xe = (e = {}) => {
 	let t = e.size ?? 1, n = Array.isArray(t) ? t : [
 		t,
 		t,
 		t
-	], r = e.center, i = M.cuboid({ size: n });
-	return r && (i = _.transforms.translate(r, i)), i;
+	], r = e.center, i = N.cuboid({ size: n });
+	return r && (i = v.transforms.translate(r, i)), i;
 }, Se = (e = {}) => {
-	let t = e.radius ?? e.r ?? 1, n = e.segments ?? e.resolution ?? 32, r = e.center, i = M.sphere({
+	let t = e.radius ?? e.r ?? 1, n = e.segments ?? e.resolution ?? 32, r = e.center, i = N.sphere({
 		radius: t,
 		segments: n
 	});
-	return r && (i = _.transforms.translate(r, i)), i;
+	return r && (i = v.transforms.translate(r, i)), i;
 }, Ce = (e = {}) => {
 	let t = e.radius ?? e.r ?? 1, n = e.height ?? e.h ?? 1, r = e.segments ?? e.resolution ?? 32, i = e.r1 ?? t, a = e.r2 ?? t, o = e.center, s;
-	return s = i === a ? M.cylinder({
+	return s = i === a ? N.cylinder({
 		radius: t,
 		height: n,
 		segments: r
-	}) : M.cylinderElliptic({
+	}) : N.cylinderElliptic({
 		height: n,
 		startRadius: [i, i],
 		endRadius: [a, a],
 		segments: r
-	}), o && (s = _.transforms.translate(o, s)), s;
+	}), o && (s = v.transforms.translate(o, s)), s;
 }, we = (e = {}) => {
 	let t = e.innerRadius ?? e.ri ?? 1, n = e.outerRadius ?? e.ro ?? 4, r = e.innerSegments ?? e.innerResolution ?? 32, i = e.outerSegments ?? e.outerResolution ?? 32;
-	return M.torus({
+	return N.torus({
 		innerRadius: t,
 		outerRadius: n,
 		innerSegments: r,
@@ -350,20 +354,20 @@ var he = class {
 	});
 }, Te = (e = {}) => {
 	let t = e.points || [], n = e.faces || e.triangles || [];
-	return M.polyhedron({
+	return N.polyhedron({
 		points: t,
 		faces: n
 	});
 }, Ee = (e = {}) => {
-	let t = e.size ?? [1, 1], n = e.center, r = M.rectangle({ size: t });
-	return n && (r = _.transforms.translate([
+	let t = e.size ?? [1, 1], n = e.center, r = N.rectangle({ size: t });
+	return n && (r = v.transforms.translate([
 		n[0],
 		n[1],
 		0
 	], r)), r;
 }, De = {
 	cube: xe,
-	cuboid: M.cuboid,
+	cuboid: N.cuboid,
 	sphere: Se,
 	cylinder: Ce,
 	torus: we,
@@ -371,210 +375,210 @@ var he = class {
 	rectangle: Ee,
 	square: Ee,
 	circle: (e = {}) => {
-		let t = e.radius ?? e.r ?? 1, n = e.segments ?? e.resolution ?? 32, r = e.center, i = M.circle({
+		let t = e.radius ?? e.r ?? 1, n = e.segments ?? e.resolution ?? 32, r = e.center, i = N.circle({
 			radius: t,
 			segments: n
 		});
-		return r && (i = _.transforms.translate([
+		return r && (i = v.transforms.translate([
 			r[0],
 			r[1],
 			0
 		], i)), i;
 	},
-	ellipse: M.ellipse,
+	ellipse: N.ellipse,
 	polygon: (e = {}) => {
 		let t = e.points || [];
-		return M.polygon({ points: t });
+		return N.polygon({ points: t });
 	},
-	arc: M.arc,
-	ellipsoid: M.ellipsoid,
-	geodesicSphere: M.geodesicSphere,
-	roundedCuboid: M.roundedCuboid,
-	roundedCylinder: M.roundedCylinder,
-	roundedRectangle: M.roundedRectangle,
-	star: M.star,
-	line: M.line
-}, { booleans: P } = _, Oe = (...e) => {
-	let t = N(e);
-	return t.length === 0 ? A.create() : t.length === 1 ? t[0] : P.union(t);
+	arc: N.arc,
+	ellipsoid: N.ellipsoid,
+	geodesicSphere: N.geodesicSphere,
+	roundedCuboid: N.roundedCuboid,
+	roundedCylinder: N.roundedCylinder,
+	roundedRectangle: N.roundedRectangle,
+	star: N.star,
+	line: N.line
+}, { booleans: F } = v, Oe = (...e) => {
+	let t = P(e);
+	return t.length === 0 ? j.create() : t.length === 1 ? t[0] : F.union(t);
 }, ke = (...e) => {
-	let t = N(e);
-	return t.length === 0 ? A.create() : t.length === 1 ? t[0] : P.subtract(t);
+	let t = P(e);
+	return t.length === 0 ? j.create() : t.length === 1 ? t[0] : F.subtract(t);
 }, Ae = {
 	union: Oe,
 	subtract: ke,
 	intersect: (...e) => {
-		let t = N(e);
-		return t.length === 0 ? A.create() : t.length === 1 ? t[0] : P.intersect(t);
+		let t = P(e);
+		return t.length === 0 ? j.create() : t.length === 1 ? t[0] : F.intersect(t);
 	},
 	difference: ke
-}, { transforms: F } = _, I = (e, ...t) => {
-	let n = N(t);
-	if (n.length === 0) return A.create();
-	let r = n.map((t) => F.translate(e, t));
+}, { transforms: I } = v, L = (e, ...t) => {
+	let n = P(t);
+	if (n.length === 0) return j.create();
+	let r = n.map((t) => I.translate(e, t));
 	return r.length === 1 ? r[0] : r;
-}, je = (e, ...t) => I([
+}, je = (e, ...t) => L([
 	e,
 	0,
 	0
-], ...t), Me = (e, ...t) => I([
+], ...t), Me = (e, ...t) => L([
 	0,
 	e,
 	0
-], ...t), Ne = (e, ...t) => I([
-	0,
-	0,
-	e
-], ...t), L = (e, ...t) => {
-	let n = N(t);
-	if (n.length === 0) return A.create();
-	let r = n.map((t) => F.rotate(e, t));
-	return r.length === 1 ? r[0] : r;
-}, Pe = (e, ...t) => L([
-	e,
-	0,
-	0
-], ...t), Fe = (e, ...t) => L([
-	0,
-	e,
-	0
-], ...t), Ie = (e, ...t) => L([
+], ...t), Ne = (e, ...t) => L([
 	0,
 	0,
 	e
 ], ...t), R = (e, ...t) => {
-	let n = N(t);
-	if (n.length === 0) return A.create();
-	let r = n.map((t) => F.scale(e, t));
+	let n = P(t);
+	if (n.length === 0) return j.create();
+	let r = n.map((t) => I.rotate(e, t));
 	return r.length === 1 ? r[0] : r;
-}, Le = (e, ...t) => R([
+}, Pe = (e, ...t) => R([
+	e,
+	0,
+	0
+], ...t), Fe = (e, ...t) => R([
+	0,
+	e,
+	0
+], ...t), Ie = (e, ...t) => R([
+	0,
+	0,
+	e
+], ...t), z = (e, ...t) => {
+	let n = P(t);
+	if (n.length === 0) return j.create();
+	let r = n.map((t) => I.scale(e, t));
+	return r.length === 1 ? r[0] : r;
+}, Le = (e, ...t) => z([
 	e,
 	1,
 	1
-], ...t), Re = (e, ...t) => R([
+], ...t), Re = (e, ...t) => z([
 	1,
 	e,
 	1
-], ...t), ze = (e, ...t) => R([
+], ...t), ze = (e, ...t) => z([
 	1,
 	1,
 	e
-], ...t), z = (e, ...t) => {
-	let n = N(t);
-	if (n.length === 0) return A.create();
-	let r = n.map((t) => F.mirror(e, t));
+], ...t), B = (e, ...t) => {
+	let n = P(t);
+	if (n.length === 0) return j.create();
+	let r = n.map((t) => I.mirror(e, t));
 	return r.length === 1 ? r[0] : r;
-}, Be = (...e) => z({ normal: [
+}, Be = (...e) => B({ normal: [
 	1,
 	0,
 	0
-] }, ...e), Ve = (...e) => z({ normal: [
+] }, ...e), Ve = (...e) => B({ normal: [
 	0,
 	1,
 	0
-] }, ...e), He = (...e) => z({ normal: [
+] }, ...e), He = (...e) => B({ normal: [
 	0,
 	0,
 	1
-] }, ...e), B = (e = {}, ...t) => {
-	let n = N(t);
-	if (n.length === 0) return A.create();
-	let r = n.map((t) => F.center(e, t));
+] }, ...e), V = (e = {}, ...t) => {
+	let n = P(t);
+	if (n.length === 0) return j.create();
+	let r = n.map((t) => I.center(e, t));
 	return r.length === 1 ? r[0] : r;
 }, Ue = {
-	translate: I,
+	translate: L,
 	translateX: je,
 	translateY: Me,
 	translateZ: Ne,
-	rotate: L,
+	rotate: R,
 	rotateX: Pe,
 	rotateY: Fe,
 	rotateZ: Ie,
-	scale: R,
+	scale: z,
 	scaleX: Le,
 	scaleY: Re,
 	scaleZ: ze,
-	mirror: z,
+	mirror: B,
 	mirrorX: Be,
 	mirrorY: Ve,
 	mirrorZ: He,
-	center: B,
-	centerX: (...e) => B({ axes: [
+	center: V,
+	centerX: (...e) => V({ axes: [
 		!0,
 		!1,
 		!1
 	] }, ...e),
-	centerY: (...e) => B({ axes: [
+	centerY: (...e) => V({ axes: [
 		!1,
 		!0,
 		!1
 	] }, ...e),
-	centerZ: (...e) => B({ axes: [
+	centerZ: (...e) => V({ axes: [
 		!1,
 		!1,
 		!0
 	] }, ...e),
 	transform: (e, ...t) => {
-		let n = N(t);
-		if (n.length === 0) return A.create();
-		let r = n.map((t) => F.transform(e, t));
+		let n = P(t);
+		if (n.length === 0) return j.create();
+		let r = n.map((t) => I.transform(e, t));
 		return r.length === 1 ? r[0] : r;
 	},
-	align: F.align
-}, { measurements: V } = _, We = {
-	measureArea: V.measureArea,
-	measureBoundingBox: V.measureBoundingBox,
-	measureBoundingSphere: V.measureBoundingSphere,
-	measureCenter: V.measureCenter,
-	measureCenterOfMass: V.measureCenterOfMass,
-	measureDimensions: V.measureDimensions,
-	measureVolume: V.measureVolume,
-	measureAggregateArea: V.measureAggregateArea,
-	measureAggregateVolume: V.measureAggregateVolume,
-	measureAggregateBoundingBox: V.measureAggregateBoundingBox,
-	measureEpsilon: V.measureEpsilon
-}, { extrusions: H } = _, Ge = {
+	align: I.align
+}, { measurements: H } = v, We = {
+	measureArea: H.measureArea,
+	measureBoundingBox: H.measureBoundingBox,
+	measureBoundingSphere: H.measureBoundingSphere,
+	measureCenter: H.measureCenter,
+	measureCenterOfMass: H.measureCenterOfMass,
+	measureDimensions: H.measureDimensions,
+	measureVolume: H.measureVolume,
+	measureAggregateArea: H.measureAggregateArea,
+	measureAggregateVolume: H.measureAggregateVolume,
+	measureAggregateBoundingBox: H.measureAggregateBoundingBox,
+	measureEpsilon: H.measureEpsilon
+}, { extrusions: U } = v, Ge = {
 	extrudeLinear: (e, ...t) => {
-		let n = N(t);
-		if (n.length === 0) return A.create();
-		let r = n.map((t) => H.extrudeLinear(e, t));
+		let n = P(t);
+		if (n.length === 0) return j.create();
+		let r = n.map((t) => U.extrudeLinear(e, t));
 		return r.length === 1 ? r[0] : r;
 	},
 	extrudeRotate: (e, ...t) => {
-		let n = N(t);
-		if (n.length === 0) return A.create();
-		let r = n.map((t) => H.extrudeRotate(e, t));
+		let n = P(t);
+		if (n.length === 0) return j.create();
+		let r = n.map((t) => U.extrudeRotate(e, t));
 		return r.length === 1 ? r[0] : r;
 	},
-	extrudeRectangular: H.extrudeRectangular,
-	extrudeFromSlices: H.extrudeFromSlices,
-	extrudeHelical: H.extrudeHelical
-}, { expansions: Ke } = _, qe = {
+	extrudeRectangular: U.extrudeRectangular,
+	extrudeFromSlices: U.extrudeFromSlices,
+	extrudeHelical: U.extrudeHelical
+}, { expansions: Ke } = v, qe = {
 	expand: (e, ...t) => {
-		let n = N(t);
-		if (n.length === 0) return A.create();
+		let n = P(t);
+		if (n.length === 0) return j.create();
 		let r = n.map((t) => Ke.expand(e, t));
 		return r.length === 1 ? r[0] : r;
 	},
 	offset: (e, ...t) => {
-		let n = N(t);
+		let n = P(t);
 		if (n.length === 0) return be.create();
 		let r = n.map((t) => Ke.offset(e, t));
 		return r.length === 1 ? r[0] : r;
 	}
-}, { hulls: Je } = _, Ye = {
+}, { hulls: Je } = v, Ye = {
 	hull: (...e) => {
-		let t = N(e);
-		return t.length === 0 ? A.create() : Je.hull(t);
+		let t = P(e);
+		return t.length === 0 ? j.create() : Je.hull(t);
 	},
 	hullChain: (...e) => {
-		let t = N(e);
-		return t.length === 0 ? A.create() : Je.hullChain(t);
+		let t = P(e);
+		return t.length === 0 ? j.create() : Je.hullChain(t);
 	}
-}, { text: Xe } = _, Ze = {
+}, { text: Xe } = v, Ze = {
 	vectorText: Xe.vectorText,
 	vectorChar: Xe.vectorChar
-}, { colors: U } = _, Qe = {
+}, { colors: W } = v, Qe = {
 	black: [
 		0,
 		0,
@@ -655,24 +659,24 @@ var he = class {
 		1,
 		1
 	]
-}, W = {
+}, G = {
 	color: (e, ...t) => {
 		let n;
-		n = typeof e == "string" ? [...Qe[e.toLowerCase()] || U.colorNameToRgb(e), 1] : e.length === 3 ? [...e, 1] : e;
-		let r = N(t).map((e) => U.colorize(n, e));
+		n = typeof e == "string" ? [...Qe[e.toLowerCase()] || W.colorNameToRgb(e), 1] : e.length === 3 ? [...e, 1] : e;
+		let r = P(t).map((e) => W.colorize(n, e));
 		return r.length === 1 ? r[0] : r;
 	},
 	cssColors: Qe,
-	colorize: U.colorize,
-	colorNameToRgb: U.colorNameToRgb,
-	hexToRgb: U.hexToRgb,
-	hslToRgb: U.hslToRgb,
-	hsvToRgb: U.hsvToRgb,
-	rgbToHex: U.rgbToHex,
-	rgbToHsl: U.rgbToHsl,
-	rgbToHsv: U.rgbToHsv
-}, { utils: $e } = _, et = {
-	flatten: N,
+	colorize: W.colorize,
+	colorNameToRgb: W.colorNameToRgb,
+	hexToRgb: W.hexToRgb,
+	hslToRgb: W.hslToRgb,
+	hsvToRgb: W.hsvToRgb,
+	rgbToHex: W.rgbToHex,
+	rgbToHsl: W.rgbToHsl,
+	rgbToHsv: W.rgbToHsv
+}, { utils: $e } = v, et = {
+	flatten: P,
 	degToRad: $e.degToRad,
 	radToDeg: $e.radToDeg
 }, tt = class e {
@@ -680,37 +684,37 @@ var he = class {
 	axisvector;
 	normalvector;
 	constructor(e, t, n) {
-		this.point = e, this.axisvector = w.normalize(w.create(), t), this.normalvector = w.normalize(w.create(), n);
+		this.point = e, this.axisvector = T.normalize(T.create(), t), this.normalvector = T.normalize(T.create(), n);
 	}
 	normalized() {
-		return new e(this.point, w.normalize(w.create(), this.axisvector), w.normalize(w.create(), this.normalvector));
+		return new e(this.point, T.normalize(T.create(), this.axisvector), T.normalize(T.create(), this.normalvector));
 	}
 	transform(t) {
-		let n = w.transform(w.create(), this.point, t), r = w.transform(w.create(), this.axisvector, t), i = w.transform(w.create(), this.normalvector, t);
+		let n = T.transform(T.create(), this.point, t), r = T.transform(T.create(), this.axisvector, t), i = T.transform(T.create(), this.normalvector, t);
 		return new e(n, r, i);
 	}
 }, nt = {
 	Connector: tt,
 	create: (e, t, n) => new tt(e, t, n)
-}, { plane: G, vec3: K } = T, { poly3: q } = j, J = 1e-5, rt = (e, t, n) => {
-	let r = K.subtract(K.create(), n, t), i = (e[3] - K.dot(e, t)) / K.dot(e, r);
+}, { plane: K, vec3: q } = E, { poly3: J } = M, Y = 1e-5, rt = (e, t, n) => {
+	let r = q.subtract(q.create(), n, t), i = (e[3] - q.dot(e, t)) / q.dot(e, r);
 	Number.isNaN(i) && (i = 0), i > 1 && (i = 1), i < 0 && (i = 0);
-	let a = K.create();
-	return K.scale(a, r, i), K.add(a, a, t), a;
+	let a = q.create();
+	return q.scale(a, r, i), q.add(a, a, t), a;
 }, it = (e, t) => {
 	let n = {
 		type: 0,
 		front: null,
 		back: null
-	}, r = t.vertices || q.toVertices(t), i = r.length, a = t.plane || (r.length >= 3 ? G.fromPoints(G.create(), r[0], r[1], r[2]) : G.create());
-	if (G.equals(a, e)) n.type = 0;
+	}, r = t.vertices || J.toVertices(t), i = r.length, a = t.plane || (r.length >= 3 ? K.fromPoints(K.create(), r[0], r[1], r[2]) : K.create());
+	if (K.equals(a, e)) n.type = 0;
 	else {
 		let t = !1, o = !1, s = [];
 		for (let n = 0; n < i; n++) {
-			let i = K.dot(e, r[n]) - e[3], a = i < 0;
-			s.push(a), i > J && (t = !0), i < -1e-5 && (o = !0);
+			let i = q.dot(e, r[n]) - e[3], a = i < 0;
+			s.push(a), i > Y && (t = !0), i < -1e-5 && (o = !0);
 		}
-		if (!t && !o) n.type = K.dot(e, a) >= 0 ? 0 : 1;
+		if (!t && !o) n.type = q.dot(e, a) >= 0 ? 0 : 1;
 		else if (!o) n.type = 2;
 		else if (!t) n.type = 3;
 		else {
@@ -727,19 +731,19 @@ var he = class {
 				}
 				c = u;
 			}
-			let l = J * J;
+			let l = Y * Y;
 			if (o.length >= 3) {
 				let e = o[o.length - 1];
 				for (let t = 0; t < o.length; t++) {
 					let n = o[t];
-					K.squaredDistance(n, e) < l && (o.splice(t, 1), t--), e = n;
+					q.squaredDistance(n, e) < l && (o.splice(t, 1), t--), e = n;
 				}
 			}
 			if (t.length >= 3) {
 				let e = t[t.length - 1];
 				for (let n = 0; n < t.length; n++) {
 					let r = t[n];
-					K.squaredDistance(r, e) < l && (t.splice(n, 1), n--), e = r;
+					q.squaredDistance(r, e) < l && (t.splice(n, 1), n--), e = r;
 				}
 			}
 			t.length >= 3 && (n.front = at(t, a)), o.length >= 3 && (n.back = at(o, a));
@@ -754,7 +758,7 @@ function at(e, t) {
 	};
 }
 function ot(e) {
-	let t = e.vertices || q.toVertices(e);
+	let t = e.vertices || J.toVertices(e);
 	if (t.length === 0) return [[
 		0,
 		0,
@@ -776,8 +780,8 @@ function ot(e) {
 }
 function st(e) {
 	return {
-		vertices: (e.vertices || q.toVertices(e)).slice().reverse(),
-		plane: e.plane ? G.flip(G.create(), e.plane) : null
+		vertices: (e.vertices || J.toVertices(e)).slice().reverse(),
+		plane: e.plane ? K.flip(K.create(), e.plane) : null
 	};
 }
 var ct = class e {
@@ -829,7 +833,7 @@ var ct = class e {
 	_splitByPlane(e, t, n, r, i) {
 		let a = this.polygon;
 		if (a) {
-			let [o, s] = ot(a), c = s + J, l = K.dot(e, o) - e[3];
+			let [o, s] = ot(a), c = s + Y, l = q.dot(e, o) - e[3];
 			if (l > c) r.push(this);
 			else if (l < -c) i.push(this);
 			else {
@@ -882,7 +886,7 @@ var ct = class e {
 			for (let t of n) t.polygon = null, t.parent = null, t.children.length > 0 && e.push(t.children), t.children = [];
 		}
 	}
-}, Y = class e {
+}, lt = class e {
 	plane = null;
 	front = null;
 	back = null;
@@ -895,7 +899,7 @@ var ct = class e {
 		let e = [this];
 		for (let t = 0; t < e.length; t++) {
 			let n = e[t];
-			n.plane &&= G.flip(G.create(), n.plane), n.front && e.push(n.front), n.back && e.push(n.back);
+			n.plane &&= K.flip(K.create(), n.plane), n.front && e.push(n.front), n.back && e.push(n.back);
 			let r = n.front;
 			n.front = n.back, n.back = r;
 		}
@@ -941,7 +945,7 @@ var ct = class e {
 			}
 			if (!t.plane) {
 				let e = i[Math.floor(i.length / 2)].getPolygon();
-				t.plane = e.plane || G.fromPoints(G.create(), e.vertices[0], e.vertices[1], e.vertices[2]);
+				t.plane = e.plane || K.fromPoints(K.create(), e.vertices[0], e.vertices[1], e.vertices[2]);
 			}
 			let a = [], o = [];
 			for (let e of i) e.splitByPlane(t.plane, t.polygontreenodes, o, a, o);
@@ -961,11 +965,11 @@ var ct = class e {
 			this.parent.plane[2]
 		]), this.parent.getParentPlaneNormals(e, t - 1));
 	}
-}, lt = class {
+}, ut = class {
 	polygonTree;
 	rootnode;
 	constructor(e) {
-		this.polygonTree = new ct(), this.rootnode = new Y(null), e && this.addPolygons(e);
+		this.polygonTree = new ct(), this.rootnode = new lt(null), e && this.addPolygons(e);
 	}
 	invert() {
 		this.polygonTree.invert(), this.rootnode.invert();
@@ -986,8 +990,8 @@ var ct = class e {
 ({ ...ge });
 var X = {
 	connectors: nt,
-	geometry: j,
-	math: T,
+	geometry: M,
+	math: E,
 	primitives: De,
 	text: Ze,
 	booleans: Ae,
@@ -996,31 +1000,31 @@ var X = {
 	hulls: Ye,
 	measurements: We,
 	transforms: Ue,
-	color: W,
+	color: G,
 	utils: et,
 	splitLineByPlane: rt,
 	splitPolygonByPlane: it,
-	Tree: lt,
+	Tree: ut,
 	PolygonTreeNode: ct,
-	Node: Y
+	Node: lt
 };
 //#endregion
 //#region src/common/equal-within-range.ts
-function ut(e) {
+function dt(e) {
 	return e ? (t) => (n, r) => e.reduce((e, i) => e && Math.abs(n[i] - r[i]) < t, !0) : (e) => (t, n) => Math.abs(t - n) < e;
 }
-var dt = ut();
+var ft = dt();
 //#endregion
 //#region src/compute/acoustics/scattering-function.ts
-function ft(e, t, n, r, i) {
+function pt(e, t, n, r, i) {
 	return t + (i - e) / (n - e) * (r - t);
 }
-var pt = (e, t) => {
+var mt = (e, t) => {
 	if (t <= e[0]) return [e[0], e[1]];
 	if (t >= e[e.length - 1]) return [e[e.length - 2], e[e.length - 1]];
 	for (let r = 1; r < e.length; r++) if (n(t, e[r - 1], e[r])) return [e[r - 1], e[r]];
 	throw Error("value could not be found within input array");
-}, mt = [
+}, ht = [
 	[
 		.003,
 		.003,
@@ -1081,7 +1085,7 @@ var pt = (e, t) => {
 		.977,
 		.989
 	]
-], ht = [
+], gt = [
 	63,
 	125,
 	250,
@@ -1098,13 +1102,13 @@ var pt = (e, t) => {
 	.8,
 	.9
 ];
-function gt(e) {
-	let [t, n] = pt(Z, e), r = mt[Z.indexOf(t)], i = mt[Z.indexOf(n)];
-	return g(r.map((a, o) => ft(t, r[o], n, i[o], e)), ht);
+function _t(e) {
+	let [t, n] = mt(Z, e), r = ht[Z.indexOf(t)], i = ht[Z.indexOf(n)];
+	return g(r.map((a, o) => pt(t, r[o], n, i[o], e)), gt);
 }
 //#endregion
 //#region src/objects/surface-element.ts
-var _t = class {
+var vt = class {
 	bufferAttribute;
 	a;
 	b;
@@ -1166,7 +1170,7 @@ var _t = class {
 	displayVertexNormals: !1,
 	scatteringCoefficient: .1
 };
-function vt(e) {
+function yt(e) {
 	let t = new f.BufferGeometry();
 	if (!e.data) return t;
 	let n = e.data.attributes;
@@ -1190,6 +1194,7 @@ var $ = class e extends o {
 	absorptionFunction;
 	reflection;
 	reflectionFunction;
+	pressureReflectionFunction;
 	_scatteringCoefficient;
 	scatteringFunction;
 	_acousticMaterial;
@@ -1258,14 +1263,14 @@ var $ = class e extends o {
 			4e3,
 			8e3
 		];
-		this.absorptionFunction = g(this.absorption, s), this.reflectionFunction = (e, t) => pe(this.absorptionFunction(e), t), this.scatteringCoefficient = e.scatteringCoefficient || Q.scatteringCoefficient, this.acousticMaterial = e.acousticMaterial, this.getArea(), this.edgeLoop = this.calculateEdgeLoop();
+		this.absorptionFunction = g(this.absorption, s), this.reflectionFunction = (e, t) => pe(this.absorptionFunction(e), t), this.pressureReflectionFunction = (e, t) => _(this.absorptionFunction(e), t), this.scatteringCoefficient = e.scatteringCoefficient || Q.scatteringCoefficient, this.acousticMaterial = e.acousticMaterial, this.getArea(), this.edgeLoop = this.calculateEdgeLoop();
 		let c = this.edgeLoop.map((e) => X.math.vec3.fromArray([
 			e.x,
 			e.y,
 			e.z
 		])), l = X.math.plane.fromPoints(X.math.plane.create(), c[0], c[1], c[2]);
 		this.polygon = X.geometry.poly3.fromPointsAndPlane(c, l);
-		let u = dt(1e-6), d = (e, t) => !u(e.x, t[0]) || !u(e.y, t[1]) || !u(e.z, t[2]);
+		let u = ft(1e-6), d = (e, t) => !u(e.x, t[0]) || !u(e.y, t[1]) || !u(e.z, t[2]);
 		d(this.normal, this.polygon.plane) && (this.polygon = X.geometry.poly3.fromPointsAndPlane(c, X.math.plane.fromPoints(X.math.plane.create(), c[2], c[1], c[0])), d(this.normal, this.polygon.plane));
 	}
 	dispose() {
@@ -1292,7 +1297,7 @@ var $ = class e extends o {
 	restore(e) {
 		return this.init({
 			acousticMaterial: e.acousticMaterial,
-			geometry: vt(e.geometry),
+			geometry: yt(e.geometry),
 			wireframeVisible: e.wireframeVisible,
 			edgesVisible: e.edgesVisible,
 			fillSurface: e.fillSurface,
@@ -1363,7 +1368,7 @@ var $ = class e extends o {
 		this.tessellatedMesh = new f.Mesh(t, this.wire.material), this.add(this.tessellatedMesh);
 		let n = t.getAttribute("position"), r = [];
 		for (let e = 0; e < n.count; e += 3) {
-			let t = new _t(n, e + 0, e + 1, e + 2);
+			let t = new vt(n, e + 0, e + 1, e + 2);
 			r.push(t);
 		}
 		return this.tessellatedMesh;
@@ -1380,7 +1385,7 @@ var $ = class e extends o {
 	set acousticMaterial(e) {
 		this._acousticMaterial = e;
 		let t = Object.keys(this._acousticMaterial.absorption).map((e) => Number(e));
-		if (this.absorption = t.map((e) => this._acousticMaterial.absorption[String(e)]), this.absorptionFunction = g(this.absorption, t), this.reflectionFunction = (e, t) => pe(this.absorptionFunction(e), t), e.scattering) {
+		if (this.absorption = t.map((e) => this._acousticMaterial.absorption[String(e)]), this.absorptionFunction = g(this.absorption, t), this.reflectionFunction = (e, t) => pe(this.absorptionFunction(e), t), this.pressureReflectionFunction = (e, t) => _(this.absorptionFunction(e), t), e.scattering) {
 			let t = Object.keys(e.scattering).map(Number), n = t.map((t) => e.scattering[String(t)]);
 			this.scatteringFunction = g(n, t), this._scatteringCoefficient = this.scatteringFunction(500);
 		}
@@ -1434,7 +1439,7 @@ var $ = class e extends o {
 		return this._scatteringCoefficient;
 	}
 	set scatteringCoefficient(e) {
-		this._scatteringCoefficient = e, this.scatteringFunction = gt(e);
+		this._scatteringCoefficient = e, this.scatteringFunction = _t(e);
 	}
 };
 r("ADD_SURFACE", s($)), r("REMOVE_SURFACE", u), r("SURFACE_SET_PROPERTY", l), r("SURFACE_HOVER", (e) => {
@@ -1446,7 +1451,7 @@ r("ADD_SURFACE", s($)), r("REMOVE_SURFACE", u), r("SURFACE_SET_PROPERTY", l), r(
 });
 //#endregion
 //#region src/objects/room.ts
-var yt = class e extends o {
+var bt = class e extends o {
 	boundingBox;
 	surfaces;
 	volume;
@@ -1579,9 +1584,9 @@ var yt = class e extends o {
 		};
 	}
 };
-r("ADD_ROOM", s(yt)), r("REMOVE_ROOM", u), r("ROOM_SET_PROPERTY", l);
-var bt = () => i("room");
+r("ADD_ROOM", s(bt)), r("REMOVE_ROOM", u), r("ROOM_SET_PROPERTY", l);
+var xt = () => i("room");
 //#endregion
-export { dt as i, bt as n, $ as r, yt as t };
+export { ft as i, xt as n, $ as r, bt as t };
 
-//# sourceMappingURL=room-BkgInsAr.mjs.map
+//# sourceMappingURL=room-CAL7Miyq.mjs.map
