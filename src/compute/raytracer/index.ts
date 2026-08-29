@@ -38,7 +38,7 @@ import {
 import { traceRay as traceRayFn, inFrontOf as inFrontOfFn } from "./ray-core";
 import { arrivalPressure as arrivalPressureFn, calculateImpulseResponseForPair as calcIRForPairFn, calculateImpulseResponseForDisplay as calcIRForDisplayFn } from "./impulse-response";
 import type { TailOptions } from "./impulse-response";
-import { extractDecayParameters, synthesizeTail, assembleFinalIR } from "./tail-synthesis";
+import { extractDecayParameters, synthesizeTail, assembleFinalIR, applyAmbisonicTail } from "./tail-synthesis";
 import { reflectionLossFunction as reflectionLossFunctionFn, calculateReflectionLoss as calculateReflectionLossFn, calculateResponseByIntensity as calcResponseByIntensityFn, resampleResponseByIntensity as resampleResponseByIntensityFn, calculateT20 as calculateT20Fn, calculateT30 as calculateT30Fn, calculateT60 as calculateT60Fn } from "./response-by-intensity";
 import { pathsToLinearBuffer as pathsToLinearBufferFn, linearBufferToPaths as linearBufferToPathsFn } from "./serialization";
 import { downloadImpulses as downloadImpulsesFn, playImpulseResponse as playImpulseResponseFn, downloadImpulseResponse as downloadImpulseResponseFn, downloadAmbisonicImpulseResponse as downloadAmbisonicIRFn, playBinauralImpulseResponse as playBinauralIRFn, downloadBinauralImpulseResponse as downloadBinauralIRFn } from "./export-playback";
@@ -1579,25 +1579,14 @@ class RayTracer extends Solver {
       }
     }
 
-    // Apply late reverberation tail synthesis to W channel (ch=0) only.
-    // Late reverb is diffuse and directionless — only the omnidirectional channel needs extension.
+    // Diffuse late reverb: independent noise of the same envelope on every HOA channel.
     if (this.lateReverbTailEnabled && this._energyHistogram[this.receiverIDs[0]]) {
       const decayParams = extractDecayParameters(
         this._energyHistogram[this.receiverIDs[0]], frequencies,
         this.tailCrossfadeTime, this._histogramBinWidth
       );
-      const { tailSamples, tailStartSample } = synthesizeTail(
-        decayParams, sampleRate
-      );
       const crossfadeDurationSamples = floor(this.tailCrossfadeDuration * sampleRate);
-
-      // Extend W channel (ch=0) for each frequency band
-      for (let f = 0; f < frequencies.length; f++) {
-        const wChannel = [samples[f][0]];
-        const tailForBand = [tailSamples[f]];
-        const extended = assembleFinalIR(wChannel, tailForBand, tailStartSample, crossfadeDurationSamples);
-        samples[f][0] = extended[0];
-      }
+      applyAmbisonicTail(samples, decayParams, sampleRate, crossfadeDurationSamples);
 
       // Re-pad all [f][ch] buffers to 2 * maxLen for the FilterWorker double-length contract
       let maxLen = 0;

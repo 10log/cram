@@ -500,8 +500,8 @@ export class ImageSourceSolver extends Solver {
         return;
       }
 
-      let sortedPath: ImageSourcePath[] | null = this.validRayPaths;
-      sortedPath?.sort((a, b) => (a.arrivalTime(c) > b.arrivalTime(c)) ? 1 : -1);
+      const sortedPath = this.validRayPaths ?? [];
+      sortedPath.sort((a, b) => (a.arrivalTime(c) > b.arrivalTime(c)) ? 1 : -1);
       const levelTimeProgression = { ...useResult.getState().results[this.levelTimeProgression] as Result<ResultKind.LevelTimeProgression> };
       levelTimeProgression.data = [] as ResultTypes[ResultKind.LevelTimeProgression]["data"];
       levelTimeProgression.info = {
@@ -509,22 +509,20 @@ export class ImageSourceSolver extends Solver {
         maxOrder: this.maxReflectionOrder,
         frequency: [this._plotFrequency]
       }
-      if(sortedPath !== undefined){
-        for(let i = 0; i<sortedPath?.length; i++){
-          let t = sortedPath[i].arrivalTime(c);
-          let p = sortedPath[i].arrivalPressure(levelTimeProgression.info.initialSPL, levelTimeProgression.info.frequency, this.temperature);
-          if(consoleOutput){
-            console.log("Arrival: " + (i+1) + " | Arrival Time: (s) " + t + " | Arrival Pressure(1000Hz): " + p + " | Order " + sortedPath[i].order);
-          }
-
-          levelTimeProgression.data.push({
-            time: t,
-            pressure: ac.P2Lp(p) as number[],
-            arrival: i+1,
-            order: sortedPath[i].order,
-            uuid: sortedPath[i].uuid
-          })
+      for(let i = 0; i<sortedPath.length; i++){
+        let t = sortedPath[i].arrivalTime(c);
+        let p = sortedPath[i].arrivalPressure(levelTimeProgression.info.initialSPL, levelTimeProgression.info.frequency, this.temperature);
+        if(consoleOutput){
+          console.log("Arrival: " + (i+1) + " | Arrival Time: (s) " + t + " | Arrival Pressure(1000Hz): " + p + " | Order " + sortedPath[i].order);
         }
+
+        levelTimeProgression.data.push({
+          time: t,
+          pressure: ac.P2Lp(p) as number[],
+          arrival: i+1,
+          order: sortedPath[i].order,
+          uuid: sortedPath[i].uuid
+        })
       }
 
       emit("UPDATE_RESULT", { uuid: this.levelTimeProgression, result: levelTimeProgression });
