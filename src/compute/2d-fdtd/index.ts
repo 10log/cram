@@ -10,6 +10,7 @@ import {
   Color,
   DoubleSide,
   Vector2,
+  Vector3,
   IUniform,
   WebGLRenderTarget,
   ClampToEdgeWrapping,
@@ -27,6 +28,12 @@ import {
 import shaders from "./shaders";
 import Solver from "../solver";
 import { computeTimestep } from "./timestep";
+import {
+  applySliceTransform,
+  domainFromBox,
+  worldToPlane,
+  type FdtdSlice,
+} from "./slice";
 
 import Source from "../../objects/source";
 import Receiver from "../../objects/receiver";
@@ -46,7 +53,8 @@ export const FDTD_2D_Defaults = {
   height: 10,
   cellSize: 10 / CELL_RESOLUTION,
   offsetX: 0,
-  offsetY: 0
+  offsetY: 0,
+  slice: "xz" as FdtdSlice,
 };
 
 export interface FDTD_2D_Props {
@@ -55,6 +63,8 @@ export interface FDTD_2D_Props {
   cellSize?: number;
   offsetX?: number;
   offsetY?: number;
+  /** Floor plan (`xz`) or vertical sketch (`xy`). Inferred from the selected surface when omitted. */
+  slice?: FdtdSlice;
 }
 
 export interface Uniforms {
@@ -76,6 +86,8 @@ class FDTD_2D extends Solver {
   
   offsetX: number;
   offsetY: number;
+  slice: FdtdSlice;
+  sliceHeight: number;
 
   uniforms!: Uniforms;
   mesh!: Mesh;
@@ -123,15 +135,24 @@ class FDTD_2D extends Solver {
     const surfaces = [...useContainer.getState().selectedObjects.values()].filter(x=>x.kind==="surface") as Surface[];
     let surface: Surface|null = null;
     props = props || {};
+    let inferredDomain: ReturnType<typeof domainFromBox> | null = null;
     if (surfaces.length > 0) {
       surface = surfaces.length > 1 ? surfaces[0].mergeSurfaces(surfaces) : surfaces[0];
+      surface.updateMatrixWorld(true);
       surface.mesh.geometry.computeBoundingBox();
-      const boundingBox = surface.mesh.geometry.boundingBox;
-      if (boundingBox) {
-        props.width = boundingBox.max.x - boundingBox.min.x;
-        props.height = boundingBox.max.y - boundingBox.min.y;
-        props.offsetX = boundingBox.min.x;
-        props.offsetY = boundingBox.min.y;
+      const localBox = surface.mesh.geometry.boundingBox;
+      if (localBox) {
+        const min = localBox.min.clone().applyMatrix4(surface.mesh.matrixWorld);
+        const max = localBox.max.clone().applyMatrix4(surface.mesh.matrixWorld);
+        inferredDomain = domainFromBox(
+          { min: { x: min.x, y: min.y, z: min.z }, max: { x: max.x, y: max.y, z: max.z } },
+          props.slice,
+        );
+        props.width = inferredDomain.width;
+        props.height = inferredDomain.height;
+        props.offsetX = inferredDomain.offsetX;
+        props.offsetY = inferredDomain.offsetY;
+        props.slice = inferredDomain.slice;
       }
     }
     const _width = (props && props.width) || FDTD_2D_Defaults.width;
@@ -139,6 +160,8 @@ class FDTD_2D extends Solver {
 
     this.offsetX = (props && props.offsetX) || FDTD_2D_Defaults.offsetX;
     this.offsetY = (props && props.offsetY) || FDTD_2D_Defaults.offsetY;
+    this.slice = (props && props.slice) || inferredDomain?.slice || FDTD_2D_Defaults.slice;
+    this.sliceHeight = inferredDomain?.sliceHeight ?? 0;
 
     this.cellSize = (props && props.cellSize) || Math.max(_width, _height) / CELL_RESOLUTION;
 
@@ -159,8 +182,14 @@ class FDTD_2D extends Solver {
     this.eventListeners = [] as (()=>void)[];
 
     const editGeometry = new PlaneGeometry(this.width, this.height, 1, 1);
-    editGeometry.translate(this.width/2, this.height/2, 0);
-    editGeometry.translate(this.offsetX, this.offsetY, 0);
+    applySliceTransform(editGeometry, {
+      slice: this.slice,
+      width: this.width,
+      height: this.height,
+      offsetX: this.offsetX,
+      offsetY: this.offsetY,
+      sliceHeight: this.sliceHeight,
+    });
     const editMaterials = [
       new MeshBasicMaterial({ wireframe: true, side: DoubleSide, color: 0x707070 }),
       new MeshLambertMaterial({ transparent: true, opacity: 0.35, side: DoubleSide, color: 0x707070 })
@@ -230,8 +259,14 @@ class FDTD_2D extends Solver {
     this.dispose();
     const geometry = new PlaneGeometry(this.width, this.height, this.nx - 1, this.ny - 1);
     geometry.name = "fdtd-2d-plane-geometry";
-    geometry.translate(this.width / 2, this.height / 2, 0);
-    geometry.translate(this.offsetX, this.offsetY, 0);
+    applySliceTransform(geometry, {
+      slice: this.slice,
+      width: this.width,
+      height: this.height,
+      offsetX: this.offsetX,
+      offsetY: this.offsetY,
+      sliceHeight: this.sliceHeight,
+    });
     const heightmap = { value: null };
     const uniforms = UniformsUtils.merge([
       UniformsLib.common,
@@ -398,12 +433,21 @@ class FDTD_2D extends Solver {
     this.updateWalls();
   }
   addWallsFromSurfaceEdges(surface: Surface) {
-    const positionAttr = (surface.edges.geometry as BufferGeometry).getAttribute('position');
+    surface.updateMatrixWorld(true);
+    const edges = surface.edges;
+    edges.updateMatrixWorld(true);
+    const positionAttr = (edges.geometry as BufferGeometry).getAttribute('position');
+    const a = new Vector3();
+    const b = new Vector3();
     for (let i = 0; i < positionAttr.count; i += 2) {
-      let x1 = clamp(Math.floor((positionAttr.getX(i) - this.offsetX) / this.cellSize), 0, this.nx - 1);
-      let y1 = clamp(Math.floor((positionAttr.getY(i) - this.offsetY) / this.cellSize), 0, this.ny - 1);
-      let x2 = clamp(Math.floor((positionAttr.getX(i + 1) - this.offsetX) / this.cellSize), 0, this.nx - 1);
-      let y2 = clamp(Math.floor((positionAttr.getY(i + 1) - this.offsetY) / this.cellSize), 0, this.ny - 1);
+      a.fromBufferAttribute(positionAttr, i).applyMatrix4(edges.matrixWorld);
+      b.fromBufferAttribute(positionAttr, i + 1).applyMatrix4(edges.matrixWorld);
+      const pa = worldToPlane(a, this.slice);
+      const pb = worldToPlane(b, this.slice);
+      const x1 = clamp(Math.floor((pa.u - this.offsetX) / this.cellSize), 0, this.nx - 1);
+      const y1 = clamp(Math.floor((pa.v - this.offsetY) / this.cellSize), 0, this.ny - 1);
+      const x2 = clamp(Math.floor((pb.u - this.offsetX) / this.cellSize), 0, this.nx - 1);
+      const y2 = clamp(Math.floor((pb.v - this.offsetY) / this.cellSize), 0, this.ny - 1);
       this.walls.push(new FDTDWall({ x1, y1, x2, y2 }));
     }
     this.updateWalls();
@@ -461,25 +505,32 @@ class FDTD_2D extends Solver {
     const pixels = this.sourcemap.image.data;
     if (!pixels) return;
     for (let i = 0; i < this.sourceKeys.length; i++) {
-      const x = Math.round((this.sources[this.sourceKeys[i]].x - this.offsetX) / this.cellSize);
-      const y = Math.round((this.sources[this.sourceKeys[i]].y - this.offsetY) / this.cellSize);
+      const source = this.sources[this.sourceKeys[i]];
+      const plane = worldToPlane(source.position, this.slice);
+      const x = Math.round((plane.u - this.offsetX) / this.cellSize);
+      const y = Math.round((plane.v - this.offsetY) / this.cellSize);
       const index = 4 * (y * this.nx + x);
-      this.sources[this.sourceKeys[i]].updateWave(this.time, this.frame, this.dt);
-      const value = this.sources[this.sourceKeys[i]].value;
-      const vel = this.sources[this.sourceKeys[i]].velocity;
+      source.updateWave(this.time, this.frame, this.dt);
+      const value = source.value;
+      const vel = source.velocity;
       pixels[index + 0] = map(value, -2, 2, 0, 255);
       pixels[index + 1] = map(vel, -2, 2, 0, 255);
       pixels[index + 3] = 0;
 
-      if (this.sources[this.sourceKeys[i]].shouldClearPreviousPosition) {
-        const px = Math.round((this.sources[this.sourceKeys[i]].previousX - this.offsetX) / this.cellSize);
-        const py = Math.round((this.sources[this.sourceKeys[i]].previousY - this.offsetY) / this.cellSize);
+      if (source.shouldClearPreviousPosition) {
+        const prev = worldToPlane({
+          x: source.previousX,
+          y: source.previousY,
+          z: source.previousZ,
+        }, this.slice);
+        const px = Math.round((prev.u - this.offsetX) / this.cellSize);
+        const py = Math.round((prev.v - this.offsetY) / this.cellSize);
         const previndex = 4 * (py * this.nx + px);
         pixels[previndex + 0] = 0;
         pixels[previndex + 1] = 0;
         pixels[previndex + 3] = 1;
-        this.sources[this.sourceKeys[i]].shouldClearPreviousPosition = false;
-        this.sources[this.sourceKeys[i]].updatePreviousPosition();
+        source.shouldClearPreviousPosition = false;
+        source.updatePreviousPosition();
       }
     }
     this.sourcemap.needsUpdate = true;
@@ -507,8 +558,9 @@ class FDTD_2D extends Solver {
     for (let i = 0; i < this.receiverKeys.length; i++) {
       const key = this.receiverKeys[i];
       if (this.receivers[key]) {
-        const u = (this.receivers[key].position.x - this.offsetX) / this.width;
-        const v = (this.receivers[key].position.y - this.offsetY) / this.height;
+        const plane = worldToPlane(this.receivers[key].position, this.slice);
+        const u = (plane.u - this.offsetX) / this.width;
+        const v = (plane.v - this.offsetY) / this.height;
         this.readLevelShader.uniforms["point1"].value.set(u, v);
         this.gpuCompute.doRenderTarget(this.readLevelShader, this.readLevelRenderTarget);
         (renderer.renderer as WebGLRenderer).readRenderTargetPixels(
