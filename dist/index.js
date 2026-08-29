@@ -622,7 +622,7 @@ ei("ray-tracer", async (e, t) => {
 	let { default: n } = await import("./rt-C6ti85zo.mjs");
 	return new n();
 }), ei("energydecay", async (e, t) => {
-	let { default: n } = await import("./energy-decay-gODdDHP9.mjs");
+	let { default: n } = await import("./energy-decay-x0bLku5E.mjs");
 	return new n();
 }), ei("fdtd-2d", async (e, t) => {
 	let { default: n } = await import("./2d-fdtd-Cv3UztGp.mjs");
