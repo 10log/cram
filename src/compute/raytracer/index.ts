@@ -18,7 +18,7 @@ import { BVH } from "./bvh/BVH";
 import { renderer } from "../../render/renderer";
 import { addSolver, callSolverMethod, removeSolver, setSolverProperty, useContainer, useSolver } from "../../store";
 import { ResultKind, useResult } from "../../store/result-store";
-import {cramangle2threejsangle} from "../../common/dir-angle-conversions";
+import {cramangle2threejsangle, worldDirToCramAngles} from "../../common/dir-angle-conversions";
 import { audioEngine } from "../../audio-engine/audio-engine";
 import observe, { Observable } from "../../common/observable";
 import { encodeBufferFromDirection, getAmbisonicChannelCount } from "ambisonics";
@@ -982,7 +982,7 @@ class RayTracer extends Solver {
 
     // Gather source positions and directivity data
     const sourcePositions = new Map<string, [number, number, number]>();
-    const sourceDirectivity = new Map<string, { handler: any; refPressures: number[] }>();
+    const sourceDirectivity = new Map<string, { handler: any; refPressures: number[]; quaternion: THREE.Quaternion }>();
     for (const id of this.sourceIDs) {
       const src = containers[id] as Source;
       if (src) {
@@ -993,7 +993,7 @@ class RayTracer extends Solver {
         for (let f = 0; f < this.frequencies.length; f++) {
           refPressures[f] = dh.getPressureAtPosition(0, this.frequencies[f], 0, 0) as number;
         }
-        sourceDirectivity.set(id, { handler: dh, refPressures });
+        sourceDirectivity.set(id, { handler: dh, refPressures, quaternion: src.quaternion.clone() });
       }
     }
 
@@ -1031,25 +1031,21 @@ class RayTracer extends Solver {
       const srcDir = sourceDirectivity.get(dp.sourceId);
       if (srcDir) {
         const srcPos = sourcePositions.get(dp.sourceId)!;
-        // Direction from source to diffraction point
-        const dx = dp.diffractionPoint[0] - srcPos[0];
-        const dy = dp.diffractionPoint[1] - srcPos[1];
-        const dz = dp.diffractionPoint[2] - srcPos[2];
-        const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
-        if (dist > 1e-10) {
-          // Compute spherical angles in source frame (approximate)
-          const theta = Math.acos(Math.max(-1, Math.min(1, dy / dist))) * (180 / Math.PI);
-          const phi = Math.atan2(dz, dx) * (180 / Math.PI);
-          for (let f = 0; f < this.frequencies.length; f++) {
-            try {
-              const dirP = srcDir.handler.getPressureAtPosition(0, this.frequencies[f], Math.abs(phi), theta);
-              const refP = srcDir.refPressures[f];
-              if (typeof dirP === "number" && typeof refP === "number" && refP > 0) {
-                dp.bandEnergy[f] *= (dirP / refP) ** 2;
-              }
-            } catch (e) {
-              // Fallback to unity gain
+        const worldDir = new THREE.Vector3(
+          dp.diffractionPoint[0] - srcPos[0],
+          dp.diffractionPoint[1] - srcPos[1],
+          dp.diffractionPoint[2] - srcPos[2],
+        );
+        const [phi, theta] = worldDirToCramAngles(worldDir, srcDir.quaternion);
+        for (let f = 0; f < this.frequencies.length; f++) {
+          try {
+            const dirP = srcDir.handler.getPressureAtPosition(0, this.frequencies[f], phi, theta);
+            const refP = srcDir.refPressures[f];
+            if (typeof dirP === "number" && typeof refP === "number" && refP > 0) {
+              dp.bandEnergy[f] *= (dirP / refP) ** 2;
             }
+          } catch (e) {
+            // Fallback to unity gain
           }
         }
       }

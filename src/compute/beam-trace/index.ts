@@ -25,6 +25,7 @@ import { emit, on } from "../../messenger";
 import { renderer } from "../../render/renderer";
 import { addSolver, removeSolver, setSolverProperty, useSolver, useContainer, useResult, ResultKind, Result } from "../../store";
 import { pickProps } from "../../common/helpers";
+import { worldDirToCramAngles } from "../../common/dir-angle-conversions";
 import * as ac from "../acoustics";
 import { normalize } from "../acoustics";
 import { audioEngine } from "../../audio-engine/audio-engine";
@@ -1232,7 +1233,7 @@ export class BeamTraceSolver extends Solver {
 
     // Gather source positions and directivity data
     const sourcePositions = new Map<string, [number, number, number]>();
-    const sourceDirectivity = new Map<string, { handler: any; refPressures: number[] }>();
+    const sourceDirectivity = new Map<string, { handler: any; refPressures: number[]; quaternion: THREE.Quaternion }>();
     for (const id of this.sourceIDs) {
       const src = containers[id] as Source;
       if (src) {
@@ -1243,7 +1244,7 @@ export class BeamTraceSolver extends Solver {
           for (let f = 0; f < this.frequencies.length; f++) {
             refPressures[f] = dh.getPressureAtPosition(0, this.frequencies[f], 0, 0) as number;
           }
-          sourceDirectivity.set(id, { handler: dh, refPressures });
+          sourceDirectivity.set(id, { handler: dh, refPressures, quaternion: src.quaternion.clone() });
         }
       }
     }
@@ -1282,24 +1283,17 @@ export class BeamTraceSolver extends Solver {
       const srcDir = sourceDirectivity.get(dp.sourceId);
       if (srcDir) {
         const srcPos = sourcePositions.get(dp.sourceId)!;
-        const dx = dp.diffractionPoint[0] - srcPos[0];
-        const dy = dp.diffractionPoint[1] - srcPos[1];
-        const dz = dp.diffractionPoint[2] - srcPos[2];
-        const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
-        if (dist > 1e-10) {
-          const theta = Math.acos(Math.max(-1, Math.min(1, dy / dist))) * (180 / Math.PI);
-          const phi = Math.atan2(dz, dx) * (180 / Math.PI);
-          for (let f = 0; f < this.frequencies.length; f++) {
-            try {
-              const dirP = srcDir.handler.getPressureAtPosition(0, this.frequencies[f], Math.abs(phi), theta);
-              const refP = srcDir.refPressures[f];
-              if (typeof dirP === "number" && typeof refP === "number" && refP > 0) {
-                dp.bandEnergy[f] *= (dirP / refP) ** 2;
-              }
-            } catch (e) {
-              // Fallback to unity gain
-            }
-          }
+        // Direction from the source toward the diffraction point, in world space.
+        const worldDir = new THREE.Vector3(
+          dp.diffractionPoint[0] - srcPos[0],
+          dp.diffractionPoint[1] - srcPos[1],
+          dp.diffractionPoint[2] - srcPos[2],
+        );
+        const scale = this._directivityBandEnergy(
+          srcDir.handler, srcDir.refPressures, srcDir.quaternion, worldDir,
+        );
+        for (let f = 0; f < this.frequencies.length; f++) {
+          dp.bandEnergy[f] *= scale[f];
         }
       }
 
@@ -1463,6 +1457,41 @@ export class BeamTraceSolver extends Solver {
     });
   }
 
+  /**
+   * Per-band energy weighting from a source's directivity for energy leaving the
+   * source along `worldDir`.
+   *
+   * Shared by the specular and diffraction paths so both use one convention:
+   * undo the source's rotation with the inverse quaternion (negating Euler angles
+   * in the same order is NOT the inverse rotation for two or more non-zero
+   * components), then map the source-local direction to CRAM (phi, theta) degrees
+   * with `worldDirToCramAngles` — the same convention the ray tracer launches with.
+   */
+  private _directivityBandEnergy(
+    handler: Source["directivityHandler"],
+    refPressures: number[],
+    quaternion: THREE.Quaternion,
+    worldDir: THREE.Vector3,
+  ): number[] {
+    const scale = new Array(this.frequencies.length).fill(1);
+    if (worldDir.lengthSq() < 1e-20) return scale;
+
+    const [phi, theta] = worldDirToCramAngles(worldDir, quaternion);
+
+    for (let f = 0; f < this.frequencies.length; f++) {
+      try {
+        const dirP = handler.getPressureAtPosition(0, this.frequencies[f], phi, theta);
+        const refP = refPressures[f];
+        if (typeof dirP === "number" && typeof refP === "number" && refP > 0) {
+          scale[f] = (dirP / refP) ** 2;
+        }
+      } catch (e) {
+        // Fallback to unity gain
+      }
+    }
+    return scale;
+  }
+
   // Calculate arrival pressure for a path
   private calculateArrivalPressure(initialSPL: number[], path: BeamTracePath, receiverGain: number = 1.0): number[] {
     // Diffraction: bandEnergy is |D|² × A² from utdDiffractionCoefficient.
@@ -1500,26 +1529,18 @@ export class BeamTraceSolver extends Solver {
       if (source?.directivityHandler) {
         const sourcePos = path.points[sourceIdx];
         const nextPoint = path.points[sourceIdx - 1];
-        const worldDir = new THREE.Vector3().subVectors(nextPoint, sourcePos).normalize();
+        const worldDir = new THREE.Vector3().subVectors(nextPoint, sourcePos);
 
-        // Convert world direction to source-local spherical angles
-        const localDir = worldDir.clone().applyEuler(
-          new THREE.Euler(-source.rotation.x, -source.rotation.y, -source.rotation.z, source.rotation.order)
+        const refPressures = new Array(this.frequencies.length);
+        for (let f = 0; f < this.frequencies.length; f++) {
+          refPressures[f] = source.directivityHandler.getPressureAtPosition(0, this.frequencies[f], 0, 0);
+        }
+
+        const scale = this._directivityBandEnergy(
+          source.directivityHandler, refPressures, source.quaternion, worldDir,
         );
-        const r = localDir.length();
-        if (r > 1e-10) {
-          const theta = Math.acos(Math.min(1, Math.max(-1, localDir.z / r)));
-          const phi = Math.atan2(localDir.y, localDir.x);
-          const phiDeg = ((phi * 180 / Math.PI) % 360 + 360) % 360;
-          const thetaDeg = theta * 180 / Math.PI;
-
-          for (let f = 0; f < this.frequencies.length; f++) {
-            const dirPressure = source.directivityHandler.getPressureAtPosition(0, this.frequencies[f], phiDeg, thetaDeg);
-            const refPressure = source.directivityHandler.getPressureAtPosition(0, this.frequencies[f], 0, 0);
-            if (typeof dirPressure === 'number' && typeof refPressure === 'number' && refPressure > 0) {
-              intensities[f] *= (dirPressure / refPressure) ** 2;
-            }
-          }
+        for (let f = 0; f < this.frequencies.length; f++) {
+          intensities[f] *= scale[f];
         }
       }
     }
