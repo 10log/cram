@@ -88,6 +88,8 @@ declare class FDTD_2D extends Solver {
     getWireframeVisible(): boolean;
     addSource(source: Source): void;
     removeSource(id: string): void;
+    private planeCellIndex;
+    private vacateSourceCell;
     addReceiver(receiver: Receiver): void;
     removeReceiver(id: string): void;
     addWall(props: FDTDWallProps): void;

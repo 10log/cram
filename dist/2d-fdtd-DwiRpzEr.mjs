@@ -1,14 +1,14 @@
 import { b as e, x as t, y as n } from "./FileSaver.min-DhK9iPpQ.mjs";
 import { p as r, t as i } from "./renderer-Be437Bsu.mjs";
 import { g as a } from "./store-CAL1R5s7.mjs";
-import { n as o, t as s } from "./editor-modes-Dl6UXVU3.mjs";
-import { t as c } from "./solver-DovuaY8D.mjs";
-import { ClampToEdgeWrapping as l, Color as u, DataTexture as d, DoubleSide as f, FloatType as p, Mesh as m, MeshBasicMaterial as h, MeshLambertMaterial as g, NearestFilter as _, PlaneGeometry as v, RGBAFormat as y, ShaderMaterial as b, UniformsLib as x, UniformsUtils as S, UnsignedByteType as C, Vector2 as w, Vector3 as T, WebGLRenderTarget as E } from "three";
+import { t as o } from "./editor-modes-DTSuNg6Q.mjs";
+import { t as s } from "./solver-DovuaY8D.mjs";
+import { ClampToEdgeWrapping as c, Color as l, DataTexture as u, DoubleSide as d, FloatType as f, Mesh as p, MeshBasicMaterial as m, MeshLambertMaterial as h, NearestFilter as g, PlaneGeometry as _, RGBAFormat as v, ShaderMaterial as y, UniformsLib as b, UniformsUtils as x, UnsignedByteType as S, Vector2 as C, Vector3 as w, WebGLRenderTarget as T } from "three";
 //#region node_modules/three/examples/jsm/misc/GPUComputationRenderer.js
-var D = class {
+var E = class {
 	constructor(e, t, n) {
 		this.variables = [], this.currentTextureIndex = 0;
-		let i = p, a = { passThruTexture: { value: null } }, o = u(m(), a), s = new r(o);
+		let i = f, a = { passThruTexture: { value: null } }, o = d(m(), a), s = new r(o);
 		this.setDataType = function(e) {
 			return i = e, this;
 		}, this.addVariable = function(e, t, n) {
@@ -20,8 +20,8 @@ var D = class {
 				renderTargets: [],
 				wrapS: null,
 				wrapT: null,
-				minFilter: _,
-				magFilter: _
+				minFilter: g,
+				magFilter: g
 			};
 			return this.variables.push(r), r;
 		}, this.setVariableDependencies = function(e, t) {
@@ -75,32 +75,32 @@ var D = class {
 				n.material.dispose();
 			}
 		};
-		function c(n) {
+		function l(n) {
 			n.defines.resolution = "vec2( " + e.toFixed(1) + ", " + t.toFixed(1) + " )";
 		}
-		this.addResolutionDefine = c;
-		function u(e, t) {
+		this.addResolutionDefine = l;
+		function d(e, t) {
 			t ||= {};
-			let n = new b({
+			let n = new y({
 				name: "GPUComputationShader",
 				uniforms: t,
-				vertexShader: f(),
+				vertexShader: p(),
 				fragmentShader: e
 			});
-			return c(n), n;
+			return l(n), n;
 		}
-		this.createShaderMaterial = u, this.createRenderTarget = function(n, r, a, o, s, c) {
-			return n ||= e, r ||= t, a ||= l, o ||= l, s ||= _, c ||= _, new E(n, r, {
+		this.createShaderMaterial = d, this.createRenderTarget = function(n, r, a, o, s, l) {
+			return n ||= e, r ||= t, a ||= c, o ||= c, s ||= g, l ||= g, new T(n, r, {
 				wrapS: a,
 				wrapT: o,
 				minFilter: s,
-				magFilter: c,
-				format: y,
+				magFilter: l,
+				format: v,
 				type: i,
 				depthBuffer: !1
 			});
 		}, this.createTexture = function() {
-			let n = new Float32Array(e * t * 4), r = new d(n, e, t, y, p);
+			let n = new Float32Array(e * t * 4), r = new u(n, e, t, v, f);
 			return r.needsUpdate = !0, r;
 		}, this.renderTexture = function(e, t) {
 			a.passThruTexture.value = e, this.doRenderTarget(o, t), a.passThruTexture.value = null;
@@ -108,14 +108,14 @@ var D = class {
 			let r = n.getRenderTarget(), i = n.xr.enabled, a = n.shadowMap.autoUpdate;
 			n.xr.enabled = !1, n.shadowMap.autoUpdate = !1, s.material = e, n.setRenderTarget(t), s.render(n), s.material = o, n.xr.enabled = i, n.shadowMap.autoUpdate = a, n.setRenderTarget(r);
 		};
-		function f() {
+		function p() {
 			return "void main()	{\n\n	gl_Position = vec4( position, 1.0 );\n\n}\n";
 		}
 		function m() {
 			return "uniform sampler2D passThruTexture;\n\nvoid main() {\n\n	vec2 uv = gl_FragCoord.xy / resolution.xy;\n\n	gl_FragColor = texture2D( passThruTexture, uv );\n\n}\n";
 		}
 	}
-}, O = {
+}, D = {
 	heightMapFrag: "#include <common>\n\nuniform vec2 mousePos;\nuniform float mouseSize;\nuniform float damping;\nuniform float heightCompensation;\nuniform float courantSq;\nuniform sampler2D sourcemap;\n\nvoid main()	{\n\n  vec2 cellSize = 1.0 / resolution.xy;\n\n  vec2 uv = gl_FragCoord.xy * cellSize;\n    \n  float newvel = 0.;\n  float newpos = 0.;\n\n\n  vec4 heightmapValue = texture2D( heightmap, uv );\n  vec4 sourcemapValue = texture2D( sourcemap, uv);\n  \n\n\n  if(sourcemapValue.b > 0.0){\n    float pos = heightmapValue.r;\n    float vel = heightmapValue.g;\n    \n    \n    \n    vec2 ud_offset = vec2( 0.0, cellSize.y );\n    vec2 rl_offset = vec2( cellSize.x, 0.0 );\n    \n    vec4 u = texture2D( heightmap, uv + ud_offset );    \n    vec4 d = texture2D( heightmap, uv - ud_offset );\n    vec4 r = texture2D( heightmap, uv + rl_offset );\n    vec4 l = texture2D( heightmap, uv - rl_offset );\n    \n    float u_wall = texture2D( sourcemap, uv + ud_offset ).b;\n    float d_wall = texture2D( sourcemap, uv - ud_offset ).b;\n    float r_wall = texture2D( sourcemap, uv + rl_offset ).b;\n    float l_wall = texture2D( sourcemap, uv - rl_offset ).b;\n    \n    \n    // float u_pos = u_wall == 0 ? d.r : u.r;\n    // float d_pos = d_wall == 0 ? u.r : d.r;\n    // float r_pos = r_wall == 0 ? l.r : r.r;\n    // float l_pos = l_wall == 0 ? r.r : l.r;\n\n    float u_pos =  u.r;\n    float d_pos =  d.r;\n    float r_pos =  r.r;\n    float l_pos =  l.r;\n    \n    if(u_wall == 0.0){\n      u_pos = texture2D( heightmap, uv - ud_offset ).r;\n    }\n    if(d_wall == 0.0){\n      d_pos = texture2D( heightmap, uv + ud_offset ).r;\n    }\n    if(r_wall == 0.0){\n      r_pos = texture2D( heightmap, uv - rl_offset ).r;\n    }\n    if(l_wall == 0.0){\n      l_pos = texture2D( heightmap, uv + rl_offset ).r;\n    }\n\n    float mid = 0.25*(u_pos+d_pos+r_pos+l_pos);\n  \n    float med = 4.0 * courantSq;\n    newvel = med*(mid-pos)+vel*damping;\n    newpos = pos+newvel;\n    \n    if(sourcemapValue.a == 0.0){  \n      newvel = sourcemapValue.g;\n      newpos = sourcemapValue.r;\n    }    \n  }\n  else {\n    newvel = 0.0;\n    newpos = 127.5;\n  }\n  \n  \n  gl_FragColor = vec4(newpos, newvel, heightmapValue.b, sourcemapValue.b);\n\n\n}\n",
 	readLevelFrag: "uniform vec2 point1;\nuniform float cell_size;\nuniform float inv_cell_size;\n\nuniform sampler2D levelTexture;\n\n// Integer to float conversion from https://stackoverflow.com/questions/17981163/webgl-read-pixels-from-floating-point-render-target\n\nfloat shift_right( float v, float amt ) {\n\n	v = floor( v ) + 0.5;\n	return floor( v / exp2( amt ) );\n\n}\n\nfloat shift_left( float v, float amt ) {\n\n	return floor( v * exp2( amt ) + 0.5 );\n\n}\n\nfloat mask_last( float v, float bits ) {\n\n	return mod( v, shift_left( 1.0, bits ) );\n\n}\n\nfloat extract_bits( float num, float from, float to ) {\n\n	from = floor( from + 0.5 ); to = floor( to + 0.5 );\n	return mask_last( shift_right( num, from ), to - from );\n\n}\n\nvec4 encode_float( float val ) {\n	if ( val == 0.0 ) return vec4( 0, 0, 0, 0 );\n	float sign = val > 0.0 ? 0.0 : 1.0;\n	val = abs( val );\n	float exponent = floor( log2( val ) );\n	float biased_exponent = exponent + 127.0;\n	float fraction = ( ( val / exp2( exponent ) ) - 1.0 ) * 8388608.0;\n	float t = biased_exponent / 2.0;\n	float last_bit_of_biased_exponent = fract( t ) * 2.0;\n	float remaining_bits_of_biased_exponent = floor( t );\n	float byte4 = extract_bits( fraction, 0.0, 8.0 ) / 255.0;\n	float byte3 = extract_bits( fraction, 8.0, 16.0 ) / 255.0;\n	float byte2 = ( last_bit_of_biased_exponent * 128.0 + extract_bits( fraction, 16.0, 23.0 ) ) / 255.0;\n	float byte1 = ( sign * 128.0 + remaining_bits_of_biased_exponent ) / 255.0;\n	return vec4( byte4, byte3, byte2, byte1 );\n}\n\nvoid main()	{\n\n	vec2 cellSize = vec2(cell_size);\n\n	float waterLevel = texture2D( levelTexture, point1 ).x;\n\n	vec2 normal = vec2(\n		( texture2D( levelTexture, point1 + vec2( - cellSize.x, 0 ) ).x - texture2D( levelTexture, point1 + vec2( cellSize.x, 0 ) ).x ) * inv_cell_size,\n		( texture2D( levelTexture, point1 + vec2( 0, - cellSize.y ) ).x - texture2D( levelTexture, point1 + vec2( 0, cellSize.y ) ).x ) * inv_cell_size );\n\n	if ( gl_FragCoord.x < 1.5 ) {\n\n		gl_FragColor = encode_float( waterLevel );\n\n	} else if ( gl_FragCoord.x < 2.5 ) {\n\n		gl_FragColor = encode_float( normal.x );\n\n	} else if ( gl_FragCoord.x < 3.5 ) {\n\n		gl_FragColor = encode_float( normal.y );\n\n	} else {\n\n		gl_FragColor = encode_float( 0.0 );\n\n	}\n\n}",
 	clearFrag: "uniform sampler2D clearTexture;\n\nvoid main()	{\n\n	vec2 cellSize = 1.0 / resolution.xy;\n\n	vec2 uv = gl_FragCoord.xy * cellSize;\n\n\n	vec4 textureValue = texture2D( clearTexture, uv );\n\n	textureValue.r = 127.5;\n	textureValue.g = 0.0;\n\n	gl_FragColor = textureValue;\n\n}\n",
@@ -124,15 +124,15 @@ var D = class {
 };
 //#endregion
 //#region src/compute/2d-fdtd/timestep.ts
-function k(e, t) {
+function O(e, t) {
 	return e / (t * Math.SQRT2);
 }
 //#endregion
 //#region src/compute/2d-fdtd/slice.ts
-function A(e) {
+function k(e) {
 	return Math.abs(e.dx * e.dz) >= Math.abs(e.dx * e.dy) ? "xz" : "xy";
 }
-function j(e, t) {
+function A(e, t) {
 	return t === "xz" ? {
 		u: e.x,
 		v: e.z
@@ -141,12 +141,12 @@ function j(e, t) {
 		v: e.y
 	};
 }
-function M(e, t) {
+function j(e, t) {
 	let n = {
 		dx: e.max.x - e.min.x,
 		dy: e.max.y - e.min.y,
 		dz: e.max.z - e.min.z
-	}, r = t ?? A(n), i = j(e.min, r), a = j(e.max, r);
+	}, r = t ?? k(n), i = A(e.min, r), a = A(e.max, r);
 	return {
 		slice: r,
 		width: Math.abs(a.u - i.u),
@@ -156,12 +156,38 @@ function M(e, t) {
 		sliceHeight: r === "xz" ? e.min.y : 0
 	};
 }
-function N(e, t) {
+function M(e, t) {
 	t.slice === "xz" ? (e.rotateX(Math.PI / 2), e.translate(t.width / 2, t.sliceHeight, t.height / 2), e.translate(t.offsetX, 0, t.offsetY)) : (e.translate(t.width / 2, t.height / 2, 0), e.translate(t.offsetX, t.offsetY, 0));
 }
 //#endregion
+//#region src/compute/2d-fdtd/field-encoding.ts
+var N = 127.5;
+function P(e) {
+	return N + e * 8;
+}
+function F() {
+	return {
+		pressure: N,
+		velocity: 0,
+		alpha: 1
+	};
+}
+function I(e) {
+	return {
+		pressure: P(e),
+		velocity: 0,
+		alpha: 0
+	};
+}
+function L() {
+	return F();
+}
+function R(e, t, n) {
+	e[t + 0] = n.pressure, e[t + 1] = n.velocity, e[t + 3] = n.alpha;
+}
+//#endregion
 //#region src/compute/2d-fdtd/rasterize-line.ts
-function P(e, t, n, r) {
+function z(e, t, n, r) {
 	let i = [], a, o, s, c, l, u, d, f, p, m, h;
 	if (s = n - e, c = r - t, l = Math.abs(s), u = Math.abs(c), d = 2 * u - l, f = 2 * l - u, u <= l) for (s >= 0 ? (a = e, o = t, p = n) : (a = n, o = r, p = e), i.push([a, o]), h = 0; a < p; h++) a += 1, d < 0 ? d += 2 * u : (s < 0 && c < 0 || s > 0 && c > 0 ? o += 1 : --o, d += 2 * (u - l)), i.push([a, o]);
 	else for (c >= 0 ? (a = e, o = t, m = r) : (a = n, o = r, m = t), i.push([a, o]), h = 0; o < m; h++) o += 1, f <= 0 ? f += 2 * l : (s < 0 && c < 0 || s > 0 && c > 0 ? a += 1 : --a, f += 2 * (l - u)), i.push([a, o]);
@@ -169,7 +195,7 @@ function P(e, t, n, r) {
 }
 //#endregion
 //#region src/compute/2d-fdtd/fdtd-wall.ts
-var F = class {
+var B = class {
 	enabled;
 	x1;
 	y1;
@@ -179,27 +205,27 @@ var F = class {
 	previousCells;
 	shouldClearPreviousCells;
 	constructor(e) {
-		this.x1 = e.x1, this.y1 = e.y1, this.x2 = e.x2, this.y2 = e.y2, this.cells = P(this.x1, this.y1, this.x2, this.y2), this.previousCells = this.cells, this.shouldClearPreviousCells = !1, this.enabled = !0;
+		this.x1 = e.x1, this.y1 = e.y1, this.x2 = e.x2, this.y2 = e.y2, this.cells = z(this.x1, this.y1, this.x2, this.y2), this.previousCells = this.cells, this.shouldClearPreviousCells = !1, this.enabled = !0;
 	}
 	move(e) {
-		this.previousCells = this.cells, this.x1 = e.x1, this.y1 = e.y1, this.x2 = e.x2, this.y2 = e.y2, this.cells = P(this.x1, this.y1, this.x2, this.y2), this.shouldClearPreviousCells = !0;
+		this.previousCells = this.cells, this.x1 = e.x1, this.y1 = e.y1, this.x2 = e.x2, this.y2 = e.y2, this.cells = z(this.x1, this.y1, this.x2, this.y2), this.shouldClearPreviousCells = !0;
 	}
 };
 //#endregion
 //#region src/common/clamp.ts
-function I(e, t, n) {
+function V(e, t, n) {
 	return e < t ? t : e > n ? n : e;
 }
 //#endregion
 //#region src/compute/2d-fdtd/index.ts
-var L = 256, R = {
+var H = 256, U = {
 	width: 10,
 	height: 10,
-	cellSize: 10 / L,
+	cellSize: 10 / H,
 	offsetX: 0,
 	offsetY: 0,
 	slice: "xz"
-}, z = class extends c {
+}, W = class extends s {
 	gpuCompute;
 	nx;
 	ny;
@@ -243,7 +269,7 @@ var L = 256, R = {
 			let e = r.mesh.geometry.boundingBox;
 			if (e) {
 				let n = e.min.clone().applyMatrix4(r.mesh.matrixWorld), i = e.max.clone().applyMatrix4(r.mesh.matrixWorld);
-				o = M({
+				o = j({
 					min: {
 						x: n.x,
 						y: n.y,
@@ -257,10 +283,10 @@ var L = 256, R = {
 				}, t.slice), t.width = o.width, t.height = o.height, t.offsetX = o.offsetX, t.offsetY = o.offsetY, t.slice = o.slice;
 			}
 		}
-		let s = t && t.width || R.width, c = t && t.height || R.height;
-		this.offsetX = t && t.offsetX || R.offsetX, this.offsetY = t && t.offsetY || R.offsetY, this.slice = t && t.slice || o?.slice || R.slice, this.sliceHeight = o?.sliceHeight ?? 0, this.cellSize = t && t.cellSize || Math.max(s, c) / L, this.nx = Math.ceil(s / this.cellSize), this.ny = Math.ceil(c / this.cellSize), this.width = this.nx * this.cellSize, this.height = this.ny * this.cellSize, this.dt = k(this.cellSize, this.waveSpeed), this.sources = {}, this.sourceKeys = [], this.receivers = {}, this.receiverKeys = [], this.walls = [], this.messageHandlers = [], this.eventListeners = [];
-		let l = new v(this.width, this.height, 1, 1);
-		N(l, {
+		let s = t && t.width || U.width, c = t && t.height || U.height;
+		this.offsetX = t && t.offsetX || U.offsetX, this.offsetY = t && t.offsetY || U.offsetY, this.slice = t && t.slice || o?.slice || U.slice, this.sliceHeight = o?.sliceHeight ?? 0, this.cellSize = t && t.cellSize || Math.max(s, c) / H, this.nx = Math.ceil(s / this.cellSize), this.ny = Math.ceil(c / this.cellSize), this.width = this.nx * this.cellSize, this.height = this.ny * this.cellSize, this.dt = O(this.cellSize, this.waveSpeed), this.sources = {}, this.sourceKeys = [], this.receivers = {}, this.receiverKeys = [], this.walls = [], this.messageHandlers = [], this.eventListeners = [];
+		let l = new _(this.width, this.height, 1, 1);
+		M(l, {
 			slice: this.slice,
 			width: this.width,
 			height: this.height,
@@ -268,27 +294,27 @@ var L = 256, R = {
 			offsetY: this.offsetY,
 			sliceHeight: this.sliceHeight
 		});
-		let u = [new h({
+		let u = [new m({
 			wireframe: !0,
-			side: f,
+			side: d,
 			color: 7368816
-		}), new g({
+		}), new h({
 			transparent: !0,
 			opacity: .35,
-			side: f,
+			side: d,
 			color: 7368816
 		})];
-		this.editMesh = new m(l, u[0]), this.editMesh.name = "fdtd-2d-edit-mesh", this.editMesh.visible = !1, i.fdtdItems.add(this.editMesh), this.fillTexture = this.fillTexture.bind(this), this.init = this.init.bind(this), this.render = this.render.bind(this), this.updateWalls = this.updateWalls.bind(this), this.updateSourceTexture = this.updateSourceTexture.bind(this), this.addWallsFromSurfaceEdges = this.addWallsFromSurfaceEdges.bind(this), this.setWireframeVisible = this.setWireframeVisible.bind(this), this.getWireframeVisible = this.getWireframeVisible.bind(this), this.toggleWall = this.toggleWall.bind(this), this.clear = this.clear.bind(this), this.init(), this.onModeChange(e("GET_EDITOR_MODE")[0]), r && this.addWallsFromSurfaceEdges(r);
+		this.editMesh = new p(l, u[0]), this.editMesh.name = "fdtd-2d-edit-mesh", this.editMesh.visible = !1, i.fdtdItems.add(this.editMesh), this.fillTexture = this.fillTexture.bind(this), this.init = this.init.bind(this), this.render = this.render.bind(this), this.updateWalls = this.updateWalls.bind(this), this.updateSourceTexture = this.updateSourceTexture.bind(this), this.addWallsFromSurfaceEdges = this.addWallsFromSurfaceEdges.bind(this), this.setWireframeVisible = this.setWireframeVisible.bind(this), this.getWireframeVisible = this.getWireframeVisible.bind(this), this.toggleWall = this.toggleWall.bind(this), this.clear = this.clear.bind(this), this.init(), this.onModeChange(e("GET_EDITOR_MODE")[0]), r && this.addWallsFromSurfaceEdges(r);
 	}
 	onModeChange(e) {
 		switch (e) {
-			case s.OBJECT:
+			case o.OBJECT:
 				this.editMesh.visible = !1, this.mesh.visible = !0;
 				break;
-			case s.SKETCH:
+			case o.SKETCH:
 				this.editMesh.visible = !1, this.mesh.visible = !1;
 				break;
-			case s.EDIT: this.editMesh.visible = !0, this.mesh.visible = !1;
+			case o.EDIT: this.editMesh.visible = !0, this.mesh.visible = !1;
 		}
 	}
 	setWidth(e) {
@@ -302,8 +328,8 @@ var L = 256, R = {
 	}
 	init() {
 		this.dispose();
-		let e = new v(this.width, this.height, this.nx - 1, this.ny - 1);
-		e.name = "fdtd-2d-plane-geometry", N(e, {
+		let e = new _(this.width, this.height, this.nx - 1, this.ny - 1);
+		e.name = "fdtd-2d-plane-geometry", M(e, {
 			slice: this.slice,
 			width: this.width,
 			height: this.height,
@@ -311,51 +337,51 @@ var L = 256, R = {
 			offsetY: this.offsetY,
 			sliceHeight: this.sliceHeight
 		});
-		let t = S.merge([
-			x.common,
-			x.specularmap,
-			x.envmap,
-			x.aomap,
-			x.lightmap,
-			x.emissivemap,
-			x.bumpmap,
-			x.normalmap,
-			x.displacementmap,
-			x.gradientmap,
-			x.fog,
-			x.lights,
+		let t = x.merge([
+			b.common,
+			b.specularmap,
+			b.envmap,
+			b.aomap,
+			b.lightmap,
+			b.emissivemap,
+			b.bumpmap,
+			b.normalmap,
+			b.displacementmap,
+			b.gradientmap,
+			b.fog,
+			b.lights,
 			{
-				emissive: { value: new u(0) },
-				specular: { value: new u(1118481) },
+				emissive: { value: new l(0) },
+				specular: { value: new l(1118481) },
 				shininess: { value: 30 },
 				colorBrightness: { value: 10 },
 				cell_size: { value: this.cellSize },
 				inv_cell_size: { value: 1 / this.cellSize },
 				heightmap: { value: null }
 			}
-		]), r = O.waterVert, a = O.waterFrag, o = new b({
+		]), r = D.waterVert, a = D.waterFrag, o = new y({
 			uniforms: t,
 			vertexShader: r,
 			fragmentShader: a,
-			side: f,
+			side: d,
 			name: "fdtd-2d-material"
 		});
-		o.lights = !0, this.uniforms = o.uniforms, this.mesh = new m(e, o), this.mesh.matrixAutoUpdate = !1, this.mesh.updateMatrix(), this.mesh.material.wireframe = !1, this.mesh.matrixAutoUpdate = !0, this.mesh.scale.setZ(.01), i.fdtdItems.add(this.mesh), this.gpuCompute = new D(this.nx, this.ny, i.renderer);
+		o.lights = !0, this.uniforms = o.uniforms, this.mesh = new p(e, o), this.mesh.matrixAutoUpdate = !1, this.mesh.updateMatrix(), this.mesh.material.wireframe = !1, this.mesh.matrixAutoUpdate = !0, this.mesh.scale.setZ(.01), i.fdtdItems.add(this.mesh), this.gpuCompute = new E(this.nx, this.ny, i.renderer);
 		let s = this.gpuCompute.createTexture();
-		this.sourcemap = this.gpuCompute.createTexture(), this.fillSourceTexture(), this.updateSourceTexture(), this.fillTexture(s), this.heightmapVariable = this.gpuCompute.addVariable("heightmap", O.heightMapFrag, s), this.gpuCompute.setVariableDependencies(this.heightmapVariable, [this.heightmapVariable]), this.heightmapVariable.material.uniforms.sourcemap = { value: this.sourcemap }, this.heightmapVariable.material.uniforms.mousePos = { value: new w(5, 5) }, this.heightmapVariable.material.uniforms.mouseSize = { value: 0 }, this.heightmapVariable.material.uniforms.damping = { value: .9999 }, this.heightmapVariable.material.uniforms.courantSq = { value: (this.waveSpeed * this.dt / this.cellSize) ** 2 }, this.heightmapVariable.material.uniforms.heightCompensation = { value: 0 }, this.heightmapVariable.material.uniforms.cell_size = { value: this.cellSize }, this.heightmapVariable.material.uniforms.inv_cell_size = { value: 1 / this.cellSize };
-		let c = this.gpuCompute.init();
-		c !== null && console.error(c), this.clearShader = this.gpuCompute.createShaderMaterial(O.clearFrag, { clearTexture: { value: null } }), this.readLevelShader = this.gpuCompute.createShaderMaterial(O.readLevelFrag, {
-			point1: { value: new w() },
+		this.sourcemap = this.gpuCompute.createTexture(), this.fillSourceTexture(), this.updateSourceTexture(), this.fillTexture(s), this.heightmapVariable = this.gpuCompute.addVariable("heightmap", D.heightMapFrag, s), this.gpuCompute.setVariableDependencies(this.heightmapVariable, [this.heightmapVariable]), this.heightmapVariable.material.uniforms.sourcemap = { value: this.sourcemap }, this.heightmapVariable.material.uniforms.mousePos = { value: new C(5, 5) }, this.heightmapVariable.material.uniforms.mouseSize = { value: 0 }, this.heightmapVariable.material.uniforms.damping = { value: .9999 }, this.heightmapVariable.material.uniforms.courantSq = { value: (this.waveSpeed * this.dt / this.cellSize) ** 2 }, this.heightmapVariable.material.uniforms.heightCompensation = { value: 0 }, this.heightmapVariable.material.uniforms.cell_size = { value: this.cellSize }, this.heightmapVariable.material.uniforms.inv_cell_size = { value: 1 / this.cellSize };
+		let u = this.gpuCompute.init();
+		u !== null && console.error(u), this.clearShader = this.gpuCompute.createShaderMaterial(D.clearFrag, { clearTexture: { value: null } }), this.readLevelShader = this.gpuCompute.createShaderMaterial(D.readLevelFrag, {
+			point1: { value: new C() },
 			levelTexture: { value: null },
 			cell_size: { value: this.cellSize },
 			inv_cell_size: { value: 1 / this.cellSize }
-		}), this.readLevelImage = /* @__PURE__ */ new Uint8Array(16), this.readLevelRenderTarget = new E(4, 1, {
-			wrapS: l,
-			wrapT: l,
-			minFilter: _,
-			magFilter: _,
-			format: y,
-			type: C,
+		}), this.readLevelImage = /* @__PURE__ */ new Uint8Array(16), this.readLevelRenderTarget = new T(4, 1, {
+			wrapS: c,
+			wrapT: c,
+			minFilter: g,
+			magFilter: g,
+			format: v,
+			type: S,
 			stencilBuffer: !1,
 			depthBuffer: !1
 		}), this.eventListeners.push(n("RENDERER_UPDATED", () => {
@@ -384,7 +410,16 @@ var L = 256, R = {
 		this.sourceKeys = [...new Set(this.sourceKeys.concat(e.uuid))], this.sources[e.uuid] = e;
 	}
 	removeSource(e) {
-		this.sources[e] && (delete this.sources[e], this.sourceKeys = this.sourceKeys.filter((t) => t !== e));
+		let t = this.sources[e];
+		t && (this.vacateSourceCell(t.position), delete this.sources[e], this.sourceKeys = this.sourceKeys.filter((t) => t !== e));
+	}
+	planeCellIndex(e) {
+		let t = A(e, this.slice), n = Math.round((t.u - this.offsetX) / this.cellSize);
+		return 4 * (Math.round((t.v - this.offsetY) / this.cellSize) * this.nx + n);
+	}
+	vacateSourceCell(e) {
+		let t = this.sourcemap?.image?.data;
+		t && (R(t, this.planeCellIndex(e), L()), this.sourcemap.needsUpdate = !0);
 	}
 	addReceiver(e) {
 		this.receiverKeys = [...new Set(this.receiverKeys.concat(e.uuid))], this.receivers[e.uuid] = e;
@@ -393,8 +428,8 @@ var L = 256, R = {
 		this.receivers[e] && (delete this.receivers[e], this.receiverKeys = this.receiverKeys.filter((t) => t !== e));
 	}
 	addWall(e) {
-		let t = I(Math.floor((e.x1 - this.offsetX) / this.cellSize), 0, this.nx - 1), n = I(Math.floor((e.y1 - this.offsetY) / this.cellSize), 0, this.ny - 1), r = I(Math.floor((e.x2 - this.offsetX) / this.cellSize), 0, this.nx - 1), i = I(Math.floor((e.y2 - this.offsetY) / this.cellSize), 0, this.ny - 1);
-		this.walls.push(new F({
+		let t = V(Math.floor((e.x1 - this.offsetX) / this.cellSize), 0, this.nx - 1), n = V(Math.floor((e.y1 - this.offsetY) / this.cellSize), 0, this.ny - 1), r = V(Math.floor((e.x2 - this.offsetX) / this.cellSize), 0, this.nx - 1), i = V(Math.floor((e.y2 - this.offsetY) / this.cellSize), 0, this.ny - 1);
+		this.walls.push(new B({
 			x1: t,
 			y1: n,
 			x2: r,
@@ -405,11 +440,11 @@ var L = 256, R = {
 		e.updateMatrixWorld(!0);
 		let t = e.edges;
 		t.updateMatrixWorld(!0);
-		let n = t.geometry.getAttribute("position"), r = new T(), i = new T();
+		let n = t.geometry.getAttribute("position"), r = new w(), i = new w();
 		for (let e = 0; e < n.count; e += 2) {
 			r.fromBufferAttribute(n, e).applyMatrix4(t.matrixWorld), i.fromBufferAttribute(n, e + 1).applyMatrix4(t.matrixWorld);
-			let a = j(r, this.slice), o = j(i, this.slice), s = I(Math.floor((a.u - this.offsetX) / this.cellSize), 0, this.nx - 1), c = I(Math.floor((a.v - this.offsetY) / this.cellSize), 0, this.ny - 1), l = I(Math.floor((o.u - this.offsetX) / this.cellSize), 0, this.nx - 1), u = I(Math.floor((o.v - this.offsetY) / this.cellSize), 0, this.ny - 1);
-			this.walls.push(new F({
+			let a = A(r, this.slice), o = A(i, this.slice), s = V(Math.floor((a.u - this.offsetX) / this.cellSize), 0, this.nx - 1), c = V(Math.floor((a.v - this.offsetY) / this.cellSize), 0, this.ny - 1), l = V(Math.floor((o.u - this.offsetX) / this.cellSize), 0, this.nx - 1), u = V(Math.floor((o.v - this.offsetY) / this.cellSize), 0, this.ny - 1);
+			this.walls.push(new B({
 				x1: s,
 				y1: c,
 				x2: l,
@@ -422,7 +457,7 @@ var L = 256, R = {
 		let e = this.sourcemap.image.data;
 		if (!e) return;
 		let t = 0;
-		for (let n = 0; n < this.ny; n++) for (let n = 0; n < this.nx; n++) e[t + 0] = 0, e[t + 1] = 0, e[t + 2] = 1, e[t + 3] = 1, t += 4;
+		for (let n = 0; n < this.ny; n++) for (let n = 0; n < this.nx; n++) e[t + 0] = N, e[t + 1] = 0, e[t + 2] = 1, e[t + 3] = 1, t += 4;
 	}
 	toggleWall(e) {
 		this.walls[e] && (this.walls[e].enabled = !this.walls[e].enabled, this.updateWalls());
@@ -454,17 +489,12 @@ var L = 256, R = {
 		let e = this.sourcemap.image.data;
 		if (e) {
 			for (let t = 0; t < this.sourceKeys.length; t++) {
-				let n = this.sources[this.sourceKeys[t]], r = j(n.position, this.slice), i = Math.round((r.u - this.offsetX) / this.cellSize), a = 4 * (Math.round((r.v - this.offsetY) / this.cellSize) * this.nx + i);
-				n.updateWave(this.time, this.frame, this.dt);
-				let s = n.value, c = n.velocity;
-				if (e[a + 0] = o(s, -2, 2, 0, 255), e[a + 1] = o(c, -2, 2, 0, 255), e[a + 3] = 0, n.shouldClearPreviousPosition) {
-					let t = j({
-						x: n.previousX,
-						y: n.previousY,
-						z: n.previousZ
-					}, this.slice), r = Math.round((t.u - this.offsetX) / this.cellSize), i = 4 * (Math.round((t.v - this.offsetY) / this.cellSize) * this.nx + r);
-					e[i + 0] = 0, e[i + 1] = 0, e[i + 3] = 1, n.shouldClearPreviousPosition = !1, n.updatePreviousPosition();
-				}
+				let n = this.sources[this.sourceKeys[t]];
+				n.updateWave(this.time, this.frame, this.dt), R(e, this.planeCellIndex(n.position), I(n.value)), n.shouldClearPreviousPosition && (R(e, this.planeCellIndex({
+					x: n.previousX,
+					y: n.previousY,
+					z: n.previousZ
+				}), L()), n.shouldClearPreviousPosition = !1, n.updatePreviousPosition());
 			}
 			this.sourcemap.needsUpdate = !0;
 		}
@@ -473,7 +503,7 @@ var L = 256, R = {
 		let t = e.image.data;
 		if (!t) return;
 		let n = 0;
-		for (let e = 0; e < this.ny; e++) for (let e = 0; e < this.nx; e++) t[n + 0] = o(0, -2, 2, 0, 255), t[n + 1] = 0, t[n + 2] = 1, t[n + 3] = 1, n += 4;
+		for (let e = 0; e < this.ny; e++) for (let e = 0; e < this.nx; e++) t[n + 0] = N, t[n + 1] = 0, t[n + 2] = 1, t[n + 3] = 1, n += 4;
 	}
 	readReceiverLevels() {
 		let e = this.gpuCompute.getCurrentRenderTarget(this.heightmapVariable);
@@ -481,7 +511,7 @@ var L = 256, R = {
 		for (let e = 0; e < this.receiverKeys.length; e++) {
 			let t = this.receiverKeys[e];
 			if (this.receivers[t]) {
-				let e = j(this.receivers[t].position, this.slice), n = (e.u - this.offsetX) / this.width, r = (e.v - this.offsetY) / this.height;
+				let e = A(this.receivers[t].position, this.slice), n = (e.u - this.offsetX) / this.width, r = (e.v - this.offsetY) / this.height;
 				this.readLevelShader.uniforms.point1.value.set(n, r), this.gpuCompute.doRenderTarget(this.readLevelShader, this.readLevelRenderTarget), i.renderer.readRenderTargetPixels(this.readLevelRenderTarget, 0, 0, 4, 1, this.readLevelImage);
 				let a = new Float32Array(this.readLevelImage.buffer)[0];
 				this.receivers[t].fdtdSamples.push((a - 127.5) / 127.5);
@@ -506,6 +536,6 @@ var L = 256, R = {
 	onParameterConfigBlur() {}
 };
 //#endregion
-export { z as FDTD_2D, z as default };
+export { W as FDTD_2D, W as default };
 
-//# sourceMappingURL=2d-fdtd-iM3iSx6D.mjs.map
+//# sourceMappingURL=2d-fdtd-DwiRpzEr.mjs.map
