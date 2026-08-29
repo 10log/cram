@@ -120,7 +120,7 @@ export const FDTD_2DTab = ({uuid}: {uuid: string}) => {
           id="damping"
           label="Damping"
           labelPosition="left"
-          tooltipText="Damping Coefficient"
+          tooltipText="Numerical sponge on velocity — not air absorption and not a surface material"
           min={0.7}
           max={1.0}
           step={0.001}
