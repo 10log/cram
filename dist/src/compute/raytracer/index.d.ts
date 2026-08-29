@@ -165,7 +165,7 @@ declare class RayTracer extends Solver {
         signal: Float32Array;
         normalizedSignal: Float32Array;
     }>;
-    calculateImpulseResponseForDisplay(initialSPL?: number, frequencies?: number[], sampleRate?: number): Promise<{
+    calculateImpulseResponseForDisplay(initialSPL?: number, frequencies?: number[], sampleRate?: number, receiverId?: string): Promise<{
         signal: Float32Array;
         normalizedSignal: Float32Array;
     }>;
@@ -184,7 +184,7 @@ declare class RayTracer extends Solver {
     pathsToLinearBuffer(): Float32Array<ArrayBufferLike>;
     linearBufferToPaths(linearBuffer: Float32Array): KVP<RayPath[]>;
     arrivalPressure(initialSPL: number[], freqs: number[], path: RayPath, receiverGain?: number): number[];
-    calculateImpulseResponse(initialSPL?: number, frequencies?: number[], sampleRate?: number): Promise<AudioBuffer>;
+    calculateImpulseResponse(initialSPL?: number, frequencies?: number[], sampleRate?: number, receiverId?: string): Promise<AudioBuffer>;
     /**
      * Calculate an ambisonic impulse response from the traced ray paths.
      * Each reflection is encoded based on its arrival direction at the receiver.
@@ -195,21 +195,21 @@ declare class RayTracer extends Solver {
      * @param sampleRate - Sample rate for the output
      * @returns Promise resolving to an AudioBuffer with ambisonic channels
      */
-    calculateAmbisonicImpulseResponse(order?: number, initialSPL?: number, frequencies?: number[], sampleRate?: number): Promise<AudioBuffer>;
+    calculateAmbisonicImpulseResponse(order?: number, initialSPL?: number, frequencies?: number[], sampleRate?: number, receiverId?: string): Promise<AudioBuffer>;
     ambisonicImpulseResponse?: AudioBuffer;
     ambisonicOrder: number;
     impulseResponse: AudioBuffer;
     impulseResponsePlaying: boolean;
-    playImpulseResponse(): Promise<void>;
+    playImpulseResponse(receiverId?: string): Promise<void>;
     downloadImpulses(filename: string, initialSPL?: number, frequencies?: number[], sampleRate?: number): void;
-    downloadImpulseResponse(filename: string, sampleRate?: number): Promise<void>;
-    downloadAmbisonicImpulseResponse(filename: string, order?: number): Promise<void>;
+    downloadImpulseResponse(filename: string, sampleRate?: number, receiverId?: string): Promise<void>;
+    downloadAmbisonicImpulseResponse(filename: string, order?: number, receiverId?: string): Promise<void>;
     /**
      * Calculate binaural impulse response from the ambisonic IR using HRTF decoder filters.
      * The ambisonic IR is computed (or cached) first, then optionally rotated by head orientation,
      * and finally decoded to stereo via HRTF convolution.
      */
-    calculateBinauralImpulseResponse(order?: number): Promise<AudioBuffer>;
+    calculateBinauralImpulseResponse(order?: number, receiverId?: string): Promise<AudioBuffer>;
     playBinauralImpulseResponse(order?: number): Promise<void>;
     downloadBinauralImpulseResponse(filename: string, order?: number): Promise<void>;
     /** Initialize GPU ray tracer. Returns true on success. */

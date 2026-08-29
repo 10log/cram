@@ -4,9 +4,9 @@ import { a as d, g as f, i as p } from "./store-CUhn0IQy.mjs";
 import { i as m, n as h, r as g, t as _ } from "./audio-engine-Cfjjb4lc.mjs";
 import "./acoustics-SIlOec_Y.mjs";
 import { a as v, i as y, n as b, r as x } from "./TessellateModifier-C1tXMs2g.mjs";
-import { _ as S, c as C, d as w, f as T, g as E, h as D, l as O, m as k, n as ee, o as te, p as ne, r as re, s as ie, t as ae, u as A, v as oe, y as se } from "./diffraction-CtLn0to_.mjs";
-import { n as j } from "./air-attenuation-BJnoHmX2.mjs";
-import { t as M } from "./sound-speed-CfEkirc1.mjs";
+import { _ as S, c as C, d as w, f as T, g as E, h as ee, l as D, m as te, n as O, o as k, p as A, r as ne, s as re, t as ie, u as j, v as ae, y as oe } from "./diffraction-CtLn0to_.mjs";
+import { n as M } from "./air-attenuation-BJnoHmX2.mjs";
+import { t as se } from "./sound-speed-CfEkirc1.mjs";
 import { r as ce } from "./room-Be5invjN.mjs";
 import { n as le, t as ue } from "./gpu-context-BQmqThE1.mjs";
 import { t as de } from "./solver-DCp-VMaM.mjs";
@@ -101,27 +101,27 @@ function Oe(e) {
 }
 //#endregion
 //#region src/compute/raytracer/world-normal.ts
-function z(e, t) {
+function ke(e, t) {
 	return e.normal && e.normal.lengthSq() > 0 ? t.copy(e.normal).normalize() : e.face ? (t.copy(e.face.normal), e.object?.matrixWorld && t.transformDirection(e.object.matrixWorld), t.normalize()) : null;
 }
-function ke(e, t, n) {
+function Ae(e, t, n) {
 	return n.copy(e).addScaledVector(t, -2 * e.dot(t));
 }
 //#endregion
 //#region src/compute/raytracer/ray-core.ts
-var { abs: Ae } = Math, B = new P.Vector3(), je = new P.Vector3();
+var { abs: je } = Math, Me = new P.Vector3(), Ne = new P.Vector3();
 new P.Vector3();
-var Me = new P.Vector3(), V = new P.Vector3(), Ne = new P.Vector3(), H = new P.Vector3(), U = new P.Plane(), W = new P.Vector4(), Pe = new P.Vector4(), Fe = new P.Vector4(), Ie = new P.Vector4();
-function Le(e, t) {
-	return e.getPlane(U), W.set(U.normal.x, U.normal.y, U.normal.z, U.constant), Pe.set(t.a.x, t.a.y, t.a.z, 1), Fe.set(t.b.x, t.b.y, t.b.z, 1), Ie.set(t.c.x, t.c.y, t.c.z, 1), W.dot(Pe) > 0 || W.dot(Fe) > 0 || W.dot(Ie) > 0;
+var Pe = new P.Vector3(), z = new P.Vector3(), Fe = new P.Vector3(), B = new P.Vector3(), V = new P.Plane(), H = new P.Vector4(), Ie = new P.Vector4(), Le = new P.Vector4(), Re = new P.Vector4();
+function ze(e, t) {
+	return e.getPlane(V), H.set(V.normal.x, V.normal.y, V.normal.z, V.constant), Ie.set(t.a.x, t.a.y, t.a.z, 1), Le.set(t.b.x, t.b.y, t.b.z, 1), Re.set(t.c.x, t.c.y, t.c.z, 1), H.dot(Ie) > 0 || H.dot(Le) > 0 || H.dot(Re) > 0;
 }
-function Re(e, t, n, r, i, a, o, s, c, l, u, d, f = 1, p = []) {
+function Be(e, t, n, r, i, a, o, s, c, l, u, d, f = 1, p = []) {
 	o = o.normalize(), e.ray.origin = a, e.ray.direction = o;
 	let m = e.intersectObjects(t, !0);
 	if (m.length > 0) {
 		let a = c.reduce((e, t) => e + t, 0), h = c.length > 0 ? a / c.length : 0;
 		if (m[0].object.userData?.kind === "receiver") {
-			let e = z(m[0], je), t = e && B.copy(o).multiplyScalar(-1).angleTo(e), n = m[0].distance, i = c.map((e, t) => e * 10 ** (-r[t] * n / 10)), a = i.reduce((e, t) => e + t, 0), s = i.length > 0 ? a / i.length : 0;
+			let e = ke(m[0], Ne), t = e && Me.copy(o).multiplyScalar(-1).angleTo(e), n = m[0].distance, i = c.map((e, t) => e * 10 ** (-r[t] * n / 10)), a = i.reduce((e, t) => e + t, 0), s = i.length > 0 ? a / i.length : 0;
 			p.push({
 				object: m[0].object.parent.uuid,
 				angle: t,
@@ -144,11 +144,11 @@ function Re(e, t, n, r, i, a, o, s, c, l, u, d, f = 1, p = []) {
 				],
 				energy: s,
 				bandEnergy: [...i]
-			}), H.copy(o).normalize().negate();
+			}), B.copy(o).normalize().negate();
 			let f = [
-				H.x,
-				H.y,
-				H.z
+				B.x,
+				B.y,
+				B.z
 			];
 			return {
 				chain: p,
@@ -163,7 +163,7 @@ function Re(e, t, n, r, i, a, o, s, c, l, u, d, f = 1, p = []) {
 			};
 		}
 		{
-			let a = z(m[0], je), g = a && B.copy(o).multiplyScalar(-1).angleTo(a);
+			let a = ke(m[0], Ne), g = a && Me.copy(o).multiplyScalar(-1).angleTo(a);
 			p.push({
 				object: m[0].object.parent.uuid,
 				angle: g,
@@ -186,18 +186,18 @@ function Re(e, t, n, r, i, a, o, s, c, l, u, d, f = 1, p = []) {
 				],
 				energy: h
 			}), m[0].object.parent instanceof ce && (m[0].object.parent.numHits += 1);
-			let _ = a, v = _ && ke(o, _, Me), y = m[0].object.parent, b = n.map((e) => y.scatteringFunction(e)), x = c.reduce((e, t) => e + t, 0) || 1, S = 0;
+			let _ = a, v = _ && Ae(o, _, Pe), y = m[0].object.parent, b = n.map((e) => y.scatteringFunction(e)), x = c.reduce((e, t) => e + t, 0) || 1, S = 0;
 			for (let e = 0; e < n.length; e++) S += b[e] * (c[e] || 0);
 			if (S /= x, Oe(S)) {
 				do
-					V.set(Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 - 1);
-				while (V.lengthSq() > 1 || V.lengthSq() < 1e-6);
-				V.normalize(), v = Me.copy(V).add(_).normalize();
+					z.set(Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 - 1);
+				while (z.lengthSq() > 1 || z.lengthSq() < 1e-6);
+				z.normalize(), v = Pe.copy(z).add(_).normalize();
 			}
 			let C = m[0].distance, w = n.map((e, t) => {
 				let n = c[t];
 				if (n == null) return 0;
-				let i = n * Ae(y.reflectionFunction(e, g));
+				let i = n * je(y.reflectionFunction(e, g));
 				return i *= 10 ** (-r[t] * C / 10), i;
 			}), T = Math.max(...w);
 			if (v && _ && f < s + 1) {
@@ -216,7 +216,7 @@ function Re(e, t, n, r, i, a, o, s, c, l, u, d, f = 1, p = []) {
 					}
 					for (let t = 0; t < w.length; t++) w[t] /= e;
 				}
-				if (T > 0) return Re(e, t, n, r, i, Ne.copy(m[0].point).addScaledVector(_, Te), v, s, w, l, u, d, f + 1, p);
+				if (T > 0) return Be(e, t, n, r, i, Fe.copy(m[0].point).addScaledVector(_, Te), v, s, w, l, u, d, f + 1, p);
 			}
 		}
 		return {
@@ -229,12 +229,12 @@ function Re(e, t, n, r, i, a, o, s, c, l, u, d, f = 1, p = []) {
 }
 //#endregion
 //#region src/compute/raytracer/impulse-response.ts
-var { floor: G, abs: ze, max: Be } = Math, Ve = () => Math.random() > .5, He = () => new Worker(new URL(
+var { floor: U, abs: Ve, max: He } = Math, Ue = () => Math.random() > .5, We = () => new Worker(new URL(
 	/* @vite-ignore */
 	"/assets/filter.worker-B2fYKvk6.js",
 	"" + import.meta.url
 ));
-function K(e, t, n, r = 1, i = 20) {
+function W(e, t, n, r = 1, i = 20) {
 	let a = y(x(e));
 	if (n.bandEnergy && n.bandEnergy.length === t.length) {
 		for (let e = 0; e < t.length; e++) a[e] *= n.bandEnergy[e];
@@ -245,39 +245,39 @@ function K(e, t, n, r = 1, i = 20) {
 	n.chain.slice(0, -1).forEach((e) => {
 		let n = f.getState().containers[e.object];
 		a.forEach((r, i) => {
-			let o = ze(n.reflectionFunction(t[i], e.angle));
+			let o = Ve(n.reflectionFunction(t[i], e.angle));
 			a[i] = r * o;
 		});
 	});
-	let o = v(b(a)), s = j(t, i);
+	let o = v(b(a)), s = M(t, i);
 	t.forEach((e, t) => o[t] -= s[t] * n.totalLength);
 	let c = x(o);
 	if (r !== 1) for (let e = 0; e < c.length; e++) c[e] *= r;
 	return c;
 }
-async function Ue(e, t, n, r = 100, i, a, o = _.sampleRate, s) {
+async function Ge(e, t, n, r = 100, i, a, o = _.sampleRate, s) {
 	if (n.length === 0) throw Error("No rays have been traced for this pair");
-	let c = n.sort((e, t) => e.time - t.time), l = c[c.length - 1].time + I, u = Array(i.length).fill(r), d = G(o * l) * 2, p = [];
+	let c = n.sort((e, t) => e.time - t.time), l = c[c.length - 1].time + I, u = Array(i.length).fill(r), d = U(o * l) * 2, p = [];
 	for (let e = 0; e < i.length; e++) p.push(new Float32Array(d));
 	let m = f.getState().containers[t];
 	for (let e = 0; e < c.length; e++) {
-		let t = Ve() ? 1 : -1, n = c[e].time, r = c[e].arrivalDirection || [
+		let t = Ue() ? 1 : -1, n = c[e].time, r = c[e].arrivalDirection || [
 			0,
 			0,
 			1
-		], s = m.getGain(r), l = K(u, i, c[e], s, a).map((e) => e * t), d = G(n * o);
+		], s = m.getGain(r), l = W(u, i, c[e], s, a).map((e) => e * t), d = U(n * o);
 		for (let e = 0; e < i.length; e++) p[e][d] += l[e];
 	}
 	if (s && s.energyHistogram && s.energyHistogram.length > 0) {
-		let e = O(s.energyHistogram, s.frequencies, s.crossfadeTime, s.histogramBinWidth), { tailSamples: t, tailStartSample: n } = A(e, o), r = G(s.crossfadeDuration * o);
+		let e = D(s.energyHistogram, s.frequencies, s.crossfadeTime, s.histogramBinWidth), { tailSamples: t, tailStartSample: n } = j(e, o), r = U(s.crossfadeDuration * o);
 		p = C(p, t, n, r);
-		let a = p.reduce((e, t) => Be(e, t.length), 0) * 2;
+		let a = p.reduce((e, t) => He(e, t.length), 0) * 2;
 		for (let e = 0; e < i.length; e++) if (p[e].length < a) {
 			let t = new Float32Array(a);
 			t.set(p[e]), p[e] = t;
 		}
 	}
-	let h = He();
+	let h = We();
 	return new Promise((e, t) => {
 		h.postMessage({ samples: p }), h.onmessage = (t) => {
 			let n = t.data.samples, r = new Float32Array(n[0].length >> 1);
@@ -292,72 +292,86 @@ async function Ue(e, t, n, r = 100, i, a, o = _.sampleRate, s) {
 		};
 	});
 }
-async function We(e, t, n, r = 100, i, a, o = _.sampleRate, s) {
+async function Ke(e, t, n, r = 100, i, a, o = _.sampleRate, s, c) {
 	if (e.length == 0) throw Error("No receivers have been assigned to the raytracer");
 	if (t.length == 0) throw Error("No sources have been assigned to the raytracer");
-	if (n[e[0]].length == 0) throw Error("No rays have been traced yet");
-	let c = n[e[0]].sort((e, t) => e.time - t.time), l = c[c.length - 1].time + I, u = Array(i.length).fill(r), d = G(o * l) * 2, p = [];
-	for (let e = 0; e < i.length; e++) p.push(new Float32Array(d));
-	let m = f.getState().containers[e[0]];
-	for (let e = 0; e < c.length; e++) {
-		let t = Ve() ? 1 : -1, n = c[e].time, r = c[e].arrivalDirection || [
+	let l = c ?? e[0];
+	if (!n[l] || n[l].length == 0) throw Error("No rays have been traced yet");
+	let u = n[l].slice().sort((e, t) => e.time - t.time), d = u[u.length - 1].time + I, p = Array(i.length).fill(r), m = U(o * d) * 2, h = [];
+	for (let e = 0; e < i.length; e++) h.push(new Float32Array(m));
+	let g = f.getState().containers[l];
+	for (let e = 0; e < u.length; e++) {
+		let t = Ue() ? 1 : -1, n = u[e].time, r = u[e].arrivalDirection || [
 			0,
 			0,
 			1
-		], s = m.getGain(r), l = K(u, i, c[e], s, a).map((e) => e * t), d = G(n * o);
-		for (let e = 0; e < i.length; e++) p[e][d] += l[e];
+		], s = g.getGain(r), c = W(p, i, u[e], s, a).map((e) => e * t), l = U(n * o);
+		for (let e = 0; e < i.length; e++) h[e][l] += c[e];
 	}
 	if (s && s.energyHistogram && s.energyHistogram.length > 0) {
-		let e = O(s.energyHistogram, s.frequencies, s.crossfadeTime, s.histogramBinWidth), { tailSamples: t, tailStartSample: n } = A(e, o), r = G(s.crossfadeDuration * o);
-		p = C(p, t, n, r);
-		let a = p.reduce((e, t) => Be(e, t.length), 0) * 2;
-		for (let e = 0; e < i.length; e++) if (p[e].length < a) {
+		let e = D(s.energyHistogram, s.frequencies, s.crossfadeTime, s.histogramBinWidth), { tailSamples: t, tailStartSample: n } = j(e, o), r = U(s.crossfadeDuration * o);
+		h = C(h, t, n, r);
+		let a = h.reduce((e, t) => He(e, t.length), 0) * 2;
+		for (let e = 0; e < i.length; e++) if (h[e].length < a) {
 			let t = new Float32Array(a);
-			t.set(p[e]), p[e] = t;
+			t.set(h[e]), h[e] = t;
 		}
 	}
-	let h = He();
+	let v = We();
 	return new Promise((e, t) => {
-		h.postMessage({ samples: p }), h.onmessage = (t) => {
+		v.postMessage({ samples: h }), v.onmessage = (t) => {
 			let n = t.data.samples, r = new Float32Array(n[0].length >> 1);
 			for (let e = 0; e < n.length; e++) for (let t = 0; t < r.length; t++) r[t] += n[e][t];
 			let i = R(r.slice());
-			h.terminate(), e({
+			v.terminate(), e({
 				signal: r,
 				normalizedSignal: i
 			});
-		}, h.onerror = (e) => {
-			h.terminate(), t(e);
+		}, v.onerror = (e) => {
+			v.terminate(), t(e);
 		};
 	});
 }
 //#endregion
 //#region src/compute/raytracer/hybrid-ir.ts
-function Ge(e) {
+function qe(e) {
 	return e.chainLength - 1;
 }
-function Ke(e, t) {
-	return e.filter((e) => Ge(e) > t).slice().sort((e, t) => e.time - t.time);
+function Je(e, t) {
+	return e.filter((e) => qe(e) > t).slice().sort((e, t) => e.time - t.time);
 }
-function qe(e, t) {
+function Ye(e, t) {
 	return e.filter((e) => e.order <= t);
 }
 //#endregion
+//#region src/compute/raytracer/path-timing.ts
+function Xe(e, t) {
+	let n = 0, r = 0, i = t > 0 ? t : 343;
+	for (let t of e.chain) n += t.distance, r += t.distance / i;
+	return e.totalLength = n, e.time = r, e;
+}
+function G(e, t, n) {
+	let r = n ?? e[0];
+	if (!r) throw Error("No receivers have been assigned to the raytracer");
+	if (!t[r] || t[r].length === 0) throw Error("No rays have been traced yet");
+	return r;
+}
+//#endregion
 //#region src/compute/raytracer/response-by-intensity.ts
-var { abs: Je } = Math;
-function q(e, t, n) {
+var { abs: Ze } = Math;
+function K(e, t, n) {
 	let r = t.chain.slice(0, -1);
 	if (r && r.length > 0) {
 		let t = 1;
 		for (let i = 0; i < r.length; i++) {
 			let a = r[i], o = e.surfaceMap[a.object], s = a.angle || 0;
-			t *= Je(o.reflectionFunction(n, s));
+			t *= Ze(o.reflectionFunction(n, s));
 		}
 		return t;
 	}
 	return 1;
 }
-function Ye(e, t, n, r) {
+function Qe(e, t, n, r) {
 	let i = [], a = (e, t) => ({
 		label: e,
 		data: t
@@ -373,10 +387,10 @@ function Ye(e, t, n, r) {
 			let c = e[s[n]][a], l;
 			r ? (l = r.map((e) => ({
 				frequency: e,
-				value: q(t, c, e)
+				value: K(t, c, e)
 			})), r.forEach((e, n) => {
-				o[n].data.push([c.time, q(t, c, e)]);
-			})) : l = (e) => q(t, c, e), i[i.length - 1].data.push({
+				o[n].data.push([c.time, K(t, c, e)]);
+			})) : l = (e) => K(t, c, e), i[i.length - 1].data.push({
 				time: c.time,
 				energy: l
 			});
@@ -386,8 +400,8 @@ function Ye(e, t, n, r) {
 	for (let e = 0; e < o.length; e++) o[e].data = o[e].data.sort((e, t) => e[0] - t[0]), o[e].x = o[e].data.map((e) => e[0]), o[e].y = o[e].data.map((e) => e[1]);
 	return [i, o];
 }
-function Xe(e, t, n, r, i, a) {
-	let o = e, s = M(i), c = j(r, i), l = {};
+function $e(e, t, n, r, i, a) {
+	let o = e, s = se(i), c = M(r, i), l = {};
 	for (let e in o) {
 		l[e] = {};
 		let t = f.getState().containers[e];
@@ -428,8 +442,8 @@ function Xe(e, t, n, r, i, a) {
 }
 //#endregion
 //#region src/compute/raytracer/serialization.ts
-var Ze = -2;
-function Qe(e) {
+var et = -2;
+function tt(e) {
 	let t = (e) => String.fromCharCode(...e), n = (e) => {
 		let n = 0;
 		return {
@@ -472,7 +486,7 @@ function Qe(e) {
 	}
 	return a;
 }
-function $e(e) {
+function nt(e) {
 	let t = /* @__PURE__ */ new Set();
 	for (let n of Object.keys(e)) {
 		t.add(n);
@@ -489,7 +503,7 @@ function $e(e) {
 		for (let n of e[t]) a += 5, a += n.chain.length * 12;
 	}
 	let o = new Float32Array(i + a), s = 0;
-	o[s++] = Ze, o[s++] = n.length;
+	o[s++] = et, o[s++] = n.length;
 	for (let e of n) for (let t = 0; t < 36; t++) o[s++] = e.charCodeAt(t);
 	for (let t of Object.keys(e)) {
 		o[s++] = r.get(t);
@@ -503,7 +517,7 @@ function $e(e) {
 	}
 	return o;
 }
-function et(e) {
+function rt(e) {
 	let t = 0;
 	t++;
 	let n = e[t++];
@@ -558,56 +572,56 @@ function et(e) {
 	}
 	return i;
 }
-function tt(e) {
-	return $e(e);
+function it(e) {
+	return nt(e);
 }
-function nt(e) {
-	return e.length === 0 ? {} : e[0] === Ze ? et(e) : Qe(e);
+function at(e) {
+	return e.length === 0 ? {} : e[0] === et ? rt(e) : tt(e);
 }
 //#endregion
 //#region src/compute/raytracer/export-playback.ts
-var rt = /* @__PURE__ */ r(s()), { floor: it, abs: at } = Math, ot = () => Math.random() > .5, st = "RAYTRACER_SET_PROPERTY";
-function ct(e, t, n, r, i, a = 100, o = m(125, 8e3), s = 44100) {
+var ot = /* @__PURE__ */ r(s()), { floor: st, abs: ct } = Math, lt = () => Math.random() > .5, ut = "RAYTRACER_SET_PROPERTY";
+function dt(e, t, n, r, i, a = 100, o = m(125, 8e3), s = 44100) {
 	if (t.length === 0) throw Error("No receivers have been assigned to the raytracer");
 	if (n.length === 0) throw Error("No sources have been assigned to the raytracer");
 	if (e[t[0]].length === 0) throw Error("No rays have been traced yet");
-	let c = e[t[0]].sort((e, t) => e.time - t.time), l = c[c.length - 1].time + I, u = Array(o.length).fill(a), d = it(s * l), p = [];
+	let c = e[t[0]].sort((e, t) => e.time - t.time), l = c[c.length - 1].time + I, u = Array(o.length).fill(a), d = st(s * l), p = [];
 	for (let e = 0; e < o.length; e++) p.push(new Float32Array(d));
 	let _ = 0, v = f.getState().containers[t[0]];
 	for (let e = 0; e < c.length; e++) {
-		let t = ot() ? 1 : -1, n = c[e].time, i = c[e].arrivalDirection || [
+		let t = lt() ? 1 : -1, n = c[e].time, i = c[e].arrivalDirection || [
 			0,
 			0,
 			1
-		], a = v.getGain(i), l = r(u, o, c[e], a).map((e) => e * t), d = it(n * s);
-		for (let e = 0; e < o.length; e++) p[e][d] += l[e], at(p[e][d]) > _ && (_ = at(p[e][d]));
+		], a = v.getGain(i), l = r(u, o, c[e], a).map((e) => e * t), d = st(n * s);
+		for (let e = 0; e < o.length; e++) p[e][d] += l[e], ct(p[e][d]) > _ && (_ = ct(p[e][d]));
 	}
 	for (let e = 0; e < o.length; e++) {
 		let t = g([h(p[e])], {
 			sampleRate: s,
 			bitDepth: 32
 		});
-		rt.default.saveAs(t, `${o[e]}_${i}.wav`);
+		ot.default.saveAs(t, `${o[e]}_${i}.wav`);
 	}
 }
-async function lt(e, t, n) {
-	return fe(e, t, n, st);
+async function ft(e, t, n) {
+	return fe(e, t, n, ut);
 }
-async function ut(e, t, n, r) {
+async function pt(e, t, n, r) {
 	return he(e, t, n, r);
 }
-async function dt(e, t, n, r = 1, i) {
+async function mt(e, t, n, r = 1, i) {
 	return ge(e, t, n, r, i);
 }
-async function ft(e, t, n) {
-	return pe(e, t, n, st);
+async function ht(e, t, n) {
+	return pe(e, t, n, ut);
 }
-async function pt(e, t, n) {
+async function gt(e, t, n) {
 	return me(e, t, n);
 }
 //#endregion
 //#region src/compute/raytracer/convergence.ts
-function mt(e) {
+function _t(e) {
 	return {
 		convergenceMetrics: {
 			totalRays: 0,
@@ -622,7 +636,7 @@ function mt(e) {
 		lastConvergenceCheck: Date.now()
 	};
 }
-function ht(e, t, n, r, i, a, o, s, l) {
+function vt(e, t, n, r, i, a, o, s, l) {
 	e.totalRays = i, e.validRays = a;
 	let u = Object.keys(t);
 	if (u.length === 0) return;
@@ -695,7 +709,7 @@ function ht(e, t, n, r, i, a, o, s, l) {
 		value: { ...e }
 	});
 }
-function gt(e, t, n, r, i, a, o) {
+function yt(e, t, n, r, i, a, o) {
 	if (!e[t]) {
 		e[t] = [];
 		for (let n = 0; n < r.length; n++) e[t].push(new Float32Array(o));
@@ -708,7 +722,7 @@ function gt(e, t, n, r, i, a, o) {
 }
 //#endregion
 //#region src/compute/raytracer/gpu/gpu-bvh.ts
-function _t(e, t, n) {
+function bt(e, t, n) {
 	let r = e.allSurfaces, i = f.getState().containers, a = [], o = [], s = [], c = [];
 	for (let e = 0; e < r.length; e++) {
 		let t = r[e];
@@ -721,7 +735,7 @@ function _t(e, t, n) {
 				let n = u.getX(t + e), r = new P.Vector3(l.getX(n), l.getY(n), l.getZ(n)).applyMatrix4(d);
 				o.push(r.x, r.y, r.z);
 			}
-			let n = o.length - 9, r = xt(o[n], o[n + 1], o[n + 2], o[n + 3], o[n + 4], o[n + 5], o[n + 6], o[n + 7], o[n + 8]);
+			let n = o.length - 9, r = wt(o[n], o[n + 1], o[n + 2], o[n + 3], o[n + 4], o[n + 5], o[n + 6], o[n + 7], o[n + 8]);
 			s.push(r[0], r[1], r[2]), c.push(e);
 		}
 		else for (let t = 0; t < l.count; t += 3) {
@@ -729,7 +743,7 @@ function _t(e, t, n) {
 				let n = new P.Vector3(l.getX(t + e), l.getY(t + e), l.getZ(t + e)).applyMatrix4(d);
 				o.push(n.x, n.y, n.z);
 			}
-			let n = o.length - 9, r = xt(o[n], o[n + 1], o[n + 2], o[n + 3], o[n + 4], o[n + 5], o[n + 6], o[n + 7], o[n + 8]);
+			let n = o.length - 9, r = wt(o[n], o[n + 1], o[n + 2], o[n + 3], o[n + 4], o[n + 5], o[n + 6], o[n + 7], o[n + 8]);
 			s.push(r[0], r[1], r[2]), c.push(e);
 		}
 	}
@@ -740,12 +754,12 @@ function _t(e, t, n) {
 	}
 	let h = new Uint32Array(l);
 	for (let e = 0; e < l; e++) h[e] = e;
-	let g = J(u, m, h, 0, l, 0), _ = new Float32Array(l * 9), v = new Float32Array(l * 3), y = new Uint32Array(l);
+	let g = q(u, m, h, 0, l, 0), _ = new Float32Array(l * 9), v = new Float32Array(l * 3), y = new Uint32Array(l);
 	for (let e = 0; e < l; e++) {
 		let t = h[e];
 		_.set(u.subarray(t * 9, t * 9 + 9), e * 9), v.set(d.subarray(t * 3, t * 3 + 3), e * 3), y[e] = p[t];
 	}
-	let { nodeArray: b, nodeCount: x } = bt(g), S = n.length, C = new Float32Array(r.length * S * 2);
+	let { nodeArray: b, nodeCount: x } = Ct(g), S = n.length, C = new Float32Array(r.length * S * 2);
 	for (let e = 0; e < r.length; e++) {
 		let t = r[e];
 		for (let r = 0; r < S; r++) {
@@ -777,8 +791,8 @@ function _t(e, t, n) {
 		receiverUuidMap: w
 	};
 }
-var vt = 8, yt = 64;
-function J(e, t, n, r, i, a) {
+var xt = 8, St = 64;
+function q(e, t, n, r, i, a) {
 	let o = Infinity, s = Infinity, c = Infinity, l = -Infinity, u = -Infinity, d = -Infinity;
 	for (let t = r; t < i; t++) {
 		let r = n[t];
@@ -788,7 +802,7 @@ function J(e, t, n, r, i, a) {
 		}
 	}
 	let f = i - r;
-	if (f <= vt || a >= yt) return {
+	if (f <= xt || a >= St) return {
 		boundsMin: [
 			o,
 			s,
@@ -815,7 +829,7 @@ function J(e, t, n, r, i, a) {
 		n[b] = n[e], n[e] = t, b++;
 	}
 	(b === r || b === i) && (b = r + i >> 1);
-	let x = J(e, t, n, r, b, a + 1), S = J(e, t, n, b, i, a + 1);
+	let x = q(e, t, n, r, b, a + 1), S = q(e, t, n, b, i, a + 1);
 	return {
 		boundsMin: [
 			o,
@@ -833,7 +847,7 @@ function J(e, t, n, r, i, a) {
 		triCount: -1
 	};
 }
-function bt(e) {
+function Ct(e) {
 	let t = 0, n = [e];
 	for (; n.length > 0;) {
 		let e = n.pop();
@@ -855,7 +869,7 @@ function bt(e) {
 		nodeCount: t
 	};
 }
-function xt(e, t, n, r, i, a, o, s, c) {
+function wt(e, t, n, r, i, a, o, s, c) {
 	let l = r - e, u = i - t, d = a - n, f = o - e, p = s - t, m = c - n, h = u * m - d * p, g = d * f - l * m, _ = l * p - u * f, v = Math.sqrt(h * h + g * g + _ * _);
 	return v > 1e-10 && (h /= v, g /= v, _ /= v), [
 		h,
@@ -865,7 +879,7 @@ function xt(e, t, n, r, i, a, o, s, c) {
 }
 //#endregion
 //#region src/compute/raytracer/gpu/ray-trace.wgsl?raw
-var St = "// ─── GPU Ray Tracer Compute Shader ───────────────────────────────────\n// Traces one ray per thread through all bounces using an iterative BVH\n// traversal and Moller–Trumbore ray-triangle intersection.\n//\n// Mirrors the CPU implementation in ray-core.ts.\n\n// Constants\nconst MAX_BOUNCES: u32 = 64u;\nconst MAX_BANDS: u32 = 7u;\nconst BVH_STACK_SIZE: u32 = 64u;\nconst SELF_INTERSECTION_OFFSET: f32 = 0.01;\nconst PI: f32 = 3.14159265358979;\nconst EPSILON: f32 = 1e-6;\n\n// ─── Structures ──────────────────────────────────────────────────────\n\nstruct Params {\n  numRays: u32,\n  maxBounces: u32,\n  numBands: u32,\n  numReceivers: u32,\n  numTriangles: u32,\n  numNodes: u32,\n  numSurfaces: u32,\n  batchSeed: u32,\n  rrThreshold: f32,\n  _pad0: f32,\n  _pad1: f32,\n  _pad2: f32,\n  // Per-band air attenuation in dB/m (up to MAX_BANDS), packed into vec4s\n  // to satisfy uniform buffer layout rules (array<f32> has 16-byte stride).\n  // airAttPacked[0] = (band0, band1, band2, band3)\n  // airAttPacked[1] = (band4, band5, band6, unused)\n  airAttPacked: array<vec4<f32>, 2>,\n}\n\nfn getAirAtt(band: u32) -> f32 {\n  return params.airAttPacked[band / 4u][band % 4u];\n}\n\n// Per-bounce output written to the chain buffer\nstruct ChainEntry {\n  px: f32, py: f32, pz: f32,\n  distance: f32,\n  surfaceIndex: u32,\n  _pad0: u32,\n  angle: f32,\n  energy: f32,\n  bandEnergy: array<f32, 7>,\n  _pad1: f32,\n}\n\n// Per-ray output\nstruct RayOutput {\n  chainLength: u32,\n  intersectedReceiver: u32, // 0 or 1\n  receiverIndex: u32,\n  arrivalDirX: f32,\n  arrivalDirY: f32,\n  arrivalDirZ: f32,\n  _pad0: f32,\n  _pad1: f32,\n  finalBandEnergy: array<f32, 7>,\n  _pad2: f32,\n}\n\n// Per-ray input\nstruct RayInput {\n  ox: f32, oy: f32, oz: f32,\n  dx: f32, dy: f32, dz: f32,\n  initialPhi: f32,\n  initialTheta: f32,\n  bandEnergy: array<f32, 7>,\n  _pad: f32,\n}\n\n// ─── Bindings ────────────────────────────────────────────────────────\n\n@group(0) @binding(0) var<uniform> params: Params;\n@group(0) @binding(1) var<storage, read> bvhNodes: array<f32>;\n@group(0) @binding(2) var<storage, read> triVerts: array<f32>;\n@group(0) @binding(3) var<storage, read> triSurfIndex: array<u32>;\n@group(0) @binding(4) var<storage, read> triNormals: array<f32>;\n@group(0) @binding(5) var<storage, read> surfAcoustic: array<f32>;\n@group(0) @binding(6) var<storage, read> receiverSpheres: array<f32>;\n@group(0) @binding(7) var<storage, read> rayInputs: array<RayInput>;\n@group(0) @binding(8) var<storage, read_write> rayOutputs: array<RayOutput>;\n@group(0) @binding(9) var<storage, read_write> chainBuffer: array<ChainEntry>;\n\n// ─── RNG (PCG hash) ─────────────────────────────────────────────────\n\nfn pcg_hash(input: u32) -> u32 {\n  var state = input * 747796405u + 2891336453u;\n  var word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;\n  return (word >> 22u) ^ word;\n}\n\nfn rand(seed: ptr<function, u32>) -> f32 {\n  *seed = pcg_hash(*seed);\n  return f32(*seed) / 4294967295.0;\n}\n\n// ─── Vector helpers ─────────────────────────────────────────────────\n\nfn dot3(ax: f32, ay: f32, az: f32, bx: f32, by: f32, bz: f32) -> f32 {\n  return ax * bx + ay * by + az * bz;\n}\n\nfn length3(x: f32, y: f32, z: f32) -> f32 {\n  return sqrt(x * x + y * y + z * z);\n}\n\nfn normalize3(x: f32, y: f32, z: f32) -> vec3<f32> {\n  let len = length3(x, y, z);\n  if (len < EPSILON) { return vec3<f32>(0.0, 1.0, 0.0); }\n  return vec3<f32>(x / len, y / len, z / len);\n}\n\n// ─── Ray-AABB slab test ─────────────────────────────────────────────\n\nfn rayAabbIntersect(\n  ox: f32, oy: f32, oz: f32,\n  invDx: f32, invDy: f32, invDz: f32,\n  bminX: f32, bminY: f32, bminZ: f32,\n  bmaxX: f32, bmaxY: f32, bmaxZ: f32,\n  tMax: f32,\n) -> bool {\n  var t1 = (bminX - ox) * invDx;\n  var t2 = (bmaxX - ox) * invDx;\n  var tNear = min(t1, t2);\n  var tFar = max(t1, t2);\n\n  t1 = (bminY - oy) * invDy;\n  t2 = (bmaxY - oy) * invDy;\n  tNear = max(tNear, min(t1, t2));\n  tFar = min(tFar, max(t1, t2));\n\n  t1 = (bminZ - oz) * invDz;\n  t2 = (bmaxZ - oz) * invDz;\n  tNear = max(tNear, min(t1, t2));\n  tFar = min(tFar, max(t1, t2));\n\n  return tNear <= tFar && tFar >= 0.0 && tNear < tMax;\n}\n\n// ─── Moller–Trumbore ray-triangle intersection ──────────────────────\n\nfn rayTriIntersect(\n  ox: f32, oy: f32, oz: f32,\n  dx: f32, dy: f32, dz: f32,\n  triIdx: u32,\n) -> vec2<f32> {\n  // Returns (t, 0) on hit, (-1, 0) on miss\n  let b = triIdx * 9u;\n  let v0x = triVerts[b]; let v0y = triVerts[b + 1u]; let v0z = triVerts[b + 2u];\n  let v1x = triVerts[b + 3u]; let v1y = triVerts[b + 4u]; let v1z = triVerts[b + 5u];\n  let v2x = triVerts[b + 6u]; let v2y = triVerts[b + 7u]; let v2z = triVerts[b + 8u];\n\n  let e1x = v1x - v0x; let e1y = v1y - v0y; let e1z = v1z - v0z;\n  let e2x = v2x - v0x; let e2y = v2y - v0y; let e2z = v2z - v0z;\n\n  // h = cross(d, e2)\n  let hx = dy * e2z - dz * e2y;\n  let hy = dz * e2x - dx * e2z;\n  let hz = dx * e2y - dy * e2x;\n\n  let a = e1x * hx + e1y * hy + e1z * hz;\n  if (abs(a) < EPSILON) { return vec2<f32>(-1.0, 0.0); }\n\n  let f_inv = 1.0 / a;\n  let sx = ox - v0x; let sy = oy - v0y; let sz = oz - v0z;\n  let u = f_inv * (sx * hx + sy * hy + sz * hz);\n  if (u < 0.0 || u > 1.0) { return vec2<f32>(-1.0, 0.0); }\n\n  // q = cross(s, e1)\n  let qx = sy * e1z - sz * e1y;\n  let qy = sz * e1x - sx * e1z;\n  let qz = sx * e1y - sy * e1x;\n  let v = f_inv * (dx * qx + dy * qy + dz * qz);\n  if (v < 0.0 || u + v > 1.0) { return vec2<f32>(-1.0, 0.0); }\n\n  let t = f_inv * (e2x * qx + e2y * qy + e2z * qz);\n  if (t < EPSILON) { return vec2<f32>(-1.0, 0.0); }\n\n  return vec2<f32>(t, 0.0);\n}\n\n// ─── Ray-sphere intersection ────────────────────────────────────────\n\nfn raySphereIntersect(\n  ox: f32, oy: f32, oz: f32,\n  dx: f32, dy: f32, dz: f32,\n  cx: f32, cy: f32, cz: f32,\n  r: f32,\n) -> f32 {\n  let lx = cx - ox; let ly = cy - oy; let lz = cz - oz;\n  let tca = lx * dx + ly * dy + lz * dz;\n  let d2 = lx * lx + ly * ly + lz * lz - tca * tca;\n  let r2 = r * r;\n  if (d2 > r2) { return -1.0; }\n  let thc = sqrt(r2 - d2);\n  var t0 = tca - thc;\n  let t1 = tca + thc;\n  if (t0 < EPSILON) { t0 = t1; }\n  if (t0 < EPSILON) { return -1.0; }\n  return t0;\n}\n\n// ─── BVH traversal — find closest triangle hit ─────────────────────\n\nstruct HitResult {\n  t: f32,\n  triIdx: u32,\n  hit: bool,\n}\n\nfn traceClosest(\n  ox: f32, oy: f32, oz: f32,\n  dx: f32, dy: f32, dz: f32,\n) -> HitResult {\n  var result: HitResult;\n  result.t = 1e30;\n  result.triIdx = 0u;\n  result.hit = false;\n\n  let invDx = select(1e30, 1.0 / dx, abs(dx) > EPSILON);\n  let invDy = select(1e30, 1.0 / dy, abs(dy) > EPSILON);\n  let invDz = select(1e30, 1.0 / dz, abs(dz) > EPSILON);\n\n  var stack: array<u32, 64>;\n  var stackPtr: u32 = 0u;\n  stack[0] = 0u; // root node index\n  stackPtr = 1u;\n\n  while (stackPtr > 0u) {\n    stackPtr -= 1u;\n    let nodeIdx = stack[stackPtr];\n    let off = nodeIdx * 8u;\n\n    let bminX = bvhNodes[off];\n    let bminY = bvhNodes[off + 1u];\n    let bminZ = bvhNodes[off + 2u];\n    let bmaxX = bvhNodes[off + 4u];\n    let bmaxY = bvhNodes[off + 5u];\n    let bmaxZ = bvhNodes[off + 6u];\n\n    if (!rayAabbIntersect(ox, oy, oz, invDx, invDy, invDz, bminX, bminY, bminZ, bmaxX, bmaxY, bmaxZ, result.t)) {\n      continue;\n    }\n\n    // Read data1 as u32 to check leaf flag\n    let data1Bits = bitcast<u32>(bvhNodes[off + 7u]);\n    let isLeaf = (data1Bits & 0x80000000u) != 0u;\n\n    if (isLeaf) {\n      let triStart = bitcast<u32>(bvhNodes[off + 3u]);\n      let triCount = data1Bits & 0x7FFFFFFFu;\n      for (var i = 0u; i < triCount; i++) {\n        let tri = triStart + i;\n        let res = rayTriIntersect(ox, oy, oz, dx, dy, dz, tri);\n        if (res.x > 0.0 && res.x < result.t) {\n          result.t = res.x;\n          result.triIdx = tri;\n          result.hit = true;\n        }\n      }\n    } else {\n      let leftIdx = bitcast<u32>(bvhNodes[off + 3u]);\n      let rightIdx = data1Bits;\n      if (stackPtr < BVH_STACK_SIZE) {\n        stack[stackPtr] = leftIdx;\n        stackPtr += 1u;\n      }\n      if (stackPtr < BVH_STACK_SIZE) {\n        stack[stackPtr] = rightIdx;\n        stackPtr += 1u;\n      }\n    }\n  }\n\n  return result;\n}\n\n// ─── Reflection coefficient (matches CPU reflection-coefficient.ts) ──\n\nfn reflectionCoefficient(alpha: f32, theta: f32) -> f32 {\n  let rootOneMinusAlpha = sqrt(max(1.0 - alpha, 0.0));\n  let xi_o = (1.0 - rootOneMinusAlpha) / (1.0 + rootOneMinusAlpha);\n  let cosTheta = abs(cos(theta));\n  let xi_o_cosTheta = xi_o * cosTheta;\n  let R = (xi_o_cosTheta - 1.0) / (xi_o_cosTheta + 1.0);\n  return R * R;\n}\n\n// ─── Main compute entry point ───────────────────────────────────────\n\n@compute @workgroup_size(64)\nfn main(@builtin(global_invocation_id) gid: vec3<u32>) {\n  let rayIdx = gid.x;\n  if (rayIdx >= params.numRays) { return; }\n\n  let inp = rayInputs[rayIdx];\n  let numBands = min(params.numBands, MAX_BANDS);\n  let maxBounces = min(params.maxBounces, MAX_BOUNCES);\n\n  var rngSeed: u32 = pcg_hash(rayIdx * 747796405u + params.batchSeed);\n\n  // Current ray state\n  var ox = inp.ox; var oy = inp.oy; var oz = inp.oz;\n  var dx = inp.dx; var dy = inp.dy; var dz = inp.dz;\n  var d = normalize3(dx, dy, dz);\n  dx = d.x; dy = d.y; dz = d.z;\n\n  var bandEnergy: array<f32, 7>;\n  for (var b = 0u; b < numBands; b++) {\n    bandEnergy[b] = inp.bandEnergy[b];\n  }\n\n  // Output\n  let chainBase = rayIdx * MAX_BOUNCES;\n  var chainLen: u32 = 0u;\n  var hitReceiver: u32 = 0u;\n  var receiverIdx: u32 = 0u;\n  var arrivalDir = vec3<f32>(0.0, 0.0, 0.0);\n\n  for (var bounce = 0u; bounce < maxBounces; bounce++) {\n    // Check receiver spheres first (find closest)\n    var closestRecT: f32 = 1e30;\n    var closestRecIdx: u32 = 0u;\n    var recHit = false;\n    for (var ri = 0u; ri < params.numReceivers; ri++) {\n      let rb = ri * 4u;\n      let rcx = receiverSpheres[rb];\n      let rcy = receiverSpheres[rb + 1u];\n      let rcz = receiverSpheres[rb + 2u];\n      let rr = receiverSpheres[rb + 3u];\n      let t = raySphereIntersect(ox, oy, oz, dx, dy, dz, rcx, rcy, rcz, rr);\n      if (t > 0.0 && t < closestRecT) {\n        closestRecT = t;\n        closestRecIdx = ri;\n        recHit = true;\n      }\n    }\n\n    // BVH closest triangle hit\n    let triHit = traceClosest(ox, oy, oz, dx, dy, dz);\n\n    // Receiver is closer than any surface — ray enters receiver\n    if (recHit && closestRecT < triHit.t) {\n      // Apply air absorption for receiver segment\n      for (var b = 0u; b < numBands; b++) {\n        bandEnergy[b] *= pow(10.0, -getAirAtt(b) * closestRecT / 10.0);\n      }\n\n      // Compute mean energy\n      var totalE: f32 = 0.0;\n      for (var b = 0u; b < numBands; b++) { totalE += bandEnergy[b]; }\n      let meanE = totalE / f32(numBands);\n\n      // Record chain entry at receiver position\n      if (chainLen < MAX_BOUNCES) {\n        let ci = chainBase + chainLen;\n        chainBuffer[ci].px = ox + dx * closestRecT;\n        chainBuffer[ci].py = oy + dy * closestRecT;\n        chainBuffer[ci].pz = oz + dz * closestRecT;\n        chainBuffer[ci].distance = closestRecT;\n        // Store receiver index encoded as surface index + numSurfaces offset\n        chainBuffer[ci].surfaceIndex = params.numSurfaces + closestRecIdx;\n        chainBuffer[ci].angle = 0.0;\n        chainBuffer[ci].energy = meanE;\n        for (var b = 0u; b < numBands; b++) {\n          chainBuffer[ci].bandEnergy[b] = bandEnergy[b];\n        }\n        chainLen += 1u;\n      }\n\n      hitReceiver = 1u;\n      receiverIdx = closestRecIdx;\n      arrivalDir = normalize3(-dx, -dy, -dz);\n      break;\n    }\n\n    // No surface hit — ray escapes\n    if (!triHit.hit) { break; }\n\n    // Surface hit\n    let hitT = triHit.t;\n    let hitTri = triHit.triIdx;\n    let surfIdx = triSurfIndex[hitTri];\n\n    // Hit point\n    let hx = ox + dx * hitT;\n    let hy = oy + dy * hitT;\n    let hz = oz + dz * hitT;\n\n    // Face normal\n    let nb = hitTri * 3u;\n    let nx = triNormals[nb];\n    let ny = triNormals[nb + 1u];\n    let nz = triNormals[nb + 2u];\n\n    // Incidence angle\n    let negDdotN = -(dx * nx + dy * ny + dz * nz);\n    let angle = acos(clamp(abs(negDdotN), 0.0, 1.0));\n\n    // Mean energy before reflection (for chain output)\n    var totalEBefore: f32 = 0.0;\n    for (var b = 0u; b < numBands; b++) { totalEBefore += bandEnergy[b]; }\n    let meanEBefore = totalEBefore / f32(numBands);\n\n    // Record chain entry\n    if (chainLen < MAX_BOUNCES) {\n      let ci = chainBase + chainLen;\n      chainBuffer[ci].px = hx;\n      chainBuffer[ci].py = hy;\n      chainBuffer[ci].pz = hz;\n      chainBuffer[ci].distance = hitT;\n      chainBuffer[ci].surfaceIndex = surfIdx;\n      chainBuffer[ci].angle = angle;\n      chainBuffer[ci].energy = meanEBefore;\n      for (var b = 0u; b < numBands; b++) {\n        chainBuffer[ci].bandEnergy[b] = bandEnergy[b];\n      }\n      chainLen += 1u;\n    }\n\n    // Apply per-band reflection loss and air absorption\n    var broadbandScatter: f32 = 0.0;\n    var totalEForScatter: f32 = 0.0;\n\n    for (var b = 0u; b < numBands; b++) {\n      let acousticOffset = (surfIdx * params.numBands + b) * 2u;\n      let alpha = surfAcoustic[acousticOffset];\n      let scatter = surfAcoustic[acousticOffset + 1u];\n\n      let R = reflectionCoefficient(alpha, angle);\n      bandEnergy[b] *= abs(R);\n      bandEnergy[b] *= pow(10.0, -getAirAtt(b) * hitT / 10.0);\n\n      broadbandScatter += scatter * bandEnergy[b];\n      totalEForScatter += bandEnergy[b];\n    }\n\n    if (totalEForScatter > 0.0) {\n      broadbandScatter /= totalEForScatter;\n    }\n\n    // Russian Roulette termination\n    var maxE: f32 = 0.0;\n    for (var b = 0u; b < numBands; b++) {\n      maxE = max(maxE, bandEnergy[b]);\n    }\n\n    if (maxE < params.rrThreshold && maxE > 0.0) {\n      let survivalProb = maxE / params.rrThreshold;\n      if (rand(&rngSeed) > survivalProb) {\n        break; // Terminate\n      }\n      // Boost survivors\n      for (var b = 0u; b < numBands; b++) {\n        bandEnergy[b] /= survivalProb;\n      }\n    } else if (maxE <= 0.0) {\n      break;\n    }\n\n    // Compute reflected direction\n    // Specular: r = d - 2(d·n)n\n    let dDotN = dx * nx + dy * ny + dz * nz;\n    var rx = dx - 2.0 * dDotN * nx;\n    var ry = dy - 2.0 * dDotN * ny;\n    var rz = dz - 2.0 * dDotN * nz;\n\n    // Scattering: probabilistic Lambert vs specular\n    if (rand(&rngSeed) < broadbandScatter) {\n      // Cosine-weighted hemisphere sampling (rejection + normal offset)\n      var sx: f32; var sy: f32; var sz: f32; var lenSq: f32;\n      loop {\n        sx = rand(&rngSeed) * 2.0 - 1.0;\n        sy = rand(&rngSeed) * 2.0 - 1.0;\n        sz = rand(&rngSeed) * 2.0 - 1.0;\n        lenSq = sx * sx + sy * sy + sz * sz;\n        if (lenSq <= 1.0 && lenSq > 1e-6) { break; }\n      }\n      let invLen = 1.0 / sqrt(lenSq);\n      sx *= invLen; sy *= invLen; sz *= invLen;\n      // Offset along normal for cosine distribution\n      rx = sx + nx;\n      ry = sy + ny;\n      rz = sz + nz;\n    }\n\n    // Normalize reflected direction\n    d = normalize3(rx, ry, rz);\n    dx = d.x; dy = d.y; dz = d.z;\n\n    // Offset origin along normal to avoid self-intersection\n    ox = hx + nx * SELF_INTERSECTION_OFFSET;\n    oy = hy + ny * SELF_INTERSECTION_OFFSET;\n    oz = hz + nz * SELF_INTERSECTION_OFFSET;\n  }\n\n  // Write output\n  rayOutputs[rayIdx].chainLength = chainLen;\n  rayOutputs[rayIdx].intersectedReceiver = hitReceiver;\n  rayOutputs[rayIdx].receiverIndex = receiverIdx;\n  rayOutputs[rayIdx].arrivalDirX = arrivalDir.x;\n  rayOutputs[rayIdx].arrivalDirY = arrivalDir.y;\n  rayOutputs[rayIdx].arrivalDirZ = arrivalDir.z;\n  for (var b = 0u; b < min(params.numBands, MAX_BANDS); b++) {\n    rayOutputs[rayIdx].finalBandEnergy[b] = bandEnergy[b];\n  }\n}\n", Y = 64, Ct = 7, wt = 64, Tt = 16, Et = 64, Dt = 16, Ot = 64, kt = 16, At = 64, jt = 80, Mt = class {
+var Tt = "// ─── GPU Ray Tracer Compute Shader ───────────────────────────────────\n// Traces one ray per thread through all bounces using an iterative BVH\n// traversal and Moller–Trumbore ray-triangle intersection.\n//\n// Mirrors the CPU implementation in ray-core.ts.\n\n// Constants\nconst MAX_BOUNCES: u32 = 64u;\nconst MAX_BANDS: u32 = 7u;\nconst BVH_STACK_SIZE: u32 = 64u;\nconst SELF_INTERSECTION_OFFSET: f32 = 0.01;\nconst PI: f32 = 3.14159265358979;\nconst EPSILON: f32 = 1e-6;\n\n// ─── Structures ──────────────────────────────────────────────────────\n\nstruct Params {\n  numRays: u32,\n  maxBounces: u32,\n  numBands: u32,\n  numReceivers: u32,\n  numTriangles: u32,\n  numNodes: u32,\n  numSurfaces: u32,\n  batchSeed: u32,\n  rrThreshold: f32,\n  _pad0: f32,\n  _pad1: f32,\n  _pad2: f32,\n  // Per-band air attenuation in dB/m (up to MAX_BANDS), packed into vec4s\n  // to satisfy uniform buffer layout rules (array<f32> has 16-byte stride).\n  // airAttPacked[0] = (band0, band1, band2, band3)\n  // airAttPacked[1] = (band4, band5, band6, unused)\n  airAttPacked: array<vec4<f32>, 2>,\n}\n\nfn getAirAtt(band: u32) -> f32 {\n  return params.airAttPacked[band / 4u][band % 4u];\n}\n\n// Per-bounce output written to the chain buffer\nstruct ChainEntry {\n  px: f32, py: f32, pz: f32,\n  distance: f32,\n  surfaceIndex: u32,\n  _pad0: u32,\n  angle: f32,\n  energy: f32,\n  bandEnergy: array<f32, 7>,\n  _pad1: f32,\n}\n\n// Per-ray output\nstruct RayOutput {\n  chainLength: u32,\n  intersectedReceiver: u32, // 0 or 1\n  receiverIndex: u32,\n  arrivalDirX: f32,\n  arrivalDirY: f32,\n  arrivalDirZ: f32,\n  _pad0: f32,\n  _pad1: f32,\n  finalBandEnergy: array<f32, 7>,\n  _pad2: f32,\n}\n\n// Per-ray input\nstruct RayInput {\n  ox: f32, oy: f32, oz: f32,\n  dx: f32, dy: f32, dz: f32,\n  initialPhi: f32,\n  initialTheta: f32,\n  bandEnergy: array<f32, 7>,\n  _pad: f32,\n}\n\n// ─── Bindings ────────────────────────────────────────────────────────\n\n@group(0) @binding(0) var<uniform> params: Params;\n@group(0) @binding(1) var<storage, read> bvhNodes: array<f32>;\n@group(0) @binding(2) var<storage, read> triVerts: array<f32>;\n@group(0) @binding(3) var<storage, read> triSurfIndex: array<u32>;\n@group(0) @binding(4) var<storage, read> triNormals: array<f32>;\n@group(0) @binding(5) var<storage, read> surfAcoustic: array<f32>;\n@group(0) @binding(6) var<storage, read> receiverSpheres: array<f32>;\n@group(0) @binding(7) var<storage, read> rayInputs: array<RayInput>;\n@group(0) @binding(8) var<storage, read_write> rayOutputs: array<RayOutput>;\n@group(0) @binding(9) var<storage, read_write> chainBuffer: array<ChainEntry>;\n\n// ─── RNG (PCG hash) ─────────────────────────────────────────────────\n\nfn pcg_hash(input: u32) -> u32 {\n  var state = input * 747796405u + 2891336453u;\n  var word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;\n  return (word >> 22u) ^ word;\n}\n\nfn rand(seed: ptr<function, u32>) -> f32 {\n  *seed = pcg_hash(*seed);\n  return f32(*seed) / 4294967295.0;\n}\n\n// ─── Vector helpers ─────────────────────────────────────────────────\n\nfn dot3(ax: f32, ay: f32, az: f32, bx: f32, by: f32, bz: f32) -> f32 {\n  return ax * bx + ay * by + az * bz;\n}\n\nfn length3(x: f32, y: f32, z: f32) -> f32 {\n  return sqrt(x * x + y * y + z * z);\n}\n\nfn normalize3(x: f32, y: f32, z: f32) -> vec3<f32> {\n  let len = length3(x, y, z);\n  if (len < EPSILON) { return vec3<f32>(0.0, 1.0, 0.0); }\n  return vec3<f32>(x / len, y / len, z / len);\n}\n\n// ─── Ray-AABB slab test ─────────────────────────────────────────────\n\nfn rayAabbIntersect(\n  ox: f32, oy: f32, oz: f32,\n  invDx: f32, invDy: f32, invDz: f32,\n  bminX: f32, bminY: f32, bminZ: f32,\n  bmaxX: f32, bmaxY: f32, bmaxZ: f32,\n  tMax: f32,\n) -> bool {\n  var t1 = (bminX - ox) * invDx;\n  var t2 = (bmaxX - ox) * invDx;\n  var tNear = min(t1, t2);\n  var tFar = max(t1, t2);\n\n  t1 = (bminY - oy) * invDy;\n  t2 = (bmaxY - oy) * invDy;\n  tNear = max(tNear, min(t1, t2));\n  tFar = min(tFar, max(t1, t2));\n\n  t1 = (bminZ - oz) * invDz;\n  t2 = (bmaxZ - oz) * invDz;\n  tNear = max(tNear, min(t1, t2));\n  tFar = min(tFar, max(t1, t2));\n\n  return tNear <= tFar && tFar >= 0.0 && tNear < tMax;\n}\n\n// ─── Moller–Trumbore ray-triangle intersection ──────────────────────\n\nfn rayTriIntersect(\n  ox: f32, oy: f32, oz: f32,\n  dx: f32, dy: f32, dz: f32,\n  triIdx: u32,\n) -> vec2<f32> {\n  // Returns (t, 0) on hit, (-1, 0) on miss\n  let b = triIdx * 9u;\n  let v0x = triVerts[b]; let v0y = triVerts[b + 1u]; let v0z = triVerts[b + 2u];\n  let v1x = triVerts[b + 3u]; let v1y = triVerts[b + 4u]; let v1z = triVerts[b + 5u];\n  let v2x = triVerts[b + 6u]; let v2y = triVerts[b + 7u]; let v2z = triVerts[b + 8u];\n\n  let e1x = v1x - v0x; let e1y = v1y - v0y; let e1z = v1z - v0z;\n  let e2x = v2x - v0x; let e2y = v2y - v0y; let e2z = v2z - v0z;\n\n  // h = cross(d, e2)\n  let hx = dy * e2z - dz * e2y;\n  let hy = dz * e2x - dx * e2z;\n  let hz = dx * e2y - dy * e2x;\n\n  let a = e1x * hx + e1y * hy + e1z * hz;\n  if (abs(a) < EPSILON) { return vec2<f32>(-1.0, 0.0); }\n\n  let f_inv = 1.0 / a;\n  let sx = ox - v0x; let sy = oy - v0y; let sz = oz - v0z;\n  let u = f_inv * (sx * hx + sy * hy + sz * hz);\n  if (u < 0.0 || u > 1.0) { return vec2<f32>(-1.0, 0.0); }\n\n  // q = cross(s, e1)\n  let qx = sy * e1z - sz * e1y;\n  let qy = sz * e1x - sx * e1z;\n  let qz = sx * e1y - sy * e1x;\n  let v = f_inv * (dx * qx + dy * qy + dz * qz);\n  if (v < 0.0 || u + v > 1.0) { return vec2<f32>(-1.0, 0.0); }\n\n  let t = f_inv * (e2x * qx + e2y * qy + e2z * qz);\n  if (t < EPSILON) { return vec2<f32>(-1.0, 0.0); }\n\n  return vec2<f32>(t, 0.0);\n}\n\n// ─── Ray-sphere intersection ────────────────────────────────────────\n\nfn raySphereIntersect(\n  ox: f32, oy: f32, oz: f32,\n  dx: f32, dy: f32, dz: f32,\n  cx: f32, cy: f32, cz: f32,\n  r: f32,\n) -> f32 {\n  let lx = cx - ox; let ly = cy - oy; let lz = cz - oz;\n  let tca = lx * dx + ly * dy + lz * dz;\n  let d2 = lx * lx + ly * ly + lz * lz - tca * tca;\n  let r2 = r * r;\n  if (d2 > r2) { return -1.0; }\n  let thc = sqrt(r2 - d2);\n  var t0 = tca - thc;\n  let t1 = tca + thc;\n  if (t0 < EPSILON) { t0 = t1; }\n  if (t0 < EPSILON) { return -1.0; }\n  return t0;\n}\n\n// ─── BVH traversal — find closest triangle hit ─────────────────────\n\nstruct HitResult {\n  t: f32,\n  triIdx: u32,\n  hit: bool,\n}\n\nfn traceClosest(\n  ox: f32, oy: f32, oz: f32,\n  dx: f32, dy: f32, dz: f32,\n) -> HitResult {\n  var result: HitResult;\n  result.t = 1e30;\n  result.triIdx = 0u;\n  result.hit = false;\n\n  let invDx = select(1e30, 1.0 / dx, abs(dx) > EPSILON);\n  let invDy = select(1e30, 1.0 / dy, abs(dy) > EPSILON);\n  let invDz = select(1e30, 1.0 / dz, abs(dz) > EPSILON);\n\n  var stack: array<u32, 64>;\n  var stackPtr: u32 = 0u;\n  stack[0] = 0u; // root node index\n  stackPtr = 1u;\n\n  while (stackPtr > 0u) {\n    stackPtr -= 1u;\n    let nodeIdx = stack[stackPtr];\n    let off = nodeIdx * 8u;\n\n    let bminX = bvhNodes[off];\n    let bminY = bvhNodes[off + 1u];\n    let bminZ = bvhNodes[off + 2u];\n    let bmaxX = bvhNodes[off + 4u];\n    let bmaxY = bvhNodes[off + 5u];\n    let bmaxZ = bvhNodes[off + 6u];\n\n    if (!rayAabbIntersect(ox, oy, oz, invDx, invDy, invDz, bminX, bminY, bminZ, bmaxX, bmaxY, bmaxZ, result.t)) {\n      continue;\n    }\n\n    // Read data1 as u32 to check leaf flag\n    let data1Bits = bitcast<u32>(bvhNodes[off + 7u]);\n    let isLeaf = (data1Bits & 0x80000000u) != 0u;\n\n    if (isLeaf) {\n      let triStart = bitcast<u32>(bvhNodes[off + 3u]);\n      let triCount = data1Bits & 0x7FFFFFFFu;\n      for (var i = 0u; i < triCount; i++) {\n        let tri = triStart + i;\n        let res = rayTriIntersect(ox, oy, oz, dx, dy, dz, tri);\n        if (res.x > 0.0 && res.x < result.t) {\n          result.t = res.x;\n          result.triIdx = tri;\n          result.hit = true;\n        }\n      }\n    } else {\n      let leftIdx = bitcast<u32>(bvhNodes[off + 3u]);\n      let rightIdx = data1Bits;\n      if (stackPtr < BVH_STACK_SIZE) {\n        stack[stackPtr] = leftIdx;\n        stackPtr += 1u;\n      }\n      if (stackPtr < BVH_STACK_SIZE) {\n        stack[stackPtr] = rightIdx;\n        stackPtr += 1u;\n      }\n    }\n  }\n\n  return result;\n}\n\n// ─── Reflection coefficient (matches CPU reflection-coefficient.ts) ──\n\nfn reflectionCoefficient(alpha: f32, theta: f32) -> f32 {\n  let rootOneMinusAlpha = sqrt(max(1.0 - alpha, 0.0));\n  let xi_o = (1.0 - rootOneMinusAlpha) / (1.0 + rootOneMinusAlpha);\n  let cosTheta = abs(cos(theta));\n  let xi_o_cosTheta = xi_o * cosTheta;\n  let R = (xi_o_cosTheta - 1.0) / (xi_o_cosTheta + 1.0);\n  return R * R;\n}\n\n// ─── Main compute entry point ───────────────────────────────────────\n\n@compute @workgroup_size(64)\nfn main(@builtin(global_invocation_id) gid: vec3<u32>) {\n  let rayIdx = gid.x;\n  if (rayIdx >= params.numRays) { return; }\n\n  let inp = rayInputs[rayIdx];\n  let numBands = min(params.numBands, MAX_BANDS);\n  let maxBounces = min(params.maxBounces, MAX_BOUNCES);\n\n  var rngSeed: u32 = pcg_hash(rayIdx * 747796405u + params.batchSeed);\n\n  // Current ray state\n  var ox = inp.ox; var oy = inp.oy; var oz = inp.oz;\n  var dx = inp.dx; var dy = inp.dy; var dz = inp.dz;\n  var d = normalize3(dx, dy, dz);\n  dx = d.x; dy = d.y; dz = d.z;\n\n  var bandEnergy: array<f32, 7>;\n  for (var b = 0u; b < numBands; b++) {\n    bandEnergy[b] = inp.bandEnergy[b];\n  }\n\n  // Output\n  let chainBase = rayIdx * MAX_BOUNCES;\n  var chainLen: u32 = 0u;\n  var hitReceiver: u32 = 0u;\n  var receiverIdx: u32 = 0u;\n  var arrivalDir = vec3<f32>(0.0, 0.0, 0.0);\n\n  for (var bounce = 0u; bounce < maxBounces; bounce++) {\n    // Check receiver spheres first (find closest)\n    var closestRecT: f32 = 1e30;\n    var closestRecIdx: u32 = 0u;\n    var recHit = false;\n    for (var ri = 0u; ri < params.numReceivers; ri++) {\n      let rb = ri * 4u;\n      let rcx = receiverSpheres[rb];\n      let rcy = receiverSpheres[rb + 1u];\n      let rcz = receiverSpheres[rb + 2u];\n      let rr = receiverSpheres[rb + 3u];\n      let t = raySphereIntersect(ox, oy, oz, dx, dy, dz, rcx, rcy, rcz, rr);\n      if (t > 0.0 && t < closestRecT) {\n        closestRecT = t;\n        closestRecIdx = ri;\n        recHit = true;\n      }\n    }\n\n    // BVH closest triangle hit\n    let triHit = traceClosest(ox, oy, oz, dx, dy, dz);\n\n    // Receiver is closer than any surface — ray enters receiver\n    if (recHit && closestRecT < triHit.t) {\n      // Apply air absorption for receiver segment\n      for (var b = 0u; b < numBands; b++) {\n        bandEnergy[b] *= pow(10.0, -getAirAtt(b) * closestRecT / 10.0);\n      }\n\n      // Compute mean energy\n      var totalE: f32 = 0.0;\n      for (var b = 0u; b < numBands; b++) { totalE += bandEnergy[b]; }\n      let meanE = totalE / f32(numBands);\n\n      // Record chain entry at receiver position\n      if (chainLen < MAX_BOUNCES) {\n        let ci = chainBase + chainLen;\n        chainBuffer[ci].px = ox + dx * closestRecT;\n        chainBuffer[ci].py = oy + dy * closestRecT;\n        chainBuffer[ci].pz = oz + dz * closestRecT;\n        chainBuffer[ci].distance = closestRecT;\n        // Store receiver index encoded as surface index + numSurfaces offset\n        chainBuffer[ci].surfaceIndex = params.numSurfaces + closestRecIdx;\n        chainBuffer[ci].angle = 0.0;\n        chainBuffer[ci].energy = meanE;\n        for (var b = 0u; b < numBands; b++) {\n          chainBuffer[ci].bandEnergy[b] = bandEnergy[b];\n        }\n        chainLen += 1u;\n      }\n\n      hitReceiver = 1u;\n      receiverIdx = closestRecIdx;\n      arrivalDir = normalize3(-dx, -dy, -dz);\n      break;\n    }\n\n    // No surface hit — ray escapes\n    if (!triHit.hit) { break; }\n\n    // Surface hit\n    let hitT = triHit.t;\n    let hitTri = triHit.triIdx;\n    let surfIdx = triSurfIndex[hitTri];\n\n    // Hit point\n    let hx = ox + dx * hitT;\n    let hy = oy + dy * hitT;\n    let hz = oz + dz * hitT;\n\n    // Face normal\n    let nb = hitTri * 3u;\n    let nx = triNormals[nb];\n    let ny = triNormals[nb + 1u];\n    let nz = triNormals[nb + 2u];\n\n    // Incidence angle\n    let negDdotN = -(dx * nx + dy * ny + dz * nz);\n    let angle = acos(clamp(abs(negDdotN), 0.0, 1.0));\n\n    // Mean energy before reflection (for chain output)\n    var totalEBefore: f32 = 0.0;\n    for (var b = 0u; b < numBands; b++) { totalEBefore += bandEnergy[b]; }\n    let meanEBefore = totalEBefore / f32(numBands);\n\n    // Record chain entry\n    if (chainLen < MAX_BOUNCES) {\n      let ci = chainBase + chainLen;\n      chainBuffer[ci].px = hx;\n      chainBuffer[ci].py = hy;\n      chainBuffer[ci].pz = hz;\n      chainBuffer[ci].distance = hitT;\n      chainBuffer[ci].surfaceIndex = surfIdx;\n      chainBuffer[ci].angle = angle;\n      chainBuffer[ci].energy = meanEBefore;\n      for (var b = 0u; b < numBands; b++) {\n        chainBuffer[ci].bandEnergy[b] = bandEnergy[b];\n      }\n      chainLen += 1u;\n    }\n\n    // Apply per-band reflection loss and air absorption\n    var broadbandScatter: f32 = 0.0;\n    var totalEForScatter: f32 = 0.0;\n\n    for (var b = 0u; b < numBands; b++) {\n      let acousticOffset = (surfIdx * params.numBands + b) * 2u;\n      let alpha = surfAcoustic[acousticOffset];\n      let scatter = surfAcoustic[acousticOffset + 1u];\n\n      let R = reflectionCoefficient(alpha, angle);\n      bandEnergy[b] *= abs(R);\n      bandEnergy[b] *= pow(10.0, -getAirAtt(b) * hitT / 10.0);\n\n      broadbandScatter += scatter * bandEnergy[b];\n      totalEForScatter += bandEnergy[b];\n    }\n\n    if (totalEForScatter > 0.0) {\n      broadbandScatter /= totalEForScatter;\n    }\n\n    // Russian Roulette termination\n    var maxE: f32 = 0.0;\n    for (var b = 0u; b < numBands; b++) {\n      maxE = max(maxE, bandEnergy[b]);\n    }\n\n    if (maxE < params.rrThreshold && maxE > 0.0) {\n      let survivalProb = maxE / params.rrThreshold;\n      if (rand(&rngSeed) > survivalProb) {\n        break; // Terminate\n      }\n      // Boost survivors\n      for (var b = 0u; b < numBands; b++) {\n        bandEnergy[b] /= survivalProb;\n      }\n    } else if (maxE <= 0.0) {\n      break;\n    }\n\n    // Compute reflected direction\n    // Specular: r = d - 2(d·n)n\n    let dDotN = dx * nx + dy * ny + dz * nz;\n    var rx = dx - 2.0 * dDotN * nx;\n    var ry = dy - 2.0 * dDotN * ny;\n    var rz = dz - 2.0 * dDotN * nz;\n\n    // Scattering: probabilistic Lambert vs specular\n    if (rand(&rngSeed) < broadbandScatter) {\n      // Cosine-weighted hemisphere sampling (rejection + normal offset)\n      var sx: f32; var sy: f32; var sz: f32; var lenSq: f32;\n      loop {\n        sx = rand(&rngSeed) * 2.0 - 1.0;\n        sy = rand(&rngSeed) * 2.0 - 1.0;\n        sz = rand(&rngSeed) * 2.0 - 1.0;\n        lenSq = sx * sx + sy * sy + sz * sz;\n        if (lenSq <= 1.0 && lenSq > 1e-6) { break; }\n      }\n      let invLen = 1.0 / sqrt(lenSq);\n      sx *= invLen; sy *= invLen; sz *= invLen;\n      // Offset along normal for cosine distribution\n      rx = sx + nx;\n      ry = sy + ny;\n      rz = sz + nz;\n    }\n\n    // Normalize reflected direction\n    d = normalize3(rx, ry, rz);\n    dx = d.x; dy = d.y; dz = d.z;\n\n    // Offset origin along normal to avoid self-intersection\n    ox = hx + nx * SELF_INTERSECTION_OFFSET;\n    oy = hy + ny * SELF_INTERSECTION_OFFSET;\n    oz = hz + nz * SELF_INTERSECTION_OFFSET;\n  }\n\n  // Write output\n  rayOutputs[rayIdx].chainLength = chainLen;\n  rayOutputs[rayIdx].intersectedReceiver = hitReceiver;\n  rayOutputs[rayIdx].receiverIndex = receiverIdx;\n  rayOutputs[rayIdx].arrivalDirX = arrivalDir.x;\n  rayOutputs[rayIdx].arrivalDirY = arrivalDir.y;\n  rayOutputs[rayIdx].arrivalDirZ = arrivalDir.z;\n  for (var b = 0u; b < min(params.numBands, MAX_BANDS); b++) {\n    rayOutputs[rayIdx].finalBandEnergy[b] = bandEnergy[b];\n  }\n}\n", J = 64, Et = 7, Dt = 64, Ot = 16, kt = 64, At = 16, Y = 64, jt = 16, Mt = 64, Nt = 80, Pt = class {
 	device = null;
 	pipeline = null;
 	bindGroupLayout = null;
@@ -894,12 +908,12 @@ var St = "// ─── GPU Ray Tracer Compute Shader ─────────
 		let a = i.device.limits.maxStorageBufferBindingSize, o = i.device.limits.maxBufferSize, s = Math.floor(Math.min(a, o) / 4096);
 		if (s < 1) return console.error("[GPU RT] Device storage limits too small for even a single ray chain buffer"), !1;
 		let c = Math.max(1, r), l = Math.min(c, s);
-		l < c && console.warn(`[GPU RT] batchSize ${c} exceeds device limits; clamped to ${l}`), this.maxBatchSize = l, n.reflectionOrder > Y && console.warn(`[GPU RT] reflectionOrder ${n.reflectionOrder} clamped to ${Y}`);
-		let u = n.frequencies.slice(0, Ct);
-		this.sceneBuf = _t(e, t, u), this.gpuBvhNodes = this.createStorageBuffer(this.sceneBuf.bvhNodes), this.gpuTriVerts = this.createStorageBuffer(this.sceneBuf.triangleVertices), this.gpuTriSurfIdx = this.createStorageBuffer(new Uint32Array(this.sceneBuf.triangleSurfaceIndex)), this.gpuTriNormals = this.createStorageBuffer(this.sceneBuf.triangleNormals), this.gpuSurfAcoustic = this.createStorageBuffer(this.sceneBuf.surfaceAcousticData);
+		l < c && console.warn(`[GPU RT] batchSize ${c} exceeds device limits; clamped to ${l}`), this.maxBatchSize = l, n.reflectionOrder > J && console.warn(`[GPU RT] reflectionOrder ${n.reflectionOrder} clamped to ${J}`);
+		let u = n.frequencies.slice(0, Et);
+		this.sceneBuf = bt(e, t, u), this.gpuBvhNodes = this.createStorageBuffer(this.sceneBuf.bvhNodes), this.gpuTriVerts = this.createStorageBuffer(this.sceneBuf.triangleVertices), this.gpuTriSurfIdx = this.createStorageBuffer(new Uint32Array(this.sceneBuf.triangleSurfaceIndex)), this.gpuTriNormals = this.createStorageBuffer(this.sceneBuf.triangleNormals), this.gpuSurfAcoustic = this.createStorageBuffer(this.sceneBuf.surfaceAcousticData);
 		let d = this.sceneBuf.receiverSpheres.length > 0 ? this.sceneBuf.receiverSpheres : /* @__PURE__ */ new Float32Array(4);
 		this.gpuReceiverSpheres = this.createStorageBuffer(d);
-		let f = l * Et, p = l * Ot, m = l * Y * At;
+		let f = l * kt, p = l * Y, m = l * J * Mt;
 		this.gpuRayInputs = this.device.createBuffer({
 			size: f,
 			usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
@@ -910,7 +924,7 @@ var St = "// ─── GPU Ray Tracer Compute Shader ─────────
 			size: m,
 			usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC
 		}), this.gpuParams = this.device.createBuffer({
-			size: jt,
+			size: Nt,
 			usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
 		}), this.gpuReadbackOutput = this.device.createBuffer({
 			size: p,
@@ -919,7 +933,7 @@ var St = "// ─── GPU Ray Tracer Compute Shader ─────────
 			size: m,
 			usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST
 		});
-		let h = this.device.createShaderModule({ code: St });
+		let h = this.device.createShaderModule({ code: Tt });
 		return this.pipeline = this.device.createComputePipeline({
 			layout: "auto",
 			compute: {
@@ -932,10 +946,10 @@ var St = "// ─── GPU Ray Tracer Compute Shader ─────────
 		if (!this.device || !this.pipeline || !this.sceneBuf || !this.config) throw Error("[GPU RT] Not initialized");
 		if (t > this.maxBatchSize) throw Error(`[GPU RT] rayCount ${t} exceeds maxBatchSize ${this.maxBatchSize}`);
 		if (t === 0) return [];
-		let r = Math.min(this.config.frequencies.length, Ct), i = /* @__PURE__ */ new ArrayBuffer(jt), a = new Uint32Array(i), o = new Float32Array(i);
-		a[0] = t, a[1] = Math.min(this.config.reflectionOrder, Y), a[2] = r, a[3] = this.sceneBuf.receiverCount, a[4] = this.sceneBuf.triangleCount, a[5] = this.sceneBuf.nodeCount, a[6] = this.sceneBuf.surfaceCount, a[7] = n, o[8] = this.config.rrThreshold;
+		let r = Math.min(this.config.frequencies.length, Et), i = /* @__PURE__ */ new ArrayBuffer(Nt), a = new Uint32Array(i), o = new Float32Array(i);
+		a[0] = t, a[1] = Math.min(this.config.reflectionOrder, J), a[2] = r, a[3] = this.sceneBuf.receiverCount, a[4] = this.sceneBuf.triangleCount, a[5] = this.sceneBuf.nodeCount, a[6] = this.sceneBuf.surfaceCount, a[7] = n, o[8] = this.config.rrThreshold;
 		for (let e = 0; e < r; e++) o[12 + e] = this.config.cachedAirAtt[e];
-		this.device.queue.writeBuffer(this.gpuParams, 0, i), this.device.queue.writeBuffer(this.gpuRayInputs, 0, e.buffer, e.byteOffset, t * Et);
+		this.device.queue.writeBuffer(this.gpuParams, 0, i), this.device.queue.writeBuffer(this.gpuRayInputs, 0, e.buffer, e.byteOffset, t * kt);
 		let s = this.device.createBindGroup({
 			layout: this.bindGroupLayout,
 			entries: [
@@ -980,9 +994,9 @@ var St = "// ─── GPU Ray Tracer Compute Shader ─────────
 					resource: { buffer: this.gpuChainBuffer }
 				}
 			]
-		}), c = Math.ceil(t / wt), l = this.device.createCommandEncoder(), u = l.beginComputePass();
+		}), c = Math.ceil(t / Dt), l = this.device.createCommandEncoder(), u = l.beginComputePass();
 		u.setPipeline(this.pipeline), u.setBindGroup(0, s), u.dispatchWorkgroups(c), u.end();
-		let d = t * Ot, f = t * Y * At;
+		let d = t * Y, f = t * J * Mt;
 		l.copyBufferToBuffer(this.gpuRayOutputs, 0, this.gpuReadbackOutput, 0, d), l.copyBufferToBuffer(this.gpuChainBuffer, 0, this.gpuReadbackChain, 0, f), this.device.queue.submit([l.finish()]), await this.gpuReadbackOutput.mapAsync(GPUMapMode.READ, 0, d), await this.gpuReadbackChain.mapAsync(GPUMapMode.READ, 0, f);
 		let p = new Float32Array(this.gpuReadbackOutput.getMappedRange(0, d).slice(0)), m = new Float32Array(this.gpuReadbackChain.getMappedRange(0, f).slice(0));
 		return this.gpuReadbackOutput.unmap(), this.gpuReadbackChain.unmap(), this.parseResults(p, m, e, t, r);
@@ -990,7 +1004,7 @@ var St = "// ─── GPU Ray Tracer Compute Shader ─────────
 	parseResults(e, t, n, r, i) {
 		let a = Array(r), o = this.sceneBuf;
 		for (let s = 0; s < r; s++) {
-			let r = s * Dt, c = new Uint32Array(e.buffer, r * 4, Dt), l = c[0], u = c[1] !== 0;
+			let r = s * At, c = new Uint32Array(e.buffer, r * 4, At), l = c[0], u = c[1] !== 0;
 			if (l === 0) {
 				a[s] = null;
 				continue;
@@ -1001,9 +1015,9 @@ var St = "// ─── GPU Ray Tracer Compute Shader ─────────
 				e[r + 5]
 			], f = [];
 			for (let t = 0; t < i; t++) f.push(e[r + 8 + t]);
-			let p = [], m = s * Y;
+			let p = [], m = s * J;
 			for (let e = 0; e < l; e++) {
-				let n = (m + e) * kt, r = new Uint32Array(t.buffer, n * 4, kt), a = t[n], s = t[n + 1], c = t[n + 2], l = t[n + 3], u = r[4], d = t[n + 6], f = t[n + 7], h = [];
+				let n = (m + e) * jt, r = new Uint32Array(t.buffer, n * 4, jt), a = t[n], s = t[n + 1], c = t[n + 2], l = t[n + 3], u = r[4], d = t[n + 6], f = t[n + 7], h = [];
 				for (let e = 0; e < i; e++) h.push(t[n + 8 + e]);
 				let g;
 				if (u >= o.surfaceCount) {
@@ -1030,7 +1044,7 @@ var St = "// ─── GPU Ray Tracer Compute Shader ─────────
 					bandEnergy: h
 				});
 			}
-			let h = s * Tt, g = n[h + 6], _ = n[h + 7], v = f.reduce((e, t) => e + t, 0), y = i > 0 ? v / i : 0;
+			let h = s * Ot, g = n[h + 6], _ = n[h + 7], v = f.reduce((e, t) => e + t, 0), y = i > 0 ? v / i : 0;
 			a[s] = {
 				intersectedReceiver: u,
 				chain: p,
@@ -1076,7 +1090,7 @@ var St = "// ─── GPU Ray Tracer Compute Shader ─────────
 	/* @vite-ignore */
 	"/assets/filter.worker-B2fYKvk6.js",
 	"" + import.meta.url
-)), { floor: Z, random: Nt, abs: Q, asin: Pt } = Math, Ft = () => Nt() > .5;
+)), { floor: Z, random: Ft, abs: Q, asin: It } = Math, Lt = () => Ft() > .5;
 P.BufferGeometry.prototype.computeBoundsTree = be, P.BufferGeometry.prototype.disposeBoundsTree = xe, P.Mesh.prototype.raycast = ye;
 var $ = class extends de {
 	roomID;
@@ -1157,13 +1171,13 @@ var $ = class extends de {
 		super(e), this.kind = "ray-tracer", e = {
 			...L,
 			...e
-		}, this.uuid = e.uuid || this.uuid, this.name = e.name || L.name, this.observed_name = we(this.name), this.responseOverlayElement = document.querySelector("#response-overlay") || document.createElement("div"), this.responseOverlayElement.style.backgroundColor = "#FFFFFF", this.sourceIDs = e.sourceIDs || L.sourceIDs, this.surfaceIDs = e.surfaceIDs || L.surfaceIDs, this.roomID = e.roomID || L.roomID, this.receiverIDs = e.receiverIDs || L.receiverIDs, this.updateInterval = e.updateInterval || L.updateInterval, this.reflectionOrder = e.reflectionOrder || L.reflectionOrder, this._isRunning = e.isRunning || L.isRunning, this._runningWithoutReceivers = e.runningWithoutReceivers || L.runningWithoutReceivers, this.frequencies = e.frequencies || L.frequencies, this._cachedAirAtt = j(this.frequencies, this.temperature), this.intervals = [], this.plotData = [], this.plotStyle = e.plotStyle || L.plotStyle, this.lastTime = Date.now(), this.statsUpdatePeriod = 100, this._pointSize = e.pointSize || L.pointSize, this.validRayCount = 0, this.intensitySampleRate = 256, this.quickEstimateResults = {};
+		}, this.uuid = e.uuid || this.uuid, this.name = e.name || L.name, this.observed_name = we(this.name), this.responseOverlayElement = document.querySelector("#response-overlay") || document.createElement("div"), this.responseOverlayElement.style.backgroundColor = "#FFFFFF", this.sourceIDs = e.sourceIDs || L.sourceIDs, this.surfaceIDs = e.surfaceIDs || L.surfaceIDs, this.roomID = e.roomID || L.roomID, this.receiverIDs = e.receiverIDs || L.receiverIDs, this.updateInterval = e.updateInterval || L.updateInterval, this.reflectionOrder = e.reflectionOrder || L.reflectionOrder, this._isRunning = e.isRunning || L.isRunning, this._runningWithoutReceivers = e.runningWithoutReceivers || L.runningWithoutReceivers, this.frequencies = e.frequencies || L.frequencies, this._cachedAirAtt = M(this.frequencies, this.temperature), this.intervals = [], this.plotData = [], this.plotStyle = e.plotStyle || L.plotStyle, this.lastTime = Date.now(), this.statsUpdatePeriod = 100, this._pointSize = e.pointSize || L.pointSize, this.validRayCount = 0, this.intensitySampleRate = 256, this.quickEstimateResults = {};
 		let t = typeof e.raysVisible == "boolean";
 		this._raysVisible = t ? e.raysVisible : L.raysVisible;
 		let n = typeof e.pointsVisible == "boolean";
 		this._pointsVisible = n ? e.pointsVisible : L.pointsVisible;
 		let r = typeof e.invertedDrawStyle == "boolean";
-		this._invertedDrawStyle = r ? e.invertedDrawStyle : L.invertedDrawStyle, this.passes = e.passes || L.passes, this.raycaster = new P.Raycaster(), this.rayBufferGeometry = new P.BufferGeometry(), this.rayBufferGeometry.name = "raytracer-ray-buffer-geometry", this.maxrays = 1e6 - 1, this.rayBufferAttribute = new P.Float32BufferAttribute(new Float32Array(this.maxrays), 3), this.rayBufferAttribute.setUsage(P.DynamicDrawUsage), this.rayBufferGeometry.setAttribute("position", this.rayBufferAttribute), this.rayBufferGeometry.setDrawRange(0, this.maxrays), this.colorBufferAttribute = new P.Float32BufferAttribute(new Float32Array(this.maxrays), 2), this.colorBufferAttribute.setUsage(P.DynamicDrawUsage), this.rayBufferGeometry.setAttribute("color", this.colorBufferAttribute), this.chartdata = [], this.hybrid = !1, this.transitionOrder = 2, this.convergenceThreshold = e.convergenceThreshold ?? L.convergenceThreshold, this.autoStop = e.autoStop ?? L.autoStop, this.rrThreshold = e.rrThreshold ?? L.rrThreshold, this.maxStoredPaths = e.maxStoredPaths ?? L.maxStoredPaths, this.edgeDiffractionEnabled = e.edgeDiffractionEnabled ?? L.edgeDiffractionEnabled, this.lateReverbTailEnabled = e.lateReverbTailEnabled ?? L.lateReverbTailEnabled, this.tailCrossfadeTime = e.tailCrossfadeTime ?? L.tailCrossfadeTime, this.tailCrossfadeDuration = e.tailCrossfadeDuration ?? L.tailCrossfadeDuration, this.gpuEnabled = e.gpuEnabled ?? L.gpuEnabled, this.gpuBatchSize = e.gpuBatchSize ?? L.gpuBatchSize, this.hrtfSubjectId = e.hrtfSubjectId ?? "D1", this.headYaw = e.headYaw ?? 0, this.headPitch = e.headPitch ?? 0, this.headRoll = e.headRoll ?? 0, this._edgeGraph = null, this._histogramBinWidth = oe, this._histogramNumBins = se, this._convergenceCheckInterval = 500, this._resetConvergenceState(), this.rays = new P.LineSegments(this.rayBufferGeometry, new P.LineBasicMaterial({
+		this._invertedDrawStyle = r ? e.invertedDrawStyle : L.invertedDrawStyle, this.passes = e.passes || L.passes, this.raycaster = new P.Raycaster(), this.rayBufferGeometry = new P.BufferGeometry(), this.rayBufferGeometry.name = "raytracer-ray-buffer-geometry", this.maxrays = 1e6 - 1, this.rayBufferAttribute = new P.Float32BufferAttribute(new Float32Array(this.maxrays), 3), this.rayBufferAttribute.setUsage(P.DynamicDrawUsage), this.rayBufferGeometry.setAttribute("position", this.rayBufferAttribute), this.rayBufferGeometry.setDrawRange(0, this.maxrays), this.colorBufferAttribute = new P.Float32BufferAttribute(new Float32Array(this.maxrays), 2), this.colorBufferAttribute.setUsage(P.DynamicDrawUsage), this.rayBufferGeometry.setAttribute("color", this.colorBufferAttribute), this.chartdata = [], this.hybrid = !1, this.transitionOrder = 2, this.convergenceThreshold = e.convergenceThreshold ?? L.convergenceThreshold, this.autoStop = e.autoStop ?? L.autoStop, this.rrThreshold = e.rrThreshold ?? L.rrThreshold, this.maxStoredPaths = e.maxStoredPaths ?? L.maxStoredPaths, this.edgeDiffractionEnabled = e.edgeDiffractionEnabled ?? L.edgeDiffractionEnabled, this.lateReverbTailEnabled = e.lateReverbTailEnabled ?? L.lateReverbTailEnabled, this.tailCrossfadeTime = e.tailCrossfadeTime ?? L.tailCrossfadeTime, this.tailCrossfadeDuration = e.tailCrossfadeDuration ?? L.tailCrossfadeDuration, this.gpuEnabled = e.gpuEnabled ?? L.gpuEnabled, this.gpuBatchSize = e.gpuBatchSize ?? L.gpuBatchSize, this.hrtfSubjectId = e.hrtfSubjectId ?? "D1", this.headYaw = e.headYaw ?? 0, this.headPitch = e.headPitch ?? 0, this.headRoll = e.headRoll ?? 0, this._edgeGraph = null, this._histogramBinWidth = ae, this._histogramNumBins = oe, this._convergenceCheckInterval = 500, this._resetConvergenceState(), this.rays = new P.LineSegments(this.rayBufferGeometry, new P.LineBasicMaterial({
 			fog: !1,
 			color: 2631977,
 			transparent: !0,
@@ -1217,10 +1231,10 @@ var $ = class extends de {
 		return this.room?.temperature ?? 20;
 	}
 	get c() {
-		return M(this.temperature);
+		return se(this.temperature);
 	}
 	save() {
-		let { name: e, kind: t, uuid: n, autoCalculate: r, roomID: i, sourceIDs: a, surfaceIDs: o, receiverIDs: s, updateInterval: c, passes: l, pointSize: u, reflectionOrder: d, runningWithoutReceivers: f, raysVisible: p, pointsVisible: m, invertedDrawStyle: h, plotStyle: g, paths: _, frequencies: v, convergenceThreshold: y, autoStop: b, rrThreshold: x, maxStoredPaths: S, edgeDiffractionEnabled: C, lateReverbTailEnabled: w, tailCrossfadeTime: T, tailCrossfadeDuration: E, gpuEnabled: D, gpuBatchSize: O, hrtfSubjectId: k, headYaw: ee, headPitch: te, headRoll: ne } = this;
+		let { name: e, kind: t, uuid: n, autoCalculate: r, roomID: i, sourceIDs: a, surfaceIDs: o, receiverIDs: s, updateInterval: c, passes: l, pointSize: u, reflectionOrder: d, runningWithoutReceivers: f, raysVisible: p, pointsVisible: m, invertedDrawStyle: h, plotStyle: g, paths: _, frequencies: v, convergenceThreshold: y, autoStop: b, rrThreshold: x, maxStoredPaths: S, edgeDiffractionEnabled: C, lateReverbTailEnabled: w, tailCrossfadeTime: T, tailCrossfadeDuration: E, gpuEnabled: ee, gpuBatchSize: D, hrtfSubjectId: te, headYaw: O, headPitch: k, headRoll: A } = this;
 		return {
 			name: e,
 			kind: t,
@@ -1249,12 +1263,12 @@ var $ = class extends de {
 			lateReverbTailEnabled: w,
 			tailCrossfadeTime: T,
 			tailCrossfadeDuration: E,
-			gpuEnabled: D,
-			gpuBatchSize: O,
-			hrtfSubjectId: k,
-			headYaw: ee,
-			headPitch: te,
-			headRoll: ne
+			gpuEnabled: ee,
+			gpuBatchSize: D,
+			hrtfSubjectId: te,
+			headYaw: O,
+			headPitch: k,
+			headRoll: A
 		};
 	}
 	removeMessageHandlers() {
@@ -1301,10 +1315,10 @@ var $ = class extends de {
 		this.rayBufferAttribute.needsUpdate = !0, this.rayBufferAttribute.version++, this.colorBufferAttribute.needsUpdate = !0, this.colorBufferAttribute.version++;
 	}
 	inFrontOf(e, t) {
-		return Le(e, t);
+		return ze(e, t);
 	}
 	traceRay(e, t, n, r, i, a, o, s = 1, c = []) {
-		return Re(this.raycaster, this.intersectableObjects, this.frequencies, this._cachedAirAtt, this.rrThreshold, e, t, n, r, i, a, o, s, c);
+		return Be(this.raycaster, this.intersectableObjects, this.frequencies, this._cachedAirAtt, this.rrThreshold, e, t, n, r, i, a, o, s, c);
 	}
 	startQuickEstimate(e = this.frequencies, t = 1e3) {
 		let n = this.runningWithoutReceivers;
@@ -1321,7 +1335,7 @@ var $ = class extends de {
 		}, this.updateInterval));
 	}
 	quickEstimateStep(e, t, n) {
-		let r = re(this.raycaster, this.intersectableObjects, e.position, e.initialIntensity, t, this.temperature);
+		let r = ne(this.raycaster, this.intersectableObjects, e.position, e.initialIntensity, t, this.temperature);
 		return this.stats.numRaysShot.value++, r;
 	}
 	startAllMonteCarlo() {
@@ -1397,6 +1411,7 @@ var $ = class extends de {
 		}
 	}
 	_pushPathWithEviction(e, t) {
+		Xe(t, this.c);
 		let n = Math.max(1, this.maxStoredPaths | 0);
 		if (!this.paths[e]) {
 			this.paths[e] = [t];
@@ -1410,7 +1425,7 @@ var $ = class extends de {
 		r.push(t);
 	}
 	_addToEnergyHistogram(e, t) {
-		gt(this._energyHistogram, e, t, this.frequencies, this.c, this._histogramBinWidth, this._histogramNumBins);
+		yt(this._energyHistogram, e, t, this.frequencies, this.c, this._histogramBinWidth, this._histogramNumBins);
 	}
 	step() {
 		for (let e = 0; e < this.sourceIDs.length; e++) {
@@ -1461,14 +1476,14 @@ var $ = class extends de {
 		}
 	}
 	_resetConvergenceState() {
-		let e = mt(this.frequencies.length);
+		let e = _t(this.frequencies.length);
 		this.convergenceMetrics = e.convergenceMetrics, this._energyHistogram = e.energyHistogram, this._lastConvergenceCheck = e.lastConvergenceCheck;
 	}
 	_updateConvergenceMetrics() {
-		ht(this.convergenceMetrics, this._energyHistogram, this.frequencies, this.receiverIDs, this.__num_checked_paths, this.validRayCount, this._histogramBinWidth, this._histogramNumBins, this.uuid);
+		vt(this.convergenceMetrics, this._energyHistogram, this.frequencies, this.receiverIDs, this.__num_checked_paths, this.validRayCount, this._histogramBinWidth, this._histogramNumBins, this.uuid);
 	}
 	start() {
-		this._isRunning = !0, this._cachedAirAtt = j(this.frequencies, this.temperature), this.mapIntersectableObjects(), this._edgeGraph = this.edgeDiffractionEnabled && this.room ? ee(this.room.allSurfaces) : null, this.__start_time = Date.now(), this.__num_checked_paths = 0, this._resetConvergenceState(), this.gpuEnabled ? this._startGpuMonteCarlo() : this.startAllMonteCarlo();
+		this._isRunning = !0, this._cachedAirAtt = M(this.frequencies, this.temperature), this.mapIntersectableObjects(), this._edgeGraph = this.edgeDiffractionEnabled && this.room ? O(this.room.allSurfaces) : null, this.__start_time = Date.now(), this.__num_checked_paths = 0, this._resetConvergenceState(), this.gpuEnabled ? this._startGpuMonteCarlo() : this.startAllMonteCarlo();
 	}
 	stop() {
 		this._isRunning = !1, this.__calc_time = Date.now() - this.__start_time, this._gpuRunning = !1, this._gpuRayTracer && setTimeout(() => this._disposeGpu(), 0), cancelAnimationFrame(this._rafId), this._rafId = 0, this.intervals.forEach((e) => {
@@ -1520,7 +1535,7 @@ var $ = class extends de {
 		this.room.surfaces.traverse((e) => {
 			e.kind && e.kind === "surface" && i.push(e.mesh);
 		});
-		let a = ae(this._edgeGraph, t, r, this.frequencies, this.c, this.temperature, this.raycaster, i);
+		let a = ie(this._edgeGraph, t, r, this.frequencies, this.c, this.temperature, this.raycaster, i);
 		for (let e of a) {
 			let i = n.get(e.sourceId);
 			if (i) {
@@ -1645,17 +1660,17 @@ var $ = class extends de {
 			crossfadeDuration: this.tailCrossfadeDuration,
 			histogramBinWidth: this._histogramBinWidth,
 			frequencies: i
-		}), Ue(e, t, n, r, i, this.temperature, a, o);
+		}), Ge(e, t, n, r, i, this.temperature, a, o);
 	}
-	async calculateImpulseResponseForDisplay(e = 100, t = this.frequencies, n = _.sampleRate) {
-		let r;
-		return this.lateReverbTailEnabled && this.receiverIDs.length > 0 && this._energyHistogram[this.receiverIDs[0]] && (r = {
-			energyHistogram: this._energyHistogram[this.receiverIDs[0]],
+	async calculateImpulseResponseForDisplay(e = 100, t = this.frequencies, n = _.sampleRate, r) {
+		let i = G(this.receiverIDs, this.paths, r), a;
+		return this.lateReverbTailEnabled && this._energyHistogram[i] && (a = {
+			energyHistogram: this._energyHistogram[i],
 			crossfadeTime: this.tailCrossfadeTime,
 			crossfadeDuration: this.tailCrossfadeDuration,
 			histogramBinWidth: this._histogramBinWidth,
 			frequencies: t
-		}), We(this.receiverIDs, this.sourceIDs, this.paths, e, t, this.temperature, n, r);
+		}), Ke(this.receiverIDs, this.sourceIDs, this.paths, e, t, this.temperature, n, a, i);
 	}
 	clearRays() {
 		if (this.room) for (let e = 0; e < this.room.allSurfaces.length; e++) this.room.allSurfaces[e].resetHits();
@@ -1671,17 +1686,17 @@ var $ = class extends de {
 		});
 	}
 	reflectionLossFunction(e, t, n) {
-		return q(e, t, n);
+		return K(e, t, n);
 	}
 	calculateReflectionLoss(e = this.frequencies) {
-		let [t, n] = Ye(this.paths, this.room, this.receiverIDs, e);
+		let [t, n] = Qe(this.paths, this.room, this.receiverIDs, e);
 		return this.allReceiverData = t, this.chartdata = n, [this.allReceiverData, n];
 	}
 	getReceiverIntersectionPoints(e) {
 		return this.paths && this.paths[e] && this.paths[e].length > 0 ? this.paths[e].map((e) => new P.Vector3().fromArray(e.chain[e.chain.length - 1].point)) : [];
 	}
 	calculateResponseByIntensity(e = this.frequencies, t = this.temperature) {
-		let n = Xe(this.indexedPaths, this.receiverIDs, this.sourceIDs, e, t, this.intensitySampleRate);
+		let n = $e(this.indexedPaths, this.receiverIDs, this.sourceIDs, e, t, this.intensitySampleRate);
 		return n && (this.responseByIntensity = n), this.responseByIntensity;
 	}
 	resampleResponseByIntensity(e = this.intensitySampleRate) {
@@ -1694,21 +1709,21 @@ var $ = class extends de {
 	calculateT30(e, t) {
 		if (this.responseByIntensity) {
 			let n = e ? [e] : this.receiverIDs, r = t ? [t] : this.sourceIDs;
-			for (let e of n) for (let t of r) this.responseByIntensity[e]?.[t] && k(this.responseByIntensity, e, t);
+			for (let e of n) for (let t of r) this.responseByIntensity[e]?.[t] && te(this.responseByIntensity, e, t);
 		}
 		return this.responseByIntensity;
 	}
 	calculateT20(e, t) {
 		if (this.responseByIntensity) {
 			let n = e ? [e] : this.receiverIDs, r = t ? [t] : this.sourceIDs;
-			for (let e of n) for (let t of r) this.responseByIntensity[e]?.[t] && ne(this.responseByIntensity, e, t);
+			for (let e of n) for (let t of r) this.responseByIntensity[e]?.[t] && A(this.responseByIntensity, e, t);
 		}
 		return this.responseByIntensity;
 	}
 	calculateT60(e, t) {
 		if (this.responseByIntensity) {
 			let n = e ? [e] : this.receiverIDs, r = t ? [t] : this.sourceIDs;
-			for (let e of n) for (let t of r) this.responseByIntensity[e]?.[t] && D(this.responseByIntensity, e, t);
+			for (let e of n) for (let t of r) this.responseByIntensity[e]?.[t] && ee(this.responseByIntensity, e, t);
 		}
 		return this.responseByIntensity;
 	}
@@ -1719,22 +1734,20 @@ var $ = class extends de {
 		console.log("blur"), u.overlays.global.hideCell(this.uuid + "-valid-ray-count");
 	}
 	pathsToLinearBuffer() {
-		return tt(this.paths);
+		return it(this.paths);
 	}
 	linearBufferToPaths(e) {
-		return nt(e);
+		return at(e);
 	}
 	arrivalPressure(e, t, n, r = 1) {
-		return K(e, t, n, r, this.temperature);
+		return W(e, t, n, r, this.temperature);
 	}
-	async calculateImpulseResponse(e = 100, t = this.frequencies, n = _.sampleRate) {
-		if (this.receiverIDs.length === 0) throw Error("No receivers have been assigned to the raytracer");
+	async calculateImpulseResponse(e = 100, t = this.frequencies, n = _.sampleRate, r) {
 		if (this.sourceIDs.length === 0) throw Error("No sources have been assigned to the raytracer");
-		if (!this.paths[this.receiverIDs[0]] || this.paths[this.receiverIDs[0]].length === 0) throw Error("No rays have been traced yet");
-		let r = this.paths[this.receiverIDs[0]], i = r.slice().sort((e, t) => e.time - t.time), a = i, o = i[i.length - 1].time + I, s = Array(t.length).fill(e), c = Z(n * o) * 2, l = [];
-		for (let e = 0; e < t.length; e++) l.push(new Float32Array(c));
+		let i = G(this.receiverIDs, this.paths, r), a = this.paths[i], o = a.slice().sort((e, t) => e.time - t.time), s = o, c = o[o.length - 1].time + I, l = Array(t.length).fill(e), u = Z(n * c) * 2, d = [];
+		for (let e = 0; e < t.length; e++) d.push(new Float32Array(u));
 		if (this.hybrid) {
-			console.log("Hybrid Calculation..."), a = Ke(r, this.transitionOrder);
+			console.log("Hybrid Calculation..."), s = Je(a, this.transitionOrder);
 			let e = {
 				name: "HybridHelperIS",
 				roomID: this.roomID,
@@ -1746,86 +1759,84 @@ var $ = class extends de {
 				rayPathsVisible: !1,
 				plotOrders: Array.from({ length: this.transitionOrder + 1 }, (e, t) => t),
 				frequencies: this.frequencies
-			}, i = qe(new ve(e, !0).returnSortedPathsForHybrid(this.c, s, t), this.transitionOrder);
-			for (let e = 0; e < i.length; e++) {
-				let r = i[e].time, a = Z(r * n);
-				for (let n = 0; n < t.length; n++) l[n][a] += i[e].pressure[n];
+			}, r = Ye(new ve(e, !0).returnSortedPathsForHybrid(this.c, l, t), this.transitionOrder);
+			for (let e = 0; e < r.length; e++) {
+				let i = r[e].time, a = Z(i * n);
+				for (let n = 0; n < t.length; n++) d[n][a] += r[e].pressure[n];
 			}
 		}
-		let u = f.getState().containers[this.receiverIDs[0]];
-		for (let e = 0; e < a.length; e++) {
-			let r = Ft() ? 1 : -1, i = a[e].time, o = a[e].arrivalDirection || [
+		let p = f.getState().containers[i];
+		for (let e = 0; e < s.length; e++) {
+			let r = Lt() ? 1 : -1, i = s[e].time, a = s[e].arrivalDirection || [
 				0,
 				0,
 				1
-			], c = u.getGain(o), d = this.arrivalPressure(s, t, a[e], c).map((e) => e * r), f = Z(i * n);
-			for (let e = 0; e < t.length; e++) l[e][f] += d[e];
+			], o = p.getGain(a), c = this.arrivalPressure(l, t, s[e], o).map((e) => e * r), u = Z(i * n);
+			for (let e = 0; e < t.length; e++) d[e][u] += c[e];
 		}
-		if (this.lateReverbTailEnabled && this._energyHistogram[this.receiverIDs[0]]) {
-			let e = O(this._energyHistogram[this.receiverIDs[0]], t, this.tailCrossfadeTime, this._histogramBinWidth), { tailSamples: r, tailStartSample: i } = A(e, n), a = Z(this.tailCrossfadeDuration * n);
-			l = C(l, r, i, a);
-			let o = l.reduce((e, t) => Math.max(e, t.length), 0) * 2;
-			for (let e = 0; e < t.length; e++) if (l[e].length < o) {
-				let t = new Float32Array(o);
-				t.set(l[e]), l[e] = t;
+		if (this.lateReverbTailEnabled && this._energyHistogram[i]) {
+			let e = D(this._energyHistogram[i], t, this.tailCrossfadeTime, this._histogramBinWidth), { tailSamples: r, tailStartSample: a } = j(e, n), o = Z(this.tailCrossfadeDuration * n);
+			d = C(d, r, a, o);
+			let s = d.reduce((e, t) => Math.max(e, t.length), 0) * 2;
+			for (let e = 0; e < t.length; e++) if (d[e].length < s) {
+				let t = new Float32Array(s);
+				t.set(d[e]), d[e] = t;
 			}
 		}
-		let d = X();
+		let m = X();
 		return new Promise((e, t) => {
-			d.postMessage({ samples: l }), d.onmessage = (r) => {
+			m.postMessage({ samples: d }), m.onmessage = (r) => {
 				let i = r.data.samples, a = new Float32Array(i[0].length >> 1), o = 0;
 				for (let e = 0; e < i.length; e++) for (let t = 0; t < a.length; t++) a[t] += i[e][t], Q(a[t]) > o && (o = Q(a[t]));
 				let s = R(a), c = _.createOfflineContext(1, a.length, n), l = _.createBufferSource(s, c);
-				l.connect(c.destination), l.start(), _.renderContextAsync(c).then((t) => e(t)).catch(t).finally(() => d.terminate());
+				l.connect(c.destination), l.start(), _.renderContextAsync(c).then((t) => e(t)).catch(t).finally(() => m.terminate());
 			};
 		});
 	}
-	async calculateAmbisonicImpulseResponse(e = 1, t = 100, n = this.frequencies, r = _.sampleRate) {
-		if (this.receiverIDs.length === 0) throw Error("No receivers have been assigned to the raytracer");
+	async calculateAmbisonicImpulseResponse(e = 1, t = 100, n = this.frequencies, r = _.sampleRate, i) {
 		if (this.sourceIDs.length === 0) throw Error("No sources have been assigned to the raytracer");
-		if (!this.paths[this.receiverIDs[0]] || this.paths[this.receiverIDs[0]].length === 0) throw Error("No rays have been traced yet. Run the raytracer first.");
-		let i = this.paths[this.receiverIDs[0]].sort((e, t) => e.time - t.time);
-		if (i.length === 0) throw Error("No valid ray paths found");
-		let a = i[i.length - 1].time + I;
-		if (a <= 0) throw Error("Invalid impulse response duration");
-		let o = Array(n.length).fill(t), s = Z(r * a) * 2;
-		if (s < 2) throw Error("Impulse response too short to process");
-		let c = T(e), l = [];
+		let a = G(this.receiverIDs, this.paths, i), o = this.paths[a].slice().sort((e, t) => e.time - t.time);
+		if (o.length === 0) throw Error("No valid ray paths found");
+		let s = o[o.length - 1].time + I;
+		if (s <= 0) throw Error("Invalid impulse response duration");
+		let c = Array(n.length).fill(t), l = Z(r * s) * 2;
+		if (l < 2) throw Error("Impulse response too short to process");
+		let u = T(e), d = [];
 		for (let e = 0; e < n.length; e++) {
-			l.push([]);
-			for (let t = 0; t < c; t++) l[e].push(new Float32Array(s));
+			d.push([]);
+			for (let t = 0; t < u; t++) d[e].push(new Float32Array(l));
 		}
-		let u = f.getState().containers[this.receiverIDs[0]];
-		for (let t = 0; t < i.length; t++) {
-			let a = i[t], d = Ft() ? 1 : -1, f = a.time, p = a.arrivalDirection || [
+		let p = f.getState().containers[a];
+		for (let t = 0; t < o.length; t++) {
+			let i = o[t], a = Lt() ? 1 : -1, s = i.time, f = i.arrivalDirection || [
 				0,
 				0,
 				1
-			], m = u.getGain(p), h = this.arrivalPressure(o, n, a, m).map((e) => e * d), g = Z(f * r);
-			if (g >= s) continue;
+			], m = p.getGain(f), h = this.arrivalPressure(c, n, i, m).map((e) => e * a), g = Z(s * r);
+			if (g >= l) continue;
 			let _ = /* @__PURE__ */ new Float32Array(1);
 			for (let t = 0; t < n.length; t++) {
 				_[0] = h[t];
-				let n = w(_, p[0], p[1], p[2], e, "threejs");
-				for (let e = 0; e < c; e++) l[t][e][g] += n[e][0];
+				let n = w(_, f[0], f[1], f[2], e, "threejs");
+				for (let e = 0; e < u; e++) d[t][e][g] += n[e][0];
 			}
 		}
-		if (this.lateReverbTailEnabled && this._energyHistogram[this.receiverIDs[0]]) {
-			let e = O(this._energyHistogram[this.receiverIDs[0]], n, this.tailCrossfadeTime, this._histogramBinWidth), t = Z(this.tailCrossfadeDuration * r);
-			ie(l, e, r, t);
+		if (this.lateReverbTailEnabled && this._energyHistogram[a]) {
+			let e = D(this._energyHistogram[a], n, this.tailCrossfadeTime, this._histogramBinWidth), t = Z(this.tailCrossfadeDuration * r);
+			re(d, e, r, t);
 			let i = 0;
-			for (let e = 0; e < n.length; e++) for (let t = 0; t < c; t++) l[e][t].length > i && (i = l[e][t].length);
-			let a = i * 2;
-			for (let e = 0; e < n.length; e++) for (let t = 0; t < c; t++) if (l[e][t].length < a) {
-				let n = new Float32Array(a);
-				n.set(l[e][t]), l[e][t] = n;
+			for (let e = 0; e < n.length; e++) for (let t = 0; t < u; t++) d[e][t].length > i && (i = d[e][t].length);
+			let o = i * 2;
+			for (let e = 0; e < n.length; e++) for (let t = 0; t < u; t++) if (d[e][t].length < o) {
+				let n = new Float32Array(o);
+				n.set(d[e][t]), d[e][t] = n;
 			}
 		}
-		let d = X();
+		let m = X();
 		return new Promise((e, t) => {
 			let i = async (e) => new Promise((t) => {
 				let r = [];
-				for (let t = 0; t < n.length; t++) r.push(l[t][e]);
+				for (let t = 0; t < n.length; t++) r.push(d[t][e]);
 				let i = X();
 				i.postMessage({ samples: r }), i.onmessage = (e) => {
 					let n = e.data.samples, r = new Float32Array(n[0].length >> 1);
@@ -1833,18 +1844,18 @@ var $ = class extends de {
 					i.terminate(), t(r);
 				};
 			});
-			Promise.all(Array.from({ length: c }, (e, t) => i(t))).then((n) => {
+			Promise.all(Array.from({ length: u }, (e, t) => i(t))).then((n) => {
 				let i = 0;
 				for (let e of n) for (let t = 0; t < e.length; t++) Q(e[t]) > i && (i = Q(e[t]));
 				if (i > 0) for (let e of n) for (let t = 0; t < e.length; t++) e[t] /= i;
 				let a = n[0].length;
 				if (a === 0) {
-					d.terminate(), t(/* @__PURE__ */ Error("Filtered signal has zero length"));
+					m.terminate(), t(/* @__PURE__ */ Error("Filtered signal has zero length"));
 					return;
 				}
-				let o = _.createOfflineContext(c, a, r).createBuffer(c, a, r);
-				for (let e = 0; e < c; e++) o.copyToChannel(new Float32Array(n[e]), e);
-				d.terminate(), e(o);
+				let o = _.createOfflineContext(u, a, r).createBuffer(u, a, r);
+				for (let e = 0; e < u; e++) o.copyToChannel(new Float32Array(n[e]), e);
+				m.terminate(), e(o);
 			}).catch(t);
 		});
 	}
@@ -1852,23 +1863,23 @@ var $ = class extends de {
 	ambisonicOrder = 1;
 	impulseResponse;
 	impulseResponsePlaying = !1;
-	async playImpulseResponse() {
-		let e = await lt(this.impulseResponse, () => this.calculateImpulseResponse(), this.uuid);
-		this.impulseResponse = e.impulseResponse;
+	async playImpulseResponse(e) {
+		let t = await ft(this.impulseResponse, () => this.calculateImpulseResponse(void 0, void 0, void 0, e), this.uuid);
+		this.impulseResponse = t.impulseResponse;
 	}
 	downloadImpulses(e, t = 100, n = m(125, 8e3), r = 44100) {
-		ct(this.paths, this.receiverIDs, this.sourceIDs, (e, t, n, r) => this.arrivalPressure(e, t, n, r), e, t, n, r);
+		dt(this.paths, this.receiverIDs, this.sourceIDs, (e, t, n, r) => this.arrivalPressure(e, t, n, r), e, t, n, r);
 	}
-	async downloadImpulseResponse(e, t = _.sampleRate) {
-		let n = await ut(this.impulseResponse, () => this.calculateImpulseResponse(), e, t);
-		this.impulseResponse = n.impulseResponse;
+	async downloadImpulseResponse(e, t = _.sampleRate, n) {
+		let r = await pt(this.impulseResponse, () => this.calculateImpulseResponse(void 0, void 0, void 0, n), e, t);
+		this.impulseResponse = r.impulseResponse;
 	}
-	async downloadAmbisonicImpulseResponse(e, t = 1) {
-		let n = await dt(this.ambisonicImpulseResponse, (e) => this.calculateAmbisonicImpulseResponse(e), this.ambisonicOrder, t, e);
-		this.ambisonicImpulseResponse = n.ambisonicImpulseResponse, this.ambisonicOrder = n.ambisonicOrder;
+	async downloadAmbisonicImpulseResponse(e, t = 1, n) {
+		let r = await mt(this.ambisonicImpulseResponse, (e) => this.calculateAmbisonicImpulseResponse(e, void 0, void 0, void 0, n), this.ambisonicOrder, t, e);
+		this.ambisonicImpulseResponse = r.ambisonicImpulseResponse, this.ambisonicOrder = r.ambisonicOrder;
 	}
-	async calculateBinauralImpulseResponse(e = 1) {
-		return (!this.ambisonicImpulseResponse || this.ambisonicOrder !== e) && (this.ambisonicImpulseResponse = await this.calculateAmbisonicImpulseResponse(e), this.ambisonicOrder = e), this.binauralImpulseResponse = await te({
+	async calculateBinauralImpulseResponse(e = 1, t) {
+		return (!this.ambisonicImpulseResponse || this.ambisonicOrder !== e) && (this.ambisonicImpulseResponse = await this.calculateAmbisonicImpulseResponse(e, void 0, void 0, void 0, t), this.ambisonicOrder = e), this.binauralImpulseResponse = await k({
 			ambisonicImpulseResponse: this.ambisonicImpulseResponse,
 			order: e,
 			hrtfSubjectId: this.hrtfSubjectId,
@@ -1878,18 +1889,18 @@ var $ = class extends de {
 		}), this.binauralImpulseResponse;
 	}
 	async playBinauralImpulseResponse(e = 1) {
-		let t = await ft(this.binauralImpulseResponse, () => this.calculateBinauralImpulseResponse(e), this.uuid);
+		let t = await ht(this.binauralImpulseResponse, () => this.calculateBinauralImpulseResponse(e), this.uuid);
 		this.binauralImpulseResponse = t.binauralImpulseResponse;
 	}
 	async downloadBinauralImpulseResponse(e, t = 1) {
-		let n = await pt(this.binauralImpulseResponse, () => this.calculateBinauralImpulseResponse(t), e);
+		let n = await gt(this.binauralImpulseResponse, () => this.calculateBinauralImpulseResponse(t), e);
 		this.binauralImpulseResponse = n.binauralImpulseResponse;
 	}
 	async _initGpu() {
 		if (!ue()) return console.warn("[GPU RT] WebGPU not available in this browser"), !1;
 		let e = null;
 		try {
-			return e = new Mt(), !await e.initialize(this.room, this.receiverIDs, {
+			return e = new Pt(), !await e.initialize(this.room, this.receiverIDs, {
 				reflectionOrder: this.reflectionOrder,
 				frequencies: this.frequencies,
 				cachedAirAtt: this._cachedAirAtt,
@@ -2061,4 +2072,4 @@ t("RAYTRACER_CALL_METHOD", a), t("RAYTRACER_SET_PROPERTY", o), t("REMOVE_RAYTRAC
 //#endregion
 export { $ as default };
 
-//# sourceMappingURL=raytracer-C4byO6rt.mjs.map
+//# sourceMappingURL=raytracer-B-vWgrWF.mjs.map
