@@ -28,6 +28,7 @@ import {
 import shaders from "./shaders";
 import Solver from "../solver";
 import { computeTimestep } from "./timestep";
+import { soundSpeed } from "../acoustics/sound-speed";
 import {
   applySliceTransform,
   domainFromBox,
@@ -74,6 +75,8 @@ export interface FDTD_2D_Props {
   offsetY?: number;
   /** Floor plan (`xz`) or vertical sketch (`xy`). Inferred from the selected surface when omitted. */
   slice?: FdtdSlice;
+  /** Air temperature in °C. Default 20, matching the other solvers. */
+  temperature?: number;
 }
 
 export interface Uniforms {
@@ -126,6 +129,7 @@ class FDTD_2D extends Solver {
   cellSize: number;
   numPasses: number;
   waveSpeed: number;
+  _temperature: number;
   recording: boolean;
   lastTickMs: number | null;
   clearShader!: ShaderMaterial;
@@ -139,7 +143,8 @@ class FDTD_2D extends Solver {
     this.time = 0;
     this.frame = 0;
     this.numPasses = 1;
-    this.waveSpeed = 340.29;
+    this._temperature = props?.temperature ?? 20;
+    this.waveSpeed = soundSpeed(this._temperature);
     this.recording = false;
     this.lastTickMs = null;
 
@@ -182,7 +187,7 @@ class FDTD_2D extends Solver {
     this.width = this.nx * this.cellSize;
     this.height = this.ny * this.cellSize;
 
-    this.dt = computeTimestep(this.cellSize, this.waveSpeed);
+    this.applyWaveSpeed();
 
     this.sources = {} as KeyValuePair<Source>;
     this.sourceKeys = [] as string[];
@@ -349,7 +354,8 @@ class FDTD_2D extends Solver {
     // Walls in height-map.frag are perfectly rigid (Neumann) until impedance exists.
     (this.heightmapVariable.material as ShaderMaterial).uniforms["damping"] = { value: 0.9999 };
 
-    (this.heightmapVariable.material as ShaderMaterial).uniforms["courantSq"] = { value: (this.waveSpeed * this.dt / this.cellSize) ** 2 };
+    (this.heightmapVariable.material as ShaderMaterial).uniforms["courantSq"] = { value: 0 };
+    this.applyWaveSpeed();
 
     (this.heightmapVariable.material as ShaderMaterial).uniforms["heightCompensation"] = { value: 0 };
 
@@ -433,6 +439,28 @@ class FDTD_2D extends Solver {
     this.running = false;
     this.lastTickMs = null;
     renderer.fdtd2drunning = false;
+  }
+
+  get temperature() {
+    return this._temperature;
+  }
+  set temperature(value: number) {
+    this._temperature = value;
+    this.applyWaveSpeed();
+  }
+  get c() {
+    return soundSpeed(this._temperature);
+  }
+  /** Keep waveSpeed, dt, and courantSq on the CFL 1/√2 locus. */
+  applyWaveSpeed() {
+    this.waveSpeed = this.c;
+    if (this.cellSize > 0) {
+      this.dt = computeTimestep(this.cellSize, this.waveSpeed);
+    }
+    const material = this.heightmapVariable?.material as ShaderMaterial | undefined;
+    if (material?.uniforms?.courantSq && this.cellSize > 0) {
+      material.uniforms.courantSq.value = (this.waveSpeed * this.dt / this.cellSize) ** 2;
+    }
   }
 
   get sampleRate() {
