@@ -304,7 +304,8 @@ const defaults = {
 
 export interface HybridRayPath {
   time: number,
-  pressure: number[]
+  pressure: number[],
+  order: number,
 }
 
 export class ImageSourceSolver extends Solver {
@@ -488,6 +489,7 @@ export class ImageSourceSolver extends Solver {
           let path: HybridRayPath = {
             time: t, 
             pressure: p,
+            order: sortedPath[i].order,
           }
           result.push(path);
         }
