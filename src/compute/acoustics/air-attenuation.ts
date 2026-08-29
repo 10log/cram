@@ -35,3 +35,16 @@ export function airAttenuation(
 
   return alphas;
 }
+
+/**
+ * `airAttenuation` is dB/m of SPL (20 log₁₀). Intensity / energy uses
+ * 10 log₁₀, so the energy factor over distance r is 10^(-α_dB · r / 10).
+ */
+export function airAttenuationEnergy(airAbsDbPerMeter: number, distance: number): number {
+  return 10 ** ((-airAbsDbPerMeter * distance) / 10);
+}
+
+/** Nepers/m for energy so that exp(-n · r) = airAttenuationEnergy(α_dB, r). */
+export function airAbsDbToEnergyNepers(airAbsDbPerMeter: number): number {
+  return airAbsDbPerMeter / (10 / Math.LN10);
+}
