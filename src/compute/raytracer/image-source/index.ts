@@ -27,6 +27,7 @@ import {
   reflectPointAcrossPlane,
   worldSurfaceNormal,
 } from "./reflection-geometry";
+import { SolverOverlay } from "./overlay";
 
 function createLine(){
   const line = new MeshLine();
@@ -329,6 +330,7 @@ export class ImageSourceSolver extends Solver {
     allRayPaths: ImageSourcePath[] | null; 
 
     selectedImageSourcePath: THREE.Mesh;
+    private overlay: SolverOverlay;
 
     private _plotFrequency: number; 
 
@@ -377,9 +379,11 @@ export class ImageSourceSolver extends Solver {
 
         this.roomID = resolveRoomID(this.roomID, getRooms().map((r) => r.uuid));
 
-        // //@ts-ignore
+        this.overlay = new SolverOverlay(renderer.markup);
         this.selectedImageSourcePath = createLine();
-        renderer.markup.add(this.selectedImageSourcePath);
+        if (!this.isHybrid) {
+          this.overlay.group.add(this.selectedImageSourcePath);
+        }
     }
 
     save(){
@@ -401,8 +405,8 @@ export class ImageSourceSolver extends Solver {
     }
 
     dispose(){
-        renderer.markup.remove(this.selectedImageSourcePath);
         this.reset();
+        this.overlay.dispose();
         emit("REMOVE_RESULT", this.levelTimeProgression);
     }
 
@@ -614,14 +618,14 @@ export class ImageSourceSolver extends Solver {
       for(let i = 0; i<this.plotOrders.length; i++){
         let is = this.rootImageSource?.getChildrenOfOrder(this.plotOrders[i]) as ImageSource[];   
         for(let j = 0; j<is?.length; j++){
-          is[j].markup(); 
+          const pos = is[j].position;
+          this.overlay.addPoint([pos.x, pos.y, pos.z]);
         }
       }
     }
 
     clearImageSources(){
-      // placeholder
-      renderer.markup.clearPoints(); 
+      this.overlay.clearPoints();
     }
 
     drawRayPaths(orders?:number[]){
@@ -629,14 +633,18 @@ export class ImageSourceSolver extends Solver {
       for(let i = 0; i<this.plotOrders.length; i++){
         let is_paths = this.getPathsOfOrder(this.plotOrders[i]) as ImageSourcePath[]; 
         for(let j = 0; j<is_paths.length; j++){
-          is_paths[j].markup(); 
+          const path = is_paths[j].path;
+          for (let k = 0; k < path.length - 1; k++) {
+            const p1 = path[k].point;
+            const p2 = path[k + 1].point;
+            this.overlay.addLine([p1.x, p1.y, p1.z], [p2.x, p2.y, p2.z]);
+          }
         }
       }
     }
 
     clearRayPaths(){
-      // placeholder
-      renderer.markup.clearLines(); 
+      this.overlay.clearLines();
     }
 
     toggleRayPathHighlight(rayPathUUID: string){
