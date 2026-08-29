@@ -155,7 +155,8 @@ export function injectSourceEnergy(
   sourcePosition: Vector3,
   initialEnergy: number,
   ctx: ShootingContext,
-  nRays: number = 500
+  nRays: number = 500,
+  rayWeight?: (dir: Vector3) => number,
 ): void {
   const { patchSet, unshotEnergy, totalEnergy, brdf, airAbsNepers, speedOfSound, sampleRate } = ctx;
   const { patches, bvh, triangleToPatch } = patchSet;
@@ -204,7 +205,7 @@ export function injectSourceEnergy(
 
     // Create a unit impulse as the source emission
     const impulse = new Response(1);
-    impulse.buffer[0] = gain * airAtten;
+    impulse.buffer[0] = gain * airAtten * (rayWeight ? rayWeight(dir) : 1);
 
     for (let outSlot = 0; outSlot < brdf.nSlots; outSlot++) {
       const w = outWeights[outSlot];

@@ -15,6 +15,7 @@ import { soundSpeed } from "../acoustics/sound-speed";
 import { airAbsDbToEnergyNepers, airAttenuation } from "../acoustics/air-attenuation";
 import { directPathEnergy, directPathSampleIndex, pickDirectAirFrequency } from "./direct-path";
 import { downsampleEnergyEnvelope } from "./energy-decay";
+import { sourceEmissionEnergy, sourceRayWeight } from "./source-emission";
 import Room from "../../objects/room";
 import Source from "../../objects/source";
 import Receiver from "../../objects/receiver";
@@ -213,8 +214,16 @@ export class ART extends Solver {
             raysPerShoot: this.raysPerShoot,
           };
 
-          // Step 4: Inject source emission
-          injectSourceEnergy(sourcePos, this.initialEnergy, ctx, this.sourceRays);
+          // Step 4: Inject source emission from Source.initialSPL × Q(θ,φ,f)
+          const emitted = sourceEmissionEnergy(source.initialSPL);
+          injectSourceEnergy(sourcePos, emitted, ctx, this.sourceRays, (dir) =>
+            sourceRayWeight({
+              handler: source.directivityHandler,
+              quaternion: source.quaternion,
+              worldDir: dir,
+              frequency: freq,
+            }),
+          );
 
           // Step 5: Progressive shooting loop
           const initialTotal = totalUnshotEnergy(unshotEnergy);
@@ -260,8 +269,15 @@ export class ART extends Solver {
           const airAbsDb = airAttenuation([directFreq], this.temperature)[0];
           const directIdx = directPathSampleIndex(directDist, c, this.sampleRate);
           if (directIdx >= 0 && directIdx < combined.length) {
+            const towardReceiver = receiverPos.clone().sub(sourcePos);
+            const q = sourceRayWeight({
+              handler: source.directivityHandler,
+              quaternion: source.quaternion,
+              worldDir: towardReceiver,
+              frequency: directFreq,
+            });
             combined[directIdx] += directPathEnergy({
-              energy: this.initialEnergy,
+              energy: sourceEmissionEnergy(source.initialSPL) * q,
               distance: directDist,
               airAbsDbPerMeter: airAbsDb,
             });
