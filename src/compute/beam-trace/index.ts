@@ -404,11 +404,20 @@ export class BeamTraceSolver extends Solver {
   }
 
   dispose() {
-    this.clearVisualization();
+    this.reset(); // stops quick-estimate interval, clears viz + highlights
     this.removeClickHandler();
     renderer.markup.remove(this.selectedPath);
     renderer.markup.remove(this.selectedBeamsGroup);
     renderer.markup.remove(this.virtualSourcesGroup);
+    this.selectedPath.geometry?.dispose();
+    const material = this.selectedPath.material;
+    if (material instanceof THREE.Material) {
+      material.dispose();
+    } else if (Array.isArray(material)) {
+      for (const mat of material) {
+        if (mat instanceof THREE.Material) mat.dispose();
+      }
+    }
     emit("REMOVE_RESULT", this.levelTimeProgression);
     emit("REMOVE_RESULT", this.impulseResponseResult);
   }
