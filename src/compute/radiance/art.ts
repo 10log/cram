@@ -12,7 +12,7 @@ import { v4 as uuid } from 'uuid';
 import { ResultKind, Result } from "../../store/result-store";
 import { whole_octave } from "../acoustics";
 import { soundSpeed } from "../acoustics/sound-speed";
-import { airAttenuation } from "../acoustics/air-attenuation";
+import { airAbsDbToEnergyNepers, airAttenuation } from "../acoustics/air-attenuation";
 import { directPathEnergy, directPathSampleIndex, pickDirectAirFrequency } from "./direct-path";
 import { downsampleEnergyEnvelope } from "./energy-decay";
 import Room from "../../objects/room";
@@ -187,9 +187,9 @@ export class ART extends Solver {
             scatterings.push(patch.scattering(freq));
           }
 
-          // Air absorption: convert from dB/m to Nepers/m
+          // Air absorption: ISO dB/m is SPL; energy uses 10 log (#118).
           const airAbsDb = airAttenuation([freq], this.temperature)[0];
-          const airAbsNepers = airAbsDb / (20 / Math.LN10);
+          const airAbsNepers = airAbsDbToEnergyNepers(airAbsDb);
 
           // Initialize energy buffers
           const unshotEnergy: DirectionalResponse[] = [];

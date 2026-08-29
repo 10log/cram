@@ -3,9 +3,10 @@
  * this formulation — adding `initialEnergy` into every octave buffer and
  * then summing makes the direct bin N_bands times too large (#116).
  *
- * Air conversion matches the current ART shoot/gather (pressure 20 log).
- * Energy-vs-pressure air is #118.
+ * Air on this energy path uses 10 log₁₀ (#118), not the pressure 20 log.
  */
+
+import { airAttenuationEnergy } from "../acoustics/air-attenuation";
 
 export const DIRECT_AIR_FREQUENCY_HZ = 1000;
 
@@ -22,8 +23,7 @@ export function directPathEnergy(opts: {
 }): number {
   const { energy, distance, airAbsDbPerMeter } = opts;
   if (!(distance > 1e-6)) return 0;
-  const airAbsNepers = airAbsDbPerMeter / (20 / Math.LN10);
-  return (energy * Math.exp(-airAbsNepers * distance)) / (distance * distance);
+  return (energy * airAttenuationEnergy(airAbsDbPerMeter, distance)) / (distance * distance);
 }
 
 export function directPathSampleIndex(
