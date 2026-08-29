@@ -999,96 +999,212 @@ var Source3D = class {
 		let n = Array.isArray(e) ? e : e.position;
 		this.solver.debugBeamPath(n, t);
 	}
-};
-//#endregion
-//#region src/common/dir-angle-conversions.ts
-function threejsdir2cramangle(e, t, n) {
-	let r = Math.sqrt(e * e + t * t + n * n);
-	if (r < 1e-10) return [0, 0];
-	let i = Math.acos(Math.min(1, Math.max(-1, t / r))), a = Math.atan2(e, n), o = 180 / Math.PI * i;
-	return [((360 - 180 / Math.PI * a) % 360 + 360) % 360, o];
-}
-function worldDirToCramAngles(e, t) {
-	if (e.lengthSq() < 1e-20) return [0, 0];
-	let n = e.clone().normalize().applyQuaternion(t.clone().invert()), [r, i] = threejsdir2cramangle(n.x, n.y, n.z);
-	return [r, i];
-}
-//#endregion
-//#region src/common/arrival-direction.ts
-function lookingBackArrivalDirection(e, t) {
-	let n = t.x - e.x, r = t.y - e.y, i = t.z - e.z, a = Math.hypot(n, r, i);
-	return a < 1e-10 ? [
+}, beamTraceDefaults = {
+	name: "Beam Tracer",
+	uuid: "",
+	roomID: "",
+	sourceIDs: [],
+	receiverIDs: [],
+	maxReflectionOrder: 3,
+	visualizationMode: "rays",
+	showAllBeams: !1,
+	visibleOrders: [
 		0,
-		0,
-		1
-	] : [
-		n / a,
-		r / a,
-		i / a
-	];
+		1,
+		2,
+		3
+	],
+	frequencies: [
+		125,
+		250,
+		500,
+		1e3,
+		2e3,
+		4e3,
+		8e3
+	],
+	levelTimeProgression: "",
+	impulseResponseResult: "",
+	hrtfSubjectId: "D1",
+	headYaw: 0,
+	headPitch: 0,
+	headRoll: 0,
+	edgeDiffractionEnabled: !1,
+	lateReverbTailEnabled: !1,
+	tailCrossfadeTime: 0,
+	tailCrossfadeDuration: .05
+}, HISTOGRAM_BIN_WIDTH = .001, HISTOGRAM_NUM_BINS = 1e4;
+//#endregion
+//#region src/common/moving-average.ts
+function movingAverage(e, t = 1) {
+	let n = e.slice();
+	for (let r = 0; r < e.length; r++) if (r >= t && r < e.length - t) {
+		let i = r - t, a = r + t, o = 0;
+		for (let t = i; t < a; t++) o += e[t];
+		n[r] = o / (2 * t);
+	}
+	return n;
 }
 //#endregion
-//#region src/compute/beam-trace/tree-signature.ts
-function beamTreeSignature(e) {
-	return [
-		e.sourceId,
-		e.roomID,
-		String(e.maxOrder),
-		String(e.surfaceCount),
-		e.sourceX.toFixed(6),
-		e.sourceY.toFixed(6),
-		e.sourceZ.toFixed(6),
-		e.surfaceWorlds.map((e) => e.toFixed(6)).join(",")
-	].join("|");
-}
-//#endregion
-//#region src/compute/binaural/binaural-decoder.ts
-async function decodeBinaural(e, t) {
-	let n = e.sampleRate;
-	if (n !== t.sampleRate) throw Error(`Sample rate mismatch: ambisonic IR is ${n} Hz but HRTF filters are ${t.sampleRate} Hz`);
-	let r = Math.min(e.numberOfChannels, t.channelCount);
-	if (r === 0) throw Error("No channels to decode");
-	let i = e.length + t.filterLength - 1, a = new OfflineAudioContext(2, i, n);
-	for (let i = 0; i < r; i++) {
-		let r = a.createBuffer(1, e.length, n);
-		r.copyToChannel(e.getChannelData(i), 0);
-		let o = a.createBufferSource();
-		o.buffer = r;
-		let s = a.createBuffer(2, t.filterLength, n);
-		s.copyToChannel(new Float32Array(t.filtersLeft[i]), 0), s.copyToChannel(new Float32Array(t.filtersRight[i]), 1);
-		let c = a.createConvolver();
-		c.normalize = !1, c.buffer = s, o.connect(c), c.connect(a.destination), o.start(0);
+//#region node_modules/simple-statistics/dist/simple-statistics.mjs
+function linearRegression$1(e) {
+	var t, n, r = e.length;
+	if (r === 1) t = 0, n = e[0][1];
+	else {
+		for (var i = 0, a = 0, o = 0, s = 0, c, l, u, d = 0; d < r; d++) c = e[d], l = c[0], u = c[1], i += l, a += u, o += l * l, s += l * u;
+		t = (r * s - i * a) / (r * o - i * i), n = a / r - t * i / r;
 	}
 	return {
-		buffer: await a.startRendering(),
-		sampleRate: n
+		m: t,
+		b: n
 	};
 }
-function rotateAmbisonicIR(e, t, n, r) {
-	if (t === 0 && n === 0 && r === 0) return e;
-	let i = e.numberOfChannels, a = e.length, o = e.sampleRate;
-	if (i < 4) throw Error("Ambisonic rotation requires at least 4 channels (first order)");
-	let s = t * Math.PI / 180, c = n * Math.PI / 180, l = r * Math.PI / 180, u = Math.cos(s), d = Math.sin(s), f = Math.cos(c), p = Math.sin(c), m = Math.cos(l), h = Math.sin(l), g = u * m + d * p * h, _ = -u * h + d * p * m, v = d * f, y = f * h, b = f * m, x = -p, S = -d * m + u * p * h, w = d * h + u * p * m, E = u * f, D = new OfflineAudioContext(i, a, o).createBuffer(i, a, o);
-	D.copyToChannel(e.getChannelData(0), 0);
-	let O = e.getChannelData(1), j = e.getChannelData(2), M = e.getChannelData(3), N = new Float32Array(a), F = new Float32Array(a), I = new Float32Array(a);
-	for (let e = 0; e < a; e++) {
-		let t = O[e], n = j[e], r = M[e];
-		N[e] = g * t + _ * n + v * r, F[e] = y * t + b * n + x * r, I[e] = S * t + w * n + E * r;
+var BayesianClassifier = function() {
+	this.totalCount = 0, this.data = {};
+};
+BayesianClassifier.prototype.train = function(e, t) {
+	for (var n in this.data[t] || (this.data[t] = {}), e) {
+		var r = e[n];
+		this.data[t][n] === void 0 && (this.data[t][n] = {}), this.data[t][n][r] === void 0 && (this.data[t][n][r] = 0), this.data[t][n][r]++;
 	}
-	D.copyToChannel(N, 1), D.copyToChannel(F, 2), D.copyToChannel(I, 3);
-	for (let t = 4; t < i; t++) D.copyToChannel(e.getChannelData(t), t);
-	return D;
+	this.totalCount++;
+}, BayesianClassifier.prototype.score = function(e) {
+	var t = {}, n;
+	for (var r in e) {
+		var i = e[r];
+		for (n in this.data) t[n] = {}, this.data[n][r] ? t[n][r + "_" + i] = (this.data[n][r][i] || 0) / this.totalCount : t[n][r + "_" + i] = 0;
+	}
+	var a = {};
+	for (n in t) for (var o in a[n] = 0, t[n]) a[n] += t[n][o];
+	return a;
+};
+var SQRT_2PI$1 = Math.sqrt(2 * Math.PI);
+function cumulativeDistribution(e) {
+	for (var t = e, n = e, r = 1; r < 15; r++) n *= e * e / (2 * r + 1), t += n;
+	return Math.round((.5 + t / SQRT_2PI$1 * Math.exp(-e * e / 2)) * 1e4) / 1e4;
+}
+for (var standardNormalTable = [], z = 0; z <= 3.09; z += .01) standardNormalTable.push(cumulativeDistribution(z));
+var LOGSQRT2PI = Math.log(Math.sqrt(2 * Math.PI)), SQRT_2PI = Math.sqrt(2 * Math.PI), PerceptronModel = function() {
+	this.weights = [], this.bias = 0;
+};
+PerceptronModel.prototype.predict = function(e) {
+	if (e.length !== this.weights.length) return null;
+	for (var t = 0, n = 0; n < this.weights.length; n++) t += this.weights[n] * e[n];
+	return t += this.bias, +(t > 0);
+}, PerceptronModel.prototype.train = function(e, t) {
+	if (t !== 0 && t !== 1) return null;
+	e.length !== this.weights.length && (this.weights = e, this.bias = 1);
+	var n = this.predict(e);
+	if (typeof n == "number" && n !== t) {
+		for (var r = t - n, i = 0; i < this.weights.length; i++) this.weights[i] += r * e[i];
+		this.bias += r;
+	}
+	return this;
+};
+//#endregion
+//#region src/common/linear-regression.ts
+function linearRegression(e, t) {
+	let n = e.length, r = [];
+	for (let i = 0; i < n; i++) r.push([e[i], t[i]]);
+	let { m: i, b: a } = linearRegression$1(r);
+	return {
+		m: i,
+		b: a,
+		fx: (e) => i * e + a,
+		fy: (e) => (e - a) / i
+	};
 }
 //#endregion
-//#region src/compute/binaural/calculate-binaural.ts
-async function calculateBinauralFromAmbisonic(e) {
-	let { ambisonicImpulseResponse: t, order: n, hrtfSubjectId: r, headYaw: i, headPitch: a, headRoll: o } = e, s = t;
-	(i !== 0 || a !== 0 || o !== 0) && (s = rotateAmbisonicIR(s, i, a, o));
-	let c = await loadDecoderFilters(r, n);
-	return (await decodeBinaural(s, c)).buffer;
+//#region src/compute/shared/response-by-intensity.ts
+var { floor: floor$1 } = Math;
+function resampleResponseByIntensity(e, t = 256) {
+	if (e) {
+		for (let n in e) for (let r in e[n]) {
+			let { response: i, freqs: a } = e[n][r], o = i[i.length - 1].time, s = floor$1(t * o);
+			e[n][r].resampledResponse = Array(a.length).fill(0).map((e) => new Float32Array(s)), e[n][r].sampleRate = t;
+			let c = 0, l = [], u = a.map((e) => 0), d = !1;
+			for (let t = 0, f = 0; t < s; t++) {
+				let p = t / s * o;
+				if (i[f] && i[f].time) {
+					let t = i[f].time;
+					if (t > p) {
+						for (let t = 0; t < a.length; t++) e[n][r].resampledResponse[t][c] = 0;
+						d && l.push(c), c++;
+						continue;
+					}
+					if (t <= p) {
+						let o = i[f].level.map((e) => 0);
+						for (; t <= p;) {
+							t = i[f].time;
+							for (let e = 0; e < a.length; e++) o[e] = db_add([o[e], i[f].level[e]]);
+							f++;
+						}
+						for (let t = 0; t < a.length; t++) {
+							if (e[n][r].resampledResponse[t][c] = o[t], l.length > 0) {
+								let i = u[t], a = o[t];
+								for (let o = 0; o < l.length; o++) {
+									let s = lerp(i, a, (o + 1) / (l.length + 1));
+									e[n][r].resampledResponse[t][l[o]] = s;
+								}
+							}
+							u[t] = o[t];
+						}
+						l.length > 0 && (l = []), d = !0, c++;
+						continue;
+					}
+				}
+			}
+			calculateT20(e, n, r), calculateT30(e, n, r), calculateT60(e, n, r);
+		}
+		return e;
+	}
+	console.warn("no data yet");
+}
+function calculateT30(e, t, n) {
+	let r = t, i = n, a = e[r][i].resampledResponse, o = e[r][i].sampleRate;
+	if (a && o) {
+		let t = new Float32Array(a[0].length);
+		for (let e = 0; e < a[0].length; e++) t[e] = e / o;
+		e[r][i].t30 = a.map((e) => {
+			let n = 0, r = e[n];
+			for (; r === 0;) r = e[n++];
+			for (let t = n; t >= 0; t--) e[t] = r;
+			let i = r - 30, a = movingAverage(e, 2).filter((e) => e >= i).length;
+			return linearRegression(t.slice(0, a), e.slice(0, a));
+		});
+	}
+}
+function calculateT20(e, t, n) {
+	let r = t, i = n, a = e[r][i].resampledResponse, o = e[r][i].sampleRate;
+	if (a && o) {
+		let t = new Float32Array(a[0].length);
+		for (let e = 0; e < a[0].length; e++) t[e] = e / o;
+		e[r][i].t20 = a.map((e) => {
+			let n = 0, r = e[n];
+			for (; r === 0;) r = e[n++];
+			for (let t = n; t >= 0; t--) e[t] = r;
+			let i = r - 20, a = movingAverage(e, 2).filter((e) => e >= i).length;
+			return linearRegression(t.slice(0, a), e.slice(0, a));
+		});
+	}
+}
+function calculateT60(e, t, n) {
+	let r = t, i = n, a = e[r][i].resampledResponse, o = e[r][i].sampleRate;
+	if (a && o) {
+		let t = new Float32Array(a[0].length);
+		for (let e = 0; e < a[0].length; e++) t[e] = e / o;
+		e[r][i].t60 = a.map((e) => {
+			let n = 0, r = e[n];
+			for (; r === 0;) r = e[n++];
+			for (let t = n; t >= 0; t--) e[t] = r;
+			let i = r - 60, a = movingAverage(e, 2).filter((e) => e >= i).length;
+			return linearRegression(t.slice(0, a), e.slice(0, a));
+		});
+	}
 }
 //#endregion
 //#region node_modules/ambisonics/dist/ambisonics.es.js
+var import_FileSaver_min = /* @__PURE__ */ __toESM(require_FileSaver_min());
 function getAmbisonicChannelCount(e) {
 	return (e + 1) * (e + 1);
 }
@@ -17052,7 +17168,665 @@ var serveSofaHrirExports = serveSofaHrir.exports, HRIRloader_ircam = class {
 	n3d2sn3d,
 	sn3d2n3d,
 	wxyz2acn
-}, Symbol.toStringTag, { value: "Module" })), converters = _converters, utils = _utils;
+}, Symbol.toStringTag, { value: "Module" })), converters = _converters, utils = _utils, { log10, pow, floor, max, min, sqrt: sqrt$1, cos: cos$1, PI: PI$1, random } = Math;
+function extractDecayParameters(e, t, n, r) {
+	let i = t.length, a = [];
+	for (let t = 0; t < i; t++) {
+		let i = e[t], o = 0;
+		for (let e = i.length - 1; e >= 0; e--) if (i[e] > 0) {
+			o = e;
+			break;
+		}
+		if (o < 2) {
+			a.push({
+				t60: 0,
+				decayRate: 0,
+				crossfadeLevel: 0,
+				crossfadeTime: 0,
+				endTime: 0
+			});
+			continue;
+		}
+		let s = new Float32Array(o + 1);
+		s[o] = i[o];
+		for (let e = o - 1; e >= 0; e--) s[e] = s[e + 1] + i[e];
+		let c = s[0];
+		if (c <= 0) {
+			a.push({
+				t60: 0,
+				decayRate: 0,
+				crossfadeLevel: 0,
+				crossfadeTime: 0,
+				endTime: 0
+			});
+			continue;
+		}
+		let l = c * pow(10, -5 / 10), u = c * pow(10, -35 / 10), d = -1, f = -1;
+		for (let e = 0; e <= o; e++) d < 0 && s[e] <= l && (d = e), f < 0 && s[e] <= u && (f = e);
+		let p = 0, m = 0;
+		if (d >= 0 && f > d) {
+			let e = [], t = [];
+			for (let n = d; n <= f; n++) {
+				let i = s[n];
+				i > 0 && (e.push(n * r), t.push(10 * log10(i / c)));
+			}
+			if (e.length >= 2) {
+				let n = linearRegression(e, t).m;
+				n < 0 && (p = n, m = -60 / n);
+			}
+		}
+		p < 0 && p > -1 && (p = -1, m = 60 / 1);
+		let h = n;
+		if (h <= 0) {
+			let e = max(1, floor(.05 / r));
+			h = max(0, o - e) * r;
+		}
+		let g = min(floor(h / r), o), _ = g <= o && g >= 0 ? s[g] / c : 0, v = m > 0 ? min(h + m, 10) : h;
+		a.push({
+			t60: m,
+			decayRate: p,
+			crossfadeLevel: _,
+			crossfadeTime: h,
+			endTime: v
+		});
+	}
+	return a;
+}
+function synthesizeTail(e, t) {
+	let n = 0, r = Infinity;
+	for (let t of e) t.endTime > n && (n = t.endTime), t.crossfadeTime > 0 && t.crossfadeTime < r && (r = t.crossfadeTime);
+	if (n <= 0 || !isFinite(r)) return {
+		tailSamples: e.map(() => /* @__PURE__ */ new Float32Array()),
+		tailStartSample: 0,
+		totalSamples: 0
+	};
+	let i = floor(r * t), a = floor(n * t), o = a - i;
+	if (o <= 0) return {
+		tailSamples: e.map(() => /* @__PURE__ */ new Float32Array()),
+		tailStartSample: i,
+		totalSamples: a
+	};
+	let s = [];
+	for (let n of e) {
+		let e = new Float32Array(o);
+		if (n.decayRate >= 0 || n.crossfadeLevel <= 0) {
+			s.push(e);
+			continue;
+		}
+		let r = sqrt$1(n.crossfadeLevel) / (1 / sqrt$1(3));
+		for (let i = 0; i < o; i++) {
+			let a = i / t, o = pow(10, n.decayRate * a / 20), s = random() * 2 - 1;
+			e[i] = s * o * r;
+		}
+		s.push(e);
+	}
+	return {
+		tailSamples: s,
+		tailStartSample: i,
+		totalSamples: a
+	};
+}
+function assembleFinalIR(e, t, n, r) {
+	let i = e.length, a = [];
+	for (let o = 0; o < i; o++) {
+		let i = e[o], s = t[o];
+		if (!s || s.length === 0) {
+			a.push(i);
+			continue;
+		}
+		let c = max(i.length, n + s.length), l = new Float32Array(c);
+		for (let e = 0; e < min(n, i.length); e++) l[e] = i[e];
+		let u = r, d = u > 1 ? u - 1 : 1;
+		for (let e = 0; e < u; e++) {
+			let t = n + e;
+			if (t >= c) break;
+			let r = .5 * (1 + cos$1(PI$1 * e / d)), a = .5 * (1 - cos$1(PI$1 * e / d)), o = t < i.length ? i[t] : 0, u = e < s.length ? s[e] : 0;
+			l[t] = o * r + u * a;
+		}
+		for (let e = u; e < s.length; e++) {
+			let t = n + e;
+			if (t >= c) break;
+			l[t] = s[e];
+		}
+		a.push(l);
+	}
+	return a;
+}
+function applyAmbisonicTail(e, t, n, r) {
+	if (e.length === 0 || e[0].length === 0) return e;
+	let i = e.length, a = e[0].length;
+	for (let o = 0; o < a; o++) {
+		let { tailSamples: a, tailStartSample: s } = synthesizeTail(t, n), c = Array(i);
+		for (let t = 0; t < i; t++) c[t] = e[t][o];
+		let l = assembleFinalIR(c, a, s, r);
+		for (let t = 0; t < i; t++) e[t][o] = l[t];
+	}
+	return e;
+}
+//#endregion
+//#region src/compute/binaural/binaural-decoder.ts
+async function decodeBinaural(e, t) {
+	let n = e.sampleRate;
+	if (n !== t.sampleRate) throw Error(`Sample rate mismatch: ambisonic IR is ${n} Hz but HRTF filters are ${t.sampleRate} Hz`);
+	let r = Math.min(e.numberOfChannels, t.channelCount);
+	if (r === 0) throw Error("No channels to decode");
+	let i = e.length + t.filterLength - 1, a = new OfflineAudioContext(2, i, n);
+	for (let i = 0; i < r; i++) {
+		let r = a.createBuffer(1, e.length, n);
+		r.copyToChannel(e.getChannelData(i), 0);
+		let o = a.createBufferSource();
+		o.buffer = r;
+		let s = a.createBuffer(2, t.filterLength, n);
+		s.copyToChannel(new Float32Array(t.filtersLeft[i]), 0), s.copyToChannel(new Float32Array(t.filtersRight[i]), 1);
+		let c = a.createConvolver();
+		c.normalize = !1, c.buffer = s, o.connect(c), c.connect(a.destination), o.start(0);
+	}
+	return {
+		buffer: await a.startRendering(),
+		sampleRate: n
+	};
+}
+function rotateAmbisonicIR(e, t, n, r) {
+	if (t === 0 && n === 0 && r === 0) return e;
+	let i = e.numberOfChannels, a = e.length, o = e.sampleRate;
+	if (i < 4) throw Error("Ambisonic rotation requires at least 4 channels (first order)");
+	let s = t * Math.PI / 180, c = n * Math.PI / 180, l = r * Math.PI / 180, u = Math.cos(s), d = Math.sin(s), f = Math.cos(c), p = Math.sin(c), m = Math.cos(l), h = Math.sin(l), g = u * m + d * p * h, _ = -u * h + d * p * m, v = d * f, y = f * h, b = f * m, x = -p, S = -d * m + u * p * h, w = d * h + u * p * m, E = u * f, D = new OfflineAudioContext(i, a, o).createBuffer(i, a, o);
+	D.copyToChannel(e.getChannelData(0), 0);
+	let O = e.getChannelData(1), j = e.getChannelData(2), M = e.getChannelData(3), N = new Float32Array(a), F = new Float32Array(a), I = new Float32Array(a);
+	for (let e = 0; e < a; e++) {
+		let t = O[e], n = j[e], r = M[e];
+		N[e] = g * t + _ * n + v * r, F[e] = y * t + b * n + x * r, I[e] = S * t + w * n + E * r;
+	}
+	D.copyToChannel(N, 1), D.copyToChannel(F, 2), D.copyToChannel(I, 3);
+	for (let t = 4; t < i; t++) D.copyToChannel(e.getChannelData(t), t);
+	return D;
+}
+//#endregion
+//#region src/compute/binaural/calculate-binaural.ts
+async function calculateBinauralFromAmbisonic(e) {
+	let { ambisonicImpulseResponse: t, order: n, hrtfSubjectId: r, headYaw: i, headPitch: a, headRoll: o } = e, s = t;
+	(i !== 0 || a !== 0 || o !== 0) && (s = rotateAmbisonicIR(s, i, a, o));
+	let c = await loadDecoderFilters(r, n);
+	return (await decodeBinaural(s, c)).buffer;
+}
+//#endregion
+//#region src/compute/beam-trace/impulse-response.ts
+var FilterWorker = () => new Worker(new URL(
+	/* @vite-ignore */
+	"/assets/filter.worker-B2fYKvk6.js",
+	"" + import.meta.url
+));
+function receiverGainForPath(e, t) {
+	if (!e) return 1;
+	let n = t.arrivalDirection;
+	return e.getGain([
+		n.x,
+		n.y,
+		n.z
+	]);
+}
+async function calculateMonoImpulseResponse(e) {
+	let { validPaths: t, frequencies: n, receiver: r, arrivalPressure: i, lateReverbTailEnabled: a, energyHistogram: o, tailCrossfadeTime: s, tailCrossfadeDuration: c, updateResult: l } = e;
+	if (t.length === 0) throw Error("No paths calculated yet. Run calculate() first.");
+	let u = audioEngine.sampleRate, d = Array(n.length).fill(100), f = t[t.length - 1].arrivalTime + .05, p = Math.floor(u * f) * 2, m = [];
+	for (let e = 0; e < n.length; e++) m.push(new Float32Array(p));
+	for (let e of t) {
+		let t = Math.random() > .5 ? 1 : -1, a = i(d, e, receiverGainForPath(r, e)), o = Math.floor(e.arrivalTime * u);
+		for (let e = 0; e < n.length; e++) o < m[e].length && (m[e][o] += a[e] * t);
+	}
+	let h = m;
+	if (a && o) {
+		let { tailSamples: e, tailStartSample: t } = synthesizeTail(extractDecayParameters(o, n, s, HISTOGRAM_BIN_WIDTH), u);
+		h = assembleFinalIR(m, e, t, Math.floor(c * u));
+	}
+	let g = FilterWorker();
+	return new Promise((e, t) => {
+		g.postMessage({ samples: h }), g.onmessage = (n) => {
+			let r = n.data.samples, i = new Float32Array(r[0].length >> 1), a = 0;
+			for (let e = 0; e < r.length; e++) for (let t = 0; t < i.length; t++) i[t] += r[e][t], Math.abs(i[t]) > a && (a = Math.abs(i[t]));
+			let o = normalize$1(i), s = audioEngine.createOfflineContext(1, i.length, u), c = audioEngine.createBufferSource(o, s);
+			c.connect(s.destination), c.start(), audioEngine.renderContextAsync(s).then((t) => {
+				l(t, u), e(t);
+			}).catch(t).finally(() => g.terminate());
+		}, g.onerror = (e) => {
+			g.terminate(), t(e);
+		};
+	});
+}
+function updateImpulseResponseResult(e) {
+	let { ir: t, sampleRate: n, sourceIDs: r, receiverIDs: i, impulseResponseResult: a, solverUuid: o } = e, s = useContainer.getState().containers, c = r.length > 0 && s[r[0]]?.name || "source", l = i.length > 0 && s[i[0]]?.name || "receiver", u = t.getChannelData(0), d = [], f = Math.max(1, Math.floor(u.length / 2e3));
+	for (let e = 0; e < u.length; e += f) d.push({
+		time: e / n,
+		amplitude: u[e]
+	});
+	console.log(`BeamTraceSolver: Updating IR result with ${d.length} samples, duration: ${(u.length / n).toFixed(3)}s`);
+	let p = {
+		kind: ResultKind.ImpulseResponse,
+		data: d,
+		info: {
+			sampleRate: n,
+			sourceName: c,
+			receiverName: l,
+			sourceId: r[0] || "",
+			receiverId: i[0] || ""
+		},
+		name: `IR: ${c} → ${l}`,
+		uuid: a,
+		from: o
+	};
+	emit("UPDATE_RESULT", {
+		uuid: a,
+		result: p
+	});
+}
+async function calculateAmbisonicImpulseResponse(e) {
+	let { validPaths: t, frequencies: n, receiver: r, arrivalPressure: i, lateReverbTailEnabled: a, energyHistogram: o, tailCrossfadeTime: s, tailCrossfadeDuration: c, order: l } = e;
+	if (t.length === 0) throw Error("No paths calculated yet. Run calculate() first.");
+	let u = audioEngine.sampleRate, d = Array(n.length).fill(100), f = t[t.length - 1].arrivalTime + .05;
+	if (f <= 0) throw Error("Invalid impulse response duration");
+	let p = Math.floor(u * f) * 2;
+	if (p < 2) throw Error("Impulse response too short to process");
+	let m = getAmbisonicChannelCount(l), h = [];
+	for (let e = 0; e < n.length; e++) {
+		h.push([]);
+		for (let t = 0; t < m; t++) h[e].push(new Float32Array(p));
+	}
+	for (let e of t) {
+		let t = Math.random() > .5 ? 1 : -1, a = i(d, e, receiverGainForPath(r, e)), o = Math.floor(e.arrivalTime * u);
+		if (o >= p) continue;
+		let s = /* @__PURE__ */ new Float32Array(1), c = e.arrivalDirection;
+		for (let e = 0; e < n.length; e++) {
+			s[0] = a[e] * t;
+			let n = encodeBufferFromDirection(s, c.x, c.y, c.z, l, "threejs");
+			for (let t = 0; t < m; t++) h[e][t][o] += n[t][0];
+		}
+	}
+	a && o && applyAmbisonicTail(h, extractDecayParameters(o, n, s, HISTOGRAM_BIN_WIDTH), u, Math.floor(c * u));
+	let g = async (e) => new Promise((t) => {
+		let r = [];
+		for (let t = 0; t < n.length; t++) r.push(h[t][e]);
+		let i = FilterWorker();
+		i.postMessage({ samples: r }), i.onmessage = (e) => {
+			let n = e.data.samples, r = new Float32Array(n[0].length >> 1);
+			for (let e = 0; e < n.length; e++) for (let t = 0; t < r.length; t++) r[t] += n[e][t];
+			i.terminate(), t(r);
+		};
+	}), _ = await Promise.all(Array.from({ length: m }, (e, t) => g(t))), v = 0;
+	for (let e of _) for (let t = 0; t < e.length; t++) Math.abs(e[t]) > v && (v = Math.abs(e[t]));
+	if (v > 0) for (let e of _) for (let t = 0; t < e.length; t++) e[t] /= v;
+	let y = _[0].length;
+	if (y === 0) throw Error("Filtered signal has zero length");
+	let b = audioEngine.createOfflineContext(m, y, u).createBuffer(m, y, u);
+	for (let e = 0; e < m; e++) b.copyToChannel(new Float32Array(_[e]), e);
+	return b;
+}
+async function calculateBinauralImpulseResponse(e) {
+	return calculateBinauralFromAmbisonic(e);
+}
+function downloadOctaveBandIR(e) {
+	let { validPaths: t, frequencies: n, receiver: r, arrivalPressure: i, filename: a } = e, o = e.sampleRate ?? audioEngine.sampleRate;
+	if (t.length === 0) throw Error("No paths calculated yet. Run calculate() first.");
+	let s = Array(n.length).fill(100), c = [...t].sort((e, t) => e.arrivalTime - t.arrivalTime), l = c[c.length - 1].arrivalTime + .05, u = Math.floor(o * l), d = [];
+	for (let e = 0; e < n.length; e++) d.push(new Float32Array(u));
+	for (let e of c) {
+		let t = Math.random() > .5 ? 1 : -1, a = i(s, e, receiverGainForPath(r, e)), c = Math.floor(e.arrivalTime * o);
+		for (let e = 0; e < n.length; e++) c < d[e].length && (d[e][c] += a[e] * t);
+	}
+	for (let e = 0; e < n.length; e++) {
+		let t = wavAsBlob([normalize$1(d[e])], {
+			sampleRate: o,
+			bitDepth: 32
+		});
+		import_FileSaver_min.default.saveAs(t, `${n[e]}_${a}.wav`);
+	}
+}
+//#endregion
+//#region src/compute/beam-trace/results.ts
+function buildEnergyHistogram(e) {
+	let { validPaths: t, frequencies: n, receiver: r, arrivalPressure: i } = e, a = n.length, o = [];
+	for (let e = 0; e < a; e++) o.push(new Float32Array(HISTOGRAM_NUM_BINS));
+	let s = Array(a).fill(100);
+	for (let e of t) {
+		let t = Math.floor(e.arrivalTime / HISTOGRAM_BIN_WIDTH);
+		if (t < 0 || t >= 1e4) continue;
+		let n = i(s, e, receiverGainForPath(r, e));
+		for (let e = 0; e < a; e++) o[e][t] += n[e] * n[e];
+	}
+	return o;
+}
+function calculateLevelTimeProgression(e) {
+	let { validPaths: t, levelTimeProgressionId: n, plotFrequency: r, maxReflectionOrder: i, solverUuid: a, receiver: o, arrivalPressure: s } = e;
+	if (t.length === 0) return;
+	let c = [...t].sort((e, t) => e.arrivalTime - t.arrivalTime), l = { ...useResult.getState().results[n] };
+	l.data = [], l.info = {
+		...l.info,
+		maxOrder: i,
+		frequency: [r]
+	};
+	for (let e = 0; e < c.length; e++) {
+		let t = c[e], n = receiverGainForPath(o, t), r = s(l.info.initialSPL, t, n), i = P2Lp(r);
+		l.data.push({
+			time: t.arrivalTime,
+			pressure: i,
+			arrival: e + 1,
+			order: t.order,
+			uuid: `${a}-path-${e}`
+		});
+	}
+	emit("UPDATE_RESULT", {
+		uuid: n,
+		result: l
+	});
+}
+function calculateResponseByIntensity(e) {
+	let { validPaths: t, frequencies: n, sourceId: r, receiverId: i, receiver: a, arrivalPressure: o } = e, s = Array(n.length).fill(100), c = [...t].sort((e, t) => e.arrivalTime - t.arrivalTime), l = [];
+	for (let e of c) {
+		let t = o(s, e, receiverGainForPath(a, e));
+		l.push({
+			time: e.arrivalTime,
+			bounces: e.order,
+			level: P2Lp(t)
+		});
+	}
+	return resampleResponseByIntensity({ [i]: { [r]: {
+		freqs: n,
+		response: l
+	} } }, 256);
+}
+//#endregion
+//#region src/compute/shared/quick-estimate-types.ts
+var QUICK_ESTIMATE_MAX_ORDER = 1e3, RT60_DECAY_RATIO = 1e6;
+//#endregion
+//#region src/compute/shared/quick-estimate.ts
+function quickEstimateStep(e, t, n, r, i, a, o = QUICK_ESTIMATE_MAX_ORDER) {
+	let s = soundSpeed(a), c = Array(i.length).fill(0), l = n.clone(), u, d, f, p;
+	do
+		u = Math.random() * 2 - 1, d = Math.random() * 2 - 1, f = Math.random() * 2 - 1, p = u * u + d * d + f * f;
+	while (p > 1 || p < 1e-6);
+	let m = new THREE.Vector3(u, d, f).normalize(), h = 0, g = Array(i.length).fill(r), _ = 0, v = !1, y = 0;
+	airAttenuation(i, a);
+	let b = {};
+	for (; !v && _ < o;) {
+		e.ray.set(l, m);
+		let n = e.intersectObjects(t, !0);
+		if (n.length > 0) {
+			h = m.clone().multiplyScalar(-1).angleTo(n[0].face.normal), y += n[0].distance;
+			let e = n[0].object.parent;
+			for (let t = 0; t < i.length; t++) {
+				let n = i[t], a = 1;
+				e.kind === "surface" && (a = e.reflectionFunction(n, h)), g[t] *= a;
+				let o = r / g[t] > RT60_DECAY_RATIO;
+				o && (c[t] = y / s), v ||= o;
+			}
+			n[0].object.parent instanceof Surface && (n[0].object.parent.numHits += 1);
+			let t = n[0].face.normal.normalize();
+			m.sub(t.clone().multiplyScalar(m.dot(t)).multiplyScalar(2)).normalize(), l.copy(n[0].point), b = n[0];
+		}
+		_ += 1;
+	}
+	return {
+		distance: y,
+		rt60s: c,
+		angle: h,
+		direction: m,
+		lastIntersection: b
+	};
+}
+//#endregion
+//#region src/compute/beam-trace/quick-estimate.ts
+function startQuickEstimate(e, t, n = 500) {
+	if (e._quickEstimateInterval !== null && (window.clearInterval(e._quickEstimateInterval), e._quickEstimateInterval = null), !t || !e.room) return;
+	let r = [];
+	if (e.room.surfaces.traverse((e) => {
+		e.isMesh && r.push(e);
+	}), r.length === 0) return;
+	e.quickEstimateResults = [], e.estimatedT30 = null;
+	let i = 0, a = 10;
+	e._quickEstimateInterval = window.setInterval(() => {
+		for (let a = 0; a < 10 && i < n; a++, i++) e.quickEstimateResults.push(quickEstimateStep(e._raycaster, r, t.position, t.initialIntensity, e.frequencies, e.temperature));
+		if (i >= n) {
+			window.clearInterval(e._quickEstimateInterval), e._quickEstimateInterval = null;
+			let t = e.frequencies.length, n = Array(t).fill(0), r = Array(t).fill(0);
+			for (let i of e.quickEstimateResults) for (let e = 0; e < t; e++) i.rt60s[e] > 0 && (n[e] += i.rt60s[e], r[e]++);
+			for (let e = 0; e < t; e++) n[e] = r[e] > 0 ? n[e] / r[e] : 0;
+			e.estimatedT30 = n, emit("BEAMTRACE_QUICK_ESTIMATE_COMPLETE", e.uuid);
+		}
+	}, 5);
+}
+//#endregion
+//#region src/compute/beam-trace/events.ts
+function registerBeamTraceEvents(e) {
+	on("BEAMTRACE_SET_PROPERTY", setSolverProperty), on("REMOVE_BEAMTRACE", removeSolver), on("ADD_BEAMTRACE", addSolver(e)), on("BEAMTRACE_CALCULATE", (e) => {
+		useSolver.getState().solvers[e].calculate(), setTimeout(() => emit("BEAMTRACE_CALCULATE_COMPLETE", e), 0);
+	}), on("BEAMTRACE_RESET", (e) => {
+		useSolver.getState().solvers[e].reset();
+	}), on("BEAMTRACE_PLAY_IR", (e) => {
+		useSolver.getState().solvers[e].playImpulseResponse().catch((e) => {
+			window.alert(e.message || "Failed to play impulse response");
+		});
+	}), on("BEAMTRACE_DOWNLOAD_IR", (e) => {
+		let t = useSolver.getState().solvers[e], n = useContainer.getState().containers, r = `ir-beamtrace-${t.sourceIDs.length > 0 && n[t.sourceIDs[0]]?.name || "source"}-${t.receiverIDs.length > 0 && n[t.receiverIDs[0]]?.name || "receiver"}`.replace(/[^a-zA-Z0-9-_]/g, "_");
+		t.downloadImpulseResponse(r).catch((e) => {
+			window.alert(e.message || "Failed to download impulse response");
+		});
+	}), on("BEAMTRACE_DOWNLOAD_AMBISONIC_IR", ({ uuid: e, order: t }) => {
+		let n = useSolver.getState().solvers[e], r = useContainer.getState().containers, i = `ir-beamtrace-ambi-${n.sourceIDs.length > 0 && r[n.sourceIDs[0]]?.name || "source"}-${n.receiverIDs.length > 0 && r[n.receiverIDs[0]]?.name || "receiver"}`.replace(/[^a-zA-Z0-9-_]/g, "_");
+		n.downloadAmbisonicImpulseResponse(i, t).catch((e) => {
+			window.alert(e.message || "Failed to download ambisonic impulse response");
+		});
+	}), on("BEAMTRACE_PLAY_BINAURAL_IR", ({ uuid: e, order: t }) => {
+		useSolver.getState().solvers[e].playBinauralImpulseResponse(t).catch((e) => {
+			window.alert(e.message || "Failed to play binaural impulse response");
+		});
+	}), on("BEAMTRACE_DOWNLOAD_BINAURAL_IR", ({ uuid: e, order: t }) => {
+		let n = useSolver.getState().solvers[e], r = useContainer.getState().containers, i = `ir-beamtrace-${n.sourceIDs.length > 0 && r[n.sourceIDs[0]]?.name || "source"}-${n.receiverIDs.length > 0 && r[n.receiverIDs[0]]?.name || "receiver"}`.replace(/[^a-zA-Z0-9-_]/g, "_");
+		n.downloadBinauralImpulseResponse(i, t).catch((e) => {
+			window.alert(e.message || "Failed to download binaural impulse response");
+		});
+	}), on("BEAMTRACE_DOWNLOAD_OCTAVE_IR", (e) => {
+		let t = useSolver.getState().solvers[e], n = useContainer.getState().containers, r = `ir-beamtrace-${t.sourceIDs.length > 0 && n[t.sourceIDs[0]]?.name || "source"}-${t.receiverIDs.length > 0 && n[t.receiverIDs[0]]?.name || "receiver"}`.replace(/[^a-zA-Z0-9-_]/g, "_");
+		try {
+			t.downloadOctaveBandIR(r);
+		} catch (e) {
+			window.alert(e.message || "Failed to download octave-band impulse responses");
+		}
+	}), on("BEAMTRACE_QUICK_ESTIMATE", (e) => {
+		useSolver.getState().solvers[e].startQuickEstimate();
+	}), on("SHOULD_ADD_BEAMTRACE", () => {
+		emit("ADD_BEAMTRACE", void 0);
+	});
+}
+//#endregion
+//#region src/common/dir-angle-conversions.ts
+function threejsdir2cramangle(e, t, n) {
+	let r = Math.sqrt(e * e + t * t + n * n);
+	if (r < 1e-10) return [0, 0];
+	let i = Math.acos(Math.min(1, Math.max(-1, t / r))), a = Math.atan2(e, n), o = 180 / Math.PI * i;
+	return [((360 - 180 / Math.PI * a) % 360 + 360) % 360, o];
+}
+function worldDirToCramAngles(e, t) {
+	if (e.lengthSq() < 1e-20) return [0, 0];
+	let n = e.clone().normalize().applyQuaternion(t.clone().invert()), [r, i] = threejsdir2cramangle(n.x, n.y, n.z);
+	return [r, i];
+}
+//#endregion
+//#region src/compute/beam-trace/arrival-pressure.ts
+function directivityBandEnergy(e, t, n, r, i) {
+	let a = Array(i.length).fill(1);
+	if (r.lengthSq() < 1e-20) return a;
+	let [o, s] = worldDirToCramAngles(r, n);
+	for (let n = 0; n < i.length; n++) try {
+		let r = e.getPressureAtPosition(0, i[n], o, s), c = t[n];
+		typeof r == "number" && typeof c == "number" && c > 0 && (a[n] = (r / c) ** 2);
+	} catch {}
+	return a;
+}
+function calculateArrivalPressure(e, t, n) {
+	let { frequencies: r, temperature: i, receiverGain: a = 1, source: o = null, polygonToSurface: s } = n;
+	if (t.bandEnergy) {
+		let n = P2I(Lp2P(e)), i = t.points.length - 1, o = i >= 1 ? t.points[i].distanceTo(t.points[i - 1]) : t.length, s = spreadingFactor(o), c = Array(r.length);
+		for (let e = 0; e < r.length; e++) {
+			let r = n[e] * t.bandEnergy[e] * s;
+			c[e] = I2P([r])[0] * a;
+		}
+		return c;
+	}
+	let c = spreadingFactor(t.length), l = P2I(Lp2P(e));
+	for (let e = 0; e < l.length; e++) l[e] *= c;
+	let u = t.points.length - 1;
+	if (u >= 1 && o?.directivityHandler) {
+		let e = t.points[u], n = t.points[u - 1], i = new THREE.Vector3().subVectors(n, e), a = Array(r.length);
+		for (let e = 0; e < r.length; e++) a[e] = o.directivityHandler.getPressureAtPosition(0, r[e], 0, 0);
+		let s = directivityBandEnergy(o.directivityHandler, a, o.quaternion, i, r);
+		for (let e = 0; e < r.length; e++) l[e] *= s[e];
+	}
+	let d = 0;
+	t.polygonIds.forEach((e, n) => {
+		if (e === null) return;
+		let i = s?.get(e);
+		if (!i) {
+			d++;
+			return;
+		}
+		let a = 0;
+		if (t.reflections && d < t.reflections.length) a = t.reflections[d].incidenceAngle;
+		else if (n > 0 && n < t.points.length - 1) {
+			let e = new THREE.Vector3().subVectors(t.points[n + 1], t.points[n]).normalize(), r = new THREE.Vector3().subVectors(t.points[n - 1], t.points[n]).normalize(), i = Math.min(1, Math.max(-1, e.dot(r)));
+			a = Math.acos(i) / 2;
+		}
+		d++;
+		for (let e = 0; e < r.length; e++) {
+			let t = Math.abs(i.reflectionFunction(r[e], a));
+			l[e] *= t;
+		}
+	});
+	let f = P2Lp(I2P(l)), p = airAttenuation(r, i);
+	for (let e = 0; e < r.length; e++) f[e] -= p[e] * t.length;
+	let m = Lp2P(f);
+	if (a !== 1) for (let e = 0; e < m.length; e++) m[e] *= a;
+	return m;
+}
+//#endregion
+//#region src/common/arrival-direction.ts
+function lookingBackArrivalDirection(e, t) {
+	let n = t.x - e.x, r = t.y - e.y, i = t.z - e.z, a = Math.hypot(n, r, i);
+	return a < 1e-10 ? [
+		0,
+		0,
+		1
+	] : [
+		n / a,
+		r / a,
+		i / a
+	];
+}
+//#endregion
+//#region src/compute/beam-trace/paths.ts
+function convertPath(e, t, n) {
+	let r = e.map((e) => new THREE.Vector3(e.position[0], e.position[1], e.position[2])), i = computePathLength(e), a = computeArrivalTime(e, n), o = getPathReflectionOrder(e), s = e.map((e) => e.polygonId), c;
+	if (r.length >= 2) {
+		let [e, t, n] = lookingBackArrivalDirection(r[0], r[1]);
+		c = new THREE.Vector3(e, t, n);
+	} else c = new THREE.Vector3(0, 0, 1);
+	let l = t?.reflections.map((e) => ({
+		polygonId: e.polygonId,
+		hitPoint: new THREE.Vector3(e.hitPoint[0], e.hitPoint[1], e.hitPoint[2]),
+		incidenceAngle: e.incidenceAngle,
+		surfaceNormal: new THREE.Vector3(e.surfaceNormal[0], e.surfaceNormal[1], e.surfaceNormal[2]),
+		isGrazing: e.isGrazing
+	}));
+	return {
+		points: r,
+		order: o,
+		length: i,
+		arrivalTime: a,
+		polygonIds: s,
+		arrivalDirection: c,
+		reflections: l
+	};
+}
+//#endregion
+//#region src/compute/beam-trace/tree-signature.ts
+function beamTreeSignature(e) {
+	return [
+		e.sourceId,
+		e.roomID,
+		String(e.maxOrder),
+		String(e.surfaceCount),
+		e.sourceX.toFixed(6),
+		e.sourceY.toFixed(6),
+		e.sourceZ.toFixed(6),
+		e.surfaceWorlds.map((e) => e.toFixed(6)).join(",")
+	].join("|");
+}
+//#endregion
+//#region src/compute/beam-trace/geometry.ts
+function surfaceToPolygons(e) {
+	let t = [], n = e.geometry, r = n.getAttribute("position");
+	if (!r) return t;
+	e.updateMatrixWorld(!0);
+	let i = e.matrixWorld, a = n.getIndex(), o = r.array, s = (e, n, r) => {
+		let a = new THREE.Vector3(o[e * 3], o[e * 3 + 1], o[e * 3 + 2]).applyMatrix4(i), s = new THREE.Vector3(o[n * 3], o[n * 3 + 1], o[n * 3 + 2]).applyMatrix4(i), c = new THREE.Vector3(o[r * 3], o[r * 3 + 1], o[r * 3 + 2]).applyMatrix4(i), l = [
+			[
+				a.x,
+				a.y,
+				a.z
+			],
+			[
+				s.x,
+				s.y,
+				s.z
+			],
+			[
+				c.x,
+				c.y,
+				c.z
+			]
+		];
+		t.push(Polygon3D.create(l));
+	};
+	if (a) {
+		let e = a.array;
+		for (let t = 0; t < e.length; t += 3) s(e[t], e[t + 1], e[t + 2]);
+	} else {
+		let e = r.count;
+		for (let t = 0; t < e; t += 3) s(t, t + 1, t + 2);
+	}
+	return t;
+}
+function extractPolygons(e) {
+	let t = [], n = /* @__PURE__ */ new Map(), r = /* @__PURE__ */ new Map();
+	return e && e.allSurfaces.forEach((e) => {
+		let i = surfaceToPolygons(e), a = t.length;
+		i.forEach((n, i) => {
+			r.set(a + i, e), t.push(n);
+		}), n.set(e.uuid, i.map((e, t) => a + t));
+	}), {
+		polygons: t,
+		surfaceToPolygonIndex: n,
+		polygonToSurface: r
+	};
+}
+function currentTreeSignature(e) {
+	let { source: t, room: n, roomID: r, maxOrder: i } = e;
+	if (!t || !n) return null;
+	let a = n.allSurfaces, o = [];
+	for (let e of a) {
+		e.updateMatrixWorld(!0);
+		let t = e.matrixWorld.elements;
+		for (let e = 0; e < 16; e++) o.push(t[e]);
+	}
+	return beamTreeSignature({
+		sourceId: t.uuid,
+		sourceX: t.position.x,
+		sourceY: t.position.y,
+		sourceZ: t.position.z,
+		roomID: r,
+		maxOrder: i,
+		surfaceCount: a.length,
+		surfaceWorlds: o
+	});
+}
 //#endregion
 //#region src/compute/shared/diffraction/edge-graph.ts
 function hashPointKeys(e, t, n, r) {
@@ -17133,9 +17907,9 @@ function buildEdgeGraph(e, t = 1e-4) {
 }
 //#endregion
 //#region src/compute/shared/diffraction/utd-coefficient.ts
-var { PI: PI$1, sqrt: sqrt$1, abs, cos: cos$1, sin, atan2 } = Math;
+var { PI, sqrt, abs, cos, sin, atan2 } = Math;
 function fresnelTransition(e) {
-	return e < 0 && (e = 0), 1 - Math.exp(-sqrt$1(PI$1 * e));
+	return e < 0 && (e = 0), 1 - Math.exp(-sqrt(PI * e));
 }
 function computeWedgeAngles(e, t, n, r, i) {
 	let a = e, o = [
@@ -17146,7 +17920,7 @@ function computeWedgeAngles(e, t, n, r, i) {
 		o[0] - s * a[0],
 		o[1] - s * a[1],
 		o[2] - s * a[2]
-	], l = sqrt$1(c[0] ** 2 + c[1] ** 2 + c[2] ** 2), u = [
+	], l = sqrt(c[0] ** 2 + c[1] ** 2 + c[2] ** 2), u = [
 		i[0] - n[0],
 		i[1] - n[1],
 		i[2] - n[2]
@@ -17154,10 +17928,10 @@ function computeWedgeAngles(e, t, n, r, i) {
 		u[0] - d * a[0],
 		u[1] - d * a[1],
 		u[2] - d * a[2]
-	], p = sqrt$1(f[0] ** 2 + f[1] ** 2 + f[2] ** 2);
+	], p = sqrt(f[0] ** 2 + f[1] ** 2 + f[2] ** 2);
 	if (l < 1e-10 || p < 1e-10) return {
-		phiSource: PI$1,
-		phiReceiver: PI$1
+		phiSource: PI,
+		phiReceiver: PI
 	};
 	let m = [
 		c[0] / l,
@@ -17177,7 +17951,7 @@ function computeWedgeAngles(e, t, n, r, i) {
 		a[0] * g[1] - a[1] * g[0]
 	], v = atan2(m[0] * _[0] + m[1] * _[1] + m[2] * _[2], m[0] * g[0] + m[1] * g[1] + m[2] * g[2]), y = atan2(h[0] * _[0] + h[1] * _[1] + h[2] * _[2], h[0] * g[0] + h[1] * g[1] + h[2] * g[2]), b = (e) => {
 		let t = e;
-		for (; t < 0;) t += 2 * PI$1;
+		for (; t < 0;) t += 2 * PI;
 		return t;
 	};
 	return {
@@ -17186,17 +17960,17 @@ function computeWedgeAngles(e, t, n, r, i) {
 	};
 }
 function cotTerm(e, t, n, r, i) {
-	let a = (PI$1 + t * (n + r * i)) / (2 * e), o = sin(a);
-	return abs(o) < 1e-12 ? 0 : cos$1(a) / o;
+	let a = (PI + t * (n + r * i)) / (2 * e), o = sin(a);
+	return abs(o) < 1e-12 ? 0 : cos(a) / o;
 }
 function utdDiffractionCoefficient(e, t, n, r, i, a, o) {
 	if (n < 1e-10 || r < 1e-10) return 0;
-	let s = 2 * PI$1 * e / o;
+	let s = 2 * PI * e / o;
 	if (s < 1e-10) return 0;
 	let c = n * r / (n + r), l = (e, n, r, i) => {
-		let a = n + r * i, o = Math.round((a + PI$1) / (2 * PI$1 * t)), s = Math.round((a - PI$1) / (2 * PI$1 * t)), c = 2 * cos$1((2 * PI$1 * t * o - a) / 2) ** 2, l = 2 * cos$1((2 * PI$1 * t * s - a) / 2) ** 2;
+		let a = n + r * i, o = Math.round((a + PI) / (2 * PI * t)), s = Math.round((a - PI) / (2 * PI * t)), c = 2 * cos((2 * PI * t * o - a) / 2) ** 2, l = 2 * cos((2 * PI * t * s - a) / 2) ** 2;
 		return e > 0 ? c : l;
-	}, u = 0, d = l(1, a, -1, i), f = cotTerm(t, 1, a, -1, i), p = fresnelTransition(s * c * d), m = l(-1, a, -1, i), h = cotTerm(t, -1, a, -1, i), g = fresnelTransition(s * c * m), _ = l(1, a, 1, i), v = cotTerm(t, 1, a, 1, i), y = fresnelTransition(s * c * _), b = l(-1, a, 1, i), x = cotTerm(t, -1, a, 1, i), S = fresnelTransition(s * c * b), w = 1 / (2 * t * sqrt$1(2 * PI$1 * s)), E = f * p + h * g + v * y + x * S;
+	}, u = 0, d = l(1, a, -1, i), f = cotTerm(t, 1, a, -1, i), p = fresnelTransition(s * c * d), m = l(-1, a, -1, i), h = cotTerm(t, -1, a, -1, i), g = fresnelTransition(s * c * m), _ = l(1, a, 1, i), v = cotTerm(t, 1, a, 1, i), y = fresnelTransition(s * c * _), b = l(-1, a, 1, i), x = cotTerm(t, -1, a, 1, i), S = fresnelTransition(s * c * b), w = 1 / (2 * t * sqrt(2 * PI * s)), E = f * p + h * g + v * y + x * S;
 	u = w * w * E * E;
 	let D = n, O = D / (r * (r + D));
 	return u * O;
@@ -17268,344 +18042,88 @@ function findDiffractionPaths(e, t, n, r, i, a, o, s) {
 	return c;
 }
 //#endregion
-//#region src/compute/shared/tail-synthesis-types.ts
-var HISTOGRAM_BIN_WIDTH = .001, HISTOGRAM_NUM_BINS = 1e4;
-//#endregion
-//#region node_modules/simple-statistics/dist/simple-statistics.mjs
-function linearRegression$1(e) {
-	var t, n, r = e.length;
-	if (r === 1) t = 0, n = e[0][1];
-	else {
-		for (var i = 0, a = 0, o = 0, s = 0, c, l, u, d = 0; d < r; d++) c = e[d], l = c[0], u = c[1], i += l, a += u, o += l * l, s += l * u;
-		t = (r * s - i * a) / (r * o - i * i), n = a / r - t * i / r;
-	}
-	return {
-		m: t,
-		b: n
+//#region src/compute/beam-trace/diffraction.ts
+function computeDiffractionPaths(e) {
+	let { room: t, sourceId: n, receiverId: r, frequencies: i, speedOfSound: a, temperature: o, containers: s, raycaster: c } = e, l = buildEdgeGraph(t.allSurfaces);
+	if (l.edges.length === 0) return {
+		paths: [],
+		edgeGraph: l
 	};
-}
-var BayesianClassifier = function() {
-	this.totalCount = 0, this.data = {};
-};
-BayesianClassifier.prototype.train = function(e, t) {
-	for (var n in this.data[t] || (this.data[t] = {}), e) {
-		var r = e[n];
-		this.data[t][n] === void 0 && (this.data[t][n] = {}), this.data[t][n][r] === void 0 && (this.data[t][n][r] = 0), this.data[t][n][r]++;
-	}
-	this.totalCount++;
-}, BayesianClassifier.prototype.score = function(e) {
-	var t = {}, n;
-	for (var r in e) {
-		var i = e[r];
-		for (n in this.data) t[n] = {}, this.data[n][r] ? t[n][r + "_" + i] = (this.data[n][r][i] || 0) / this.totalCount : t[n][r + "_" + i] = 0;
-	}
-	var a = {};
-	for (n in t) for (var o in a[n] = 0, t[n]) a[n] += t[n][o];
-	return a;
-};
-var SQRT_2PI$1 = Math.sqrt(2 * Math.PI);
-function cumulativeDistribution(e) {
-	for (var t = e, n = e, r = 1; r < 15; r++) n *= e * e / (2 * r + 1), t += n;
-	return Math.round((.5 + t / SQRT_2PI$1 * Math.exp(-e * e / 2)) * 1e4) / 1e4;
-}
-for (var standardNormalTable = [], z = 0; z <= 3.09; z += .01) standardNormalTable.push(cumulativeDistribution(z));
-var LOGSQRT2PI = Math.log(Math.sqrt(2 * Math.PI)), SQRT_2PI = Math.sqrt(2 * Math.PI), PerceptronModel = function() {
-	this.weights = [], this.bias = 0;
-};
-PerceptronModel.prototype.predict = function(e) {
-	if (e.length !== this.weights.length) return null;
-	for (var t = 0, n = 0; n < this.weights.length; n++) t += this.weights[n] * e[n];
-	return t += this.bias, +(t > 0);
-}, PerceptronModel.prototype.train = function(e, t) {
-	if (t !== 0 && t !== 1) return null;
-	e.length !== this.weights.length && (this.weights = e, this.bias = 1);
-	var n = this.predict(e);
-	if (typeof n == "number" && n !== t) {
-		for (var r = t - n, i = 0; i < this.weights.length; i++) this.weights[i] += r * e[i];
-		this.bias += r;
-	}
-	return this;
-};
-//#endregion
-//#region src/common/linear-regression.ts
-function linearRegression(e, t) {
-	let n = e.length, r = [];
-	for (let i = 0; i < n; i++) r.push([e[i], t[i]]);
-	let { m: i, b: a } = linearRegression$1(r);
-	return {
-		m: i,
-		b: a,
-		fx: (e) => i * e + a,
-		fy: (e) => (e - a) / i
-	};
-}
-//#endregion
-//#region src/compute/shared/tail-synthesis.ts
-var { log10, pow, floor: floor$1, max, min, sqrt, cos, PI, random } = Math;
-function extractDecayParameters(e, t, n, r) {
-	let i = t.length, a = [];
-	for (let t = 0; t < i; t++) {
-		let i = e[t], o = 0;
-		for (let e = i.length - 1; e >= 0; e--) if (i[e] > 0) {
-			o = e;
-			break;
-		}
-		if (o < 2) {
-			a.push({
-				t60: 0,
-				decayRate: 0,
-				crossfadeLevel: 0,
-				crossfadeTime: 0,
-				endTime: 0
+	let u = /* @__PURE__ */ new Map(), d = /* @__PURE__ */ new Map(), f = s[n];
+	if (f) {
+		u.set(n, [
+			f.position.x,
+			f.position.y,
+			f.position.z
+		]);
+		let e = f.directivityHandler;
+		if (e) {
+			let t = Array(i.length);
+			for (let n = 0; n < i.length; n++) t[n] = e.getPressureAtPosition(0, i[n], 0, 0);
+			d.set(n, {
+				handler: e,
+				refPressures: t,
+				quaternion: f.quaternion.clone()
 			});
-			continue;
 		}
-		let s = new Float32Array(o + 1);
-		s[o] = i[o];
-		for (let e = o - 1; e >= 0; e--) s[e] = s[e + 1] + i[e];
-		let c = s[0];
-		if (c <= 0) {
-			a.push({
-				t60: 0,
-				decayRate: 0,
-				crossfadeLevel: 0,
-				crossfadeTime: 0,
-				endTime: 0
-			});
-			continue;
-		}
-		let l = c * pow(10, -5 / 10), u = c * pow(10, -35 / 10), d = -1, f = -1;
-		for (let e = 0; e <= o; e++) d < 0 && s[e] <= l && (d = e), f < 0 && s[e] <= u && (f = e);
-		let p = 0, m = 0;
-		if (d >= 0 && f > d) {
-			let e = [], t = [];
-			for (let n = d; n <= f; n++) {
-				let i = s[n];
-				i > 0 && (e.push(n * r), t.push(10 * log10(i / c)));
-			}
-			if (e.length >= 2) {
-				let n = linearRegression(e, t).m;
-				n < 0 && (p = n, m = -60 / n);
-			}
-		}
-		p < 0 && p > -1 && (p = -1, m = 60 / 1);
-		let h = n;
-		if (h <= 0) {
-			let e = max(1, floor$1(.05 / r));
-			h = max(0, o - e) * r;
-		}
-		let g = min(floor$1(h / r), o), _ = g <= o && g >= 0 ? s[g] / c : 0, v = m > 0 ? min(h + m, 10) : h;
-		a.push({
-			t60: m,
-			decayRate: p,
-			crossfadeLevel: _,
-			crossfadeTime: h,
-			endTime: v
-		});
 	}
-	return a;
-}
-function synthesizeTail(e, t) {
-	let n = 0, r = Infinity;
-	for (let t of e) t.endTime > n && (n = t.endTime), t.crossfadeTime > 0 && t.crossfadeTime < r && (r = t.crossfadeTime);
-	if (n <= 0 || !isFinite(r)) return {
-		tailSamples: e.map(() => /* @__PURE__ */ new Float32Array()),
-		tailStartSample: 0,
-		totalSamples: 0
-	};
-	let i = floor$1(r * t), a = floor$1(n * t), o = a - i;
-	if (o <= 0) return {
-		tailSamples: e.map(() => /* @__PURE__ */ new Float32Array()),
-		tailStartSample: i,
-		totalSamples: a
-	};
-	let s = [];
-	for (let n of e) {
-		let e = new Float32Array(o);
-		if (n.decayRate >= 0 || n.crossfadeLevel <= 0) {
-			s.push(e);
-			continue;
+	let p = /* @__PURE__ */ new Map(), m = s[r];
+	m && p.set(r, [
+		m.position.x,
+		m.position.y,
+		m.position.z
+	]);
+	let h = [];
+	t.surfaces.traverse((e) => {
+		e.kind && e.kind === "surface" && h.push(e.mesh);
+	});
+	let g = findDiffractionPaths(l, u, p, i, a, o, c, h), _ = [];
+	for (let e of g) {
+		let t = d.get(e.sourceId);
+		if (t) {
+			let n = u.get(e.sourceId), r = new THREE.Vector3(e.diffractionPoint[0] - n[0], e.diffractionPoint[1] - n[1], e.diffractionPoint[2] - n[2]), a = directivityBandEnergy(t.handler, t.refPressures, t.quaternion, r, i);
+			for (let t = 0; t < i.length; t++) e.bandEnergy[t] *= a[t];
 		}
-		let r = sqrt(n.crossfadeLevel) / (1 / sqrt(3));
-		for (let i = 0; i < o; i++) {
-			let a = i / t, o = pow(10, n.decayRate * a / 20), s = random() * 2 - 1;
-			e[i] = s * o * r;
-		}
-		s.push(e);
+		let n = p.get(e.receiverId), r = {
+			x: e.diffractionPoint[0],
+			y: e.diffractionPoint[1],
+			z: e.diffractionPoint[2]
+		}, [a, o, s] = lookingBackArrivalDirection({
+			x: n[0],
+			y: n[1],
+			z: n[2]
+		}, r), c = new THREE.Vector3(a, o, s), l = u.get(e.sourceId), f = new THREE.Vector3(n[0], n[1], n[2]), m = new THREE.Vector3(e.diffractionPoint[0], e.diffractionPoint[1], e.diffractionPoint[2]), h = new THREE.Vector3(l[0], l[1], l[2]);
+		_.push({
+			points: [
+				f,
+				m,
+				h
+			],
+			order: 0,
+			length: e.totalDistance,
+			arrivalTime: e.time,
+			polygonIds: [
+				null,
+				null,
+				null
+			],
+			arrivalDirection: c,
+			reflections: [],
+			bandEnergy: e.bandEnergy
+		});
 	}
 	return {
-		tailSamples: s,
-		tailStartSample: i,
-		totalSamples: a
-	};
-}
-function assembleFinalIR(e, t, n, r) {
-	let i = e.length, a = [];
-	for (let o = 0; o < i; o++) {
-		let i = e[o], s = t[o];
-		if (!s || s.length === 0) {
-			a.push(i);
-			continue;
-		}
-		let c = max(i.length, n + s.length), l = new Float32Array(c);
-		for (let e = 0; e < min(n, i.length); e++) l[e] = i[e];
-		let u = r, d = u > 1 ? u - 1 : 1;
-		for (let e = 0; e < u; e++) {
-			let t = n + e;
-			if (t >= c) break;
-			let r = .5 * (1 + cos(PI * e / d)), a = .5 * (1 - cos(PI * e / d)), o = t < i.length ? i[t] : 0, u = e < s.length ? s[e] : 0;
-			l[t] = o * r + u * a;
-		}
-		for (let e = u; e < s.length; e++) {
-			let t = n + e;
-			if (t >= c) break;
-			l[t] = s[e];
-		}
-		a.push(l);
-	}
-	return a;
-}
-//#endregion
-//#region src/common/moving-average.ts
-function movingAverage(e, t = 1) {
-	let n = e.slice();
-	for (let r = 0; r < e.length; r++) if (r >= t && r < e.length - t) {
-		let i = r - t, a = r + t, o = 0;
-		for (let t = i; t < a; t++) o += e[t];
-		n[r] = o / (2 * t);
-	}
-	return n;
-}
-//#endregion
-//#region src/compute/shared/response-by-intensity.ts
-var { floor } = Math;
-function resampleResponseByIntensity(e, t = 256) {
-	if (e) {
-		for (let n in e) for (let r in e[n]) {
-			let { response: i, freqs: a } = e[n][r], o = i[i.length - 1].time, s = floor(t * o);
-			e[n][r].resampledResponse = Array(a.length).fill(0).map((e) => new Float32Array(s)), e[n][r].sampleRate = t;
-			let c = 0, l = [], u = a.map((e) => 0), d = !1;
-			for (let t = 0, f = 0; t < s; t++) {
-				let p = t / s * o;
-				if (i[f] && i[f].time) {
-					let t = i[f].time;
-					if (t > p) {
-						for (let t = 0; t < a.length; t++) e[n][r].resampledResponse[t][c] = 0;
-						d && l.push(c), c++;
-						continue;
-					}
-					if (t <= p) {
-						let o = i[f].level.map((e) => 0);
-						for (; t <= p;) {
-							t = i[f].time;
-							for (let e = 0; e < a.length; e++) o[e] = db_add([o[e], i[f].level[e]]);
-							f++;
-						}
-						for (let t = 0; t < a.length; t++) {
-							if (e[n][r].resampledResponse[t][c] = o[t], l.length > 0) {
-								let i = u[t], a = o[t];
-								for (let o = 0; o < l.length; o++) {
-									let s = lerp(i, a, (o + 1) / (l.length + 1));
-									e[n][r].resampledResponse[t][l[o]] = s;
-								}
-							}
-							u[t] = o[t];
-						}
-						l.length > 0 && (l = []), d = !0, c++;
-						continue;
-					}
-				}
-			}
-			calculateT20(e, n, r), calculateT30(e, n, r), calculateT60(e, n, r);
-		}
-		return e;
-	}
-	console.warn("no data yet");
-}
-function calculateT30(e, t, n) {
-	let r = t, i = n, a = e[r][i].resampledResponse, o = e[r][i].sampleRate;
-	if (a && o) {
-		let t = new Float32Array(a[0].length);
-		for (let e = 0; e < a[0].length; e++) t[e] = e / o;
-		e[r][i].t30 = a.map((e) => {
-			let n = 0, r = e[n];
-			for (; r === 0;) r = e[n++];
-			for (let t = n; t >= 0; t--) e[t] = r;
-			let i = r - 30, a = movingAverage(e, 2).filter((e) => e >= i).length;
-			return linearRegression(t.slice(0, a), e.slice(0, a));
-		});
-	}
-}
-function calculateT20(e, t, n) {
-	let r = t, i = n, a = e[r][i].resampledResponse, o = e[r][i].sampleRate;
-	if (a && o) {
-		let t = new Float32Array(a[0].length);
-		for (let e = 0; e < a[0].length; e++) t[e] = e / o;
-		e[r][i].t20 = a.map((e) => {
-			let n = 0, r = e[n];
-			for (; r === 0;) r = e[n++];
-			for (let t = n; t >= 0; t--) e[t] = r;
-			let i = r - 20, a = movingAverage(e, 2).filter((e) => e >= i).length;
-			return linearRegression(t.slice(0, a), e.slice(0, a));
-		});
-	}
-}
-function calculateT60(e, t, n) {
-	let r = t, i = n, a = e[r][i].resampledResponse, o = e[r][i].sampleRate;
-	if (a && o) {
-		let t = new Float32Array(a[0].length);
-		for (let e = 0; e < a[0].length; e++) t[e] = e / o;
-		e[r][i].t60 = a.map((e) => {
-			let n = 0, r = e[n];
-			for (; r === 0;) r = e[n++];
-			for (let t = n; t >= 0; t--) e[t] = r;
-			let i = r - 60, a = movingAverage(e, 2).filter((e) => e >= i).length;
-			return linearRegression(t.slice(0, a), e.slice(0, a));
-		});
-	}
-}
-//#endregion
-//#region src/compute/shared/quick-estimate-types.ts
-var QUICK_ESTIMATE_MAX_ORDER = 1e3, RT60_DECAY_RATIO = 1e6;
-//#endregion
-//#region src/compute/shared/quick-estimate.ts
-function quickEstimateStep(e, t, n, r, i, a, o = QUICK_ESTIMATE_MAX_ORDER) {
-	let s = soundSpeed(a), c = Array(i.length).fill(0), l = n.clone(), u, d, f, p;
-	do
-		u = Math.random() * 2 - 1, d = Math.random() * 2 - 1, f = Math.random() * 2 - 1, p = u * u + d * d + f * f;
-	while (p > 1 || p < 1e-6);
-	let m = new THREE.Vector3(u, d, f).normalize(), h = 0, g = Array(i.length).fill(r), _ = 0, v = !1, y = 0;
-	airAttenuation(i, a);
-	let b = {};
-	for (; !v && _ < o;) {
-		e.ray.set(l, m);
-		let n = e.intersectObjects(t, !0);
-		if (n.length > 0) {
-			h = m.clone().multiplyScalar(-1).angleTo(n[0].face.normal), y += n[0].distance;
-			let e = n[0].object.parent;
-			for (let t = 0; t < i.length; t++) {
-				let n = i[t], a = 1;
-				e.kind === "surface" && (a = e.reflectionFunction(n, h)), g[t] *= a;
-				let o = r / g[t] > RT60_DECAY_RATIO;
-				o && (c[t] = y / s), v ||= o;
-			}
-			n[0].object.parent instanceof Surface && (n[0].object.parent.numHits += 1);
-			let t = n[0].face.normal.normalize();
-			m.sub(t.clone().multiplyScalar(m.dot(t)).multiplyScalar(2)).normalize(), l.copy(n[0].point), b = n[0];
-		}
-		_ += 1;
-	}
-	return {
-		distance: y,
-		rt60s: c,
-		angle: h,
-		direction: m,
-		lastIntersection: b
+		paths: _,
+		edgeGraph: l
 	};
 }
 //#endregion
-//#region src/compute/beam-trace/index.ts
-var import_FileSaver_min = /* @__PURE__ */ __toESM(require_FileSaver_min());
+//#region src/compute/beam-trace/visualization.ts
+var colorScale = chroma.scale(["#ff8a0b", "#000080"]).mode("lch");
+function getOrderColor(e, t) {
+	let n = t + 1, r = colorScale.colors(n), i = Math.min(e, n - 1), a = chroma(r[i]);
+	return parseInt(a.hex().slice(1), 16);
+}
 function createHighlightLine() {
 	let e = new MeshLine();
 	e.setPoints(/* @__PURE__ */ new Float32Array());
@@ -17616,46 +18134,258 @@ function createHighlightLine() {
 	});
 	return new THREE.Mesh(e, t);
 }
-var colorScale = chroma.scale(["#ff8a0b", "#000080"]).mode("lch");
-function getOrderColor(e, t) {
-	let n = t + 1, r = colorScale.colors(n), i = Math.min(e, n - 1), a = chroma(r[i]);
-	return parseInt(a.hex().slice(1), 16);
+function disposeObject3D(e) {
+	if (e instanceof THREE.Mesh || e instanceof THREE.Line) {
+		e.geometry?.dispose();
+		let t = e.material;
+		if (Array.isArray(t)) for (let e of t) e instanceof THREE.Material && e.dispose();
+		else t instanceof THREE.Material && t.dispose();
+	}
 }
-var defaults = {
-	name: "Beam Tracer",
-	uuid: "",
-	roomID: "",
-	sourceIDs: [],
-	receiverIDs: [],
-	maxReflectionOrder: 3,
-	visualizationMode: "rays",
-	showAllBeams: !1,
-	visibleOrders: [
-		0,
-		1,
-		2,
-		3
-	],
-	frequencies: [
-		125,
-		250,
-		500,
-		1e3,
-		2e3,
-		4e3,
-		8e3
-	],
-	levelTimeProgression: "",
-	impulseResponseResult: "",
-	hrtfSubjectId: "D1",
-	headYaw: 0,
-	headPitch: 0,
-	headRoll: 0,
-	edgeDiffractionEnabled: !1,
-	lateReverbTailEnabled: !1,
-	tailCrossfadeTime: 0,
-	tailCrossfadeDuration: .05
-}, BeamTraceSolver = class extends Solver {
+function clearGroup(e) {
+	for (; e.children.length > 0;) {
+		let t = e.children[0];
+		e.remove(t), disposeObject3D(t);
+	}
+}
+function clearVisualization(e) {
+	renderer.markup.clearLines(), renderer.markup.clearPoints(), clearGroup(e);
+}
+function beamHasValidPath(e, t) {
+	let n = e.polygonPath;
+	if (!n || n.length === 0) return !1;
+	let r = e.reflectionOrder;
+	for (let e of t) {
+		if (e.order !== r) continue;
+		let t = !0;
+		for (let i = 0; i < n.length; i++) {
+			let a = r - i;
+			if (e.polygonIds[a] !== n[i]) {
+				t = !1;
+				break;
+			}
+		}
+		if (t) return !0;
+	}
+	return !1;
+}
+function drawPaths(e) {
+	let { validPaths: t, visibleOrders: n, maxReflectionOrder: r, virtualSourcesGroup: i, lastMetrics: a } = e, o = t.filter((e) => n.includes(e.order));
+	o.forEach((e) => {
+		let t = getOrderColor(e.order, r), n = [
+			(t >> 16 & 255) / 255,
+			(t >> 8 & 255) / 255,
+			(t & 255) / 255
+		];
+		for (let t = 0; t < e.points.length - 1; t++) {
+			let r = e.points[t], i = e.points[t + 1];
+			renderer.markup.addLine([
+				r.x,
+				r.y,
+				r.z
+			], [
+				i.x,
+				i.y,
+				i.z
+			], n, n);
+		}
+	}), o.forEach((e) => {
+		if (e.bandEnergy && e.points.length === 3) {
+			let t = e.points[1], n = getOrderColor(e.order, r), a = new THREE.SphereGeometry(.06, 8, 8), o = new THREE.MeshBasicMaterial({ color: n }), s = new THREE.Mesh(a, o);
+			s.position.copy(t), i.add(s);
+		}
+	});
+	let s = renderer.markup.getUsageStats();
+	a && (a.bufferUsage = s), s.overflowWarning ? console.error(`⚠️ Path buffer overflow! Lines: ${s.linesUsed}/${s.linesCapacity}. Reduce reflection order.`) : s.linesPercent > 80 && console.warn(`Buffer usage high: Lines ${s.linesPercent.toFixed(1)}%`);
+}
+function drawBeams(e) {
+	if (!e.btSolver) return;
+	clearGroup(e.virtualSourcesGroup), e.virtualSourceMap.clear(), e.selectedVirtualSource = null;
+	let t = e.validPaths;
+	e.btSolver.getBeamsForVisualization(e.maxReflectionOrder).forEach((n) => {
+		if (!e.visibleOrders.includes(n.reflectionOrder)) return;
+		let r = beamHasValidPath(n, t);
+		if (!r && !e.showAllBeams) return;
+		let i = Math.max(.05, .1 - n.reflectionOrder * .01), a = getOrderColor(n.reflectionOrder, e.maxReflectionOrder), o = a;
+		if (!r) {
+			let e = (a >> 16 & 255) * .4 + 76.8, t = (a >> 8 & 255) * .4 + 76.8, n = (a & 255) * .4 + 76.8;
+			o = Math.round(e) << 16 | Math.round(t) << 8 | Math.round(n);
+		}
+		let s = new THREE.Vector3(n.virtualSource[0], n.virtualSource[1], n.virtualSource[2]), c = new THREE.SphereGeometry(i, 12, 12), l = new THREE.MeshStandardMaterial({
+			color: o,
+			transparent: !r,
+			opacity: r ? 1 : .4,
+			roughness: .6,
+			metalness: .1
+		}), u = new THREE.Mesh(c, l);
+		u.position.copy(s), e.virtualSourcesGroup.add(u), r && e.virtualSourceMap.set(u, {
+			...n,
+			polygonPath: n.polygonPath || []
+		});
+		let d = n.apertureVertices;
+		if (d && d.length >= 3) {
+			let t = d.map((e) => new THREE.Vector3(e[0], e[1], e[2])), n = new THREE.BufferGeometry(), i = new Float32Array(t.length * 3);
+			for (let e = 0; e < t.length; e++) i[e * 3] = t[e].x, i[e * 3 + 1] = t[e].y, i[e * 3 + 2] = t[e].z;
+			n.setAttribute("position", new THREE.BufferAttribute(i, 3));
+			let a = [];
+			for (let e = 1; e < t.length - 1; e++) a.push(0, e, e + 1);
+			n.setIndex(a), n.computeVertexNormals();
+			let c = new THREE.MeshBasicMaterial({
+				color: o,
+				side: THREE.DoubleSide,
+				transparent: !0,
+				opacity: r ? .2 : .08,
+				depthWrite: !1
+			});
+			e.virtualSourcesGroup.add(new THREE.Mesh(n, c));
+			let l = new THREE.BufferGeometry().setFromPoints(t), u = new THREE.LineBasicMaterial({
+				color: o,
+				transparent: !0,
+				opacity: r ? .5 : .2
+			});
+			e.virtualSourcesGroup.add(new THREE.LineLoop(l, u));
+			let f = [];
+			for (let e of t) f.push(s.clone(), e);
+			let p = new THREE.BufferGeometry().setFromPoints(f), m = new THREE.LineBasicMaterial({
+				color: o,
+				transparent: !0,
+				opacity: r ? .35 : .12
+			});
+			e.virtualSourcesGroup.add(new THREE.LineSegments(p, m));
+		}
+	}), renderer.needsToRender = !0;
+}
+function highlightVirtualSourcePath(e) {
+	let { beam: t, validPaths: n, maxReflectionOrder: r, receiver: i, selectedPath: a, selectedBeamsGroup: o } = e;
+	a.geometry.setPoints(/* @__PURE__ */ new Float32Array()), clearGroup(o);
+	let s = getOrderColor(t.reflectionOrder, r), c = new THREE.Vector3(t.virtualSource[0], t.virtualSource[1], t.virtualSource[2]);
+	if (!i) return;
+	let l = i.position.clone(), u = new THREE.LineDashedMaterial({
+		color: s,
+		transparent: !0,
+		opacity: .4,
+		dashSize: .3,
+		gapSize: .15
+	}), d = new THREE.BufferGeometry().setFromPoints([c, l]), f = new THREE.Line(d, u);
+	f.computeLineDistances(), o.add(f);
+	let p = new THREE.SphereGeometry(.18, 16, 16), m = new THREE.MeshBasicMaterial({
+		color: s,
+		transparent: !0,
+		opacity: .4
+	}), h = new THREE.Mesh(p, m);
+	h.position.copy(c), o.add(h);
+	let g = t.polygonPath;
+	if (!g || g.length === 0) return;
+	let _ = t.reflectionOrder;
+	for (let e of n) {
+		if (e.order !== _) continue;
+		let t = !0;
+		for (let n = 0; n < g.length; n++) {
+			let r = _ - n;
+			if (e.polygonIds[r] !== g[n]) {
+				t = !1;
+				break;
+			}
+		}
+		if (t) {
+			let t = e.points, n = e.order;
+			for (let e = 0; e < t.length - 1; e++) {
+				let i = t[e], a = t[e + 1], s = i.distanceTo(a), c = new THREE.Vector3().addVectors(i, a).multiplyScalar(.5), l = n - e, u = l === 0 ? 16777215 : getOrderColor(l, r), d = new THREE.CylinderGeometry(.025, .025, s, 8), f = new THREE.MeshBasicMaterial({ color: u }), p = new THREE.Mesh(d, f);
+				p.position.copy(c);
+				let m = new THREE.Vector3().subVectors(a, i).normalize(), h = new THREE.Quaternion();
+				h.setFromUnitVectors(new THREE.Vector3(0, 1, 0), m), p.setRotationFromQuaternion(h), o.add(p);
+			}
+			for (let t = 1; t < e.points.length - 1; t++) {
+				let i = getOrderColor(n - t + 1, r), a = new THREE.SphereGeometry(.08, 12, 12), s = new THREE.MeshBasicMaterial({ color: i }), c = new THREE.Mesh(a, s);
+				c.position.copy(e.points[t]), o.add(c);
+			}
+			renderer.needsToRender = !0;
+			return;
+		}
+	}
+	renderer.needsToRender = !0;
+}
+function highlightPathByIndex(e) {
+	let { pathIndex: t, validPaths: n, maxReflectionOrder: r, btSolver: i, receiver: a, selectedPath: o, selectedBeamsGroup: s } = e, c = [...n].sort((e, t) => e.arrivalTime - t.arrivalTime);
+	if (t < 0 || t >= c.length) {
+		console.warn("BeamTraceSolver: Path index out of bounds:", t);
+		return;
+	}
+	let l = c[t];
+	o.geometry.setPoints(/* @__PURE__ */ new Float32Array()), clearGroup(s);
+	let u = getOrderColor(l.order, r), d = new THREE.LineBasicMaterial({
+		color: u,
+		linewidth: 2,
+		transparent: !1
+	});
+	for (let e = 0; e < l.points.length - 1; e++) {
+		let t = new THREE.BufferGeometry().setFromPoints([l.points[e], l.points[e + 1]]);
+		s.add(new THREE.Line(t, d));
+	}
+	if (i && a) {
+		let e = i.getBeamsForVisualization(r), t = l.polygonIds[l.order];
+		if (t !== null) {
+			let n = e.find((e) => e.polygonId === t && e.reflectionOrder === l.order);
+			if (n) {
+				let e = new THREE.LineDashedMaterial({
+					color: u,
+					linewidth: 1,
+					dashSize: .3,
+					gapSize: .15,
+					transparent: !0,
+					opacity: .7
+				}), t = new THREE.Vector3(n.virtualSource[0], n.virtualSource[1], n.virtualSource[2]), r = new THREE.BufferGeometry().setFromPoints([t, a.position.clone()]), i = new THREE.Line(r, e);
+				i.computeLineDistances(), s.add(i);
+			}
+		}
+	}
+	console.log(`BeamTraceSolver: Highlighting path ${t} with order ${l.order}, arrival time ${l.arrivalTime.toFixed(4)}s`), renderer.needsToRender = !0;
+}
+function redrawVisualization(e) {
+	switch (clearVisualization(e.virtualSourcesGroup), e.mode) {
+		case "rays":
+			e.validPaths.length > 0 && e.drawPathsFn();
+			break;
+		case "beams":
+			e.btSolver && e.drawBeamsFn();
+			break;
+		case "both": e.validPaths.length > 0 && e.drawPathsFn(), e.btSolver && e.drawBeamsFn();
+	}
+	renderer.needsToRender = !0;
+}
+function removeClickHandler(e) {
+	let t = renderer.renderer.domElement;
+	e.clickHandler &&= (t.removeEventListener("click", e.clickHandler), null), e.hoverHandler && (t.removeEventListener("mousemove", e.hoverHandler), e.hoverHandler = null, t.style.cursor = "default");
+}
+function setupClickHandler(e) {
+	removeClickHandler(e);
+	let t = renderer.renderer.domElement, n = (e) => {
+		let n = t.getBoundingClientRect();
+		return new THREE.Vector2((e.clientX - n.left) / n.width * 2 - 1, -((e.clientY - n.top) / n.height) * 2 + 1);
+	};
+	e.hoverHandler = (r) => {
+		if (e.virtualSourceMap.size === 0) {
+			t.style.cursor = "default";
+			return;
+		}
+		let i = n(r), a = new THREE.Raycaster();
+		a.setFromCamera(i, renderer.camera);
+		let o = a.intersectObjects(Array.from(e.virtualSourceMap.keys()));
+		t.style.cursor = o.length > 0 ? "pointer" : "default";
+	}, e.clickHandler = (t) => {
+		if (t.button !== 0 || e.virtualSourceMap.size === 0) return;
+		let r = n(t), i = new THREE.Raycaster();
+		i.setFromCamera(r, renderer.camera);
+		let a = i.intersectObjects(Array.from(e.virtualSourceMap.keys()));
+		if (a.length > 0) {
+			let t = a[0].object, n = e.virtualSourceMap.get(t);
+			n && (e.selectedVirtualSource === t ? (e.selectedVirtualSource = null, e.onDeselect()) : (e.selectedVirtualSource = t, e.onSelectBeam(n)));
+		}
+	}, t.addEventListener("click", e.clickHandler), t.addEventListener("mousemove", e.hoverHandler);
+}
+//#endregion
+//#region src/compute/beam-trace/index.ts
+var BeamTraceSolver = class extends Solver {
 	roomID;
 	sourceIDs;
 	receiverIDs;
@@ -17704,7 +18434,7 @@ var defaults = {
 	constructor(e = {}) {
 		super(e);
 		let t = {
-			...defaults,
+			...beamTraceDefaults,
 			...e
 		};
 		if (this.kind = "beam-trace", this.uuid = t.uuid || v4(), this.name = t.name, this.roomID = t.roomID, this.sourceIDs = t.sourceIDs, this.receiverIDs = t.receiverIDs, this.maxReflectionOrder = t.maxReflectionOrder, this.frequencies = t.frequencies, this.hrtfSubjectId = t.hrtfSubjectId, this.headYaw = t.headYaw, this.headPitch = t.headPitch, this.headRoll = t.headRoll, this.edgeDiffractionEnabled = t.edgeDiffractionEnabled, this.lateReverbTailEnabled = t.lateReverbTailEnabled, this.tailCrossfadeTime = t.tailCrossfadeTime, this.tailCrossfadeDuration = t.tailCrossfadeDuration, this._visualizationMode = t.visualizationMode, this._showAllBeams = t.showAllBeams, this._visibleOrders = t.visibleOrders.length > 0 ? t.visibleOrders : Array.from({ length: t.maxReflectionOrder + 1 }, (e, t) => t), this._plotFrequency = 1e3, this._plotOrders = Array.from({ length: t.maxReflectionOrder + 1 }, (e, t) => t), this.levelTimeProgression = t.levelTimeProgression || v4(), this.impulseResponseResult = t.impulseResponseResult || v4(), !this.roomID) {
@@ -17781,151 +18511,55 @@ var defaults = {
 		else if (Array.isArray(e)) for (let t of e) t instanceof THREE.Material && t.dispose();
 		emit("REMOVE_RESULT", this.levelTimeProgression), emit("REMOVE_RESULT", this.impulseResponseResult);
 	}
-	setupClickHandler() {
-		this.removeClickHandler();
-		let e = renderer.renderer.domElement, t = (t) => {
-			let n = e.getBoundingClientRect();
-			return new THREE.Vector2((t.clientX - n.left) / n.width * 2 - 1, -((t.clientY - n.top) / n.height) * 2 + 1);
+	clickHost() {
+		let e = {
+			virtualSourceMap: this.virtualSourceMap,
+			clickHandler: this.clickHandler,
+			hoverHandler: this.hoverHandler,
+			onSelectBeam: (e) => this.highlightVirtualSourcePath(e),
+			onDeselect: () => this.clearSelectedBeams(),
+			selectedVirtualSource: null
 		};
-		this.hoverHandler = (n) => {
-			if (this.virtualSourceMap.size === 0) {
-				e.style.cursor = "default";
-				return;
-			}
-			let r = t(n), i = new THREE.Raycaster();
-			i.setFromCamera(r, renderer.camera);
-			let a = Array.from(this.virtualSourceMap.keys());
-			i.intersectObjects(a).length > 0 ? e.style.cursor = "pointer" : e.style.cursor = "default";
-		}, this.clickHandler = (e) => {
-			if (e.button !== 0 || this.virtualSourceMap.size === 0) return;
-			let n = t(e), r = new THREE.Raycaster();
-			r.setFromCamera(n, renderer.camera);
-			let i = Array.from(this.virtualSourceMap.keys()), a = r.intersectObjects(i);
-			if (a.length > 0) {
-				let e = a[0].object, t = this.virtualSourceMap.get(e);
-				t && (this.selectedVirtualSource === e ? (this.selectedVirtualSource = null, this.clearSelectedBeams()) : (this.selectedVirtualSource = e, this.highlightVirtualSourcePath(t)));
-			}
-		}, e.addEventListener("click", this.clickHandler), e.addEventListener("mousemove", this.hoverHandler);
+		return Object.defineProperty(e, "selectedVirtualSource", {
+			get: () => this.selectedVirtualSource,
+			set: (e) => {
+				this.selectedVirtualSource = e;
+			},
+			enumerable: !0,
+			configurable: !0
+		}), e;
 	}
-	highlightVirtualSourcePath(e) {
-		this.selectedPath.geometry.setPoints(/* @__PURE__ */ new Float32Array()), this.clearSelectedBeams();
-		let t = getOrderColor(e.reflectionOrder, this.maxReflectionOrder), n = new THREE.Vector3(e.virtualSource[0], e.virtualSource[1], e.virtualSource[2]);
-		if (this.receiverIDs.length === 0) return;
-		let r = useContainer.getState().containers[this.receiverIDs[0]];
-		if (!r) return;
-		let i = r.position.clone(), a = new THREE.LineDashedMaterial({
-			color: t,
-			transparent: !0,
-			opacity: .4,
-			dashSize: .3,
-			gapSize: .15
-		}), o = new THREE.BufferGeometry().setFromPoints([n, i]), s = new THREE.Line(o, a);
-		s.computeLineDistances(), this.selectedBeamsGroup.add(s);
-		let c = new THREE.SphereGeometry(.18, 16, 16), l = new THREE.MeshBasicMaterial({
-			color: t,
-			transparent: !0,
-			opacity: .4
-		}), u = new THREE.Mesh(c, l);
-		u.position.copy(n), this.selectedBeamsGroup.add(u);
-		let d = e.polygonPath;
-		if (!d || d.length === 0) return;
-		let f = e.reflectionOrder;
-		for (let e of this.validPaths) {
-			let t = e.order;
-			if (t !== f) continue;
-			let n = !0;
-			for (let r = 0; r < d.length; r++) {
-				let i = t - r;
-				if (e.polygonIds[i] !== d[r]) {
-					n = !1;
-					break;
-				}
-			}
-			if (n) {
-				let t = e.points, n = e.order;
-				for (let e = 0; e < t.length - 1; e++) {
-					let r = t[e], i = t[e + 1], a = r.distanceTo(i), o = new THREE.Vector3().addVectors(r, i).multiplyScalar(.5), s = n - e, c = s === 0 ? 16777215 : getOrderColor(s, this.maxReflectionOrder), l = new THREE.CylinderGeometry(.025, .025, a, 8), u = new THREE.MeshBasicMaterial({ color: c }), d = new THREE.Mesh(l, u);
-					d.position.copy(o);
-					let f = new THREE.Vector3().subVectors(i, r).normalize(), p = new THREE.Quaternion();
-					p.setFromUnitVectors(new THREE.Vector3(0, 1, 0), f), d.setRotationFromQuaternion(p), this.selectedBeamsGroup.add(d);
-				}
-				for (let t = 1; t < e.points.length - 1; t++) {
-					let r = getOrderColor(n - t + 1, this.maxReflectionOrder), i = new THREE.SphereGeometry(.08, 12, 12), a = new THREE.MeshBasicMaterial({ color: r }), o = new THREE.Mesh(i, a);
-					o.position.copy(e.points[t]), this.selectedBeamsGroup.add(o);
-				}
-				renderer.needsToRender = !0;
-				return;
-			}
-		}
-		renderer.needsToRender = !0;
+	setupClickHandler() {
+		let e = this.clickHost();
+		setupClickHandler(e), this.clickHandler = e.clickHandler, this.hoverHandler = e.hoverHandler;
 	}
 	removeClickHandler() {
-		let e = renderer.renderer.domElement;
-		this.clickHandler &&= (e.removeEventListener("click", this.clickHandler), null), this.hoverHandler && (e.removeEventListener("mousemove", this.hoverHandler), this.hoverHandler = null, e.style.cursor = "default");
+		let e = this.clickHost();
+		removeClickHandler(e), this.clickHandler = e.clickHandler, this.hoverHandler = e.hoverHandler;
+	}
+	highlightVirtualSourcePath(e) {
+		let t = this.receiverIDs.length === 0 ? void 0 : useContainer.getState().containers[this.receiverIDs[0]];
+		highlightVirtualSourcePath({
+			beam: e,
+			validPaths: this.validPaths,
+			maxReflectionOrder: this.maxReflectionOrder,
+			receiver: t,
+			selectedPath: this.selectedPath,
+			selectedBeamsGroup: this.selectedBeamsGroup
+		});
 	}
 	extractPolygons() {
-		let e = this.room;
-		if (!e) return [];
-		let t = [];
-		return this.surfaceToPolygonIndex.clear(), this.polygonToSurface.clear(), e.allSurfaces.forEach((e) => {
-			let n = this.surfaceToPolygons(e), r = t.length;
-			n.forEach((n, i) => {
-				this.polygonToSurface.set(r + i, e), t.push(n);
-			}), this.surfaceToPolygonIndex.set(e.uuid, n.map((e, t) => r + t));
-		}), t;
-	}
-	surfaceToPolygons(e) {
-		let t = [], n = e.geometry, r = n.getAttribute("position");
-		if (!r) return t;
-		e.updateMatrixWorld(!0);
-		let i = e.matrixWorld, a = n.getIndex(), o = r.array, s = (e, n, r) => {
-			let a = new THREE.Vector3(o[e * 3], o[e * 3 + 1], o[e * 3 + 2]).applyMatrix4(i), s = new THREE.Vector3(o[n * 3], o[n * 3 + 1], o[n * 3 + 2]).applyMatrix4(i), c = new THREE.Vector3(o[r * 3], o[r * 3 + 1], o[r * 3 + 2]).applyMatrix4(i), l = [
-				[
-					a.x,
-					a.y,
-					a.z
-				],
-				[
-					s.x,
-					s.y,
-					s.z
-				],
-				[
-					c.x,
-					c.y,
-					c.z
-				]
-			], u = Polygon3D.create(l);
-			t.push(u);
-		};
-		if (a) {
-			let e = a.array;
-			for (let t = 0; t < e.length; t += 3) s(e[t], e[t + 1], e[t + 2]);
-		} else {
-			let e = r.count;
-			for (let t = 0; t < e; t += 3) s(t, t + 1, t + 2);
-		}
-		return t;
+		let e = extractPolygons(this.room);
+		return this.polygons = e.polygons, this.surfaceToPolygonIndex = e.surfaceToPolygonIndex, this.polygonToSurface = e.polygonToSurface, e.polygons;
 	}
 	currentTreeSignature() {
 		if (this.sourceIDs.length === 0) return null;
-		let e = useContainer.getState().containers[this.sourceIDs[0]], t = this.room;
-		if (!e || !t) return null;
-		let n = t.allSurfaces, r = [];
-		for (let e of n) {
-			e.updateMatrixWorld(!0);
-			let t = e.matrixWorld.elements;
-			for (let e = 0; e < 16; e++) r.push(t[e]);
-		}
-		return beamTreeSignature({
-			sourceId: e.uuid,
-			sourceX: e.position.x,
-			sourceY: e.position.y,
-			sourceZ: e.position.z,
+		let e = useContainer.getState().containers[this.sourceIDs[0]];
+		return currentTreeSignature({
+			source: e,
+			room: this.room,
 			roomID: this.roomID,
-			maxOrder: this.maxReflectionOrder,
-			surfaceCount: n.length,
-			surfaceWorlds: r
+			maxOrder: this.maxReflectionOrder
 		});
 	}
 	needsBeamTreeRebuild() {
@@ -17947,12 +18581,12 @@ var defaults = {
 			console.warn("BeamTraceSolver: No polygons extracted from room");
 			return;
 		}
-		let t = new Source3D([
+		let t = [
 			e.position.x,
 			e.position.y,
 			e.position.z
-		]);
-		this.btSolver = new Solver3D(this.polygons, t, { maxReflectionOrder: this.maxReflectionOrder }), this._lastTreeSignature = this.currentTreeSignature(), console.log(`BeamTraceSolver: Built with ${this.polygons.length} polygons, max order ${this.maxReflectionOrder}`);
+		];
+		this.btSolver = new Solver3D(this.polygons, new Source3D(t), { maxReflectionOrder: this.maxReflectionOrder }), this._lastTreeSignature = this.currentTreeSignature(), console.log(`BeamTraceSolver: Built with ${this.polygons.length} polygons, max order ${this.maxReflectionOrder}`);
 	}
 	calculate() {
 		if (this.sourceIDs.length === 0 || this.receiverIDs.length === 0) {
@@ -17993,54 +18627,18 @@ var defaults = {
 		this.calculateLTP(), this.calculateResponseByIntensity(), console.log(`BeamTraceSolver: Found ${this.validPaths.length} valid paths`), this.lastMetrics && (console.log(`  Raycasts: ${this.lastMetrics.raycastCount}`), console.log(`  Cache hits: ${this.lastMetrics.failPlaneCacheHits}`), console.log(`  Buckets skipped: ${this.lastMetrics.bucketsSkipped}`)), renderer.needsToRender = !0;
 	}
 	convertPath(e, t) {
-		let n = e.map((e) => new THREE.Vector3(e.position[0], e.position[1], e.position[2])), r = computePathLength(e), i = computeArrivalTime(e, this.c), a = getPathReflectionOrder(e), o = e.map((e) => e.polygonId), s;
-		if (n.length >= 2) {
-			let [e, t, r] = lookingBackArrivalDirection(n[0], n[1]);
-			s = new THREE.Vector3(e, t, r);
-		} else s = new THREE.Vector3(0, 0, 1);
-		let c = t?.reflections.map((e) => ({
-			polygonId: e.polygonId,
-			hitPoint: new THREE.Vector3(e.hitPoint[0], e.hitPoint[1], e.hitPoint[2]),
-			incidenceAngle: e.incidenceAngle,
-			surfaceNormal: new THREE.Vector3(e.surfaceNormal[0], e.surfaceNormal[1], e.surfaceNormal[2]),
-			isGrazing: e.isGrazing
-		}));
-		return {
-			points: n,
-			order: a,
-			length: r,
-			arrivalTime: i,
-			polygonIds: o,
-			arrivalDirection: s,
-			reflections: c
-		};
+		return convertPath(e, t, this.c);
 	}
 	calculateLTP() {
-		if (this.validPaths.length === 0) return;
-		let e = [...this.validPaths].sort((e, t) => e.arrivalTime - t.arrivalTime), t = { ...useResult.getState().results[this.levelTimeProgression] };
-		t.data = [], t.info = {
-			...t.info,
-			maxOrder: this.maxReflectionOrder,
-			frequency: [this._plotFrequency]
-		};
-		let n = this.receiverIDs.length > 0 ? useContainer.getState().containers[this.receiverIDs[0]] : null;
-		for (let r = 0; r < e.length; r++) {
-			let i = e[r], a = i.arrivalDirection, o = n ? n.getGain([
-				a.x,
-				a.y,
-				a.z
-			]) : 1, s = this.calculateArrivalPressure(t.info.initialSPL, i, o), c = P2Lp(s);
-			t.data.push({
-				time: i.arrivalTime,
-				pressure: c,
-				arrival: r + 1,
-				order: i.order,
-				uuid: `${this.uuid}-path-${r}`
-			});
-		}
-		emit("UPDATE_RESULT", {
-			uuid: this.levelTimeProgression,
-			result: t
+		let e = this.receiverIDs.length > 0 ? useContainer.getState().containers[this.receiverIDs[0]] : null;
+		calculateLevelTimeProgression({
+			validPaths: this.validPaths,
+			levelTimeProgressionId: this.levelTimeProgression,
+			plotFrequency: this._plotFrequency,
+			maxReflectionOrder: this.maxReflectionOrder,
+			solverUuid: this.uuid,
+			receiver: e,
+			arrivalPressure: (e, t, n) => this.calculateArrivalPressure(e, t, n)
 		});
 	}
 	clearLevelTimeProgressionData() {
@@ -18068,333 +18666,88 @@ var defaults = {
 			console.warn("BeamTraceSolver: Invalid path UUID format:", e);
 			return;
 		}
-		let n = parseInt(t[1], 10);
-		this.highlightPathByIndex(n);
+		this.highlightPathByIndex(parseInt(t[1], 10));
 	}
 	clearVisualization() {
-		renderer.markup.clearLines(), renderer.markup.clearPoints(), this.clearVirtualSources(), this.virtualSourceMap.clear(), this.selectedVirtualSource = null;
+		clearVisualization(this.virtualSourcesGroup), this.virtualSourceMap.clear(), this.selectedVirtualSource = null;
 	}
 	drawPaths() {
-		let e = this.validPaths.filter((e) => this._visibleOrders.includes(e.order));
-		e.forEach((e) => {
-			let t = getOrderColor(e.order, this.maxReflectionOrder), n = [
-				(t >> 16 & 255) / 255,
-				(t >> 8 & 255) / 255,
-				(t & 255) / 255
-			];
-			for (let t = 0; t < e.points.length - 1; t++) {
-				let r = e.points[t], i = e.points[t + 1];
-				renderer.markup.addLine([
-					r.x,
-					r.y,
-					r.z
-				], [
-					i.x,
-					i.y,
-					i.z
-				], n, n);
-			}
-		}), e.forEach((e) => {
-			if (e.bandEnergy && e.points.length === 3) {
-				let t = e.points[1], n = getOrderColor(e.order, this.maxReflectionOrder), r = new THREE.SphereGeometry(.06, 8, 8), i = new THREE.MeshBasicMaterial({ color: n }), a = new THREE.Mesh(r, i);
-				a.position.copy(t), this.virtualSourcesGroup.add(a);
-			}
+		drawPaths({
+			validPaths: this.validPaths,
+			visibleOrders: this._visibleOrders,
+			maxReflectionOrder: this.maxReflectionOrder,
+			virtualSourcesGroup: this.virtualSourcesGroup,
+			lastMetrics: this.lastMetrics
 		});
-		let t = renderer.markup.getUsageStats();
-		this.lastMetrics && (this.lastMetrics.bufferUsage = t), t.overflowWarning ? console.error(`⚠️ Path buffer overflow! Lines: ${t.linesUsed}/${t.linesCapacity}. Reduce reflection order.`) : t.linesPercent > 80 && console.warn(`Buffer usage high: Lines ${t.linesPercent.toFixed(1)}%`);
 	}
 	drawBeams() {
-		if (!this.btSolver) return;
-		this.clearVirtualSources(), this.virtualSourceMap.clear(), this.selectedVirtualSource = null;
-		let e = this.validPaths, t = /* @__PURE__ */ new Map();
-		e.forEach((e) => {
-			let n = e.polygonIds.filter((e) => e !== null).join(",");
-			n && t.set(n, e);
-		}), this.btSolver.getBeamsForVisualization(this.maxReflectionOrder).forEach((t) => {
-			if (!this._visibleOrders.includes(t.reflectionOrder)) return;
-			let n = this.beamHasValidPath(t, e);
-			if (!n && !this._showAllBeams) return;
-			let r = Math.max(.05, .1 - t.reflectionOrder * .01), i = getOrderColor(t.reflectionOrder, this.maxReflectionOrder), a = i;
-			if (!n) {
-				let e = (i >> 16 & 255) * .4 + 76.8, t = (i >> 8 & 255) * .4 + 76.8, n = (i & 255) * .4 + 76.8;
-				a = Math.round(e) << 16 | Math.round(t) << 8 | Math.round(n);
-			}
-			let o = new THREE.Vector3(t.virtualSource[0], t.virtualSource[1], t.virtualSource[2]), s = new THREE.SphereGeometry(r, 12, 12), c = new THREE.MeshStandardMaterial({
-				color: a,
-				transparent: !n,
-				opacity: n ? 1 : .4,
-				roughness: .6,
-				metalness: .1
-			}), l = new THREE.Mesh(s, c);
-			l.position.copy(o), this.virtualSourcesGroup.add(l), n && this.virtualSourceMap.set(l, {
-				...t,
-				polygonPath: t.polygonPath || []
-			});
-			let u = t.apertureVertices;
-			if (u && u.length >= 3) {
-				let e = u.map((e) => new THREE.Vector3(e[0], e[1], e[2])), t = new THREE.BufferGeometry(), r = new Float32Array(e.length * 3);
-				for (let t = 0; t < e.length; t++) r[t * 3] = e[t].x, r[t * 3 + 1] = e[t].y, r[t * 3 + 2] = e[t].z;
-				t.setAttribute("position", new THREE.BufferAttribute(r, 3));
-				let i = [];
-				for (let t = 1; t < e.length - 1; t++) i.push(0, t, t + 1);
-				t.setIndex(i), t.computeVertexNormals();
-				let s = new THREE.MeshBasicMaterial({
-					color: a,
-					side: THREE.DoubleSide,
-					transparent: !0,
-					opacity: n ? .2 : .08,
-					depthWrite: !1
-				}), c = new THREE.Mesh(t, s);
-				this.virtualSourcesGroup.add(c);
-				let l = new THREE.BufferGeometry().setFromPoints(e), d = new THREE.LineBasicMaterial({
-					color: a,
-					transparent: !0,
-					opacity: n ? .5 : .2
-				}), f = new THREE.LineLoop(l, d);
-				this.virtualSourcesGroup.add(f);
-				let p = [];
-				for (let t of e) p.push(o.clone(), t);
-				let m = new THREE.BufferGeometry().setFromPoints(p), h = new THREE.LineBasicMaterial({
-					color: a,
-					transparent: !0,
-					opacity: n ? .35 : .12
-				}), g = new THREE.LineSegments(m, h);
-				this.virtualSourcesGroup.add(g);
-			}
-		}), this.setupClickHandler(), renderer.needsToRender = !0;
-	}
-	beamHasValidPath(e, t) {
-		let n = e.polygonPath;
-		if (!n || n.length === 0) return !1;
-		let r = e.reflectionOrder;
-		for (let e of t) {
-			if (e.order !== r) continue;
-			let t = !0;
-			for (let i = 0; i < n.length; i++) {
-				let a = r - i;
-				if (e.polygonIds[a] !== n[i]) {
-					t = !1;
-					break;
-				}
-			}
-			if (t) return !0;
-		}
-		return !1;
-	}
-	clearVirtualSources() {
-		for (; this.virtualSourcesGroup.children.length > 0;) {
-			let e = this.virtualSourcesGroup.children[0];
-			if (this.virtualSourcesGroup.remove(e), e instanceof THREE.Mesh || e instanceof THREE.Line) {
-				e.geometry?.dispose();
-				let t = e.material;
-				if (Array.isArray(t)) for (let e of t) e instanceof THREE.Material && e.dispose();
-				else t instanceof THREE.Material && t.dispose();
-			}
-		}
+		let e = {
+			btSolver: this.btSolver,
+			validPaths: this.validPaths,
+			visibleOrders: this._visibleOrders,
+			maxReflectionOrder: this.maxReflectionOrder,
+			showAllBeams: this._showAllBeams,
+			virtualSourcesGroup: this.virtualSourcesGroup,
+			virtualSourceMap: this.virtualSourceMap,
+			selectedVirtualSource: this.selectedVirtualSource
+		};
+		drawBeams(e), this.selectedVirtualSource = e.selectedVirtualSource, this.setupClickHandler(), renderer.needsToRender = !0;
 	}
 	_computeDiffractionPaths() {
 		if (!this.room) return;
-		let e = useContainer.getState().containers;
-		if (this._edgeGraph = buildEdgeGraph(this.room.allSurfaces), this._edgeGraph.edges.length === 0) return;
-		let t = /* @__PURE__ */ new Map(), n = /* @__PURE__ */ new Map(), r = this.sourceIDs[0], i = e[r];
-		if (i) {
-			t.set(r, [
-				i.position.x,
-				i.position.y,
-				i.position.z
-			]);
-			let e = i.directivityHandler;
-			if (e) {
-				let t = Array(this.frequencies.length);
-				for (let n = 0; n < this.frequencies.length; n++) t[n] = e.getPressureAtPosition(0, this.frequencies[n], 0, 0);
-				n.set(r, {
-					handler: e,
-					refPressures: t,
-					quaternion: i.quaternion.clone()
-				});
-			}
-		}
-		let a = /* @__PURE__ */ new Map(), o = this.receiverIDs[0], s = e[o];
-		s && a.set(o, [
-			s.position.x,
-			s.position.y,
-			s.position.z
-		]);
-		let c = [];
-		this.room.surfaces.traverse((e) => {
-			e.kind && e.kind === "surface" && c.push(e.mesh);
+		let e = computeDiffractionPaths({
+			room: this.room,
+			sourceId: this.sourceIDs[0],
+			receiverId: this.receiverIDs[0],
+			frequencies: this.frequencies,
+			speedOfSound: this.c,
+			temperature: this.temperature,
+			containers: useContainer.getState().containers,
+			raycaster: this._raycaster
 		});
-		let l = findDiffractionPaths(this._edgeGraph, t, a, this.frequencies, this.c, this.temperature, this._raycaster, c);
-		for (let e of l) {
-			let r = n.get(e.sourceId);
-			if (r) {
-				let n = t.get(e.sourceId), i = new THREE.Vector3(e.diffractionPoint[0] - n[0], e.diffractionPoint[1] - n[1], e.diffractionPoint[2] - n[2]), a = this._directivityBandEnergy(r.handler, r.refPressures, r.quaternion, i);
-				for (let t = 0; t < this.frequencies.length; t++) e.bandEnergy[t] *= a[t];
-			}
-			let i = a.get(e.receiverId), o = {
-				x: e.diffractionPoint[0],
-				y: e.diffractionPoint[1],
-				z: e.diffractionPoint[2]
-			}, [s, c, l] = lookingBackArrivalDirection({
-				x: i[0],
-				y: i[1],
-				z: i[2]
-			}, o), u = new THREE.Vector3(s, c, l), d = t.get(e.sourceId), f = {
-				points: [
-					new THREE.Vector3(i[0], i[1], i[2]),
-					new THREE.Vector3(e.diffractionPoint[0], e.diffractionPoint[1], e.diffractionPoint[2]),
-					new THREE.Vector3(d[0], d[1], d[2])
-				],
-				order: 0,
-				length: e.totalDistance,
-				arrivalTime: e.time,
-				polygonIds: [
-					null,
-					null,
-					null
-				],
-				arrivalDirection: u,
-				reflections: [],
-				bandEnergy: e.bandEnergy
-			};
-			this.validPaths.push(f);
-		}
-		l.length > 0 && console.log(`BeamTraceSolver: Found ${l.length} diffraction paths`);
+		this._edgeGraph = e.edgeGraph, this.validPaths.push(...e.paths), e.paths.length > 0 && console.log(`BeamTraceSolver: Found ${e.paths.length} diffraction paths`);
 	}
 	_buildEnergyHistogram() {
-		let e = this.frequencies.length;
-		this._energyHistogram = [];
-		for (let t = 0; t < e; t++) this._energyHistogram.push(new Float32Array(HISTOGRAM_NUM_BINS));
-		let t = Array(e).fill(100), n = this.receiverIDs.length > 0 ? useContainer.getState().containers[this.receiverIDs[0]] : null;
-		for (let r of this.validPaths) {
-			let i = Math.floor(r.arrivalTime / HISTOGRAM_BIN_WIDTH);
-			if (i < 0 || i >= 1e4) continue;
-			let a = r.arrivalDirection, o = n ? n.getGain([
-				a.x,
-				a.y,
-				a.z
-			]) : 1, s = this.calculateArrivalPressure(t, r, o);
-			for (let t = 0; t < e; t++) this._energyHistogram[t][i] += s[t] * s[t];
-		}
-	}
-	async calculateImpulseResponse() {
-		if (this.validPaths.length === 0) throw Error("No paths calculated yet. Run calculate() first.");
-		let e = audioEngine.sampleRate, t = Array(this.frequencies.length).fill(100), n = this.validPaths[this.validPaths.length - 1].arrivalTime + .05, r = Math.floor(e * n) * 2, i = [];
-		for (let e = 0; e < this.frequencies.length; e++) i.push(new Float32Array(r));
-		let a = this.receiverIDs.length > 0 ? useContainer.getState().containers[this.receiverIDs[0]] : null;
-		for (let n of this.validPaths) {
-			let r = Math.random() > .5 ? 1 : -1, o = n.arrivalDirection, s = a ? a.getGain([
-				o.x,
-				o.y,
-				o.z
-			]) : 1, c = this.calculateArrivalPressure(t, n, s), l = Math.floor(n.arrivalTime * e);
-			for (let e = 0; e < this.frequencies.length; e++) l < i[e].length && (i[e][l] += c[e] * r);
-		}
-		let o = i;
-		if (this.lateReverbTailEnabled && this._energyHistogram) {
-			let { tailSamples: t, tailStartSample: n } = synthesizeTail(extractDecayParameters(this._energyHistogram, this.frequencies, this.tailCrossfadeTime, HISTOGRAM_BIN_WIDTH), e);
-			o = assembleFinalIR(i, t, n, Math.floor(this.tailCrossfadeDuration * e));
-		}
-		let s = new Worker(new URL(
-			/* @vite-ignore */
-			"/assets/filter.worker-B2fYKvk6.js",
-			"" + import.meta.url
-		));
-		return new Promise((t, n) => {
-			s.postMessage({ samples: o }), s.onmessage = (r) => {
-				let i = r.data.samples, a = new Float32Array(i[0].length >> 1), o = 0;
-				for (let e = 0; e < i.length; e++) for (let t = 0; t < a.length; t++) a[t] += i[e][t], Math.abs(a[t]) > o && (o = Math.abs(a[t]));
-				let c = normalize$1(a), l = audioEngine.createOfflineContext(1, a.length, e), u = audioEngine.createBufferSource(c, l);
-				u.connect(l.destination), u.start(), audioEngine.renderContextAsync(l).then((n) => {
-					this.impulseResponse = n, this.updateImpulseResponseResult(n, e), t(n);
-				}).catch(n).finally(() => s.terminate());
-			}, s.onerror = (e) => {
-				s.terminate(), n(e);
-			};
+		let e = this.receiverIDs.length > 0 ? useContainer.getState().containers[this.receiverIDs[0]] : null;
+		this._energyHistogram = buildEnergyHistogram({
+			validPaths: this.validPaths,
+			frequencies: this.frequencies,
+			receiver: e,
+			arrivalPressure: (e, t, n) => this.calculateArrivalPressure(e, t, n)
 		});
-	}
-	_directivityBandEnergy(e, t, n, r) {
-		let i = Array(this.frequencies.length).fill(1);
-		if (r.lengthSq() < 1e-20) return i;
-		let [a, o] = worldDirToCramAngles(r, n);
-		for (let n = 0; n < this.frequencies.length; n++) try {
-			let r = e.getPressureAtPosition(0, this.frequencies[n], a, o), s = t[n];
-			typeof r == "number" && typeof s == "number" && s > 0 && (i[n] = (r / s) ** 2);
-		} catch {}
-		return i;
 	}
 	calculateArrivalPressure(e, t, n = 1) {
-		if (t.bandEnergy) {
-			let r = P2I(Lp2P(e)), i = t.points.length - 1, a = i >= 1 ? t.points[i].distanceTo(t.points[i - 1]) : t.length, o = spreadingFactor(a), s = Array(this.frequencies.length);
-			for (let e = 0; e < this.frequencies.length; e++) {
-				let i = r[e] * t.bandEnergy[e] * o;
-				s[e] = I2P([i])[0] * n;
-			}
-			return s;
-		}
-		let r = spreadingFactor(t.length), i = P2I(Lp2P(e));
-		for (let e = 0; e < i.length; e++) i[e] *= r;
-		let a = t.points.length - 1;
-		if (a >= 1 && this.sourceIDs.length > 0) {
-			let e = useContainer.getState().containers[this.sourceIDs[0]];
-			if (e?.directivityHandler) {
-				let n = t.points[a], r = t.points[a - 1], o = new THREE.Vector3().subVectors(r, n), s = Array(this.frequencies.length);
-				for (let t = 0; t < this.frequencies.length; t++) s[t] = e.directivityHandler.getPressureAtPosition(0, this.frequencies[t], 0, 0);
-				let c = this._directivityBandEnergy(e.directivityHandler, s, e.quaternion, o);
-				for (let e = 0; e < this.frequencies.length; e++) i[e] *= c[e];
-			}
-		}
-		let o = 0;
-		t.polygonIds.forEach((e, n) => {
-			if (e === null) return;
-			let r = this.polygonToSurface.get(e);
-			if (!r) {
-				o++;
-				return;
-			}
-			let a = 0;
-			if (t.reflections && o < t.reflections.length) a = t.reflections[o].incidenceAngle;
-			else if (n > 0 && n < t.points.length - 1) {
-				let e = new THREE.Vector3().subVectors(t.points[n + 1], t.points[n]).normalize(), r = new THREE.Vector3().subVectors(t.points[n - 1], t.points[n]).normalize(), i = Math.min(1, Math.max(-1, e.dot(r)));
-				a = Math.acos(i) / 2;
-			}
-			o++;
-			for (let e = 0; e < this.frequencies.length; e++) {
-				let t = Math.abs(r.reflectionFunction(this.frequencies[e], a));
-				i[e] *= t;
-			}
+		let r = this.sourceIDs.length > 0 ? useContainer.getState().containers[this.sourceIDs[0]] : null;
+		return calculateArrivalPressure(e, t, {
+			frequencies: this.frequencies,
+			temperature: this.temperature,
+			receiverGain: n,
+			source: r?.directivityHandler ? r : null,
+			polygonToSurface: this.polygonToSurface
 		});
-		let s = P2Lp(I2P(i)), c = airAttenuation(this.frequencies, this.temperature);
-		for (let e = 0; e < this.frequencies.length; e++) s[e] -= c[e] * t.length;
-		let l = Lp2P(s);
-		if (n !== 1) for (let e = 0; e < l.length; e++) l[e] *= n;
-		return l;
 	}
-	updateImpulseResponseResult(e, t) {
-		let n = useContainer.getState().containers, r = this.sourceIDs.length > 0 && n[this.sourceIDs[0]]?.name || "source", i = this.receiverIDs.length > 0 && n[this.receiverIDs[0]]?.name || "receiver", a = e.getChannelData(0), o = [], s = Math.max(1, Math.floor(a.length / 2e3));
-		for (let e = 0; e < a.length; e += s) o.push({
-			time: e / t,
-			amplitude: a[e]
+	async calculateImpulseResponse() {
+		let e = this.receiverIDs.length > 0 ? useContainer.getState().containers[this.receiverIDs[0]] : null, t = await calculateMonoImpulseResponse({
+			validPaths: this.validPaths,
+			frequencies: this.frequencies,
+			receiver: e,
+			arrivalPressure: (e, t, n) => this.calculateArrivalPressure(e, t, n),
+			lateReverbTailEnabled: this.lateReverbTailEnabled,
+			energyHistogram: this._energyHistogram,
+			tailCrossfadeTime: this.tailCrossfadeTime,
+			tailCrossfadeDuration: this.tailCrossfadeDuration,
+			updateResult: (e, t) => {
+				this.impulseResponse = e, updateImpulseResponseResult({
+					ir: e,
+					sampleRate: t,
+					sourceIDs: this.sourceIDs,
+					receiverIDs: this.receiverIDs,
+					impulseResponseResult: this.impulseResponseResult,
+					solverUuid: this.uuid
+				});
+			}
 		});
-		console.log(`BeamTraceSolver: Updating IR result with ${o.length} samples, duration: ${(a.length / t).toFixed(3)}s`);
-		let c = {
-			kind: ResultKind.ImpulseResponse,
-			data: o,
-			info: {
-				sampleRate: t,
-				sourceName: r,
-				receiverName: i,
-				sourceId: this.sourceIDs[0] || "",
-				receiverId: this.receiverIDs[0] || ""
-			},
-			name: `IR: ${r} → ${i}`,
-			uuid: this.impulseResponseResult,
-			from: this.uuid
-		};
-		emit("UPDATE_RESULT", {
-			uuid: this.impulseResponseResult,
-			result: c
-		});
+		return this.impulseResponse = t, t;
 	}
 	async playImpulseResponse() {
 		let e = await playImpulseResponse(this.impulseResponse, () => this.calculateImpulseResponse(), this.uuid, "BEAMTRACE_SET_PROPERTY");
@@ -18407,74 +18760,25 @@ var defaults = {
 	ambisonicImpulseResponse;
 	ambisonicOrder = 1;
 	async calculateAmbisonicImpulseResponse(e = 1) {
-		if (this.validPaths.length === 0) throw Error("No paths calculated yet. Run calculate() first.");
-		let t = audioEngine.sampleRate, n = Array(this.frequencies.length).fill(100), r = this.validPaths[this.validPaths.length - 1].arrivalTime + .05;
-		if (r <= 0) throw Error("Invalid impulse response duration");
-		let i = Math.floor(t * r) * 2;
-		if (i < 2) throw Error("Impulse response too short to process");
-		let a = getAmbisonicChannelCount(e), o = [];
-		for (let e = 0; e < this.frequencies.length; e++) {
-			o.push([]);
-			for (let t = 0; t < a; t++) o[e].push(new Float32Array(i));
-		}
-		let s = this.receiverIDs.length > 0 ? useContainer.getState().containers[this.receiverIDs[0]] : null;
-		for (let r of this.validPaths) {
-			let c = Math.random() > .5 ? 1 : -1, l = r.arrivalDirection, u = s ? s.getGain([
-				l.x,
-				l.y,
-				l.z
-			]) : 1, d = this.calculateArrivalPressure(n, r, u), f = Math.floor(r.arrivalTime * t);
-			if (f >= i) continue;
-			let p = /* @__PURE__ */ new Float32Array(1);
-			for (let t = 0; t < this.frequencies.length; t++) {
-				p[0] = d[t] * c;
-				let n = encodeBufferFromDirection(p, l.x, l.y, l.z, e, "threejs");
-				for (let e = 0; e < a; e++) o[t][e][f] += n[e][0];
-			}
-		}
-		if (this.lateReverbTailEnabled && this._energyHistogram) {
-			let { tailSamples: e, tailStartSample: n } = synthesizeTail(extractDecayParameters(this._energyHistogram, this.frequencies, this.tailCrossfadeTime, HISTOGRAM_BIN_WIDTH), t), r = Math.floor(this.tailCrossfadeDuration * t), i = [];
-			for (let e = 0; e < this.frequencies.length; e++) i.push(o[e][0]);
-			let a = assembleFinalIR(i, e, n, r);
-			for (let e = 0; e < this.frequencies.length; e++) o[e][0] = a[e];
-		}
-		let c = () => new Worker(new URL(
-			/* @vite-ignore */
-			"/assets/filter.worker-B2fYKvk6.js",
-			"" + import.meta.url
-		));
-		return new Promise((n, r) => {
-			let i = async (e) => new Promise((t) => {
-				let n = [];
-				for (let t = 0; t < this.frequencies.length; t++) n.push(o[t][e]);
-				let r = c();
-				r.postMessage({ samples: n }), r.onmessage = (e) => {
-					let n = e.data.samples, i = new Float32Array(n[0].length >> 1);
-					for (let e = 0; e < n.length; e++) for (let t = 0; t < i.length; t++) i[t] += n[e][t];
-					r.terminate(), t(i);
-				};
-			});
-			Promise.all(Array.from({ length: a }, (e, t) => i(t))).then((i) => {
-				let o = 0;
-				for (let e of i) for (let t = 0; t < e.length; t++) Math.abs(e[t]) > o && (o = Math.abs(e[t]));
-				if (o > 0) for (let e of i) for (let t = 0; t < e.length; t++) e[t] /= o;
-				let s = i[0].length;
-				if (s === 0) {
-					r(/* @__PURE__ */ Error("Filtered signal has zero length"));
-					return;
-				}
-				let c = audioEngine.createOfflineContext(a, s, t).createBuffer(a, s, t);
-				for (let e = 0; e < a; e++) c.copyToChannel(new Float32Array(i[e]), e);
-				this.ambisonicImpulseResponse = c, this.ambisonicOrder = e, n(c);
-			}).catch(r);
+		let t = this.receiverIDs.length > 0 ? useContainer.getState().containers[this.receiverIDs[0]] : null, n = await calculateAmbisonicImpulseResponse({
+			validPaths: this.validPaths,
+			frequencies: this.frequencies,
+			receiver: t,
+			arrivalPressure: (e, t, n) => this.calculateArrivalPressure(e, t, n),
+			lateReverbTailEnabled: this.lateReverbTailEnabled,
+			energyHistogram: this._energyHistogram,
+			tailCrossfadeTime: this.tailCrossfadeTime,
+			tailCrossfadeDuration: this.tailCrossfadeDuration,
+			order: e
 		});
+		return this.ambisonicImpulseResponse = n, this.ambisonicOrder = e, n;
 	}
 	async downloadAmbisonicImpulseResponse(e, t = 1) {
 		let n = await downloadAmbisonicImpulseResponse(this.ambisonicImpulseResponse, (e) => this.calculateAmbisonicImpulseResponse(e), this.ambisonicOrder, t, e);
 		this.ambisonicImpulseResponse = n.ambisonicImpulseResponse, this.ambisonicOrder = n.ambisonicOrder;
 	}
 	async calculateBinauralImpulseResponse(e = 1) {
-		return (!this.ambisonicImpulseResponse || this.ambisonicOrder !== e) && (this.ambisonicImpulseResponse = await this.calculateAmbisonicImpulseResponse(e), this.ambisonicOrder = e), this.binauralImpulseResponse = await calculateBinauralFromAmbisonic({
+		return (!this.ambisonicImpulseResponse || this.ambisonicOrder !== e) && (this.ambisonicImpulseResponse = await this.calculateAmbisonicImpulseResponse(e), this.ambisonicOrder = e), this.binauralImpulseResponse = await calculateBinauralImpulseResponse({
 			ambisonicImpulseResponse: this.ambisonicImpulseResponse,
 			order: e,
 			hrtfSubjectId: this.hrtfSubjectId,
@@ -18493,80 +18797,36 @@ var defaults = {
 	}
 	calculateResponseByIntensity() {
 		if (this.validPaths.length === 0 || this.receiverIDs.length === 0 || this.sourceIDs.length === 0) return;
-		let e = this.receiverIDs[0], t = this.sourceIDs[0], n = Array(this.frequencies.length).fill(100), r = useContainer.getState().containers[e], i = [...this.validPaths].sort((e, t) => e.arrivalTime - t.arrivalTime), a = [];
-		for (let e of i) {
-			let t = e.arrivalDirection, i = r ? r.getGain([
-				t.x,
-				t.y,
-				t.z
-			]) : 1, o = this.calculateArrivalPressure(n, e, i), s = P2Lp(o);
-			a.push({
-				time: e.arrivalTime,
-				bounces: e.order,
-				level: s
-			});
-		}
-		let o = { [e]: { [t]: {
-			freqs: this.frequencies,
-			response: a
-		} } };
-		this.responseByIntensity = resampleResponseByIntensity(o, 256);
+		let e = this.receiverIDs[0], t = this.sourceIDs[0], n = useContainer.getState().containers[e];
+		this.responseByIntensity = calculateResponseByIntensity({
+			validPaths: this.validPaths,
+			frequencies: this.frequencies,
+			sourceId: t,
+			receiverId: e,
+			receiver: n,
+			arrivalPressure: (e, t, n) => this.calculateArrivalPressure(e, t, n)
+		});
 	}
 	downloadOctaveBandIR(e, t = audioEngine.sampleRate) {
-		if (this.validPaths.length === 0) throw Error("No paths calculated yet. Run calculate() first.");
-		let n = Array(this.frequencies.length).fill(100), r = [...this.validPaths].sort((e, t) => e.arrivalTime - t.arrivalTime), i = r[r.length - 1].arrivalTime + .05, a = Math.floor(t * i), o = [];
-		for (let e = 0; e < this.frequencies.length; e++) o.push(new Float32Array(a));
-		let s = this.receiverIDs.length > 0 ? useContainer.getState().containers[this.receiverIDs[0]] : null;
-		for (let e of r) {
-			let r = Math.random() > .5 ? 1 : -1, i = e.arrivalDirection, a = s ? s.getGain([
-				i.x,
-				i.y,
-				i.z
-			]) : 1, c = this.calculateArrivalPressure(n, e, a), l = Math.floor(e.arrivalTime * t);
-			for (let e = 0; e < this.frequencies.length; e++) l < o[e].length && (o[e][l] += c[e] * r);
-		}
-		for (let n = 0; n < this.frequencies.length; n++) {
-			let r = wavAsBlob([normalize$1(o[n])], {
-				sampleRate: t,
-				bitDepth: 32
-			});
-			import_FileSaver_min.default.saveAs(r, `${this.frequencies[n]}_${e}.wav`);
-		}
+		let n = this.receiverIDs.length > 0 ? useContainer.getState().containers[this.receiverIDs[0]] : null;
+		downloadOctaveBandIR({
+			validPaths: this.validPaths,
+			frequencies: this.frequencies,
+			receiver: n,
+			arrivalPressure: (e, t, n) => this.calculateArrivalPressure(e, t, n),
+			filename: e,
+			sampleRate: t
+		});
 	}
 	startQuickEstimate(e = 500) {
-		if (this._quickEstimateInterval !== null && (window.clearInterval(this._quickEstimateInterval), this._quickEstimateInterval = null), this.sourceIDs.length === 0) return;
-		let t = useContainer.getState().containers[this.sourceIDs[0]];
-		if (!t) return;
-		let n = this.room;
-		if (!n) return;
-		let r = [];
-		if (n.surfaces.traverse((e) => {
-			e.isMesh && r.push(e);
-		}), r.length === 0) return;
-		this.quickEstimateResults = [], this.estimatedT30 = null;
-		let i = 0, a = 10;
-		this._quickEstimateInterval = window.setInterval(() => {
-			for (let n = 0; n < 10 && i < e; n++, i++) {
-				let e = quickEstimateStep(this._raycaster, r, t.position, t.initialIntensity, this.frequencies, this.temperature);
-				this.quickEstimateResults.push(e);
-			}
-			if (i >= e) {
-				window.clearInterval(this._quickEstimateInterval), this._quickEstimateInterval = null;
-				let e = this.frequencies.length, t = Array(e).fill(0), n = Array(e).fill(0);
-				for (let r of this.quickEstimateResults) for (let i = 0; i < e; i++) r.rt60s[i] > 0 && (t[i] += r.rt60s[i], n[i]++);
-				for (let r = 0; r < e; r++) t[r] = n[r] > 0 ? t[r] / n[r] : 0;
-				this.estimatedT30 = t, emit("BEAMTRACE_QUICK_ESTIMATE_COMPLETE", this.uuid);
-			}
-		}, 5);
+		let t = this.sourceIDs.length === 0 ? void 0 : useContainer.getState().containers[this.sourceIDs[0]];
+		startQuickEstimate(this, t, e);
 	}
 	reset() {
 		this.validPaths = [], this.clearVisualization(), this.btSolver = null, this._lastTreeSignature = null, this.lastMetrics = null, this.responseByIntensity = void 0, this._quickEstimateInterval !== null && (window.clearInterval(this._quickEstimateInterval), this._quickEstimateInterval = null), this.quickEstimateResults = [], this.estimatedT30 = null, this.clearLevelTimeProgressionData(), this.selectedPath.geometry.setPoints(/* @__PURE__ */ new Float32Array()), this.clearSelectedBeams(), renderer.needsToRender = !0;
 	}
 	clearSelectedBeams() {
-		for (; this.selectedBeamsGroup.children.length > 0;) {
-			let e = this.selectedBeamsGroup.children[0];
-			this.selectedBeamsGroup.remove(e), (e instanceof THREE.Mesh || e instanceof THREE.Line) && (e.geometry?.dispose(), e.material instanceof THREE.Material && e.material.dispose());
-		}
+		clearGroup(this.selectedBeamsGroup);
 	}
 	get room() {
 		return useContainer.getState().containers[this.roomID];
@@ -18590,37 +18850,26 @@ var defaults = {
 		return this._visualizationMode;
 	}
 	set visualizationMode(e) {
-		switch (this._visualizationMode = e, this.clearVisualization(), e) {
-			case "rays":
-				this.validPaths.length > 0 && this.drawPaths();
-				break;
-			case "beams":
-				this.btSolver && this.drawBeams();
-				break;
-			case "both": this.validPaths.length > 0 && this.drawPaths(), this.btSolver && this.drawBeams();
-		}
-		renderer.needsToRender = !0;
+		this._visualizationMode = e, redrawVisualization({
+			mode: e,
+			validPaths: this.validPaths,
+			btSolver: this.btSolver,
+			virtualSourcesGroup: this.virtualSourcesGroup,
+			drawBeamsFn: () => this.drawBeams(),
+			drawPathsFn: () => this.drawPaths()
+		});
 	}
 	get showAllBeams() {
 		return this._showAllBeams;
 	}
 	set showAllBeams(e) {
-		this._showAllBeams = e, (this._visualizationMode === "beams" || this._visualizationMode === "both") && (this.clearVisualization(), this._visualizationMode === "both" && this.validPaths.length > 0 && this.drawPaths(), this.btSolver && this.drawBeams(), renderer.needsToRender = !0);
+		this._showAllBeams = e, (this._visualizationMode === "beams" || this._visualizationMode === "both") && (this.visualizationMode = this._visualizationMode);
 	}
 	get visibleOrders() {
 		return this._visibleOrders;
 	}
 	set visibleOrders(e) {
-		switch (this._visibleOrders = e, this.clearVisualization(), this._visualizationMode) {
-			case "rays":
-				this.validPaths.length > 0 && this.drawPaths();
-				break;
-			case "beams":
-				this.btSolver && this.drawBeams();
-				break;
-			case "both": this.validPaths.length > 0 && this.drawPaths(), this.btSolver && this.drawBeams();
-		}
-		renderer.needsToRender = !0;
+		this._visibleOrders = e, this.visualizationMode = this._visualizationMode;
 	}
 	debugBeamPath(e) {
 		if (!this.btSolver) {
@@ -18650,97 +18899,30 @@ var defaults = {
 		if (!this.btSolver) return console.warn("BeamTraceSolver: No solver built. Run calculate() first."), [];
 		if (this.receiverIDs.length === 0) return console.warn("BeamTraceSolver: No receiver selected."), [];
 		let e = useContainer.getState().containers[this.receiverIDs[0]];
-		if (!e) return console.warn("BeamTraceSolver: Receiver not found."), [];
-		let t = [
+		return e ? this.btSolver.getDetailedPaths([
 			e.position.x,
 			e.position.y,
 			e.position.z
-		];
-		return this.btSolver.getDetailedPaths(t);
+		]) : (console.warn("BeamTraceSolver: Receiver not found."), []);
 	}
 	highlightPathByIndex(e) {
-		let t = [...this.validPaths].sort((e, t) => e.arrivalTime - t.arrivalTime);
-		if (e < 0 || e >= t.length) {
-			console.warn("BeamTraceSolver: Path index out of bounds:", e);
-			return;
-		}
-		let n = t[e];
-		this.selectedPath.geometry.setPoints(/* @__PURE__ */ new Float32Array()), this.clearSelectedBeams();
-		let r = getOrderColor(n.order, this.maxReflectionOrder), i = new THREE.LineBasicMaterial({
-			color: r,
-			linewidth: 2,
-			transparent: !1
+		let t = this.receiverIDs.length === 0 ? void 0 : useContainer.getState().containers[this.receiverIDs[0]];
+		highlightPathByIndex({
+			pathIndex: e,
+			validPaths: this.validPaths,
+			maxReflectionOrder: this.maxReflectionOrder,
+			btSolver: this.btSolver,
+			receiver: t,
+			selectedPath: this.selectedPath,
+			selectedBeamsGroup: this.selectedBeamsGroup
 		});
-		for (let e = 0; e < n.points.length - 1; e++) {
-			let t = new THREE.BufferGeometry().setFromPoints([n.points[e], n.points[e + 1]]), r = new THREE.Line(t, i);
-			this.selectedBeamsGroup.add(r);
-		}
-		if (this.btSolver && this.receiverIDs.length > 0) {
-			let e = useContainer.getState().containers[this.receiverIDs[0]];
-			if (e) {
-				let t = this.btSolver.getBeamsForVisualization(this.maxReflectionOrder), i = n.polygonIds[n.order];
-				if (i !== null) {
-					let a = t.find((e) => e.polygonId === i && e.reflectionOrder === n.order);
-					if (a) {
-						let t = new THREE.LineDashedMaterial({
-							color: r,
-							linewidth: 1,
-							dashSize: .3,
-							gapSize: .15,
-							transparent: !0,
-							opacity: .7
-						}), n = new THREE.Vector3(a.virtualSource[0], a.virtualSource[1], a.virtualSource[2]), i = e.position.clone(), o = new THREE.BufferGeometry().setFromPoints([n, i]), s = new THREE.Line(o, t);
-						s.computeLineDistances(), this.selectedBeamsGroup.add(s);
-					}
-				}
-			}
-		}
-		console.log(`BeamTraceSolver: Highlighting path ${e} with order ${n.order}, arrival time ${n.arrivalTime.toFixed(4)}s`), renderer.needsToRender = !0;
 	}
 	clearPathHighlight() {
 		this.selectedPath.geometry.setPoints(/* @__PURE__ */ new Float32Array()), this.clearSelectedBeams(), renderer.needsToRender = !0;
 	}
 };
-on("BEAMTRACE_SET_PROPERTY", setSolverProperty), on("REMOVE_BEAMTRACE", removeSolver), on("ADD_BEAMTRACE", addSolver(BeamTraceSolver)), on("BEAMTRACE_CALCULATE", (e) => {
-	useSolver.getState().solvers[e].calculate(), setTimeout(() => emit("BEAMTRACE_CALCULATE_COMPLETE", e), 0);
-}), on("BEAMTRACE_RESET", (e) => {
-	useSolver.getState().solvers[e].reset();
-}), on("BEAMTRACE_PLAY_IR", (e) => {
-	useSolver.getState().solvers[e].playImpulseResponse().catch((e) => {
-		window.alert(e.message || "Failed to play impulse response");
-	});
-}), on("BEAMTRACE_DOWNLOAD_IR", (e) => {
-	let t = useSolver.getState().solvers[e], n = useContainer.getState().containers, r = `ir-beamtrace-${t.sourceIDs.length > 0 && n[t.sourceIDs[0]]?.name || "source"}-${t.receiverIDs.length > 0 && n[t.receiverIDs[0]]?.name || "receiver"}`.replace(/[^a-zA-Z0-9-_]/g, "_");
-	t.downloadImpulseResponse(r).catch((e) => {
-		window.alert(e.message || "Failed to download impulse response");
-	});
-}), on("BEAMTRACE_DOWNLOAD_AMBISONIC_IR", ({ uuid: e, order: t }) => {
-	let n = useSolver.getState().solvers[e], r = useContainer.getState().containers, i = `ir-beamtrace-ambi-${n.sourceIDs.length > 0 && r[n.sourceIDs[0]]?.name || "source"}-${n.receiverIDs.length > 0 && r[n.receiverIDs[0]]?.name || "receiver"}`.replace(/[^a-zA-Z0-9-_]/g, "_");
-	n.downloadAmbisonicImpulseResponse(i, t).catch((e) => {
-		window.alert(e.message || "Failed to download ambisonic impulse response");
-	});
-}), on("BEAMTRACE_PLAY_BINAURAL_IR", ({ uuid: e, order: t }) => {
-	useSolver.getState().solvers[e].playBinauralImpulseResponse(t).catch((e) => {
-		window.alert(e.message || "Failed to play binaural impulse response");
-	});
-}), on("BEAMTRACE_DOWNLOAD_BINAURAL_IR", ({ uuid: e, order: t }) => {
-	let n = useSolver.getState().solvers[e], r = useContainer.getState().containers, i = `ir-beamtrace-${n.sourceIDs.length > 0 && r[n.sourceIDs[0]]?.name || "source"}-${n.receiverIDs.length > 0 && r[n.receiverIDs[0]]?.name || "receiver"}`.replace(/[^a-zA-Z0-9-_]/g, "_");
-	n.downloadBinauralImpulseResponse(i, t).catch((e) => {
-		window.alert(e.message || "Failed to download binaural impulse response");
-	});
-}), on("BEAMTRACE_DOWNLOAD_OCTAVE_IR", (e) => {
-	let t = useSolver.getState().solvers[e], n = useContainer.getState().containers, r = `ir-beamtrace-${t.sourceIDs.length > 0 && n[t.sourceIDs[0]]?.name || "source"}-${t.receiverIDs.length > 0 && n[t.receiverIDs[0]]?.name || "receiver"}`.replace(/[^a-zA-Z0-9-_]/g, "_");
-	try {
-		t.downloadOctaveBandIR(r);
-	} catch (e) {
-		window.alert(e.message || "Failed to download octave-band impulse responses");
-	}
-}), on("BEAMTRACE_QUICK_ESTIMATE", (e) => {
-	useSolver.getState().solvers[e].startQuickEstimate();
-}), on("SHOULD_ADD_BEAMTRACE", () => {
-	emit("ADD_BEAMTRACE", void 0);
-});
+registerBeamTraceEvents(BeamTraceSolver);
 //#endregion
 export { BeamTraceSolver, BeamTraceSolver as default };
 
-//# sourceMappingURL=beam-trace-DoMGglkI.mjs.map
+//# sourceMappingURL=beam-trace-BVrpuQ_a.mjs.map

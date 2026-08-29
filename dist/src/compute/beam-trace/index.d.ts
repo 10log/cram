@@ -6,72 +6,11 @@ import { default as Receiver } from '../../objects/receiver';
 import { ResponseByIntensity } from '../shared/response-by-intensity-types';
 import { QuickEstimateStepResult } from '../shared/quick-estimate-types';
 import { KVP } from '../../common/key-value-pair';
-import * as THREE from "three";
-export interface BeamTracePath {
-    points: THREE.Vector3[];
-    order: number;
-    length: number;
-    arrivalTime: number;
-    polygonIds: (number | null)[];
-    /** Unit vector at the receiver pointing toward the last bounce (looking-back). Matches Receiver.getGain. */
-    arrivalDirection: THREE.Vector3;
-    reflections?: {
-        polygonId: number;
-        hitPoint: THREE.Vector3;
-        incidenceAngle: number;
-        surfaceNormal: THREE.Vector3;
-        isGrazing: boolean;
-    }[];
-    /** Pre-computed per-band energy for diffraction paths (bypasses specular reflection calc) */
-    bandEnergy?: number[];
-}
-export type VisualizationMode = "rays" | "beams" | "both";
-export interface BeamTraceSaveObject {
-    name: string;
-    kind: "beam-trace";
-    uuid: string;
-    autoCalculate: boolean;
-    roomID: string;
-    sourceIDs: string[];
-    receiverIDs: string[];
-    maxReflectionOrder: number;
-    visualizationMode: VisualizationMode;
-    showAllBeams: boolean;
-    visibleOrders: number[];
-    frequencies: number[];
-    levelTimeProgression: string;
-    impulseResponseResult: string;
-    hrtfSubjectId?: string;
-    headYaw?: number;
-    headPitch?: number;
-    headRoll?: number;
-    edgeDiffractionEnabled?: boolean;
-    lateReverbTailEnabled?: boolean;
-    tailCrossfadeTime?: number;
-    tailCrossfadeDuration?: number;
-}
-export interface BeamTraceSolverParams {
-    name?: string;
-    uuid?: string;
-    roomID?: string;
-    sourceIDs?: string[];
-    receiverIDs?: string[];
-    maxReflectionOrder?: number;
-    visualizationMode?: VisualizationMode;
-    showAllBeams?: boolean;
-    visibleOrders?: number[];
-    frequencies?: number[];
-    levelTimeProgression?: string;
-    impulseResponseResult?: string;
-    hrtfSubjectId?: string;
-    headYaw?: number;
-    headPitch?: number;
-    headRoll?: number;
-    edgeDiffractionEnabled?: boolean;
-    lateReverbTailEnabled?: boolean;
-    tailCrossfadeTime?: number;
-    tailCrossfadeDuration?: number;
-}
+import { BeamTraceSaveObject, BeamTraceSolverParams } from './types';
+import { BeamTracePath, VisualizationMode } from './paths';
+export type { BeamTracePath, VisualizationMode } from './paths';
+export type { BeamTraceSaveObject, BeamTraceSolverParams } from './types';
+export { calculateArrivalPressure, directivityBandEnergy } from './arrival-pressure';
 export declare class BeamTraceSolver extends Solver {
     roomID: string;
     sourceIDs: string[];
@@ -138,11 +77,11 @@ export declare class BeamTraceSolver extends Solver {
     save(): BeamTraceSaveObject;
     restore(state: BeamTraceSaveObject): this;
     dispose(): void;
+    private clickHost;
     private setupClickHandler;
-    private highlightVirtualSourcePath;
     private removeClickHandler;
+    private highlightVirtualSourcePath;
     private extractPolygons;
-    private surfaceToPolygons;
     private currentTreeSignature;
     private needsBeamTreeRebuild;
     buildSolver(): void;
@@ -158,62 +97,21 @@ export declare class BeamTraceSolver extends Solver {
     private clearVisualization;
     private drawPaths;
     private drawBeams;
-    private beamHasValidPath;
-    private clearVirtualSources;
-    /**
-     * Compute first-order UTD edge diffraction paths and add them to validPaths.
-     */
     private _computeDiffractionPaths;
-    /**
-     * Build per-band energy histograms from all computed paths (for tail synthesis).
-     */
     private _buildEnergyHistogram;
-    calculateImpulseResponse(): Promise<AudioBuffer>;
-    /**
-     * Per-band energy weighting from a source's directivity for energy leaving the
-     * source along `worldDir`.
-     *
-     * Shared by the specular and diffraction paths so both use one convention:
-     * undo the source's rotation with the inverse quaternion (negating Euler angles
-     * in the same order is NOT the inverse rotation for two or more non-zero
-     * components), then map the source-local direction to CRAM (phi, theta) degrees
-     * with `worldDirToCramAngles` — the same convention the ray tracer launches with.
-     */
-    private _directivityBandEnergy;
     private calculateArrivalPressure;
-    private updateImpulseResponseResult;
+    calculateImpulseResponse(): Promise<AudioBuffer>;
     playImpulseResponse(): Promise<void>;
     downloadImpulseResponse(filename: string, sampleRate?: number): Promise<void>;
     ambisonicImpulseResponse?: AudioBuffer;
     ambisonicOrder: number;
-    /**
-     * Calculate an ambisonic impulse response from the beam-traced paths.
-     * Each reflection is encoded based on its arrival direction at the receiver.
-     *
-     * @param order - Ambisonic order (1 = first order with 4 channels, 2 = 9 channels, etc.)
-     * @returns Promise resolving to an AudioBuffer with ambisonic channels
-     */
     calculateAmbisonicImpulseResponse(order?: number): Promise<AudioBuffer>;
     downloadAmbisonicImpulseResponse(filename: string, order?: number): Promise<void>;
     calculateBinauralImpulseResponse(order?: number): Promise<AudioBuffer>;
     playBinauralImpulseResponse(order?: number): Promise<void>;
     downloadBinauralImpulseResponse(filename: string, order?: number): Promise<void>;
-    /**
-     * Calculate per-frequency intensity response with T20/T30/T60 decay estimates.
-     * Uses existing calculateArrivalPressure() to convert beam-trace paths into
-     * the same RayPathResult format the raytracer uses, then delegates to the
-     * shared resampleResponseByIntensity() for decay-time fitting.
-     */
     calculateResponseByIntensity(): void;
-    /**
-     * Export per-octave-band impulse responses as individual WAV files.
-     * Skips the filter worker — writes one WAV per frequency band directly.
-     */
     downloadOctaveBandIR(filename: string, sampleRate?: number): void;
-    /**
-     * Quick RT60 estimate by shooting random rays through the room geometry.
-     * Runs in batches via setInterval to avoid blocking the UI.
-     */
     startQuickEstimate(numRays?: number): void;
     reset(): void;
     private clearSelectedBeams;
@@ -236,31 +134,3 @@ export declare class BeamTraceSolver extends Solver {
     clearPathHighlight(): void;
 }
 export default BeamTraceSolver;
-declare global {
-    interface EventTypes {
-        ADD_BEAMTRACE: BeamTraceSolver | undefined;
-        REMOVE_BEAMTRACE: string;
-        BEAMTRACE_SET_PROPERTY: SetPropertyPayload<BeamTraceSolver>;
-        BEAMTRACE_CALCULATE: string;
-        BEAMTRACE_CALCULATE_COMPLETE: string;
-        BEAMTRACE_RESET: string;
-        BEAMTRACE_PLAY_IR: string;
-        BEAMTRACE_DOWNLOAD_IR: string;
-        BEAMTRACE_DOWNLOAD_AMBISONIC_IR: {
-            uuid: string;
-            order: number;
-        };
-        BEAMTRACE_PLAY_BINAURAL_IR: {
-            uuid: string;
-            order: number;
-        };
-        BEAMTRACE_DOWNLOAD_BINAURAL_IR: {
-            uuid: string;
-            order: number;
-        };
-        BEAMTRACE_DOWNLOAD_OCTAVE_IR: string;
-        BEAMTRACE_QUICK_ESTIMATE: string;
-        BEAMTRACE_QUICK_ESTIMATE_COMPLETE: string;
-        SHOULD_ADD_BEAMTRACE: undefined;
-    }
-}

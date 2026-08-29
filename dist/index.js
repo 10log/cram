@@ -620,7 +620,7 @@ Xr("ray-tracer", async (e, t) => {
 	let { default: n } = await import("./2d-fdtd-W2b1L3NX.mjs");
 	return new n();
 }), Xr("beam-trace", async (e, t) => {
-	let { BeamTraceSolver: n } = await import("./beam-trace-DoMGglkI.mjs");
+	let { BeamTraceSolver: n } = await import("./beam-trace-BVrpuQ_a.mjs");
 	return new n();
 }), Xr("art", async (e, t) => {
 	let { ART: n } = await import("./art-D9Z4II0r.mjs");
@@ -6691,7 +6691,7 @@ async function Jo(e, t) {
 			return new e(t).restore(t);
 		}
 		case "beam-trace": {
-			let { BeamTraceSolver: e } = await import("./beam-trace-DoMGglkI.mjs");
+			let { BeamTraceSolver: e } = await import("./beam-trace-BVrpuQ_a.mjs");
 			return new e().restore(t);
 		}
 		default: throw Error(`Unknown solver kind: ${e}`);
