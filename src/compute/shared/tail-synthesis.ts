@@ -246,3 +246,36 @@ export function assembleFinalIR(
 
   return result;
 }
+
+/**
+ * Extend every HOA channel with an independent noise tail of the same envelope.
+ *
+ * Diffuse late reverb is uncorrelated equal energy in all channels (SN3D:
+ * E{W²} ≈ E{Y²} ≈ E{Z²} ≈ E{X²}), not energy in W only. `samples` is
+ * [band][channel]. Mutates and returns it so every channel has the same length.
+ */
+export function applyAmbisonicTail(
+  samples: Float32Array[][],
+  decayParams: DecayParameters[],
+  sampleRate: number,
+  crossfadeDurationSamples: number,
+): Float32Array[][] {
+  if (samples.length === 0 || samples[0].length === 0) return samples;
+  const nBands = samples.length;
+  const nCh = samples[0].length;
+
+  for (let ch = 0; ch < nCh; ch++) {
+    const { tailSamples, tailStartSample } = synthesizeTail(decayParams, sampleRate);
+    const bandForChannel: Float32Array[] = new Array(nBands);
+    for (let f = 0; f < nBands; f++) {
+      bandForChannel[f] = samples[f][ch];
+    }
+    const extended = assembleFinalIR(
+      bandForChannel, tailSamples, tailStartSample, crossfadeDurationSamples,
+    );
+    for (let f = 0; f < nBands; f++) {
+      samples[f][ch] = extended[f];
+    }
+  }
+  return samples;
+}
