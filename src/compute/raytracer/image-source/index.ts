@@ -23,6 +23,7 @@ import { resolveRoomID, selectedReflectors, shouldRebuildImageSourceTree } from 
 import {
   hitWorldNormal,
   incidenceAngle,
+  pointInFrontOfPlane,
   reflectPointAcrossPlane,
   worldSurfaceNormal,
 } from "./reflection-geometry";
@@ -903,8 +904,7 @@ function computeImageSources(is: ImageSource, maxOrder: number, surfaces?: Surfa
     // returns true if current image source's previous reflector is either null (direct sound) or not the current reflector.
     let reflectorCondition: boolean = (is.reflector === null || is.reflector !== reflectors[i]);
 
-    // returns true if reflecting surface is in front of previous surface
-    let inFrontOf: boolean = true; 
+    let inFrontOf: boolean = is.reflector === null || isInFrontOf(reflectors[i], is.reflector); 
 
     // check if facing each other
     let facingEachOther: boolean;
@@ -1001,9 +1001,25 @@ function constructImageSourcePath(is: ImageSource, listener: Receiver): ImageSou
   return pathObject;
 }
 
-function isInFrontOf(surface1: Surface, surface2: Surface): boolean{
-  // figure out how to check this
-  return true; 
+/** True if `surface`'s centroid lies in front of `previous` (world frame). */
+function isInFrontOf(surface: Surface, previous: Surface): boolean{
+  const planePoint = surfaceWorldAnchor(previous);
+  const planeNormal = worldSurfaceNormal(previous.normal, previous.matrixWorld);
+  return pointInFrontOfPlane(surfaceWorldCentroid(surface), planePoint, planeNormal);
+}
+
+function surfaceWorldAnchor(surface: Surface): Vector3 {
+  const v = surface.polygon.vertices[0];
+  return surface.localToWorld(new Vector3(v[0], v[1], v[2]));
+}
+
+function surfaceWorldCentroid(surface: Surface): Vector3 {
+  const verts = surface.polygon.vertices;
+  const acc = new Vector3();
+  for (const v of verts) {
+    acc.add(surface.localToWorld(new Vector3(v[0], v[1], v[2])));
+  }
+  return acc.multiplyScalar(1 / Math.max(verts.length, 1));
 }
 
 function surfacesFacingEachother(surface1: Surface, surface2: Surface): boolean{
