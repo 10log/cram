@@ -26,6 +26,7 @@ import { renderer } from "../../render/renderer";
 import { addSolver, removeSolver, setSolverProperty, useSolver, useContainer, useResult, ResultKind, Result } from "../../store";
 import { pickProps } from "../../common/helpers";
 import { worldDirToCramAngles } from "../../common/dir-angle-conversions";
+import { lookingBackArrivalDirection } from "../../common/arrival-direction";
 import * as ac from "../acoustics";
 import { normalize } from "../acoustics";
 import { audioEngine } from "../../audio-engine/audio-engine";
@@ -83,7 +84,7 @@ export interface BeamTracePath {
   length: number;
   arrivalTime: number;
   polygonIds: (number | null)[];
-  /** Direction from which the path arrives at the receiver (normalized) */
+  /** Unit vector at the receiver pointing toward the last bounce (looking-back). Matches Receiver.getGain. */
   arrivalDirection: THREE.Vector3;
   // Detailed reflection info (optional, populated when using getDetailedPaths)
   reflections?: {
@@ -854,16 +855,13 @@ export class BeamTraceSolver extends Solver {
     const order = getPathReflectionOrder(path);
     const polygonIds = path.map(p => p.polygonId);
 
-    // Compute arrival direction (direction from second-to-last point to receiver)
-    // points[0] is the receiver, points[1] is the last reflection point (or source for direct)
+    // Looking-back: receiver → last bounce (or source). Matches Receiver.getGain.
+    // points[0] is the receiver, points[1] is the last reflection (or source for direct).
     let arrivalDirection: THREE.Vector3;
     if (points.length >= 2) {
-      arrivalDirection = new THREE.Vector3()
-        .subVectors(points[0], points[1])
-        .normalize()
-        .negate(); // Negate to get direction ray arrives FROM
+      const [x, y, z] = lookingBackArrivalDirection(points[0], points[1]);
+      arrivalDirection = new THREE.Vector3(x, y, z);
     } else {
-      // Fallback for edge case
       arrivalDirection = new THREE.Vector3(0, 0, 1);
     }
 
@@ -1297,15 +1295,16 @@ export class BeamTraceSolver extends Solver {
         }
       }
 
-      // Compute arrival direction: diffraction point → receiver (normalized)
+      // Looking-back: receiver → diffraction point. Same convention as convertPath.
       const recPos = receiverPositions.get(dp.receiverId)!;
-      const adx = recPos[0] - dp.diffractionPoint[0];
-      const ady = recPos[1] - dp.diffractionPoint[1];
-      const adz = recPos[2] - dp.diffractionPoint[2];
-      const adLen = Math.sqrt(adx * adx + ady * ady + adz * adz);
-      const arrivalDir = adLen > 1e-10
-        ? new THREE.Vector3(adx / adLen, ady / adLen, adz / adLen)
-        : new THREE.Vector3(0, 0, 1);
+      const diffPt = {
+        x: dp.diffractionPoint[0],
+        y: dp.diffractionPoint[1],
+        z: dp.diffractionPoint[2],
+      };
+      const rec = { x: recPos[0], y: recPos[1], z: recPos[2] };
+      const [adx, ady, adz] = lookingBackArrivalDirection(rec, diffPt);
+      const arrivalDir = new THREE.Vector3(adx, ady, adz);
 
       const srcPos = sourcePositions.get(dp.sourceId)!;
       const receiverVec = new THREE.Vector3(recPos[0], recPos[1], recPos[2]);
