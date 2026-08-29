@@ -591,7 +591,7 @@ Qr("ray-tracer", async (e, t) => {
 	let { default: n } = await import("./raytracer-3ICWYPE3.mjs");
 	return new n(t);
 }), Qr("image-source", async (e, t) => {
-	let { ImageSourceSolver: n } = await import("./image-source-B_UVw1g7.mjs");
+	let { ImageSourceSolver: n } = await import("./image-source-DsQrIBeS.mjs");
 	return new n({
 		name: "Image Source",
 		roomID: "",
@@ -6694,7 +6694,7 @@ async function Zo(e, t) {
 			return new e(t).restore(t);
 		}
 		case "image-source": {
-			let { default: e } = await import("./image-source-B_UVw1g7.mjs");
+			let { default: e } = await import("./image-source-DsQrIBeS.mjs");
 			return new e(t).restore(t);
 		}
 		case "beam-trace": {
