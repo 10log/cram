@@ -19,7 +19,7 @@ import {
   downloadImpulseResponse as sharedDownloadIR,
 } from "../../shared/export-playback";
 import { imageSourceArrivalPressure, imageSourceArrivalPressureIR } from "./arrival-pressure";
-import { resolveRoomID, selectedReflectors } from "./selection";
+import { resolveRoomID, selectedReflectors, shouldRebuildImageSourceTree } from "./selection";
 
 function createLine(){
   const line = new MeshLine();
@@ -485,11 +485,11 @@ export class ImageSourceSolver extends Solver {
     }
 
     calculateLTP(c: number = this.c, consoleOutput: boolean = false){
-      // If no paths have been calculated yet, run the calculation first
-      if (!this.validRayPaths || this.validRayPaths.length === 0) {
+      // null = never run (build once). [] = ran, nothing valid (emit empty, no recurse).
+      if (shouldRebuildImageSourceTree(this.validRayPaths)) {
         if (this.sourceIDs.length > 0 && this.receiverIDs.length > 0) {
           this.updateImageSourceCalculation();
-          return; // updateImageSourceCalculation calls calculateLTP at the end
+          return;
         }
         return;
       }

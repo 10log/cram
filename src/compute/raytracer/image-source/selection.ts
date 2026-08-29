@@ -13,3 +13,11 @@ export function selectedReflectors<T extends { uuid: string }>(all: T[], surface
   const allow = new Set(surfaceIDs);
   return all.filter((s) => allow.has(s.uuid));
 }
+
+/**
+ * `null` means the tree has never run — Calculate should build it once.
+ * `[]` means it ran and nothing was valid — do not re-enter (#125).
+ */
+export function shouldRebuildImageSourceTree(validRayPaths: unknown[] | null): boolean {
+  return validRayPaths === null;
+}
