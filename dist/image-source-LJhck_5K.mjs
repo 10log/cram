@@ -366,7 +366,8 @@ var H = class {
 		if (r != null) for (let a = 0; a < r.length; a++) {
 			let o = {
 				time: r[a].arrivalTime(e),
-				pressure: r[a].arrivalPressure(t, n, this.temperature)
+				pressure: r[a].arrivalPressure(t, n, this.temperature),
+				order: r[a].order
 			};
 			i.push(o);
 		}
@@ -675,4 +676,4 @@ n("IMAGESOURCE_SET_PROPERTY", o), n("REMOVE_IMAGESOURCE", t), n("ADD_IMAGESOURCE
 //#endregion
 export { G as t };
 
-//# sourceMappingURL=image-source-Bd7lMTGE.mjs.map
+//# sourceMappingURL=image-source-LJhck_5K.mjs.map

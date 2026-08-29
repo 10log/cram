@@ -80,6 +80,7 @@ export interface ImageSourceSolverParams {
 export interface HybridRayPath {
     time: number;
     pressure: number[];
+    order: number;
 }
 export declare class ImageSourceSolver extends Solver {
     sourceIDs: string[];
