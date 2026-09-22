@@ -10,7 +10,8 @@
 
 import { DctPartition } from '../dct-partition';
 import { FdtdPartition } from '../fdtd-partition';
-import type { Box } from '../partition';
+import { Axis, spatialRank, vonNeumannCflLimit, type Box } from '../partition';
+import { PML_CFL_MARGIN, PmlPartition } from '../pml-partition';
 
 const C = 343; // m/s — deliberately not 1, see the forcing-convention note below
 const DX = 0.05;
@@ -213,6 +214,119 @@ describe('FdtdPartition', () => {
   });
 });
 
+describe('pressure buffer identity', () => {
+  /**
+   * FDTD and PML rotate three time levels internally. If `pressure` returned
+   * the live slot, a held reference would become the previous level after one
+   * step and a scratch buffer after two — safe on DctPartition, silently wrong
+   * on the other two. Phase 6 receivers, debug probes and postMessage
+   * transfers will all hold these, so the identity has to be stable.
+   */
+  const fixture = () => {
+    const dt = dtFor(0.3);
+    const seed = gaussian(32, 16, 3);
+    const dct = new DctPartition({ box: box(32), dx: DX, c: C, dt });
+    const fdtd = new FdtdPartition({ box: box(32), dx: DX, c: C, dt });
+    const pml = new PmlPartition({
+      box: box(32),
+      dx: DX,
+      c: C,
+      dt,
+      axis: Axis.X,
+      increasing: true,
+      sigmaMax: 500,
+    });
+    dct.setPressure(seed);
+    fdtd.setPressure(seed);
+    pml.setPressure(seed);
+    return { dct, fdtd, pml };
+  };
+
+  it('is stable across steps for every partition kind', () => {
+    for (const p of Object.values(fixture())) {
+      const held = p.pressure;
+      for (let s = 0; s < 5; s++) p.step();
+      expect(p.pressure).toBe(held);
+    }
+  });
+
+  it('shows updated values through a reference held across steps', () => {
+    for (const p of Object.values(fixture())) {
+      const held = p.pressure;
+      const before = held.slice();
+      for (let s = 0; s < 20; s++) p.step();
+      expect(maxAbs(held)).toBeGreaterThan(0);
+      let changed = false;
+      for (let i = 0; i < held.length; i++) {
+        if (Math.abs(held[i] - before[i]) > 1e-12) changed = true;
+      }
+      expect(changed).toBe(true);
+      // And it is the same data the accessor reports.
+      for (let i = 0; i < held.length; i++) {
+        expect(held[i]).toBe(p.pressureAt(i, 0, 0));
+      }
+    }
+  });
+});
+
+describe('PmlPartition stability guard', () => {
+  /**
+   * The PML runs the same explicit 6th-order update as FdtdPartition, so it
+   * carries the same CFL limit — and measurement shows the damping terms
+   * tighten it by up to ~2.6%, so the plain bound is optimistic rather than
+   * conservative. Without a guard, a rank-3 wall slab at the plan's default
+   * Courant 0.5 diverges while the DCT interior beside it stays healthy, and
+   * the 1D calibration rig never sees it.
+   */
+  const mkPml = (w: number, h: number, d: number, courant: number) =>
+    new PmlPartition({
+      box: box(w, h, d),
+      dx: DX,
+      c: C,
+      dt: dtFor(courant),
+      axis: Axis.X,
+      increasing: true,
+      sigmaMax: 500,
+    });
+
+  it('refuses a rank-3 slab at the plan default of Courant 0.5', () => {
+    expect(() => mkPml(16, 16, 16, 0.5)).toThrow(/CFL-unstable/);
+    expect(() => mkPml(16, 16, 16, 0.4)).not.toThrow();
+  });
+
+  it('applies a margin below the undamped von Neumann bound', () => {
+    for (const [w, h, d, rank] of [
+      [32, 1, 1, 1],
+      [32, 32, 1, 2],
+      [16, 16, 16, 3],
+    ] as const) {
+      const pml = mkPml(w, h, d, 0.3);
+      expect(pml.rank).toBe(rank);
+      expect(pml.cflLimit).toBeCloseTo(PML_CFL_MARGIN * vonNeumannCflLimit(rank), 10);
+      expect(pml.cflLimit).toBeLessThan(vonNeumannCflLimit(rank));
+    }
+  });
+
+  it('stays bounded just under its limit and is refused just over', () => {
+    const rank3 = PML_CFL_MARGIN * vonNeumannCflLimit(3);
+    const ok = mkPml(12, 12, 12, rank3 * 0.98);
+    ok.setPressure(
+      Array.from({ length: 12 ** 3 }, (_, i) => Math.sin(i * 0.7) * 1e-3),
+    );
+    for (let s = 0; s < 800; s++) ok.step();
+    expect(maxAbs(ok.pressure)).toBeLessThan(1);
+
+    expect(() => mkPml(12, 12, 12, rank3 * 1.02)).toThrow(/CFL-unstable/);
+  });
+
+  it('shares the rank helper with the FDTD partition', () => {
+    expect(spatialRank(10, 1, 1)).toBe(1);
+    expect(spatialRank(10, 10, 1)).toBe(2);
+    expect(spatialRank(10, 10, 10)).toBe(3);
+    expect(spatialRank(1, 1, 1)).toBe(1);
+  });
+});
+
 describe('DctPartition vs FdtdPartition', () => {
   /**
    * The two solvers have different boundary conditions — the DCT partition's
@@ -345,6 +459,20 @@ describe('forcing bookkeeping', () => {
 
     p.step();
     expect(maxAbs(p.pressure)).toBe(0);
+  });
+
+  it('rejects non-integer extents and origins', () => {
+    // `new Float64Array(10.5)` truncates to length 10 while a loop bounded by
+    // `nx = 10.5` still visits x = 10, so a fractional extent walks off the end
+    // of the array. A Phase 3 decomposition bug must fail here, not corrupt
+    // memory quietly. `createDctPlan` already rejects these; FdtdPartition and
+    // PmlPartition reach the grid only through PartitionBase.
+    const base = { dx: DX, c: C, dt: dtFor(0.3) };
+    expect(() => new FdtdPartition({ box: box(10.5), ...base })).toThrow(/integer/);
+    expect(() => new FdtdPartition({ box: box(10, 4.5), ...base })).toThrow(/integer/);
+    expect(() => new FdtdPartition({ box: box(10, 4, 2.5), ...base })).toThrow(/integer/);
+    expect(() => new FdtdPartition({ box: box(10, 4, 2, 0.5), ...base })).toThrow(/integer/);
+    expect(() => new DctPartition({ box: box(10.5), ...base })).toThrow(/integer/);
   });
 
   it('rejects degenerate geometry and parameters', () => {

@@ -212,6 +212,45 @@ describe('interface residual', () => {
   });
 });
 
+describe('grid parameter agreement', () => {
+  // The residual amplitude is c^2/(180 dx^2) but each side steps with its own
+  // c and dx, so a mismatched argument silently applies the wrong amplitude —
+  // the sort of bug that passes a 1D unit test and is wrong in the driver.
+  const left = () => new DctPartition({ box: box(20), dx: DX, c: C, dt: DT });
+  const right = () => new DctPartition({ box: box(20, 1, 1, 20), dx: DX, c: C, dt: DT });
+
+  it('rejects a c that does not match the partitions', () => {
+    const iface = findInterface(left(), right())!;
+    expect(() => applyInterfaceForcing(iface, 340, DX)).toThrow(/c = 340/);
+  });
+
+  it('rejects a dx that does not match the partitions', () => {
+    const iface = findInterface(left(), right())!;
+    expect(() => applyInterfaceForcing(iface, C, 0.04)).toThrow(/dx = 0.04/);
+  });
+
+  it('rejects partitions built on different grids', () => {
+    // Arguments match the lower partition; the upper one was built on a
+    // different grid, which no single argument can be correct for.
+    const a = new DctPartition({ box: box(20), dx: DX, c: C, dt: DT });
+    const b = new DctPartition({ box: box(20, 1, 1, 20), dx: 0.04, c: C, dt: DT });
+    const iface = findInterface(a, b)!;
+    expect(() => applyInterfaceForcing(iface, C, DX)).toThrow(/upper partition runs at 0.04/);
+  });
+
+  it('rejects partitions with different time steps', () => {
+    const a = new DctPartition({ box: box(20), dx: DX, c: C, dt: DT });
+    const b = new DctPartition({ box: box(20, 1, 1, 20), dx: DX, c: C, dt: DT * 0.5 });
+    const iface = findInterface(a, b)!;
+    expect(() => applyInterfaceForcing(iface, C, DX)).toThrow(/time step/);
+  });
+
+  it('accepts matching parameters', () => {
+    const iface = findInterface(left(), right())!;
+    expect(() => applyInterfaceForcing(iface, C, DX)).not.toThrow();
+  });
+});
+
 describe('a split partition matches an undivided one', () => {
   /**
    * The headline test. One 400-cell domain versus the same domain cut in two at
@@ -363,6 +402,67 @@ describe('a split partition matches an undivided one', () => {
 
     expect(maxAbs(whole.pressure)).toBeGreaterThan(0.05);
     expect(relL2(joined, whole.pressure)).toBeLessThan(0.05);
+  });
+
+  /**
+   * The headline cases above are all DCT|DCT. `includeSelfTerms` is the sharp
+   * edge of this module — a DCT side needs `across - own`, an FDTD or PML side
+   * needs `across` alone — and a regression that applied self-terms to an FDTD
+   * partition would double-force the seam without failing any of them. Phase 3
+   * will emit exactly this pairing for boxes too thin for a DCT partition, so
+   * it needs its own split-vs-whole case.
+   */
+  it('transmits across a mixed DCT|FDTD seam', () => {
+    const n = 400;
+    const cut = 200;
+    const whole = new DctPartition({ box: box(n), dx: DX, c: C, dt: DT });
+    const left = new DctPartition({ box: box(cut), dx: DX, c: C, dt: DT });
+    const right = new FdtdPartition({ box: box(n - cut, 1, 1, cut), dx: DX, c: C, dt: DT });
+
+    const pulse = gaussian1d(n, 150, 6);
+    whole.setPressure(pulse);
+    left.setPressure(pulse.subarray(0, cut));
+    right.setPressure(pulse.subarray(cut));
+
+    // 300 steps moves the front 120 cells, to 270 — across the seam at 200 but
+    // still 130 cells clear of the FDTD partition's zero-padded far edge, which
+    // is a different boundary condition from the undivided run's rigid wall.
+    advance([whole], 300);
+    advance([left, right], 300);
+
+    const joined = new Float64Array(n);
+    joined.set(left.pressure, 0);
+    joined.set(right.pressure, cut);
+
+    expect(maxAbs(whole.pressure)).toBeGreaterThan(0.3);
+    // Looser than the DCT|DCT figure: the FDTD side carries its own dispersion
+    // error, which the spectrally exact DCT reference does not.
+    expect(relL2(joined, whole.pressure, 60, 340)).toBeLessThan(0.02);
+  });
+
+  it('is much worse across a mixed seam without the interface forcing', () => {
+    // The discriminating control for the mixed case.
+    const n = 400;
+    const cut = 200;
+    const whole = new DctPartition({ box: box(n), dx: DX, c: C, dt: DT });
+    const left = new DctPartition({ box: box(cut), dx: DX, c: C, dt: DT });
+    const right = new FdtdPartition({ box: box(n - cut, 1, 1, cut), dx: DX, c: C, dt: DT });
+
+    const pulse = gaussian1d(n, 150, 6);
+    whole.setPressure(pulse);
+    left.setPressure(pulse.subarray(0, cut));
+    right.setPressure(pulse.subarray(cut));
+
+    advance([whole], 300);
+    for (let s = 0; s < 300; s++) {
+      left.step();
+      right.step();
+    }
+
+    const joined = new Float64Array(n);
+    joined.set(left.pressure, 0);
+    joined.set(right.pressure, cut);
+    expect(relL2(joined, whole.pressure, 60, 340)).toBeGreaterThan(0.5);
   });
 
   it('is much worse without the interface forcing', () => {

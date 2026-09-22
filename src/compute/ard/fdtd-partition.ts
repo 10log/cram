@@ -42,32 +42,28 @@ import {
   PartitionBase,
   STENCIL_6TH,
   STENCIL_6TH_DIV,
+  vonNeumannCflLimit,
   type PartitionParams,
 } from './partition';
-
-/**
- * Most negative value of the 6th-order stencil's Fourier symbol, at θ = π:
- * `|[4cos3θ − 54cos2θ + 540cosθ − 490]/180| = 1088/180`.
- */
-const WORST_CASE_SYMBOL = 1088 / 180;
 
 export class FdtdPartition extends PartitionBase {
   readonly kind = 'fdtd' as const;
   /** Out-of-range taps read zero, so there is no mirror for the residual to cancel. */
   readonly includeSelfTerms = false;
 
-  // The three time levels rotate every step, so `pressure` is a getter over
-  // the current one rather than a fixed array.
+  // Three time levels rotate every step. `pressure` is a fourth, stable array
+  // copied from the current level at the end of each step, so a caller may hold
+  // the reference — see the contract on `Partition.pressure`. The copy is one
+  // linear pass against a stencil that already does ~21 multiply-adds per cell,
+  // so it costs well under a percent.
+  readonly pressure: Float64Array;
   private p: Float64Array;
   private pNew: Float64Array;
   private pOld: Float64Array;
 
-  get pressure(): Float64Array {
-    return this.p;
-  }
-
   constructor(params: PartitionParams) {
     super(params);
+    this.pressure = new Float64Array(this.size);
     this.p = new Float64Array(this.size);
     this.pNew = new Float64Array(this.size);
     this.pOld = new Float64Array(this.size);
@@ -81,20 +77,12 @@ export class FdtdPartition extends PartitionBase {
     }
   }
 
-  /** Number of axes with extent > 1. A 1-thick axis carries no derivative. */
-  get rank(): number {
-    return Math.max(
-      1,
-      (this.nx > 1 ? 1 : 0) + (this.ny > 1 ? 1 : 0) + (this.nz > 1 ? 1 : 0),
-    );
-  }
-
   /**
    * Stability bound on the Courant number — see the class comment.
    * 0.813 in 1D, 0.575 in 2D, 0.470 in 3D.
    */
   get cflLimit(): number {
-    return Math.sqrt(4 / (WORST_CASE_SYMBOL * this.rank));
+    return vonNeumannCflLimit(this.rank);
   }
 
   step(): void {
@@ -146,6 +134,7 @@ export class FdtdPartition extends PartitionBase {
     this.pOld = p;
     this.p = pNew;
     this.pNew = pOld;
+    this.pressure.set(this.p);
 
     this.clearForce();
   }
@@ -157,5 +146,6 @@ export class FdtdPartition extends PartitionBase {
     }
     this.p.set(values);
     this.pOld.set(values);
+    this.pressure.set(values);
   }
 }

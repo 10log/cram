@@ -203,6 +203,7 @@ function addForceAtDepth(
  */
 export function applyInterfaceForcing(iface: PartitionInterface, c: number, dx: number): void {
   const { axis, lower, upper, overlap } = iface;
+  assertGridMatches(iface, c, dx);
   const scale = (c * c) / (STENCIL_6TH_DIV * dx * dx);
 
   const lowerSelf = lower.includeSelfTerms;
@@ -244,6 +245,37 @@ export function applyInterfaceForcing(iface: PartitionInterface, c: number, dx: 
         if (r !== 0) addForceAtDepth(upper, axis, false, d - 1, gu, gv, scale * r);
       }
     }
+  }
+}
+
+/**
+ * The residual amplitude is `c²/(180 dx²)`, but each partition advances with
+ * its own `this.c` and `this.dx`. A caller passing different values — or two
+ * partitions built on different grids — silently applies the wrong amplitude:
+ * the kind of bug that passes a 1D unit test and is wrong in the driver. Fail
+ * instead.
+ */
+function assertGridMatches(iface: PartitionInterface, c: number, dx: number): void {
+  for (const [side, part] of [
+    ['lower', iface.lower],
+    ['upper', iface.upper],
+  ] as const) {
+    if (part.c !== c) {
+      throw new Error(
+        `Interface forcing called with c = ${c} but the ${side} partition runs at ${part.c}`,
+      );
+    }
+    if (part.dx !== dx) {
+      throw new Error(
+        `Interface forcing called with dx = ${dx} but the ${side} partition runs at ${part.dx}`,
+      );
+    }
+  }
+  if (iface.lower.dt !== iface.upper.dt) {
+    throw new Error(
+      `Partitions across an interface must share a time step; got ` +
+        `${iface.lower.dt} and ${iface.upper.dt}`,
+    );
   }
 }
 

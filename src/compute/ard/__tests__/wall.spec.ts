@@ -208,6 +208,64 @@ describe('createWall', () => {
     expect(wall.sigmaAt(19)).toBeLessThan(wall.sigmaAt(0));
   });
 
+  /**
+   * A wall keeps its face's transverse extents, so a wall on a 3D room is a
+   * rank-3 PML slab with the 3D CFL limit (~0.47) — while the DCT interior it
+   * terminates has no limit at all. At the plan's default Courant 0.5 the wall
+   * diverges and the room beside it looks healthy. The calibration rig is 1D
+   * (rank 1, limit ~0.81), so it cannot notice; the check has to live where the
+   * geometry is known.
+   */
+  describe('stability guard', () => {
+    const room3d = { x: 0, y: 0, z: 0, w: 40, h: 30, d: 20 };
+    const dtFor = (courant: number) => (courant * DX) / C;
+
+    it('refuses a 3D room wall at the plan default of Courant 0.5', () => {
+      expect(() =>
+        createWall({
+          box: room3d,
+          axis: Axis.X,
+          high: true,
+          alpha: 0.3,
+          dx: DX,
+          c: C,
+          dt: dtFor(0.5),
+        }),
+      ).toThrow(/rank-3 PML slab/);
+    });
+
+    it('accepts the same wall at Courant 0.4', () => {
+      const wall = createWall({
+        box: room3d,
+        axis: Axis.X,
+        high: true,
+        alpha: 0.3,
+        dx: DX,
+        c: C,
+        dt: dtFor(0.4),
+      });
+      expect(wall.rank).toBe(3);
+      expect(wall.courant).toBeLessThan(wall.cflLimit);
+    });
+
+    it('still allows Courant 0.5 on a 2D room, where the slab is rank 2', () => {
+      // Same default, different geometry: the 2D limit is ~0.575, so 0.5 is
+      // genuinely safe here and must not be refused.
+      const room2d = { x: 0, y: 0, z: 0, w: 40, h: 30, d: 1 };
+      const wall = createWall({
+        box: room2d,
+        axis: Axis.X,
+        high: true,
+        alpha: 0.3,
+        dx: DX,
+        c: C,
+        dt: dtFor(0.5),
+      });
+      expect(wall.rank).toBe(2);
+      expect(wall.courant).toBeLessThan(wall.cflLimit);
+    });
+  });
+
   it('gives a fully reflective surface no damping at all', () => {
     const wall = createWall({
       box: room,

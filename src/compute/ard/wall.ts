@@ -55,6 +55,11 @@
  *
  * ## Limitations
  *
+ * `createWall` refuses a time step the resulting slab cannot run at: a wall on
+ * a 3D room face is a rank-3 PML and carries the 3D CFL limit, even though the
+ * DCT interior it terminates has none. The calibration rig is 1D and cannot
+ * detect that on its own.
+ *
  * Normal incidence only, and frequency-independent — both intrinsic to the
  * method, not to this implementation. Angle-dependent absorption needs a
  * different boundary condition (a locally-reacting impedance surface, as in
@@ -63,8 +68,8 @@
  */
 
 import { DctPartition } from './dct-partition';
-import { Axis } from './partition';
-import { PmlPartition } from './pml-partition';
+import { Axis, spatialRank, vonNeumannCflLimit } from './partition';
+import { PML_CFL_MARGIN, PmlPartition } from './pml-partition';
 import { applyAllInterfaceForcing, findInterfaces } from './interface';
 
 /** Normal-incidence pressure reflection magnitude for an absorption coefficient. */
@@ -342,11 +347,31 @@ export function createWall(options: {
     gradingExponent = DEFAULT_CALIBRATION.gradingExponent,
   } = options;
 
-  const calibration: WallCalibration = {
-    thickness,
-    gradingExponent,
-    courant: (c * dt) / dx,
-  };
+  const courant = (c * dt) / dx;
+
+  // Guard before calibrating. A room face keeps its transverse extents, so a
+  // wall on a 3D room is a rank-3 slab and carries the 3D CFL limit (~0.47),
+  // while the DCT interior it terminates has no limit at all. At the plan's
+  // default Courant 0.5 the wall diverges and the room beside it looks fine.
+  // The calibration rig is 1D — rank 1, limit ~0.81 — so it would happily build
+  // and cache a curve for a dt the real slab cannot run at. Fail here, where
+  // the geometry is known, rather than inside the constructor with no context.
+  const slabRank = spatialRank(
+    axis === Axis.X ? thickness : box.w,
+    axis === Axis.Y ? thickness : box.h,
+    axis === Axis.Z ? thickness : box.d,
+  );
+  const limit = PML_CFL_MARGIN * vonNeumannCflLimit(slabRank);
+  if (courant > limit) {
+    throw new Error(
+      `A wall on this face is a rank-${slabRank} PML slab, limited to Courant ` +
+        `${limit.toFixed(3)}, but dt gives ${courant.toFixed(3)}. The wall slab sets ` +
+        `the time step for the whole simulation — DctPartition interiors have no CFL ` +
+        `limit — so reduce dt rather than the layer thickness.`,
+    );
+  }
+
+  const calibration: WallCalibration = { thickness, gradingExponent, courant };
   const sigmaHat = dampingForAbsorption(alpha, calibration);
 
   const origin: ['x', 'y', 'z'] = ['x', 'y', 'z'];

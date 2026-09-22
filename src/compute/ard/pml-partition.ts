@@ -31,8 +31,33 @@
  * covers a slab attached to a face, which is the only way the solver builds
  * them. It does **not** cover a PML corner, where two slabs overlap and both
  * axes need damping; the reference papers over that case with its constant
- * `0.05` cross-term. Corners are left for the Phase 6 driver to avoid by
- * construction, and this class throws rather than pretending otherwise.
+ * `0.05` cross-term.
+ *
+ * A partition cannot detect a corner on its own — that needs the neighbour set,
+ * which only the driver has — so nothing here rejects one. **Avoiding corners is
+ * a Phase 6 contract**, not something this class enforces. Build two overlapping
+ * slabs and you get two independently damped partitions and a wrong answer, with
+ * no error.
+ *
+ * ## Stability
+ *
+ * The interior update is the same explicit 6th-order scheme as
+ * {@link FdtdPartition}, so it carries the same CFL limit — and measurement
+ * shows the damping terms tighten it slightly further. Largest stable Courant,
+ * bisected over 2000 steps, as a fraction of the undamped von Neumann bound:
+ *
+ * | σ̂    | 1D    | 2D    | 3D    |
+ * |-------|-------|-------|-------|
+ * | 0.00  | 1.000 | 1.003 | 1.010 |
+ * | 0.05  | 0.995 | 1.000 | 1.008 |
+ * | 0.20  | 0.974 | 0.989 | 1.001 |
+ *
+ * So the plain FDTD bound is *optimistic* here by up to ~2.6%, not
+ * conservative. {@link PML_CFL_MARGIN} applies a 5% margin, which covers the
+ * whole measured range and still admits Courant 0.4 in 3D. Without the guard a
+ * rank-3 wall slab at the plan's default Courant 0.5 diverges silently while
+ * the DCT interior beside it — which has no CFL limit — looks perfectly
+ * healthy, and the 1D calibration rig never sees it.
  *
  * ## Accuracy
  *
@@ -49,8 +74,15 @@ import {
   PartitionBase,
   STENCIL_6TH,
   STENCIL_6TH_DIV,
+  vonNeumannCflLimit,
   type PartitionParams,
 } from './partition';
+
+/**
+ * Safety factor on the von Neumann bound for a damped layer. Measured worst
+ * case across σ̂ ∈ [0, 0.2] and rank 1-3 is 0.974; 0.95 covers it with room.
+ */
+export const PML_CFL_MARGIN = 0.95;
 
 export interface PmlPartitionParams extends PartitionParams {
   /** Axis the damping acts along — the normal of the face this slab terminates. */
@@ -79,15 +111,14 @@ export class PmlPartition extends PartitionBase {
   /** σ per cell along the damped axis. */
   private readonly sigma: Float64Array;
 
+  // As in FdtdPartition: three rotating time levels plus a stable `pressure`
+  // copied from the current one, so callers may hold the reference.
+  readonly pressure: Float64Array;
   private p: Float64Array;
   private pNew: Float64Array;
   private pOld: Float64Array;
   private readonly phi: [Float64Array, Float64Array, Float64Array];
   private readonly phiNew: [Float64Array, Float64Array, Float64Array];
-
-  get pressure(): Float64Array {
-    return this.p;
-  }
 
   constructor(params: PmlPartitionParams) {
     super(params);
@@ -106,6 +137,18 @@ export class PmlPartition extends PartitionBase {
       this.sigma[i] = sigmaMax * Math.pow(depth, gradingExponent);
     }
 
+    if (this.courant > this.cflLimit) {
+      throw new Error(
+        `PML partition is CFL-unstable: Courant ${this.courant.toFixed(3)} exceeds ` +
+          `${this.cflLimit.toFixed(3)} for rank ${this.rank}. The damped 6th-order ` +
+          `update carries the same limit as an FDTD partition, less a ${
+            ((1 - PML_CFL_MARGIN) * 100).toFixed(0)
+          }% margin. Reduce dt — a DctPartition interior has no CFL limit, so the ` +
+          `wall slab, not the room, sets the time step.`,
+      );
+    }
+
+    this.pressure = new Float64Array(this.size);
     this.p = new Float64Array(this.size);
     this.pNew = new Float64Array(this.size);
     this.pOld = new Float64Array(this.size);
@@ -119,6 +162,15 @@ export class PmlPartition extends PartitionBase {
       new Float64Array(this.size),
       new Float64Array(this.size),
     ];
+  }
+
+  /**
+   * Stability bound on the Courant number: the von Neumann bound for the
+   * explicit 6th-order update, less {@link PML_CFL_MARGIN} to cover the
+   * tightening the damping terms cause. See the class comment for measurements.
+   */
+  get cflLimit(): number {
+    return PML_CFL_MARGIN * vonNeumannCflLimit(this.rank);
   }
 
   /** σ at a given cell along the damped axis, for tests and diagnostics. */
@@ -215,6 +267,7 @@ export class PmlPartition extends PartitionBase {
     this.pOld = p;
     this.p = pNew;
     this.pNew = pOld;
+    this.pressure.set(this.p);
 
     this.clearForce();
   }
@@ -226,5 +279,6 @@ export class PmlPartition extends PartitionBase {
     }
     this.p.set(values);
     this.pOld.set(values);
+    this.pressure.set(values);
   }
 }

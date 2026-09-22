@@ -75,6 +75,12 @@ export interface PartitionParams {
 export interface Partition {
   readonly kind: 'dct' | 'fdtd' | 'pml';
   readonly box: Box;
+  /** Cell size in metres. Every partition on a grid must agree. */
+  readonly dx: number;
+  /** Speed of sound in m/s. */
+  readonly c: number;
+  /** Time step in seconds. Partitions sharing an interface must agree. */
+  readonly dt: number;
   /**
    * Whether the interface residual should include this partition's own
    * mirrored terms.
@@ -86,7 +92,17 @@ export interface Partition {
    * interface.
    */
   readonly includeSelfTerms: boolean;
-  /** Pressure field, for interfaces, recording and display. */
+  /**
+   * Pressure field, for interfaces, recording and display.
+   *
+   * **The array identity is stable for the life of the partition.** Holding a
+   * reference across `step()` is safe and sees updated values, for every
+   * partition kind. `FdtdPartition` and `PmlPartition` rotate three time levels
+   * internally and copy the current one here; `DctPartition` writes it in
+   * place. Without that guarantee a receiver probe, a debug view or a
+   * `postMessage` transfer that cached `partition.pressure` would silently read
+   * a stale — and two steps later, a scratch — buffer on two of the three kinds.
+   */
   readonly pressure: Float64Array;
   /** Advance one time step, then clear the forcing field. */
   step(): void;
@@ -120,6 +136,24 @@ export abstract class PartitionBase implements Partition {
 
   constructor(params: PartitionParams) {
     const { box, dx, c, dt } = params;
+    // Integers, not just positive. `new Float64Array(10.5)` truncates to length
+    // 10 while `for (x = 0; x < nx; x++)` with `nx = 10.5` still visits x = 10,
+    // so a fractional extent reads and writes off the end of the array. A
+    // Phase 3 decomposition bug would surface as silent corruption instead of
+    // a constructor error. `createDctPlan` already fails closed this way; the
+    // FDTD and PML partitions only pass through here.
+    for (const [name, value] of [
+      ['w', box.w],
+      ['h', box.h],
+      ['d', box.d],
+      ['x', box.x],
+      ['y', box.y],
+      ['z', box.z],
+    ] as const) {
+      if (!Number.isInteger(value)) {
+        throw new Error(`Partition box.${name} must be an integer, got ${value}`);
+      }
+    }
     if (box.w < 1 || box.h < 1 || box.d < 1) {
       throw new Error(`Partition extents must be >= 1, got ${box.w}x${box.h}x${box.d}`);
     }
@@ -171,6 +205,39 @@ export abstract class PartitionBase implements Partition {
   get courant(): number {
     return (this.c * this.dt) / this.dx;
   }
+
+  /** Number of axes with extent > 1. A 1-thick axis carries no derivative. */
+  get rank(): number {
+    return spatialRank(this.nx, this.ny, this.nz);
+  }
+}
+
+/** Number of axes with extent greater than 1, clamped to at least 1. */
+export function spatialRank(nx: number, ny: number, nz: number): number {
+  return Math.max(1, (nx > 1 ? 1 : 0) + (ny > 1 ? 1 : 0) + (nz > 1 ? 1 : 0));
+}
+
+/**
+ * Most negative value of the 6th-order stencil's Fourier symbol, at θ = π:
+ * `|[4cos3θ − 54cos2θ + 540cosθ − 490]/180| = 1088/180`.
+ */
+export const WORST_CASE_SYMBOL = 1088 / 180;
+
+/**
+ * Stability bound on the Courant number for the explicit 6th-order update
+ * `p^{n+1} = 2pⁿ − p^{n−1} + C²Ŝpⁿ`, which is stable while `C²·|Ŝ| ≤ 4`:
+ *
+ * ```
+ * C ≤ sqrt(4 / (6.0444 · rank))   →   0.813 (1D), 0.575 (2D), 0.470 (3D)
+ * ```
+ *
+ * Applies to {@link FdtdPartition} and, with a margin, to {@link PmlPartition}.
+ * {@link DctPartition} has no CFL limit at all — every mode is an exact
+ * oscillator — which is why the plan's default of Courant 0.5 is safe for room
+ * interiors and unsafe for a 3D wall slab.
+ */
+export function vonNeumannCflLimit(rank: number): number {
+  return Math.sqrt(4 / (WORST_CASE_SYMBOL * rank));
 }
 
 /**
