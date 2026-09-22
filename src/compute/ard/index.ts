@@ -54,6 +54,24 @@
  * of that reflection" is therefore wrong, and increasingly wrong the lower
  * `fMax` is set.
  *
+ * ## Two dimensions is a different room, not a cheaper one
+ *
+ * `dimensions: 2` runs on a plane through the room — the floor plan by
+ * default. It is the only mode that reaches 4 kHz on anything but a cupboard
+ * (plan §5), because collapsing an axis removes a whole cross-section of cells
+ * rather than a third of them.
+ *
+ * What it computes is the response of a room that is **uniform and unbounded
+ * along the collapsed axis**. Not a horizontal slice of this room's field: a
+ * different room, whose sound spreads as `1/sqrt(r)` instead of `1/r` and which
+ * has no modes across the missing axis at all. The level calibration is a
+ * spectral tilt rather than a constant for that reason (`deconvolve.ts`), the
+ * results are named `IR [2D xz]` so they cannot be read as comparable to the
+ * 3D ones, and the run pushes a warning saying the same thing in words.
+ *
+ * Useful for wavefronts and early reflections in plan. Not for a reverberation
+ * time.
+ *
  * ## What this does not do
  *
  * **Source directivity is not applied.** Plan D4 said it would be, following
@@ -85,6 +103,7 @@ import Solver, { type SolverParams } from '../solver';
 
 import { decompose } from './decompose';
 import {
+  calibration2D,
   calibrationScale,
   deconvolvePulse,
   deconvolveTransformLength,
@@ -99,6 +118,14 @@ import {
 } from './simulation';
 import type { ArdWorkerRequest, ArdWorkerResponse } from './ard.worker';
 import { Vector3 } from 'three';
+import {
+  collapsedAxis,
+  layerForCoordinate,
+  sliceGrid,
+  sliceHasAir,
+  widestLayer,
+  type ArdSlice,
+} from './grid-slice';
 import { Cell, cellSizeFor, nearestCell, worldToCell, type VoxelGrid } from './voxelize';
 import { voxelizeRoom } from './voxelize-room';
 import { DEFAULT_WALL_THICKNESS, padCellsForWalls } from './walls-from-grid';
@@ -156,6 +183,20 @@ export interface ARDProps extends SolverParams {
   sampleRate?: number;
   /** Relative humidity in %, for air attenuation. */
   humidity?: number;
+  /**
+   * 3 for the room, 2 for a plane through it. Default 3.
+   *
+   * A 2D run is not a cheaper approximation of the 3D one — see the class
+   * comment. It is the only mode that reaches 4 kHz on a plan (plan §5).
+   */
+  dimensions?: 2 | 3;
+  /** Plane a 2D run lives on: `xz` is the floor plan, `xy` a section. */
+  slice?: ArdSlice;
+  /**
+   * Where to cut, in metres along the collapsed axis. `null` cuts through the
+   * first source, which is inside the room by construction.
+   */
+  sliceCoordinate?: number | null;
 }
 
 export type ARDSaveObject = {
@@ -174,6 +215,9 @@ export type ARDSaveObject = {
   perBandRuns?: boolean;
   sampleRate?: number;
   humidity?: number;
+  dimensions?: 2 | 3;
+  slice?: ArdSlice;
+  sliceCoordinate?: number | null;
 };
 
 /** What a completed run reports, for the UI and for tests. */
@@ -227,6 +271,9 @@ export class ARD extends Solver {
   public perBandRuns: boolean;
   public sampleRate: number;
   public humidity: number;
+  public dimensions: 2 | 3;
+  public slice: ArdSlice;
+  public sliceCoordinate: number | null;
 
   /** Progress of the run in flight, 0..1. */
   public progress: number;
@@ -260,6 +307,9 @@ export class ARD extends Solver {
     this.perBandRuns = props.perBandRuns ?? false;
     this.sampleRate = props.sampleRate ?? 44100;
     this.humidity = props.humidity ?? 40;
+    this.dimensions = props.dimensions ?? 3;
+    this.slice = props.slice ?? 'xz';
+    this.sliceCoordinate = props.sliceCoordinate ?? null;
 
     this.progress = 0;
     this.lastRun = null;
@@ -359,20 +409,31 @@ export class ARD extends Solver {
     // A source is by construction a point the user believes is inside the room,
     // and the centroid of an L-shaped or a concave room is not.
     const seed = worldPosition(sources[0]);
-    const { grid, surfaces } = voxelizeRoom(room, {
+    const { grid: volumeGrid, surfaces } = voxelizeRoom(room, {
       dx,
       seed,
       padCells: padCellsForWalls(this.wallThickness),
     });
-    if (grid.leaked) {
+    if (volumeGrid.leaked) {
       throw new Error(
         'ARD: the room does not enclose a volume — the flood fill reached the outside of the ' +
           'grid. Close the geometry, or check that the first source is inside the room.',
       );
     }
 
+    const warnings = [...volumeGrid.warnings];
+    // A 2D run is one plane of the same voxelization the 3D run would use, so
+    // the two modes cannot disagree about where the room is. See
+    // `grid-slice.ts` for what that costs and why it is worth it.
+    const grid = this.dimensions === 2 ? this.takeSlice(volumeGrid, seed, warnings) : volumeGrid;
+    if (grid.airCount === 0) {
+      throw new Error(
+        'ARD: the chosen slice plane contains no room air. Move it inside the room, or run ' +
+          'in three dimensions.',
+      );
+    }
+
     const decomposition = decompose(grid);
-    const warnings = [...grid.warnings];
     const isRoomAir = (index: number) =>
       grid.cells[index] === Cell.Air && decomposition.assignment[index] >= 0;
 
@@ -504,6 +565,53 @@ export class ARD extends Solver {
     this.progress = 1;
     emit('ARD_PROGRESS', { uuid: this.uuid, progress: 1 });
     return summary;
+  }
+
+  /**
+   * The plane a 2D run lives on, cut out of the room's full voxelization.
+   *
+   * Defaults to the layer with the most air rather than the middle of the
+   * bounding box — on a pitched roof or a raked floor the middle can be mostly
+   * solid — unless the user names a height, in which case that wins and a
+   * height outside the room is clamped with a warning rather than refused.
+   */
+  private takeSlice(grid: VoxelGrid, seed: { x: number; y: number; z: number }, warnings: string[]) {
+    const axis = collapsedAxis(this.slice);
+    const axisName = axis === 1 ? 'y' : 'z';
+
+    // Where to cut, and what to do when that plane has no room in it. Clamping
+    // into the *grid* is not enough: the outermost layers are the padding the
+    // wall slabs grow into, so a height above the ceiling clamps to a layer
+    // that is entirely solid. The fallback is the widest layer, and the user
+    // is told which plane was used rather than left with an error about a
+    // slider that went too far.
+    const requested =
+      this.sliceCoordinate === null
+        ? // No height given: cut through the first source. It is inside the
+          // room by construction — it seeded the fill — which the widest layer
+          // need not be on a building with more than one storey.
+          (axis === 1 ? seed.y : seed.z)
+        : this.sliceCoordinate;
+    const chosen = layerForCoordinate(grid, axis, requested);
+    let layer = chosen.index;
+    if (!sliceHasAir(grid, axis, layer)) {
+      layer = widestLayer(grid, axis);
+      warnings.push(
+        `The 2D slice at ${axisName} = ${requested.toFixed(2)} m contains no room air — it is ` +
+          `outside the room, or in its padding. Cut at the widest plane instead.`,
+      );
+    }
+
+    const plane = sliceGrid(grid, axis, layer);
+    const height = axis === 1 ? plane.origin.y : plane.origin.z;
+    warnings.push(
+      `Running in two dimensions on the ${this.slice} plane at ${axisName} = ` +
+        `${height.toFixed(2)} m. A 2D result is the response of a room that is uniform and ` +
+        'unbounded along the collapsed axis, not of this room — sound spreads as 1/sqrt(r) ' +
+        'and there are no modes across that axis at all. Use it to see wavefronts in plan, ' +
+        'not to read a reverberation time.',
+    );
+    return plane;
   }
 
   /** One simulation: one source, one band. */
@@ -714,7 +822,18 @@ export class ARD extends Solver {
     const transformLength = deconvolveTransformLength(steps, pulse.length);
     const bandWindows =
       bands.length > 1 ? octaveBandWindows(transformLength, simRate, bands) : null;
-    const scale = calibrationScale(dx, c);
+
+    // In 2D the absolute scale is not a scale. A line source spreads as
+    // `1/sqrt(r)` and its free-field response falls as `1/sqrt(f)`, so the
+    // correction is a +3 dB/octave spectral tilt and the 3D constant is wrong
+    // by a factor that varies with distance *and* frequency — measured 8x to
+    // 23x across a metre and an octave. It rides inside the deconvolution
+    // alongside the band window, for the same reason that does.
+    const twoDimensional = this.dimensions === 2;
+    const calibration = twoDimensional
+      ? calibration2D(transformLength, simRate, dx, c)
+      : null;
+    const scale = twoDimensional ? 1 : calibrationScale(dx, c);
     const impulseResponses = new Map<string, Float32Array>();
 
     for (let s = 0; s < sources.length; s++) {
@@ -738,7 +857,7 @@ export class ARD extends Solver {
           const contribution = deconvolvePulse(records[s][b][r], pulse, {
             sampleRate: simRate,
             fMax: this.fMax,
-            window: bandWindows?.[b],
+            window: combineWindows(bandWindows?.[b], calibration),
           });
           for (let i = 0; i < steps; i++) combined[i] += contribution[i];
         }
@@ -767,6 +886,11 @@ export class ARD extends Solver {
   private emitPair(source: Source, receiver: Receiver, ir: Float32Array): void {
     const sourceName = source.name || 'source';
     const receiverName = receiver.name || 'receiver';
+    // A 2D result is the response of a different room — uniform and unbounded
+    // along the collapsed axis — so its name says so. Sitting unlabelled next
+    // to a ray-traced IR in the results panel invites a comparison that has no
+    // meaning: different spreading law, no modes across the third axis.
+    const tag = this.dimensions === 2 ? ` [2D ${this.slice}]` : '';
     const info = {
       sourceName,
       receiverName,
@@ -777,7 +901,7 @@ export class ARD extends Solver {
     const irUuid = `${this.uuid}-ard-ir-${source.uuid}-${receiver.uuid}`;
     publish<ResultKind.ImpulseResponse>({
       kind: ResultKind.ImpulseResponse,
-      name: `IR: ${sourceName} → ${receiverName}`,
+      name: `IR${tag}: ${sourceName} → ${receiverName}`,
       uuid: irUuid,
       from: this.uuid,
       info: { sampleRate: this.sampleRate, ...info },
@@ -790,7 +914,7 @@ export class ARD extends Solver {
     const edcUuid = `${this.uuid}-ard-edc-${source.uuid}-${receiver.uuid}`;
     publish<ResultKind.EnergyDecay>({
       kind: ResultKind.EnergyDecay,
-      name: `ARD energy: ${sourceName} → ${receiverName}`,
+      name: `ARD energy${tag}: ${sourceName} → ${receiverName}`,
       uuid: edcUuid,
       from: this.uuid,
       info: { binRate: this.sampleRate, units: 'energy', ...info },
@@ -804,12 +928,12 @@ export class ARD extends Solver {
     const {
       name, kind, uuid, autoCalculate, roomID, sourceIDs, receiverIDs,
       fMax, cellsPerWavelength, courant, irLength, wallThickness,
-      perBandRuns, sampleRate, humidity,
+      perBandRuns, sampleRate, humidity, dimensions, slice, sliceCoordinate,
     } = this;
     return {
       name, kind, uuid, autoCalculate, roomID, sourceIDs, receiverIDs,
       fMax, cellsPerWavelength, courant, irLength, wallThickness,
-      perBandRuns, sampleRate, humidity,
+      perBandRuns, sampleRate, humidity, dimensions, slice, sliceCoordinate,
     } as ARDSaveObject;
   }
 
@@ -827,6 +951,9 @@ export class ARD extends Solver {
     if (state.perBandRuns !== undefined) this.perBandRuns = state.perBandRuns;
     if (state.sampleRate !== undefined) this.sampleRate = state.sampleRate;
     if (state.humidity !== undefined) this.humidity = state.humidity;
+    if (state.dimensions !== undefined) this.dimensions = state.dimensions;
+    if (state.slice !== undefined) this.slice = state.slice;
+    if (state.sliceCoordinate !== undefined) this.sliceCoordinate = state.sliceCoordinate;
     return this;
   }
 
@@ -902,11 +1029,25 @@ export class ARD extends Solver {
     if (!size) return 0;
     const dx = this.cellSize;
     // Interior extents: the shell occupies the outermost cell on each side.
-    const nx = Math.max(1, Math.round(size.x / dx) - 1);
-    const ny = Math.max(1, Math.round(size.y / dx) - 1);
-    const nz = Math.max(1, Math.round(size.z / dx) - 1);
+    let nx = Math.max(1, Math.round(size.x / dx) - 1);
+    let ny = Math.max(1, Math.round(size.y / dx) - 1);
+    let nz = Math.max(1, Math.round(size.z / dx) - 1);
+    // A 2D run collapses one axis to a single cell, and the two faces normal
+    // to it need no slab — there is no outside on that axis to absorb into.
+    // That is most of the saving: it is not a third of the cells, it is the
+    // whole cross-section gone.
+    if (this.dimensions === 2) {
+      if (collapsedAxis(this.slice) === 1) ny = 1;
+      else nz = 1;
+    }
     const air = nx * ny * nz;
-    const faceCells = 2 * (nx * ny + ny * nz + nx * nz);
+    // A face normal to an axis gets a slab only if that axis has an outside to
+    // grow into — `planWalls` skips a 1-thick axis for the same reason. So a
+    // floor plan keeps its four in-plane walls and loses the two that would
+    // have been floor and ceiling.
+    const faceCells =
+      2 *
+      ((nx > 1 ? ny * nz : 0) + (ny > 1 ? nx * nz : 0) + (nz > 1 ? nx * ny : 0));
     return air + faceCells * this.wallThickness;
   }
 
@@ -1019,6 +1160,24 @@ export class ARD extends Solver {
 }
 
 export default ARD;
+
+/**
+ * Multiply two spectral windows, or return whichever exists.
+ *
+ * The band split and the 2D calibration are independent weights over the same
+ * bins, and `deconvolvePulse` takes one — folding them here keeps the run at
+ * one transform pair per band rather than adding one back for the 2D path.
+ */
+function combineWindows(
+  a: Float64Array | undefined,
+  b: Float64Array | null,
+): Float64Array | undefined {
+  if (!a) return b ?? undefined;
+  if (!b) return a;
+  const out = new Float64Array(a.length);
+  for (let k = 0; k < a.length; k++) out[k] = a[k] * b[k];
+  return out;
+}
 
 /** World position of a container, as a plain point. */
 function worldPosition(container: Source | Receiver): { x: number; y: number; z: number } {

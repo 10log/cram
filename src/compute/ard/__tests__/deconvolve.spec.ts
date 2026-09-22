@@ -12,10 +12,12 @@ import { decompose } from '../decompose';
 import {
   applySpectralWindow,
   bandWindow,
+  calibration2D,
   calibrationScale,
   deconvolvePulse,
   deconvolveTransformLength,
   freeFieldGain,
+  freeFieldGain2D,
   nextPowerOfTwo,
   octaveBandWindows,
 } from '../deconvolve';
@@ -364,6 +366,48 @@ describe('absolute scale', () => {
     expect(() => freeFieldGain(dx, C, 0)).toThrow(/positive/);
   });
 
+  it('has a two-dimensional gain that is not the three-dimensional one', () => {
+    // Not a variant with an exponent changed: a different function of
+    // different variables. 2D falls as 1/sqrt(r) and as 1/sqrt(f), 3D as 1/r
+    // and flat.
+    const dx = 0.05;
+    expect(freeFieldGain2D(dx, C, 1, 500) / freeFieldGain2D(dx, C, 4, 500)).toBeCloseTo(2, 9);
+    expect(freeFieldGain(dx, C, 1) / freeFieldGain(dx, C, 4)).toBeCloseTo(4, 9);
+    expect(freeFieldGain2D(dx, C, 1, 250) / freeFieldGain2D(dx, C, 1, 1000)).toBeCloseTo(2, 9);
+
+    for (const bad of [0, -1]) {
+      expect(() => freeFieldGain2D(bad, C, 1, 500)).toThrow(/positive/);
+      expect(() => freeFieldGain2D(dx, C, bad, 500)).toThrow(/positive/);
+      expect(() => freeFieldGain2D(dx, C, 1, bad)).toThrow(/positive/);
+    }
+  });
+
+  it('builds a 2D calibration that undoes the spreading it corrects', () => {
+    const dx = 0.05;
+    const n = 2048;
+    const sampleRate = 6500;
+    const weight = calibration2D(n, sampleRate, dx, C);
+
+    // Symmetric, so the inverse transform of a real spectrum stays real.
+    for (let k = 1; k < n / 2; k++) expect(weight[n - k]).toBe(weight[k]);
+    // Zero at DC: 2D free field has no amplitude there to normalize against,
+    // and the driving pulse carries nothing there either.
+    expect(weight[0]).toBe(0);
+
+    // The defining property: gain times calibration is 1/sqrt(r), flat in
+    // frequency. That is what makes a 2D impulse response readable at all —
+    // without it the result carries a -3 dB/octave tilt that is spreading, not
+    // the room.
+    const binHz = sampleRate / n;
+    for (const r of [0.5, 2, 5]) {
+      for (const k of [64, 128, 256]) {
+        const f = k * binHz;
+        expect(freeFieldGain2D(dx, C, r, f) * weight[k]).toBeCloseTo(1 / Math.sqrt(r), 9);
+      }
+    }
+    expect(() => calibration2D(n, sampleRate, 0, C)).toThrow(/positive/);
+  });
+
   /** Air box with a one-cell rigid shell, for a free-field window. */
   function openGrid(extent: number, dx: number): VoxelGrid {
     const n = extent + 2;
@@ -443,6 +487,101 @@ describe('absolute scale', () => {
     }
     return ratios;
   }
+
+  /** Air plane with a one-cell rigid shell — a 2D free-field window. */
+  function openPlane(extent: number, dx: number): VoxelGrid {
+    const n = extent + 2;
+    const cells = new Uint8Array(n * n);
+    let airCount = 0;
+    for (let j = 1; j <= extent; j++) {
+      for (let i = 1; i <= extent; i++) {
+        cells[i + n * j] = Cell.Air;
+        airCount++;
+      }
+    }
+    return {
+      nx: n, ny: n, nz: 1, dx,
+      origin: { x: 0, y: 0, z: 0 },
+      cells,
+      surfaceOf: new Int32Array(n * n).fill(-1),
+      airCount,
+      solidCount: n * n - airCount,
+      leaked: false,
+      warnings: [],
+    };
+  }
+
+  it('matches the analytic line-source solution in two dimensions', () => {
+    // The 2D counterpart of the test below, and the one that says the 3D
+    // constant cannot simply be reused: it is checked here too, and misses by
+    // a factor that moves with both distance and frequency.
+    const dx = 0.05;
+    const courant = 0.4;
+    const fMax = 1200;
+    const half = 40;
+    const grid = openPlane(2 * half, dx);
+    const dt = (courant * dx) / C;
+    const source: [number, number, number] = [1 + half, 1 + half, 0];
+    const distances = [8, 16, 24];
+    const steps = Math.floor((2 * half - distances[distances.length - 1]) / courant);
+    const signal = bandlimitedPulse(steps, dt, fMax);
+
+    const sim = createArdSimulation({
+      grid,
+      decomposition: decompose(grid),
+      c: C,
+      courant,
+      walls: false,
+      steps,
+      sources: [{ cell: source, signal }],
+      receivers: distances.map((d) => ({
+        cell: [source[0] + d, source[1], 0] as [number, number, number],
+      })),
+    });
+    // A plane is rank 2, so nothing here is a degenerate 3D run.
+    expect(sim.partitions.every((p) => p.box.d === 1)).toBe(true);
+    const irs = sim.run();
+    sim.dispose();
+
+    const n = nextPowerOfTwo(steps * 2);
+    const plan = createComplexFftPlan(n);
+    const spectrum = (x: Float32Array) => {
+      const re = new Float64Array(n);
+      const im = new Float64Array(n);
+      re.set(x.subarray(0, Math.min(x.length, n)));
+      plan.forward(re, im);
+      return { re, im };
+    };
+    const s = spectrum(signal);
+
+    const twoD: number[] = [];
+    const threeD: number[] = [];
+    for (let d = 0; d < distances.length; d++) {
+      const p = spectrum(irs[d]);
+      const r = distances[d] * dx;
+      for (const fraction of [0.25, 0.5, 0.75]) {
+        const k = Math.round(fraction * fMax * n * dt);
+        const f = k / (n * dt);
+        const measured =
+          Math.hypot(p.re[k], p.im[k]) / Math.hypot(s.re[k], s.im[k]);
+        twoD.push(measured / freeFieldGain2D(dx, C, r, f));
+        threeD.push(measured / freeFieldGain(dx, C, r));
+      }
+    }
+
+    // Measured: every ratio within 1.6% of 1 across three distances and three
+    // frequencies.
+    for (const ratio of twoD) {
+      expect(ratio).toBeGreaterThan(0.97);
+      expect(ratio).toBeLessThan(1.03);
+    }
+
+    // And the 3D expression is not merely off by a constant here — the spread
+    // across these nine points is itself a factor of three, so no scale factor
+    // could rescue it. Measured 8x to 23x.
+    expect(Math.min(...threeD)).toBeGreaterThan(5);
+    expect(Math.max(...threeD) / Math.min(...threeD)).toBeGreaterThan(2);
+  }, 300_000);
 
   it('matches the analytic point-source solution across parameters', () => {
     // dx^3/(4 pi c^2 r) is the continuum Green's function for the forcing

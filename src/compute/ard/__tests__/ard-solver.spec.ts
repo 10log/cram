@@ -741,6 +741,172 @@ describe('ARD solver', () => {
     }
   }, 900_000);
 
+  it('runs on a plane and says that it is a different room', async () => {
+    containers['room-1'] = makeRoom({ x: 4, y: 3, z: 3.2 }, 0.3);
+    containers['s1'] = makeSource('s1', [-1, 0, 0]);
+    containers['r1'] = makeReceiver('r1', [0.8, 0, 0.4]);
+
+    const solver = new ARD({
+      roomID: 'room-1',
+      sourceIDs: ['s1'],
+      receiverIDs: ['r1'],
+      fMax: 400,
+      irLength: 0.04,
+      dimensions: 2,
+    });
+    const summary = await solver.run();
+
+    // Every partition is one cell deep on the collapsed axis — a floor plan
+    // collapses world Y, which is the grid's *second* axis, not the third.
+    expect(summary.dx).toBeGreaterThan(0);
+    expect(summary.impulseResponses.get('s1->r1')!.length).toBeGreaterThan(0);
+    expect(summary.airCells).toBeGreaterThan(0);
+
+    // Said in words, because the result looks exactly like a 3D one otherwise.
+    const said = summary.warnings.join(' ');
+    expect(said).toMatch(/Running in two dimensions on the xz plane/);
+    expect(said).toMatch(/not of this room/);
+    expect(said).toMatch(/1\/sqrt\(r\)/);
+
+    // And in the result names, which is where someone comparing two tabs
+    // actually looks.
+    const names = addedResults().map((r) => r.name);
+    expect(names).toContain(`IR [2D xz]: s1 → r1`);
+    expect(names).toContain(`ARD energy [2D xz]: s1 → r1`);
+  }, 300_000);
+
+  it('gets the level right on a plane, which needs a different law entirely', async () => {
+    // The 2D counterpart of the direct-arrival test above, and the one that
+    // says the solver actually applies the 2D calibration rather than merely
+    // having one. Three properties, and each catches a different mistake:
+    //
+    //  1. **1/sqrt(r), not 1/r.** A line source spreads 3 dB per doubling, not
+    //     6. Getting this wrong is the difference between the two modes.
+    //  2. **Flat in frequency.** 2D free field falls as 1/sqrt(f); the
+    //     calibration is a +3 dB/octave tilt that takes it out. Without it the
+    //     result carries a slope that is spreading, not the room.
+    //  3. **The right absolute level.** A scalar borrowed from the 3D path
+    //     leaves 1 and 2 intact while being wrong by five orders of magnitude.
+    //
+    // Distances in cells again: at fMax 500 the grid is 26 cm, so 2 m and 4 m
+    // are 7.6 and 15.2 cells out — far enough for the asymptotic Hankel form
+    // the calibration is built on (kr well above 2).
+    containers['room-1'] = makeRoom({ x: 12, y: 3, z: 8 }, 0.9);
+    containers['s1'] = makeSource('s1', [-4, 0, 0], 100);
+    containers['near'] = makeReceiver('near', [-2, 0, 0]);
+    containers['far'] = makeReceiver('far', [0, 0, 0]);
+
+    const solver = new ARD({
+      roomID: 'room-1',
+      sourceIDs: ['s1'],
+      receiverIDs: ['near', 'far'],
+      fMax: 500,
+      irLength: 0.05,
+      dimensions: 2,
+    });
+    const summary = await solver.run();
+    const sampleRate = solver.sampleRate;
+
+    // The nearest image source is 6 m away against a 2 m direct path, so
+    // everything before 14 ms is direct.
+    const cut = Math.floor(0.014 * sampleRate);
+    const near = before(summary.impulseResponses.get('s1->near')!, cut);
+    const far = before(summary.impulseResponses.get('s1->far')!, cut);
+    const pressureAtOneMetre = 10 ** (100 / 20) * PREF;
+
+    const level = (ir: Float32Array, hz: number) => spectralMagnitude(ir, sampleRate, hz);
+
+    // Probes well inside the band. 500 Hz is `fMax` itself, where the
+    // deconvolver's raised-cosine edge is 0.5 by construction — measuring
+    // flatness against it would read the window, not the calibration.
+    const probes = [125, 250, 375];
+    const mean = (ir: Float32Array) =>
+      probes.reduce((total, hz) => total + level(ir, hz), 0) / probes.length;
+
+    // 1. The spreading law. sqrt(2) = 1.414, measured 1.45 — and the bound is
+    //    tight enough that the 3D law's 2.0 cannot sit inside it.
+    expect(mean(near) / mean(far)).toBeGreaterThan(1.2);
+    expect(mean(near) / mean(far)).toBeLessThan(1.7);
+
+    // 2. Flat across a pair of in-band octaves. Uncalibrated, 125 Hz would
+    //    read sqrt(3) times 375 Hz; measured 1.007.
+    const flatness = level(near, 125) / level(near, 375);
+    expect(flatness).toBeGreaterThan(0.75);
+    expect(flatness).toBeLessThan(1.35);
+
+    // 3. The absolute level: Lp2P(100 dB) / sqrt(2 m) = 1.414 Pa, measured
+    //    1.505. A scalar borrowed from the 3D path is out by 1e8 here, so the
+    //    band is wide enough for modal ripple and nowhere near wide enough for
+    //    that.
+    const expected = pressureAtOneMetre / Math.SQRT2;
+    expect(mean(near) / expected).toBeGreaterThan(0.7);
+    expect(mean(near) / expected).toBeLessThan(1.5);
+  }, 600_000);
+
+  it('cuts the section plane when asked, and clamps a height outside the room', async () => {
+    containers['room-1'] = makeRoom({ x: 4, y: 3, z: 3.2 }, 0.3);
+    containers['s1'] = makeSource('s1', [-1, 0, 0]);
+    containers['r1'] = makeReceiver('r1', [0.8, 0.2, 0]);
+
+    const section = await new ARD({
+      roomID: 'room-1', sourceIDs: ['s1'], receiverIDs: ['r1'],
+      fMax: 400, irLength: 0.04, dimensions: 2, slice: 'xy',
+    }).run();
+    expect(section.warnings.join(' ')).toMatch(/on the xy plane/);
+    expect(addedResults().map((r) => r.name)).toContain('IR [2D xy]: s1 → r1');
+
+    // A height well above the ceiling is a slider that went too far, not a
+    // broken room. Clamping into the grid is not enough on its own: the
+    // outermost layers are the padding the wall slabs grow into, so the
+    // clamped plane is solid. Fall back to the widest plane, say which one was
+    // used, and still produce a result.
+    emitted.length = 0;
+    const clamped = await new ARD({
+      roomID: 'room-1', sourceIDs: ['s1'], receiverIDs: ['r1'],
+      fMax: 400, irLength: 0.04, dimensions: 2, sliceCoordinate: 99,
+    }).run();
+    expect(clamped.warnings.join(' ')).toMatch(/contains no room air/);
+    expect(clamped.warnings.join(' ')).toMatch(/widest plane instead/);
+    expect(clamped.impulseResponses.get('s1->r1')).toBeDefined();
+    expect(clamped.airCells).toBeGreaterThan(0);
+  }, 300_000);
+
+  it('costs far less in two dimensions, and the saving is the cross-section', () => {
+    containers['room-1'] = makeRoom({ x: 8, y: 4, z: 6 }, 0.3);
+    const solver = new ARD({ roomID: 'room-1', fMax: 1000, irLength: 0.5 });
+
+    const threeD = solver.estimatedSimulatedCells;
+    solver.dimensions = 2;
+    const twoD = solver.estimatedSimulatedCells;
+
+    // Not a third of the cells — a whole cross-section gone. On this room the
+    // ratio is above 20x, which is why 2D is the only mode that reaches 4 kHz.
+    expect(threeD / twoD).toBeGreaterThan(10);
+
+    // Floor and ceiling lose their slabs too: there is no outside along a
+    // 1-thick axis to absorb into, and `planWalls` skips it for that reason.
+    // So fewer faces scale with thickness in 2D than in 3D — measurable as the
+    // slope of cells against thickness.
+    const slope = (s: ARD) => {
+      s.wallThickness = 20;
+      const thick = s.estimatedSimulatedCells;
+      s.wallThickness = 8;
+      const thin = s.estimatedSimulatedCells;
+      return (thick - thin) / 12;
+    };
+    const twoDSlope = slope(solver);
+    solver.dimensions = 3;
+    const threeDSlope = slope(solver);
+    expect(twoDSlope).toBeGreaterThan(0);
+    expect(threeDSlope).toBeGreaterThan(5 * twoDSlope);
+    solver.dimensions = 2;
+
+    // The section plane costs differently from the floor plan on a room that
+    // is not a cube, so the choice is not cosmetic.
+    solver.slice = 'xy';
+    expect(solver.estimatedSimulatedCells).not.toBe(twoD);
+  });
+
   it('saves and restores every property', () => {
     containers['room-1'] = makeRoom({ x: 3, y: 2.4, z: 2 }, 0.2);
     const solver = new ARD({
@@ -755,6 +921,9 @@ describe('ARD solver', () => {
       perBandRuns: true,
       sampleRate: 48000,
       humidity: 55,
+      dimensions: 2,
+      slice: 'xy',
+      sliceCoordinate: 1.2,
     });
     const state = solver.save();
     expect(state.kind).toBe('ard');
@@ -764,6 +933,18 @@ describe('ARD solver', () => {
     expect(restored.fMax).toBe(1500);
     expect(restored.perBandRuns).toBe(true);
     expect(restored.humidity).toBe(55);
+    // A project saved in 2D has to come back in 2D — the results it produced
+    // are not comparable with the 3D ones, so silently reverting the mode
+    // would change what the solver means without changing anything visible.
+    expect(restored.dimensions).toBe(2);
+    expect(restored.slice).toBe('xy');
+    expect(restored.sliceCoordinate).toBe(1.2);
+
+    // And a project saved before these existed restores as 3D rather than
+    // undefined.
+    const legacy = new ARD({}).restore({ ...state, dimensions: undefined, slice: undefined });
+    expect(legacy.dimensions).toBe(3);
+    expect(legacy.slice).toBe('xz');
   });
 
   it('stops a run when cancelled', async () => {

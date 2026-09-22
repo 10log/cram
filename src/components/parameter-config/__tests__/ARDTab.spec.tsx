@@ -9,6 +9,8 @@
 import React from 'react';
 import { act, render, screen, fireEvent } from '@testing-library/react';
 
+import ARDTab from '../ARDTab';
+
 const mocks = vi.hoisted(() => ({
   emitted: [] as { event: string; payload: unknown }[],
   listeners: new Map<string, Set<(payload: unknown) => void>>(),
@@ -44,7 +46,6 @@ vi.mock('../../../render/renderer', () => ({
   renderer: { add: vi.fn(), remove: vi.fn(), requestRender: vi.fn() },
 }));
 
-import ARDTab from '../ARDTab';
 
 /** A stand-in for the solver, exposing only what the tab reads. */
 function fakeSolver(overrides: Record<string, unknown> = {}) {
@@ -68,6 +69,8 @@ function fakeSolver(overrides: Record<string, unknown> = {}) {
     bands: [500],
     referenceFrequency: 500,
     cellSize: 0.264,
+    dimensions: 3,
+    slice: 'xz',
     ...overrides,
   };
 }
@@ -190,6 +193,38 @@ describe('ARDTab', () => {
     setUp(fakeSolver({ sourceIDs: [], receiverIDs: [] }));
     render(<ARDTab uuid="ard-1" />);
     expect(screen.getByRole('button', { name: /run/i })).toBeDisabled();
+  });
+
+  it('offers the plane control only in two dimensions', () => {
+    const threeD = render(<ARDTab uuid="ard-1" />);
+    expect(screen.queryByDisplayValue('xz')).toBeNull();
+    threeD.unmount();
+
+    setUp(fakeSolver({ dimensions: 2 }));
+    render(<ARDTab uuid="ard-1" />);
+    expect(screen.getByDisplayValue('xz')).toBeInTheDocument();
+  });
+
+  it('names the plane in the cost line rather than a grid that is one cell deep', () => {
+    setUp(fakeSolver({ dimensions: 2, slice: 'xy' }));
+    render(<ARDTab uuid="ard-1" />);
+    expect(screen.getByText('xy plane @ 26.4 cm')).toBeInTheDocument();
+    expect(screen.queryByText(/33 x 29 x 27/)).toBeNull();
+  });
+
+  it('sends the dimension change as a number, not a string', () => {
+    // `PropertyRowSelect` deals in strings; `ARD.dimensions` is 2 | 3, and a
+    // solver whose dimensions are "2" takes the 3D branch everywhere.
+    render(<ARDTab uuid="ard-1" />);
+    fireEvent.change(screen.getByDisplayValue('3'), { target: { value: '2' } });
+
+    const set = mocks.emitted.filter(
+      (e) =>
+        e.event === 'ARD_SET_PROPERTY' &&
+        (e.payload as { property: string }).property === 'dimensions',
+    );
+    expect(set).toHaveLength(1);
+    expect((set[0].payload as { value: unknown }).value).toBe(2);
   });
 
   it('sends parameter edits as ARD_SET_PROPERTY', () => {
