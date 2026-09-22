@@ -817,9 +817,10 @@ has stopped; a rigid box's measured mode frequencies match
 
 ### Phase 7 — Solver Class — **implemented**
 
-**Created** `src/compute/ard/{index,deconvolve,resample}.ts`,
-`__tests__/{ard-solver,deconvolve,resample}.spec.ts`, and
-`airAbsDbToPressureNepers` in `compute/acoustics/air-attenuation.ts`.
+**Created** `src/compute/ard/{index,deconvolve,resample,worker-host}.ts`,
+`__tests__/{ard-solver,ard-worker-host,deconvolve,resample}.spec.ts`,
+`nearestCell` in `voxelize.ts`, and `airAbsDbToPressureNepers` in
+`compute/acoustics/air-attenuation.ts`.
 
 The solver runs end to end: room and probes out of the stores, grid from
 `fMax`, voxelize, decompose, simulate (in the worker where there is one),
@@ -883,10 +884,54 @@ Three smaller findings:
   using it on a wave solver attenuates twice as fast in dB as ISO 9613 says and
   reads as a plausible but short reverberation time.
 
-The cost estimate on the solver reaches `O(fMax⁴)` only asymptotically: the wall
+`estimatedSteps` uses the *clamped* Courant number, not the requested one:
+wall slabs are `PmlPartition`s and every partition shares a time step, so on a
+3D room the bound is `PML_CFL_MARGIN × vonNeumann(3)` ≈ 0.446. Reporting the
+requested number would show a step count 12% low every time walls exist, which
+is the default. The cost estimate reaches `O(fMax⁴)` only asymptotically: the wall
 slabs' padding is a fixed *cell* count per axis, so on a coarse grid it is most
 of the grid. Measured on a 4 × 3 × 2.5 m room at the default 8-cell slabs, 5.2x
 for 500 → 1000 Hz and 8.4x for 1000 → 2000 Hz.
+
+Five more from review, each of which is a contract the earlier phases already
+hold and this one had to learn:
+
+- **One time step for every band, planned from the union of faces.** Per-band
+  planning is a trap: a band whose materials are all rigid builds no PML slabs,
+  which lifts the CFL clamp and gives that band a larger `dt` and a shorter
+  record than its neighbours — while every band is deconvolved against one pulse
+  at one rate. At the default Courant 0.4 the clamp never bites and the bug is
+  invisible; at the plan's original 0.5 it is immediate. The union of the faces
+  any band would build is the most constrained case, so forcing the resolved
+  Courant number on each run leaves every band's own limit untouched.
+- **Bands are filtered against `fMax`.** Unfiltered, a 250 Hz run paid for seven
+  simulations and the deconvolver zeroed five of them. A band whose lower edge
+  (`centre/√2`) is past `fMax` contributes nothing; the highest surviving band's
+  window still runs to Nyquist, so dropping the rest loses no energy and the
+  windows still sum to one. The single-run reference frequency is clamped the
+  same way, so a 250 Hz run no longer reads its `alpha` from the 500 Hz column.
+- **Probes relocate off wall cells.** `worldToCell` only rounds and
+  bounds-checks, so a receiver flush against a surface lands on the one-cell
+  shell and the run died with "inside a wall" only after voxelizing, decomposing
+  and planning walls. The flood-fill seed already relocated, which made it worse
+  rather than better: a run could clear the first source — which *is* the seed —
+  and then die on a receiver that landed the same way. `nearestCell` orders by
+  Chebyshev radius then true distance from the probe, deliberately unlike the
+  seed's centre-first tie-break: a seed needs any interior cell, a probe stands
+  for equipment someone placed.
+- **A worker that dies mid-run rejects; one that never started falls back
+  once.** Re-running the time loop on the main thread after a mid-run crash is
+  the minutes-long freeze the worker exists to avoid, for a run the UI has
+  already shown progress for. One worker serves the whole `run()` rather than
+  one per band, and `run()` itself refuses to start while one is in flight —
+  the same rule `ard.worker.ts` applies to a second `start`.
+- **The octave window rides inside the deconvolution.** Applying it afterwards
+  was a second forward and inverse FFT over the whole record, per band, per
+  receiver. Measured against the claim that the two windows in series
+  under-weight the low octaves: at `fMax` 1000 on a 6500 Hz record the
+  deconvolver's own window reaches 1.000 by 39 Hz, so 125 Hz is untouched, and
+  the Wiener term costs 2.3% there — applied identically on the broadband path,
+  so it is not a per-band penalty.
 
 Event wiring (`ADD_ARD`, `REMOVE_ARD`, `ARD_SET_PROPERTY`, `CALCULATE_ARD`,
 `ARD_PROGRESS`) is in place. The registry entry, the restore case and the UI are

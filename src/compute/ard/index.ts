@@ -85,10 +85,9 @@ import Solver, { type SolverParams } from '../solver';
 
 import { decompose } from './decompose';
 import {
-  applySpectralWindow,
   calibrationScale,
   deconvolvePulse,
-  nextPowerOfTwo,
+  deconvolveTransformLength,
   octaveBandWindows,
 } from './deconvolve';
 import { resample } from './resample';
@@ -100,9 +99,12 @@ import {
 } from './simulation';
 import type { ArdWorkerRequest, ArdWorkerResponse } from './ard.worker';
 import { Vector3 } from 'three';
-import { cellSizeFor, worldToCell, type VoxelGrid } from './voxelize';
+import { Cell, cellSizeFor, nearestCell, worldToCell, type VoxelGrid } from './voxelize';
 import { voxelizeRoom } from './voxelize-room';
 import { DEFAULT_WALL_THICKNESS, padCellsForWalls } from './walls-from-grid';
+import { createArdWorker } from './worker-host';
+import { PML_CFL_MARGIN } from './pml-partition';
+import { vonNeumannCflLimit } from './partition';
 
 // Imported last, as `art.ts` does, to keep the store's circular dependency on
 // solver modules from biting at module-evaluation time.
@@ -124,22 +126,6 @@ const MAX_DISPLAY_POINTS = 2000;
 
 /** Steps between yields on the no-worker path. */
 const INLINE_CHUNK_STEPS = 256;
-
-/**
- * A worker for the time loop, or `null` where there is none.
- *
- * `Worker` is absent under jsdom and Node, which is where the tests run, so
- * they exercise the inline path; `__tests__/ard.worker.spec.ts` drives the
- * worker's own protocol directly against a fake global scope.
- */
-function createArdWorker(): Worker | null {
-  if (typeof Worker === 'undefined') return null;
-  try {
-    return new Worker(new URL('./ard.worker.ts', import.meta.url), { type: 'module' });
-  } catch {
-    return null;
-  }
-}
 
 export interface ARDProps extends SolverParams {
   roomID?: string;
@@ -241,8 +227,10 @@ export class ARD extends Solver {
 
   /** Set when a run is asked to stop; checked between chunks. */
   private cancelled: boolean;
-  /** The worker running the current simulation, if there is one. */
+  /** The worker serving this run, reused across sources and bands. */
   private activeWorker: Worker | null;
+  /** False once a worker has proved unusable, so later bands do not retry. */
+  private workerUsable: boolean;
 
   constructor(props: ARDProps = defaults) {
     super(props);
@@ -269,6 +257,7 @@ export class ARD extends Solver {
     this.hasEmittedResults = false;
     this.cancelled = false;
     this.activeWorker = null;
+    this.workerUsable = true;
   }
 
   /**
@@ -290,14 +279,30 @@ export class ARD extends Solver {
   }
 
   async run(): Promise<ARDRunSummary> {
+    // Refuse rather than interleave. A second `run()` — a double click on the
+    // button, or `CALCULATE_ARD` arriving while one is in flight — would clear
+    // `cancelled` and undo a cancel already under way, share `activeWorker` and
+    // `progress` with the first, and on the inline path put two time loops into
+    // overlapping buffers racing each other's `dispose()`. Phase 6's worker
+    // refuses a second `start` for the same reasons; this is the same rule one
+    // level up.
+    if (this.running) {
+      throw new Error(
+        'ARD: a run is already in progress. Cancel it and wait for it to stop before starting ' +
+          'another.',
+      );
+    }
+
     const started = Date.now();
     this.cancelled = false;
     this.running = true;
+    this.workerUsable = true;
     this.progress = 0;
 
     try {
       return await this.execute(started);
     } finally {
+      this.releaseWorker();
       this.running = false;
     }
   }
@@ -338,24 +343,55 @@ export class ARD extends Solver {
     }
 
     const decomposition = decompose(grid);
+    const warnings = [...grid.warnings];
+    const isRoomAir = (index: number) =>
+      grid.cells[index] === Cell.Air && decomposition.assignment[index] >= 0;
+
     const sourceCells = sources.map((source, n) =>
-      resolveCell(grid, worldPosition(source), `Source ${source.name || n}`),
+      resolveCell(grid, worldPosition(source), `Source ${source.name || n}`, isRoomAir, warnings),
     );
     const receiverCells = receivers.map((receiver, n) =>
-      resolveCell(grid, worldPosition(receiver), `Receiver ${receiver.name || n}`),
+      resolveCell(
+        grid,
+        worldPosition(receiver),
+        `Receiver ${receiver.name || n}`,
+        isRoomAir,
+        warnings,
+      ),
     );
 
-    const bands = this.perBandRuns ? [...ARD_BAND_CENTRES] : [ARD_REFERENCE_FREQUENCY];
-    const warnings = [...grid.warnings];
+    const bands = this.bands;
     const totalRuns = sources.length * bands.length;
+
+    // --- One time step for every band ----------------------------------------
+    // Planned once, from the union of the faces any band would build, and then
+    // forced on each run by passing the resolved Courant number rather than the
+    // requested one.
+    //
+    // Doing it per band is a trap. A band whose materials are all rigid builds
+    // no PML slabs, which lifts the CFL clamp and gives that band a larger `dt`
+    // and a shorter record than its neighbours — while `emitResults`
+    // deconvolves every band against one pulse at one rate. At the default
+    // Courant 0.4 the clamp never bites and the bug is invisible; at the plan's
+    // original 0.5 it is immediate.
+    const unionAbsorption = surfaces.map((surface) =>
+      Math.max(...bands.map((frequency) => clampAlpha(surface.absorptionFunction(frequency)))),
+    );
+    const plan = planArdTimeStep({
+      grid,
+      decomposition,
+      c,
+      courant: this.courant,
+      duration: this.irLength,
+      wallThickness: this.wallThickness,
+      absorptionFor: (index) => (index >= 0 && index < surfaces.length ? unionAbsorption[index] : 0),
+    });
+    const pulse = bandlimitedPulse(plan.steps, plan.dt, this.fMax);
 
     // `records[sourceIndex][bandIndex][receiverIndex]` — the raw pulse
     // responses, before any deconvolution.
     const records: Float32Array[][][] = [];
-    let pulse: Float32Array | null = null;
-    let summaryDt = 0;
-    let summaryCourant = 0;
-    let summarySteps = 0;
+    let summaryCourant = plan.courant;
     let summaryCells = { room: 0, walls: 0 };
     let runIndex = 0;
 
@@ -369,37 +405,28 @@ export class ARD extends Solver {
           airAttenuation([frequency], this.temperature, this.humidity)[0],
         );
 
-        const config: Omit<ArdSimulationConfig, 'absorptionFor' | 'sources'> & {
-          sources: ArdSimulationConfig['sources'];
-        } = {
+        const config: ArdSimulationConfig = {
           grid,
           decomposition,
           c,
-          courant: this.courant,
-          duration: this.irLength,
-          // Filled in below, once `dt` is known — the pulse has to be sampled
-          // at the simulation's own rate.
-          sources: [],
+          // The resolved Courant number, not the requested one. Every band's
+          // own limit is at or above this — the plan used the union of faces,
+          // which is the most constrained case — so `min` leaves it alone and
+          // all bands share one `dt`.
+          courant: plan.courant,
+          steps: plan.steps,
+          sources: [{ cell: sourceCells[s], signal: pulse }],
           receivers: receiverCells.map((cell) => ({ cell })),
           airAbsNepersPerMetre: airAbs,
           wallThickness: this.wallThickness,
         };
 
-        const result = await this.runOne(
-          config,
-          sourceCells[s],
-          frequency,
-          surfaces,
-          (fraction) => {
-            this.progress = (runIndex + fraction) / totalRuns;
-            emit('ARD_PROGRESS', { uuid: this.uuid, progress: this.progress });
-          },
-        );
+        const result = await this.runOne(config, frequency, surfaces, (fraction) => {
+          this.progress = (runIndex + fraction) / totalRuns;
+          emit('ARD_PROGRESS', { uuid: this.uuid, progress: this.progress });
+        });
 
-        pulse = result.pulse;
-        summaryDt = result.dt;
         summaryCourant = result.courant;
-        summarySteps = result.steps;
         summaryCells = result.cellCount;
         for (const warning of result.warnings) {
           if (!warnings.includes(warning)) warnings.push(warning);
@@ -410,28 +437,26 @@ export class ARD extends Solver {
       records.push(perBand);
     }
 
-    if (!pulse) throw new Error('ARD: no simulation ran');
-
     const impulseResponses = this.emitResults({
       sources,
       receivers,
       records,
       bands,
       pulse,
-      dt: summaryDt,
+      dt: plan.dt,
       dx,
       c,
     });
 
     const summary: ARDRunSummary = {
       dx,
-      dt: summaryDt,
+      dt: plan.dt,
       courant: summaryCourant,
       gridCells: grid.nx * grid.ny * grid.nz,
       airCells: grid.airCount,
       boxCount: decomposition.boxes.length,
       cellCount: summaryCells,
-      steps: summarySteps,
+      steps: plan.steps,
       runs: totalRuns,
       seconds: (Date.now() - started) / 1000,
       warnings,
@@ -447,19 +472,13 @@ export class ARD extends Solver {
 
   /** One simulation: one source, one band. */
   private async runOne(
-    config: Omit<ArdSimulationConfig, 'absorptionFor' | 'sources'> & {
-      sources: ArdSimulationConfig['sources'];
-    },
-    sourceCell: [number, number, number],
+    config: ArdSimulationConfig,
     frequency: number,
     surfaces: Surface[],
     onProgress: (fraction: number) => void,
   ): Promise<{
     irs: Float32Array[];
-    pulse: Float32Array;
-    dt: number;
     courant: number;
-    steps: number;
     cellCount: { room: number; walls: number };
     warnings: string[];
   }> {
@@ -471,20 +490,7 @@ export class ARD extends Solver {
     const absorptionFor = (surfaceIndex: number) =>
       surfaceIndex >= 0 && surfaceIndex < absorption.length ? absorption[surfaceIndex] : 0;
 
-    // `dt` has to be known before the pulse can be sampled, and it is not
-    // settled until the wall slabs are planned and the CFL clamp applied. The
-    // planner answers that without building any partitions — which matters,
-    // because building them means a PML calibration curve per distinct slab
-    // thickness, about a second each.
-    const plan = planArdTimeStep({ ...config, absorptionFor });
-    const pulse = bandlimitedPulse(plan.steps, plan.dt, this.fMax);
-    const full: ArdSimulationConfig = {
-      ...config,
-      sources: [{ cell: sourceCell, signal: pulse }],
-    };
-
-    const outcome = await this.stepSimulation(full, absorption, absorptionFor, onProgress);
-    return { ...outcome, pulse, steps: plan.steps };
+    return this.stepSimulation({ ...config, absorptionFor }, absorption, absorptionFor, onProgress);
   }
 
   /**
@@ -495,10 +501,24 @@ export class ARD extends Solver {
    * loop runs for seconds to minutes (plan §5, D2), which on the main thread
    * freezes the editor and stalls the render loop for its whole duration.
    *
-   * The fallback runs the same loop here, chunked with a yield between chunks
-   * so a cancel can land. That is strictly worse — a chunk still blocks — but a
-   * frozen tab beats a solver that cannot run at all, which is the same call
-   * `import-handlers/dxf.ts` makes.
+   * ## Falling back, once, and only for a worker that never started
+   *
+   * Two failures look the same from here and must not be treated the same.
+   *
+   * A worker that **never produced anything** — construction refused, module
+   * type unsupported, wrong MIME on the script — has done no work, so running
+   * the loop inline loses nothing but the non-blocking. That fallback is taken
+   * once, and {@link workerUsable} is cleared so the remaining bands go
+   * straight inline instead of each paying the same failed construction.
+   *
+   * A worker that **died mid-run**, after posting progress, is a different
+   * animal. Re-running the whole time loop on the main thread there is exactly
+   * the minutes-long freeze the worker exists to avoid, for a run the UI has
+   * already shown progress for and which would now restart from zero. That
+   * rejects.
+   *
+   * One worker serves the whole `run()`, not one per band: with `perBandRuns`
+   * that was seven constructions per source.
    */
   private stepSimulation(
     config: ArdSimulationConfig,
@@ -512,26 +532,31 @@ export class ARD extends Solver {
     cellCount: { room: number; walls: number };
     warnings: string[];
   }> {
-    const worker = createArdWorker();
+    const worker = this.workerUsable ? this.acquireWorker() : null;
     if (!worker) return this.stepInline(config, absorptionFor, onProgress);
 
     return new Promise((resolve, reject) => {
-      const finish = (action: () => void) => {
-        worker.terminate();
-        this.activeWorker = null;
+      let started = false;
+      let settled = false;
+
+      const settle = (action: () => void) => {
+        if (settled) return;
+        settled = true;
+        worker.removeEventListener('message', onMessage);
+        worker.removeEventListener('error', onError);
         action();
       };
-      this.activeWorker = worker;
 
-      worker.addEventListener('message', (event: MessageEvent<ArdWorkerResponse>) => {
+      const onMessage = (event: MessageEvent<ArdWorkerResponse>) => {
         const message = event.data;
         switch (message.type) {
           case 'progress':
+            started = true;
             onProgress((message.step + 1) / message.total);
             if (this.cancelled) worker.postMessage({ type: 'cancel' } satisfies ArdWorkerRequest);
             break;
           case 'done':
-            finish(() =>
+            settle(() =>
               resolve({
                 irs: message.irs,
                 dt: message.dt,
@@ -542,29 +567,59 @@ export class ARD extends Solver {
             );
             break;
           case 'cancelled':
-            finish(() => reject(new Error('ARD: run cancelled')));
+            settle(() => reject(new Error('ARD: run cancelled')));
             break;
           case 'error':
-            finish(() => reject(new Error(message.message)));
+            // A reported error is the worker working: it caught the throw and
+            // told us. Nothing to retry — the same config fails the same way
+            // inline.
+            settle(() => reject(new Error(message.message)));
             break;
         }
-      });
+      };
 
-      worker.addEventListener('error', (event) => {
-        // The worker failed to start or threw outside its handler. Running the
-        // loop here is slow and blocking, but it is an answer.
-        finish(() => {
-          this.stepInline(config, absorptionFor, onProgress).then(resolve, (error) =>
-            reject(error instanceof Error ? error : new Error(String(event.message))),
-          );
+      const onError = (event: ErrorEvent) => {
+        settle(() => {
+          this.releaseWorker();
+          if (started) {
+            reject(
+              new Error(
+                `ARD: the simulation worker died mid-run (${
+                  event.message || 'no message'
+                }). Not restarting the time loop on the main thread — it would freeze the ` +
+                  'editor for as long as the run has already taken.',
+              ),
+            );
+            return;
+          }
+          // Never started, so nothing is lost by running it here, and the
+          // remaining bands skip the worker entirely.
+          this.workerUsable = false;
+          this.stepInline(config, absorptionFor, onProgress).then(resolve, reject);
         });
-      });
+      };
+
+      worker.addEventListener('message', onMessage);
+      worker.addEventListener('error', onError);
 
       // `absorptionFor` is a function and functions do not survive a
       // structured clone. The worker rebuilds it from `absorption`.
       const { absorptionFor: _unused, ...cloneable } = config;
       worker.postMessage({ type: 'start', config: cloneable, absorption } satisfies ArdWorkerRequest);
     });
+  }
+
+  /** The worker for this run, constructed on first use. */
+  private acquireWorker(): Worker | null {
+    if (this.activeWorker) return this.activeWorker;
+    this.activeWorker = createArdWorker();
+    if (!this.activeWorker) this.workerUsable = false;
+    return this.activeWorker;
+  }
+
+  private releaseWorker(): void {
+    this.activeWorker?.terminate();
+    this.activeWorker = null;
   }
 
   /** The time loop on this thread, chunked so a cancel can get in. */
@@ -620,7 +675,7 @@ export class ARD extends Solver {
     const { sources, receivers, records, bands, pulse, dt, dx, c } = args;
     const simRate = 1 / dt;
     const steps = pulse.length;
-    const transformLength = nextPowerOfTwo(steps + pulse.length);
+    const transformLength = deconvolveTransformLength(steps, pulse.length);
     const bandWindows =
       bands.length > 1 ? octaveBandWindows(transformLength, simRate, bands) : null;
     const scale = calibrationScale(dx, c);
@@ -635,13 +690,20 @@ export class ARD extends Solver {
         const combined = new Float32Array(steps);
 
         for (let b = 0; b < bands.length; b++) {
-          const deconvolved = deconvolvePulse(records[s][b][r], pulse, {
+          // The octave window rides along inside the deconvolution rather than
+          // being applied to its output. Same arithmetic — the two windows
+          // multiply — but one transform pair per band instead of two, on top
+          // of `sources x bands` simulations.
+          //
+          // It is also still exactly the broadband answer when summed: the
+          // deconvolver's own `[fMin, fMax]` window `W` multiplies every band
+          // identically, and the octave windows sum to one, so
+          // `sum_b W·w_b·H = W·H`.
+          const contribution = deconvolvePulse(records[s][b][r], pulse, {
             sampleRate: simRate,
             fMax: this.fMax,
+            window: bandWindows?.[b],
           });
-          const contribution = bandWindows
-            ? applySpectralWindow(deconvolved, bandWindows[b])
-            : deconvolved;
           for (let i = 0; i < steps; i++) combined[i] += contribution[i];
         }
 
@@ -783,11 +845,53 @@ export class ARD extends Solver {
     );
   }
 
-  /** Steps the run would take, at the requested Courant number. */
+  /**
+   * Band centres this run will actually use.
+   *
+   * Filtered against `fMax`: the grid cannot represent anything above about
+   * `1.3·fMax` and the deconvolver zeroes everything above `fMax`, so a band
+   * whose *lower* edge is already past `fMax` costs a full simulation and
+   * contributes nothing. Unfiltered, a 250 Hz run paid for seven bands and
+   * threw five of them away. The highest surviving band's window still runs to
+   * Nyquist, so dropping the rest loses no energy and the windows still sum to
+   * one.
+   */
+  get bands(): number[] {
+    if (!this.perBandRuns) return [this.referenceFrequency];
+    // Lower edge of a band is the geometric mean with its neighbour below, so
+    // `centre / sqrt(2)` for octave spacing.
+    const kept = ARD_BAND_CENTRES.filter((centre) => centre / Math.SQRT2 <= this.fMax);
+    return kept.length > 0 ? [...kept] : [ARD_BAND_CENTRES[0]];
+  }
+
+  /**
+   * Frequency a single broadband run reads absorption at (plan D3).
+   *
+   * 500 Hz normally, but never above `fMax` — a 250 Hz run taking its `alpha`
+   * from the 500 Hz column would use a material figure for a band it cannot
+   * represent, and would disagree with what the per-band path does on the same
+   * room.
+   */
+  get referenceFrequency(): number {
+    return Math.min(ARD_REFERENCE_FREQUENCY, this.fMax);
+  }
+
+  /**
+   * Steps the run would take.
+   *
+   * Uses the clamped Courant number, not the requested one. Wall slabs are
+   * `PmlPartition`s and every partition shares a time step, so on a 3D room the
+   * clamp is `PML_CFL_MARGIN × vonNeumann(3)` ≈ 0.446 — about 12% more steps
+   * than the requested 0.5 implies. This getter has no grid, so it cannot call
+   * `planArdTimeStep`; applying the bound unconditionally over-estimates a
+   * rigid-only run, which is the right direction for a figure shown before
+   * pressing run.
+   */
   get estimatedSteps(): number {
     const c = soundSpeed(this.temperature);
-    const dt = (this.courant * this.cellSize) / c;
-    return Math.ceil(this.irLength / dt) * (this.perBandRuns ? ARD_BAND_CENTRES.length : 1);
+    const courant = Math.min(this.courant, PML_CFL_MARGIN * vonNeumannCflLimit(3));
+    const dt = (courant * this.cellSize) / c;
+    return Math.ceil(this.irLength / dt) * this.bands.length;
   }
 }
 
@@ -800,16 +904,49 @@ function worldPosition(container: Source | Receiver): { x: number; y: number; z:
   return { x: v.x, y: v.y, z: v.z };
 }
 
+/**
+ * The air cell a probe sits in, relocating it off a wall if it landed on one.
+ *
+ * `worldToCell` only rounds and bounds-checks. A source or receiver flush
+ * against a surface — or anywhere in the half-cell band inside it — rounds onto
+ * the one-cell shell and is Solid. Left alone, `createArdSimulation` rejects it
+ * later with "inside a wall", *after* voxelizing, decomposing and planning
+ * walls: a slow, opaque failure for a probe the user placed perfectly
+ * reasonably. At `fMax` 500 the grid is 26 cm, so this is not a rare edge.
+ *
+ * The flood-fill seed already relocates this way (`voxelize.ts`), which made
+ * the asymmetry worse rather than better: a run could get past the first
+ * source, which is the seed, and then die on a receiver that landed the same
+ * way.
+ */
 function resolveCell(
   grid: VoxelGrid,
   point: { x: number; y: number; z: number },
   what: string,
+  isRoomAir: (index: number) => boolean,
+  warnings: string[],
 ): [number, number, number] {
-  const cell = worldToCell(grid, point);
+  const where = `(${point.x.toFixed(2)}, ${point.y.toFixed(2)}, ${point.z.toFixed(2)})`;
+  const rounded = worldToCell(grid, point);
+  if (!rounded) {
+    throw new Error(`ARD: ${what} at ${where} is outside the voxel grid — it is not in this room.`);
+  }
+
+  const cell = nearestCell(grid, rounded, (index) => isRoomAir(index));
   if (!cell) {
     throw new Error(
-      `ARD: ${what} at (${point.x.toFixed(2)}, ${point.y.toFixed(2)}, ${point.z.toFixed(2)}) ` +
-        'is outside the voxel grid — it is not in this room.',
+      `ARD: ${what} at ${where} is inside a wall, and there is no room air within 8 cells of ` +
+        'it. Move it into the room, or lower fMax for a coarser grid.',
+    );
+  }
+
+  const moved = Math.hypot(cell.i - rounded.i, cell.j - rounded.j, cell.k - rounded.k);
+  if (moved > 0) {
+    warnings.push(
+      `${what} at ${where} landed on a wall cell and was moved ${(moved * grid.dx).toFixed(2)} m ` +
+        `to the nearest room air. Every probe snaps to the grid — dx is ${grid.dx.toFixed(
+          3,
+        )} m here — but this one had to move further than rounding.`,
     );
   }
   return [cell.i, cell.j, cell.k];

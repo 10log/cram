@@ -475,6 +475,65 @@ function relocationCandidates(
   return found;
 }
 
+/**
+ * The nearest cell to `from` that `accept` allows, searched outward.
+ *
+ * Ordered by Chebyshev radius, then by true distance from `from` within a
+ * radius. That differs on purpose from the *seed* relocation above, which
+ * breaks ties toward the centre of the grid: a seed has to land somewhere in
+ * the main volume and any interior cell will do, while a probe stands for a
+ * microphone or a loudspeaker the user placed and should move as little as
+ * possible.
+ *
+ * Returns `from` itself when it is already acceptable, and `null` when nothing
+ * within `maxRadius` is. Callers that need to know how far it moved can compare
+ * the result against what they passed in — the distance matters, because `dx`
+ * is `c/(n·fMax)` and at 500 Hz that is 26 cm.
+ */
+export function nearestCell(
+  grid: VoxelGrid,
+  from: { i: number; j: number; k: number },
+  accept: (index: number, i: number, j: number, k: number) => boolean,
+  maxRadius = 8,
+): { i: number; j: number; k: number } | null {
+  const { nx, ny, nz } = grid;
+  const at = (i: number, j: number, k: number) => i + nx * (j + ny * k);
+
+  const inside = (i: number, j: number, k: number) =>
+    i >= 0 && j >= 0 && k >= 0 && i < nx && j < ny && k < nz;
+
+  if (inside(from.i, from.j, from.k) && accept(at(from.i, from.j, from.k), from.i, from.j, from.k)) {
+    return { ...from };
+  }
+
+  for (let r = 1; r <= maxRadius; r++) {
+    const ring: Array<{ i: number; j: number; k: number; distance: number }> = [];
+    for (let k = from.k - r; k <= from.k + r; k++) {
+      for (let j = from.j - r; j <= from.j + r; j++) {
+        for (let i = from.i - r; i <= from.i + r; i++) {
+          const onShell =
+            Math.abs(i - from.i) === r ||
+            Math.abs(j - from.j) === r ||
+            Math.abs(k - from.k) === r;
+          if (!onShell || !inside(i, j, k)) continue;
+          const index = at(i, j, k);
+          if (!accept(index, i, j, k)) continue;
+          const di = i - from.i;
+          const dj = j - from.j;
+          const dk = k - from.k;
+          ring.push({ i, j, k, distance: di * di + dj * dj + dk * dk });
+        }
+      }
+    }
+    if (ring.length === 0) continue;
+    ring.sort((a, b) => a.distance - b.distance || a.i - b.i || a.j - b.j || a.k - b.k);
+    const { i, j, k } = ring[0];
+    return { i, j, k };
+  }
+
+  return null;
+}
+
 /** Linear index of a cell, or -1 if outside the grid. */
 export function cellIndex(grid: VoxelGrid, i: number, j: number, k: number): number {
   if (i < 0 || j < 0 || k < 0 || i >= grid.nx || j >= grid.ny || k >= grid.nz) return -1;

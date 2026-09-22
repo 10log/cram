@@ -15,6 +15,8 @@ import { BufferAttribute, BufferGeometry, Vector3 } from 'three';
 import { nextPowerOfTwo } from '../deconvolve';
 import { createComplexFftPlan } from '../fft';
 import { ARD, ARD_REFERENCE_FREQUENCY } from '../index';
+import { vonNeumannCflLimit } from '../partition';
+import { PML_CFL_MARGIN } from '../pml-partition';
 
 // `vi.mock` factories are hoisted above module initialization, so anything they
 // close over has to be hoisted with them.
@@ -59,13 +61,17 @@ const PREF = 2e-5;
 const SOUND_SPEED_20C = 20.05 * Math.sqrt(20 + 273.15);
 
 /** A shoebox room whose surfaces all carry the same absorption. */
-function makeRoom(size: { x: number; y: number; z: number }, alpha: number) {
+function makeRoom(
+  size: { x: number; y: number; z: number },
+  alpha: number | ((frequency: number) => number),
+) {
+  const alphaAt = typeof alpha === 'function' ? alpha : () => alpha;
   const half = { x: size.x / 2, y: size.y / 2, z: size.z / 2 };
   const surfaces = faceQuads(half).map((quad, index) => ({
     uuid: `surface-${index}`,
     kind: 'surface',
     geometry: quadGeometry(quad),
-    absorptionFunction: () => alpha,
+    absorptionFunction: alphaAt,
     // The quads are already in world coordinates, so the transform is the
     // identity — but `roomTriangles` calls it, and a fake that omits it fails
     // in a way that looks like a voxelizer bug.
@@ -195,10 +201,34 @@ describe('ARD solver', () => {
 
     solver.fMax = 1000;
 
-    // Per-band runs cost one run per octave band.
+    // Per-band runs cost one run per octave band that the grid can carry.
+    // At fMax 1000 that is 125 Hz through 1 kHz — 2 kHz has its lower edge at
+    // 1414 Hz, past what the grid represents, so paying for it would buy a
+    // full simulation whose every sample the deconvolver then zeroes.
     const single = solver.estimatedSteps;
     solver.perBandRuns = true;
-    expect(solver.estimatedSteps).toBe(single * 7);
+    expect(solver.bands).toEqual([125, 250, 500, 1000]);
+    expect(solver.estimatedSteps).toBe(single * 4);
+
+    solver.fMax = 250;
+    expect(solver.bands).toEqual([125, 250]);
+    // A single broadband run reads absorption at 500 Hz, but never above fMax.
+    solver.perBandRuns = false;
+    expect(solver.referenceFrequency).toBe(250);
+    solver.fMax = 1000;
+    expect(solver.referenceFrequency).toBe(500);
+
+    // The cost figure uses the *clamped* Courant number. Wall slabs are PML
+    // partitions and every partition shares a time step, so on a 3D room the
+    // clamp is ~0.446 — asking for 0.5 and reporting 0.5 would show a step
+    // count 12% low every time walls exist, which is the default.
+    solver.courant = 0.5;
+    const atHalf = solver.estimatedSteps;
+    solver.courant = 0.446;
+    expect(solver.estimatedSteps).toBe(atHalf);
+    solver.courant = 0.3;
+    expect(solver.estimatedSteps).toBeGreaterThan(atHalf);
+    solver.courant = 0.4;
   });
 
   it('refuses to run without a room, a source or a receiver', async () => {
@@ -387,7 +417,7 @@ describe('ARD solver', () => {
     const broadband = await new ARD(base).run();
     const perBand = await new ARD({ ...base, perBandRuns: true }).run();
 
-    expect(perBand.runs).toBe(7);
+    expect(perBand.runs).toBe(2); // fMax 250 keeps only the 125 and 250 Hz bands
     const a = broadband.impulseResponses.get('s1->r1')!;
     const b = perBand.impulseResponses.get('s1->r1')!;
     expect(b.length).toBe(a.length);
@@ -400,6 +430,154 @@ describe('ARD solver', () => {
     }
     expect(Math.sqrt(error / energy)).toBeLessThan(0.02);
   }, 600_000);
+
+  it('refuses a second run while one is in flight', async () => {
+    // Interleaving two runs would clear `cancelled` under the first, share the
+    // worker and the progress counter, and on the inline path put two time
+    // loops into overlapping buffers. Phase 6's worker refuses a second
+    // `start` for the same reasons.
+    containers['room-1'] = makeRoom({ x: 4, y: 3, z: 2.6 }, 0.3);
+    containers['s1'] = makeSource('s1', [-1, 0, 0]);
+    containers['r1'] = makeReceiver('r1', [0.5, 0, 0]);
+    const solver = new ARD({
+      roomID: 'room-1', sourceIDs: ['s1'], receiverIDs: ['r1'], fMax: 300, irLength: 0.6,
+    });
+
+    const first = solver.run();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(solver.running).toBe(true);
+    await expect(solver.run()).rejects.toThrow(/already in progress/);
+
+    // And the refusal did not disturb the first run: a cancel still lands.
+    solver.cancel();
+    await expect(first).rejects.toThrow(/cancelled/);
+    expect(solver.running).toBe(false);
+
+    // Once it has stopped, a new run is allowed again.
+    const summary = await new ARD({
+      roomID: 'room-1', sourceIDs: ['s1'], receiverIDs: ['r1'], fMax: 250, irLength: 0.03,
+    }).run();
+    expect(summary.runs).toBe(1);
+  }, 300_000);
+
+  it('moves a probe that lands on a wall cell into the room, and says so', async () => {
+    // A receiver flush against a surface rounds onto the one-cell shell and is
+    // Solid. Left alone the run dies with "inside a wall" only after
+    // voxelizing, decomposing and planning walls — and only for receivers,
+    // since the first source doubles as the flood-fill seed and already
+    // relocates.
+    containers['room-1'] = makeRoom({ x: 4, y: 3, z: 2.6 }, 0.3);
+    containers['s1'] = makeSource('s1', [0, 0, 0]);
+    containers['flush'] = makeReceiver('flush', [2, 0, 0]); // exactly on the +x wall
+    containers['inside'] = makeReceiver('inside', [0.5, 0, 0]);
+
+    const solver = new ARD({
+      roomID: 'room-1',
+      sourceIDs: ['s1'],
+      receiverIDs: ['flush', 'inside'],
+      fMax: 300,
+      irLength: 0.03,
+    });
+    const summary = await solver.run();
+
+    // It ran, and the relocated probe reports the cell it actually used.
+    expect(summary.receiverCells).toHaveLength(2);
+    expect(summary.warnings.join(' ')).toMatch(/landed on a wall cell and was moved/);
+    expect(summary.impulseResponses.get('s1->flush')).toBeDefined();
+
+    // The flush receiver moved; the one well inside did not.
+    const [flushCell, insideCell] = summary.receiverCells;
+    expect(flushCell).not.toEqual(insideCell);
+
+    // A probe genuinely outside the room is still an error, not a relocation.
+    containers['far'] = makeReceiver('far', [40, 40, 40]);
+    await expect(
+      new ARD({
+        roomID: 'room-1', sourceIDs: ['s1'], receiverIDs: ['far'], fMax: 300, irLength: 0.03,
+      }).run(),
+    ).rejects.toThrow(/outside the voxel grid|inside a wall/);
+  }, 300_000);
+
+  it('uses one time step and one pulse for every band', async () => {
+    // Each band has its own absorption, and a band whose materials are all
+    // rigid builds no PML slabs — which lifts the CFL clamp and would give
+    // that band a larger dt and a shorter record than its neighbours, while
+    // every band is deconvolved against one pulse at one rate. Planning from
+    // the union of faces and forcing the resolved Courant number on each run
+    // is what keeps them in step.
+    //
+    // Courant 0.5 on purpose: at the class default of 0.4 the clamp never
+    // bites and this cannot fail.
+    containers['room-1'] = makeRoom({ x: 3.2, y: 2.6, z: 2.2 }, 0.35);
+    containers['s1'] = makeSource('s1', [-0.8, 0, 0]);
+    containers['r1'] = makeReceiver('r1', [0.6, 0.3, 0]);
+
+    // The 125 Hz band absorbs, the 250 Hz band is perfectly rigid. A rigid
+    // band builds no PML slabs, so planning per band would leave it at the
+    // requested 0.5 while its neighbour is clamped to 0.446 — two different
+    // record lengths fed to one deconvolution against one pulse.
+    containers['room-1'] = makeRoom({ x: 3.2, y: 2.6, z: 2.2 }, (frequency) =>
+      frequency < 200 ? 0.5 : 0,
+    );
+
+    const solver = new ARD({
+      roomID: 'room-1',
+      sourceIDs: ['s1'],
+      receiverIDs: ['r1'],
+      fMax: 250,
+      irLength: 0.03,
+      courant: 0.5,
+      perBandRuns: true,
+    });
+    const summary = await solver.run();
+
+    expect(summary.runs).toBe(2);
+    // Clamped, because the room has absorbing walls.
+    expect(summary.courant).toBeLessThan(0.5);
+    expect(summary.courant).toBeCloseTo(PML_CFL_MARGIN * vonNeumannCflLimit(3), 10);
+    expect(summary.dt).toBeCloseTo((summary.courant * summary.dx) / SOUND_SPEED_20C, 12);
+    // One record length for every band: the IR is `steps` long at the
+    // simulation rate, resampled once. A band that ran at a different `dt`
+    // would come back short, and summing it into the combined record reads
+    // past its end.
+    const ir = summary.impulseResponses.get('s1->r1')!;
+    expect(ir.length).toBe(Math.round(summary.steps * (44100 * summary.dt)));
+    expect(ir.every((sample) => Number.isFinite(sample))).toBe(true);
+    let energy = 0;
+    for (const sample of ir) energy += sample * sample;
+    expect(energy).toBeGreaterThan(0);
+  }, 300_000);
+
+  it('keeps the low octave bands at full weight on a 1 kHz grid', async () => {
+    // The per-band path filters twice — the deconvolver's own [fMin, fMax]
+    // window and then the octave window — so it is worth checking that the
+    // lowest band survives at a real fMax rather than only at the 250 Hz the
+    // agreement test uses. Measured directly: at fMax 1000 the deconvolver's
+    // window is 1.000 from 39 Hz up, and the Wiener term costs 2.3% at 125 Hz
+    // — applied identically on the broadband path, so neither is a per-band
+    // penalty.
+    containers['room-1'] = makeRoom({ x: 3.2, y: 2.6, z: 2.2 }, 0.35);
+    containers['s1'] = makeSource('s1', [-0.8, 0, 0]);
+    containers['r1'] = makeReceiver('r1', [0.6, 0.3, 0]);
+
+    const base = {
+      roomID: 'room-1', sourceIDs: ['s1'], receiverIDs: ['r1'],
+      fMax: 1000, irLength: 0.03,
+    };
+    const broadband = await new ARD(base).run();
+    const perBand = await new ARD({ ...base, perBandRuns: true }).run();
+    expect(perBand.runs).toBe(4); // 125, 250, 500, 1000
+
+    const a = broadband.impulseResponses.get('s1->r1')!;
+    const b = perBand.impulseResponses.get('s1->r1')!;
+    const rate = 44100;
+    for (const hz of [125, 250, 500]) {
+      const ratio =
+        spectralMagnitude(b, rate, hz) / spectralMagnitude(a, rate, hz);
+      expect(ratio).toBeGreaterThan(0.9);
+      expect(ratio).toBeLessThan(1.1);
+    }
+  }, 900_000);
 
   it('saves and restores every property', () => {
     containers['room-1'] = makeRoom({ x: 3, y: 2.4, z: 2 }, 0.2);

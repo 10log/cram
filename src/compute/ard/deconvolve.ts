@@ -187,6 +187,27 @@ export interface DeconvolveOptions {
   regularization?: number;
   /** Transition width for the band window. See {@link bandWindow}. */
   transition?: number;
+  /**
+   * A further spectral window, multiplied in alongside the band window.
+   *
+   * Length must be {@link deconvolveTransformLength} of the two inputs. This
+   * exists so a caller that wants to filter the result — the per-band path
+   * splitting into octaves — pays one transform instead of three: a second
+   * `applySpectralWindow` on the output is a forward and an inverse FFT over
+   * the whole record, per band, per receiver, on top of the simulations.
+   */
+  window?: Float64Array;
+}
+
+/**
+ * FFT length {@link deconvolvePulse} will use for these inputs.
+ *
+ * Long enough that the circular division does not wrap the tail of `h` onto its
+ * onset: the linear convolution of the two is `response + pulse - 1` long.
+ * Exported so a caller can build a `window` that lines up with it.
+ */
+export function deconvolveTransformLength(responseLength: number, pulseLength: number): number {
+  return nextPowerOfTwo(responseLength + pulseLength);
 }
 
 export const DEFAULT_REGULARIZATION = 1e-3;
@@ -209,6 +230,7 @@ export function deconvolvePulse(
     fMin = fMax / 32,
     regularization = DEFAULT_REGULARIZATION,
     transition = 0.25,
+    window: extraWindow,
   } = options;
 
   if (!(sampleRate > 0)) throw new Error(`sampleRate must be positive, got ${sampleRate}`);
@@ -221,10 +243,13 @@ export function deconvolvePulse(
   }
   if (response.length === 0) return new Float32Array(0);
 
-  // Long enough that the circular division does not wrap the tail of `h` onto
-  // its onset: the linear convolution of the two inputs is
-  // `response.length + pulse.length - 1` long.
-  const n = nextPowerOfTwo(response.length + pulse.length);
+  const n = deconvolveTransformLength(response.length, pulse.length);
+  if (extraWindow && extraWindow.length !== n) {
+    throw new Error(
+      `window must be ${n} long for these inputs (deconvolveTransformLength), got ` +
+        `${extraWindow.length}`,
+    );
+  }
   const plan = createComplexFftPlan(n);
 
   const pRe = new Float64Array(n);
@@ -251,7 +276,7 @@ export function deconvolvePulse(
 
   for (let k = 0; k < n; k++) {
     const denominator = sRe[k] * sRe[k] + sIm[k] * sIm[k] + lambda;
-    const gain = window[k] / denominator;
+    const gain = (extraWindow ? window[k] * extraWindow[k] : window[k]) / denominator;
     // P · conj(S)
     const re = (pRe[k] * sRe[k] + pIm[k] * sIm[k]) * gain;
     const im = (pIm[k] * sRe[k] - pRe[k] * sIm[k]) * gain;

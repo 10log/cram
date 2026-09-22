@@ -14,6 +14,7 @@ import {
   bandWindow,
   calibrationScale,
   deconvolvePulse,
+  deconvolveTransformLength,
   freeFieldGain,
   nextPowerOfTwo,
   octaveBandWindows,
@@ -238,6 +239,97 @@ describe('deconvolvePulse', () => {
     const db = deconvolvePulse(rb, pulse, { sampleRate, fMax });
     const dsum = deconvolvePulse(sum, pulse, { sampleRate, fMax });
     for (let i = 0; i < length; i++) expect(dsum[i]).toBeCloseTo(da[i] + db[i], 6);
+  });
+
+  it('folds an extra window in for the price of the transform it already does', () => {
+    // The per-band path needs the octave window on the deconvolved result.
+    // Applying it afterwards is a second forward and inverse FFT over the
+    // whole record, per band, per receiver, on top of `sources x bands`
+    // simulations. Multiplying it into the division costs nothing.
+    const length = 512;
+    const h = new Float32Array(length);
+    h[40] = 1;
+    h[120] = -0.4;
+    const pulse = bandlimitedPulse(200, dt, fMax);
+    const response = convolve(h, pulse, length);
+
+    const n = deconvolveTransformLength(length, pulse.length);
+    const plain = deconvolvePulse(response, pulse, { sampleRate, fMax });
+
+    // A window of ones is the identity, so the extra multiply is exactly a
+    // window and not a rescaling.
+    const ones = new Float64Array(n).fill(1);
+    const withOnes = deconvolvePulse(response, pulse, { sampleRate, fMax, window: ones });
+    for (let i = 0; i < length; i++) expect(withOnes[i]).toBeCloseTo(plain[i], 12);
+
+    // And the octave bands add back up to the unwindowed result, which is what
+    // makes the per-band path agree with the broadband one. Exact, because the
+    // windows sum to one inside the same division.
+    const octave = octaveBandWindows(n, sampleRate, [125, 250, 500, 1000]);
+    const sum = new Float32Array(length);
+    for (const window of octave) {
+      const band = deconvolvePulse(response, pulse, { sampleRate, fMax, window });
+      for (let i = 0; i < length; i++) sum[i] += band[i];
+    }
+    for (let i = 0; i < length; i++) expect(sum[i]).toBeCloseTo(plain[i], 6);
+  });
+
+  it('keeps a band to its own octave', () => {
+    const length = 512;
+    const h = new Float32Array(length);
+    h[40] = 1;
+    const pulse = bandlimitedPulse(200, dt, fMax);
+    const response = convolve(h, pulse, length);
+    const n = deconvolveTransformLength(length, pulse.length);
+    const octave = octaveBandWindows(n, sampleRate, [125, 250, 500, 1000]);
+
+    const low = deconvolvePulse(response, pulse, { sampleRate, fMax, window: octave[0] });
+    const magnitude = (signal: Float32Array, hz: number) => {
+      const size = nextPowerOfTwo(signal.length);
+      const re = new Float64Array(size);
+      const im = new Float64Array(size);
+      re.set(signal.subarray(0, Math.min(signal.length, size)));
+      createComplexFftPlan(size).forward(re, im);
+      const k = Math.round((hz * size) / sampleRate);
+      return Math.hypot(re[k], im[k]);
+    };
+    // Energy at 125 Hz, none two octaves up.
+    expect(magnitude(low, 125)).toBeGreaterThan(0);
+    expect(magnitude(low, 500) / magnitude(low, 125)).toBeLessThan(0.01);
+  });
+
+  it('rejects a window that does not match its transform length', () => {
+    const pulse = bandlimitedPulse(64, dt, fMax);
+    expect(() =>
+      deconvolvePulse(new Float32Array(128), pulse, {
+        sampleRate,
+        fMax,
+        window: new Float64Array(64),
+      }),
+    ).toThrow(/window must be \d+ long/);
+    expect(deconvolveTransformLength(128, 64)).toBe(256);
+  });
+
+  it('passes the low octave bands at full weight on a 1 kHz grid', () => {
+    // The two windows in series — the deconvolver's own [fMin, fMax] and then
+    // the octave — could in principle eat the lowest octaves. Measured here
+    // rather than assumed: at fMax 1000 and a 6500 Hz simulation rate the
+    // deconvolver's window reaches 1.000 by 39 Hz, so 125 Hz is untouched by
+    // it, and the Wiener term costs 2.3% there.
+    const simRate = (2.6 * 1000) / 0.4;
+    const n = 8192;
+    const window = bandWindow(n, simRate, { fLow: 1000 / 32, fHigh: 1000 });
+    const bin = (hz: number) => Math.round((hz * n) / simRate);
+    expect(window[bin(125)]).toBeCloseTo(1, 10);
+    expect(window[bin(63)]).toBeCloseTo(1, 10);
+    expect(window[bin(39)]).toBeGreaterThan(0.999);
+    // The rise really is confined to a third of an octave either side of fMin.
+    expect(window[bin(31.25)]).toBeCloseTo(0.5, 1);
+    expect(window[bin(20)]).toBeLessThan(0.01);
+
+    const octave = octaveBandWindows(n, simRate, [125, 250, 500, 1000]);
+    expect(octave[0][bin(125)]).toBeCloseTo(1, 10);
+    for (let b = 1; b < octave.length; b++) expect(octave[b][bin(125)]).toBeLessThan(1e-9);
   });
 
   it('rejects a silent pulse and a zero regularizer', () => {
