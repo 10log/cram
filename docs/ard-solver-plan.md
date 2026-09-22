@@ -673,7 +673,7 @@ configured for `alpha = 0.3` reflects `|R| = sqrt(0.7) ± 0.05` in a 1D test.
 ### Phase 6 — Simulation Driver and Worker — **implemented**
 
 **Created** `src/compute/ard/{simulation,walls-from-grid,ard.worker}.ts` and
-`__tests__/simulation.spec.ts`.
+`__tests__/{simulation,walls-from-grid,ard.worker}.spec.ts`.
 
 All three physics checks below pass: the direct arrival lands within one sample
 of `round(distance / (c·Δt))` at three distances, its amplitude follows `1/r`,
@@ -716,15 +716,50 @@ that is now the most valuable single change available to this solver.
 a room face into solid cells, and a voxelized room's shell is one cell thick, so
 the space has to come from the grid's padding — which defaults to 1. At that
 setting every face is dropped and the room comes out perfectly rigid, carrying
-no absorption at all. `padCellsForWalls(thickness)` gives the figure, the
-warning names it, and a grid with no placeable walls now says so explicitly
-rather than silently simulating a perfectly reflective room.
+no absorption at all. `padCellsForWalls(thickness)` gives the figure, and
+`createArdSimulation` **throws** rather than warns when walls were asked for and
+every face was dropped for lack of room: the run would otherwise complete and
+return a reverberation time set by nothing but the room's volume, which looks
+entirely publishable. `WallPlan.droppedForSpace` is what distinguishes that from
+the legitimate case of every material being perfectly reflective, which is
+`skippedRigid` and only warns.
 
 PML corners are avoided as the Phase 5 contract requires: slabs are clipped to
 their own face's extent, so the corner region beyond two faces is simply left
 empty and no cell is ever inside two slabs. Partly-shared faces are covered by
 running `decompose` on the face's exposed mask, and slabs claim the solid cells
 they occupy so two never overlap inside a thin pillar.
+`__tests__/walls-from-grid.spec.ts` checks each of those three against the mask
+rule directly, including the concave corner of an L-room where two faces want
+the same cells and one must lose.
+
+Four smaller corrections, from review:
+
+- **A face whose material absorbs nothing gets no slab.** A PML at `α = 0` is
+  acoustically identical to a rigid face while costing its cells and pinning the
+  whole simulation to the PML's CFL limit. Skipping it means a fully rigid room
+  keeps the requested Courant number, which is the observable difference.
+- **The CFL clamp keys off slabs actually placed, not the `walls` flag.** The
+  two diverge exactly in the case above.
+- **Air attenuation is applied to room partitions only.** A PML slab's damping
+  is already calibrated to a target reflection coefficient; scaling its state on
+  top of that makes the wall more absorbing than its material, and also scales
+  the auxiliary `φ` fields, which are not pressure.
+- **`bandlimitedPulse` subtracts the sample mean.** The Gaussian derivative's
+  integral is zero over `(−∞, ∞)`, which a finite buffer is not. Measured on a
+  buffer truncated 1.3σ past the peak: mean-pressure drift over 600 silent steps
+  is 0.24 of the field peak uncorrected and 2e-8 corrected, the latter being the
+  float32 buffer's own quantization floor.
+
+**The worker's cancel state is per run, not per module.** The chunked loop
+yields with `setTimeout`, so between chunks the worker is idle and dispatches
+whatever arrives next. A module-level `cancelled` flag does not survive that: a
+second `start` resets it to `false` and two loops then interleave on one flag,
+so a `cancel` aimed at the second stops both and both post their own `done`. The
+token is created per run and closed over by that run's chunks, a second `start`
+is refused while one is live, and a throw inside a chunk — which runs outside
+the `start` handler's `try` — is caught and reported rather than leaving the
+worker silent and permanently marked busy.
 
 **Original specification follows.**
 

@@ -127,27 +127,72 @@ describe('createArdSimulation', () => {
     sim.dispose();
   });
 
-  it('says so, loudly, when the grid has no room for wall slabs', () => {
+  it('refuses to run when an under-padded grid leaves no room for wall slabs', () => {
     // The default `padCells: 1` from the voxelizer leaves only the one-cell
     // shell behind each face, which is below the minimum a slab needs. Every
-    // face is then rigid and the result carries no absorption at all — a
-    // silent outcome that would look like a working simulation.
+    // face is then rigid and the result carries no absorption at all. A warning
+    // is not enough: the run completes, produces a reverberation time set by
+    // nothing but the room's volume, and looks entirely healthy.
     const grid = shoeboxGrid(20, 16, 12, 0.1, 0);
-    const sim = createArdSimulation({
+    expect(() =>
+      createArdSimulation({
+        grid,
+        decomposition: decompose(grid),
+        c: C,
+        sources: [{ cell: [11, 9, 7], signal: new Float32Array(2) }],
+        receivers: [],
+        steps: 2,
+        absorptionFor: () => 0.5,
+      }),
+    ).toThrow(/padCells >= 9/);
+  });
+
+  it('builds no slab for a face whose material absorbs nothing', () => {
+    // A PML at alpha = 0 is acoustically the same as a rigid face, but it costs
+    // its cells and it drags the whole simulation onto the PML's CFL limit. The
+    // requested Courant surviving is the observable half of that: the room is
+    // pure DCT, so nothing constrains it.
+    const pad = 9;
+    const o = airOrigin(pad);
+    const grid = shoeboxGrid(16, 14, 12, 0.1, pad);
+    const decomposition = decompose(grid);
+    const requested = 0.6; // above the PML limit of ~0.446 for a rank-3 slab
+
+    const rigid = createArdSimulation({
       grid,
-      decomposition: decompose(grid),
+      decomposition,
       c: C,
-      sources: [{ cell: [11, 9, 7], signal: new Float32Array(2) }],
+      courant: requested,
+      sources: [{ cell: [o + 8, o + 7, o + 6], signal: new Float32Array(2) }],
       receivers: [],
       steps: 2,
-      absorptionFor: () => 0.5,
+      absorptionFor: () => 0,
     });
 
-    expect(sim.wallPlan.faces).toHaveLength(0);
-    expect(sim.cellCount.walls).toBe(0);
-    expect(sim.warnings.join(' ')).toMatch(/perfectly rigid/);
-    expect(sim.warnings.join(' ')).toMatch(/padCells >= 9/);
-    sim.dispose();
+    expect(rigid.wallPlan.faces).toHaveLength(0);
+    expect(rigid.wallPlan.skippedRigid).toBe(6);
+    expect(rigid.wallPlan.droppedForSpace).toBe(0);
+    expect(rigid.cellCount.walls).toBe(0);
+    expect(rigid.courant).toBe(requested);
+    expect(rigid.warnings.join(' ')).toMatch(/absorb nothing/);
+    rigid.dispose();
+
+    // The same room with a real material does get slabs, and does pay the CFL
+    // price — so the difference above is the absorption coefficient, not the
+    // geometry.
+    const absorbing = createArdSimulation({
+      grid,
+      decomposition,
+      c: C,
+      courant: requested,
+      sources: [{ cell: [o + 8, o + 7, o + 6], signal: new Float32Array(2) }],
+      receivers: [],
+      steps: 2,
+      absorptionFor: () => 0.3,
+    });
+    expect(absorbing.wallPlan.faces).toHaveLength(6);
+    expect(absorbing.courant).toBeLessThan(requested);
+    absorbing.dispose();
   });
 
   it('lets the wall slabs set the time step, not the room', () => {
@@ -394,7 +439,10 @@ describe('energy does not grow once the source stops', () => {
         steps: 500,
         absorptionFor: () => alpha,
       });
-      expect(sim.wallPlan.faces.length).toBe(6);
+      // The control is rigid because no slab is built for alpha = 0 at all,
+      // which is exactly what makes it a control: same grid, same
+      // decomposition, no absorbing boundary anywhere.
+      expect(sim.wallPlan.faces.length).toBe(alpha > 0 ? 6 : 0);
       // Sample once the field has filled the room, not while it is still
       // arriving: the source stops at step 60 but the energy keeps
       // redistributing for a while after.
@@ -415,6 +463,51 @@ describe('energy does not grow once the source stops', () => {
     expect(absorbing.final / absorbing.settled).toBeLessThan(0.2);
     expect(absorbing.final).toBeLessThan(rigid.final);
   }, 120_000);
+
+  it('applies air attenuation to the room only, never to a wall slab', () => {
+    // A PML slab is not air. Its damping is calibrated to hit a target
+    // reflection coefficient, so scaling its state on top of that makes the
+    // wall more absorbing than the material it stands for — and it also scales
+    // the auxiliary `phi` fields, which are not pressure at all. The effect is
+    // small, plausible and entirely invisible in a reverberation time, which
+    // is why this is checked by mechanism rather than by measurement.
+    const dx = 0.1;
+    const pad = 9;
+    const o = airOrigin(pad);
+    const grid = shoeboxGrid(16, 14, 12, dx, pad);
+
+    const sim = createArdSimulation({
+      grid,
+      decomposition: decompose(grid),
+      c: C,
+      courant: 0.4,
+      sources: [{ cell: [o + 8, o + 7, o + 6], signal: new Float32Array(4) }],
+      receivers: [],
+      steps: 4,
+      airAbsNepersPerMetre: 0.5,
+      absorptionFor: () => 0.4,
+    });
+
+    const scaled = new Map<(typeof sim.partitions)[number], number>();
+    for (const partition of sim.partitions) {
+      const original = partition.scaleState.bind(partition);
+      scaled.set(partition, 0);
+      (partition as { scaleState: (f: number) => void }).scaleState = (factor: number) => {
+        scaled.set(partition, (scaled.get(partition) ?? 0) + 1);
+        original(factor);
+      };
+    }
+
+    sim.step();
+
+    const pml = sim.partitions.filter((p) => p.kind === 'pml');
+    const room = sim.partitions.filter((p) => p.kind !== 'pml');
+    expect(pml.length).toBeGreaterThan(0);
+    expect(room.length).toBeGreaterThan(0);
+    for (const partition of pml) expect(scaled.get(partition)).toBe(0);
+    for (const partition of room) expect(scaled.get(partition)).toBe(1);
+    sim.dispose();
+  });
 
   it('decays faster with air attenuation than without', () => {
     const dx = 0.1;
@@ -522,4 +615,94 @@ describe('rigid box eigenfrequencies', () => {
     // where modes are only tens of Hz apart.
     expect(found.length).toBeGreaterThanOrEqual(8);
   }, 120_000);
+});
+
+describe('bandlimitedPulse', () => {
+  const dt = (0.4 * 0.1) / C;
+
+  it('sums to zero even when the buffer truncates the tail', () => {
+    // The analytic integral of a Gaussian derivative is zero over the whole
+    // line. A buffer is not the whole line: it starts at -4 sigma and stops
+    // wherever `steps` runs out, so the sampled sum is not zero unless it is
+    // made so. Whatever is left over is DC, which drives the omega = 0 mode
+    // and ramps the mean pressure of a sealed rigid room without bound.
+    const fMax = 600;
+    const sigma = 1 / (2 * Math.PI * fMax);
+    // Deliberately short: cut off about 1.3 sigma past the peak, well inside
+    // the tail, which is the case the analytic argument does not cover.
+    const steps = Math.ceil((4 * sigma + 1.3 * sigma) / dt);
+    const pulse = bandlimitedPulse(steps, dt, fMax);
+
+    let sum = 0;
+    let magnitude = 0;
+    for (const v of pulse) {
+      sum += v;
+      magnitude = Math.max(magnitude, Math.abs(v));
+    }
+    expect(magnitude).toBeGreaterThan(0.1);
+    expect(Math.abs(sum) / magnitude).toBeLessThan(1e-6);
+  });
+
+  it('does not ramp the mean pressure of a sealed rigid room', () => {
+    // The consequence, measured. With zero net forcing the DC mode has no
+    // restoring force but also no drive: after the source stops its amplitude
+    // is constant. With net forcing it accelerates, and the mean pressure —
+    // and with it the field energy — walks up linearly and without bound.
+    //
+    // So the test is flatness, not smallness. A one-off offset is harmless;
+    // a slope is the bug.
+    const dx = 0.1;
+    const grid = shoeboxGrid(16, 12, 12, dx);
+    const fMax = 600;
+    const sigma = 1 / (2 * Math.PI * fMax);
+    const sourceSteps = Math.ceil((4 * sigma + 1.3 * sigma) / dt);
+
+    const sim = createArdSimulation({
+      grid,
+      decomposition: decompose(grid),
+      c: C,
+      courant: 0.4,
+      walls: false,
+      sources: [{ cell: [6, 5, 5], signal: bandlimitedPulse(sourceSteps, dt, fMax) }],
+      receivers: [],
+      steps: 900,
+    });
+
+    const meanPressure = () => {
+      let total = 0;
+      let count = 0;
+      for (const partition of sim.partitions) {
+        for (let i = 0; i < partition.pressure.length; i++) total += partition.pressure[i];
+        count += partition.pressure.length;
+      }
+      return total / count;
+    };
+    let scale = 0;
+    const runTo = (step: number) => {
+      while (sim.currentStep < step) {
+        sim.step();
+        for (const partition of sim.partitions) {
+          for (let i = 0; i < partition.pressure.length; i++) {
+            scale = Math.max(scale, Math.abs(partition.pressure[i]));
+          }
+        }
+      }
+    };
+
+    runTo(sourceSteps);
+    expect(scale).toBeGreaterThan(0);
+
+    runTo(300);
+    const early = meanPressure();
+    runTo(900);
+    const late = meanPressure();
+
+    // 600 further steps with the source long silent. Measured: 2e-8 with the
+    // correction — the float32 signal buffer's own quantization floor, since
+    // the mean is subtracted in double and then rounded back to float32 — and
+    // 0.24 without it. Seven orders of magnitude apart, so the threshold sits
+    // comfortably between rather than on either.
+    expect(Math.abs(late - early) / scale).toBeLessThan(1e-5);
+    sim.dispose();
+  }, 60_000);
 });

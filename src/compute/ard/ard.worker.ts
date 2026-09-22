@@ -59,17 +59,47 @@ export type ArdWorkerResponse =
 
 const DEFAULT_CHUNK_SIZE = 64;
 
-let cancelled = false;
+/**
+ * The run currently in flight, or `null`.
+ *
+ * A chunked loop yields with `setTimeout`, so between chunks the worker is idle
+ * and will happily dispatch another message. A module-level `cancelled` flag
+ * cannot survive that: a second `start` resets it to `false`, and now two loops
+ * are interleaved on one flag — a `cancel` aimed at the second stops both, and
+ * both post their own `done`. The token is therefore created per run and closed
+ * over by that run's chunks, and a second `start` is refused while one is live
+ * rather than quietly racing the first.
+ */
+let activeRun: { cancelled: boolean } | null = null;
 
 ctx.addEventListener('message', (event: MessageEvent<ArdWorkerRequest>) => {
   const request = event.data;
 
   if (request.type === 'cancel') {
-    cancelled = true;
+    if (activeRun) activeRun.cancelled = true;
     return;
   }
 
-  cancelled = false;
+  if (activeRun) {
+    ctx.postMessage({
+      type: 'error',
+      message:
+        'An ARD run is already in progress in this worker. Send { type: "cancel" } and wait ' +
+        'for the "cancelled" reply before starting another, or use a second worker.',
+    } satisfies ArdWorkerResponse);
+    return;
+  }
+
+  const run = { cancelled: false };
+  activeRun = run;
+
+  const fail = (error: unknown) => {
+    if (activeRun === run) activeRun = null;
+    ctx.postMessage({
+      type: 'error',
+      message: error instanceof Error ? error.message : String(error),
+    } satisfies ArdWorkerResponse);
+  };
 
   try {
     const { config, absorption, chunkSize = DEFAULT_CHUNK_SIZE } = request;
@@ -83,61 +113,68 @@ ctx.addEventListener('message', (event: MessageEvent<ArdWorkerRequest>) => {
     const irs = config.receivers.map(() => new Float32Array(total));
 
     const runChunk = () => {
-      if (cancelled) {
-        simulation.dispose();
-        ctx.postMessage({
-          type: 'cancelled',
-          step: simulation.currentStep,
-        } satisfies ArdWorkerResponse);
-        return;
-      }
+      try {
+        if (run.cancelled) {
+          activeRun = null;
+          simulation.dispose();
+          ctx.postMessage({
+            type: 'cancelled',
+            step: simulation.currentStep,
+          } satisfies ArdWorkerResponse);
+          return;
+        }
 
-      const until = Math.min(simulation.currentStep + chunkSize, total);
-      let last: ReturnType<typeof simulation.step> | null = null;
-      while (simulation.currentStep < until) {
-        last = simulation.step();
-        for (let n = 0; n < irs.length; n++) irs[n][last.step] = last.receiverSamples[n];
-      }
+        const until = Math.min(simulation.currentStep + chunkSize, total);
+        let last: ReturnType<typeof simulation.step> | null = null;
+        while (simulation.currentStep < until) {
+          last = simulation.step();
+          for (let n = 0; n < irs.length; n++) irs[n][last.step] = last.receiverSamples[n];
+        }
 
-      if (last) {
-        // One progress message per chunk, not per step: at 64 steps a chunk a
-        // long run still reports often enough to animate, without flooding the
-        // main thread with messages it has to deserialize.
-        const progress: ArdWorkerResponse = {
-          type: 'progress',
-          step: last.step,
-          total,
-          receiverSamples: last.receiverSamples,
-          slice: last.slice,
+        if (last) {
+          // One progress message per chunk, not per step: at 64 steps a chunk a
+          // long run still reports often enough to animate, without flooding the
+          // main thread with messages it has to deserialize.
+          const progress: ArdWorkerResponse = {
+            type: 'progress',
+            step: last.step,
+            total,
+            receiverSamples: last.receiverSamples,
+            slice: last.slice,
+          };
+          const transfers: ArrayBuffer[] = [last.receiverSamples.buffer as ArrayBuffer];
+          if (last.slice) transfers.push(last.slice.buffer as ArrayBuffer);
+          ctx.postMessage(progress, transfers);
+        }
+
+        if (simulation.currentStep < total) {
+          // Yield so a cancel message can land between chunks.
+          setTimeout(runChunk, 0);
+          return;
+        }
+
+        const done: ArdWorkerResponse = {
+          type: 'done',
+          irs,
+          dt: simulation.dt,
+          courant: simulation.courant,
+          cellCount: simulation.cellCount,
+          warnings: [...simulation.warnings],
         };
-        const transfers: ArrayBuffer[] = [last.receiverSamples.buffer as ArrayBuffer];
-        if (last.slice) transfers.push(last.slice.buffer as ArrayBuffer);
-        ctx.postMessage(progress, transfers);
+        activeRun = null;
+        simulation.dispose();
+        ctx.postMessage(done, irs.map((ir) => ir.buffer as ArrayBuffer));
+      } catch (error) {
+        // A throw inside a chunk runs on a timer callback, outside the `start`
+        // handler's try — without this the worker would go silent mid-run and
+        // stay marked busy forever.
+        simulation.dispose();
+        fail(error);
       }
-
-      if (simulation.currentStep < total) {
-        // Yield so a cancel message can land between chunks.
-        setTimeout(runChunk, 0);
-        return;
-      }
-
-      const done: ArdWorkerResponse = {
-        type: 'done',
-        irs,
-        dt: simulation.dt,
-        courant: simulation.courant,
-        cellCount: simulation.cellCount,
-        warnings: [...simulation.warnings],
-      };
-      simulation.dispose();
-      ctx.postMessage(done, irs.map((ir) => ir.buffer as ArrayBuffer));
     };
 
     runChunk();
   } catch (error) {
-    ctx.postMessage({
-      type: 'error',
-      message: error instanceof Error ? error.message : String(error),
-    } satisfies ArdWorkerResponse);
+    fail(error);
   }
 });

@@ -62,6 +62,7 @@ import { Cell, type VoxelGrid } from './voxelize';
 import {
   DEFAULT_WALL_THICKNESS,
   buildWalls,
+  padCellsForWalls,
   planWalls,
   type WallPlan,
 } from './walls-from-grid';
@@ -165,12 +166,46 @@ export function createArdSimulation(config: ArdSimulationConfig): ArdSimulation 
     throw new Error('Decomposition has no boxes; there is nothing to simulate');
   }
 
+  // --- Wall plan -------------------------------------------------------------
+  // Planned before the time step, because whether any slab is actually placed
+  // is what decides the CFL limit below. `planWalls` needs no dt, so the order
+  // costs nothing. Doing it the other way round clamps the Courant number for a
+  // room that turns out to have no slabs at all — every surface rigid, every
+  // face dropped — which is a 12% tax for a constraint that does not exist.
+  const wallPlan: WallPlan = walls
+    ? planWalls(grid, decomposition, { maxThickness: wallThickness, absorptionFor })
+    : { faces: [], warnings: [], slabCells: 0, droppedForSpace: 0, skippedRigid: 0 };
+  warnings.push(...wallPlan.warnings);
+
+  if (walls && wallPlan.faces.length === 0 && wallPlan.droppedForSpace > 0) {
+    // Not a warning. A caller that asked for absorbing walls and got a sealed
+    // rigid box gets a reverberation time set by nothing but air attenuation,
+    // and the number looks plausible enough to publish. The cause is almost
+    // always the same one thing, so say it.
+    throw new Error(
+      `Walls were requested but all ${wallPlan.droppedForSpace} faces were dropped for lack ` +
+        'of solid to grow into, so every room surface would be perfectly rigid. Voxelize ' +
+        `with padCells >= ${padCellsForWalls(wallThickness)} (currently the grid has too ` +
+        'few), or pass walls: false if a rigid room is what you meant.',
+    );
+  }
+  if (walls && wallPlan.faces.length === 0) {
+    // The other way to get no slabs: every material is perfectly reflective.
+    // That is the caller's choice, faithfully carried out.
+    warnings.push(
+      `No wall slabs were built: all ${wallPlan.skippedRigid} faces have materials that ` +
+        'absorb nothing, so every surface is rigid. The simulation runs without the PML ' +
+        'CFL limit as a result.',
+    );
+  }
+
   // --- Time step -------------------------------------------------------------
   // Wall slabs carry the transverse extents of the face they cover, so on a 3D
   // room they are rank 3 and take the 3D CFL limit. Everything shares one dt,
-  // so the wall is what sets it.
+  // so the wall is what sets it — but only if there is a wall.
   const gridRank = spatialRank(grid.nx, grid.ny, grid.nz);
-  const wallLimit = walls ? PML_CFL_MARGIN * vonNeumannCflLimit(gridRank) : Infinity;
+  const wallLimit =
+    wallPlan.faces.length > 0 ? PML_CFL_MARGIN * vonNeumannCflLimit(gridRank) : Infinity;
   // An FDTD partition appears wherever a box was too thin for the interface
   // stencil, and has the same limit without the PML margin.
   const hasFdtd = decomposition.kinds.includes('fdtd');
@@ -179,8 +214,9 @@ export function createArdSimulation(config: ArdSimulationConfig): ArdSimulation 
   if (courant < requestedCourant) {
     warnings.push(
       `Courant reduced from ${requestedCourant} to ${courant.toFixed(3)}: the ` +
-        `${walls ? 'wall slabs' : 'FDTD partitions'} are rank ${gridRank} and cannot run ` +
-        'faster. DCT interiors have no such limit, but every partition shares a time step.',
+        `${wallLimit <= fdtdLimit ? 'wall slabs' : 'FDTD partitions'} are rank ${gridRank} ` +
+        'and cannot run faster. DCT interiors have no such limit, but every partition ' +
+        'shares a time step.',
     );
   }
   const dt = (courant * dx) / c;
@@ -192,13 +228,8 @@ export function createArdSimulation(config: ArdSimulationConfig): ArdSimulation 
       : new FdtdPartition({ box, dx, c, dt }),
   );
 
-  const wallPlan: WallPlan = walls
-    ? planWalls(grid, decomposition, wallThickness)
-    : { faces: [], warnings: [], slabCells: 0 };
-  warnings.push(...wallPlan.warnings);
-
   let wallPartitions: Partition[] = [];
-  if (walls && wallPlan.faces.length > 0) {
+  if (wallPlan.faces.length > 0) {
     const built = buildWalls(wallPlan, { dx, c, dt, absorptionFor });
     wallPartitions = built.partitions;
     warnings.push(...built.warnings);
@@ -215,14 +246,6 @@ export function createArdSimulation(config: ArdSimulationConfig): ArdSimulation 
         wallCells / roomCells
       ).toFixed(1)}x) — the simulation is mostly wall. Absorbing layers are expensive in ` +
         'cells; a locally-reacting impedance boundary would cost none.',
-    );
-  }
-  if (walls && wallPlan.faces.length === 0) {
-    warnings.push(
-      'No wall slabs could be placed, so every room surface is perfectly rigid and the ' +
-        `result carries no absorption at all. Voxelize with padCells >= ${
-          wallThickness + 1
-        } to give the slabs room.`,
     );
   }
 
@@ -294,8 +317,14 @@ export function createArdSimulation(config: ArdSimulationConfig): ArdSimulation 
 
       for (const partition of partitions) partition.step();
 
+      // Room partitions only. A PML slab is not air — it is a numerical
+      // absorber whose damping is already calibrated to hit a target reflection
+      // coefficient, and scaling its state on top of that makes the wall more
+      // absorbing than the material it stands for. It also scales the auxiliary
+      // `phi` fields, which are not pressure and have no business decaying at
+      // the air's rate.
       if (decayPerStep !== 1) {
-        for (const partition of partitions) partition.scaleState(decayPerStep);
+        for (const partition of roomPartitions) partition.scaleState(decayPerStep);
       }
 
       for (let n = 0; n < receiverProbes.length; n++) {
@@ -393,9 +422,27 @@ export function bandlimitedPulse(steps: number, dt: number, fMax: number): Float
   const sigma = 1 / (2 * Math.PI * fMax);
   const centre = 4 * sigma;
   const out = new Float32Array(steps);
+  let sum = 0;
   for (let n = 0; n < steps; n++) {
     const t = n * dt - centre;
-    out[n] = -(t / sigma) * Math.exp(-0.5 * (t / sigma) ** 2);
+    const v = -(t / sigma) * Math.exp(-0.5 * (t / sigma) ** 2);
+    out[n] = v;
+    sum += v;
+  }
+
+  // The analytic integral is zero over `(-inf, inf)`. This buffer is neither
+  // infinite nor symmetric about the peak: it starts at `t = -4σ` and stops at
+  // whatever `steps` reaches, so the sampled sum is not zero and the residue is
+  // exactly the DC content the pulse exists to avoid. Subtracting the sample
+  // mean makes the discrete sum zero by construction, whatever `steps` is.
+  //
+  // The correction is tiny when the buffer is long (the tails are ~1e-8 of the
+  // peak by 6σ) and is the whole difference when it is short — a caller who
+  // truncates at, say, 2σ past the peak otherwise gets a net-positive pulse and
+  // the unbounded energy growth described above, with no indication why.
+  const mean = steps > 0 ? sum / steps : 0;
+  if (mean !== 0) {
+    for (let n = 0; n < steps; n++) out[n] -= mean;
   }
   return out;
 }

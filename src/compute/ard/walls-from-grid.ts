@@ -98,6 +98,15 @@ export interface WallPlan {
   warnings: string[];
   /** Cells added by the slabs, for cost reporting. */
   slabCells: number;
+  /**
+   * Faces that wanted a slab but had no room for one. Non-zero means the grid
+   * was under-padded: the surfaces are silently rigid and the result carries no
+   * absorption. Distinct from `skippedRigid`, which is the user asking for a
+   * rigid surface and getting one.
+   */
+  droppedForSpace: number;
+  /** Faces left rigid because their material absorbs nothing. */
+  skippedRigid: number;
 }
 
 const ORIGIN: readonly ['x', 'y', 'z'] = ['x', 'y', 'z'];
@@ -128,6 +137,9 @@ export const DEFAULT_WALL_THICKNESS = 8;
 /** Below this, a slab absorbs too little to be worth the cells it costs. */
 const MIN_USEFUL_THICKNESS = 4;
 
+/** Absorption at or below this is treated as a rigid surface. */
+const RIGID_ALPHA_EPSILON = 1e-6;
+
 /**
  * Padding a voxel grid needs so wall slabs of this thickness have room: the
  * slab itself plus the one cell of shell it starts behind.
@@ -142,11 +154,23 @@ export function padCellsForWalls(thickness: number = DEFAULT_WALL_THICKNESS): nu
  * Separated from construction so the geometry can be tested without paying for
  * calibration curves, and so a caller can report the cost before committing.
  */
+export interface PlanWallsOptions {
+  maxThickness?: number;
+  /**
+   * Absorption per surface index, so a face with nothing to absorb can be left
+   * alone. A slab at α = 0 is acoustically identical to a rigid face but still
+   * costs its cells and still drags the whole simulation onto the PML's CFL
+   * limit, so building one is pure loss.
+   */
+  absorptionFor?: (surfaceIndex: number) => number;
+}
+
 export function planWalls(
   grid: VoxelGrid,
   decomposition: Decomposition,
-  maxThickness: number = DEFAULT_WALL_THICKNESS,
+  options: PlanWallsOptions = {},
 ): WallPlan {
+  const { maxThickness = DEFAULT_WALL_THICKNESS, absorptionFor } = options;
   const { nx, ny, nz, cells, surfaceOf } = grid;
   const dims = [nx, ny, nz];
   const faces: WallFace[] = [];
@@ -154,6 +178,8 @@ export function planWalls(
   /** Solid cells already taken by a slab, so two slabs never overlap. */
   const claimed = new Uint8Array(nx * ny * nz);
   let slabCells = 0;
+  let droppedForSpace = 0;
+  let skippedRigid = 0;
 
   const index = (i: number, j: number, k: number) => i + nx * (j + ny * k);
   const inGrid = (i: number, j: number, k: number) =>
@@ -242,6 +268,7 @@ export function planWalls(
             WALL_THICKNESS_LADDER.find((candidate) => candidate <= available) ?? 0;
 
           if (thickness < MIN_USEFUL_THICKNESS) {
+            droppedForSpace++;
             warnings.push(
               `A wall face of box ${boxIndex} on ${high ? '+' : '-'}${'xyz'[axis]} has only ` +
                 `${available} cells of solid behind it, below the ${MIN_USEFUL_THICKNESS} an ` +
@@ -251,8 +278,41 @@ export function planWalls(
             continue;
           }
 
-          // Claim the cells so no other slab can take them.
+          // Which surface is behind this face? One absorption coefficient per
+          // slab, so a face spanning two materials takes whichever covers more
+          // of it. Splitting per material would be more faithful and is left
+          // for later; the slab count, and with it the cost, would rise.
           const dominant = new Map<number, number>();
+          for (let v = 0; v < rect.h; v++) {
+            for (let u = 0; u < rect.w; u++) {
+              const at = [0, 0, 0];
+              at[axis] = outer;
+              at[uAxis] = uBase + rect.x + u;
+              at[vAxis] = vBase + rect.y + v;
+              const surface = surfaceOf[index(at[0], at[1], at[2])];
+              if (surface >= 0) dominant.set(surface, (dominant.get(surface) ?? 0) + 1);
+            }
+          }
+          let surfaceIndex = -1;
+          let best = 0;
+          for (const [surface, count] of dominant) {
+            if (count > best) {
+              best = count;
+              surfaceIndex = surface;
+            }
+          }
+
+          // A face that absorbs nothing needs no slab. Building one would be
+          // acoustically identical to leaving it rigid while costing its cells
+          // and pinning the whole simulation to the PML's CFL limit.
+          if (absorptionFor && absorptionFor(surfaceIndex) <= RIGID_ALPHA_EPSILON) {
+            skippedRigid++;
+            continue;
+          }
+
+          // Claim the cells so no other slab can take them. Only now, once the
+          // slab is certain to be built — a face left rigid must not reserve
+          // space a neighbouring slab could have used.
           for (let t = 0; t < thickness; t++) {
             for (let v = 0; v < rect.h; v++) {
               for (let u = 0; u < rect.w; u++) {
@@ -260,26 +320,8 @@ export function planWalls(
                 at[axis] = outer + stepOut * t;
                 at[uAxis] = uBase + rect.x + u;
                 at[vAxis] = vBase + rect.y + v;
-                const idx = index(at[0], at[1], at[2]);
-                claimed[idx] = 1;
-                if (t === 0) {
-                  const surface = surfaceOf[idx];
-                  if (surface >= 0) dominant.set(surface, (dominant.get(surface) ?? 0) + 1);
-                }
+                claimed[index(at[0], at[1], at[2])] = 1;
               }
-            }
-          }
-
-          // One absorption coefficient per slab, so a face spanning two
-          // materials takes whichever covers more of it. Splitting the face per
-          // material would be more faithful and is left for later; the slab
-          // count, and with it the cost, would rise.
-          let surfaceIndex = -1;
-          let best = 0;
-          for (const [surface, count] of dominant) {
-            if (count > best) {
-              best = count;
-              surfaceIndex = surface;
             }
           }
 
@@ -298,7 +340,7 @@ export function planWalls(
     }
   }
 
-  return { faces, warnings, slabCells };
+  return { faces, warnings, slabCells, droppedForSpace, skippedRigid };
 }
 
 export interface BuildWallsOptions {
