@@ -1,0 +1,445 @@
+/**
+ * Tests for the ARD solver class (plan Phase 7).
+ *
+ * The stores, the renderer and the messenger are mocked, following
+ * `raytracer.perf.spec.ts`, so this exercises the solver's own sequencing —
+ * voxelize, decompose, run, deconvolve, calibrate, resample, emit — against a
+ * shoebox whose answers are known analytically.
+ *
+ * `Worker` is undefined under jsdom, so these take the inline path.
+ * `ard.worker.spec.ts` covers the worker's protocol separately.
+ */
+
+import { BufferAttribute, BufferGeometry, Vector3 } from 'three';
+
+import { nextPowerOfTwo } from '../deconvolve';
+import { createComplexFftPlan } from '../fft';
+import { ARD, ARD_REFERENCE_FREQUENCY } from '../index';
+
+// `vi.mock` factories are hoisted above module initialization, so anything they
+// close over has to be hoisted with them.
+const mocks = vi.hoisted(() => ({
+  emitted: [] as { event: string; payload: unknown }[],
+  containers: {} as Record<string, unknown>,
+  solvers: {} as Record<string, unknown>,
+  results: {} as Record<string, unknown>,
+}));
+const { emitted, containers, results } = mocks;
+
+vi.mock('../../../render/renderer', () => ({
+  renderer: { add: vi.fn(), remove: vi.fn(), requestRender: vi.fn() },
+}));
+
+vi.mock('../../../messenger', () => ({
+  emit: (event: string, payload: unknown) => {
+    mocks.emitted.push({ event, payload });
+  },
+  on: vi.fn(),
+  messenger: { on: vi.fn(), emit: vi.fn() },
+}));
+
+vi.mock('../../../store', () => ({
+  useContainer: {
+    getState: () => ({
+      containers: mocks.containers,
+      getRooms: () =>
+        Object.values(mocks.containers).filter((c: any) => c.kind === 'room'),
+    }),
+  },
+  useSolver: { getState: () => ({ solvers: mocks.solvers }) },
+  useResult: { getState: () => ({ results: mocks.results }) },
+  addSolver: vi.fn(),
+  removeSolver: vi.fn(),
+  setSolverProperty: vi.fn(),
+  callSolverMethod: vi.fn(),
+}));
+
+const PREF = 2e-5;
+/** `soundSpeed(20)`, the temperature every fake room here reports. */
+const SOUND_SPEED_20C = 20.05 * Math.sqrt(20 + 273.15);
+
+/** A shoebox room whose surfaces all carry the same absorption. */
+function makeRoom(size: { x: number; y: number; z: number }, alpha: number) {
+  const half = { x: size.x / 2, y: size.y / 2, z: size.z / 2 };
+  const surfaces = faceQuads(half).map((quad, index) => ({
+    uuid: `surface-${index}`,
+    kind: 'surface',
+    geometry: quadGeometry(quad),
+    absorptionFunction: () => alpha,
+    // The quads are already in world coordinates, so the transform is the
+    // identity — but `roomTriangles` calls it, and a fake that omits it fails
+    // in a way that looks like a voxelizer bug.
+    localToWorld: (v: Vector3) => v,
+  }));
+
+  return {
+    uuid: 'room-1',
+    kind: 'room',
+    name: 'shoebox',
+    temperature: 20,
+    humidity: 40,
+    allSurfaces: surfaces,
+    boundingBox: {
+      getSize: (target: Vector3) => target.set(size.x, size.y, size.z),
+    },
+  };
+}
+
+/** Six faces of a box centred on the origin, each as two triangles. */
+function faceQuads(half: { x: number; y: number; z: number }): number[][] {
+  const { x, y, z } = half;
+  const corners = (a: number[], b: number[], c: number[], d: number[]) => [
+    ...a, ...b, ...c,
+    ...a, ...c, ...d,
+  ];
+  return [
+    corners([-x, -y, -z], [-x, y, -z], [-x, y, z], [-x, -y, z]),
+    corners([x, -y, -z], [x, -y, z], [x, y, z], [x, y, -z]),
+    corners([-x, -y, -z], [-x, -y, z], [x, -y, z], [x, -y, -z]),
+    corners([-x, y, -z], [x, y, -z], [x, y, z], [-x, y, z]),
+    corners([-x, -y, -z], [x, -y, -z], [x, y, -z], [-x, y, -z]),
+    corners([-x, -y, z], [-x, y, z], [x, y, z], [x, -y, z]),
+  ];
+}
+
+function quadGeometry(positions: number[]): BufferGeometry {
+  const geometry = new BufferGeometry();
+  geometry.setAttribute('position', new BufferAttribute(new Float32Array(positions), 3));
+  return geometry;
+}
+
+function makeSource(uuid: string, at: [number, number, number], initialSPL = 100) {
+  return {
+    uuid,
+    kind: 'source',
+    name: uuid,
+    initialSPL,
+    getWorldPosition: (target: Vector3) => target.set(...at),
+  };
+}
+
+function makeReceiver(uuid: string, at: [number, number, number]) {
+  return {
+    uuid,
+    kind: 'receiver',
+    name: uuid,
+    getWorldPosition: (target: Vector3) => target.set(...at),
+  };
+}
+
+function reset() {
+  emitted.length = 0;
+  for (const key of Object.keys(containers)) delete containers[key];
+  for (const key of Object.keys(results)) delete results[key];
+}
+
+function addedResults() {
+  return emitted.filter((e) => e.event === 'ADD_RESULT').map((e) => e.payload as any);
+}
+
+/**
+ * Magnitude of the impulse response's spectrum at `hz`.
+ *
+ * This is the quantity the solver's calibration is defined on: an arrival's
+ * sum is its pressure, so a flat-spectrum arrival reads its pressure here. It
+ * is also independent of the sample rate the result happens to be written at,
+ * unlike the waveform peak.
+ */
+function spectralMagnitude(ir: Float32Array, sampleRate: number, hz: number): number {
+  const n = nextPowerOfTwo(ir.length);
+  const re = new Float64Array(n);
+  const im = new Float64Array(n);
+  re.set(ir.subarray(0, Math.min(ir.length, n)));
+  createComplexFftPlan(n).forward(re, im);
+  const k = Math.round((hz * n) / sampleRate);
+  return Math.hypot(re[k], im[k]);
+}
+
+/** A copy with everything from `cut` onward zeroed, keeping the length. */
+function before(signal: Float32Array, cut: number): Float32Array {
+  const out = new Float32Array(signal.length);
+  out.set(signal.subarray(0, Math.min(cut, signal.length)));
+  return out;
+}
+
+describe('ARD solver', () => {
+  beforeEach(reset);
+
+  it('reports what a run would cost before running it', () => {
+    containers['room-1'] = makeRoom({ x: 4, y: 3, z: 2.5 }, 0.2);
+    const solver = new ARD({ fMax: 500, irLength: 0.3 });
+
+    expect(solver.cellSize).toBeCloseTo(SOUND_SPEED_20C / (2.6 * 500), 9);
+    expect(solver.estimatedCellCount).toBeGreaterThan(0);
+    expect(solver.estimatedSteps).toBeGreaterThan(0);
+
+    // fMax is the cost dial: cells go as fMax^3 and steps as fMax, so the run
+    // is asymptotically O(fMax^4). It only reaches that asymptote once the
+    // grid is fine enough — the wall slabs' padding is a fixed *cell* count
+    // per axis, so on a coarse grid it is most of the grid. Measured on this
+    // 4 x 3 x 2.5 m room at the default 8-cell slabs: 5.2x for 500 -> 1000 Hz,
+    // 8.4x for 1000 -> 2000. Worth knowing before quoting fMax^4 at a user
+    // who is about to double 500 Hz.
+    const cost = () => solver.estimatedCellCount * solver.estimatedSteps;
+    const at500 = cost();
+    solver.fMax = 1000;
+    const at1000 = cost();
+    solver.fMax = 2000;
+    const at2000 = cost();
+
+    expect(at1000 / at500).toBeGreaterThan(4);
+    expect(at1000 / at500).toBeLessThan(16);
+    // Steeper the second time, as the fixed padding stops dominating.
+    expect(at2000 / at1000).toBeGreaterThan(at1000 / at500);
+    expect(at2000 / at1000).toBeLessThan(16);
+
+    solver.fMax = 1000;
+
+    // Per-band runs cost one run per octave band.
+    const single = solver.estimatedSteps;
+    solver.perBandRuns = true;
+    expect(solver.estimatedSteps).toBe(single * 7);
+  });
+
+  it('refuses to run without a room, a source or a receiver', async () => {
+    const solver = new ARD({});
+    await expect(solver.run()).rejects.toThrow(/no room/);
+
+    containers['room-1'] = makeRoom({ x: 3, y: 2.4, z: 2 }, 0.2);
+    const withRoom = new ARD({ roomID: 'room-1' });
+    await expect(withRoom.run()).rejects.toThrow(/at least one source and one receiver/);
+  });
+
+  it('rejects a source placed outside the room', async () => {
+    containers['room-1'] = makeRoom({ x: 3, y: 2.4, z: 2 }, 0.2);
+    containers['s1'] = makeSource('s1', [40, 40, 40]);
+    containers['r1'] = makeReceiver('r1', [0.5, 0, 0]);
+    const solver = new ARD({
+      roomID: 'room-1', sourceIDs: ['s1'], receiverIDs: ['r1'], fMax: 400, irLength: 0.05,
+    });
+    // The flood fill is seeded from the first source, so a source outside the
+    // room leaks straight to the rim rather than producing a silently wrong
+    // air region.
+    await expect(solver.run()).rejects.toThrow(/does not enclose a volume|not in this room/);
+  });
+
+  it('runs a shoebox end to end and emits a result pair per source-receiver', async () => {
+    containers['room-1'] = makeRoom({ x: 4, y: 3, z: 2.6 }, 0.3);
+    containers['s1'] = makeSource('s1', [-1, 0, 0]);
+    containers['r1'] = makeReceiver('r1', [0.4, 0.2, 0]);
+    containers['r2'] = makeReceiver('r2', [1.2, -0.3, 0.2]);
+
+    const solver = new ARD({
+      roomID: 'room-1',
+      sourceIDs: ['s1'],
+      receiverIDs: ['r1', 'r2'],
+      fMax: 300,
+      irLength: 0.08,
+    });
+
+    const summary = await solver.run();
+
+    expect(summary.runs).toBe(1);
+    expect(summary.boxCount).toBeGreaterThan(0);
+    expect(summary.airCells).toBeGreaterThan(0);
+    expect(summary.cellCount.walls).toBeGreaterThan(0); // alpha 0.3, so slabs exist
+    expect(summary.courant).toBeLessThanOrEqual(0.4);
+    expect(summary.dt).toBeCloseTo((summary.courant * summary.dx) / SOUND_SPEED_20C, 12);
+    expect(summary.impulseResponses.size).toBe(2);
+
+    const added = addedResults();
+    expect(added.map((r) => r.uuid).sort()).toEqual(
+      [
+        `${solver.uuid}-ard-edc-s1-r1`,
+        `${solver.uuid}-ard-edc-s1-r2`,
+        `${solver.uuid}-ard-ir-s1-r1`,
+        `${solver.uuid}-ard-ir-s1-r2`,
+      ].sort(),
+    );
+
+    const ir = added.find((r) => r.uuid === `${solver.uuid}-ard-ir-s1-r1`);
+    expect(ir.kind).toBe('impulseResponse');
+    expect(ir.info.sampleRate).toBe(44100);
+    expect(ir.info.sourceId).toBe('s1');
+    expect(ir.data.length).toBeGreaterThan(1);
+    expect(ir.data.length).toBeLessThanOrEqual(2000);
+
+    const full = summary.impulseResponses.get('s1->r1')!;
+    expect(full.length).toBe(Math.round(summary.steps * (44100 * summary.dt)));
+    expect(solver.progress).toBe(1);
+    expect(solver.noResults).toBe(false);
+    expect(emitted.some((e) => e.event === 'ARD_PROGRESS')).toBe(true);
+  }, 300_000);
+
+  it('puts the direct arrival at the right time and level', async () => {
+    // Big, heavily absorbing room so the direct sound is clear of reflections,
+    // and two distances so the level check is a spreading law rather than a
+    // single number that could be anything.
+    // Distances chosen in *cells*, not metres. `freeFieldGain` is a continuum
+    // expression and the source occupies a whole cell, so it means nothing
+    // within a couple of cells of the source: at fMax 250 (dx = 0.53 m) a
+    // receiver 1 m away is under two cells out and reads 38% low. Here
+    // dx = 0.26 m, so the two receivers are 7.6 and 15.2 cells out.
+    containers['room-1'] = makeRoom({ x: 12, y: 8, z: 5 }, 0.9);
+    containers['s1'] = makeSource('s1', [-4, 0, 0], 100);
+    containers['near'] = makeReceiver('near', [-2, 0, 0]);
+    containers['far'] = makeReceiver('far', [0, 0, 0]);
+
+    const solver = new ARD({
+      roomID: 'room-1',
+      sourceIDs: ['s1'],
+      receiverIDs: ['near', 'far'],
+      fMax: 500,
+      irLength: 0.05,
+    });
+    const summary = await solver.run();
+    const sampleRate = solver.sampleRate;
+
+    const near = summary.impulseResponses.get('s1->near')!;
+    const far = summary.impulseResponses.get('s1->far')!;
+
+    // Arrival time. The cells the source and receiver land in are rounded to
+    // the grid, so the tolerance is a cell either way.
+    const cellSeconds = summary.dx / SOUND_SPEED_20C;
+    for (const [ir, distance] of [[near, 2], [far, 4]] as const) {
+      let peak = 0;
+      let index = 0;
+      for (let i = 0; i < ir.length; i++) {
+        if (Math.abs(ir[i]) > peak) {
+          peak = Math.abs(ir[i]);
+          index = i;
+        }
+      }
+      const expected = (distance / SOUND_SPEED_20C) * sampleRate;
+      expect(Math.abs(index - expected)).toBeLessThan(2 * cellSeconds * sampleRate);
+    }
+
+    // Level. An arrival's spectrum is its pressure, so the direct sound at r
+    // metres reads Lp2P(initialSPL)/r — 2 Pa at 1 m for 100 dB, so 1 Pa and
+    // 0.5 Pa at the two receivers.
+    //
+    // Measure the direct arrival alone. The spectrum of the whole record is
+    // the room's transfer function, modal structure and all, and a spreading
+    // law read off that gives whatever the modes happen to be doing at the
+    // probe frequency — measured 5.0 rather than 2 on this room. The nearest
+    // image source is 5.4 m away against a 2 m direct path, so everything
+    // before 14 ms is direct.
+    const pressureAtOneMetre = 10 ** (100 / 20) * PREF;
+    const directCut = Math.floor(0.014 * sampleRate);
+    const levels = [near, far].map((ir) =>
+      spectralMagnitude(before(ir, directCut), sampleRate, ARD_REFERENCE_FREQUENCY / 2),
+    );
+
+    // Measured 1.059 and 0.530 Pa against 1.000 and 0.500: a common +6%, and a
+    // ratio of 1.998 against 2. Two things contribute and neither is a
+    // calibration error. The free-field constant itself scatters by ~2.5%
+    // (deconvolve.spec.ts), and probes snap to cells — at dx = 26 cm each
+    // lands up to 13 cm from where it was put, which here is the 7.575-cell
+    // true distance becoming a 7-cell grid distance, worth +8% on its own. The
+    // bands below are wide enough to hold both and far too tight to hold a
+    // mistaken constant.
+    for (let n = 0; n < levels.length; n++) {
+      const expected = pressureAtOneMetre / [2, 4][n];
+      expect(levels[n] / expected).toBeGreaterThan(0.85);
+      expect(levels[n] / expected).toBeLessThan(1.15);
+    }
+    // The spreading law between them, which no constant could fake: both
+    // receivers snap the same way, so the ratio is clean where the absolute
+    // level is not.
+    expect(levels[0] / levels[1]).toBeGreaterThan(1.85);
+    expect(levels[0] / levels[1]).toBeLessThan(2.15);
+  }, 300_000);
+
+  it('scales the result with the source level', async () => {
+    containers['room-1'] = makeRoom({ x: 4, y: 3, z: 2.6 }, 0.4);
+    containers['s1'] = makeSource('s1', [-1, 0, 0], 94);
+    containers['r1'] = makeReceiver('r1', [0.5, 0, 0]);
+
+    const quiet = await new ARD({
+      roomID: 'room-1', sourceIDs: ['s1'], receiverIDs: ['r1'], fMax: 250, irLength: 0.04,
+    }).run();
+
+    (containers['s1'] as { initialSPL: number }).initialSPL = 114; // +20 dB
+    const loud = await new ARD({
+      roomID: 'room-1', sourceIDs: ['s1'], receiverIDs: ['r1'], fMax: 250, irLength: 0.04,
+    }).run();
+
+    const a = quiet.impulseResponses.get('s1->r1')!;
+    const b = loud.impulseResponses.get('s1->r1')!;
+    for (let i = 0; i < a.length; i++) {
+      if (Math.abs(a[i]) > 1e-12) expect(b[i] / a[i]).toBeCloseTo(10, 3);
+    }
+  }, 300_000);
+
+  it('gives the same answer per band as broadband when absorption is flat', async () => {
+    // The band windows sum to one, so a room whose materials do not vary with
+    // frequency has to come out the same either way. If it does not, the
+    // per-band path is changing the broadband level as a side effect of asking
+    // for more accuracy.
+    containers['room-1'] = makeRoom({ x: 3.2, y: 2.6, z: 2.2 }, 0.35);
+    containers['s1'] = makeSource('s1', [-0.8, 0, 0]);
+    containers['r1'] = makeReceiver('r1', [0.6, 0.3, 0]);
+
+    const base = {
+      roomID: 'room-1', sourceIDs: ['s1'], receiverIDs: ['r1'],
+      fMax: 250, irLength: 0.04,
+    };
+    const broadband = await new ARD(base).run();
+    const perBand = await new ARD({ ...base, perBandRuns: true }).run();
+
+    expect(perBand.runs).toBe(7);
+    const a = broadband.impulseResponses.get('s1->r1')!;
+    const b = perBand.impulseResponses.get('s1->r1')!;
+    expect(b.length).toBe(a.length);
+
+    let error = 0;
+    let energy = 0;
+    for (let i = 0; i < a.length; i++) {
+      error += (b[i] - a[i]) ** 2;
+      energy += a[i] ** 2;
+    }
+    expect(Math.sqrt(error / energy)).toBeLessThan(0.02);
+  }, 600_000);
+
+  it('saves and restores every property', () => {
+    containers['room-1'] = makeRoom({ x: 3, y: 2.4, z: 2 }, 0.2);
+    const solver = new ARD({
+      roomID: 'room-1',
+      sourceIDs: ['s1', 's2'],
+      receiverIDs: ['r1'],
+      fMax: 1500,
+      cellsPerWavelength: 3.4,
+      courant: 0.35,
+      irLength: 2.5,
+      wallThickness: 12,
+      perBandRuns: true,
+      sampleRate: 48000,
+      humidity: 55,
+    });
+    const state = solver.save();
+    expect(state.kind).toBe('ard');
+
+    const restored = new ARD({}).restore(state);
+    expect(restored.save()).toEqual(state);
+    expect(restored.fMax).toBe(1500);
+    expect(restored.perBandRuns).toBe(true);
+    expect(restored.humidity).toBe(55);
+  });
+
+  it('stops a run when cancelled', async () => {
+    containers['room-1'] = makeRoom({ x: 4, y: 3, z: 2.6 }, 0.3);
+    containers['s1'] = makeSource('s1', [-1, 0, 0]);
+    containers['r1'] = makeReceiver('r1', [0.5, 0, 0]);
+    const solver = new ARD({
+      roomID: 'room-1', sourceIDs: ['s1'], receiverIDs: ['r1'], fMax: 400, irLength: 1.5,
+    });
+
+    const running = solver.run();
+    // The inline loop yields between chunks, so a cancel from here lands.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    solver.cancel();
+
+    await expect(running).rejects.toThrow(/cancelled/);
+    expect(solver.running).toBe(false);
+  }, 300_000);
+});

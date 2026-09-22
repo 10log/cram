@@ -1,7 +1,7 @@
 /**
  * Issue #118: energy radiosity must use 10 log₁₀ on ISO 9613-1 dB/m SPL.
  */
-import { airAttenuation, airAttenuationEnergy, airAbsDbToEnergyNepers } from "../air-attenuation";
+import { airAttenuation, airAttenuationEnergy, airAbsDbToEnergyNepers, airAbsDbToPressureNepers } from "../air-attenuation";
 
 describe("Issue #118: air attenuation on energy", () => {
   test("1 kHz, 10 m: energy factor is 10^(-α_dB * 10 / 10)", () => {
@@ -23,6 +23,25 @@ describe("Issue #118: air attenuation on energy", () => {
     const high = airAttenuationEnergy(airAttenuation([8000], 20)[0], r);
     expect(high).toBeLessThan(low);
     expect(high / low).toBeLessThan(0.75);
+  });
+});
+
+describe("airAbsDbToPressureNepers", () => {
+  test("is exactly half the energy figure", () => {
+    // Energy goes as pressure squared, so the same dB/m is twice as many
+    // nepers for energy as for amplitude. A wave solver carries pressure, so
+    // handing it the energy nepers attenuates twice as fast in dB as the
+    // standard says — a plausible-looking but short reverberation time.
+    for (const db of [0.001, 0.05, 1.2, 9]) {
+      expect(airAbsDbToPressureNepers(db) * 2).toBeCloseTo(airAbsDbToEnergyNepers(db), 15);
+    }
+  });
+
+  test("exp(-n·r) is the SPL decay airAttenuation reports", () => {
+    const db = airAttenuation([1000], 20)[0];
+    const r = 30;
+    const amplitude = Math.exp(-airAbsDbToPressureNepers(db) * r);
+    expect(-20 * Math.log10(amplitude)).toBeCloseTo(db * r, 12);
   });
 });
 

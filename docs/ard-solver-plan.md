@@ -815,7 +815,84 @@ establishes the pattern); total field energy is non-increasing once the source
 has stopped; a rigid box's measured mode frequencies match
 `(c/2)*sqrt((nx/Lx)^2 + (ny/Ly)^2 + (nz/Lz)^2)` for the first ten modes.
 
-### Phase 7 — Solver Class
+### Phase 7 — Solver Class — **implemented**
+
+**Created** `src/compute/ard/{index,deconvolve,resample}.ts`,
+`__tests__/{ard-solver,deconvolve,resample}.spec.ts`, and
+`airAbsDbToPressureNepers` in `compute/acoustics/air-attenuation.ts`.
+
+The solver runs end to end: room and probes out of the stores, grid from
+`fMax`, voxelize, decompose, simulate (in the worker where there is one),
+deconvolve the pulse, calibrate the level, resample, emit an
+`ImpulseResponse` and an `EnergyDecay` per source–receiver pair.
+
+**The absolute scale is analytic, and the time-domain peak would have got it
+wrong.** The forcing convention is `∂²p/∂t² = c²∇²p + F` injected into one
+cell, so the continuum free-field transfer function is `Δx³/(4πc²r)`. Measured
+against the assembled solver at 0.25, 0.5 and 0.75 `fMax`, over `Δx` 0.05–0.1 m,
+Courant 0.3–0.4, `fMax` 600–1200 Hz and `r` 0.3–1.8 m: **every ratio within 2.5%
+of 1, no systematic bias.** The *peak* of the recorded waveform does not follow
+that constant — it runs 1–5% high, increasing with both Courant number and cells
+per wavelength, because it is a band-limited delta sampled at an arbitrary
+offset. Calibrating on the peak would have folded a discretization artefact into
+the level. The calibration is therefore spectral, and the impulse-response
+convention is that **an arrival's sum is its pressure** — the same thing the ray
+tracer means when it puts an arrival's pressure in a single sample, except
+spread over the band-limited arrival, so the peak is lower than the pressure by
+a factor that depends on `fMax`.
+
+**Every ARD run is *up*sampled on the way out, and the result is band-limited
+whatever rate it is written at.** `fs_sim = n·fMax/C`, which at the plan's
+defaults is 6500 Hz, not 44100. There is nothing above `1.3·fMax` to alias, and
+nothing above it in the written result either. Resampling makes the IR playable
+and convolvable next to CRAM's other results; it does not make it broadband.
+Kaiser-windowed sinc rather than FFT zero-padding, because an impulse response
+is not periodic and the FFT method wraps the reverberant tail onto the direct
+arrival.
+
+**`perBandRuns` works, and costs what it says.** The octave-band windows sum to
+exactly one, so a room with frequency-flat materials gives the same answer
+either way — checked end to end to 2% relative. Cost is `sources × bands` runs.
+
+**Source directivity does not port, and D4 was wrong to assume it would.** A ray
+carries its own launch direction, so a geometric solver can weight it by
+`Q(θ,φ,f)`. A wave solver injects into a single cell, which is a monopole with
+no direction to weight. Scaling the whole impulse response by the on-axis gain
+toward the receiver would be right for the direct sound and wrong for every
+reflection. Sources are omnidirectional and `source.directivityHandler` is
+ignored; directivity needs a multipole or an array of driven cells with per-cell
+delays, which is its own piece of work.
+
+Three smaller findings:
+
+- **`duration`, not `steps`.** `dt` is not settled until the wall slabs are
+  planned and the CFL clamp applied, so a caller computing `steps` from its
+  *requested* Courant number asks for the wrong number every time the clamp
+  bites — 12% short on a 3D room with walls. `createArdSimulation` now takes
+  either, and `planArdTimeStep` is split out so a caller can learn `dt` without
+  building partitions (which would mean a PML calibration curve per thickness,
+  about a second each). That is also what makes a worker handoff possible: the
+  driving pulse has to be in the message, and it has to be sampled at `dt`.
+- **Probes snap to cells, and it is worth saying so.** At `fMax` 500 the grid is
+  26 cm, so a source or receiver moves up to 13 cm per axis on its way onto the
+  grid while its marker stays put in the room view. Measured effect on a 2 m
+  free-field path: 6% in level. `ARDRunSummary` therefore reports the cells
+  everything landed in.
+- **Air attenuation on a pressure field needs `dB/(20/ln10)` nepers, not the
+  energy figure.** The existing `airAbsDbToEnergyNepers` is twice as large;
+  using it on a wave solver attenuates twice as fast in dB as ISO 9613 says and
+  reads as a plausible but short reverberation time.
+
+The cost estimate on the solver reaches `O(fMax⁴)` only asymptotically: the wall
+slabs' padding is a fixed *cell* count per axis, so on a coarse grid it is most
+of the grid. Measured on a 4 × 3 × 2.5 m room at the default 8-cell slabs, 5.2x
+for 500 → 1000 Hz and 8.4x for 1000 → 2000 Hz.
+
+Event wiring (`ADD_ARD`, `REMOVE_ARD`, `ARD_SET_PROPERTY`, `CALCULATE_ARD`,
+`ARD_PROGRESS`) is in place. The registry entry, the restore case and the UI are
+Phase 8's table, untouched here.
+
+**Original specification follows.**
 
 **Create** `src/compute/ard/index.ts`
 
