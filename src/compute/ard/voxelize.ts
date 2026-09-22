@@ -232,6 +232,8 @@ export function voxelizeTriangles(
 
   const cells = new Uint8Array(total);
   const surfaceOf = new Int32Array(total).fill(-1);
+  const strideY = nx;
+  const strideZ = nx * ny;
 
   // --- Pass 1: rasterize the shell -------------------------------------------
   const h = dx / 2;
@@ -279,8 +281,6 @@ export function voxelizeTriangles(
     }
   }
 
-  const isBoundary = (idx: number) => surfaceOf[idx] >= 0;
-
   // --- Pass 2: flood fill the air --------------------------------------------
   const vertexCount = triangles.length * 3;
   const seedPoint = seed ?? {
@@ -288,81 +288,100 @@ export function voxelizeTriangles(
     y: sumY / vertexCount,
     z: sumZ / vertexCount,
   };
-  let si = Math.round((seedPoint.x - origin.x) / dx);
-  let sj = Math.round((seedPoint.y - origin.y) / dx);
-  let sk = Math.round((seedPoint.z - origin.z) / dx);
-  si = Math.min(nx - 1, Math.max(0, si));
-  sj = Math.min(ny - 1, Math.max(0, sj));
-  sk = Math.min(nz - 1, Math.max(0, sk));
-  let seedIdx = si + nx * (sj + ny * sk);
+  const clamp = (v: number, hi: number) => Math.min(hi, Math.max(0, v));
+  const si = clamp(Math.round((seedPoint.x - origin.x) / dx), nx - 1);
+  const sj = clamp(Math.round((seedPoint.y - origin.y) / dx), ny - 1);
+  const sk = clamp(Math.round((seedPoint.z - origin.z) / dx), nz - 1);
+  const seedIdx = si + nx * (sj + ny * sk);
 
-  if (isBoundary(seedIdx)) {
-    const relocated = nearestFreeCell(surfaceOf, nx, ny, nz, si, sj, sk);
-    if (relocated < 0) {
+  const stack = new Int32Array(total);
+
+  /**
+   * Fill from one cell and report whether the result is sealed.
+   *
+   * `cells` carries nothing but the fill result — the shell lives in
+   * `surfaceOf` — so clearing it is a complete reset between attempts.
+   */
+  const attemptFill = (from: number): { airCount: number; touchedRim: boolean } => {
+    cells.fill(Cell.Solid);
+    let top = 0;
+    stack[top++] = from;
+    cells[from] = Cell.Air;
+    let airCount = 1;
+
+    while (top > 0) {
+      const idx = stack[--top];
+      const i = idx % nx;
+      const j = ((idx - i) / nx) % ny;
+      const k = Math.floor(idx / strideZ);
+
+      if (i > 0) push(idx - 1);
+      if (i < nx - 1) push(idx + 1);
+      if (j > 0) push(idx - strideY);
+      if (j < ny - 1) push(idx + strideY);
+      if (k > 0) push(idx - strideZ);
+      if (k < nz - 1) push(idx + strideZ);
+    }
+
+    function push(n: number): void {
+      if (cells[n] === Cell.Air || surfaceOf[n] >= 0) return;
+      cells[n] = Cell.Air;
+      airCount++;
+      stack[top++] = n;
+    }
+
+    return { airCount, touchedRim: fillTouchesRim(cells, nx, ny, nz) };
+  };
+
+  let result: { airCount: number; touchedRim: boolean };
+
+  if (surfaceOf[seedIdx] < 0) {
+    // The seed landed in free space. Take its answer as given: if that fill
+    // leaks, the geometry is open or the seed is outside, and relocating would
+    // hide a real problem behind a different starting point.
+    result = attemptFill(seedIdx);
+  } else {
+    // The seed landed on a wall cell. That is not exotic: `Math.round` maps any
+    // world point within half a cell of a wall-cell centre onto it, so a source
+    // mounted flush to a surface — or anywhere in the half-cell band inside it
+    // — arrives here.
+    //
+    // Which free cell we relocate to has to be decided by whether the fill from
+    // it stays sealed, not by scan order. Picking the first free cell found
+    // walking k, then j, then i ascending biases hard toward the low-index
+    // side, which for a wall on -x, -y or -z is the exterior: the fill then
+    // floods the outside of a perfectly watertight room and `decompose`
+    // refuses it.
+    const candidates = relocationCandidates(surfaceOf, nx, ny, nz, si, sj, sk);
+    if (candidates.length === 0) {
       throw new Error('No free cell found near the seed point; the grid is entirely solid');
     }
-    seedIdx = relocated;
+
+    let chosen: { airCount: number; touchedRim: boolean } | null = null;
+    for (const candidate of candidates) {
+      const attempt = attemptFill(candidate);
+      if (!attempt.touchedRim) {
+        chosen = attempt;
+        break;
+      }
+      // Keep the first attempt so a genuinely open room still reports
+      // something rather than the last candidate tried.
+      if (chosen === null) chosen = attempt;
+    }
+    result = chosen!;
+    if (result.touchedRim) {
+      // Re-run so `cells` matches the result being reported.
+      result = attemptFill(candidates[0]);
+    }
+
     warnings.push(
-      'The seed point landed on a wall cell; the fill started from the nearest free cell ' +
-        'instead, which may not be inside the room.',
+      'The seed point landed on a wall cell; the fill started from the nearest enclosed ' +
+        'free cell instead.',
     );
   }
 
-  // Iterative 6-connected fill. An explicit stack, not recursion: a room at
-  // 1 kHz is ~10^5 cells and at 2 kHz ~10^6, which would overflow the call
-  // stack many times over.
-  const stack = new Int32Array(total);
-  let top = 0;
-  stack[top++] = seedIdx;
-  cells[seedIdx] = Cell.Air;
-  let airCount = 1;
-
-  const strideY = nx;
-  const strideZ = nx * ny;
-
-  while (top > 0) {
-    const idx = stack[--top];
-    const i = idx % nx;
-    const j = ((idx - i) / nx) % ny;
-    const k = Math.floor(idx / strideZ);
-
-    if (i > 0) pushNeighbour(idx - 1);
-    if (i < nx - 1) pushNeighbour(idx + 1);
-    if (j > 0) pushNeighbour(idx - strideY);
-    if (j < ny - 1) pushNeighbour(idx + strideY);
-    if (k > 0) pushNeighbour(idx - strideZ);
-    if (k < nz - 1) pushNeighbour(idx + strideZ);
-  }
-
-  function pushNeighbour(n: number): void {
-    if (cells[n] === Cell.Air || surfaceOf[n] >= 0) return;
-    cells[n] = Cell.Air;
-    airCount++;
-    stack[top++] = n;
-  }
-
-  // --- Leak detection ---------------------------------------------------------
-  let leaked = false;
-  outer: for (let k = 0; k < nz && !leaked; k++) {
-    const onZRim = k === 0 || k === nz - 1;
-    for (let j = 0; j < ny; j++) {
-      const onYRim = j === 0 || j === ny - 1;
-      const rowBase = nx * (j + ny * k);
-      if (onZRim || onYRim) {
-        for (let i = 0; i < nx; i++) {
-          if (cells[rowBase + i] === Cell.Air) {
-            leaked = true;
-            break outer;
-          }
-        }
-      } else {
-        if (cells[rowBase] === Cell.Air || cells[rowBase + nx - 1] === Cell.Air) {
-          leaked = true;
-          break outer;
-        }
-      }
-    }
-  }
+  const airCount = result.airCount;
+  const leaked = result.touchedRim;
   if (leaked) {
     warnings.push(
       'The air fill reached the edge of the padded grid. The room surfaces do not close, ' +
@@ -386,8 +405,35 @@ export function voxelizeTriangles(
   };
 }
 
-/** Breadth-first search outward for a cell that is not part of the shell. */
-function nearestFreeCell(
+/** Does the filled region touch the padded rim? */
+function fillTouchesRim(cells: Uint8Array, nx: number, ny: number, nz: number): boolean {
+  for (let k = 0; k < nz; k++) {
+    const onZRim = k === 0 || k === nz - 1;
+    for (let j = 0; j < ny; j++) {
+      const onYRim = j === 0 || j === ny - 1;
+      const rowBase = nx * (j + ny * k);
+      if (onZRim || onYRim) {
+        for (let i = 0; i < nx; i++) if (cells[rowBase + i] === Cell.Air) return true;
+      } else if (cells[rowBase] === Cell.Air || cells[rowBase + nx - 1] === Cell.Air) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+/** How many candidates a relocated seed will try before giving up. */
+const MAX_RELOCATION_CANDIDATES = 12;
+
+/**
+ * Free cells near a seed that landed on a wall, best first.
+ *
+ * Ordered by Chebyshev radius, then — and this is the part that matters — by
+ * distance to the centre of the grid rather than by scan order. The caller
+ * still validates each by filling from it, so this ordering only decides how
+ * quickly the right one is found, not whether it is correct.
+ */
+function relocationCandidates(
   surfaceOf: Int32Array,
   nx: number,
   ny: number,
@@ -395,23 +441,38 @@ function nearestFreeCell(
   si: number,
   sj: number,
   sk: number,
-): number {
+): number[] {
+  const centreI = (nx - 1) / 2;
+  const centreJ = (ny - 1) / 2;
+  const centreK = (nz - 1) / 2;
+  const found: number[] = [];
   const maxRadius = Math.max(nx, ny, nz);
-  for (let r = 1; r < maxRadius; r++) {
+
+  for (let r = 1; r < maxRadius && found.length < MAX_RELOCATION_CANDIDATES; r++) {
+    const ring: Array<{ idx: number; toCentre: number }> = [];
     for (let k = Math.max(0, sk - r); k <= Math.min(nz - 1, sk + r); k++) {
       for (let j = Math.max(0, sj - r); j <= Math.min(ny - 1, sj + r); j++) {
         for (let i = Math.max(0, si - r); i <= Math.min(nx - 1, si + r); i++) {
-          // Only the shell of the search cube is new at this radius.
           const onShell =
             Math.abs(i - si) === r || Math.abs(j - sj) === r || Math.abs(k - sk) === r;
           if (!onShell) continue;
           const idx = i + nx * (j + ny * k);
-          if (surfaceOf[idx] < 0) return idx;
+          if (surfaceOf[idx] >= 0) continue;
+          const di = i - centreI;
+          const dj = j - centreJ;
+          const dk = k - centreK;
+          ring.push({ idx, toCentre: di * di + dj * dj + dk * dk });
         }
       }
     }
+    ring.sort((a, b) => a.toCentre - b.toCentre || a.idx - b.idx);
+    for (const entry of ring) {
+      found.push(entry.idx);
+      if (found.length >= MAX_RELOCATION_CANDIDATES) break;
+    }
   }
-  return -1;
+
+  return found;
 }
 
 /** Linear index of a cell, or -1 if outside the grid. */

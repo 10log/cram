@@ -15,6 +15,7 @@ import {
   type VoxelGrid,
   type VoxelTriangle,
 } from '../voxelize';
+import { decompose } from '../decompose';
 
 type P = [number, number, number];
 
@@ -212,12 +213,75 @@ describe('voxelizeTriangles', () => {
     expect(at(grid, notch.i, notch.j, notch.k)).toBe(Cell.Solid);
   });
 
-  it('warns and relocates when the seed lands on a wall', () => {
-    const grid = voxelizeTriangles(boxSurfaces([0, 0, 0], [1, 1, 1]), {
-      dx: 0.1,
-      seed: { x: 0, y: 0.5, z: 0.5 },
+  describe('a seed on or near a wall still fills the interior', () => {
+    /**
+     * `Math.round` maps any world point within half a cell of a wall-cell
+     * centre onto that wall, so this covers a source mounted flush to a
+     * surface *and* anything in the half-cell band inside it — which is
+     * exactly where wall-mounted speakers go.
+     *
+     * Relocating from such a seed has to pick an enclosed cell. Choosing the
+     * first free cell in scan order biases toward the low-index side, which on
+     * a -x, -y or -z wall is the exterior: the fill then floods the outside of
+     * a watertight room and `decompose` refuses it. Asserting only the warning
+     * string let that ship, so assert the fill itself.
+     */
+    const CUBE = boxSurfaces([0, 0, 0], [1, 1, 1]);
+    const DX = 0.1;
+
+    /** The answer a clean interior seed gives, as the control. */
+    const control = voxelizeTriangles(CUBE, { dx: DX, seed: { x: 0.5, y: 0.5, z: 0.5 } });
+
+    it('has a sealed control fill to compare against', () => {
+      expect(control.leaked).toBe(false);
+      expect(control.warnings).toEqual([]);
+      expect(control.airCount).toBe(729); // 9^3 interior cells
     });
-    expect(grid.warnings.join(' ')).toMatch(/wall cell/);
+
+    it.each([
+      ['-x face', { x: 0, y: 0.5, z: 0.5 }],
+      ['+x face', { x: 1, y: 0.5, z: 0.5 }],
+      ['-y face', { x: 0.5, y: 0, z: 0.5 }],
+      ['+y face', { x: 0.5, y: 1, z: 0.5 }],
+      ['-z face', { x: 0.5, y: 0.5, z: 0 }],
+      ['+z face', { x: 0.5, y: 0.5, z: 1 }],
+    ])('seed on the %s', (_label, seed) => {
+      const grid = voxelizeTriangles(CUBE, { dx: DX, seed });
+
+      expect(grid.warnings.join(' ')).toMatch(/wall cell/);
+      expect(grid.leaked).toBe(false);
+      expect(grid.airCount).toBe(control.airCount);
+    });
+
+    it.each([
+      ['inside the -x wall', { x: 0.04, y: 0.5, z: 0.5 }],
+      ['inside the -y wall', { x: 0.5, y: 0.04, z: 0.5 }],
+      ['inside the -z wall', { x: 0.5, y: 0.5, z: 0.04 }],
+      ['inside the +x wall', { x: 0.96, y: 0.5, z: 0.5 }],
+      ['inside the +y wall', { x: 0.5, y: 0.96, z: 0.5 }],
+      ['inside the +z wall', { x: 0.5, y: 0.5, z: 0.96 }],
+    ])('seed a half cell %s', (_label, seed) => {
+      const grid = voxelizeTriangles(CUBE, { dx: DX, seed });
+      expect(grid.leaked).toBe(false);
+      expect(grid.airCount).toBe(control.airCount);
+    });
+
+    it('decomposes a wall-seeded grid exactly like a centre-seeded one', () => {
+      // The end the bug actually surfaced at: `decompose` throws on a leaked
+      // grid, so a source near a low-index wall hard-failed a closed room.
+      const wallSeeded = voxelizeTriangles(CUBE, { dx: DX, seed: { x: 0, y: 0.5, z: 0.5 } });
+      expect(() => decompose(wallSeeded)).not.toThrow();
+      expect(decompose(wallSeeded).boxes).toEqual(decompose(control).boxes);
+    });
+
+    it('still reports a genuine leak rather than relocating around it', () => {
+      // Relocation must not paper over open geometry: with the +x face gone
+      // there is no enclosed cell to find, and that has to be said.
+      const open = CUBE.filter((t) => t.surfaceIndex !== 1);
+      const grid = voxelizeTriangles(open, { dx: DX, seed: { x: 0, y: 0.5, z: 0.5 } });
+      expect(grid.leaked).toBe(true);
+      expect(grid.warnings.join(' ')).toMatch(/do not close|outside/);
+    });
   });
 
   it('pads the grid so the exterior always touches the rim', () => {

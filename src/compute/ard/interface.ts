@@ -55,14 +55,14 @@
 
 import {
   Axis,
+  INTERFACE_DEPTH,
   STENCIL_6TH,
   STENCIL_6TH_DIV,
   type Box,
   type Partition,
 } from './partition';
 
-/** Cells of overlap each side of the interface that carry residual forcing. */
-export const INTERFACE_DEPTH = 3;
+export { INTERFACE_DEPTH };
 
 /**
  * A shared face between two partitions.

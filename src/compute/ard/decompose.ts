@@ -54,7 +54,7 @@
  * whereas marking the kind always works and Phase 4 already handles it.
  */
 
-import type { Box } from './partition';
+import { INTERFACE_DEPTH, type Box } from './partition';
 import { Cell, type VoxelGrid } from './voxelize';
 
 export type PartitionKind = 'dct' | 'fdtd';
@@ -92,10 +92,14 @@ export interface DecomposeOptions {
   longestAxisFirst?: boolean;
 }
 
-/** Three cells either side of a face, as the 6th-order interface stencil needs. */
-export const INTERFACE_STENCIL_DEPTH = 3;
-
-const DEFAULT_MIN_BOX_EDGE = 2 * INTERFACE_STENCIL_DEPTH + 1;
+/**
+ * Both opposing faces of a box may carry an interface, so a box needs
+ * `INTERFACE_DEPTH` cells for each plus one between them. The constant comes
+ * from `partition.ts`, where it is derived from the stencil itself: defining it
+ * twice would let `decompose` mark boxes `dct` that cannot supply the taps
+ * `interface.ts` goes on to read.
+ */
+const DEFAULT_MIN_BOX_EDGE = 2 * INTERFACE_DEPTH + 1;
 
 /**
  * Cover a voxel grid's air region with disjoint axis-aligned boxes.

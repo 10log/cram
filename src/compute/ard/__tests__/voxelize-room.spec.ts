@@ -19,13 +19,18 @@ import { roomTriangles, voxelizeRoom } from '../voxelize-room';
 interface StubOptions {
   positions: number[];
   offset?: { x: number; y: number; z: number };
+  /** Triangle vertex indices, for an indexed BufferGeometry. */
+  index?: number[];
 }
 
-function stubSurface({ positions, offset = { x: 0, y: 0, z: 0 } }: StubOptions) {
+function stubSurface({ positions, offset = { x: 0, y: 0, z: 0 }, index }: StubOptions) {
   return {
     geometry: {
       getAttribute: (name: string) =>
         name === 'position' ? { array: new Float32Array(positions) } : undefined,
+      index: index
+        ? { count: index.length, getX: (i: number) => index[i] }
+        : null,
     },
     localToWorld: (v: Vector3) => v.set(v.x + offset.x, v.y + offset.y, v.z + offset.z),
   };
@@ -81,6 +86,86 @@ describe('roomTriangles', () => {
     const { triangles } = roomTriangles(room);
     expect(triangles).toHaveLength(1);
     expect(triangles[0].surfaceIndex).toBe(0);
+  });
+
+  describe('indexed geometry', () => {
+    /**
+     * `Surface` builds non-indexed buffers today, so this is defence rather
+     * than a live bug. But a loader change or a model import carrying an index
+     * would otherwise have the position buffer read as consecutive triples —
+     * shared-vertex soup taken for independent triangles. The shell would come
+     * out full of holes and produce a "leak" that is near-impossible to trace
+     * back to the adapter. `TessellateModifier` guards the same way.
+     */
+    it('expands an index buffer instead of reading positions as triples', () => {
+      // A quad as four shared vertices plus six indices. Read as triples this
+      // would give one triangle from (0,1,2) and garbage past the end.
+      const positions = [
+        0, 0, 0,
+        1, 0, 0,
+        1, 1, 0,
+        0, 1, 0,
+      ];
+      const room = stubRoom([stubSurface({ positions, index: [0, 1, 2, 0, 2, 3] })]);
+      const { triangles } = roomTriangles(room);
+
+      expect(triangles).toHaveLength(2);
+      expect([triangles[0].ax, triangles[0].ay]).toEqual([0, 0]);
+      expect([triangles[0].bx, triangles[0].by]).toEqual([1, 0]);
+      expect([triangles[0].cx, triangles[0].cy]).toEqual([1, 1]);
+      // The second triangle reuses vertices 0 and 2 — the whole point of an index.
+      expect([triangles[1].ax, triangles[1].ay]).toEqual([0, 0]);
+      expect([triangles[1].bx, triangles[1].by]).toEqual([1, 1]);
+      expect([triangles[1].cx, triangles[1].cy]).toEqual([0, 1]);
+    });
+
+    it('applies the world transform to indexed vertices too', () => {
+      const room = stubRoom([
+        stubSurface({
+          positions: [0, 0, 0, 1, 0, 0, 0, 1, 0],
+          index: [0, 1, 2],
+          offset: { x: 5, y: 0, z: 0 },
+        }),
+      ]);
+      const { triangles } = roomTriangles(room);
+      expect([triangles[0].ax, triangles[0].bx, triangles[0].cx]).toEqual([5, 6, 5]);
+    });
+
+    it('produces the same shell from indexed and non-indexed geometry', () => {
+      // The property that actually matters: an indexed cube must voxelize to
+      // the same air region as the equivalent non-indexed one.
+      const corners = [
+        [0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0],
+        [0, 0, 1], [1, 0, 1], [1, 1, 1], [0, 1, 1],
+      ];
+      const faces = [
+        [0, 3, 7, 4], [1, 5, 6, 2], [0, 4, 5, 1],
+        [3, 2, 6, 7], [0, 1, 2, 3], [4, 7, 6, 5],
+      ];
+
+      const indexedSurfaces = faces.map((f) =>
+        stubSurface({
+          positions: corners.flat(),
+          index: [f[0], f[1], f[2], f[0], f[2], f[3]],
+        }),
+      );
+      const expandedSurfaces = faces.map((f) =>
+        stubSurface({
+          positions: [
+            ...corners[f[0]], ...corners[f[1]], ...corners[f[2]],
+            ...corners[f[0]], ...corners[f[2]], ...corners[f[3]],
+          ],
+        }),
+      );
+
+      const seed = { x: 0.5, y: 0.5, z: 0.5 };
+      const indexed = voxelizeRoom(stubRoom(indexedSurfaces), { dx: 0.1, seed });
+      const expanded = voxelizeRoom(stubRoom(expandedSurfaces), { dx: 0.1, seed });
+
+      expect(indexed.grid.leaked).toBe(false);
+      expect(indexed.grid.airCount).toBe(expanded.grid.airCount);
+      expect(Array.from(indexed.grid.cells)).toEqual(Array.from(expanded.grid.cells));
+    });
   });
 
   it('ignores a trailing partial triangle rather than reading past the end', () => {

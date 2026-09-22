@@ -35,28 +35,44 @@ export function roomTriangles(room: Room): {
 
   for (let si = 0; si < surfaces.length; si++) {
     const surface = surfaces[si];
-    const position = surface.geometry?.getAttribute('position');
+    const geometry = surface.geometry;
+    const position = geometry?.getAttribute('position');
     if (!position) continue;
 
     const array = position.array as ArrayLike<number>;
-    const triCount = Math.floor(array.length / 9);
+    // Indexed geometry has to be expanded first. `Surface` builds non-indexed
+    // buffers today, but a loader change or a model import that carries an
+    // index would otherwise be read as consecutive triples — shared-vertex soup
+    // interpreted as independent triangles. The shell comes out full of holes
+    // and the result is a real leak that is very hard to attribute back to
+    // here. `TessellateModifier` guards the same way for the same reason.
+    const index = geometry?.index ?? null;
+    const corner = (t: number, c: 0 | 1 | 2): number => {
+      const vertex = index ? index.getX(t * 3 + c) : t * 3 + c;
+      return vertex * 3;
+    };
+    const triCount = index
+      ? Math.floor(index.count / 3)
+      : Math.floor(array.length / 9);
 
     for (let t = 0; t < triCount; t++) {
-      const o = t * 9;
+      const oa = corner(t, 0);
+      const ob = corner(t, 1);
+      const oc = corner(t, 2);
       // localToWorld mutates, so each vertex is converted on its own.
-      v.set(array[o], array[o + 1], array[o + 2]);
+      v.set(array[oa], array[oa + 1], array[oa + 2]);
       surface.localToWorld(v);
       const ax = v.x;
       const ay = v.y;
       const az = v.z;
 
-      v.set(array[o + 3], array[o + 4], array[o + 5]);
+      v.set(array[ob], array[ob + 1], array[ob + 2]);
       surface.localToWorld(v);
       const bx = v.x;
       const by = v.y;
       const bz = v.z;
 
-      v.set(array[o + 6], array[o + 7], array[o + 8]);
+      v.set(array[oc], array[oc + 1], array[oc + 2]);
       surface.localToWorld(v);
 
       triangles.push({

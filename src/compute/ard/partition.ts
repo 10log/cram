@@ -250,6 +250,17 @@ export const STENCIL_6TH = [2, -27, 270, -490, 270, -27, 2] as const;
 export const STENCIL_6TH_DIV = 180;
 
 /**
+ * Cells either side of a partition face that the interface residual reads.
+ *
+ * Derived from {@link STENCIL_6TH}: the operator spans offsets -3..+3, so taps
+ * reach three cells across a face. Two things depend on it and must not drift
+ * apart — `interface.ts` sizes the residual with it, and `decompose.ts` uses it
+ * to decide which boxes are too thin to carry an interface at all. Raising the
+ * stencil order changes both, so it lives here with the stencil.
+ */
+export const INTERFACE_DEPTH = (STENCIL_6TH.length - 1) / 2;
+
+/**
  * 4th-order central first-difference coefficients, for offsets -2..+2.
  * The operator is `sum(FIRST_DERIV_4TH[k] * p[i + k - 2]) / (12 * dx)`.
  */
