@@ -21,7 +21,24 @@
  * so nothing is divided twice.
  */
 
-/** A prepared complex FFT of one fixed length. Both methods are in-place. */
+/**
+ * Largest transform length accepted. Well above any partition extent a room
+ * produces, and low enough that an accidental huge value fails with a clear
+ * error instead of an allocation failure — a plan of length `n` holds tables of
+ * `O(n)`, and Bluestein rounds up to a power of two at least `2n - 1`.
+ */
+export const MAX_FFT_LENGTH = 1 << 26;
+
+/**
+ * A prepared complex FFT of one fixed length. Both methods are in-place.
+ *
+ * **Not re-entrant.** A plan owns mutable scratch (the Bluestein path in
+ * particular), so a single instance must not have two transforms in flight at
+ * once: no overlapping calls, and no sharing between concurrent callers. Plans
+ * are also plain class instances, so they do not survive `postMessage` —
+ * a worker builds its own. One plan per sequential user; `createComplexFftPlan`
+ * again for anything concurrent.
+ */
 export interface ComplexFftPlan {
   readonly n: number;
   /** `(re, im) <- DFT(re + i*im)`, unnormalized. */
@@ -30,8 +47,13 @@ export interface ComplexFftPlan {
   inverseUnscaled(re: Float64Array, im: Float64Array): void;
 }
 
+/**
+ * JavaScript's bitwise operators coerce through `ToInt32`, so the usual
+ * `n & (n - 1)` trick silently misclassifies values at or above `2^31`
+ * (`2**32 + 2` would test as a power of two). Bound the input before using it.
+ */
 function isPowerOfTwo(n: number): boolean {
-  return n >= 1 && (n & (n - 1)) === 0;
+  return Number.isInteger(n) && n >= 1 && n <= 0x40000000 && (n & (n - 1)) === 0;
 }
 
 function reverseBits(value: number, width: number): number {
@@ -217,11 +239,15 @@ class BluesteinFft extends FftPlanBase {
 
 /**
  * Build a reusable FFT plan of length `n`. Plans hold precomputed tables and
- * scratch, so create them once per transform length and keep them.
+ * scratch, so create them once per transform length and keep them — but see
+ * {@link ComplexFftPlan} on re-entrancy before sharing one.
  */
 export function createComplexFftPlan(n: number): ComplexFftPlan {
   if (!Number.isInteger(n) || n < 1) {
     throw new Error(`FFT length must be a positive integer, got ${n}`);
+  }
+  if (n > MAX_FFT_LENGTH) {
+    throw new Error(`FFT length ${n} exceeds the maximum of ${MAX_FFT_LENGTH}`);
   }
   if (n === 1) return new IdentityFft();
   if (isPowerOfTwo(n)) return new Radix2Fft(n);

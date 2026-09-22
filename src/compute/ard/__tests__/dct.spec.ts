@@ -99,11 +99,15 @@ describe('ARD separable DCT', () => {
         const modes = new Float64Array(plan.size);
         const restored = new Float64Array(plan.size);
         plan.forward(values, modes);
+        const modesAfterForward = modes.slice();
         plan.inverse(modes, restored);
 
         expect(maxAbsDiff(restored, original)).toBeLessThan(1e-12);
-        // forward must not disturb its input
+        // Neither direction may disturb its input when the buffers are
+        // distinct: the partition step keeps the modal state across steps, and
+        // re-reads the forcing field it just transformed.
         expect(maxAbsDiff(values, original)).toBe(0);
+        expect(maxAbsDiff(modes, modesAfterForward)).toBe(0);
       },
     );
   });
@@ -244,6 +248,17 @@ describe('ARD separable DCT', () => {
 
   it('exposes its dims and size', () => {
     const plan = createDctPlan([4, 6, 3]);
+    expect(plan.dims).toEqual([4, 6, 3]);
+    expect(plan.size).toBe(72);
+  });
+
+  it('publishes dims frozen, so they cannot drift from the built plan', () => {
+    const input = [4, 6, 3];
+    const plan = createDctPlan(input);
+
+    expect(Object.isFrozen(plan.dims)).toBe(true);
+    // Mutating the caller's array must not reach into the plan either.
+    input[0] = 99;
     expect(plan.dims).toEqual([4, 6, 3]);
     expect(plan.size).toBe(72);
   });

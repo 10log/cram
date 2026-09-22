@@ -51,8 +51,19 @@
 
 import { createComplexFftPlan, type ComplexFftPlan } from './fft';
 
+/**
+ * A prepared separable DCT for one fixed grid.
+ *
+ * **Not re-entrant.** A plan owns mutable line scratch, and shares one
+ * {@link ComplexFftPlan} between axes of equal length, so a single instance must
+ * not have two transforms in flight at once: no overlapping `forward` /
+ * `inverse` calls, and no sharing between concurrent callers. Giving each axis
+ * its own FFT would not change this — the line scratch is shared regardless —
+ * so the rule is one plan per sequential user. Plans are plain class instances
+ * and do not survive `postMessage`, so a worker builds its own.
+ */
 export interface DctPlan {
-  /** Grid extents, first axis contiguous. */
+  /** Grid extents, first axis contiguous. Frozen. */
   readonly dims: readonly number[];
   /** Total number of samples, `prod(dims)`. */
   readonly size: number;
@@ -87,7 +98,9 @@ class SeparableDctPlan implements DctPlan {
   private readonly inverseScale: number;
 
   constructor(dims: readonly number[]) {
-    this.dims = dims.slice();
+    // Frozen: the extents are baked into `axes`, `size` and the FFT plans below,
+    // so a mutated copy would silently disagree with the plan it describes.
+    this.dims = Object.freeze(dims.slice());
 
     let size = 1;
     for (const n of dims) size *= n;
@@ -248,7 +261,8 @@ class SeparableDctPlan implements DctPlan {
  * Build a reusable DCT plan for a grid of the given extents (first axis
  * contiguous). Tables and scratch are allocated here so that `forward` and
  * `inverse` allocate nothing; create one plan per partition and keep it for the
- * life of the simulation.
+ * life of the simulation — but see {@link DctPlan} on re-entrancy before
+ * sharing one between concurrent callers.
  */
 export function createDctPlan(dims: readonly number[]): DctPlan {
   if (dims.length === 0) throw new Error('DCT plan needs at least one axis');

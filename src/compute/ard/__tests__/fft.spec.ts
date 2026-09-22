@@ -8,7 +8,7 @@
  * case.
  */
 
-import { createComplexFftPlan } from '../fft';
+import { createComplexFftPlan, MAX_FFT_LENGTH } from '../fft';
 
 /** Direct DFT: X[k] = sum_j x[j] exp(-2i*pi*j*k/N). */
 function naiveDft(re: Float64Array, im: Float64Array): { re: Float64Array; im: Float64Array } {
@@ -140,5 +140,17 @@ describe('ARD complex FFT', () => {
     expect(() => createComplexFftPlan(0)).toThrow();
     expect(() => createComplexFftPlan(-4)).toThrow();
     expect(() => createComplexFftPlan(2.5)).toThrow();
+  });
+
+  it('rejects lengths past the maximum instead of misclassifying them', () => {
+    // Bitwise operators coerce through ToInt32, so `n & (n - 1)` reports
+    // 2**32 + 2 as a power of two. Such a value must throw, not quietly take
+    // the radix-2 path with a truncated length.
+    expect(() => createComplexFftPlan(2 ** 32 + 2)).toThrow(/exceeds the maximum/);
+    expect(() => createComplexFftPlan(2 ** 31)).toThrow(/exceeds the maximum/);
+    expect(() => createComplexFftPlan(MAX_FFT_LENGTH + 1)).toThrow(/exceeds the maximum/);
+    // Not asserting that MAX_FFT_LENGTH itself builds: the tables for 2^26 run
+    // to hundreds of megabytes, which is not worth spending on a bounds check.
+    expect(() => createComplexFftPlan(1 << 12)).not.toThrow();
   });
 });
