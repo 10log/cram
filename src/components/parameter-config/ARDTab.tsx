@@ -11,6 +11,8 @@ import { createPropertyInputs, useSolverProperty } from './SolverComponents';
 import SourceReceiverMatrix from './SourceReceiverMatrix';
 import PropertyRow from './property-row/PropertyRow';
 import PropertyRowLabel from './property-row/PropertyRowLabel';
+import { PropertyRowCheckbox } from './property-row/PropertyRowCheckbox';
+import { PropertyRowNumberInput } from './property-row/PropertyRowNumberInput';
 import { PropertyRowSelect } from './property-row/PropertyRowSelect';
 import SolverControlBar from './SolverControlBar';
 import SectionLabel from './property-row/SectionLabel';
@@ -116,7 +118,22 @@ export const ARDTab = ({ uuid }: ARDTabProps) => {
   const [slice, setSlice] = useSolverProperty<ARD, 'slice'>(
     uuid, 'slice', 'ARD_SET_PROPERTY',
   );
+  const [sliceCoordinate, setSliceCoordinate] = useSolverProperty<ARD, 'sliceCoordinate'>(
+    uuid, 'sliceCoordinate', 'ARD_SET_PROPERTY',
+  );
   const twoDimensional = dimensions === 2;
+  const cutAtSource = sliceCoordinate === null || sliceCoordinate === undefined;
+
+  const toggleCutAtSource = useCallback(
+    (event: { value: boolean }) => {
+      // `sliceCoordinate` is `number | null` and the number input cannot emit
+      // null, so the checkbox owns that half of the state. Turning it off needs
+      // a starting height: 1.2 m is the conventional plan cut for a floor plan,
+      // and 0 is the centre for a section.
+      setSliceCoordinate({ value: event.value ? null : (slice === 'xy' ? 0 : 1.2) });
+    },
+    [setSliceCoordinate, slice],
+  );
 
   useEffect(() => {
     return on('ARD_PROGRESS', (payload) => {
@@ -264,6 +281,33 @@ export const ARDTab = ({ uuid }: ARDTabProps) => {
             ]}
           />
         </PropertyRow>
+      )}
+
+      {twoDimensional && (
+        <>
+          <PropertyRow>
+            <PropertyRowLabel
+              label="Cut at Source"
+              hasToolTip
+              tooltip="Cut through the first source, which is inside the room by construction because it seeds the flood fill. Turn it off to set a height — useful on a building with more than one storey, where the source's own plane may not be the one you want."
+            />
+            <PropertyRowCheckbox value={cutAtSource} onChange={toggleCutAtSource} />
+          </PropertyRow>
+          {!cutAtSource && (
+            <PropertyRow>
+              <PropertyRowLabel
+                label={slice === 'xy' ? 'Cut at Z (m)' : 'Cut at Y (m)'}
+                hasToolTip
+                tooltip="Where to cut, in metres along the collapsed axis. A plane outside the room — or in the padding the wall slabs grow into — falls back to the widest plane, and the run says which one it used."
+              />
+              <PropertyRowNumberInput
+                value={sliceCoordinate ?? 0}
+                onChange={setSliceCoordinate}
+                step={0.1}
+              />
+            </PropertyRow>
+          )}
+        </>
       )}
 
       {/* Source / Receiver Pairs */}

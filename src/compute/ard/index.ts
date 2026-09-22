@@ -437,18 +437,51 @@ export class ARD extends Solver {
     const isRoomAir = (index: number) =>
       grid.cells[index] === Cell.Air && decomposition.assignment[index] >= 0;
 
+    // In 2D every probe lives on the cut, whatever height it was placed at.
+    // `worldToCell` rounds and bounds-checks, so on a grid one cell deep a
+    // point more than half a cell off the plane resolves to `null` and the run
+    // dies with "outside the voxel grid" — 17 cm at `fMax` 400, which is an
+    // ordinary difference between a source height and a listener height. There
+    // is no third coordinate in a 2D run to preserve, so projecting is not an
+    // approximation of anything; it is what the mode means.
+    let furthestProjection = 0;
+    const onPlane = (point: { x: number; y: number; z: number }) => {
+      if (this.dimensions !== 2) return point;
+      const axis = collapsedAxis(this.slice);
+      const planeAt = axis === 1 ? grid.origin.y : grid.origin.z;
+      const was = axis === 1 ? point.y : point.z;
+      furthestProjection = Math.max(furthestProjection, Math.abs(was - planeAt));
+      return axis === 1 ? { ...point, y: planeAt } : { ...point, z: planeAt };
+    };
+
     const sourceCells = sources.map((source, n) =>
-      resolveCell(grid, worldPosition(source), `Source ${source.name || n}`, isRoomAir, warnings),
+      resolveCell(
+        grid,
+        onPlane(worldPosition(source)),
+        `Source ${source.name || n}`,
+        isRoomAir,
+        warnings,
+      ),
     );
     const receiverCells = receivers.map((receiver, n) =>
       resolveCell(
         grid,
-        worldPosition(receiver),
+        onPlane(worldPosition(receiver)),
         `Receiver ${receiver.name || n}`,
         isRoomAir,
         warnings,
       ),
     );
+    if (furthestProjection > grid.dx) {
+      // Silent projection is fine for the half-cell rounding every probe gets
+      // anyway. A probe a metre off the cut is a different matter: the run will
+      // answer about a position the user can see is not where they put it.
+      warnings.push(
+        `Sources and receivers are projected onto the 2D cut; the furthest moved ` +
+          `${furthestProjection.toFixed(2)} m. A 2D run has no coordinate off the plane, so a ` +
+          'probe placed well away from it answers about somewhere else.',
+      );
+    }
 
     const bands = this.bands;
     const totalRuns = sources.length * bands.length;
@@ -570,14 +603,19 @@ export class ARD extends Solver {
   /**
    * The plane a 2D run lives on, cut out of the room's full voxelization.
    *
-   * Defaults to the layer with the most air rather than the middle of the
-   * bounding box — on a pitched roof or a raked floor the middle can be mostly
-   * solid — unless the user names a height, in which case that wins and a
-   * height outside the room is clamped with a warning rather than refused.
+   * Defaults to the plane through the **first source**, which is inside the
+   * room by construction because it seeded the flood fill — unlike the middle
+   * of the bounding box, and unlike the widest layer on a building with more
+   * than one storey. A height given by the user wins over that.
+   *
+   * Either way the chosen plane is checked for air, and the widest layer is the
+   * fallback when it has none. Clamping a height into the grid is not enough on
+   * its own: the outermost layers are the padding the wall slabs grow into, so
+   * a height above the ceiling clamps to solid.
    */
   private takeSlice(grid: VoxelGrid, seed: { x: number; y: number; z: number }, warnings: string[]) {
     const axis = collapsedAxis(this.slice);
-    const axisName = axis === 1 ? 'y' : 'z';
+    const axisName = axis === 1 ? ('y' as const) : ('z' as const);
 
     // Where to cut, and what to do when that plane has no room in it. Clamping
     // into the *grid* is not enough: the outermost layers are the padding the
@@ -594,6 +632,16 @@ export class ARD extends Solver {
         : this.sliceCoordinate;
     const chosen = layerForCoordinate(grid, axis, requested);
     let layer = chosen.index;
+    if (chosen.clamped && sliceHasAir(grid, axis, layer)) {
+      // Clamped but still in the room — a tight room or a coarse grid. The
+      // plane moved and the result is usable, so say where it went rather than
+      // letting the only voice on this be the no-air path below.
+      const used = grid.origin[axisName] + layer * grid.dx;
+      warnings.push(
+        `The 2D slice at ${axisName} = ${requested.toFixed(2)} m is outside the grid and was ` +
+          `clamped to ${axisName} = ${used.toFixed(2)} m.`,
+      );
+    }
     if (!sliceHasAir(grid, axis, layer)) {
       layer = widestLayer(grid, axis);
       warnings.push(
@@ -1136,7 +1184,12 @@ export class ARD extends Solver {
    */
   get estimatedStepsPerRun(): number {
     const c = soundSpeed(this.temperature);
-    const courant = Math.min(this.courant, PML_CFL_MARGIN * vonNeumannCflLimit(3));
+    // Rank follows the mode: a sliced plane is rank 2, where the bound is
+    // 0.575 rather than 0.470. Using the 3D bound for a 2D run over-states the
+    // step count — latent at the default Courant 0.4, where neither clamp
+    // bites, and real at 0.5.
+    const rank = this.dimensions === 2 ? 2 : 3;
+    const courant = Math.min(this.courant, PML_CFL_MARGIN * vonNeumannCflLimit(rank));
     const dt = (courant * this.cellSize) / c;
     return Math.ceil(this.irLength / dt);
   }

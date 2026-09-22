@@ -85,9 +85,17 @@ export function sliceGrid(grid: VoxelGrid, axis: 1 | 2, index: number): VoxelGri
     }
   }
 
-  // The origin moves onto the plane, so `worldToCell` on the sliced grid maps a
-  // point's in-plane coordinates correctly and its out-of-plane coordinate to
-  // layer 0 — which is where the only layer is.
+  // The origin moves onto the plane, so `worldToCell` on the sliced grid maps
+  // the two in-plane coordinates correctly.
+  //
+  // It does **not** rescue the third one. `worldToCell` rounds and then
+  // bounds-checks, so with an extent of 1 the collapsed index must round to
+  // exactly 0 — a point more than half a cell off the plane returns `null`, not
+  // layer 0. At `fMax` 400 that is 17 cm, which is an ordinary difference
+  // between a source height and a listener height. **A caller resolving probes
+  // against a sliced grid has to project them onto the plane first**; `ARD`
+  // does, and there is a regression test for a receiver a full cell off the
+  // cut.
   const origin = { ...grid.origin };
   if (axis === 1) origin.y = grid.origin.y + index * grid.dx;
   else origin.z = grid.origin.z + index * grid.dx;

@@ -71,6 +71,7 @@ function fakeSolver(overrides: Record<string, unknown> = {}) {
     cellSize: 0.264,
     dimensions: 3,
     slice: 'xz',
+    sliceCoordinate: null,
     ...overrides,
   };
 }
@@ -210,6 +211,59 @@ describe('ARDTab', () => {
     render(<ARDTab uuid="ard-1" />);
     expect(screen.getByText('xy plane @ 26.4 cm')).toBeInTheDocument();
     expect(screen.queryByText(/33 x 29 x 27/)).toBeNull();
+  });
+
+  it('lets the cut height be set, which is what makes the fallback reachable', () => {
+    // `sliceCoordinate` is saved and restored; without a control the clamp and
+    // widest-layer paths could only be reached by editing project JSON.
+    setUp(fakeSolver({ dimensions: 2 }));
+    const bySource = render(<ARDTab uuid="ard-1" />);
+    expect(screen.getByText('Cut at Source')).toBeInTheDocument();
+    // No height row while the source owns the plane.
+    expect(screen.queryByText('Cut at Y (m)')).toBeNull();
+    bySource.unmount();
+
+    setUp(fakeSolver({ dimensions: 2, sliceCoordinate: 1.2 }));
+    render(<ARDTab uuid="ard-1" />);
+    expect(screen.getByText('Cut at Y (m)')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('1.2')).toBeInTheDocument();
+  });
+
+  it('names the cut axis after the plane', () => {
+    setUp(fakeSolver({ dimensions: 2, slice: 'xy', sliceCoordinate: 0.5 }));
+    render(<ARDTab uuid="ard-1" />);
+    // A section collapses world Z, not world Y.
+    expect(screen.getByText('Cut at Z (m)')).toBeInTheDocument();
+    expect(screen.queryByText('Cut at Y (m)')).toBeNull();
+  });
+
+  it('hides the cut controls entirely in three dimensions', () => {
+    render(<ARDTab uuid="ard-1" />);
+    expect(screen.queryByText('Cut at Source')).toBeNull();
+    expect(screen.queryByText('Cut at Y (m)')).toBeNull();
+  });
+
+  it('turns the cut height on and off through the checkbox', () => {
+    // The number input cannot emit null, so the checkbox owns that half of the
+    // state. Turning it off has to hand over a usable starting height.
+    setUp(fakeSolver({ dimensions: 2 }));
+    const { unmount } = render(<ARDTab uuid="ard-1" />);
+    const setOf = (property: string) =>
+      mocks.emitted.filter(
+        (e) =>
+          e.event === 'ARD_SET_PROPERTY' &&
+          (e.payload as { property: string }).property === property,
+      );
+
+    fireEvent.click(screen.getByRole('checkbox', { checked: true }));
+    expect((setOf('sliceCoordinate')[0].payload as { value: unknown }).value).toBe(1.2);
+    unmount();
+
+    // A section starts at the centre instead.
+    setUp(fakeSolver({ dimensions: 2, slice: 'xy' }));
+    render(<ARDTab uuid="ard-1" />);
+    fireEvent.click(screen.getByRole('checkbox', { checked: true }));
+    expect((setOf('sliceCoordinate')[0].payload as { value: unknown }).value).toBe(0);
   });
 
   it('sends the dimension change as a number, not a string', () => {

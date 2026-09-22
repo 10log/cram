@@ -15,7 +15,9 @@ import { BufferAttribute, BufferGeometry, Vector3 } from 'three';
 import { nextPowerOfTwo } from '../deconvolve';
 import { createComplexFftPlan } from '../fft';
 import { ARD, ARD_CELL_STEPS_PER_SECOND, ARD_REFERENCE_FREQUENCY } from '../index';
+import { layerForCoordinate, sliceHasAir } from '../grid-slice';
 import { vonNeumannCflLimit } from '../partition';
+import { Cell, type VoxelGrid } from '../voxelize';
 import { PML_CFL_MARGIN } from '../pml-partition';
 
 // `vi.mock` factories are hoisted above module initialization, so anything they
@@ -775,6 +777,99 @@ describe('ARD solver', () => {
     expect(names).toContain(`ARD energy [2D xz]: s1 → r1`);
   }, 300_000);
 
+  it('resolves probes that are nowhere near the cut plane', async () => {
+    // The gap the other 2D tests all miss by keeping probes on the plane.
+    // `worldToCell` rounds and bounds-checks, so on a grid one cell deep a
+    // point more than half a cell off the plane resolves to null and the run
+    // dies with "outside the voxel grid" — after the full 3D voxelization, for
+    // an ordinary source-height / listener-height difference.
+    containers['room-1'] = makeRoom({ x: 6, y: 3, z: 5 }, 0.3);
+    containers['s1'] = makeSource('s1', [-1.5, 1.0, 0]);
+    // A metre below the source: several cells off the cut at fMax 400.
+    containers['low'] = makeReceiver('low', [1.2, 0, 0.5]);
+    // And one a hair off, the case that used to fail at 17 cm.
+    containers['near'] = makeReceiver('near', [0.6, 0.8, -0.4]);
+
+    const solver = new ARD({
+      roomID: 'room-1',
+      sourceIDs: ['s1'],
+      receiverIDs: ['low', 'near'],
+      fMax: 400,
+      irLength: 0.03,
+      dimensions: 2,
+    });
+    const summary = await solver.run();
+
+    expect(summary.impulseResponses.get('s1->low')).toBeDefined();
+    expect(summary.impulseResponses.get('s1->near')).toBeDefined();
+    // Projected onto the cut, not left where they were — and said so, because
+    // a metre is far enough that the answer is about somewhere else.
+    expect(summary.warnings.join(' ')).toMatch(/projected onto the 2D cut/);
+    // The cut sits on the layer nearest the source's height, so the distance
+    // is a metre give or take half a cell rather than exactly a metre.
+    const moved = /the furthest moved ([0-9.]+) m/.exec(summary.warnings.join(' '));
+    expect(moved).not.toBeNull();
+    expect(Number(moved![1])).toBeGreaterThan(0.8);
+    expect(Number(moved![1])).toBeLessThan(1.2);
+
+    // Every probe landed on the single layer, which is the only place there is.
+    for (const cell of [...summary.sourceCells, ...summary.receiverCells]) {
+      expect(cell[1]).toBe(0);
+    }
+
+    // In 3D the same scene keeps them apart, so the projection is the mode's
+    // doing rather than something that always happens.
+    emitted.length = 0;
+    const threeD = await new ARD({
+      roomID: 'room-1', sourceIDs: ['s1'], receiverIDs: ['low', 'near'],
+      fMax: 400, irLength: 0.03,
+    }).run();
+    expect(threeD.receiverCells[0][1]).not.toBe(threeD.receiverCells[1][1]);
+    expect(threeD.warnings.join(' ')).not.toMatch(/projected onto the 2D cut/);
+  }, 300_000);
+
+  it('survives a fallback plane that moves away from the source', async () => {
+    // When the requested height lands in padding the cut falls back to the
+    // widest layer, which can be nowhere near the seed source. Without the
+    // projection the seed itself then fails to resolve — the shoebox clamp
+    // test passes only because its source sits at the centre, which *is* the
+    // widest layer.
+    containers['room-1'] = makeRoom({ x: 6, y: 4, z: 5 }, 0.3);
+    containers['s1'] = makeSource('s1', [-1.5, 1.6, 0]); // well off centre
+    containers['r1'] = makeReceiver('r1', [1.2, -1.6, 0.5]);
+
+    const summary = await new ARD({
+      roomID: 'room-1',
+      sourceIDs: ['s1'],
+      receiverIDs: ['r1'],
+      fMax: 400,
+      irLength: 0.03,
+      dimensions: 2,
+      sliceCoordinate: 99,
+    }).run();
+
+    expect(summary.warnings.join(' ')).toMatch(/contains no room air/);
+    expect(summary.impulseResponses.get('s1->r1')).toBeDefined();
+    expect(summary.sourceCells[0][1]).toBe(0);
+    expect(summary.receiverCells[0][1]).toBe(0);
+  }, 300_000);
+
+  it('warns when a requested height is clamped but still in the room', () => {
+    // `layerForCoordinate` reports the clamp and the solver used to drop it on
+    // the floor, so a plane that moved said nothing unless it moved into
+    // padding. Checked on the helper, since producing a clamp-into-air through
+    // a real room needs a grid with no padding at all.
+    const grid: VoxelGrid = {
+      nx: 5, ny: 4, nz: 5, dx: 0.5,
+      origin: { x: 0, y: 0, z: 0 },
+      cells: new Uint8Array(100).fill(Cell.Air),
+      surfaceOf: new Int32Array(100).fill(-1),
+      airCount: 100, solidCount: 0, leaked: false, warnings: [],
+    };
+    expect(layerForCoordinate(grid, 1, 99)).toEqual({ index: 3, clamped: true });
+    expect(sliceHasAir(grid, 1, 3)).toBe(true);
+  });
+
   it('gets the level right on a plane, which needs a different law entirely', async () => {
     // The 2D counterpart of the direct-arrival test above, and the one that
     // says the solver actually applies the 2D calibration rather than merely
@@ -870,6 +965,30 @@ describe('ARD solver', () => {
     expect(clamped.impulseResponses.get('s1->r1')).toBeDefined();
     expect(clamped.airCells).toBeGreaterThan(0);
   }, 300_000);
+
+  it('clamps the cost estimate at the rank the mode actually runs at', () => {
+    // A sliced plane is rank 2, where the von Neumann bound is 0.575 rather
+    // than 0.470. Using the 3D bound for a 2D run over-states the step count —
+    // latent at the default Courant 0.4, where neither clamp bites, and real
+    // at the plan's original 0.5.
+    containers['room-1'] = makeRoom({ x: 8, y: 4, z: 6 }, 0.3);
+    const solver = new ARD({ roomID: 'room-1', fMax: 500, irLength: 0.5, courant: 0.5 });
+
+    const threeD = solver.estimatedStepsPerRun;
+    solver.dimensions = 2;
+    const twoD = solver.estimatedStepsPerRun;
+
+    // 0.5 is under the 2D bound of 0.546 and over the 3D bound of 0.446, so
+    // only the 3D figure is clamped.
+    expect(twoD).toBeLessThan(threeD);
+    expect(threeD / twoD).toBeCloseTo(0.5 / (PML_CFL_MARGIN * vonNeumannCflLimit(3)), 1);
+
+    // Below both bounds the two agree: the rank only matters where it bites.
+    solver.courant = 0.3;
+    const twoDSlow = solver.estimatedStepsPerRun;
+    solver.dimensions = 3;
+    expect(solver.estimatedStepsPerRun).toBe(twoDSlow);
+  });
 
   it('costs far less in two dimensions, and the saving is the cross-section', () => {
     containers['room-1'] = makeRoom({ x: 8, y: 4, z: 6 }, 0.3);

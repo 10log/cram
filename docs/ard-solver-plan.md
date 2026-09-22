@@ -1195,6 +1195,22 @@ rather than a third of the cells (measured >10x on an 8 × 4 × 6 m room), and
 the two faces normal to the collapsed axis lose their slabs entirely, because
 there is no outside along a 1-thick axis to absorb into.
 
+**Probes are projected onto the cut, and that is not a nicety.** `worldToCell`
+rounds and then bounds-checks, so on a grid one cell deep the collapsed index
+must round to exactly 0 — a point more than half a cell off the plane resolves
+to `null` and the run dies with "outside the voxel grid", *after* the full 3D
+voxelization. At `fMax` 400 that is **17 cm**, which is an ordinary difference
+between a source height and a listener height, and it would have shipped: every
+2D test placed its probes on the plane. A 2D run has no coordinate off the
+plane to preserve, so projecting is what the mode means rather than an
+approximation of it — but a probe more than a cell away says so, because the
+answer is then about somewhere else.
+
+The same gap closed a second one: when a requested height lands in padding and
+the cut falls back to the widest layer, the seed source itself can be off the
+chosen plane. The shoebox test passed only because its source sat at the
+centre, which *is* the widest layer.
+
 **Still outstanding from this phase: the slice-plane visualization.** The driver
 has emitted display frames since Phase 6 (`frameInterval`, `sliceAxis`,
 `sliceIndex`) and nothing consumes them. Making them visible is a renderer
