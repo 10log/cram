@@ -379,7 +379,30 @@ earlier draft of this paragraph pointed at them; it was wrong.
 single non-zero coefficient at the expected index; forward output matches a
 naive `O(N^2)` reference DCT-II for small `N`.
 
-### Phase 2 — Voxelization
+### Phase 2 — Voxelization — **implemented**
+
+**Created** `src/compute/ard/{voxelize,voxelize-room}.ts` and
+`__tests__/{voxelize,voxelize-room}.spec.ts`.
+
+Built as specced, with three changes:
+
+- **No BVH.** The spec called for a `three-mesh-bvh` box-vs-triangle query per
+  candidate cell. Scattering each triangle into the cells its own bounding box
+  covers is strictly better: work is proportional to the surface area in cells —
+  the solid cells actually produced — rather than grid volume times
+  `log(triangles)`, and it needs no acceleration structure. The overlap test is
+  exact either way (full 13-axis SAT; a conservative AABB test thickens oblique
+  walls into a blob, which changes the air volume and with it the modal
+  frequencies).
+- **Split into a pure core and a `Room` adapter**, mirroring
+  `radiance/patch.ts`. `voxelize.ts` has no `three`, no stores and no DOM, so
+  the geometry can be tested on plain triangle lists; `voxelize-room.ts` is the
+  thin adapter.
+- **Leaks are reported, not thrown.** A grid whose fill reaches the padded rim
+  carries `leaked: true` and a warning; `decompose` is what refuses it. The
+  caller may still want the grid to diagnose which surface is open.
+
+**Original specification follows.**
 
 **Create** `src/compute/ard/voxelize.ts`
 
@@ -420,7 +443,43 @@ interior closet leaves the closet `Solid` when the seed is outside it; a
 non-watertight surface set does not leak the fill to the grid edge (assert no
 `Air` on the padded rim) and surfaces a warning.
 
-### Phase 3 — Rectangular Decomposition
+### Phase 3 — Rectangular Decomposition — **implemented**
+
+**Created** `src/compute/ard/decompose.ts` and `__tests__/decompose.spec.ts`.
+
+**This section's axis-ordering claim was wrong.** It asserted that growing the
+longest run first "noticeably reduces the box count and therefore the interface
+area". Measured against a fixed x→y→z order it **ties on every room-like shape
+tried** — corridor, L, cross, T, comb, staircase, pillared room, ball — and on
+200 randomized air masks it is *worse*: 172 losses to 17 wins, mean 207.5 boxes
+against 202.9. The stronger variant, trying all six orders per seed and keeping
+the largest box, also ties everywhere room-like and comes out slightly worse on
+random masks (205.2 vs 202.8), because greedily maximizing one box leaves worse
+leftovers.
+
+The reason is that the slab rule already extends maximally along each axis in
+turn, so for near-rectilinear geometry the result is order-independent. The
+option is kept but **defaulted off**, with a test pinning the negative result so
+the idea is not rediscovered. Reducing box count — and with it the interface
+area where the error lives — needs a different idea: seed selection, or a merge
+pass.
+
+Thin boxes are marked `fdtd` rather than merged. A merge pass was the spec's
+first suggestion, but the union of two boxes is only a box in special cases, so
+it would succeed rarely and silently leave the rest; marking the kind always
+works and Phase 4 already implements the partition.
+
+Also added `validateDecomposition`, which checks the cover is a true partition
+of the air region. It is cheap next to a simulation and worth running before
+Phase 6 spends minutes on a bad cover.
+
+`__tests__/decompose.spec.ts` carries the first **end-to-end test of Phases
+2-5**: a shoebox and an L-shaped room go from triangles through the voxelizer
+and decomposition into real partitions with real interfaces, and a pulse driven
+in one partition reaches another through the seam. That is the sequence Phase 6's
+driver will run.
+
+**Original specification follows.**
 
 **Create** `src/compute/ard/decompose.ts`
 
@@ -885,8 +944,9 @@ should confirm no leaked worker or retained `Float64Array`s after solver removal
 |------|--------|---------|
 | `src/compute/ard/fft.ts` | **Done** | Allocation-free complex FFT plans (radix-2 + Bluestein) |
 | `src/compute/ard/dct.ts` | **Done** | Separable DCT-II/III plans over N-D grids |
-| `src/compute/ard/voxelize.ts` | Create | Triangle rasterization + flood fill to an air voxel grid |
-| `src/compute/ard/decompose.ts` | Create | Greedy rectangular decomposition of the air region |
+| `src/compute/ard/voxelize.ts` | **Done** | Triangle rasterization + flood fill to an air voxel grid |
+| `src/compute/ard/voxelize-room.ts` | **Done** | `Room` adapter onto the three-free voxelizer core |
+| `src/compute/ard/decompose.ts` | **Done** | Greedy rectangular decomposition of the air region |
 | `src/compute/ard/partition.ts` | **Done** | Partition interface and shared bookkeeping |
 | `src/compute/ard/dct-partition.ts` | **Done** | Analytic modal update — the ARD interior solver |
 | `src/compute/ard/fdtd-partition.ts` | **Done** | 6th-order FDTD partition for degenerate regions |
@@ -934,12 +994,14 @@ partition only), and 5 (interface only), with `interface.spec.ts` green. If a
 split partition cannot be made indistinguishable from an undivided one, nothing
 downstream matters.
 
-**That milestone is met** (0.089% relative L2, against a 2% target; see Phase 5).
-The numerical core of ARD is therefore validated, and the remaining risk in this
-plan is no longer "does the method work" but "can the geometry pipeline feed it"
-— Phases 2 and 3, which have no counterpart in the reference at all — and
-whether §5's cost envelope is tolerable. Those are the next things to build, in
-that order.
+**That milestone is met** (0.089% relative L2, against a 2% target; see Phase 5),
+and Phases 2 and 3 — the geometry pipeline, which has no counterpart in the
+reference at all — are now built and tested end to end into Phase 4/5
+partitions.
+
+What remains is therefore Phase 6 onward: the driver, the solver class and the
+wiring, plus §5's cost envelope, which is the open question the numerics cannot
+answer.
 
 ---
 
