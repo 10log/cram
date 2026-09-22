@@ -112,6 +112,16 @@ export interface Partition {
   addForce(x: number, y: number, z: number, f: number): void;
   /** Zero the forcing field. Called at the end of `step`. */
   clearForce(): void;
+  /**
+   * Multiply the whole solver state by a factor, damping the field uniformly.
+   *
+   * Both stored time levels are scaled, which is what makes this an exact
+   * amplitude decay rather than an impulse: applied once per step it gives
+   * geometric decay of the solution. The driver uses it for air attenuation —
+   * the place the reference's `0.999` factor was standing in for, except
+   * derived from a real absorption coefficient instead of invented.
+   */
+  scaleState(factor: number): void;
   dispose(): void;
 }
 
@@ -195,6 +205,7 @@ export abstract class PartitionBase implements Partition {
   }
 
   abstract step(): void;
+  abstract scaleState(factor: number): void;
 
   dispose(): void {
     /* Typed arrays are collected with the instance; subclasses override if

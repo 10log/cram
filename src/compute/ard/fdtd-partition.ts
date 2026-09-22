@@ -139,6 +139,14 @@ export class FdtdPartition extends PartitionBase {
     this.clearForce();
   }
 
+  scaleState(factor: number): void {
+    for (let i = 0; i < this.size; i++) {
+      this.p[i] *= factor;
+      this.pOld[i] *= factor;
+      this.pressure[i] *= factor;
+    }
+  }
+
   /** Seed both time levels, for tests and initial conditions. */
   setPressure(values: ArrayLike<number>): void {
     if (values.length !== this.size) {
