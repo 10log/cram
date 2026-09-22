@@ -1232,7 +1232,124 @@ present), a slice-plane visualization instead of a full-field one, and
 re-baselining the performance tests. Keep 2D selectable — on a floor-plan slice
 it is the only mode that reaches 4 kHz (§5).
 
-### Phase 10 — WebGPU (optional, and the only real answer to §5)
+### Phase 10 — WebGPU — **gated, and the gate changed the design**
+
+**Created** `src/compute/ard/__tests__/f32-budget.spec.ts`. No GPU code: the
+two questions this phase told itself to answer first both came back with
+answers that change what should be built, and one of them says the shape below
+is wrong.
+
+#### The f32 gate: passed, with a specific reformulation
+
+The plan said to settle f32 drift *before* committing, and the answer is more
+useful than yes or no: **the drift comes from storing `cos ωΔt`, not from
+storing the state.**
+
+Measured on the unforced recurrence over 20 000 steps, absolute error against
+the exact solution, amplitude 1:
+
+| `ωΔt` | Hz at `Δt` = 1.5e-4 | f64 | f32 all | f32 state only | f32 `cos` only | reformulated |
+|-------|--------|---------|---------|---------|---------|---------|
+| 0.005 | 5      | 9.7e-12 | 6.2e-2  | 1.1e-3  | 6.0e-2  | 8.0e-4  |
+| 0.020 | 21     | 1.1e-11 | 1.0e-2  | 1.1e-5  | 1.0e-2  | 1.4e-4  |
+| 0.050 | 53     | 7.4e-12 | 1.8e-3  | 6.9e-6  | 1.9e-3  | 4.0e-5  |
+| 0.200 | 212    | 1.0e-13 | 1.2e-3  | 3.1e-6  | 1.1e-3  | 4.2e-5  |
+| 1.000 | 1061   | 6.1e-14 | 3.6e-5  | 4.0e-8  | 3.5e-5  | 5.6e-6  |
+
+Rounding `cos` alone is as bad as rounding everything; rounding the state alone
+is two to three orders of magnitude better. The reason is cancellation:
+`cos ωΔt` for a low mode is `1 − (ωΔt)²/2`, and f32 cannot hold the small part
+next to the 1, so the stored value carries a *frequency* error of order
+`ε/(ωΔt)²`. That accumulates as phase, linearly in the step count — measured
+2.9e-4 at 2 000 steps growing to 3.2e-3 at 32 000, the signature of a bias
+rather than noise.
+
+The fix is to never store `cos ωΔt`:
+
+```
+M' = M + (M − P) − k·M,     k = 2(1 − cos ωΔt)
+```
+
+Algebraically identical, and `k` keeps full f32 relative precision because it
+*is* the small quantity. `forceCoef` already equals `k/ω²`, so one stored array
+serves both terms. Measured: 70x better at 21 Hz, and — the part that matters —
+**flat in step count** rather than growing.
+
+So a GPU port is viable in f32. It is **not** viable written from the published
+formula, and nothing in the f64 solver would catch the difference.
+
+The reformulation is deliberately **not** applied to `DctPartition`. In f64 the
+two forms agree to within their own noise (ratio 1.0 across every mode and
+horizon measured), so changing validated numerics for a path that does not
+exist would be churn. The constraint is recorded in a spec instead, with the
+numbers and the failure it prevents.
+
+#### The DCT is not the bulk of the work
+
+The section below asserts it is, and builds its whole "what is actually hard"
+list on that. Measured, per partition kind, on the assembled solver:
+
+| room (cells) | DCT partitions | PML slabs | DCT share | PML share |
+|--------------|----------------|-----------|-----------|-----------|
+| 16 × 14 × 12 | 1 / 2 688 c    | 6 / 9 344 c   | 12.9% | **87.1%** |
+| 24 × 20 × 16 | 1 / 7 680 c    | 6 / 18 944 c  | 24.1% | **75.9%** |
+| 32 × 32 × 16 | 1 / 16 384 c   | 6 / 32 768 c  | 6.8%  | **93.2%** |
+
+Per cell the two are comparable — 120–650 ns for the DCT against a flat ~830 ns
+for the PML — but Phase 5 established that wall slabs run 2–5x the room's own
+cell count, and Phase 8 measured that again from the cost side. So the slabs
+dominate by sheer volume.
+
+That inverts the phase's priorities. The PML and FDTD stencils are the case the
+plan already calls *"textbook stencil kernels"* and they are **76–93% of the
+work**; the DCT, which the plan calls the hard part and which would need a
+separable 1D FFT with explicit transposes and a Bluestein path, is **7–24%**.
+
+**A GPU port should do the stencil partitions and leave the DCT on the CPU.**
+By Amdahl at an 85% share, a 20x stencil speedup is 5.2x overall — most of what
+is available, without writing a GPU FFT at all. The per-step traffic that
+arrangement needs is the interface halos, not whole fields: three cells deep on
+each shared face, about 58 kB per direction per step on a 24 × 20 × 16 room,
+against a run already measured in minutes.
+
+The honest alternative reading is that the *real* answer to §5 is not a GPU at
+all but a locally-reacting impedance boundary (reference [6]), which Phases 5, 6
+and 8 each arrived at independently from different directions. It would delete
+the slabs rather than accelerate them: no 76–93%, no CFL clamp on the whole
+simulation from the walls, no 2–5x cell cost. That is a smaller piece of work
+than a GPU port and it makes the GPU port cheaper afterwards, because what is
+left to accelerate is then the DCT interior alone.
+
+#### What stopped the shader being written
+
+`src/compute/raytracer/gpu/` is a working WebGPU path, as the plan says. But
+its tests — `gpu-ray-tracer.spec.ts`, `gpu-bvh.spec.ts` — only construct,
+dispose and assert buffer-layout constants. **The shader is never executed**,
+because there is no WebGPU in jsdom or Node, and there is none in this
+environment either.
+
+Every numeric claim in Phases 1–9 was measured, and every mechanism was
+mutation-tested. WGSL written here could be neither. Shipping an unrunnable
+kernel as the capstone of that would be the first unvalidated code in the
+solver, and the one place it would hurt most: a stencil that is subtly wrong
+produces a field that looks like acoustics.
+
+#### What remains, scoped
+
+1. A `GpuPmlPartition` implementing the existing `Partition` interface — the
+   6th-order stencil, the 4th-order first difference and the three auxiliary
+   `φ` fields, in one WGSL kernel with ping-ponged storage buffers.
+2. The same for `FdtdPartition`, which is the same kernel with the damping
+   terms removed.
+3. Halo exchange per step for `interface.ts`, and `scaleState` as a trivial
+   elementwise kernel.
+4. Batching similarly-sized slabs into one dispatch, per Mehra et al. [4].
+5. A device harness that can run a kernel against the CPU partition cell by
+   cell, which is what makes any of the above verifiable.
+
+Item 5 is the prerequisite, not the afterthought.
+
+**Original specification follows.**
 
 The CPU worker of Phase 6 is what makes ARD *correct*; it is not what makes it
 *fast*. The cost table in §5 is a CPU table, and the way past it is the GPU —
