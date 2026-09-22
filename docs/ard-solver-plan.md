@@ -148,7 +148,11 @@ These are load-bearing gaps, not polish items:
    no bandwidth control, no level, and no directivity.
 10. **Receivers are a hardcoded 20x20 lattice** spanning the scene bounding box.
 11. **Concurrency is one OS thread per partition** with `condition_variable`
-    handshakes — not portable to the browser as written.
+    handshakes — not portable to the browser as written, and not correct as
+    written either: `volatile bool finish/quit/wait` is used for cross-thread
+    flags where `std::atomic` is required by the C++ memory model, and
+    `waitForStepFinish` polls `cv_finish.wait_for(lk, 100ms)` in a loop instead
+    of using a real barrier. See §3 D2 and Phase 10 for the browser strategy.
 
 So the port is better framed as: **implement ARD in CRAM, using the reference as
 the authoritative structural and numerical guide, while supplying the four
@@ -185,6 +189,16 @@ sources/boundaries).
 - `src/objects/source.ts` — `initialSPL`, `directivityHandler`, `quaternion`.
 - `three-mesh-bvh` — already a dependency, wired up in
   `src/compute/raytracer/index.ts` (`computeBoundsTree`, `acceleratedRaycast`).
+- **`src/compute/raytracer/gpu/` — a working WebGPU compute path.**
+  `gpu-context.ts` provides `isWebGPUAvailable()` / `requestGpuContext()` /
+  `releaseGpuContext()` with a cached adapter and device, device-loss recovery,
+  and `requiredLimits` negotiation (it already raises
+  `maxStorageBuffersPerShaderStage` past the default 8). `ray-trace.wgsl` is a
+  real compute shader, `gpu-bvh.ts` shows the buffer-packing conventions,
+  `gpu-ray-tracer.ts` shows the correct readback discipline
+  (`copyBufferToBuffer` into dedicated `MAP_READ` staging buffers, then
+  `mapAsync`), and `RayTracer._initGpu()` shows the graceful
+  WebGPU-or-CPU-fallback pattern. Phase 10 reuses all of it.
 - `src/compute/radiance/art.ts` — the cleanest end-to-end example of a modern
   CRAM solver: property declaration, `calculate()`, result emission,
   `save`/`restore`, `declare global { interface EventTypes }`, `on(...)` wiring.
@@ -220,14 +234,34 @@ checked against both the reference and CRAM's existing `FDTD_2D` on the same
 slice), then enable 3D by flipping a parameter. This avoids writing the solver
 twice and avoids shipping an unvalidated 3D solver.
 
-**D2 — Compute in a dedicated Web Worker, one worker total.** Not one worker per
-partition: `SharedArrayBuffer` needs `Cross-Origin-Opener-Policy` and
-`Cross-Origin-Embedder-Policy` response headers, and `vite.config.ts` sets no
-`server.headers`, so cross-origin isolation is unavailable. Structured-clone
-handoff per partition per step would dominate the step cost. Run the entire time
-loop in one worker and post back progress frames (receiver samples + an
-optional downsampled slice for display) via transferable `ArrayBuffer`s. Revisit
-a pool only if COOP/COEP is added.
+**D2 — Compute in a dedicated Web Worker, one worker total.** The worker is
+non-negotiable for a reason unrelated to parallelism: the time loop blocks for
+seconds to minutes (§5), which on the main thread freezes the editor and stalls
+the render loop.
+
+Not one worker *per partition*, though. The reference parallelizes over
+partitions with `std::thread` and a per-step fork-join barrier, and the browser
+equivalent would want `SharedArrayBuffer` — which requires
+`Cross-Origin-Opener-Policy` and `Cross-Origin-Embedder-Policy` response headers.
+Setting those in `vite.config.ts` would be trivial, but **CRAM ships as a
+consumable library** (`package.json` `main`/`module`/`exports`,
+`files: ["dist", "src/lib"]`, `build:lib` with `src/lib/index.ts` as entry). That
+would impose cross-origin isolation on every host application embedding CRAM, and
+COEP `require-corp` breaks any cross-origin resource that does not send CORP
+headers. That is not CRAM's decision to make for its consumers, so
+`SharedArrayBuffer` is out.
+
+Run the entire time loop in one worker and post back progress frames (receiver
+samples plus an optional downsampled display slice) via transferable
+`ArrayBuffer`s.
+
+A SAB-free parallel variant is possible if it ever becomes necessary: keep each
+partition's state resident in its own worker and exchange only the 3-cell halo
+layers by `postMessage` per step. The win is bounded by partition count and by
+load imbalance — the barrier waits on the largest box, and box sizes vary widely —
+against roughly `2 * nPartitions * nSteps` messages (~320k for a 20k-step,
+8-partition run). High complexity, modest payoff. Phase 10 (GPU) is the better
+use of the same effort.
 
 **D3 — Absorption via calibrated PML damping, one run per octave band.** ARD's
 boundary treatment is frequency-independent by construction, and the reference's
@@ -602,6 +636,48 @@ present), a slice-plane visualization instead of a full-field one, and
 re-baselining the performance tests. Keep 2D selectable — on a floor-plan slice
 it is the only mode that reaches 4 kHz (§5).
 
+### Phase 10 — WebGPU (optional, and the only real answer to §5)
+
+The CPU worker of Phase 6 is what makes ARD *correct*; it is not what makes it
+*fast*. The cost table in §5 is a CPU table, and the way past it is the GPU —
+which is how ARD is deployed in the literature ([3], [4]).
+
+This is not new infrastructure for CRAM: `src/compute/raytracer/gpu/` is already
+a working WebGPU compute path (§2). An `ard.wgsl` calls the existing
+`requestGpuContext()` and inherits device caching, loss recovery, limit
+negotiation and the staging-buffer readback pattern. Keep the
+`isWebGPUAvailable()` → CPU fallback shape that `RayTracer._initGpu()` uses.
+
+**What ports cleanly:**
+- The modal update is embarrassingly parallel: elementwise over modes, with
+  `cos(w*dt)` and `1/w^2` precomputed per mode into storage buffers, and no
+  communication between invocations. One invocation per mode.
+- The 6th-order FDTD and PML updates are textbook stencil kernels.
+- Interface forcing is a gather over a thin 3-cell layer, parallel over
+  interface cells.
+
+**What is actually hard:**
+- **The DCT is the bulk of the work.** There is no WebGPU FFT or DCT in the
+  dependency tree, so Phase 1's plan must be rewritten as separable 1D passes
+  per axis, ping-ponging between storage buffers. The non-contiguous axes are
+  bandwidth-bound without an explicit transpose pass.
+- **WGSL has no `f64`.** The reference is `double` throughout, and the modal
+  recurrence `M_new = 2*M*cos(w*dt) - M_prev + ...` is a marginally-stable
+  second-order recurrence run for 10k-20k steps. f32 drift over that horizon is
+  an open question, not a rounding footnote. **Settle it before committing to
+  this phase:** run the Phase 6 CPU simulation in f32 and in f64 over a full
+  duration and compare the resulting IRs. The CPU path is the control for that
+  experiment, which is one more reason it is not throwaway.
+- **Partitions have very different sizes**, so either pad to a common size
+  (wasted lanes) or issue many small dispatches (launch-overhead bound). Mehra
+  et al. [4] batch partitions of similar size; do the same.
+- **Never read back per step.** Accumulate receiver samples into a GPU buffer and
+  map once at the end; read the display slice only every Nth step.
+
+**Not WebGL2.** `GPUComputationRenderer` — what `FDTD_2D` uses — has no compute
+shaders, so the DCT would become a multi-pass render-to-texture contortion.
+WebGPU compute with storage buffers is the right fit and is already in the repo.
+
 ---
 
 ## 5. Cost Envelope
@@ -617,6 +693,10 @@ the solver is for. With `dx = c / (2.6 * fMax)` and `dt = 0.5 * dx / c`:
 | 3D | 10 x 8 x 4 m | 1 kHz | 76 x 61 x 30 | 5.2 k | ~1 min |
 | 3D | 10 x 8 x 4 m | 2 kHz | 152 x 121 x 61 | 10.4 k | ~15 min |
 | 3D | 10 x 8 x 4 m | 4 kHz | 303 x 242 x 121 | 20.8 k | hours |
+
+These are **single-threaded CPU** figures, which is what Phases 1-8 deliver.
+Phase 10 (WebGPU) is the way past them; per-partition threading is not, for the
+reasons in §3 D2.
 
 So ARD's place in CRAM is the **low-frequency band**, where the geometrical
 solvers are least valid (below the Schroeder frequency) — not as a replacement
@@ -665,6 +745,8 @@ should confirm no leaked worker or retained `Float64Array`s after solver removal
 | `src/compute/ard/source.ts` | Create | Bandlimited Gaussian pulse, calibration, deconvolution |
 | `src/compute/ard/simulation.ts` | Create | Portable time-loop driver |
 | `src/compute/ard/ard.worker.ts` | Create | Worker host with progress messaging |
+| `src/compute/ard/gpu/ard.wgsl` | Create (Phase 10) | Modal update, stencil and DCT compute kernels |
+| `src/compute/ard/gpu/gpu-ard.ts` | Create (Phase 10) | Buffer packing and dispatch, reusing `raytracer/gpu/gpu-context.ts` |
 | `src/compute/ard/visualization.ts` | Create | Pressure-field display mesh / slice plane |
 | `src/compute/ard/index.ts` | Create | `ARD extends Solver`, event wiring, result emission |
 | `src/compute/ard/__tests__/*.spec.ts` | Create | Suite from §6 |
@@ -691,7 +773,10 @@ Phases 1-3 are independent of CRAM's UI and fully unit-testable in isolation;
 they are also where the reference gives the least help (Phase 2 and 3 do not
 exist in it at all). Phases 4-6 are the port proper. Phase 7-8 is wiring, and is
 mechanical once §4 Phase 8's table is worked through. Phase 9 is a parameter
-flip plus a performance re-baseline.
+flip plus a performance re-baseline. Phase 10 is optional and gated on the f32
+precision experiment described there — run that experiment early, since a
+negative result means the CPU path is the only path and §5's envelope is the
+permanent one.
 
 A reasonable first milestone that proves the whole idea: Phases 1, 4 (DCT
 partition only), and 5 (interface only), with `interface.spec.ts` green. If a
