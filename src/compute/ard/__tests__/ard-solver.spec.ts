@@ -281,6 +281,29 @@ describe('ARD solver', () => {
     solver.irLength = 1;
     expect(solver.estimatedSeconds / short).toBeCloseTo(2, 1);
 
+    // One full simulation per source, so sources multiply the cost exactly as
+    // bands do. `execute` runs `sources.length * bands.length` times, and an
+    // estimate that missed the first factor would be silently half right for
+    // two sources — the undercount this whole cost line exists to prevent.
+    const oneSource = solver.estimatedSeconds;
+    solver.sourceIDs = ['s1', 's2'];
+    expect(solver.estimatedRuns).toBe(2);
+    expect(solver.estimatedSeconds / oneSource).toBeCloseTo(2, 6);
+    solver.perBandRuns = true;
+    expect(solver.estimatedRuns).toBe(2 * solver.bands.length);
+    expect(solver.estimatedSteps).toBe(solver.estimatedStepsPerRun * solver.estimatedRuns);
+
+    // Receivers are probes into a field being computed anyway: free.
+    const before = solver.estimatedSeconds;
+    solver.receiverIDs = ['r1', 'r2', 'r3'];
+    expect(solver.estimatedSeconds).toBe(before);
+
+    // And with no sources configured the estimate is still a run's worth
+    // rather than zero.
+    solver.sourceIDs = [];
+    solver.perBandRuns = false;
+    expect(solver.estimatedRuns).toBe(1);
+
     // A room with no geometry estimates nothing rather than NaN or Infinity.
     solver.roomID = 'nope';
     expect(solver.estimatedSeconds).toBe(0);
@@ -314,6 +337,60 @@ describe('ARD solver', () => {
       new ARD({ roomID: 'nope', sourceIDs: ['s1'], receiverIDs: ['r1'] }).run(),
     ).rejects.toThrow();
     expect(emitted.map((e) => e.event)).toContain('HIDE_PROGRESS');
+  }, 300_000);
+
+  it('leaves progress at a terminal value when a run is cancelled or fails', async () => {
+    // `ARD_PROGRESS` is how the UI knows a run is in flight, and anything
+    // keyed on "0 < progress < 1" latches on for good if the last event of a
+    // failed run is a fraction. The solver card is the sharp case: it disables
+    // its Calculate button while calculating, so a stuck state cannot be
+    // cleared by starting another run from there.
+    containers['room-1'] = makeRoom({ x: 4, y: 3, z: 2.6 }, 0.3);
+    containers['s1'] = makeSource('s1', [-1, 0, 0]);
+    containers['r1'] = makeReceiver('r1', [0.5, 0, 0]);
+
+    const progressOf = () =>
+      emitted
+        .filter((e) => e.event === 'ARD_PROGRESS')
+        .map((e) => (e.payload as { progress: number }).progress);
+
+    const solver = new ARD({
+      roomID: 'room-1', sourceIDs: ['s1'], receiverIDs: ['r1'], fMax: 400, irLength: 1.5,
+    });
+    const running = solver.run();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    solver.cancel();
+    await expect(running).rejects.toThrow(/cancelled/);
+
+    const cancelled = progressOf();
+    expect(cancelled.length).toBeGreaterThan(0);
+    expect(cancelled.some((p) => p > 0 && p < 1)).toBe(true); // it did report mid-flight
+    expect(cancelled[cancelled.length - 1]).toBe(0);
+    expect(solver.progress).toBe(0);
+
+    // Same for a run that throws rather than being cancelled.
+    emitted.length = 0;
+    const doomed = new ARD({
+      roomID: 'room-1', sourceIDs: ['s1'], receiverIDs: ['r1'], fMax: 400, irLength: 0.03,
+    });
+    void doomed.run().catch(() => undefined);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    // Break the room out from under it mid-run.
+    delete containers['room-1'];
+    doomed.cancel();
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    const last = progressOf();
+    if (last.length > 0) expect(last[last.length - 1] % 1).toBe(0); // 0 or 1, never a fraction
+
+    // A successful run ends at 1, not 0 — "finished" and "never ran" are
+    // different states even though both read as "not calculating".
+    emitted.length = 0;
+    containers['room-1'] = makeRoom({ x: 4, y: 3, z: 2.6 }, 0.3);
+    await new ARD({
+      roomID: 'room-1', sourceIDs: ['s1'], receiverIDs: ['r1'], fMax: 250, irLength: 0.03,
+    }).run();
+    const finished = progressOf();
+    expect(finished[finished.length - 1]).toBe(1);
   }, 300_000);
 
   it('refuses to run without a room, a source or a receiver', async () => {

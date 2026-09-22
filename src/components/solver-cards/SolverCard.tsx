@@ -74,10 +74,11 @@ export default function SolverCard({ uuid, defaultExpanded = false }: SolverCard
       return () => { unsubStart(); unsubComplete(); };
     }
     if (solver.kind === "ard") {
-      // ARD has no start/complete pair — it reports a fraction, and reaching
-      // 1 is the completion. It also rejects rather than completing when
-      // cancelled, so progress can stop short; the card clears on the next
-      // run rather than sticking at "calculating".
+      // ARD has no start/complete pair — it reports a fraction, and leaving
+      // (0, 1) is the end of it. A run that finishes reaches 1; one that is
+      // cancelled or throws is reset to 0 by the solver, which it has to be:
+      // this header disables Calculate while calculating, so a state that
+      // never clears cannot be cleared from here either.
       const unsub = on("ARD_PROGRESS", ({ uuid: id, progress }) => {
         if (id !== uuid) return;
         setIsCalculating(progress > 0 && progress < 1);
@@ -91,13 +92,20 @@ export default function SolverCard({ uuid, defaultExpanded = false }: SolverCard
   const canCalculate = useMemo(() => {
     if (!solver) return false;
     // Duck type for solvers with sourceIDs/receiverIDs
-    const s = solver as { sourceIDs?: string[]; receiverIDs?: string[] };
+    const s = solver as { sourceIDs?: string[]; receiverIDs?: string[]; roomID?: string };
+    const hasPairs = (s.sourceIDs?.length ?? 0) > 0 && (s.receiverIDs?.length ?? 0) > 0;
     switch (solver.kind) {
       case "beam-trace":
       case "image-source":
       case "ray-tracer":
+        return hasPairs;
       case "ard":
-        return (s.sourceIDs?.length ?? 0) > 0 && (s.receiverIDs?.length ?? 0) > 0;
+        // ARD also needs a room: it voxelizes geometry rather than tracing
+        // against whatever is in the scene. Without this the button is enabled,
+        // the run starts, the progress bar flashes and the solver throws — and
+        // the parameter tab, which does check, disagrees with the card about
+        // whether the same solver can run.
+        return hasPairs && Boolean(s.roomID);
       case "rt60":
         return true;
       default:

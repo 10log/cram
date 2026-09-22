@@ -79,9 +79,10 @@ describe('ARD solver wiring', () => {
     const source = read('components/solver-cards/SolverCard.tsx');
     expect(source).toMatch(/supportsCalculate = \[[^\]]*"ard"/);
     expect(source).toMatch(/emit\("CALCULATE_ARD", uuid\)/);
-    // And the run button is enabled by the same source/receiver rule the other
-    // pair-based solvers use, rather than always.
-    expect(source).toMatch(/case "ard":\s*\n\s*return \(s\.sourceIDs/);
+    // And its run button is gated on the same things the parameter tab checks.
+    // Two entry points that disagree about whether a solver can run means one
+    // of them starts a run the solver immediately refuses.
+    expect(source).toMatch(/return hasPairs && Boolean\(s\.roomID\)/);
   });
 
   it('accepts ARD in the shared property-input helpers', () => {

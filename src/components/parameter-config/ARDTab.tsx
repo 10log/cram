@@ -62,6 +62,21 @@ function formatCount(value: number): string {
   return Math.round(value).toLocaleString('en-US');
 }
 
+/**
+ * The steps row, spelling out every multiplier rather than folding them in.
+ *
+ * "10,400" for two sources across four bands hides both the thing the user
+ * controls (how many sources they asked for) and the thing they toggled
+ * (per-band runs). "2,600 x 2 sources x 4 bands" says where the number came
+ * from, which is the only way the line can be acted on.
+ */
+function formatSteps(cost: { stepsPerRun: number; sources: number; bands: number }): string {
+  const parts = [formatCount(cost.stepsPerRun)];
+  if (cost.sources > 1) parts.push(`${cost.sources} sources`);
+  if (cost.bands > 1) parts.push(`${cost.bands} bands`);
+  return parts.join(' x ');
+}
+
 function CostRow({ label, value, tooltip, warn = false }: {
   label: string;
   value: string;
@@ -129,6 +144,8 @@ export const ARDTab = ({ uuid }: ARDTabProps) => {
       cells: solver.estimatedCellCount,
       simulated: solver.estimatedSimulatedCells,
       steps: solver.estimatedSteps,
+      stepsPerRun: solver.estimatedStepsPerRun,
+      sources: Math.max(1, solver.sourceIDs?.length ?? 0),
       seconds: solver.estimatedSeconds,
       bands: solver.bands.length,
       referenceFrequency: solver.referenceFrequency,
@@ -166,12 +183,8 @@ export const ARDTab = ({ uuid }: ARDTabProps) => {
           />
           <CostRow
             label="Steps"
-            value={
-              cost.bands > 1
-                ? `${formatCount(cost.steps / cost.bands)} x ${cost.bands} bands`
-                : formatCount(cost.steps)
-            }
-            tooltip="Time steps per run. Set by the impulse response length and the time step, which the absorbing walls cap below the Courant number you asked for."
+            value={formatSteps(cost)}
+            tooltip="Time steps per run, and how many runs there are. One full simulation per source — several sources at once would leave every receiver recording their sum — and, with per-band runs, one per octave band on top of that. Receivers are free: they are probes into a field being computed anyway."
           />
           <CostRow
             label="Estimated time"

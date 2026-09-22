@@ -1061,6 +1061,29 @@ kind that implements it. And there is no `visualize` checkbox: nothing consumes
 the slice frames the driver can emit, so the toggle would have been a control
 that does nothing. Both wait for a phase that gives them something to do.
 
+Three more from review, all of them the same shape — a number or a state that
+is right in one place and wrong in another:
+
+- **The cost line undercounted by the number of sources.** `execute` runs
+  `sources × bands` times, because a single simulation carrying several sources
+  leaves every receiver recording their sum. `estimatedSteps` counted only the
+  bands, so two sources read half the real cost — exactly the silent undercount
+  the line exists to prevent. Split into `estimatedStepsPerRun` and
+  `estimatedRuns`, and the tab now spells out every multiplier
+  (`2,600 x 2 sources x 4 bands`) rather than folding them into one number that
+  cannot be acted on. Receivers stay free: they are probes into a field that is
+  being computed anyway.
+- **A cancelled or failed run left `ARD_PROGRESS` mid-flight.** Nothing else
+  moves it afterwards, so anything keyed on "0 < progress < 1 means running"
+  latched on for good. The solver card is the sharp case, and a closed loop: it
+  disables its Calculate button while calculating, so the stuck state could not
+  be cleared by starting the run that would have cleared it. `run()` now resets
+  to 0 from its `finally` — zero, not one, because the run did not finish.
+- **The card would start a run the solver refuses.** Its `canCalculate` checked
+  only sources and receivers, while the parameter tab also checked the room. Two
+  entry points, two answers to whether the same solver can run, and the card's
+  answer produced a flash of progress bar and a throw.
+
 **The wiring checklist is a test.** Adding a solver kind means touching a dozen
 unrelated files, and missing one fails silently and specifically — no icon, or
 present in the Add menu but not the properties panel, or the quiet one: saves

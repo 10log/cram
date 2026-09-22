@@ -323,6 +323,15 @@ export class ARD extends Solver {
     } finally {
       this.releaseWorker();
       this.running = false;
+      // A cancelled or failed run leaves `progress` part-way, and nothing else
+      // will ever move it. Anything keyed on "0 < progress < 1 means running"
+      // then latches on for good — including the solver card, which disables
+      // its Calculate button while calculating and so cannot start the run
+      // that would have cleared it. Zero, not one: the run did not finish.
+      if (this.progress > 0 && this.progress < 1) {
+        this.progress = 0;
+        emit('ARD_PROGRESS', { uuid: this.uuid, progress: 0 });
+      }
       emit('HIDE_PROGRESS', undefined);
     }
   }
@@ -974,7 +983,7 @@ export class ARD extends Solver {
   }
 
   /**
-   * Steps the run would take.
+   * Steps in a single simulation run.
    *
    * Uses the clamped Courant number, not the requested one. Wall slabs are
    * `PmlPartition`s and every partition shares a time step, so on a 3D room the
@@ -984,11 +993,28 @@ export class ARD extends Solver {
    * rigid-only run, which is the right direction for a figure shown before
    * pressing run.
    */
-  get estimatedSteps(): number {
+  get estimatedStepsPerRun(): number {
     const c = soundSpeed(this.temperature);
     const courant = Math.min(this.courant, PML_CFL_MARGIN * vonNeumannCflLimit(3));
     const dt = (courant * this.cellSize) / c;
-    return Math.ceil(this.irLength / dt) * this.bands.length;
+    return Math.ceil(this.irLength / dt);
+  }
+
+  /**
+   * Simulation runs the solver would perform: one per source, per band.
+   *
+   * A single simulation can carry several sources at once, but then every
+   * receiver records their sum and no per-pair impulse response can be
+   * recovered — so sources multiply the cost the same way bands do. Receivers
+   * do not: they are probes into a field that is being computed anyway.
+   */
+  get estimatedRuns(): number {
+    return Math.max(1, this.sourceIDs.length) * this.bands.length;
+  }
+
+  /** Steps across every run. This is what {@link estimatedSeconds} rides on. */
+  get estimatedSteps(): number {
+    return this.estimatedStepsPerRun * this.estimatedRuns;
   }
 }
 

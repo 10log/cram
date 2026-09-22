@@ -62,6 +62,8 @@ function fakeSolver(overrides: Record<string, unknown> = {}) {
     estimatedCellCount: 33 * 29 * 27,
     estimatedSimulatedCells: 41_000,
     estimatedSteps: 2_600,
+    estimatedStepsPerRun: 2_600,
+    estimatedRuns: 1,
     estimatedSeconds: 79,
     bands: [500],
     referenceFrequency: 500,
@@ -98,12 +100,30 @@ describe('ARDTab', () => {
     expect(screen.getByText('79 s')).toBeInTheDocument();
   });
 
-  it('reports per-band runs as a multiplier rather than a total', () => {
-    // 4 bands x 2600 steps reads as "2,600 x 4 bands", not "10,400" — the
-    // per-run figure is what the user recognises from the single-band case.
-    setUp(fakeSolver({ bands: [125, 250, 500, 1000], estimatedSteps: 10_400 }));
+  it('spells out every multiplier on the steps row', () => {
+    // "10,400" hides both the thing the user controls (how many sources) and
+    // the thing they toggled (per-band runs). The point of the cost line is
+    // that it can be acted on, which means showing where the number came from.
+    setUp(fakeSolver({
+      bands: [125, 250, 500, 1000],
+      estimatedSteps: 20_800,
+      estimatedStepsPerRun: 2_600,
+      estimatedRuns: 8,
+      sourceIDs: ['s1', 's2'],
+    }));
     render(<ARDTab uuid="ard-1" />);
-    expect(screen.getByText('2,600 x 4 bands')).toBeInTheDocument();
+    expect(screen.getByText('2,600 x 2 sources x 4 bands')).toBeInTheDocument();
+  });
+
+  it('leaves out multipliers that are one', () => {
+    setUp(fakeSolver({ bands: [125, 250], estimatedStepsPerRun: 2_600 }));
+    const single = render(<ARDTab uuid="ard-1" />);
+    expect(screen.getByText('2,600 x 2 bands')).toBeInTheDocument();
+    single.unmount();
+
+    setUp(fakeSolver({ sourceIDs: ['s1', 's2', 's3'] }));
+    render(<ARDTab uuid="ard-1" />);
+    expect(screen.getByText('2,600 x 3 sources')).toBeInTheDocument();
   });
 
   it('scales the time estimate into readable units', () => {
