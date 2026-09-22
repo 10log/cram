@@ -147,7 +147,17 @@ These are load-bearing gaps, not polish items:
 9. **The source is a fixed, uncalibrated pulse** at `t = 8` grid time units with
    no bandwidth control, no level, and no directivity.
 10. **Receivers are a hardcoded 20x20 lattice** spanning the scene bounding box.
-11. **Concurrency is one OS thread per partition** with `condition_variable`
+11. **The forcing-term convention is internally inconsistent, and `c = 1` hides
+    it.** `Boundary::computeForcingTerms` sets `force = c²·sip`.
+    `DCTPartition::step` then consumes it as `2F̃/ω²·(1 − cos ωΔt)`, which is
+    correct, because `ω` already carries `c`. But `FDTDPartition::step` and
+    `PMLPartition::step` consume the same field as `c²Δt²·(KP + force)`,
+    applying `c²` a second time. The reference sets `speedOfSound = 1.0`, so
+    `c² = c⁴ = 1` and the two conventions coincide exactly; at 343 m/s they
+    differ by a factor of ~10⁵. Any port that keeps both partition kinds must
+    pick one convention — Phase 4 defines `addForce` as taking `F` in
+    `∂²p/∂t² = c²∇²p + F` — and test for it at a physical sound speed.
+12. **Concurrency is one OS thread per partition** with `condition_variable`
     handshakes — not portable to the browser as written, and not correct as
     written either: `volatile bool finish/quit/wait` is used for cross-thread
     flags where `std::atomic` is required by the C++ memory model, and
@@ -442,7 +452,45 @@ room to exactly two; `coverage === 1` and `assignment` is a partition (no cell
 assigned twice) on a randomized fuzz set of air masks; every emitted box
 contains only air cells.
 
-### Phase 4 — Partitions
+### Phase 4 — Partitions — **implemented**
+
+**Created** `src/compute/ard/{partition,dct-partition,fdtd-partition,pml-partition}.ts`
+and `__tests__/{partition,wall}.spec.ts`.
+
+Built as specced, with four things the spec did not anticipate:
+
+- **A single forcing-term convention**, because the reference has two (§1.5
+  item 11). `addForce` takes `F` in `∂²p/∂t² = c²∇²p + F`; every partition kind
+  applies it identically. There is a test that drives a DCT and an FDTD
+  partition with the same forcing at 343 m/s, which fails under the reference's
+  convention.
+- **Courant 0.5 is unstable for a 3D FDTD partition.** Von Neumann analysis of
+  the 6th-order symbol gives `C ≤ 0.813` (1D), `0.575` (2D), `0.470` (3D), so
+  the plan's default sits just past the 3D limit. DCT partitions are
+  unconditionally stable and unaffected, but `FdtdPartition` now throws rather
+  than diverging quietly, and Phase 6 must pick `dt` per partition kind.
+- **Axes of extent 1 must be skipped in the stencil.** Zero-padded, a 1-thick
+  axis collapses to its centre tap and injects `−490·p` into the Laplacian, so
+  a 2D run (`nz = 1`) would solve the wrong equation entirely.
+- **`modalEnergy` is not `Σ M²`.** Each mode is an oscillator, so that
+  oscillates; the conserved invariant of `x_{n+1} = 2λx_n − x_{n−1}` is
+  `x_n² + x_{n−1}² − 2λ x_n x_{n−1}`.
+
+Measured: modal energy drifts < 1e-9 over 10,000 steps; eigenfrequencies match
+the analytic shoebox series to 8 decimal places; DCT and FDTD partitions agree
+to < 1% relative L2 on both a propagating pulse and a forced response. The suite
+is mutation-checked against the reference's own bugs — the `0.999` damping fails
+7 of 16 tests, the double-`c²` forcing fails the test written for it, and
+removing the 1-thick-axis guard fails 3.
+
+**PML accuracy is below what this section assumed.** The target was `|R| < 1e-3`
+at a tuned `σmax`. Measured floors at Courant 0.4, grading 2: `0.138` at 10
+cells, `0.030` at 20, `0.010` at 30, `0.005` at 60 — so 1e-3 is not reached at
+any tested thickness. That matters for terminating an open domain and would need
+a better-matched profile than a graded sponge. It does not matter for room
+surfaces (§Phase 5).
+
+**Original specification follows.**
 
 **Create** `src/compute/ard/partition.ts`, `dct-partition.ts`,
 `fdtd-partition.ts`, `pml-partition.ts`
@@ -482,7 +530,53 @@ driven identically agree to within 1% over the first 200 steps at
 `Courant = 0.5`; a plane wave normally incident on a PML layer reflects with
 `|R| < 1e-3` at `sigmaMax` tuned for maximum absorption.
 
-### Phase 5 — Interfaces and Walls
+### Phase 5 — Interfaces and Walls — **implemented**
+
+**Created** `src/compute/ard/{interface,wall}.ts` and
+`__tests__/interface.spec.ts`.
+
+**The milestone in §8 is met.** A 400-cell domain split in two, driven
+identically to an undivided one, agrees to **0.089% relative L2** after a pulse
+crosses the seam — against the 2% this section asked for. The same holds in 2D
+(cut along Y), in 3D (cut along Z), across three partitions and two seams, and
+at every cut position tried. With the interface forcing removed the error is
+100%, so the comparison is discriminating rather than vacuous. Error falls with
+pulse width (0.22% at 3 cells, 0.042% at 12), as a high-order scheme should.
+
+`interface.ts` does not port the reference's 6×7 coefficient table. It derives
+the residual instead — for a cell at depth `d` from the face,
+`R(d) = Σ_t STENCIL[3 + d + t]·(across[t] − own[t])` — which is three short dot
+products over the three cells each side, and can be checked by eye. A test
+cross-checks it against the literal reference table term by term, so the
+equivalence is verified rather than asserted.
+
+`wall.ts` departs from the spec below in one way: the calibration table is built
+at runtime and memoized, not generated by a script and checked in. A checked-in
+table goes stale the moment the stencil, the grading or the Courant number
+changes, and cannot cover the `(thickness, grading, Courant)` grid a caller might
+ask for. Expressing damping dimensionlessly as `σ̂ = σ·dx/c` makes one cached
+curve valid for every grid; the default builds in ~0.9 s, once.
+
+Two findings the spec did not anticipate:
+
+- **`|R|(σ̂)` is not monotonic.** It falls from 1, reaches a floor, then rises
+  again as the profile gets steep enough to reflect on its own, and goes
+  unstable above `σ̂ ≈ 15`. Only the falling branch is invertible, so
+  `calibrationCurve` samples the whole range and keeps that branch. (An earlier
+  version broke out of the walk at the first non-improving sample and stopped
+  far short of the floor, capping absorption at 0.76 instead of 0.999.)
+- **The reachable range is set by thickness, and a 20-cell layer is enough for
+  room surfaces** even though it misses the Phase 4 `|R| < 1e-3` target: it
+  reaches α ≤ 0.9991, and the α → σ̂ → measured-α round trip is accurate to
+  ~0.001 across α ∈ [0.05, 0.95]. `dampingForAbsorption` throws rather than
+  clamping when asked for more than the layer can deliver.
+
+Still not covered: **PML corners**, where two slabs overlap and both axes need
+damping. `PmlPartition` damps one axis and the Phase 6 driver must avoid
+building corners; the reference papers over this case with a hand-tuned constant
+cross-term.
+
+**Original specification follows.**
 
 **Create** `src/compute/ard/interface.ts`, `src/compute/ard/wall.ts`
 
@@ -793,12 +887,12 @@ should confirm no leaked worker or retained `Float64Array`s after solver removal
 | `src/compute/ard/dct.ts` | **Done** | Separable DCT-II/III plans over N-D grids |
 | `src/compute/ard/voxelize.ts` | Create | Triangle rasterization + flood fill to an air voxel grid |
 | `src/compute/ard/decompose.ts` | Create | Greedy rectangular decomposition of the air region |
-| `src/compute/ard/partition.ts` | Create | Partition interface and shared bookkeeping |
-| `src/compute/ard/dct-partition.ts` | Create | Analytic modal update — the ARD interior solver |
-| `src/compute/ard/fdtd-partition.ts` | Create | 6th-order FDTD partition for degenerate regions |
-| `src/compute/ard/pml-partition.ts` | Create | Graded PML absorbing layer |
-| `src/compute/ard/interface.ts` | Create | 6th-order interface residual forcing |
-| `src/compute/ard/wall.ts` | Create | alpha -> PML damping calibration for room boundaries |
+| `src/compute/ard/partition.ts` | **Done** | Partition interface and shared bookkeeping |
+| `src/compute/ard/dct-partition.ts` | **Done** | Analytic modal update — the ARD interior solver |
+| `src/compute/ard/fdtd-partition.ts` | **Done** | 6th-order FDTD partition for degenerate regions |
+| `src/compute/ard/pml-partition.ts` | **Done** | Graded PML absorbing layer |
+| `src/compute/ard/interface.ts` | **Done** | 6th-order interface residual forcing |
+| `src/compute/ard/wall.ts` | **Done** | alpha -> PML damping calibration for room boundaries |
 | `src/compute/ard/source.ts` | Create | Bandlimited Gaussian pulse, calibration, deconvolution |
 | `src/compute/ard/simulation.ts` | Create | Portable time-loop driver |
 | `src/compute/ard/ard.worker.ts` | Create | Worker host with progress messaging |
@@ -839,6 +933,13 @@ A reasonable first milestone that proves the whole idea: Phases 1, 4 (DCT
 partition only), and 5 (interface only), with `interface.spec.ts` green. If a
 split partition cannot be made indistinguishable from an undivided one, nothing
 downstream matters.
+
+**That milestone is met** (0.089% relative L2, against a 2% target; see Phase 5).
+The numerical core of ARD is therefore validated, and the remaining risk in this
+plan is no longer "does the method work" but "can the geometry pipeline feed it"
+— Phases 2 and 3, which have no counterpart in the reference at all — and
+whether §5's cost envelope is tolerable. Those are the next things to build, in
+that order.
 
 ---
 
