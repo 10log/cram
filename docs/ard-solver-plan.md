@@ -351,11 +351,18 @@ export function createDctPlan(dims: number[]): DctPlan;
 
 FFTW's `REDFT10` is DCT-II and `REDFT01` is DCT-III. Implement 1D DCT-II of
 length `N` by the standard even-odd reordering plus a length-`N` complex FFT and
-a twiddle rotation, reusing `src/compute/acoustics/fft`; precompute twiddle
-tables per axis length in `createDctPlan` so the hot loop allocates nothing.
-Apply per axis with strided passes. Normalize so `inverse(forward(x)) === x`
-(the reference splits its scaling `2*sqrt(2WH)` / `sqrt(2WH)` across the two
-directions; make the round trip exact and unit-test it).
+a twiddle rotation; precompute twiddle tables per axis length in
+`createDctPlan` so the hot loop allocates nothing. Apply per axis with strided
+passes. Normalize so `inverse(forward(x)) === x` (the reference splits its
+scaling `2*sqrt(2WH)` / `sqrt(2WH)` across the two directions; make the round
+trip exact and unit-test it).
+
+The complex FFT comes from `./fft` (`createComplexFftPlan`). **The three
+transforms under `src/compute/acoustics/fft` are off-limits to the ARD hot
+loop** and must not be reached for here or in any later phase: `fft.ts` wraps
+every sample in a `Complex` object, `_fft.ts` allocates fresh arrays on every
+call, and `index.ts` applies a Hann window and chunks its input by default. An
+earlier draft of this paragraph pointed at them; it was wrong.
 
 **Tests** (`src/compute/ard/__tests__/dct.spec.ts`): round-trip identity to
 `1e-12` for non-square 2D and 3D grids; a single cosine mode transforms to a
