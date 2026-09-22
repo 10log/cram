@@ -53,14 +53,34 @@ function textbook(
 }
 
 /**
- * The f32-safe form: `M' = M + (M − P) − k·M`, with `k = 2(1 − cos ωΔt)`
- * evaluated in double and stored as f32.
+ * How `k = 2(1 − cos ωΔt)` is arrived at, which turns out to matter as much as
+ * using `k` at all.
  *
- * Algebraically identical — `M + (M − P) − 2M(1 − cos) = 2M·cos − P` — but it
- * never stores `cos ωΔt` itself. That is the whole difference.
+ *  - `precomputed` — evaluated in double on the CPU and uploaded as f32.
+ *  - `halfAngle` — `4·sin²(ωΔt/2)`, computed entirely in f32. Identical
+ *    algebraically, and free of cancellation because `sin(θ/2)` for a small
+ *    angle has full relative precision, so squaring it keeps it.
+ *  - `naive` — `2(1 − cos ωΔt)` evaluated in f32, which is what a WGSL
+ *    transcription of the reformulation looks like if nobody thinks about it.
+ *    The subtraction throws away exactly what the reformulation was for.
  */
-function safeForm(theta: number, steps: number): number {
-  const k = f(2 * (1 - Math.cos(theta)));
+type KForm = 'precomputed' | 'halfAngle' | 'naive';
+
+function coefficient(theta: number, form: KForm): number {
+  if (form === 'precomputed') return f(2 * (1 - Math.cos(theta)));
+  if (form === 'halfAngle') return f(4 * f(Math.sin(f(theta / 2))) ** 2);
+  return f(2 * f(1 - f(Math.cos(theta))));
+}
+
+/**
+ * The f32-safe update: `M' = M + (M − P) − k·M`.
+ *
+ * Algebraically identical to the textbook form — `M + (M − P) − 2M(1 − cos) =
+ * 2M·cos − P` — but it never stores `cos ωΔt` itself. That is the whole
+ * difference, provided `k` does not go through `cos` in f32 on its way in.
+ */
+function safeForm(theta: number, steps: number, form: KForm = 'precomputed'): number {
+  const k = coefficient(theta, form);
   let p = f(0);
   let m = f(Math.sin(theta));
   for (let n = 0; n < steps; n++) {
@@ -71,9 +91,37 @@ function safeForm(theta: number, steps: number): number {
   return m;
 }
 
+/** The safe update in double, for the neutrality claim about the shipped solver. */
+function safeFormF64(theta: number, steps: number): number {
+  const k = 2 * (1 - Math.cos(theta));
+  let p = 0;
+  let m = Math.sin(theta);
+  for (let n = 0; n < steps; n++) {
+    const next = m + (m - p) - k * m;
+    p = m;
+    m = next;
+  }
+  return m;
+}
+
 /** Frequency in Hz a given `ωΔt` corresponds to at the plan's default `Δt`. */
 const DT = 1.5e-4;
 const hz = (theta: number) => theta / (2 * Math.PI) / DT;
+
+/**
+ * Where the k-form is the right choice: `k = 2(1 − cos ωΔt)` small enough that
+ * `M + (M − P) − k·M` has no cancellation of its own. Measured crossover is
+ * around `k = 0.5`; see the per-mode test below for the numbers either side.
+ */
+const K_CROSSOVER = 0.5;
+const smallK = (theta: number) => 2 * (1 - Math.cos(theta)) < K_CROSSOVER;
+
+/** What a correct kernel does: the k-form below the crossover, textbook above. */
+function bestForm(theta: number, steps: number): number {
+  return smallK(theta)
+    ? safeForm(theta, steps, 'precomputed')
+    : textbook(theta, steps, { roundState: true, roundCos: true });
+}
 
 describe('f32 modal drift', () => {
   it('is caused by storing cos(wdt), not by storing the state', () => {
@@ -117,15 +165,96 @@ describe('f32 modal drift', () => {
     expect(err(32000, true)).toBeLessThan(err(32000, false) / 20);
   });
 
-  it('is under a tenth of a percent of amplitude across the audible band', () => {
+  it('keeps every mode under a tenth of a percent of amplitude', () => {
     // The budget itself. `M` here has unit amplitude, so the error is a
-    // fraction of full scale. A GPU port using the safe form has to stay
-    // inside this for the mode frequencies a room actually has.
-    for (const theta of [0.02, 0.05, 0.2, 1.0, 3.0]) {
-      expect(hz(theta)).toBeGreaterThan(20);
-      const error = Math.abs(safeForm(theta, STEPS_ONE_SECOND) - exact(theta, STEPS_ONE_SECOND));
-      expect(error).toBeLessThan(1e-3);
+    // fraction of full scale, and the horizon is the long one: over 6500 steps
+    // the textbook form is already under 1e-3 above about 50 Hz, so a budget
+    // stated there would pass whether or not the reformulation is used.
+    //
+    // `theta` runs to 2.18, which is not arbitrary — it is the largest
+    // `omega*dt` a run produces, at the corner of the mode cube:
+    // `pi * sqrt(3) * Courant` at the plan's default 0.4.
+    for (const theta of [0.02, 0.05, 0.2, 1.0, 1.5, 2.18]) {
+      const want = exact(theta, STEPS_LONG);
+      expect(Math.abs(bestForm(theta, STEPS_LONG) - want)).toBeLessThan(1e-3);
     }
+  });
+
+  it('needs the k-form only where k is small, and needs it badly there', () => {
+    // A correction to the first reading of this finding. The k-form is not a
+    // universal replacement: it has a cancellation of its own once `k` is
+    // O(1), between `M + (M − P)` and `k·M`. Measured at 20 000 steps, ratio
+    // of textbook error to k-form error:
+    //
+    //   theta 0.05 (k 0.00): 45x     theta 1.2 (k 1.28): 0.59x
+    //   theta 0.20 (k 0.04): 28x     theta 1.8 (k 2.45): 0.18x
+    //   theta 0.50 (k 0.24): 3.7x    theta 2.0 (k 2.83): 0.21x
+    //
+    // So the rule is to pick per mode, which costs nothing when the
+    // coefficients are precomputed anyway. Below the crossover the k-form is
+    // required; above it, either works and both are inside the budget.
+    for (const theta of [0.02, 0.05, 0.2, 0.5]) {
+      expect(smallK(theta)).toBe(true);
+      const want = exact(theta, STEPS_LONG);
+      const kForm = Math.abs(safeForm(theta, STEPS_LONG) - want);
+      const text = Math.abs(
+        textbook(theta, STEPS_LONG, { roundState: true, roundCos: true }) - want,
+      );
+      expect(text / kForm).toBeGreaterThan(3);
+    }
+
+    // Above the crossover neither form is in trouble, which is the part that
+    // makes a per-mode choice safe rather than a compromise.
+    for (const theta of [1.2, 1.8, 2.18]) {
+      expect(smallK(theta)).toBe(false);
+      const want = exact(theta, STEPS_LONG);
+      expect(Math.abs(textbook(theta, STEPS_LONG, { roundState: true, roundCos: true }) - want))
+        .toBeLessThan(1e-3);
+      expect(Math.abs(safeForm(theta, STEPS_LONG) - want)).toBeLessThan(1e-3);
+    }
+  });
+
+  it('depends on how k is computed as much as on using k at all', () => {
+    // The trap. `M' = M + (M − P) − k·M` with `k = 2(1 − cos wdt)` evaluated
+    // in f32 is the natural WGSL transcription of the reformulation, and it is
+    // no better than the form it replaces: the subtraction throws away exactly
+    // the small quantity the reformulation exists to keep.
+    for (const theta of [0.005, 0.02, 0.05]) {
+      const want = exact(theta, STEPS_LONG);
+      const naive = Math.abs(safeForm(theta, STEPS_LONG, 'naive') - want);
+      const broken = Math.abs(
+        textbook(theta, STEPS_LONG, { roundState: true, roundCos: true }) - want,
+      );
+      // Indistinguishable from the textbook form — measured 6.1e-2 against
+      // 6.2e-2 at 5 Hz.
+      expect(naive / broken).toBeGreaterThan(0.5);
+      expect(naive / broken).toBeLessThan(2);
+
+      // Both safe routes are an order of magnitude better or more: precompute
+      // `k` in double on the CPU and upload it, or use the half-angle identity
+      // `k = 4·sin²(wdt/2)`, which has no cancellation to lose.
+      for (const form of ['precomputed', 'halfAngle'] as const) {
+        expect(Math.abs(safeForm(theta, STEPS_LONG, form) - want)).toBeLessThan(naive / 10);
+      }
+    }
+  });
+
+  it('keeps the half-angle route inside the budget too', () => {
+    // A kernel that cannot upload per-mode coefficients has to compute `k`
+    // itself. The half-angle route drifts a little where the precomputed one
+    // does not — measured 9.4e-6 at 2000 steps against 4.4e-5 at 32000 — but
+    // it stays two orders under the naive route and inside the budget, which
+    // is what it has to do.
+    const theta = 0.05;
+    const err = (steps: number, form: KForm) =>
+      Math.abs(safeForm(theta, steps, form) - exact(theta, steps));
+    for (const steps of [2000, 8000, 32000]) {
+      expect(err(steps, 'halfAngle')).toBeLessThan(1e-3);
+      expect(err(steps, 'halfAngle')).toBeLessThan(err(steps, 'naive') / 10);
+    }
+    // And the naive route grows over that range where the half-angle does not
+    // meaningfully: 3.2e-4 to 3.2e-3, a factor of ten for a factor of sixteen.
+    expect(err(32000, 'naive')).toBeGreaterThan(5 * err(2000, 'naive'));
   });
 
   it('would exceed one percent of amplitude in the textbook form by 20 Hz', () => {
@@ -147,10 +276,26 @@ describe('f32 modal drift', () => {
     // Which is why the reformulation is not applied to `DctPartition`: in f64
     // the two forms agree to within their own noise, so changing validated
     // numerics would be churn. The constraint belongs to the GPU path.
-    for (const theta of [0.002, 0.05, 1.0]) {
-      const want = exact(theta, STEPS_LONG);
-      const textbookF64 = Math.abs(textbook(theta, STEPS_LONG) - want);
-      expect(textbookF64).toBeLessThan(1e-9);
+    //
+    // Pinned as a comparison rather than as prose, so a later change that
+    // "helpfully" rewrites `DctPartition` to the k-form has a number to point
+    // at — in either direction. If this ever stops holding, the neutrality
+    // argument stops holding with it.
+    for (const theta of [0.002, 0.01, 0.05, 0.3, 1.0]) {
+      for (const steps of [STEPS_ONE_SECOND, STEPS_LONG]) {
+        const want = exact(theta, steps);
+        const textbookError = Math.abs(textbook(theta, steps) - want);
+        const safeError = Math.abs(safeFormF64(theta, steps) - want);
+
+        // Both far below anything physical...
+        expect(textbookError).toBeLessThan(1e-9);
+        expect(safeError).toBeLessThan(1e-9);
+        // ...and neither systematically better: measured ratio 1.0 to 1.1
+        // across every mode and horizon here.
+        const ratio = textbookError / safeError;
+        expect(ratio).toBeGreaterThan(0.5);
+        expect(ratio).toBeLessThan(2);
+      }
     }
   });
 });
