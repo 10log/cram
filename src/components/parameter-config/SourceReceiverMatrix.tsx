@@ -93,7 +93,12 @@ const emptyMarkSx: SxProps<Theme> = {
 interface SourceReceiverMatrixProps {
   uuid: string;
   disabled?: boolean;
-  eventType?: "RAYTRACER_SET_PROPERTY" | "IMAGESOURCE_SET_PROPERTY" | "BEAMTRACE_SET_PROPERTY" | "ART_SET_PROPERTY";
+  eventType?:
+    | "RAYTRACER_SET_PROPERTY"
+    | "IMAGESOURCE_SET_PROPERTY"
+    | "BEAMTRACE_SET_PROPERTY"
+    | "ART_SET_PROPERTY"
+    | "ARD_SET_PROPERTY";
 }
 
 export const SourceReceiverMatrix = memo(({ uuid, disabled = false, eventType = "RAYTRACER_SET_PROPERTY" }: SourceReceiverMatrixProps) => {

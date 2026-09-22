@@ -231,6 +231,7 @@ export function AddMenu() {
         <MenuItemWithMessenger label="Statistical RT" message="SHOULD_ADD_RT60" />
         <MenuItemWithMessenger label="Energy Decay" message="SHOULD_ADD_ENERGYDECAY"/>
         <MenuItemWithEmitter label="Acoustic Radiance Transfer" event="ADD_ART"/>
+        <MenuItemWithEmitter label="Adaptive Rectangular Decomposition" event="ADD_ARD"/>
       </Menu>
     </>
   );

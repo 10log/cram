@@ -143,6 +143,13 @@ export function registerMessageHandlers(
     return art;
   });
 
+  msg.addMessageHandler("SHOULD_ADD_ARD", async (_acc, ..._args) => {
+    const ard = await createSolver("ard", cram);
+    cram.state.solvers[ard.uuid] = ard;
+    emit("ADD_ARD", ard as import("../compute/ard").ARD);
+    return ard;
+  });
+
   msg.addMessageHandler("RAYTRACER_CALCULATE_RESPONSE", (acc, id, frequencies) => {
     const solver = cram.state.solvers[id];
     if (solver?.kind === "ray-tracer" && "calculateReflectionLoss" in solver) {

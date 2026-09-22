@@ -12,6 +12,7 @@ import RT60Tab from "../parameter-config/RT60Tab";
 import FDTD_2DTab from "../parameter-config/FDTD_2DTab";
 import EnergyDecayTab from "../parameter-config/EnergyDecayTab";
 import ARTTab from "../parameter-config/ARTTab";
+import ARDTab from "../parameter-config/ARDTab";
 import BeamTraceTab from "../parameter-config/BeamTraceTab";
 
 const cardContainerSx: SxProps<Theme> = {
@@ -37,6 +38,7 @@ const SolverComponentMap = new Map<string, React.ComponentType<{ uuid: string }>
   ["fdtd-2d", FDTD_2DTab],
   ["energydecay", EnergyDecayTab],
   ["art", ARTTab],
+  ["ard", ARDTab],
   ["beam-trace", BeamTraceTab],
 ]);
 
@@ -71,6 +73,17 @@ export default function SolverCard({ uuid, defaultExpanded = false }: SolverCard
       });
       return () => { unsubStart(); unsubComplete(); };
     }
+    if (solver.kind === "ard") {
+      // ARD has no start/complete pair — it reports a fraction, and reaching
+      // 1 is the completion. It also rejects rather than completing when
+      // cancelled, so progress can stop short; the card clears on the next
+      // run rather than sticking at "calculating".
+      const unsub = on("ARD_PROGRESS", ({ uuid: id, progress }) => {
+        if (id !== uuid) return;
+        setIsCalculating(progress > 0 && progress < 1);
+      });
+      return () => { unsub(); };
+    }
   }, [solver, uuid]);
 
   // Check if solver can calculate (has sources and receivers configured)
@@ -83,6 +96,7 @@ export default function SolverCard({ uuid, defaultExpanded = false }: SolverCard
       case "beam-trace":
       case "image-source":
       case "ray-tracer":
+      case "ard":
         return (s.sourceIDs?.length ?? 0) > 0 && (s.receiverIDs?.length ?? 0) > 0;
       case "rt60":
         return true;
@@ -103,6 +117,9 @@ export default function SolverCard({ uuid, defaultExpanded = false }: SolverCard
         break;
       case "ray-tracer":
         emit("RAYTRACER_SET_PROPERTY", { uuid, property: "isRunning", value: true });
+        break;
+      case "ard":
+        emit("CALCULATE_ARD", uuid);
         break;
     }
   }, [solver, uuid]);
@@ -130,7 +147,7 @@ export default function SolverCard({ uuid, defaultExpanded = false }: SolverCard
 
   // Determine if this solver supports calculate/clear
   // RT60 relies on auto-calculate, so no manual calculate button needed
-  const supportsCalculate = ["beam-trace", "image-source", "ray-tracer"].includes(solver.kind);
+  const supportsCalculate = ["beam-trace", "image-source", "ray-tracer", "ard"].includes(solver.kind);
   const supportsClear = ["beam-trace", "image-source", "ray-tracer"].includes(solver.kind);
 
   const ParameterComponent = SolverComponentMap.get(solver.kind);

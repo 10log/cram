@@ -19,7 +19,8 @@ export type SolverType =
   | 'fdtd-2d'
   | 'rt60'
   | 'energy-decay'
-  | 'art';
+  | 'art'
+  | 'ard';
 
 /**
  * Props for the CRAMEditor component

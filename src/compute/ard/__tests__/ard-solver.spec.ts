@@ -14,7 +14,7 @@ import { BufferAttribute, BufferGeometry, Vector3 } from 'three';
 
 import { nextPowerOfTwo } from '../deconvolve';
 import { createComplexFftPlan } from '../fft';
-import { ARD, ARD_REFERENCE_FREQUENCY } from '../index';
+import { ARD, ARD_CELL_STEPS_PER_SECOND, ARD_REFERENCE_FREQUENCY } from '../index';
 import { vonNeumannCflLimit } from '../partition';
 import { PML_CFL_MARGIN } from '../pml-partition';
 
@@ -230,6 +230,91 @@ describe('ARD solver', () => {
     expect(solver.estimatedSteps).toBeGreaterThan(atHalf);
     solver.courant = 0.4;
   });
+
+  it('predicts the cells a shoebox will actually step', async () => {
+    // `estimatedSimulatedCells` is what the runtime estimate rides on, so it
+    // has to be the cells that get stepped — not the grid allocation, most of
+    // which is padding for the slabs to grow into.
+    //
+    // This room is deliberately coarse: at fMax 250 the grid is 53 cm and the
+    // air region is 5 x 4 x 3 cells, so the shell is most of the bounding box.
+    // Counting in metres over dx cubed over-predicted by 64% here; counting
+    // interior extents in cells gets both terms exact.
+    containers['room-1'] = makeRoom({ x: 3.2, y: 2.6, z: 2.2 }, 0.35);
+    containers['s1'] = makeSource('s1', [-0.8, 0, 0]);
+    containers['r1'] = makeReceiver('r1', [0.6, 0.3, 0]);
+
+    const solver = new ARD({
+      roomID: 'room-1', sourceIDs: ['s1'], receiverIDs: ['r1'],
+      fMax: 250, irLength: 0.03,
+    });
+    const predicted = solver.estimatedSimulatedCells;
+    const summary = await solver.run();
+    const actual = summary.cellCount.room + summary.cellCount.walls;
+
+    // Within 20%: the voxelizer rounds the room onto the grid and a face's
+    // slab is clipped to its own extent, so neither term stays exact on an
+    // arbitrary room — but it is the right quantity, unlike the allocation.
+    expect(predicted / actual).toBeGreaterThan(0.8);
+    expect(predicted / actual).toBeLessThan(1.2);
+
+    // And the allocation is much larger, which is the reason the two are
+    // separate getters rather than one.
+    expect(solver.estimatedCellCount).toBeGreaterThan(1.5 * actual);
+    expect(solver.estimatedCellCount).toBe(
+      solver.estimatedGrid.x * solver.estimatedGrid.y * solver.estimatedGrid.z,
+    );
+  }, 300_000);
+
+  it('estimates a runtime that tracks the work', () => {
+    containers['room-1'] = makeRoom({ x: 4, y: 3, z: 2.5 }, 0.2);
+    const solver = new ARD({ roomID: 'room-1', fMax: 500, irLength: 0.5 });
+
+    expect(solver.estimatedSeconds).toBeGreaterThan(0);
+    expect(solver.estimatedSeconds).toBeCloseTo(
+      (solver.estimatedSimulatedCells * solver.estimatedSteps) / ARD_CELL_STEPS_PER_SECOND,
+      9,
+    );
+
+    // Longer impulse response, proportionally longer run.
+    const short = solver.estimatedSeconds;
+    solver.irLength = 1;
+    expect(solver.estimatedSeconds / short).toBeCloseTo(2, 1);
+
+    // A room with no geometry estimates nothing rather than NaN or Infinity.
+    solver.roomID = 'nope';
+    expect(solver.estimatedSeconds).toBe(0);
+    expect(solver.estimatedSimulatedCells).toBe(0);
+    expect(solver.estimatedGrid).toEqual({ x: 0, y: 0, z: 0 });
+  });
+
+  it('drives the app-wide progress indicator', async () => {
+    // A wave solve runs long enough that no indicator reads as a hang, so the
+    // solver drives the same SHOW/UPDATE/HIDE the ray tracer does rather than
+    // relying on a panel to subscribe to ARD_PROGRESS.
+    containers['room-1'] = makeRoom({ x: 3.2, y: 2.6, z: 2.2 }, 0.35);
+    containers['s1'] = makeSource('s1', [-0.8, 0, 0]);
+    containers['r1'] = makeReceiver('r1', [0.6, 0.3, 0]);
+
+    const solver = new ARD({
+      roomID: 'room-1', sourceIDs: ['s1'], receiverIDs: ['r1'],
+      fMax: 250, irLength: 0.03,
+    });
+    await solver.run();
+
+    const events = emitted.map((e) => e.event);
+    expect(events).toContain('SHOW_PROGRESS');
+    expect(events).toContain('UPDATE_PROGRESS');
+    expect(events).toContain('HIDE_PROGRESS');
+    expect(events.lastIndexOf('HIDE_PROGRESS')).toBeGreaterThan(events.indexOf('SHOW_PROGRESS'));
+
+    // Hidden even when the run fails, or the indicator sticks on screen.
+    emitted.length = 0;
+    await expect(
+      new ARD({ roomID: 'nope', sourceIDs: ['s1'], receiverIDs: ['r1'] }).run(),
+    ).rejects.toThrow();
+    expect(emitted.map((e) => e.event)).toContain('HIDE_PROGRESS');
+  }, 300_000);
 
   it('refuses to run without a room, a source or a receiver', async () => {
     const solver = new ARD({});

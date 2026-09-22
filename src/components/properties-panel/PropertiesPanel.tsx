@@ -59,6 +59,7 @@ import EnergyDecayTab from "../parameter-config/EnergyDecayTab";
 import BeamTraceTab from "../parameter-config/BeamTraceTab";
 import FDTD_2DTab from "../parameter-config/FDTD_2DTab";
 import ARTTab from "../parameter-config/ARTTab";
+import ARDTab from "../parameter-config/ARDTab";
 import RendererTab from "../parameter-config/RendererTab";
 
 // ============================================================================
@@ -323,6 +324,7 @@ const SolverTabMap: Record<string, React.ComponentType<{ uuid: string }>> = {
   "beam-trace": BeamTraceTab,
   "fdtd-2d": FDTD_2DTab,
   "art": ARTTab,
+  "ard": ARDTab,
 };
 
 // ============================================================================
@@ -385,6 +387,7 @@ export function PropertiesPanel() {
       "fdtd-2d": "Finite-difference time-domain",
       "energydecay": "Energy decay analysis",
       "art": "Acoustic radiance transfer",
+      "ard": "Wave-based adaptive rectangular decomposition",
       "beam-trace": "Specular beam solver",
     };
     return Object.keys(solversData).map((uuid) => ({
