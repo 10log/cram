@@ -299,7 +299,43 @@ pressure-field export covers the same ground in CRAM's existing vocabulary.
 
 ## 4. Implementation Phases
 
-### Phase 1 — Separable DCT
+### Phase 1 — Separable DCT — **implemented**
+
+**Created** `src/compute/ard/fft.ts`, `src/compute/ard/dct.ts`,
+`src/compute/ard/__tests__/{fft,dct}.spec.ts`.
+
+Built as specced below, with one addition: the FFT had to be written too. The
+three existing FFTs in `compute/acoustics/fft/` are all unusable in a
+20k-iteration hot loop — `fft.ts` wraps every element in a `Complex` object,
+`_fft.ts` allocates fresh arrays per call, and `index.ts` applies a Hann window
+and chunks its input by default. `fft.ts` is therefore a self-contained
+allocation-free plan-based complex FFT: radix-2 for power-of-two lengths,
+Bluestein's chirp-z for everything else (mandatory, since partition extents are
+whatever integers Phase 3 produces).
+
+Verified: round-trip identity to `1e-12`; `forward` matches an independent
+direct `REDFT10` and the FFT matches a direct DFT; single cosine modes map to
+single coefficients; allocation-free across 2000 transform pairs. The suite was
+mutation-checked — injecting the reference's own off-by-one mode index (§1.5
+item 4) fails 28 of 32 DCT tests.
+
+**Measured, and it corrects §5:** Bluestein costs **3x in 2D and 5.6x in 3D**
+against power-of-two extents at equal cell count (`61x67x31` at 102 ms/step
+versus `64x64x32` at 18 ms/step). The penalty compounds with rank because every
+axis pays it, and it is the single largest lever on whether ARD is usable at all.
+Two follow-ups, in order of value:
+
+1. **Mixed-radix FFT** (radix 2/3/5/7 with a Bluestein fallback for large prime
+   factors). This is the real fix and what FFTW does; it would make most integer
+   extents cheap rather than only powers of two. Independently testable against
+   the suite already written.
+2. **Phase 3 should prefer FFT-friendly box extents.** Box dimensions are the
+   modal basis, so they cannot simply be rounded — but greedy growth may stop
+   short of maximal, so it can be biased toward friendly lengths at the cost of
+   more boxes and therefore more interface area. Worth measuring against (1)
+   before doing, since (1) may make it unnecessary.
+
+**Original specification follows.**
 
 **Create** `src/compute/ard/dct.ts`
 
@@ -685,14 +721,27 @@ WebGPU compute with storage buffers is the right fit and is already in the repo.
 Worth stating plainly in both the plan and the UI, because it determines what
 the solver is for. With `dx = c / (2.6 * fMax)` and `dt = 0.5 * dx / c`:
 
-| Mode | Room | `fMax` | Grid | Steps for 1 s | Rough runtime |
-|------|------|--------|------|---------------|---------------|
-| 2D slice | 10 x 8 m | 1 kHz | 76 x 61 | 5.2 k | < 1 s |
-| 2D slice | 10 x 8 m | 4 kHz | 303 x 242 | 20.8 k | ~1 min |
-| 3D | 10 x 8 x 4 m | 500 Hz | 38 x 30 x 15 | 2.6 k | a few seconds |
-| 3D | 10 x 8 x 4 m | 1 kHz | 76 x 61 x 30 | 5.2 k | ~1 min |
-| 3D | 10 x 8 x 4 m | 2 kHz | 152 x 121 x 61 | 10.4 k | ~15 min |
-| 3D | 10 x 8 x 4 m | 4 kHz | 303 x 242 x 121 | 20.8 k | hours |
+| Mode | Room | `fMax` | Grid | Steps for 1 s | ms/step | 1 s of IR |
+|------|------|--------|------|---------------|---------|-----------|
+| 2D slice | 10 x 8 m | 1 kHz | 76 x 61 | 5.2 k | 2.6 | 13 s |
+| 2D slice | 10 x 8 m | 4 kHz | 303 x 242 | 20.8 k | 47 | 16 min |
+| 3D | 10 x 8 x 4 m | 500 Hz | 38 x 30 x 15 | 2.6 k | 12 | 30 s |
+| 3D | 10 x 8 x 4 m | 1 kHz | 76 x 61 x 30 | 5.2 k | 103 | 9 min |
+| 3D | 10 x 8 x 4 m | 2 kHz | 152 x 121 x 61 | 10.4 k | 928 | 2.7 h |
+| 3D | 10 x 8 x 4 m | 4 kHz | 303 x 242 x 121 | 20.8 k | — | days |
+
+The `ms/step` column is **measured** from the Phase 1 DCT on one partition per
+room (a shoebox decomposes to a single box, which is ARD's best case). It is a
+**lower bound on the real step cost**: interface forcing, PML layers, source
+injection and recording all add on top, and a room that decomposes into many
+boxes pays more.
+
+An earlier revision of this table carried estimates that were optimistic by
+roughly 10x. They were replaced once Phase 1 could be benchmarked. Phase 1 also
+identified the reason the numbers are as bad as they are — Bluestein transforms
+for non-power-of-two extents — and the two follow-ups that would recover most of
+it; with power-of-two extents the 3D 1 kHz row drops from 9 min to about 1.7 min.
+Treat every row here as "current", not "intrinsic".
 
 These are **single-threaded CPU** figures, which is what Phases 1-8 deliver.
 Phase 10 (WebGPU) is the way past them; per-partition threading is not, for the
@@ -733,7 +782,8 @@ should confirm no leaked worker or retained `Float64Array`s after solver removal
 
 | File | Action | Purpose |
 |------|--------|---------|
-| `src/compute/ard/dct.ts` | Create | Separable DCT-II/III plans over N-D grids |
+| `src/compute/ard/fft.ts` | **Done** | Allocation-free complex FFT plans (radix-2 + Bluestein) |
+| `src/compute/ard/dct.ts` | **Done** | Separable DCT-II/III plans over N-D grids |
 | `src/compute/ard/voxelize.ts` | Create | Triangle rasterization + flood fill to an air voxel grid |
 | `src/compute/ard/decompose.ts` | Create | Greedy rectangular decomposition of the air region |
 | `src/compute/ard/partition.ts` | Create | Partition interface and shared bookkeeping |
