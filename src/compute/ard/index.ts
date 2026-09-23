@@ -157,17 +157,16 @@ export const ARD_REFERENCE_FREQUENCY = 500;
  * cell runs an explicit stencil, which is cheap per cell and there are two to
  * five times as many of them; an impedance run has only the room's DCT cells,
  * each dearer, plus a boundary residual on every face cell that this count does
- * not see. So removing the slabs cuts total work by about 3x while *raising*
- * the average cost of the cells that remain — the two effects pull opposite
- * ways and one constant cannot carry both.
+ * not see. So removing the slabs cuts total work by about 3x while changing the
+ * average cost of the cells that remain — one constant cannot carry both.
  *
  * Measured on this implementation; see {@link ARD.estimatedSeconds} for the
  * table. Both take the conservative end of their range — a run that finishes
  * sooner than the warning said is a good surprise.
  */
 export const ARD_CELL_STEPS_PER_SECOND = {
-  impedance: 1.0e6,
-  pml: 1.25e6,
+  impedance: 1.4e6,
+  pml: 1.3e6,
 } as const;
 
 /** Points kept for the store's chart, matching the ray tracer's convention. */
@@ -1182,33 +1181,34 @@ export class ARD extends Solver {
    * and `fMax` is an `O(fMax⁴)` dial. Throughput measured on this
    * implementation across four room sizes:
    *
-   * Re-measured for Phase 11, all three configurations in one run so the rows
-   * are comparable with each other (`dx` 0.13, Courant 0.4, α 0.3, min of four
-   * timed passes after a warm-up):
+   * Re-measured after the mixed-radix FFT landed, all three configurations in
+   * one run so the rows are comparable with each other (`dx` 0.13, Courant 0.4,
+   * α 0.3, min of four timed passes after a warm-up). The parenthesised figures
+   * are the same measurement before mixed radix, when every non-power-of-two
+   * extent went through Bluestein:
    *
-   * | room (cells) | rigid | impedance | PML | ms/step, impedance vs PML |
-   * |--------------|-------|-----------|-----|---------------------------|
-   * | 16 x 14 x 12 | 2.14  | 0.99      | 1.28 | 2.71 vs 9.40 — **3.5x** |
-   * | 24 x 20 x 16 | 1.76  | 1.17      | 1.25 | 6.54 vs 21.24 — **3.2x** |
-   * | 32 x 24 x 20 | 1.77  | 1.26      | 1.26 | 12.23 vs 36.13 — **3.0x** |
-   * | 32 x 32 x 16 | 6.27  | 2.76      | 1.54 | 5.94 vs 31.83 — **5.4x** |
+   * | room (cells) | rigid       | impedance   | PML         | ms/step, impedance vs PML |
+   * |--------------|-------------|-------------|-------------|---------------------------|
+   * | 16 x 14 x 12 | 4.98 (2.14) | 1.44 (0.99) | 1.31 (1.28) | 1.87 vs 7.38 — **3.9x** |
+   * | 24 x 20 x 16 | 5.36 (1.76) | 2.00 (1.17) | 1.40 (1.25) | 3.84 vs 15.61 — **4.1x** |
+   * | 32 x 24 x 20 | 5.28 (1.77) | 2.29 (1.26) | 1.48 (1.26) | 6.72 vs 25.62 — **3.8x** |
+   * | 16 x 16 x 16 | 7.81        | 1.82        | 1.43        | 2.25 vs 9.31 — **4.1x** |
+   * | 32 x 32 x 16 | 6.41 (6.27) | 2.63 (2.76) | 1.56 (1.54) | 6.24 vs 26.27 — **4.2x** |
    *
    * (Mcell-steps/s, over `estimatedSimulatedCells`-equivalent stepped cells.)
    *
    * Read the rate columns and the wall-clock column together, because they say
-   * different things. **Wall clock is 3-5x better on the impedance path**, which
-   * is the number a user experiences. The *rate* is lower there, which looks
-   * like a regression and is not: the rate is per stepped cell, slab cells are
-   * cheaper per cell than DCT cells, and an impedance run also does boundary
-   * work on every face cell that the cell count does not include. Fewer, dearer
-   * cells.
+   * different things. **Wall clock is about 4x better on the impedance path**,
+   * which is the number a user experiences, and it comes from stepping roughly
+   * a third as many cells rather than from stepping them faster.
    *
-   * The consequence for this estimate is the one that matters: multiplying the
-   * (3x smaller) impedance cell count by the old 1.35e6 was **optimistic**, not
-   * pessimistic — typical rooms measure 0.99-1.26. Hence the per-boundary
-   * constants. The last row is the Phase 1 finding from the other side:
-   * power-of-two extents take the radix-2 FFT path, and on the impedance path,
-   * where the DCT is most of the work, that is worth 2.2x rather than 20%.
+   * The two power-of-two rows are the control: they were already on the radix-2
+   * path and did not move. Everything else did, by 1.8-2.3x on the DCT-bound
+   * configurations, because a mixed extent no longer pays for Bluestein — which
+   * is what made the impedance rate *lower* than the slab's before and higher
+   * than it now. The per-boundary constants stay, because the cell counts still
+   * differ by 3x and the per-cell costs no longer cancel that; they are just
+   * both larger, and closer together, than Phase 11 measured.
    */
   get estimatedSeconds(): number {
     return (

@@ -1028,19 +1028,20 @@ describe('ARD solver', () => {
   });
 
   it('costs the time estimate at the boundary it will actually run', () => {
-    // Two constants because the cost per *stepped* cell differs: a slab cell is
-    // cheaper than a DCT cell and there are 2-5x as many, while an impedance run
-    // keeps only the dear ones and does face work the cell count does not see.
-    // Measured 0.99-1.26 Mcell-steps/s against the slab's 1.25-1.54, so reusing
-    // one number would make the impedance estimate optimistic — which is the
-    // wrong direction for a warning.
+    // Two constants because the cost per *stepped* cell differs: a slab cell
+    // runs an explicit stencil and there are 2-5x as many, while an impedance
+    // run keeps only the DCT cells and does face work the cell count does not
+    // see. Measured 1.44-2.63 Mcell-steps/s against the slab's 1.31-1.56 — so
+    // the impedance path is now the faster one per cell as well as end to end,
+    // which it was not before the mixed-radix FFT: a mixed extent used to pay
+    // for Bluestein, and that alone put the DCT-bound path below the slab's.
     containers['room-1'] = makeRoom({ x: 5, y: 4, z: 3 }, 0.3);
     const impedance = new ARD({ roomID: 'room-1', fMax: 600, irLength: 0.5 });
     const pml = new ARD({
       roomID: 'room-1', fMax: 600, irLength: 0.5, boundary: 'pml',
     });
 
-    expect(ARD_CELL_STEPS_PER_SECOND.impedance).toBeLessThan(
+    expect(ARD_CELL_STEPS_PER_SECOND.impedance).toBeGreaterThan(
       ARD_CELL_STEPS_PER_SECOND.pml,
     );
     for (const solver of [impedance, pml]) {
