@@ -73,7 +73,16 @@ describe("Issue #199: the field stepper is the single-cell stencil, tiled", () =
     const nx = 11;
     const ny = 9;
     const field = createField2D(nx, ny);
-    const gammas = [0, 0.2, 0.5, ghostGainForAbsorption(0.7, Math.SQRT1_2)];
+    // The last two are past MAX_GHOST_GAIN, so the centred loss (#219) is
+    // pinned too, including on corner cells that sum two of them.
+    const gammas = [
+      0,
+      0.2,
+      0.5,
+      ghostGainForAbsorption(0.7, Math.SQRT1_2),
+      ghostGainForAbsorption(1, Math.SQRT1_2),
+      1.2,
+    ];
     let state = 12345;
     const random = () => {
       state = (state * 1664525 + 1013904223) >>> 0;

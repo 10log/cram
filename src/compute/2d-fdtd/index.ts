@@ -46,6 +46,7 @@ import {
 import {
   AIR_CHANNEL,
   FDTD_CELLS_PER_WAVELENGTH_FOR_IMPEDANCE,
+  MAX_GHOST_GAIN,
   wallChannelFor,
 } from "./impedance";
 import { DEFAULT_DAMPING, FDTD_REFERENCE_FREQUENCY } from "./index-constants";
@@ -366,6 +367,7 @@ class FDTD_2D extends Solver {
       { value: DEFAULT_DAMPING };
 
     (this.heightmapVariable.material as ShaderMaterial).uniforms["courantSq"] = { value: 0 };
+    (this.heightmapVariable.material as ShaderMaterial).uniforms["maxGhostGain"] = { value: MAX_GHOST_GAIN };
     this.applyWaveSpeed();
 
     (this.heightmapVariable.material as ShaderMaterial).uniforms["heightCompensation"] = { value: 0 };

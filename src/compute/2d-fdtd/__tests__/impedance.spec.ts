@@ -24,13 +24,18 @@ import {
   AIR_CHANNEL,
   MAX_GHOST_GAIN,
   ghostGainForAbsorption,
-  maxStableAbsorption,
   ghostGainFromChannel,
   isWallChannel,
+  splitGhostGain,
   wallChannelFor,
   wallChannelForGhostGain,
 } from '../impedance';
-import { createField2D, stepField, wallGhostPressure } from '../wall-stencil';
+import {
+  applyCentredWallLoss,
+  createField2D,
+  stepField,
+  wallGhostPressure,
+} from '../wall-stencil';
 
 /** The CFL locus this solver runs on: C = 1/√2, so courantSq = 1/2. */
 const C = Math.SQRT1_2;
@@ -65,14 +70,24 @@ function runTube(
   const np = new Float64Array(n);
   const nv = new Float64Array(n);
   const out = probes.map(() => new Float64Array(steps));
+  const { centred } = splitGhostGain(gamma);
+  const last = n - 1;
   for (let t = 0; t < steps; t++) {
-    for (let i = 0; i < n; i++) {
+    for (let i = 0; i < last; i++) {
       const l = i > 0 ? p[i - 1] : p[i];
-      const r = i < n - 1 ? p[i + 1] : wallGhostPressure(p[i], v[i], gamma);
-      const vel = C2 * (l + r - 2 * p[i]) + v[i];
+      const vel = C2 * (l + p[i + 1] - 2 * p[i]) + v[i];
       nv[i] = vel;
       np[i] = p[i] + vel;
     }
+    const r = wallGhostPressure(p[last], v[last], gamma);
+    const vel = applyCentredWallLoss(
+      C2 * (p[last - 1] + r - 2 * p[last]) + v[last],
+      v[last],
+      C2,
+      centred,
+    );
+    nv[last] = vel;
+    np[last] = p[last] + vel;
     p.set(np);
     v.set(nv);
     p[src] += drive(t);
@@ -162,20 +177,35 @@ describe('Issue #199: FDTD 2D impedance walls', () => {
       }
     });
 
-    it('clamps at the stability bound rather than diverging', () => {
-      // Unclamped, a matched surface would ask for gamma = 1/C = 1.414, and
-      // the field diverges above gamma = 1 — see the module comment.
-      expect(ghostGainForAbsorption(1, C)).toBe(MAX_GHOST_GAIN);
-      expect(MAX_GHOST_GAIN).toBeLessThan(1);
-      const cap = maxStableAbsorption(C);
-      expect(cap).toBeCloseTo(0.961, 3);
-      expect(ghostGainForAbsorption(cap, C)).toBeCloseTo(MAX_GHOST_GAIN, 9);
-      // Everything at or below the cap is untouched by the clamp.
-      for (const alpha of [0.5, 0.8, 0.95, cap - 1e-6]) {
+    it('is not clamped: a matched wall asks for 1/C and gets it (#219)', () => {
+      // The backward ghost diverges above gamma = 1, so this used to clamp at
+      // MAX_GHOST_GAIN and cap absorption at 0.961. The excess now goes to the
+      // centred loss instead, and the gain is the material's own.
+      expect(ghostGainForAbsorption(1, C)).toBeCloseTo(1 / C, 12);
+      for (const alpha of [0.5, 0.8, 0.95, 0.97, 0.99]) {
         const r = Math.sqrt(1 - alpha);
         expect(ghostGainForAbsorption(alpha, C)).toBeCloseTo((1 - r) / ((1 + r) * C), 12);
       }
-      expect(() => maxStableAbsorption(0)).toThrow(/Courant/);
+    });
+
+    it('splits at MAX_GHOST_GAIN, leaving every gain below it to the backward ghost alone', () => {
+      expect(MAX_GHOST_GAIN).toBeLessThan(1);
+      for (const gamma of [0, 0.3, 0.9, MAX_GHOST_GAIN]) {
+        expect(splitGhostGain(gamma)).toEqual({ backward: gamma, centred: 0 });
+      }
+      for (const gamma of [0.96, 1.2, 1 / C, 10]) {
+        const { backward, centred } = splitGhostGain(gamma);
+        expect(backward).toBe(MAX_GHOST_GAIN);
+        expect(backward + centred).toBeCloseTo(gamma, 14);
+      }
+    });
+
+    it('leaves the velocity untouched when there is no centred remainder', () => {
+      // Not "close": the shader skips the divide on the same condition, and a
+      // rigid or ordinary wall must be the update it was, to the bit.
+      for (const stepped of [0.1234567, -3, 0]) {
+        expect(applyCentredWallLoss(stepped, 0.5, C2, 0)).toBe(stepped);
+      }
     });
 
     it('survives the channel round trip', () => {
@@ -208,9 +238,9 @@ describe('Issue #199: FDTD 2D impedance walls', () => {
         expect([bad, ghostGainForAbsorption(bad, C)]).toEqual([bad, 0]);
       }
       // A finite value out of range clamps to the nearer end: below 0 is rigid,
-      // above 1 is fully absorbing and then the stability bound.
+      // above 1 is fully absorbing.
       expect(ghostGainForAbsorption(-1, C)).toBe(0);
-      expect(ghostGainForAbsorption(1.5, C)).toBe(MAX_GHOST_GAIN);
+      expect(ghostGainForAbsorption(1.5, C)).toBeCloseTo(1 / C, 12);
       // And the clamp reaches the sourcemap, so a bad material writes a wall
       // rather than a NaN channel that would poison every neighbouring cell.
       for (const bad of [NaN, -1, 1.5]) {
@@ -270,12 +300,26 @@ describe('Issue #199: FDTD 2D impedance walls', () => {
       }
     });
 
+    it('delivers past the old 0.961 cap, up to a matched wall (#219)', () => {
+      // These walls carry a centred remainder on top of the backward ghost.
+      // Before #219 every row here read 0.961 at best.
+      const tolerance: Record<number, number> = { 20: 0.005, 12: 0.01, 8: 0.02, 6: 0.03 };
+      for (const cells of [20, 12, 8, 6]) {
+        for (const alpha of [0.98, 1]) {
+          const delivered = deliveredAbsorption(alpha, cells);
+          expect([cells, alpha, Math.abs(delivered - alpha) <= tolerance[cells]])
+            .toEqual([cells, alpha, true]);
+          expect([cells, alpha, delivered > 0.961]).toEqual([cells, alpha, true]);
+        }
+      }
+    });
+
     it('errs towards reflecting, never towards absorbing more than asked', () => {
       // A coarse grid should make a room too live, not too dead: over-delivering
       // absorption would be a silent energy leak, which is the failure mode #205
       // found in ART.
       for (const cells of [12, 8, 6, 4]) {
-        for (const alpha of [0.2, 0.5, 0.8]) {
+        for (const alpha of [0.2, 0.5, 0.8, 1]) {
           const delivered = deliveredAbsorption(alpha, cells);
           expect([cells, alpha, delivered <= alpha + 1e-3]).toEqual([cells, alpha, true]);
           expect(delivered).toBeGreaterThan(0);
@@ -294,47 +338,90 @@ describe('Issue #199: FDTD 2D impedance walls', () => {
   });
 
   describe('stability', () => {
-    it('clamps to a gain the surface mode is stable at', () => {
-      // The single-cell recursion (pole 1 - C²γ) says γ < 4 and is wrong: the
-      // mode that diverges is the checkerboard along the wall, which a
-      // one-cell analysis cannot see. Measured bound is γ = 1.
-      expect(ghostGainForAbsorption(1, C)).toBeLessThan(1);
+    const scratchFor = (n: number) => ({
+      pressure: new Float64Array(n),
+      velocity: new Float64Array(n),
     });
 
-    it('decays the wall checkerboard instead of sustaining or growing it', () => {
-      // The instability is a surface mode, so it has to be excited directly —
-      // a point source leaves it at a level where 40,000 steps of slow growth
-      // still look like nothing.
-      const run = (gamma: number) => {
-        const field = createField2D(48, 36);
-        const channel = wallChannelForGhostGain(gamma);
-        for (let j = 0; j < field.ny; j++) {
-          for (let i = 0; i < field.nx; i++) {
-            if (i === 0 || j === 0 || i === field.nx - 1 || j === field.ny - 1) {
-              field.channel[j * field.nx + i] = channel;
+    /**
+     * Peak pressure after `steps`, starting from the checkerboard. The
+     * instability is a surface mode, so it has to be excited directly — a
+     * point source leaves it at a level where 40,000 steps of slow growth
+     * still look like nothing.
+     */
+    const checkerboard = (gamma: number, maxGhostGain: number, steps = 24000) => {
+      const field = createField2D(48, 36);
+      const channel = wallChannelForGhostGain(gamma);
+      for (let j = 0; j < field.ny; j++) {
+        for (let i = 0; i < field.nx; i++) {
+          if (i === 0 || j === 0 || i === field.nx - 1 || j === field.ny - 1) {
+            field.channel[j * field.nx + i] = channel;
+          } else {
+            field.pressure[j * field.nx + i] = (i + j) % 2 === 0 ? 0.5 : -0.5;
+          }
+        }
+      }
+      const scratch = scratchFor(field.pressure.length);
+      for (let t = 0; t < steps; t++) stepField(field, C2, 1, scratch, maxGhostGain);
+      let worst = 0;
+      for (const p of field.pressure) worst = Math.max(worst, Math.abs(p));
+      return worst;
+    };
+
+    it('keeps the backward ghost below the gain it diverges at', () => {
+      // The single-cell recursion (pole 1 - C²γ) says γ < 4 and is wrong: the
+      // mode that diverges is the checkerboard along the wall, which a
+      // one-cell analysis cannot see. The measured bound is γ = 1, and it is
+      // the backward ghost's alone — `Infinity` here switches the split off.
+      expect(MAX_GHOST_GAIN).toBeLessThan(1);
+      expect(checkerboard(MAX_GHOST_GAIN, Infinity)).toBeLessThan(1e-3);
+      expect(checkerboard(1.01, Infinity)).toBeGreaterThan(1e6);
+    });
+
+    it('decays the wall checkerboard at every gain a material can ask for', () => {
+      // The same 1.01 that diverges above, split: 0.95 backward and 0.06
+      // centred. Then a matched wall, the most a material can ask for.
+      for (const gamma of [MAX_GHOST_GAIN, 1.01, ghostGainForAbsorption(1, C)]) {
+        expect([gamma, checkerboard(gamma, MAX_GHOST_GAIN) < 1e-3]).toEqual([gamma, true]);
+      }
+      // Far past it the wall is over-damped — mismatched, so it reflects and
+      // the mode leaves slowly — but it still leaves.
+      expect(checkerboard(10, MAX_GHOST_GAIN, 24000))
+        .toBeLessThan(0.5 * checkerboard(10, MAX_GHOST_GAIN, 8000));
+    });
+
+    it('stays bounded on rooms with corners, pockets and one-cell corridors', () => {
+      // A wall that is stable along a straight edge might not be where a cell
+      // has two or three wall neighbours and sums their centred remainders.
+      // Nothing here decays to zero — DC and sealed pockets have no loss — so
+      // the test is that the peak does not grow.
+      const N = 32;
+      const rooms: Record<string, (i: number, j: number) => boolean> = {
+        diagonal: (i, j) => i === j,
+        corridor: (i, j) => j !== 16 && i > 8 && i < 24,
+        pillars: (i, j) => i % 3 === 0 && j % 3 === 0,
+        pockets: (i, j) => (i % 4 !== 1 && j % 4 === 0) || (i % 4 === 0 && j % 4 !== 2 && j > 16),
+      };
+      const gammas = [0, 0.5, MAX_GHOST_GAIN, ghostGainForAbsorption(1, C), 5];
+      for (const [name, inner] of Object.entries(rooms)) {
+        const field = createField2D(N, N);
+        for (let j = 0; j < N; j++) {
+          for (let i = 0; i < N; i++) {
+            const idx = j * N + i;
+            if (i === 0 || j === 0 || i === N - 1 || j === N - 1 || inner(i, j)) {
+              field.channel[idx] = wallChannelForGhostGain(gammas[(7 * i + 3 * j) % gammas.length]);
             } else {
-              field.pressure[j * field.nx + i] = (i + j) % 2 === 0 ? 0.5 : -0.5;
+              field.pressure[idx] = ((i + j) % 2 === 0 ? 0.5 : -0.5) + 0.3 * Math.sin(0.7 * i * j);
             }
           }
         }
-        const scratch = {
-          pressure: new Float64Array(field.pressure.length),
-          velocity: new Float64Array(field.pressure.length),
-        };
-        for (let t = 0; t < 24000; t++) stepField(field, C2, 1, scratch);
-        let worst = 0;
-        for (const p of field.pressure) worst = Math.max(worst, Math.abs(p));
-        return worst;
-      };
-
-      // At the clamp, and at the most absorbing wall the clamp allows.
-      expect(run(MAX_GHOST_GAIN)).toBeLessThan(1e-3);
-      expect(run(ghostGainForAbsorption(1, C))).toBeLessThan(1e-3);
-
-      // And the bound is where it was measured: just above it the field is
-      // gone within the same number of steps. Without this the clamp could be
-      // set anywhere and nothing would notice.
-      expect(run(1.01)).toBeGreaterThan(1e6);
+        const scratch = scratchFor(N * N);
+        const peak = () => field.pressure.reduce((m, p) => Math.max(m, Math.abs(p)), 0);
+        for (let t = 0; t < 5000; t++) stepField(field, C2, 1, scratch);
+        const early = peak();
+        for (let t = 0; t < 15000; t++) stepField(field, C2, 1, scratch);
+        expect([name, peak() <= early * 1.001]).toEqual([name, true]);
+      }
     });
   });
 
@@ -350,11 +437,23 @@ describe('Issue #199: FDTD 2D impedance walls', () => {
     it('applies the ghost on every one of the four neighbours', () => {
       for (const dir of ['u', 'd', 'r', 'l']) {
         expect(frag).toContain(`if (${dir}_wall <= 0.0) {`);
-        expect(frag).toContain(`${dir}_pos = pos + ${dir}_wall * vel;`);
+        expect(frag).toContain(`${dir}_pos = pos + max(${dir}_wall, -maxGhostGain) * vel;`);
+        expect(frag).toContain(`centredGain += max(-${dir}_wall - maxGhostGain, 0.0);`);
       }
       // `pos + channel * vel` is `pos - gamma * vel` because the channel holds
       // -gamma; the CPU mirror spells the same thing the other way round.
       expect(wallGhostPressure(3, 2, 0.25)).toBeCloseTo(3 + -0.25 * 2, 15);
+    });
+
+    it('applies the centred remainder the way applyCentredWallLoss does (#219)', () => {
+      expect(frag).toContain('uniform float maxGhostGain;');
+      expect(frag).toContain('if (centredGain > 0.0) {');
+      expect(frag).toContain('float beta = 0.5 * courantSq * centredGain;');
+      expect(frag).toContain('newvel = (newvel - beta * vel) / (1.0 + beta);');
+      // And the solver feeds the uniform from the same constant the CPU
+      // mirror splits at, so the two cannot disagree about where it is.
+      const solver = readFileSync(resolve(__dirname, '../index.ts'), 'utf8');
+      expect(solver).toContain('uniforms["maxGhostGain"] = { value: MAX_GHOST_GAIN }');
     });
 
     it('no longer tests walls with equality, which would ignore gamma', () => {
