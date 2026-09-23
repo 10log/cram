@@ -77,6 +77,9 @@ export function nextPowerOfTwo(n: number): number {
  * is meaningless inside about two cells of it.
  */
 export function freeFieldGain(dx: number, c: number, r: number): number {
+  // Three dimensions only. See `freeFieldGain2D` for what a plane does, and
+  // why it is not this expression with an exponent changed.
+
   if (!(dx > 0) || !(c > 0) || !(r > 0)) {
     throw new Error(`freeFieldGain needs positive dx, c and r; got ${dx}, ${c}, ${r}`);
   }
@@ -93,6 +96,91 @@ export function freeFieldGain(dx: number, c: number, r: number): number {
  */
 export function calibrationScale(dx: number, c: number): number {
   return (4 * Math.PI * c * c) / dx ** 3;
+}
+
+/*
+ * `calibration2D` and `freeFieldGain2D` are the two-dimensional counterparts of
+ * the pair above. They are defined after the band windows because the 2D
+ * correction *is* a window — there is no 2D equivalent of `calibrationScale`
+ * returning a number.
+ */
+
+/**
+ * Free-field pressure per unit injected forcing sample in **two dimensions**,
+ * at distance `r` and frequency `f`.
+ *
+ * Not a variant of {@link freeFieldGain} — a different function of different
+ * variables. A 2D run's source is a line, not a point, so the Green's function
+ * is a Hankel function rather than a delta, and for `kr >> 1`
+ *
+ * ```
+ * |P/F| = (Δx² / 4πc²) · sqrt(c / (f·r))
+ * ```
+ *
+ * Two things follow, and both matter more than the constant:
+ *
+ * - **2D free field falls as `1/√r`, not `1/r`** — 3 dB per doubling rather
+ *   than 6.
+ * - **It is not flat in frequency.** It falls as `1/√f`, so "an arrival's sum
+ *   is its pressure" — the 3D convention this module is built on — simply does
+ *   not hold. A 2D impulse response has a −3 dB/octave tilt in free field, and
+ *   {@link calibration2D} is what takes it back out.
+ *
+ * Measured against the assembled solver at 0.25, 0.5 and 0.75 `fMax`, over `r`
+ * 0.4–1.2 m at `Δx` 5 cm: every ratio within 1.6% of 1. Over the same points
+ * the 3D expression is wrong by factors of **8 to 23**, varying with both `r`
+ * and `f` — so a 2D run calibrated with the 3D constant is not off by a gain,
+ * it is off by a function, and no scale factor can rescue it.
+ *
+ * Asymptotic in `kr`: at `kr = 2.2` the measured ratio is 0.990, and below
+ * about `kr = 2` — `r < c/(πf)`, so a metre at 100 Hz — the near-field terms of
+ * the Hankel function take over and this expression stops applying.
+ */
+export function freeFieldGain2D(dx: number, c: number, r: number, f: number): number {
+  if (!(dx > 0) || !(c > 0) || !(r > 0) || !(f > 0)) {
+    throw new Error(`freeFieldGain2D needs positive dx, c, r and f; got ${dx}, ${c}, ${r}, ${f}`);
+  }
+  return ((dx * dx) / (4 * Math.PI * c * c)) * Math.sqrt(c / (f * r));
+}
+
+/**
+ * Spectral weight taking a deconvolved **2D** record to an impulse response
+ * whose free-field response is `1/√r`, flat in frequency.
+ *
+ * The 2D analogue of {@link calibrationScale}, and a weight rather than a
+ * scalar because there is no scalar that would do: the correction is a
+ * +3 dB/octave tilt, undoing the `1/√f` of 2D spreading.
+ *
+ * `1/√r` rather than `1/r` is not a choice — it is how a line source spreads.
+ * Which is the whole reason a 2D result cannot be compared with a 3D one: they
+ * are answers about different rooms, and this function makes the 2D one
+ * internally consistent, not equivalent.
+ *
+ * Returned as a window over `n` bins at `sampleRate`, symmetric so the inverse
+ * transform stays real, to be passed to {@link deconvolvePulse} as `window`.
+ */
+export function calibration2D(
+  n: number,
+  sampleRate: number,
+  dx: number,
+  c: number,
+): Float64Array {
+  if (!(dx > 0) || !(c > 0)) {
+    throw new Error(`calibration2D needs positive dx and c; got ${dx}, ${c}`);
+  }
+  const weight = new Float64Array(n);
+  const binHz = sampleRate / n;
+  const scale = (4 * Math.PI * c * c) / (dx * dx * Math.sqrt(c));
+  const half = Math.floor(n / 2);
+
+  for (let k = 0; k <= half; k++) {
+    // DC has no 2D free-field amplitude to normalize against — the expression
+    // diverges there — and the driving pulse carries nothing at DC anyway.
+    const value = k === 0 ? 0 : scale * Math.sqrt(k * binHz);
+    weight[k] = value;
+    if (k > 0 && k < n - k) weight[n - k] = value;
+  }
+  return weight;
 }
 
 export interface BandWindowOptions {

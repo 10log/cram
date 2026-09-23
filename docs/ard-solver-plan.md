@@ -1122,7 +1122,108 @@ references `"art"` or `"beam-trace"`:
 | `src/components/parameter-config/SolverComponents.tsx` | Add `ARD` to the `SetPropertyEventTypes` union and to every `T extends ...` constraint |
 | `src/compute/auto-calculate.ts` | **Do not** add `"ard"` to `CALCULATABLE_SOLVER_KINDS`. A 300 ms-debounced auto-run of a multi-second wave solve would make the editor unusable. Revisit only behind an explicit opt-in |
 
-### Phase 9 — 3D
+### Phase 9 — 3D — **implemented, inverted**
+
+**Created** `src/compute/ard/grid-slice.ts`, `__tests__/grid-slice.spec.ts`,
+`freeFieldGain2D` and `calibration2D` in `deconvolve.ts`, and the
+`dimensions` / `slice` / `sliceCoordinate` properties with their UI.
+
+**This phase turned out to be the other way round.** D1 said to ship 2D first
+and flip a parameter for 3D; what happened instead is that Phases 4–8 were
+written, validated and shipped in 3D throughout — the tests have been driving
+3D rooms since Phase 4, and there was never a `dimensions` parameter to flip.
+So the work here was not adding 3D. It was **adding 2D**, which is the phase's
+own closing sentence and the half that did not exist.
+
+The axis-generic claim held completely. A grid with one axis of extent 1 runs
+end to end through the existing machinery with nothing changed: one DCT box,
+four PML walls, rank 2, stable, correct arrival times. `decompose` already
+carried the case explicitly — *"a 1-thick axis is a legitimate 2D run, not a
+thin box"* — as do `FdtdPartition`, `PmlPartition` and `planWalls`. Both
+orientations work identically.
+
+**The orientation that matters is not the one the name suggests.** CRAM rooms
+are Y-up, so the floor plan is the world **XZ** plane and the axis that
+collapses is world **Y** — grid axis 1, not the 2 that "the third axis"
+implies. `compute/2d-fdtd/slice.ts` had already had to settle this and its
+`xy`/`xz` naming is reused.
+
+**A 2D run is a different room, and the level calibration is where that stops
+being a caveat and becomes arithmetic.** The source is a line, not a point, so
+the Green's function is a Hankel function:
+
+```
+|P/F| = (Δx² / 4πc²) · sqrt(c / (f·r))
+```
+
+Measured against the assembled solver at 0.25, 0.5 and 0.75 `fMax` over
+`r` 0.4–1.2 m: **every ratio within 1.6% of 1**. Over the same nine points the
+3D expression is wrong by factors of **8 to 23** — and the spread across them
+is itself a factor of three, so it is not off by a gain, it is off by a
+function and no scale factor rescues it.
+
+Two consequences, neither of them cosmetic:
+
+- 2D free field falls as `1/√r`, not `1/r` — 3 dB per doubling, not 6.
+- It is **not flat in frequency**. Phase 7's whole convention, *an arrival's sum
+  is its pressure*, does not hold: a 2D impulse response carries a −3 dB/octave
+  tilt that is spreading, not the room. `calibration2D` takes it back out, and
+  it is necessarily a spectral weight rather than a scalar — there is no 2D
+  counterpart to `calibrationScale` returning a number.
+
+So a 2D result is labelled `IR [2D xz]` in the results panel, and the run
+pushes a warning saying in words what it is: the response of a room uniform and
+unbounded along the collapsed axis, with no modes across it at all. Useful for
+wavefronts and early reflections in plan. Not for a reverberation time.
+
+**The plane is a slice of the room's own 3D voxelization**, not an independent
+2D rasterization. That costs the whole volume grid — 948 ms and 12M cells for a
+10 × 4 × 8 m room at 4 kHz, against a simulation that touches 85 000 cells —
+and buys two things worth more than the second: the validated triangle/box
+overlap and flood fill are reused rather than reimplemented, and the 2D air
+region *is* the region a 3D run would have used at that height, so the two
+modes cannot disagree about where the room is at a doorway or a balcony edge.
+
+The default cut goes through the first source, which is inside the room by
+construction because it seeded the fill. Clamping a requested height into the
+grid is not enough on its own — the outermost layers are the padding the wall
+slabs grow into, so a height above the ceiling clamps to solid; the fallback is
+the widest layer, named in a warning.
+
+Cost estimation follows: collapsing an axis removes a whole cross-section
+rather than a third of the cells (measured >10x on an 8 × 4 × 6 m room), and
+the two faces normal to the collapsed axis lose their slabs entirely, because
+there is no outside along a 1-thick axis to absorb into.
+
+**Probes are projected onto the cut, and that is not a nicety.** `worldToCell`
+rounds and then bounds-checks, so on a grid one cell deep the collapsed index
+must round to exactly 0 — a point more than half a cell off the plane resolves
+to `null` and the run dies with "outside the voxel grid", *after* the full 3D
+voxelization. At `fMax` 400 that is **17 cm**, which is an ordinary difference
+between a source height and a listener height, and it would have shipped: every
+2D test placed its probes on the plane. A 2D run has no coordinate off the
+plane to preserve, so projecting is what the mode means rather than an
+approximation of it — but a probe more than a cell away says so, because the
+answer is then about somewhere else.
+
+The same gap closed a second one: when a requested height lands in padding and
+the cut falls back to the widest layer, the seed source itself can be off the
+chosen plane. The shoebox test passed only because its source sat at the
+centre, which *is* the widest layer.
+
+**Still outstanding from this phase: the slice-plane visualization.** The driver
+has emitted display frames since Phase 6 (`frameInterval`, `sliceAxis`,
+`sliceIndex`) and nothing consumes them. Making them visible is a renderer
+change on the scale of `compute/2d-fdtd/index.ts` — a `DataTexture` and a mesh
+in `renderer.fdtdItems`, plus plumbing the frames back through the worker
+protocol, which currently discards them. It is the other half of the
+`visualize` toggle deferred in Phase 8, and it is a piece of work rather than a
+loose end.
+
+**Re-baselining the performance tests** was done in Phase 8, where the cost line
+needed a measured throughput figure.
+
+**Original specification follows.**
 
 Flip `dimensions` to `3` once Phase 4-6 tests pass in 2D: the DCT plan, the
 partition solvers, the interface routine and the decomposition were all written

@@ -11,6 +11,8 @@ import { createPropertyInputs, useSolverProperty } from './SolverComponents';
 import SourceReceiverMatrix from './SourceReceiverMatrix';
 import PropertyRow from './property-row/PropertyRow';
 import PropertyRowLabel from './property-row/PropertyRowLabel';
+import { PropertyRowCheckbox } from './property-row/PropertyRowCheckbox';
+import { PropertyRowNumberInput } from './property-row/PropertyRowNumberInput';
 import { PropertyRowSelect } from './property-row/PropertyRowSelect';
 import SolverControlBar from './SolverControlBar';
 import SectionLabel from './property-row/SectionLabel';
@@ -110,6 +112,28 @@ export const ARDTab = ({ uuid }: ARDTabProps) => {
   const [roomID, setRoomID] = useSolverProperty<ARD, 'roomID'>(
     uuid, 'roomID', 'ARD_SET_PROPERTY',
   );
+  const [dimensions, setDimensions] = useSolverProperty<ARD, 'dimensions'>(
+    uuid, 'dimensions', 'ARD_SET_PROPERTY',
+  );
+  const [slice, setSlice] = useSolverProperty<ARD, 'slice'>(
+    uuid, 'slice', 'ARD_SET_PROPERTY',
+  );
+  const [sliceCoordinate, setSliceCoordinate] = useSolverProperty<ARD, 'sliceCoordinate'>(
+    uuid, 'sliceCoordinate', 'ARD_SET_PROPERTY',
+  );
+  const twoDimensional = dimensions === 2;
+  const cutAtSource = sliceCoordinate === null || sliceCoordinate === undefined;
+
+  const toggleCutAtSource = useCallback(
+    (event: { value: boolean }) => {
+      // `sliceCoordinate` is `number | null` and the number input cannot emit
+      // null, so the checkbox owns that half of the state. Turning it off needs
+      // a starting height: 1.2 m is the conventional plan cut for a floor plan,
+      // and 0 is the centre for a section.
+      setSliceCoordinate({ value: event.value ? null : (slice === 'xy' ? 0 : 1.2) });
+    },
+    [setSliceCoordinate, slice],
+  );
 
   useEffect(() => {
     return on('ARD_PROGRESS', (payload) => {
@@ -141,6 +165,8 @@ export const ARDTab = ({ uuid }: ARDTabProps) => {
     const grid = solver.estimatedGrid;
     return {
       grid,
+      dimensions: solver.dimensions,
+      slice: solver.slice,
       cells: solver.estimatedCellCount,
       simulated: solver.estimatedSimulatedCells,
       steps: solver.estimatedSteps,
@@ -173,8 +199,12 @@ export const ARDTab = ({ uuid }: ARDTabProps) => {
         <>
           <CostRow
             label="Grid"
-            value={`${cost.grid.x} x ${cost.grid.y} x ${cost.grid.z} @ ${(cost.dx * 100).toFixed(1)} cm`}
-            tooltip="Voxel grid the run would allocate, from the room's bounding box, and the cell size that follows from fMax and cells per wavelength."
+            value={
+              cost.dimensions === 2
+                ? `${cost.slice} plane @ ${(cost.dx * 100).toFixed(1)} cm`
+                : `${cost.grid.x} x ${cost.grid.y} x ${cost.grid.z} @ ${(cost.dx * 100).toFixed(1)} cm`
+            }
+            tooltip="Voxel grid the run would allocate, from the room's bounding box, and the cell size that follows from fMax and cells per wavelength. A 2D run still voxelizes the room in three dimensions — it takes one plane out of the result, so the air region matches what a 3D run would have used at that height."
           />
           <CostRow
             label="Cells stepped"
@@ -216,6 +246,69 @@ export const ARDTab = ({ uuid }: ARDTabProps) => {
           options={rooms.length > 0 ? rooms : [{ value: '', label: 'No rooms available' }]}
         />
       </PropertyRow>
+
+      {/* Dimensions */}
+      <PropertyRow>
+        <PropertyRowLabel
+          label="Dimensions"
+          hasToolTip
+          tooltip="3D solves the room. 2D solves a plane through it — which is a different room, one that is uniform and unbounded along the collapsed axis: sound spreads as 1/sqrt(r) and there are no modes across the missing axis. It is the only mode that reaches 4 kHz on anything but a cupboard, and it is for seeing wavefronts in plan, not for reading a reverberation time."
+        />
+        <PropertyRowSelect
+          value={String(dimensions ?? 3)}
+          onChange={(event) =>
+            setDimensions({ value: Number((event as { value: string }).value) as 2 | 3 })
+          }
+          options={[
+            { value: '3', label: '3D — the room' },
+            { value: '2', label: '2D — a plane through it' },
+          ]}
+        />
+      </PropertyRow>
+      {twoDimensional && (
+        <PropertyRow>
+          <PropertyRowLabel
+            label="Plane"
+            hasToolTip
+            tooltip="Which plane to cut. Floor plan collapses height; section collapses depth. The cut goes through the first source unless a height is set, since a source is inside the room by construction."
+          />
+          <PropertyRowSelect
+            value={slice ?? 'xz'}
+            onChange={setSlice}
+            options={[
+              { value: 'xz', label: 'Floor plan (XZ)' },
+              { value: 'xy', label: 'Section (XY)' },
+            ]}
+          />
+        </PropertyRow>
+      )}
+
+      {twoDimensional && (
+        <>
+          <PropertyRow>
+            <PropertyRowLabel
+              label="Cut at Source"
+              hasToolTip
+              tooltip="Cut through the first source, which is inside the room by construction because it seeds the flood fill. Turn it off to set a height — useful on a building with more than one storey, where the source's own plane may not be the one you want."
+            />
+            <PropertyRowCheckbox value={cutAtSource} onChange={toggleCutAtSource} />
+          </PropertyRow>
+          {!cutAtSource && (
+            <PropertyRow>
+              <PropertyRowLabel
+                label={slice === 'xy' ? 'Cut at Z (m)' : 'Cut at Y (m)'}
+                hasToolTip
+                tooltip="Where to cut, in metres along the collapsed axis. A plane outside the room — or in the padding the wall slabs grow into — falls back to the widest plane, and the run says which one it used."
+              />
+              <PropertyRowNumberInput
+                value={sliceCoordinate ?? 0}
+                onChange={setSliceCoordinate}
+                step={0.1}
+              />
+            </PropertyRow>
+          )}
+        </>
+      )}
 
       {/* Source / Receiver Pairs */}
       <SectionLabel label="Source / Receiver Pairs" />
