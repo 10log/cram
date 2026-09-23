@@ -49,6 +49,40 @@ export function selectShootingPatch(unshotEnergy: DirectionalResponse[]): number
 }
 
 /**
+ * Along-normal offset for a ray leaving a patch, in metres.
+ *
+ * A barycentric sample sits exactly **on** the triangle plane, so a ray leaving
+ * it starts coplanar with its own surface, and the other triangles of the same
+ * wall sit at distance ~0 from that origin. Issue #120 read that as a leak and
+ * #207 repeated it; **measurement refuted it.** `localToWorld` maps every
+ * sampled direction into the patch normal's hemisphere, so a ray cannot turn
+ * back into its own plane and a coplanar sibling receives exactly 0 either way
+ * — with this offset and without it. The measured T30 and its Eyring ratio do
+ * not move.
+ *
+ * It is kept as a guard for the geometry where the hazard is real: a sample
+ * near a shared edge with a *non*-coplanar neighbour, which genuinely does sit
+ * at ~0 distance and is not protected by the hemisphere argument. A guard, not
+ * a fix — see `physics.spec.ts` for the measurement.
+ *
+ * 1e-4 m: far above the float noise on a room-scale coordinate, far below any
+ * geometric feature a room model has.
+ */
+export const RAY_ORIGIN_EPSILON = 1e-4;
+
+/**
+ * Slack in the gather's occlusion test, in metres.
+ *
+ * A hit counts as blocking only if it is meaningfully nearer than the receiver.
+ * This was 1 cm, which #120 called out as a fudge standing in for the missing
+ * origin offset — and it could not do that job anyway, since a sibling triangle
+ * registers at ~0 distance and 0 < dist − 0.01 for any receiver beyond a
+ * centimetre, so the patch read as occluded. With the origin lifted off the
+ * plane the slack only has to cover float noise.
+ */
+export const OCCLUSION_EPSILON = 1e-4;
+
+/**
  * Compute total unshot energy across all patches.
  */
 export function totalUnshotEnergy(unshotEnergy: DirectionalResponse[]): number {
@@ -87,8 +121,13 @@ export function shootFromPatch(ctx: ShootingContext, patchIdx: number): void {
     const gain = 1.0 / nRays;
 
     for (let r = 0; r < nRays; r++) {
-      // Generate ray origin: random point on source patch
-      const origin = samplePointOnPatch(srcPatch);
+      // Random point on the source patch, lifted off its own plane. Coplanar
+      // siblings are unreachable regardless — see RAY_ORIGIN_EPSILON — so this
+      // guards the non-coplanar neighbour at a shared edge.
+      const origin = samplePointOnPatch(srcPatch).addScaledVector(
+        srcPatch.normal,
+        RAY_ORIGIN_EPSILON,
+      );
 
       // Generate ray direction within BRDF slot k
       const localDir = sampleDirectionInSlot(brdf, k);
@@ -119,8 +158,11 @@ export function shootFromPatch(ctx: ShootingContext, patchIdx: number): void {
 
       const rcvPatchIdx = triangleToPatch[closestHit.triangleIndex];
       const rcvPatch = patches[rcvPatchIdx];
-      const recvCos = incomingLambert(rcvPatch.normal, worldDir);
-      if (recvCos <= 0) continue;
+      // Orientation gate only, never a scale factor. A ray that arrives on the
+      // back of a patch is a geometry miss and is dropped; one that arrives on
+      // the front delivers all the energy it carries. Scaling the deposit by
+      // this cosine is what issue #205 was: see the note above `depositGain`.
+      if (incomingLambert(rcvPatch.normal, worldDir) <= 0) continue;
 
       // Propagation delay in samples
       const delaySamples = (closestDist / speedOfSound) * sampleRate;
@@ -138,12 +180,22 @@ export function shootFromPatch(ctx: ShootingContext, patchIdx: number): void {
       brdf.computeCoefficients(rcvAbsorption, rcvScattering);
       const outgoingWeights = brdf.getOutgoingWeights(incomingSlot);
 
-      // Deposit energy at receiver patch
+      // Deposit energy at receiver patch.
+      //
+      // `gain` alone, with no receiver cosine. This is a particle method: the
+      // slot's energy is divided equally among `nRays` rays, each ray carries
+      // `1/nRays` of it, and a ray that lands on a patch delivers all of it. The
+      // receiver's projected area is already accounted for — a tilted patch
+      // subtends less solid angle from the source and so is *hit by fewer rays*,
+      // which is the form factor. Multiplying by `cos θ` as well counts it
+      // twice, and because a raw cosine averages below 1 it also destroys
+      // energy: measured 0.70-0.74 retention per bounce at α = 0, compounding to
+      // a reverberation time 2-4x short (issue #205).
       const sourceResponse = srcEnergy.responses[k];
-      const scaledGain = gain * airAtten * recvCos;
+      const depositGain = gain * airAtten;
 
       for (let outSlot = 0; outSlot < brdf.nSlots; outSlot++) {
-        const weight = outgoingWeights[outSlot] * scaledGain;
+        const weight = outgoingWeights[outSlot] * depositGain;
         if (weight < 1e-20) continue;
         unshotEnergy[rcvPatchIdx].responses[outSlot].delayMultiplyAdd(
           sourceResponse, delaySamples, weight
@@ -200,8 +252,11 @@ export function injectSourceEnergy(
 
     const patchIdx = triangleToPatch[closestHit.triangleIndex];
     const patch = patches[patchIdx];
-    const recvCos = incomingLambert(patch.normal, dir);
-    if (recvCos <= 0) continue;
+    // Orientation gate only, as in `shootFromPatch` — see the note on
+    // `depositGain` there. A point source divides its energy equally among rays
+    // and each ray delivers what it carries; scaling by the receiver's cosine
+    // cost about 20% of the injected energy before it entered the room at all.
+    if (incomingLambert(patch.normal, dir) <= 0) continue;
 
     const delaySamples = (closestDist / speedOfSound) * sampleRate;
     const airAtten = Math.exp(-airAbsNepers * closestDist);
@@ -218,7 +273,7 @@ export function injectSourceEnergy(
 
     // Create a unit impulse as the source emission
     const impulse = new Response(1);
-    impulse.buffer[0] = gain * airAtten * recvCos * (rayWeight ? rayWeight(dir) : 1);
+    impulse.buffer[0] = gain * airAtten * (rayWeight ? rayWeight(dir) : 1);
 
     for (let outSlot = 0; outSlot < brdf.nSlots; outSlot++) {
       const w = outWeights[outSlot];
@@ -256,8 +311,12 @@ export function gatherAtReceiver(
     const cosTheta = patch.normal.dot(toReceiver);
     if (cosTheta <= 0) continue;
 
-    // Visibility check: trace ray from patch centroid to receiver
-    const hits = bvh.intersectRay(patch.centroid, toReceiver, false);
+    // Visibility check: trace from the patch toward the receiver, from an
+    // origin lifted off the patch plane for the same reason as the shoot.
+    const gatherOrigin = patch.centroid
+      .clone()
+      .addScaledVector(patch.normal, RAY_ORIGIN_EPSILON);
+    const hits = bvh.intersectRay(gatherOrigin, toReceiver, false);
     let occluded = false;
     if (hits) {
       for (const hit of hits) {
@@ -265,11 +324,11 @@ export function gatherAtReceiver(
         if (hitPatchIdx === i) continue;
         const hitPoint = hit.intersectionPoint;
         const hitDist = new Vector3(
-          hitPoint.x - patch.centroid.x,
-          hitPoint.y - patch.centroid.y,
-          hitPoint.z - patch.centroid.z
+          hitPoint.x - gatherOrigin.x,
+          hitPoint.y - gatherOrigin.y,
+          hitPoint.z - gatherOrigin.z
         ).length();
-        if (hitDist < dist - 0.01) {
+        if (hitDist < dist - OCCLUSION_EPSILON) {
           occluded = true;
           break;
         }
