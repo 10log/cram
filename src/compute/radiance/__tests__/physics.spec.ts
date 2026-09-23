@@ -1,5 +1,5 @@
 /**
- * Issue #121: Phase 8 physics tests — tessellation, conservation, Sabine, reciprocity.
+ * Issue #121: Phase 8 physics tests — tessellation, conservation, decay, reciprocity.
  */
 import { Vector3 } from "three";
 import { BRDF } from "../brdf";
@@ -141,8 +141,13 @@ describe("Issue #121: one-bounce energy", () => {
  * which is what T20 and T30 mean.
  *
  * A two-point lookup rather than an ISO 3382-1 least-squares fit, deliberately
- * local to this spec: #137 objects to exactly that in the shipped energy-decay
- * code, and if it produces a real fit this should move onto it.
+ * local to this spec for independence from the code under test. #137 objects to
+ * exactly that in the shipped energy-decay code, and when it produces a real
+ * fit **this helper and the twin in `ard/__tests__/rt60-cross-check.spec.ts`
+ * should move onto it in one pass** — two oracles that define T30 differently
+ * would drift, and drift between oracles is worse than a shared approximation.
+ * The twin differs only in squaring its input, since ARD's response is pressure
+ * where this one is energy.
  */
 function decayTime(
   buffer: ArrayLike<number>,
@@ -175,12 +180,28 @@ function decayTime(
   return -60 / slope;
 }
 
-/** Eyring reverberation time. Sabine's, with the correct log. */
+/**
+ * Eyring reverberation time — Sabine's, with the correct log.
+ *
+ * Eyring rather than Sabine because the two differ by 12% even at α = 0.2 and
+ * further as α rises, and #121 asked for a factor-of-2 bound that should not
+ * spend a tenth of its budget on picking the looser formula.
+ *
+ * And a **single number** rather than the bracket
+ * `ard/__tests__/rt60-cross-check.spec.ts` needs, which is worth saying because
+ * it is a property of ART rather than a simplification: Sabine and Eyring take
+ * a random-incidence coefficient, the material database stores a
+ * normal-incidence one, and for a locally-reacting surface those differ by
+ * nearly a factor of two (Paris). ART's BRDF applies `reflectance = 1 − α` at
+ * every angle and never consults `reflectionCoefficient`, so its α *is* the
+ * mean absorption Eyring wants and no conversion applies. A wave solver, or the
+ * ray tracer under #201, does not get that shortcut.
+ */
 function eyring(volume: number, surface: number, alpha: number): number {
   return (0.161 * volume) / (-surface * Math.log(1 - alpha));
 }
 
-describe("Issue #121: Sabine ballpark", () => {
+describe("Issue #121: Eyring ballpark", () => {
   const Lx = 4;
   const Ly = 3;
   const Lz = 2.5;
