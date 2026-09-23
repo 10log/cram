@@ -10,6 +10,7 @@
 import { bandlimitedPulse, createArdSimulation } from '../simulation';
 import { decompose } from '../decompose';
 import { createComplexFftPlan } from '../fft';
+import { impedanceCourantLimit } from '../impedance';
 import { spatialRank, vonNeumannCflLimit } from '../partition';
 import { PML_CFL_MARGIN } from '../pml-partition';
 import { Cell, type VoxelGrid } from '../voxelize';
@@ -116,6 +117,7 @@ describe('createArdSimulation', () => {
       sources: [{ cell: [o + 10, o + 8, o + 6], signal: new Float32Array(4) }],
       receivers: [{ cell: [o + 4, o + 3, o + 2] }],
       steps: 4,
+      boundary: 'pml',
       absorptionFor: () => 0.3,
     });
 
@@ -142,6 +144,7 @@ describe('createArdSimulation', () => {
         sources: [{ cell: [11, 9, 7], signal: new Float32Array(2) }],
         receivers: [],
         steps: 2,
+        boundary: 'pml',
         absorptionFor: () => 0.5,
       }),
     ).toThrow(/padCells >= 9/);
@@ -166,6 +169,7 @@ describe('createArdSimulation', () => {
       sources: [{ cell: [o + 8, o + 7, o + 6], signal: new Float32Array(2) }],
       receivers: [],
       steps: 2,
+      boundary: 'pml',
       absorptionFor: () => 0,
     });
 
@@ -188,6 +192,7 @@ describe('createArdSimulation', () => {
       sources: [{ cell: [o + 8, o + 7, o + 6], signal: new Float32Array(2) }],
       receivers: [],
       steps: 2,
+      boundary: 'pml',
       absorptionFor: () => 0.3,
     });
     expect(absorbing.wallPlan.faces).toHaveLength(6);
@@ -209,6 +214,7 @@ describe('createArdSimulation', () => {
       sources: [{ cell: [o + 8, o + 7, o + 6], signal: new Float32Array(2) }],
       receivers: [],
       steps: 2,
+      boundary: 'pml',
       absorptionFor: () => 0.2,
     });
 
@@ -217,6 +223,183 @@ describe('createArdSimulation', () => {
     expect(sim.courant).toBeLessThan(0.5);
     expect(sim.warnings.join(' ')).toMatch(/Courant reduced/);
     sim.dispose();
+  });
+
+  it('uses impedance boundaries by default, and they cost no cells', () => {
+    // Same room, same materials, both boundary kinds — the difference is the
+    // whole reason the default changed. Note the padding: the impedance grid is
+    // the voxelizer's own one-cell shell, which the slab planner cannot use at
+    // all.
+    const air = [16, 14, 12] as const;
+    const bare = shoeboxGrid(air[0], air[1], air[2], 0.1, 0);
+    const padded = shoeboxGrid(air[0], air[1], air[2], 0.1, 9);
+    const bareOrigin = airOrigin(0);
+    const paddedOrigin = airOrigin(9);
+
+    const build = (grid: VoxelGrid, o: number, boundary: 'impedance' | 'pml') =>
+      createArdSimulation({
+        grid,
+        decomposition: decompose(grid),
+        c: C,
+        courant: 0.4,
+        sources: [{ cell: [o + 8, o + 7, o + 6], signal: new Float32Array(2) }],
+        receivers: [],
+        steps: 2,
+        boundary,
+        absorptionFor: () => 0.3,
+      });
+
+    const impedance = build(bare, bareOrigin, 'impedance');
+    const pml = build(padded, paddedOrigin, 'pml');
+
+    // Both absorb on all six faces.
+    expect(impedance.impedancePlan.faces).toHaveLength(6);
+    expect(pml.wallPlan.faces).toHaveLength(6);
+
+    // The rooms are the same; only the slabs differ.
+    expect(impedance.cellCount.room).toBe(pml.cellCount.room);
+    expect(impedance.cellCount.walls).toBe(0);
+    expect(pml.cellCount.walls).toBeGreaterThan(impedance.cellCount.room);
+
+    // Boundary cells are the face area, and are not stepped: they are cells the
+    // room already contains.
+    expect(impedance.cellCount.boundary).toBe(
+      2 * (air[0] * air[1] + air[0] * air[2] + air[1] * air[2]),
+    );
+    expect(impedance.partitions).toHaveLength(pml.partitions.length - 6);
+
+    impedance.dispose();
+    pml.dispose();
+  });
+
+  it('clamps the Courant number to what the impedance boundary is stable at', () => {
+    // Not a CFL limit in the PML's sense — nothing here steps — but the
+    // residual is feedback and diverges past a measured bound that depends on
+    // the most absorbing surface. The driver has to apply it, because a run
+    // that diverges returns NaN for a whole octave band.
+    const grid = shoeboxGrid(16, 14, 12, 0.1, 0);
+    const o = airOrigin(0);
+    const at = (alpha: number) =>
+      createArdSimulation({
+        grid,
+        decomposition: decompose(grid),
+        c: C,
+        courant: 0.9,
+        sources: [{ cell: [o + 8, o + 7, o + 6], signal: new Float32Array(2) }],
+        receivers: [],
+        steps: 2,
+        absorptionFor: () => alpha,
+      });
+
+    const live = at(0.1);
+    const dead = at(0.95);
+    expect(live.courant).toBeCloseTo(impedanceCourantLimit(0.1), 12);
+    expect(dead.courant).toBeCloseTo(impedanceCourantLimit(0.95), 12);
+    // A more absorbing room gets a smaller time step, and both stay above the
+    // 0.446 a PML slab would have imposed regardless of material.
+    expect(dead.courant).toBeLessThan(live.courant);
+    const slabLimit =
+      PML_CFL_MARGIN * vonNeumannCflLimit(spatialRank(grid.nx, grid.ny, grid.nz));
+    expect(dead.courant).toBeGreaterThan(slabLimit);
+    expect(live.warnings.join(' ')).toMatch(/Courant reduced/);
+    expect(live.warnings.join(' ')).toMatch(/impedance boundaries/);
+    live.dispose();
+    dead.dispose();
+  });
+
+  it('warns when the grid is too coarse for the boundary to deliver its alpha', () => {
+    // The mapping is measured good to about 0.01 in alpha down to four cells per
+    // wavelength. ARD's own default is 2.6, where the top octave comes back at
+    // 0.12 for a requested 0.3 — a room quietly more reflective than its
+    // materials, which is not visible in the result.
+    const grid = shoeboxGrid(16, 14, 12, 0.1, 0);
+    const o = airOrigin(0);
+    const make = (fMax: number) =>
+      createArdSimulation({
+        grid,
+        decomposition: decompose(grid),
+        c: C,
+        courant: 0.4,
+        sources: [{ cell: [o + 8, o + 7, o + 6], signal: new Float32Array(2) }],
+        receivers: [],
+        steps: 2,
+        fMax,
+        absorptionFor: () => 0.3,
+      });
+
+    // dx = 0.1 m, so 4 cells per wavelength is 857 Hz.
+    const coarse = make(1300);
+    expect(coarse.warnings.join(' ')).toMatch(/cells per wavelength/);
+    coarse.dispose();
+
+    const fine = make(600);
+    expect(fine.warnings.join(' ')).not.toMatch(/cells per wavelength/);
+    fine.dispose();
+
+    // No fMax, no warning — the driver does not guess at one.
+    const silent = make(0);
+    expect(silent.warnings.join(' ')).not.toMatch(/cells per wavelength/);
+    silent.dispose();
+  });
+
+  it('warns that the slab path leaves the room corners reflecting', () => {
+    // The corner gap costs about 4.7x in reverberation time
+    // (`rt60-cross-check.spec.ts`), which is not something to leave for a reader
+    // of `walls-from-grid.ts` to discover. It reaches anyone on the slab path,
+    // including anyone who inherited it from a project saved before the
+    // impedance boundary existed.
+    const grid = shoeboxGrid(16, 14, 12, 0.1, 9);
+    const o = airOrigin(9);
+    const build = (boundary: 'impedance' | 'pml') =>
+      createArdSimulation({
+        grid,
+        decomposition: decompose(grid),
+        c: C,
+        courant: 0.4,
+        sources: [{ cell: [o + 8, o + 7, o + 6], signal: new Float32Array(2) }],
+        receivers: [],
+        steps: 2,
+        boundary,
+        absorptionFor: () => 0.3,
+      });
+
+    const pml = build('pml');
+    expect(pml.warnings.join(' ')).toMatch(/edges and eight corners reflecting/);
+    pml.dispose();
+
+    const impedance = build('impedance');
+    expect(impedance.warnings.join(' ')).not.toMatch(/corners reflecting/);
+    impedance.dispose();
+
+    // Not emitted for a rigid room either: no slab, no corner gap.
+    const rigid = createArdSimulation({
+      grid,
+      decomposition: decompose(grid),
+      c: C,
+      courant: 0.4,
+      sources: [{ cell: [o + 8, o + 7, o + 6], signal: new Float32Array(2) }],
+      receivers: [],
+      steps: 2,
+      boundary: 'pml',
+      absorptionFor: () => 0,
+    });
+    expect(rigid.warnings.join(' ')).not.toMatch(/corners reflecting/);
+    rigid.dispose();
+  });
+
+  it('rejects a boundary kind it does not implement', () => {
+    const grid = shoeboxGrid(12, 12, 12, 0.1);
+    expect(() =>
+      createArdSimulation({
+        grid,
+        decomposition: decompose(grid),
+        c: C,
+        sources: [{ cell: [7, 7, 7], signal: new Float32Array(1) }],
+        receivers: [],
+        steps: 2,
+        boundary: 'sponge' as 'pml',
+      }),
+    ).toThrow(/Unknown boundary sponge/);
   });
 
   it('keeps the requested Courant number when there are no walls', () => {
@@ -256,6 +439,7 @@ describe('createArdSimulation', () => {
       sources: [{ cell: [o + 8, o + 7, o + 6], signal: new Float32Array(1) }],
       receivers: [],
       duration,
+      boundary: 'pml',
       absorptionFor: () => 0.3,
     });
 
@@ -466,53 +650,63 @@ describe('energy does not grow once the source stops', () => {
     sim.dispose();
   }, 60_000);
 
-  it('decays with absorbing walls, and holds steady without them', () => {
-    // Paired against a rigid control, because sum of p^2 is not the conserved
-    // quantity and wanders on its own. What identifies the walls as the cause
-    // is that the same room with alpha = 0 does not decay at all.
-    const dx = 0.1;
-    const pad = 9;
-    const o = airOrigin(pad);
-    const grid = shoeboxGrid(24, 16, 16, dx, pad);
-    const decomposition = decompose(grid);
-    const dt = (0.4 * dx) / C;
-    const signal = bandlimitedPulse(60, dt, 600);
+  it.each(['impedance', 'pml'] as const)(
+    'decays with absorbing boundaries and holds steady without them (%s)',
+    (boundary) => {
+      // Paired against a rigid control, because sum of p^2 is not the conserved
+      // quantity and wanders on its own. What identifies the boundary as the
+      // cause is that the same room with alpha = 0 does not decay at all.
+      //
+      // Run for both boundary kinds: this is the property they are alternative
+      // implementations of, so neither is allowed to pass it alone.
+      const dx = 0.1;
+      const pad = 9;
+      const o = airOrigin(pad);
+      const grid = shoeboxGrid(24, 16, 16, dx, pad);
+      const decomposition = decompose(grid);
+      const dt = (0.4 * dx) / C;
+      const signal = bandlimitedPulse(60, dt, 600);
 
-    const runTo = (alpha: number) => {
-      const sim = createArdSimulation({
-        grid,
-        decomposition,
-        c: C,
-        courant: 0.4,
-        sources: [{ cell: [o + 7, o + 5, o + 4], signal }],
-        receivers: [],
-        steps: 500,
-        absorptionFor: () => alpha,
-      });
-      // The control is rigid because no slab is built for alpha = 0 at all,
-      // which is exactly what makes it a control: same grid, same
-      // decomposition, no absorbing boundary anywhere.
-      expect(sim.wallPlan.faces.length).toBe(alpha > 0 ? 6 : 0);
-      // Sample once the field has filled the room, not while it is still
-      // arriving: the source stops at step 60 but the energy keeps
-      // redistributing for a while after.
-      while (sim.currentStep < 150) sim.step();
-      const settled = fieldEnergy(sim);
-      while (sim.currentStep < 500) sim.step();
-      const final = fieldEnergy(sim);
-      sim.dispose();
-      return { settled, final };
-    };
+      const runTo = (alpha: number) => {
+        const sim = createArdSimulation({
+          grid,
+          decomposition,
+          c: C,
+          courant: 0.4,
+          sources: [{ cell: [o + 7, o + 5, o + 4], signal }],
+          receivers: [],
+          steps: 500,
+          boundary,
+          absorptionFor: () => alpha,
+        });
+        // The control is rigid because nothing is built for alpha = 0 at all,
+        // which is exactly what makes it a control: same grid, same
+        // decomposition, no absorbing boundary anywhere.
+        const built =
+          boundary === 'pml' ? sim.wallPlan.faces.length : sim.impedancePlan.faces.length;
+        expect(built).toBe(alpha > 0 ? 6 : 0);
+        // Sample once the field has filled the room, not while it is still
+        // arriving: the source stops at step 60 but the energy keeps
+        // redistributing for a while after.
+        while (sim.currentStep < 150) sim.step();
+        const settled = fieldEnergy(sim);
+        while (sim.currentStep < 500) sim.step();
+        const final = fieldEnergy(sim);
+        sim.dispose();
+        return { settled, final };
+      };
 
-    const rigid = runTo(0);
-    const absorbing = runTo(0.6);
+      const rigid = runTo(0);
+      const absorbing = runTo(0.6);
 
-    // Rigid walls conserve: the field is still there at the end.
-    expect(rigid.final / rigid.settled).toBeGreaterThan(0.5);
-    // Absorbing walls take it away.
-    expect(absorbing.final / absorbing.settled).toBeLessThan(0.2);
-    expect(absorbing.final).toBeLessThan(rigid.final);
-  }, 120_000);
+      // Rigid walls conserve: the field is still there at the end.
+      expect(rigid.final / rigid.settled).toBeGreaterThan(0.5);
+      // Absorbing walls take it away.
+      expect(absorbing.final / absorbing.settled).toBeLessThan(0.2);
+      expect(absorbing.final).toBeLessThan(rigid.final);
+    },
+    120_000,
+  );
 
   it('applies air attenuation to the room only, never to a wall slab', () => {
     // A PML slab is not air. Its damping is calibrated to hit a target
@@ -535,6 +729,7 @@ describe('energy does not grow once the source stops', () => {
       receivers: [],
       steps: 4,
       airAbsNepersPerMetre: 0.5,
+      boundary: 'pml',
       absorptionFor: () => 0.4,
     });
 

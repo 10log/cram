@@ -58,6 +58,7 @@ import {
   INTERFACE_DEPTH,
   STENCIL_6TH,
   STENCIL_6TH_DIV,
+  transverseAxes,
   type Box,
   type Partition,
 } from './partition';
@@ -94,13 +95,6 @@ function lowEdge(box: Box, axis: Axis): number {
 
 function highEdge(box: Box, axis: Axis): number {
   return box[ORIGIN[axis]] + box[EXTENT[axis]];
-}
-
-/** The two axes perpendicular to `axis`, in ascending order. */
-function transverseAxes(axis: Axis): [Axis, Axis] {
-  if (axis === Axis.X) return [Axis.Y, Axis.Z];
-  if (axis === Axis.Y) return [Axis.X, Axis.Z];
-  return [Axis.X, Axis.Y];
 }
 
 /**
@@ -160,7 +154,7 @@ export function findInterfaces(partitions: readonly Partition[]): PartitionInter
  * selects which face — the partition's high edge on `axis` (it is the `lower`
  * partition) or its low edge (it is the `upper` one).
  */
-function pressureAtDepth(
+export function pressureAtDepth(
   part: Partition,
   axis: Axis,
   fromHigh: boolean,
@@ -176,7 +170,7 @@ function pressureAtDepth(
   return part.pressureAt(local[0], local[1], local[2]);
 }
 
-function addForceAtDepth(
+export function addForceAtDepth(
   part: Partition,
   axis: Axis,
   fromHigh: boolean,

@@ -118,6 +118,9 @@ export const ARDTab = ({ uuid }: ARDTabProps) => {
   const [slice, setSlice] = useSolverProperty<ARD, 'slice'>(
     uuid, 'slice', 'ARD_SET_PROPERTY',
   );
+  const [boundary, setBoundary] = useSolverProperty<ARD, 'boundary'>(
+    uuid, 'boundary', 'ARD_SET_PROPERTY',
+  );
   const [sliceCoordinate, setSliceCoordinate] = useSolverProperty<ARD, 'sliceCoordinate'>(
     uuid, 'sliceCoordinate', 'ARD_SET_PROPERTY',
   );
@@ -175,6 +178,7 @@ export const ARDTab = ({ uuid }: ARDTabProps) => {
       seconds: solver.estimatedSeconds,
       bands: solver.bands.length,
       referenceFrequency: solver.referenceFrequency,
+      boundary: solver.boundary,
       dx: solver.cellSize,
     };
   }, [solver, version, solverVersion]);
@@ -209,7 +213,11 @@ export const ARDTab = ({ uuid }: ARDTabProps) => {
           <CostRow
             label="Cells stepped"
             value={formatCount(cost.simulated)}
-            tooltip="Air cells plus absorbing wall slabs — what actually costs time each step. Smaller than the allocated grid, most of which is padding for the slabs to grow into."
+            tooltip={
+              cost.boundary === 'pml'
+                ? 'Air cells plus absorbing wall slabs — what actually costs time each step. Smaller than the allocated grid, most of which is padding for the slabs to grow into. Switching the boundary to impedance drops the slabs entirely, typically cutting this by two thirds.'
+                : 'Air cells — what actually costs time each step. Impedance boundaries add none: they force cells the air region already contains.'
+            }
           />
           <CostRow
             label="Steps"
@@ -219,7 +227,11 @@ export const ARDTab = ({ uuid }: ARDTabProps) => {
           <CostRow
             label="Estimated time"
             value={formatSeconds(cost.seconds)}
-            tooltip="Rough, from measured throughput of about 1.35 million cell-steps per second. An order of magnitude, not a quote — and it does not include voxelization or the per-thickness wall calibration."
+            tooltip={
+              cost.boundary === 'pml'
+                ? 'Rough, from measured throughput of about 1.25 million cell-steps per second on this boundary. An order of magnitude, not a quote — and it does not include voxelization or the per-thickness wall calibration. Note the rate is per stepped cell and a slab has two to five times as many of them, so a PML run is three to five times slower in wall clock than the same room on an impedance boundary.'
+                : 'Rough, from measured throughput of about 1.0 million cell-steps per second on this boundary. An order of magnitude, not a quote. A room whose cell extents are all powers of two runs two to three times faster, because the DCT takes its radix-2 path instead of Bluestein.'
+            }
             warn={cost.seconds > SLOW_RUN_SECONDS}
           />
           {running && (
@@ -334,7 +346,11 @@ export const ARDTab = ({ uuid }: ARDTabProps) => {
         uuid={uuid}
         label="Courant Number"
         property="courant"
-        tooltip="Requested c·Δt/Δx. The DCT interior has no stability limit at all, but absorbing wall slabs do and every partition shares one time step, so on a 3D room this is capped near 0.446 however high you set it."
+        tooltip={
+          boundary === 'pml'
+            ? 'Requested c·Δt/Δx. The DCT interior has no stability limit at all, but absorbing wall slabs do and every partition shares one time step, so on a 3D room this is capped near 0.446 however high you set it.'
+            : 'Requested c·Δt/Δx. The DCT interior has no stability limit; impedance boundaries have a measured one of 0.55 − 0.05α, so a room of highly absorbing surfaces is capped at 0.50 and a live one at 0.55. Either way that is above the 0.446 a PML slab would impose.'
+        }
         elementProps={{ step: 0.05, min: 0.05, max: 1 }}
       />
       <PropertyNumberInput
@@ -344,13 +360,30 @@ export const ARDTab = ({ uuid }: ARDTabProps) => {
         tooltip="Length of the impulse response in seconds. Steps scale linearly with it — make it long enough to hold the decay and no longer."
         elementProps={{ step: 0.1, min: 0.05, max: 10 }}
       />
-      <PropertyNumberInput
-        uuid={uuid}
-        label="Wall Thickness"
-        property="wallThickness"
-        tooltip="Absorbing layer depth in cells. Thicker reaches a higher absorption coefficient and costs proportionally more cells: 4 cells reach α 0.81, 8 reach 0.958, 20 reach 0.999 at roughly five times the room's own cell count."
-        elementProps={{ step: 2, min: 4, max: 20 }}
-      />
+      <PropertyRow>
+        <PropertyRowLabel
+          label="Boundary"
+          hasToolTip
+          tooltip="How a room surface absorbs. Impedance puts the condition on the face itself: no extra cells, no grid padding, a looser time step, and measurably closer to the material's absorption coefficient at every grid resolution tested. PML parks a graded absorbing slab outside each face — 2 to 5 times the room in cells, padding on every side to grow into, and a tighter cap on the Courant number. PML is kept because it is what the solver was originally validated against."
+        />
+        <PropertyRowSelect
+          value={boundary ?? 'impedance'}
+          onChange={setBoundary}
+          options={[
+            { value: 'impedance', label: 'Impedance — on the face' },
+            { value: 'pml', label: 'PML — absorbing slab' },
+          ]}
+        />
+      </PropertyRow>
+      {boundary === 'pml' && (
+        <PropertyNumberInput
+          uuid={uuid}
+          label="Wall Thickness"
+          property="wallThickness"
+          tooltip="Absorbing layer depth in cells. Thicker reaches a higher absorption coefficient and costs proportionally more cells: 4 cells reach α 0.81, 8 reach 0.958, 20 reach 0.999 at roughly five times the room's own cell count."
+          elementProps={{ step: 2, min: 4, max: 20 }}
+        />
+      )}
       <PropertyNumberInput
         uuid={uuid}
         label="Sample Rate"

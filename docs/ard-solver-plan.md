@@ -708,9 +708,10 @@ free in cells. Measured on a 3 x 2.4 x 2 m room at `dx = 0.1`:
 
 **§5's table counts room cells only, so its rows are optimistic by roughly 3x
 once walls are included.** The default thickness is 8 — α up to 0.958, past any
-material in the database. Both problems disappear with a locally-reacting
-impedance boundary (reference [6]), which costs no cells and has no CFL limit;
-that is now the most valuable single change available to this solver.
+material in the database. Both problems largely disappear with a locally-reacting
+impedance boundary (reference [6]), which costs no cells and clamps the time step
+less; that was the most valuable single change available to this solver, and
+**Phase 11 made it** — it is the default, so §5's rows now apply as written.
 
 **Phase 2's default padding makes walls impossible.** A slab grows outward from
 a room face into solid cells, and a voxelized room's shell is one cell thick, so
@@ -1033,7 +1034,12 @@ Flat to within ~5% once absorbing walls exist, which is the default. The two
 outliers are Phase 1 and Phase 5 findings seen from the other side:
 power-of-two extents take the radix-2 FFT path and run 20% faster, and a rigid
 room has no PML slabs — the most expensive partition kind — at all.
-`ARD_CELL_STEPS_PER_SECOND` takes the conservative end.
+`ARD_CELL_STEPS_PER_SECOND` takes the conservative end of each. Phase 11 split it
+per boundary and re-measured: the impedance path is **3-5x faster in wall clock**
+but *lower* per stepped cell (0.99-1.26 against the slab's 1.25-1.54), because
+the cells it keeps are the dear ones and it does boundary work the cell count
+does not see. Multiplying the 3x smaller impedance cell count by the old single
+1.35e6 was optimistic rather than pessimistic.
 
 **Estimated cells had to be counted in cells, not metres.** The obvious form —
 bounding volume over `Δx³` plus surface area over `Δx²` times the slab
@@ -1352,11 +1358,18 @@ against a run already measured in minutes.
 
 The honest alternative reading is that the *real* answer to §5 is not a GPU at
 all but a locally-reacting impedance boundary (reference [6]), which Phases 5, 6
-and 8 each arrived at independently from different directions. It would delete
-the slabs rather than accelerate them: no 76–93%, no CFL clamp on the whole
-simulation from the walls, no 2–5x cell cost. That is a smaller piece of work
-than a GPU port and it makes the GPU port cheaper afterwards, because what is
-left to accelerate is then the DCT interior alone.
+and 8 each arrived at independently from different directions. It deletes the
+slabs rather than accelerating them: no 76–93%, a looser time step, no 2–5x cell
+cost. That is a smaller piece of work than a GPU port and it makes the GPU port
+cheaper afterwards, because what is left to accelerate is then the DCT interior
+alone.
+
+**This is what happened.** Phase 11 below implements it and makes it the
+default, which retires this phase's premise: the stencil partitions a GPU port
+was to be aimed at are no longer built unless `boundary: 'pml'` is asked for. A
+GPU port is still available and still worth 3–4x on the slab path, but it is now
+a smaller prize than the profile above suggests, and the DCT — the 7–24% — is
+what a port would have to take on to beat it.
 
 Both findings are pinned by tests rather than left as prose:
 `__tests__/f32-budget.spec.ts` for the precision budget, and
@@ -1440,6 +1453,173 @@ WebGPU compute with storage buffers is the right fit and is already in the repo.
 
 ---
 
+### Phase 11 — Locally-Reacting Impedance Boundaries — **implemented, and now the default**
+
+**Created** `src/compute/ard/impedance.ts`,
+`src/compute/ard/boundaries-from-grid.ts`, `src/compute/ard/face-rects.ts`,
+`__tests__/impedance.spec.ts`, `__tests__/boundaries-from-grid.spec.ts`,
+`__tests__/rt60-cross-check.spec.ts`.
+**Modified** `simulation.ts`, `walls-from-grid.ts`, `interface.ts`, `index.ts`,
+`ARDTab.tsx`.
+
+Not in the original plan's ten phases. It is here because Phases 5, 6, 8 and 10
+each arrived at it independently, from four different directions, as the largest
+single improvement available to this solver — and Phase 10's profiling turned
+that from an opinion into a measurement. `ArdSimulationConfig.boundary` now
+selects `'impedance'` (the default) or `'pml'`; nothing about the slab path
+changed.
+
+#### What it replaces, and by how much
+
+| | PML slab | impedance boundary |
+|---|---|---|
+| cells added | 2-5x the room | **none** |
+| grid padding | `wallThickness + 1` every side (9 at the default) | **1**, the voxelizer's own |
+| share of step time (Phase 10) | 76-93% | three cells per face |
+| **wall clock per step**, same room | 9.4-36.1 ms | **2.7-12.2 ms — 3.0-5.4x faster** |
+| calibration | one measured `\|R\|` curve per distinct thickness, ~1 s each | **closed form** |
+| Courant clamp on the whole simulation | 0.446 on a 3D room, any material | **0.55 - 0.05α**, so 0.50-0.55 |
+| delivered α at 6 cells/wavelength, requested 0.7 | 0.611-0.692 | **0.700-0.710** |
+| behaviour at 2.6 cells/wavelength | **non-passive**: measured α of -13 (t=8) and -52 (t=20) at 1 kHz | under-absorbs, 0.12 for a requested 0.3 |
+| angular behaviour | a graded-σ sponge has none in particular | correct for a locally-reacting surface, `(ξcosθ-1)/(ξcosθ+1)` |
+| room corners | 12 edges and 8 corners left reflecting; measured **4.7x** too long a T60 on a 3D shoebox | no corner to leave — the boundary is on the face |
+
+The last three rows matter more than the first. A slab that returns *more* energy
+than it received near the grid's spatial Nyquist is not a wall that is slightly
+wrong; a reverberation time computed through it is unbounded, and nothing
+downstream can tell. The impedance boundary cannot do that: its ghost filter
+satisfies `\|G/P\|² - 1 ∝ 4β(cos ωΔt - 1) ≤ 0`, so the ghost is a contraction of
+the mirror at every frequency and for every β ≥ 0.
+
+#### The method
+
+`∂p/∂n + (1/(ξc))∂p/∂t = 0` for a real ξ, with `R = (ξ-1)/(ξ+1)` and
+`α = 1 - R²` inverting the database's coefficient straight to a ξ. It is imposed
+through **Phase 5's own residual**, with the neighbour's cells replaced by
+ghosts — which is why the rigid case is exact rather than approximate: at
+`ghost = own` the residual is identically zero and the face is the partition's
+own Neumann wall, bit for bit. `__tests__/impedance.spec.ts` asserts that
+identity over 200 steps of a seeded 3D field.
+
+The ghosts come from the exact 1D solution near a wall. For the mirror pair at
+depth `k`, at `±τ_k = ±(k+½)dx/c` in time, `mirror = A + RB` and `ghost = B + RA`
+with `A = f(t+τ_k)`, `B = f(t-τ_k)`; eliminating `f` to first order in `ωτ`
+gives `ghost_k - p_k = -(τ_k/ξ)·d/dt(ghost_k + p_k)`, and a backward difference
+makes it explicit with `β_k = (k+½)/(ξC)`. One stored number per ghost — three
+doubles per boundary cell.
+
+#### Three things measured that were not predicted
+
+**The pre-warp is wrong.** The frequency-domain error is exactly `tan(u)` vs `u`,
+`u = ωτ_0`, which predicts a correction `ξ·tan(u)/u` exact at a chosen frequency.
+It was implemented, measured, and **made the delivered α worse at every
+frequency** — the three ghost depths carry stencil weights of opposite sign
+(270, -27, 2), so α is not monotone in ξ across the band and no scalar
+correction improves it. Not shipped. The plain mapping is within 0.013 of the
+requested coefficient from 125 Hz to 1 kHz at 6 cells per wavelength, which
+needs no correction.
+
+**It does have a stability limit**, and the first draft of this phase claimed it
+did not, on the grounds that nothing here steps and a `DctPartition` is
+unconditionally stable. Wrong: the residual is feedback from the field onto
+itself. The envelope was swept (largest stable Courant number, 800 steps from a
+broadband seed, step 0.025):
+
+| α | 1D (24) | 2D (16x12) | 3D (16x12x10) |
+|---|---------|------------|---------------|
+| 0.05 | 0.950 | 0.700 | 0.625 |
+| 0.20 | 0.850 | 0.675 | 0.600 |
+| 0.40 | 0.750 | 0.625 | 0.600 |
+| 0.60 | 0.700 | 0.600 | 0.600 |
+| 0.80 | 0.625 | 0.575 | 0.575 |
+| 0.95 | 0.575 | 0.550 | 0.575 |
+| 1.00 | 0.525 | 0.525 | 0.550 |
+
+`impedanceCourantLimit` is `0.55 - 0.05α`, at least one sampling rung under
+every row. So the claim is not "no CFL limit" but **"a limit above the slab's at
+every absorption coefficient"** — 12% higher at a perfect absorber, 23% at a
+rigid one. The driver applies it from the most absorbing planned face, since
+every partition shares one `Δt`.
+
+**The accuracy floor is a grid-resolution floor, and ARD's default is below
+it.** The mapping holds to about 0.01 in α down to 4 cells per wavelength and
+falls off underneath; at the solver's default of 2.6 the top octave sits at 77%
+of the grid's spatial Nyquist and a requested 0.3 is delivered as 0.12. The
+driver warns rather than overriding, because run cost goes as roughly the fourth
+power of `cellsPerWavelength` and that is not a change to make on someone's
+behalf. Note that the PML is *worse* at the same resolution, not better — so
+this is a pre-existing property of the default, surfaced rather than introduced.
+
+#### The end-to-end check, and what it says about the slab
+
+`__tests__/rt60-cross-check.spec.ts` is the test §6 has asked for since it was
+written, and it is now possible because the boundary being checked delivers the
+coefficient it is given. A 3.36 x 2.64 x 2.16 m shoebox at a uniform α = 0.2,
+driven to 500 Hz, measured by Schroeder integration of a receiver impulse
+response:
+
+| 4 x 3.2 x 2.8 m | T20 | T30 | Eyring at α_normal | Eyring at α_random (Paris) |
+|---|-----|-----|---|---|
+| **impedance**, α = 0.2 | 0.238 s | 0.262 s | 0.392 s | 0.174 s (α_stat 0.396) |
+| PML t=8, α = 0.2 | 1.822 s | 1.836 s | " | " |
+| **impedance**, α = 0.4 | 0.130 s | 0.247 s | 0.171 s | 0.030 s (α_stat 0.849) |
+| PML t=8, α = 0.4 | 0.823 s | 1.011 s | " | " |
+
+Two coefficients, and the slab overshoots the upper bound by **4.7x** at both —
+so this is a property of the slab path, not one awkward room. The spec uses a
+smaller 3.36 x 2.64 x 2.16 m room to keep the run under a minute, with the same
+conclusion, and pins α = 0.2: at 0.4 the impedance decay is visibly
+non-exponential (T30/T20 = 1.9), which is the least-absorbed modes grazing the
+surfaces and is exactly what a locally-reacting boundary should do — correct
+physics, but not something to assert a single decay time against.
+
+The bracket is the whole of what statistical acoustics can assert here. Sabine
+and Eyring take a *random-incidence* coefficient; the database stores a
+*normal-incidence* one, and Paris's formula
+`α_stat = (8/ξ)[1 − (1/ξ)ln(1+ξ) + 1/(1+ξ)]` says a locally-reacting surface at
+α_normal = 0.2 absorbs 0.396 from a diffuse field — so the true T60 must be
+below Eyring at 0.2. It must also be above Eyring at 0.396, because the
+Schroeder frequency here is around 250 Hz and half the run's band is modal. The
+impedance boundary lands between them, and both bounds are one-sided errors a
+broken boundary fails: halving the absorption overshoots the upper bound,
+doubling it breaks the T30/T20 ratio. Both were checked by mutation.
+
+**The PML is 4.7x above the upper bound.** That is not a calibration error — the
+1D rig says the slab delivers roughly the right coefficient at this resolution.
+It is the corner gap. `walls-from-grid.ts` clips every slab to its own face's
+extent so that no cell is inside two slabs, which leaves all twelve edges and
+eight corners of the room uncovered; those regions zero-pad and reflect. That
+module's comment calls the resulting error "local to the corner and bounded",
+and on the evidence above **it is neither** — it is most of the room's
+absorption. The comment has been corrected.
+
+This is the strongest of the arguments for the change, and it was not one of the
+four that motivated it. The slab path has been giving reverberation times about
+five times too long on 3D rooms for as long as it has existed, and no test in
+the suite could see it, because every test compared the slab against itself.
+
+#### What is unchanged
+
+Normal incidence only, as before: α is a normal-incidence coefficient and the
+database stores nothing else. Per-band α is still carried by one run per octave
+band (design decision D3), not by the boundary model, which is real-valued and
+frequency-independent within a run. The slab path, its calibration and its tests
+are all still there and still pass — `partition-cost.spec.ts` and the
+slab-specific half of `simulation.spec.ts` are pinned to `boundary: 'pml'`,
+because they are the evidence for what the slab costs.
+
+#### One refactor it forced
+
+Both planners have to answer the same question — which parts of a partition face
+are room surface rather than a join with a neighbour, and what material is
+behind each part. `face-rects.ts` now owns it (`exposedFaceRects`,
+`dominantSurface`, `outerLayer`) and `walls-from-grid.ts` was moved onto it. Two
+independent scans would eventually disagree, and a face that one treated as
+surface and the other as a join would be either absorbing twice or not at all,
+with nothing downstream able to tell.
+
+---
+
 ## 5. Cost Envelope
 
 Worth stating plainly in both the plan and the UI, because it determines what
@@ -1460,10 +1640,12 @@ room (a shoebox decomposes to a single box, which is ARD's best case). It is a
 injection and recording all add on top, and a room that decomposes into many
 boxes pays more.
 
-**Phase 6 quantified the largest of those.** Absorbing wall slabs at the default
-8-cell thickness add about twice the room's cell count, so a simulation with
-walls is roughly **3x** the figures below. Multiply every row accordingly until
-a boundary condition that does not cost cells replaces the PML (Phase 6 notes).
+**Phase 6 quantified the largest of those, and Phase 11 removed it.** Absorbing
+wall slabs at the default 8-cell thickness add about twice the room's cell
+count, so a simulation with `boundary: 'pml'` is roughly **3x** the figures
+below. The default is now `boundary: 'impedance'`, which adds no cells at all,
+so the rows apply as written — that is the one change to this section's
+arithmetic since it was first measured.
 
 An earlier revision of this table carried estimates that were optimistic by
 roughly 10x. They were replaced once Phase 1 could be benchmarked. Phase 1 also
@@ -1473,10 +1655,12 @@ it; with power-of-two extents the 3D 1 kHz row drops from 9 min to about 1.7 min
 Treat every row here as "current", not "intrinsic".
 
 These are **single-threaded CPU** figures, which is what Phases 1-8 deliver.
-Phase 10 (WebGPU) is one way past them — 3-4x for a stencil-only port, measured
-in Phase 10 — and a locally-reacting impedance boundary is the other, which
-removes the 76-93% rather than accelerating it. Per-partition threading is
-neither, for the
+Two things get past them. A locally-reacting impedance boundary removes the
+76-93% rather than accelerating it, and is **done** (Phase 11): it is the
+default, and what is left to accelerate is the DCT interior alone. WebGPU is the
+other — 3-4x for a stencil-only port, measured in Phase 10, and now a smaller
+prize than that measurement suggested, since the stencil partitions it was aimed
+at are no longer built by default. Per-partition threading is neither, for the
 reasons in §3 D2.
 
 So ARD's place in CRAM is the **low-frequency band**, where the geometrical
@@ -1501,9 +1685,11 @@ convention, all under `src/compute/ard/__tests__/` and run by `vitest`:
 | `partition.spec.ts` | Modal energy conservation; analytic eigenfrequencies; DCT-vs-FDTD agreement |
 | `interface.spec.ts` | Split partition matches an undivided one across a seam (the key test) |
 | `wall.spec.ts` | Calibrated `\|R\|` matches `sqrt(1 - alpha)`; PML reflection floor |
+| `impedance.spec.ts` | Rigid limit bit-exact against a bare partition; delivered α within 0.013 of requested across the band; passivity at every grid resolution; the measured Courant envelope, and a run at its bound |
+| `boundaries-from-grid.spec.ts` | Six faces on a shoebox with no padding where the slab planner needs nine cells; no boundary where two partitions join; the collapsed axis of a 2D slice skipped |
 | `physics.spec.ts` | Free-field `1/r` decay; arrival-time accuracy; energy non-increase after the source stops |
 | `simulation.spec.ts` | Deterministic output for a fixed seed; `dispose()` releases buffers and terminates the worker |
-| `rt60-cross-check.spec.ts` | A shoebox with uniform `alpha` gives a Schroeder T60 within 15% of Sabine — the end-to-end sanity check that ties ARD back to `src/compute/rt` |
+| `rt60-cross-check.spec.ts` | **Done (Phase 11).** A shoebox with uniform `alpha` gives a Schroeder T20 and T30 between Eyring at the normal-incidence coefficient and Eyring at Paris's random-incidence one. Not "within 15% of Sabine" as this row originally asked: Sabine takes a random-incidence coefficient and the database stores a normal-incidence one, so there is no single number to be within 15% of — the bracket is the whole of what statistical acoustics can assert about a room this size |
 
 A `dispose.spec.ts` in the style of `src/compute/beam-trace/__tests__/dispose.spec.ts`
 should confirm no leaked worker or retained `Float64Array`s after solver removal.
@@ -1525,9 +1711,12 @@ should confirm no leaked worker or retained `Float64Array`s after solver removal
 | `src/compute/ard/pml-partition.ts` | **Done** | Graded PML absorbing layer |
 | `src/compute/ard/interface.ts` | **Done** | 6th-order interface residual forcing |
 | `src/compute/ard/wall.ts` | **Done** | alpha -> PML damping calibration for room boundaries |
+| `src/compute/ard/impedance.ts` | **Done (Phase 11)** | Locally-reacting impedance boundary: alpha -> xi, ghost filter, measured Courant bound |
+| `src/compute/ard/boundaries-from-grid.ts` | **Done (Phase 11)** | Impedance boundary placement — no padding, no claims, no thickness |
+| `src/compute/ard/face-rects.ts` | **Done (Phase 11)** | Exposed-face rectangles and dominant surface, shared by both boundary planners |
 | `src/compute/ard/source.ts` | Create | Bandlimited Gaussian pulse, calibration, deconvolution |
 | `src/compute/ard/simulation.ts` | **Done** | Portable time-loop driver |
-| `src/compute/ard/walls-from-grid.ts` | **Done** | Wall slab placement: corner avoidance, overlap claims |
+| `src/compute/ard/walls-from-grid.ts` | **Done** | Wall slab placement: corner avoidance, overlap claims. No longer the default boundary — see Phase 11 |
 | `src/compute/ard/ard.worker.ts` | **Done** | Worker host with progress messaging |
 | `src/compute/ard/gpu/ard.wgsl` | Create (Phase 10) | **Stencil** compute kernels — PML and FDTD. Not the DCT: measured at 7-24% of the time, against 76-93% for the slabs |
 | `src/compute/ard/gpu/gpu-ard.ts` | Create (Phase 10) | Buffer packing, dispatch and per-step halo exchange, reusing `raytracer/gpu/gpu-context.ts`. Needs a harness that runs a kernel against the CPU partition cell by cell first |

@@ -31,21 +31,45 @@
  * except derived from a real absorption coefficient instead of invented, and
  * therefore switched off by default rather than always on at −387 dB/s.
  *
- * ## The time step is set by the walls, not the room
+ * ## Two kinds of absorbing boundary, and why the default changed
  *
- * `DctPartition` has no CFL limit, which is ARD's headline property. But wall
- * slabs are `PmlPartition`s running an explicit 6th-order update, and they do —
- * and since every partition shares one `dt`, **the walls set the time step for
- * the whole simulation**. On a 3D room that caps the Courant number at about
- * 0.446 rather than the plan's default 0.5. It is a 12% cost, not a
- * catastrophe, but it does mean "no CFL limit" stops being true the moment
- * absorbing boundaries are added. A locally-reacting impedance boundary
- * (plan reference [6]) would avoid it, along with the cell cost below.
+ * `DctPartition` has no CFL limit, which is ARD's headline property. A PML wall
+ * slab is a `PmlPartition` running an explicit 6th-order update, and it does —
+ * and since every partition shares one `dt`, **a slab sets the time step for
+ * the whole simulation**, capping a 3D room at about Courant 0.446. It also
+ * adds 2-5x the room in cells and, Phase 10 measured, takes 76-93% of step
+ * time.
+ *
+ * `boundary: 'impedance'` is the default instead. A locally-reacting impedance
+ * boundary (plan reference [6]) is a forcing term on cells that already exist:
+ * no added cells, no grid padding, no calibration curves, and measured closer
+ * to the requested absorption coefficient than the slab at every grid
+ * resolution tested — see `impedance.ts` for both tables. It is not free of a
+ * time-step constraint, though: its residual is feedback from the field onto
+ * itself and diverges past `0.55 − 0.05α`. That is above the slab's 0.446 at
+ * every absorption coefficient — by 12% at a perfect absorber and 23% at a
+ * rigid one — so the clamp is loosened rather than lifted. `'pml'` remains
+ * available and unchanged; it is what the slab machinery in
+ * `walls-from-grid.ts` still serves.
+ *
+ * The two are alternatives, never both: a face carries one or the other, and
+ * `planArdTimeStep` returns one non-empty plan.
  */
 
 import type { Decomposition } from './decompose';
 import { DctPartition } from './dct-partition';
 import { FdtdPartition } from './fdtd-partition';
+import {
+  buildImpedanceBoundaries,
+  planImpedanceBoundaries,
+  type ImpedancePlan,
+} from './boundaries-from-grid';
+import {
+  ARD_CELLS_PER_WAVELENGTH_FOR_IMPEDANCE,
+  applyAllImpedanceForcing,
+  impedanceCourantLimit,
+  type ImpedanceBoundary,
+} from './impedance';
 import {
   applyAllInterfaceForcing,
   findInterfaces,
@@ -102,8 +126,28 @@ export interface ArdSimulationConfig {
   airAbsNepersPerMetre?: number;
   /** Absorption coefficient per surface index; -1 means no surface recorded. */
   absorptionFor?: (surfaceIndex: number) => number;
-  /** Build absorbing walls. Off gives rigid surfaces — useful for modal tests. */
+  /** Build absorbing boundaries. Off gives rigid surfaces — useful for modal tests. */
   walls?: boolean;
+  /**
+   * How a room surface absorbs.
+   *
+   * `'impedance'` (the default) puts a locally-reacting impedance boundary on
+   * the face itself: no added cells, no calibration, a time step clamped to
+   * `0.55 − 0.05α` rather than to 0.446, and measurably closer to the requested
+   * absorption coefficient than the alternative — see `impedance.ts`. `'pml'`
+   * is the original graded-sigma slab outside the face, which needs
+   * `padCells >= wallThickness + 1` on the grid and costs 2-5x the room in
+   * cells.
+   *
+   * `wallThickness` applies only to `'pml'`.
+   */
+  boundary?: 'impedance' | 'pml';
+  /**
+   * Highest frequency the run carries, in Hz. Optional, and used only to warn
+   * when the grid is too coarse for the boundary model to deliver the
+   * absorption it was asked for.
+   */
+  fMax?: number;
   /**
    * Slab thickness in cells. Higher reaches a higher absorption coefficient and
    * costs proportionally more cells — see the table in `walls-from-grid.ts`.
@@ -131,8 +175,17 @@ export interface ArdSimulation {
   readonly partitions: readonly Partition[];
   readonly interfaces: readonly PartitionInterface[];
   readonly wallPlan: WallPlan;
-  /** Cells in room partitions, and cells added by wall slabs. */
-  readonly cellCount: { room: number; walls: number };
+  readonly impedancePlan: ImpedancePlan;
+  /**
+   * Cells in room partitions, cells added by wall slabs, and face cells
+   * carrying an impedance boundary.
+   *
+   * `room` and `walls` are stepped every time step; `boundary` is not. An
+   * impedance boundary is a forcing term on cells `room` already counts, so it
+   * adds nothing to the simulated total — which is the entire point of it, and
+   * why it is reported separately rather than folded in.
+   */
+  readonly cellCount: { room: number; walls: number; boundary: number };
   readonly warnings: readonly string[];
   /** Steps taken so far. */
   readonly currentStep: number;
@@ -159,6 +212,7 @@ export interface ArdTimeStepPlan {
   /** Axes of the grid with extent above 1. */
   gridRank: number;
   wallPlan: WallPlan;
+  impedancePlan: ImpedancePlan;
   warnings: string[];
 }
 
@@ -194,6 +248,8 @@ export function planArdTimeStep(
     absorptionFor = () => 0,
     walls = true,
     wallThickness = DEFAULT_WALL_THICKNESS,
+    boundary = 'impedance',
+    fMax,
   } = config;
 
   const warnings: string[] = [];
@@ -213,18 +269,31 @@ export function planArdTimeStep(
     throw new Error('Decomposition has no boxes; there is nothing to simulate');
   }
 
-  // --- Wall plan -------------------------------------------------------------
-  // Planned before the time step, because whether any slab is actually placed
-  // is what decides the CFL limit below. `planWalls` needs no dt, so the order
-  // costs nothing. Doing it the other way round clamps the Courant number for a
-  // room that turns out to have no slabs at all — every surface rigid, every
-  // face dropped — which is a 12% tax for a constraint that does not exist.
-  const wallPlan: WallPlan = walls
-    ? planWalls(grid, decomposition, { maxThickness: wallThickness, absorptionFor })
-    : { faces: [], warnings: [], slabCells: 0, droppedForSpace: 0, skippedRigid: 0 };
+  // --- Boundaries ------------------------------------------------------------
+  // Planned before the time step, because whether any PML slab is actually
+  // placed is what decides the CFL limit below. Neither planner needs dt, so
+  // the order costs nothing. Doing it the other way round clamps the Courant
+  // number for a room that turns out to have no slabs at all — every surface
+  // rigid, every face dropped — which is a 12% tax for a constraint that does
+  // not exist.
+  const usePml = boundary === 'pml';
+  if (boundary !== 'pml' && boundary !== 'impedance') {
+    throw new Error(`Unknown boundary ${String(boundary)}; expected 'impedance' or 'pml'`);
+  }
+
+  const wallPlan: WallPlan =
+    walls && usePml
+      ? planWalls(grid, decomposition, { maxThickness: wallThickness, absorptionFor })
+      : { faces: [], warnings: [], slabCells: 0, droppedForSpace: 0, skippedRigid: 0 };
   warnings.push(...wallPlan.warnings);
 
-  if (walls && wallPlan.faces.length === 0 && wallPlan.droppedForSpace > 0) {
+  const impedancePlan: ImpedancePlan =
+    walls && !usePml
+      ? planImpedanceBoundaries(grid, decomposition, { absorptionFor })
+      : { faces: [], warnings: [], boundaryCells: 0, skippedRigid: 0, maxAbsorption: 0 };
+  warnings.push(...impedancePlan.warnings);
+
+  if (walls && usePml && wallPlan.faces.length === 0 && wallPlan.droppedForSpace > 0) {
     // Not a warning. A caller that asked for absorbing walls and got a sealed
     // rigid box gets a reverberation time set by nothing but air attenuation,
     // and the number looks plausible enough to publish. The cause is almost
@@ -233,10 +302,27 @@ export function planArdTimeStep(
       `Walls were requested but all ${wallPlan.droppedForSpace} faces were dropped for lack ` +
         'of solid to grow into, so every room surface would be perfectly rigid. Voxelize ' +
         `with padCells >= ${padCellsForWalls(wallThickness)} (currently the grid has too ` +
-        'few), or pass walls: false if a rigid room is what you meant.',
+        "few), pass boundary: 'impedance' (which needs no padding at all), or pass " +
+        'walls: false if a rigid room is what you meant.',
     );
   }
-  if (walls && wallPlan.faces.length === 0) {
+  // Anyone running the slab path should be told what it costs in accuracy, not
+  // just in cells. The corner gap is not a refinement: it leaves twelve edges
+  // and eight corners of the room reflecting, and `rt60-cross-check.spec.ts`
+  // measures the resulting reverberation time 4.7x longer than Eyring at two
+  // absorption coefficients. This reaches the user whether they chose 'pml'
+  // deliberately or inherited it from a project saved before the impedance
+  // boundary existed.
+  if (wallPlan.faces.length > 0) {
+    warnings.push(
+      'Using PML wall slabs. Slabs are clipped to their own face so no cell is inside ' +
+        'two, which leaves the room\'s twelve edges and eight corners reflecting — ' +
+        'measured as a reverberation time about 4.7x longer than Eyring predicts on a ' +
+        "3D shoebox. Prefer boundary: 'impedance', which has no corner to leave.",
+    );
+  }
+
+  if (walls && usePml && wallPlan.faces.length === 0) {
     // The other way to get no slabs: every material is perfectly reflective.
     // That is the caller's choice, faithfully carried out.
     warnings.push(
@@ -244,6 +330,23 @@ export function planArdTimeStep(
         'absorb nothing, so every surface is rigid. The simulation runs without the PML ' +
         'CFL limit as a result.',
     );
+  }
+
+  // The impedance mapping is measured accurate to about 0.01 in alpha down to
+  // four cells per wavelength and falls off below it — at ARD's own default of
+  // 2.6 a requested 0.3 is delivered as 0.12 in the top octave. Warn rather
+  // than override: run cost goes as roughly the fourth power of this number.
+  if (impedancePlan.faces.length > 0 && fMax !== undefined && fMax > 0) {
+    const cellsPerWavelength = c / (fMax * dx);
+    if (cellsPerWavelength < ARD_CELLS_PER_WAVELENGTH_FOR_IMPEDANCE) {
+      warnings.push(
+        `The grid carries ${cellsPerWavelength.toFixed(1)} cells per wavelength at ` +
+          `${fMax} Hz, below the ${ARD_CELLS_PER_WAVELENGTH_FOR_IMPEDANCE} an impedance ` +
+          'boundary needs to deliver the absorption it was asked for. Surfaces will be ' +
+          'more reflective than their materials in the top octave of the run. Raise ' +
+          'cellsPerWavelength, or lower fMax.',
+      );
+    }
   }
 
   // --- Time step -------------------------------------------------------------
@@ -257,13 +360,25 @@ export function planArdTimeStep(
   // stencil, and has the same limit without the PML margin.
   const hasFdtd = decomposition.kinds.includes('fdtd');
   const fdtdLimit = hasFdtd ? vonNeumannCflLimit(gridRank) : Infinity;
-  const courant = Math.min(requestedCourant, wallLimit, fdtdLimit);
+  // An impedance boundary does not step, but its residual is feedback from the
+  // field onto itself and diverges past a measured limit that depends on how
+  // absorbing the most absorbing surface is. Above the PML's 0.446 at every
+  // absorption coefficient, so this loosens the clamp rather than removing it.
+  const impedanceLimit =
+    impedancePlan.faces.length > 0
+      ? impedanceCourantLimit(impedancePlan.maxAbsorption)
+      : Infinity;
+  const courant = Math.min(requestedCourant, wallLimit, fdtdLimit, impedanceLimit);
   if (courant < requestedCourant) {
+    const cause =
+      courant === impedanceLimit
+        ? `impedance boundaries at alpha up to ${impedancePlan.maxAbsorption.toFixed(2)} are ` +
+          'stable to here and no further'
+        : `the ${wallLimit <= fdtdLimit ? 'wall slabs' : 'FDTD partitions'} are rank ` +
+          `${gridRank} and cannot run faster`;
     warnings.push(
-      `Courant reduced from ${requestedCourant} to ${courant.toFixed(3)}: the ` +
-        `${wallLimit <= fdtdLimit ? 'wall slabs' : 'FDTD partitions'} are rank ${gridRank} ` +
-        'and cannot run faster. DCT interiors have no such limit, but every partition ' +
-        'shares a time step.',
+      `Courant reduced from ${requestedCourant} to ${courant.toFixed(3)}: ${cause}. ` +
+        'DCT interiors have no such limit, but every partition shares a time step.',
     );
   }
   const dt = (courant * dx) / c;
@@ -271,7 +386,7 @@ export function planArdTimeStep(
   // been applied — which is the whole reason `duration` exists.
   const steps = requestedSteps ?? Math.max(1, Math.ceil((duration as number) / dt));
 
-  return { dt, courant, steps, gridRank, wallPlan, warnings };
+  return { dt, courant, steps, gridRank, wallPlan, impedancePlan, warnings };
 }
 
 export function createArdSimulation(config: ArdSimulationConfig): ArdSimulation {
@@ -292,7 +407,7 @@ export function createArdSimulation(config: ArdSimulationConfig): ArdSimulation 
   // Validation, the wall plan and the CFL clamp all live in the planner, so
   // that a caller who needs `dt` up front gets exactly the same answer.
   const plan = planArdTimeStep(config);
-  const { dt, courant, steps, wallPlan } = plan;
+  const { dt, courant, steps, wallPlan, impedancePlan } = plan;
   const warnings = [...plan.warnings];
 
   // --- Partitions ------------------------------------------------------------
@@ -311,6 +426,16 @@ export function createArdSimulation(config: ArdSimulationConfig): ArdSimulation 
 
   const partitions: Partition[] = [...roomPartitions, ...wallPartitions];
   const interfaces = findInterfaces(partitions);
+
+  // Impedance boundaries attach to the room partitions, indexed by box, and
+  // never to a wall slab: the two boundary kinds are alternatives, and
+  // `planArdTimeStep` only ever returns one non-empty plan.
+  let boundaries: ImpedanceBoundary[] = [];
+  if (impedancePlan.faces.length > 0) {
+    const built = buildImpedanceBoundaries(impedancePlan, roomPartitions, { absorptionFor });
+    boundaries = built.boundaries;
+    warnings.push(...built.warnings);
+  }
 
   const roomCells = roomPartitions.reduce((t, p) => t + p.box.w * p.box.h * p.box.d, 0);
   const wallCells = wallPartitions.reduce((t, p) => t + p.box.w * p.box.h * p.box.d, 0);
@@ -371,7 +496,12 @@ export function createArdSimulation(config: ArdSimulationConfig): ArdSimulation 
     partitions,
     interfaces,
     wallPlan,
-    cellCount: { room: roomCells, walls: wallCells },
+    impedancePlan,
+    cellCount: {
+      room: roomCells,
+      walls: wallCells,
+      boundary: boundaries.reduce((t, b) => t + b.cellCount, 0),
+    },
     warnings,
     get currentStep() {
       return currentStep;
@@ -379,6 +509,7 @@ export function createArdSimulation(config: ArdSimulationConfig): ArdSimulation 
 
     step(): ArdStepResult {
       applyAllInterfaceForcing(interfaces, c, dx);
+      applyAllImpedanceForcing(boundaries);
 
       for (let n = 0; n < sourceProbes.length; n++) {
         const signal = sources[n].signal;
@@ -430,6 +561,10 @@ export function createArdSimulation(config: ArdSimulationConfig): ArdSimulation 
 
     dispose(): void {
       for (const partition of partitions) partition.dispose();
+      // The filter state is history, not geometry: a boundary reused after
+      // dispose must start from rest or it would inject the tail of the last
+      // run into the first steps of the next.
+      for (const boundary of boundaries) boundary.reset();
     },
   };
 

@@ -220,16 +220,29 @@ describe('ARD solver', () => {
     solver.fMax = 1000;
     expect(solver.referenceFrequency).toBe(500);
 
-    // The cost figure uses the *clamped* Courant number. Wall slabs are PML
-    // partitions and every partition shares a time step, so on a 3D room the
-    // clamp is ~0.446 — asking for 0.5 and reporting 0.5 would show a step
-    // count 12% low every time walls exist, which is the default.
+    // The cost figure uses the *clamped* Courant number, and which clamp
+    // depends on the boundary. A PML slab holds a 3D room to ~0.446, so asking
+    // for 0.5 and reporting 0.5 would show a step count 12% low.
+    solver.boundary = 'pml';
     solver.courant = 0.5;
     const atHalf = solver.estimatedSteps;
     solver.courant = 0.446;
     expect(solver.estimatedSteps).toBe(atHalf);
     solver.courant = 0.3;
     expect(solver.estimatedSteps).toBeGreaterThan(atHalf);
+
+    // An impedance boundary's clamp is looser, and the estimate takes it at its
+    // worst — 0.5, the α = 1 end — because this getter has no materials to read.
+    // So 0.5 is reported as asked and anything above it is held there, where the
+    // slab estimate above was already clamped at 0.5.
+    solver.boundary = 'impedance';
+    solver.courant = 0.5;
+    const impedanceAtHalf = solver.estimatedSteps;
+    expect(impedanceAtHalf).toBeLessThan(atHalf);
+    solver.courant = 0.9;
+    expect(solver.estimatedSteps).toBe(impedanceAtHalf);
+    solver.courant = 0.3;
+    expect(solver.estimatedSteps).toBeGreaterThan(impedanceAtHalf);
     solver.courant = 0.4;
   });
 
@@ -274,7 +287,8 @@ describe('ARD solver', () => {
 
     expect(solver.estimatedSeconds).toBeGreaterThan(0);
     expect(solver.estimatedSeconds).toBeCloseTo(
-      (solver.estimatedSimulatedCells * solver.estimatedSteps) / ARD_CELL_STEPS_PER_SECOND,
+      (solver.estimatedSimulatedCells * solver.estimatedSteps) /
+        ARD_CELL_STEPS_PER_SECOND[solver.boundary],
       9,
     );
 
@@ -436,7 +450,10 @@ describe('ARD solver', () => {
     expect(summary.runs).toBe(1);
     expect(summary.boxCount).toBeGreaterThan(0);
     expect(summary.airCells).toBeGreaterThan(0);
-    expect(summary.cellCount.walls).toBeGreaterThan(0); // alpha 0.3, so slabs exist
+    // alpha 0.3, so the surfaces absorb — and by default they do it with an
+    // impedance boundary, which adds no stepped cells at all.
+    expect(summary.cellCount.boundary).toBeGreaterThan(0);
+    expect(summary.cellCount.walls).toBe(0);
     expect(summary.courant).toBeLessThanOrEqual(0.4);
     expect(summary.dt).toBeCloseTo((summary.courant * summary.dx) / SOUND_SPEED_20C, 12);
     expect(summary.impulseResponses.size).toBe(2);
@@ -560,9 +577,21 @@ describe('ARD solver', () => {
 
     const a = quiet.impulseResponses.get('s1->r1')!;
     const b = loud.impulseResponses.get('s1->r1')!;
+    // Gate on the peak, not on an absolute floor. The impulse responses are
+    // Float32Array, and the arithmetic that fills them accumulates in f32, so
+    // a sample five orders of magnitude below the peak is quantization noise
+    // whatever the level: at 1.3e-5 of peak the ratio wanders by 1e-4, which
+    // says nothing about linearity. An absolute 1e-12 floor admits exactly
+    // those samples and passes or fails on where the noise happens to land.
+    let peak = 0;
+    for (let i = 0; i < a.length; i++) peak = Math.max(peak, Math.abs(a[i]));
+    let compared = 0;
     for (let i = 0; i < a.length; i++) {
-      if (Math.abs(a[i]) > 1e-12) expect(b[i] / a[i]).toBeCloseTo(10, 3);
+      if (Math.abs(a[i]) < 1e-4 * peak) continue;
+      compared++;
+      expect(b[i] / a[i]).toBeCloseTo(10, 3);
     }
+    expect(compared).toBeGreaterThan(50);
   }, 300_000);
 
   it('gives the same answer per band as broadband when absorption is flat', async () => {
@@ -691,6 +720,9 @@ describe('ARD solver', () => {
       fMax: 250,
       irLength: 0.03,
       courant: 0.5,
+      // Pinned to the slab boundary: the clamp this test is about is the PML's,
+      // and an impedance boundary does not have one.
+      boundary: 'pml',
       perBandRuns: true,
     });
     const summary = await solver.run();
@@ -971,8 +1003,13 @@ describe('ARD solver', () => {
     // than 0.470. Using the 3D bound for a 2D run over-states the step count —
     // latent at the default Courant 0.4, where neither clamp bites, and real
     // at the plan's original 0.5.
+    //
+    // This is a property of the PML clamp specifically, because von Neumann
+    // stability is what depends on rank. Pinned accordingly.
     containers['room-1'] = makeRoom({ x: 8, y: 4, z: 6 }, 0.3);
-    const solver = new ARD({ roomID: 'room-1', fMax: 500, irLength: 0.5, courant: 0.5 });
+    const solver = new ARD({
+      roomID: 'room-1', fMax: 500, irLength: 0.5, courant: 0.5, boundary: 'pml',
+    });
 
     const threeD = solver.estimatedStepsPerRun;
     solver.dimensions = 2;
@@ -990,9 +1027,61 @@ describe('ARD solver', () => {
     expect(solver.estimatedStepsPerRun).toBe(twoDSlow);
   });
 
+  it('costs the time estimate at the boundary it will actually run', () => {
+    // Two constants because the cost per *stepped* cell differs: a slab cell is
+    // cheaper than a DCT cell and there are 2-5x as many, while an impedance run
+    // keeps only the dear ones and does face work the cell count does not see.
+    // Measured 0.99-1.26 Mcell-steps/s against the slab's 1.25-1.54, so reusing
+    // one number would make the impedance estimate optimistic — which is the
+    // wrong direction for a warning.
+    containers['room-1'] = makeRoom({ x: 5, y: 4, z: 3 }, 0.3);
+    const impedance = new ARD({ roomID: 'room-1', fMax: 600, irLength: 0.5 });
+    const pml = new ARD({
+      roomID: 'room-1', fMax: 600, irLength: 0.5, boundary: 'pml',
+    });
+
+    expect(ARD_CELL_STEPS_PER_SECOND.impedance).toBeLessThan(
+      ARD_CELL_STEPS_PER_SECOND.pml,
+    );
+    for (const solver of [impedance, pml]) {
+      expect(solver.estimatedSeconds).toBeCloseTo(
+        (solver.estimatedSimulatedCells * solver.estimatedSteps) /
+          ARD_CELL_STEPS_PER_SECOND[solver.boundary],
+        9,
+      );
+    }
+
+    // The slab run is the slower one end to end, which is the claim a user
+    // experiences — it steps several times as many cells, and that dominates the
+    // lower per-cell rate of the impedance path.
+    expect(pml.estimatedSeconds).toBeGreaterThan(2 * impedance.estimatedSeconds);
+  });
+
+  it('does not vary the impedance estimate with rank, because the bound does not', () => {
+    // The impedance bound is `0.55 - 0.05α`. Nothing in it is a von Neumann
+    // symbol, so a 2D run gets no looser time step than a 3D one — and a
+    // rank-dependent estimate here would be fiction. The 2D saving is in cells,
+    // not in steps, which is where the 2D mode's cost actually comes from.
+    containers['room-1'] = makeRoom({ x: 8, y: 4, z: 6 }, 0.3);
+    const solver = new ARD({ roomID: 'room-1', fMax: 500, irLength: 0.5, courant: 0.9 });
+
+    const threeD = solver.estimatedStepsPerRun;
+    solver.dimensions = 2;
+    expect(solver.estimatedStepsPerRun).toBe(threeD);
+    // And it is the clamp, not the request, that produced that figure.
+    solver.courant = 0.5;
+    expect(solver.estimatedStepsPerRun).toBe(threeD);
+    solver.courant = 0.45;
+    expect(solver.estimatedStepsPerRun).toBeGreaterThan(threeD);
+  });
+
   it('costs far less in two dimensions, and the saving is the cross-section', () => {
     containers['room-1'] = makeRoom({ x: 8, y: 4, z: 6 }, 0.3);
-    const solver = new ARD({ roomID: 'room-1', fMax: 1000, irLength: 0.5 });
+    // Slabs on purpose: `wallThickness` is what the second half measures the
+    // slope against, and an impedance boundary has no thickness to vary.
+    const solver = new ARD({
+      roomID: 'room-1', fMax: 1000, irLength: 0.5, boundary: 'pml',
+    });
 
     const threeD = solver.estimatedSimulatedCells;
     solver.dimensions = 2;
@@ -1064,6 +1153,33 @@ describe('ARD solver', () => {
     const legacy = new ARD({}).restore({ ...state, dimensions: undefined, slice: undefined });
     expect(legacy.dimensions).toBe(3);
     expect(legacy.slice).toBe('xz');
+  });
+
+  it('restores a project saved before impedance boundaries onto the slab path', () => {
+    // A new solver gets the better boundary; a *saved* one keeps the physics it
+    // was saved with. Taking the constructor's default on restore would change
+    // padding 9 -> 1, the cell count, and the reverberation time by about 5x on
+    // a 3D room — a migration nobody asked for, performed on load, on results
+    // somebody may already have read and reported.
+    const modern = new ARD({ roomID: 'room-1' });
+    expect(modern.boundary).toBe('impedance');
+
+    const legacy = new ARD({}).restore({
+      ...new ARD({ roomID: 'room-1', wallThickness: 12 }).save(),
+      boundary: undefined,
+    });
+    expect(legacy.boundary).toBe('pml');
+    // And the padding follows it, which is the observable half: an impedance
+    // grid is the voxelizer's own one-cell shell and a slab grid is not.
+    expect(legacy.padCells).toBe(13);
+    expect(modern.padCells).toBe(1);
+
+    // An explicit choice still round-trips, in both directions.
+    for (const boundary of ['impedance', 'pml'] as const) {
+      const saved = new ARD({ roomID: 'room-1', boundary }).save();
+      expect(saved.boundary).toBe(boundary);
+      expect(new ARD({}).restore(saved).boundary).toBe(boundary);
+    }
   });
 
   it('stops a run when cancelled', async () => {
