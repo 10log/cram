@@ -128,8 +128,8 @@ export function measureNormalIncidenceReflection(
   const dt = (courant * dx) / c;
 
   // Rig geometry. The domain is a power of two so the DCT takes the radix-2
-  // path rather than Bluestein — the calibration is ~4x cheaper for it, and the
-  // measurement does not care about the exact length. It must also be wide
+  // path, which is the cheapest of the three and costs nothing to ask for here
+  // — the measurement does not care about the exact length. It must also be wide
   // enough that the slab echo clears before the rigid-wall echo arrives, which
   // needs n/4 > thickness.
   let n = 256;

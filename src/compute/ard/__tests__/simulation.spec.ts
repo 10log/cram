@@ -498,8 +498,7 @@ describe('free-field physics', () => {
    * what makes this a free-field test inside a finite box.
    */
   // Air region is 64 x 32 x 32 — powers of two, so every DCT axis takes the
-  // radix-2 path instead of Bluestein, a 3-5x saving (Phase 1 measurements)
-  // that costs the test nothing.
+  // radix-2 path, the cheapest of the three, which costs the test nothing.
   const dx = 0.05;
   const AIR: [number, number, number] = [64, 32, 32];
   const grid = shoeboxGrid(AIR[0], AIR[1], AIR[2], dx);
