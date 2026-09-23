@@ -3,20 +3,97 @@ import { a as s, g as c, i as l } from "./store-CUhn0IQy.mjs";
 import { n as u } from "./convert-GmiMppOk.mjs";
 import { n as d, r as f } from "./air-attenuation-CZldbT4Y.mjs";
 import { t as p } from "./sound-speed-CfEkirc1.mjs";
-import { t as m } from "./solver-DCp-VMaM.mjs";
-import { a as h, c as g, d as _, f as v, h as y, i as b, l as x, m as S, o as C, p as w, r as T, s as E, t as D, u as O } from "./impedance-BJDUOGSt.mjs";
-import { t as k } from "./schroeder-BROBh3sk.mjs";
-import { Vector3 as A } from "three";
-//#region src/compute/ard/voxelize.ts
-var j = /* @__PURE__ */ function(e) {
+import { t as m } from "./reflection-coefficient-DOfZqTBY.mjs";
+import { t as h } from "./solver-DCp-VMaM.mjs";
+import { t as g } from "./schroeder-BROBh3sk.mjs";
+import { Vector3 as _ } from "three";
+//#region src/compute/ard/partition.ts
+var v = /* @__PURE__ */ function(e) {
+	return e[e.X = 0] = "X", e[e.Y = 1] = "Y", e[e.Z = 2] = "Z", e;
+}({}), y = class {
+	box;
+	dims;
+	nx;
+	ny;
+	nz;
+	size;
+	dx;
+	c;
+	dt;
+	force;
+	constructor(e) {
+		let { box: t, dx: n, c: r, dt: i } = e;
+		for (let [e, n] of [
+			["w", t.w],
+			["h", t.h],
+			["d", t.d],
+			["x", t.x],
+			["y", t.y],
+			["z", t.z]
+		]) if (!Number.isInteger(n)) throw Error(`Partition box.${e} must be an integer, got ${n}`);
+		if (t.w < 1 || t.h < 1 || t.d < 1) throw Error(`Partition extents must be >= 1, got ${t.w}x${t.h}x${t.d}`);
+		if (!(n > 0) || !(r > 0) || !(i > 0)) throw Error(`Partition needs positive dx, c and dt; got ${n}, ${r}, ${i}`);
+		this.box = { ...t }, this.nx = t.w, this.ny = t.h, this.nz = t.d, this.dims = [
+			t.w,
+			t.h,
+			t.d
+		], this.size = t.w * t.h * t.d, this.dx = n, this.c = r, this.dt = i, this.force = new Float64Array(this.size);
+	}
+	index(e, t, n) {
+		return e < 0 || t < 0 || n < 0 || e >= this.nx || t >= this.ny || n >= this.nz ? -1 : e + this.nx * (t + this.ny * n);
+	}
+	pressureAt(e, t, n) {
+		let r = this.index(e, t, n);
+		return r < 0 ? 0 : this.pressure[r];
+	}
+	addForce(e, t, n, r) {
+		let i = this.index(e, t, n);
+		i >= 0 && (this.force[i] += r);
+	}
+	clearForce() {
+		this.force.fill(0);
+	}
+	dispose() {}
+	get courant() {
+		return this.c * this.dt / this.dx;
+	}
+	get rank() {
+		return x(this.nx, this.ny, this.nz);
+	}
+};
+function b(e) {
+	return e === 0 ? [1, 2] : e === 1 ? [0, 2] : [0, 1];
+}
+function x(e, t, n) {
+	return Math.max(1, +(e > 1) + +(t > 1) + +(n > 1));
+}
+var S = 1088 / 180;
+function C(e) {
+	return Math.sqrt(4 / (S * e));
+}
+var w = [
+	2,
+	-27,
+	270,
+	-490,
+	270,
+	-27,
+	2
+], T = (w.length - 1) / 2, E = [
+	1,
+	-8,
+	0,
+	8,
+	-1
+], D = /* @__PURE__ */ function(e) {
 	return e[e.Solid = 0] = "Solid", e[e.Air = 1] = "Air", e;
 }({});
-function M(e, t = 343, n = 2.6) {
+function O(e, t = 343, n = 2.6) {
 	if (!(e > 0)) throw Error(`fMax must be positive, got ${e}`);
 	return t / (n * e);
 }
-var N = 64e6;
-function P(e, t, n, r, i, a, o, s, c, l, u, d) {
+var k = 64e6;
+function A(e, t, n, r, i, a, o, s, c, l, u, d) {
 	if (Math.min(e, r, o) > l || Math.max(e, r, o) < -l || Math.min(t, i, s) > u || Math.max(t, i, s) < -u || Math.min(n, a, c) > d || Math.max(n, a, c) < -d) return !1;
 	let f = [
 		r - e,
@@ -38,8 +115,8 @@ function P(e, t, n, r, i, a, o, s, c, l, u, d) {
 	}
 	return !0;
 }
-function F(e, t) {
-	let { dx: n, seed: r, padCells: i = 1, maxCells: a = N } = t, o = [];
+function j(e, t) {
+	let { dx: n, seed: r, padCells: i = 1, maxCells: a = k } = t, o = [];
 	if (!(n > 0)) throw Error(`Cell size must be positive, got ${n}`);
 	if (!Number.isInteger(i) || i < 1) throw Error(`padCells must be an integer >= 1, got ${i}`);
 	if (e.length === 0) throw Error("Cannot voxelize an empty surface set");
@@ -61,7 +138,7 @@ function F(e, t) {
 				let a = b.y + i * n, o = g * (i + _ * e);
 				for (let e = c; e <= l; e++) {
 					let i = b.x + e * n;
-					if (!P(t.ax - i, t.ay - a, t.az - r, t.bx - i, t.by - a, t.bz - r, t.cx - i, t.cy - a, t.cz - r, T, T, T)) continue;
+					if (!A(t.ax - i, t.ay - a, t.az - r, t.bx - i, t.by - a, t.bz - r, t.cx - i, t.cy - a, t.cz - r, T, T, T)) continue;
 					let s = o + e;
 					x[s] = 0, S[s] < 0 && (S[s] = t.surfaceIndex);
 				}
@@ -72,37 +149,37 @@ function F(e, t) {
 		x: p / E,
 		y: m / E,
 		z: h / E
-	}, O = (e, t) => Math.min(t, Math.max(0, e)), k = O(Math.round((D.x - b.x) / n), g - 1), A = O(Math.round((D.y - b.y) / n), _ - 1), j = O(Math.round((D.z - b.z) / n), v - 1), M = k + g * (A + _ * j), F = new Int32Array(y), L = (e) => {
+	}, O = (e, t) => Math.min(t, Math.max(0, e)), j = O(Math.round((D.x - b.x) / n), g - 1), N = O(Math.round((D.y - b.y) / n), _ - 1), F = O(Math.round((D.z - b.z) / n), v - 1), I = j + g * (N + _ * F), L = new Int32Array(y), R = (e) => {
 		x.fill(0);
 		let t = 0;
-		F[t++] = e, x[e] = 1;
+		L[t++] = e, x[e] = 1;
 		let n = 1;
 		for (; t > 0;) {
-			let e = F[--t], n = e % g, i = (e - n) / g % _, a = Math.floor(e / w);
+			let e = L[--t], n = e % g, i = (e - n) / g % _, a = Math.floor(e / w);
 			n > 0 && r(e - 1), n < g - 1 && r(e + 1), i > 0 && r(e - C), i < _ - 1 && r(e + C), a > 0 && r(e - w), a < v - 1 && r(e + w);
 		}
 		function r(e) {
-			x[e] === 1 || S[e] >= 0 || (x[e] = 1, n++, F[t++] = e);
+			x[e] === 1 || S[e] >= 0 || (x[e] = 1, n++, L[t++] = e);
 		}
 		return {
 			airCount: n,
-			touchedRim: I(x, g, _, v)
+			touchedRim: M(x, g, _, v)
 		};
 	}, z;
-	if (S[M] < 0) z = L(M);
+	if (S[I] < 0) z = R(I);
 	else {
-		let e = R(S, g, _, v, k, A, j);
+		let e = P(S, g, _, v, j, N, F);
 		if (e.length === 0) throw Error("No free cell found near the seed point; the grid is entirely solid");
 		let t = null;
 		for (let n of e) {
-			let e = L(n);
+			let e = R(n);
 			if (!e.touchedRim) {
 				t = e;
 				break;
 			}
 			t === null && (t = e);
 		}
-		z = t, z.touchedRim && (z = L(e[0])), o.push("The seed point landed on a wall cell; the fill started from the nearest enclosed free cell instead.");
+		z = t, z.touchedRim && (z = R(e[0])), o.push("The seed point landed on a wall cell; the fill started from the nearest enclosed free cell instead.");
 	}
 	let B = z.airCount, V = z.touchedRim;
 	return V && o.push("The air fill reached the edge of the padded grid. The room surfaces do not close, or the seed point is outside them. The air region covers the whole bounding box and is not usable."), {
@@ -119,7 +196,7 @@ function F(e, t) {
 		warnings: o
 	};
 }
-function I(e, t, n, r) {
+function M(e, t, n, r) {
 	for (let i = 0; i < r; i++) {
 		let a = i === 0 || i === r - 1;
 		for (let r = 0; r < n; r++) {
@@ -131,10 +208,10 @@ function I(e, t, n, r) {
 	}
 	return !1;
 }
-var L = 12;
-function R(e, t, n, r, i, a, o) {
+var N = 12;
+function P(e, t, n, r, i, a, o) {
 	let s = (t - 1) / 2, c = (n - 1) / 2, l = (r - 1) / 2, u = [], d = Math.max(t, n, r);
-	for (let f = 1; f < d && u.length < L; f++) {
+	for (let f = 1; f < d && u.length < N; f++) {
 		let d = [];
 		for (let u = Math.max(0, o - f); u <= Math.min(r - 1, o + f); u++) for (let r = Math.max(0, a - f); r <= Math.min(n - 1, a + f); r++) for (let p = Math.max(0, i - f); p <= Math.min(t - 1, i + f); p++) {
 			if (Math.abs(p - i) !== f && Math.abs(r - a) !== f && Math.abs(u - o) !== f) continue;
@@ -147,11 +224,11 @@ function R(e, t, n, r, i, a, o) {
 			});
 		}
 		d.sort((e, t) => e.toCentre - t.toCentre || e.idx - t.idx);
-		for (let e of d) if (u.push(e.idx), u.length >= L) break;
+		for (let e of d) if (u.push(e.idx), u.length >= N) break;
 	}
 	return u;
 }
-function z(e, t, n, r = 8) {
+function F(e, t, n, r = 8) {
 	let { nx: i, ny: a, nz: o } = e, s = (e, t, n) => e + i * (t + a * n), c = (e, t, n) => e >= 0 && t >= 0 && n >= 0 && e < i && t < a && n < o;
 	if (c(t.i, t.j, t.k) && n(s(t.i, t.j, t.k), t.i, t.j, t.k)) return { ...t };
 	for (let e = 1; e <= r; e++) {
@@ -177,7 +254,7 @@ function z(e, t, n, r = 8) {
 	}
 	return null;
 }
-function B(e, t) {
+function I(e, t) {
 	let n = Math.round((t.x - e.origin.x) / e.dx), r = Math.round((t.y - e.origin.y) / e.dx), i = Math.round((t.z - e.origin.z) / e.dx);
 	return n < 0 || r < 0 || i < 0 || n >= e.nx || r >= e.ny || i >= e.nz ? null : {
 		i: n,
@@ -187,16 +264,16 @@ function B(e, t) {
 }
 //#endregion
 //#region src/compute/ard/decompose.ts
-var V = 2 * O + 1;
-function H(e, t = {}) {
-	let { minBoxEdge: n = V, longestAxisFirst: r = !1 } = t, { nx: i, ny: a, nz: o, cells: s } = e;
+var L = 2 * T + 1;
+function R(e, t = {}) {
+	let { minBoxEdge: n = L, longestAxisFirst: r = !1 } = t, { nx: i, ny: a, nz: o, cells: s } = e;
 	if (e.leaked) throw Error("Refusing to decompose a leaked voxel grid: the air region spans the whole bounding box, so the result would be meaningless. Fix the room geometry or the seed point.");
 	if (!Number.isInteger(n) || n < 1) throw Error(`minBoxEdge must be a positive integer, got ${n}`);
 	let c = i * a * o, l = new Int32Array(c).fill(-1), u = [], d = [], f = i, p = i * a, m = 0;
-	for (let e = 0; e < c; e++) s[e] === j.Air && m++;
+	for (let e = 0; e < c; e++) s[e] === D.Air && m++;
 	let h = (e, t, n) => {
 		let r = e + f * t + p * n;
-		return s[r] === j.Air && l[r] < 0;
+		return s[r] === D.Air && l[r] < 0;
 	}, g = (e, t, n, r) => {
 		let s = r === 0 ? i : r === 1 ? a : o, c = r === 0 ? e : r === 1 ? t : n, l = 0;
 		for (; c + l < s && (r === 0 ? h(e + l, t, n) : r === 1 ? h(e, t + l, n) : h(e, t, n + l));) l++;
@@ -218,7 +295,7 @@ function H(e, t = {}) {
 		return !0;
 	}, v = 0;
 	for (let e = 0; e < c; e++) {
-		if (s[e] !== j.Air || l[e] >= 0) continue;
+		if (s[e] !== D.Air || l[e] >= 0) continue;
 		let t = e % i, c = (e - t) / i % a, m = Math.floor(e / p), h = [
 			0,
 			1,
@@ -288,24 +365,24 @@ function H(e, t = {}) {
 }
 //#endregion
 //#region src/compute/ard/fft.ts
-var ee = 1 << 26;
-function te(e) {
+var z = 1 << 26;
+function B(e) {
 	return Number.isInteger(e) && e >= 1 && e <= 1073741824 && !(e & e - 1);
 }
-function ne(e, t) {
+function V(e, t) {
 	let n = 0;
 	for (let r = 0; r < t; r++) n = n << 1 | e >>> r & 1;
 	return n >>> 0;
 }
-var U = class {
+var H = class {
 	inverseUnscaled(e, t) {
 		this.forward(t, e);
 	}
-}, re = class extends U {
+}, ee = class extends H {
 	n = 1;
 	kind = "identity";
 	forward() {}
-}, ie = class extends U {
+}, te = class extends H {
 	n;
 	kind = "radix2";
 	levels;
@@ -313,13 +390,13 @@ var U = class {
 	sinTable;
 	reversed;
 	constructor(e) {
-		if (super(), !te(e)) throw Error(`Radix2Fft needs a power of two, got ${e}`);
+		if (super(), !B(e)) throw Error(`Radix2Fft needs a power of two, got ${e}`);
 		this.n = e, this.levels = Math.round(Math.log2(e));
 		let t = e >>> 1;
 		this.cosTable = new Float64Array(t), this.sinTable = new Float64Array(t);
 		for (let n = 0; n < t; n++) this.cosTable[n] = Math.cos(2 * Math.PI * n / e), this.sinTable[n] = Math.sin(2 * Math.PI * n / e);
 		this.reversed = new Uint32Array(e);
-		for (let t = 0; t < e; t++) this.reversed[t] = ne(t, this.levels);
+		for (let t = 0; t < e; t++) this.reversed[t] = V(t, this.levels);
 	}
 	forward(e, t) {
 		let { n, reversed: r, cosTable: i, sinTable: a } = this;
@@ -340,7 +417,7 @@ var U = class {
 			}
 		}
 	}
-}, ae = class extends U {
+}, ne = class extends H {
 	n;
 	kind = "bluestein";
 	m;
@@ -355,7 +432,7 @@ var U = class {
 		super(), this.n = e;
 		let t = 1;
 		for (; t < 2 * e - 1;) t *= 2;
-		this.m = t, this.inner = new ie(t), this.cosTable = new Float64Array(e), this.sinTable = new Float64Array(e);
+		this.m = t, this.inner = new te(t), this.cosTable = new Float64Array(e), this.sinTable = new Float64Array(e);
 		let n = 2 * e;
 		for (let t = 0; t < e; t++) {
 			let r = Math.PI * (t * t % n) / e;
@@ -386,13 +463,13 @@ var U = class {
 		}
 	}
 };
-function oe(e) {
+function re(e) {
 	let t = [], n = e;
 	for (let e = 2; e <= 7; e++) for (; n % e === 0;) t.push(e), n /= e;
 	return n === 1 ? t : null;
 }
-function se(e) {
-	let t = oe(e);
+function ie(e) {
+	let t = re(e);
 	if (!t) return null;
 	let n = 0, r = [];
 	for (let e of t) e === 2 ? n++ : r.push(e);
@@ -400,7 +477,7 @@ function se(e) {
 	for (let e = 0; e + 1 < n; e += 2) i.push(4);
 	return n % 2 == 1 && i.push(2), i.concat(r);
 }
-var ce = class extends U {
+var ae = class extends H {
 	n;
 	kind = "mixed-radix";
 	stages;
@@ -482,26 +559,26 @@ var ce = class extends U {
 		}
 	}
 };
-function le(e) {
+function oe(e) {
 	if (!Number.isInteger(e) || e < 1) throw Error(`FFT length must be a positive integer, got ${e}`);
-	if (e > 67108864) throw Error(`FFT length ${e} exceeds the maximum of ${ee}`);
-	if (e === 1) return new re();
-	if (te(e)) return new ie(e);
-	let t = se(e);
-	return t ? new ce(e, t) : new ae(e);
+	if (e > 67108864) throw Error(`FFT length ${e} exceeds the maximum of ${z}`);
+	if (e === 1) return new ee();
+	if (B(e)) return new te(e);
+	let t = ie(e);
+	return t ? new ae(e, t) : new ne(e);
 }
 //#endregion
 //#region src/compute/ard/deconvolve.ts
-function ue(e) {
+function se(e) {
 	if (!Number.isInteger(e) || e < 1) throw Error(`Expected a positive integer, got ${e}`);
 	let t = 1;
 	for (; t < e;) t *= 2;
 	return t;
 }
-function de(e, t) {
+function ce(e, t) {
 	return 4 * Math.PI * t * t / e ** 3;
 }
-function fe(e, t, n, r) {
+function le(e, t, n, r) {
 	if (!(n > 0) || !(r > 0)) throw Error(`calibration2D needs positive dx and c; got ${n}, ${r}`);
 	let i = new Float64Array(e), a = t / e, o = 4 * Math.PI * r * r / (n * n * Math.sqrt(r)), s = Math.floor(e / 2);
 	for (let t = 0; t <= s; t++) {
@@ -510,18 +587,18 @@ function fe(e, t, n, r) {
 	}
 	return i;
 }
-function pe(e, t, n = {}) {
+function ue(e, t, n = {}) {
 	let { fLow: r = 0, fHigh: i = Infinity, transition: a = .25 } = n;
 	if (!(t > 0)) throw Error(`sampleRate must be positive, got ${t}`);
 	if (i <= r) throw Error(`fHigh (${i}) must exceed fLow (${r})`);
 	let o = new Float64Array(e), s = t / e, c = Math.floor(e / 2);
 	for (let t = 0; t <= c; t++) {
 		let n = t * s;
-		o[t] = me(n, r, a, !0) * me(n, i, a, !1), t > 0 && t < e - t && (o[e - t] = o[t]);
+		o[t] = de(n, r, a, !0) * de(n, i, a, !1), t > 0 && t < e - t && (o[e - t] = o[t]);
 	}
 	return o;
 }
-function me(e, t, n, r) {
+function de(e, t, n, r) {
 	if (t <= 0) return +!!r;
 	if (!Number.isFinite(t)) return +!r;
 	if (n <= 0) return r ? +(e >= t) : +(e <= t);
@@ -531,19 +608,19 @@ function me(e, t, n, r) {
 	let o = (Math.log2(e) - Math.log2(i)) / (Math.log2(a) - Math.log2(i)), s = Math.sin(Math.PI / 2 * o), c = Math.cos(Math.PI / 2 * o);
 	return r ? s * s : c * c;
 }
-function he(e, t) {
-	return ue(e + t);
+function fe(e, t) {
+	return se(e + t);
 }
-var ge = .001;
-function _e(e, t, n) {
-	let { sampleRate: r, fMax: i, fMin: a = i / 32, regularization: o = ge, transition: s = .25, window: c } = n;
+var pe = .001;
+function me(e, t, n) {
+	let { sampleRate: r, fMax: i, fMin: a = i / 32, regularization: o = pe, transition: s = .25, window: c } = n;
 	if (!(r > 0)) throw Error(`sampleRate must be positive, got ${r}`);
 	if (!(i > 0)) throw Error(`fMax must be positive, got ${i}`);
 	if (!(o > 0)) throw Error(`regularization must be positive, got ${o}`);
 	if (e.length === 0) return /* @__PURE__ */ new Float32Array();
-	let l = he(e.length, t.length);
+	let l = fe(e.length, t.length);
 	if (c && c.length !== l) throw Error(`window must be ${l} long for these inputs (deconvolveTransformLength), got ${c.length}`);
-	let u = le(l), d = new Float64Array(l), f = new Float64Array(l);
+	let u = oe(l), d = new Float64Array(l), f = new Float64Array(l);
 	d.set(e), u.forward(d, f);
 	let p = new Float64Array(l), m = new Float64Array(l);
 	for (let e = 0; e < Math.min(t.length, l); e++) p[e] = t[e];
@@ -554,7 +631,7 @@ function _e(e, t, n) {
 		t > h && (h = t);
 	}
 	if (h === 0) throw Error("The driving pulse is all zeros; there is nothing to deconvolve");
-	let g = o * h, _ = pe(l, r, {
+	let g = o * h, _ = ue(l, r, {
 		fLow: a,
 		fHigh: i,
 		transition: s
@@ -568,11 +645,11 @@ function _e(e, t, n) {
 	for (let e = 0; e < v.length; e++) v[e] = d[e] / l;
 	return v;
 }
-function ve(e, t, n, r = .25) {
+function he(e, t, n, r = .25) {
 	if (n.length === 0) throw Error("Need at least one band centre");
 	if (!(r > 0) || (1 + r) ** 2 >= 2) throw Error(`transition must be in (0, ${(Math.SQRT2 - 1).toFixed(4)}) so octave transitions do not overlap, got ${r}`);
 	for (let e = 1; e < n.length; e++) if (!(n[e] > n[e - 1])) throw Error(`Band centres must increase, got ${n[e - 1]} then ${n[e]}`);
-	return n.map((i, a) => pe(e, t, {
+	return n.map((i, a) => ue(e, t, {
 		fLow: a === 0 ? 0 : Math.sqrt(n[a - 1] * n[a]),
 		fHigh: a === n.length - 1 ? Infinity : Math.sqrt(n[a] * n[a + 1]),
 		transition: r
@@ -580,20 +657,20 @@ function ve(e, t, n, r = .25) {
 }
 //#endregion
 //#region src/compute/ard/resample.ts
-function ye(e) {
+function ge(e) {
 	let t = e / 2, n = 1, r = 1;
 	for (let e = 1; e < 64 && (n *= t / e * (t / e), r += n, !(n < r * 1e-17)); e++);
 	return r;
 }
-function be(e, t) {
-	return e <= -1 || e >= 1 ? 0 : ye(t * Math.sqrt(1 - e * e)) / ye(t);
+function _e(e, t) {
+	return e <= -1 || e >= 1 ? 0 : ge(t * Math.sqrt(1 - e * e)) / ge(t);
 }
-function xe(e) {
+function ve(e) {
 	if (e === 0) return 1;
 	let t = Math.PI * e;
 	return Math.sin(t) / t;
 }
-function Se(e, t, n, r = {}) {
+function ye(e, t, n, r = {}) {
 	let { zeroCrossings: i = 16, beta: a = 8 } = r;
 	if (!(t > 0) || !(n > 0)) throw Error(`Sample rates must be positive, got ${t} and ${n}`);
 	if (!Number.isInteger(i) || i < 1) throw Error(`zeroCrossings must be a positive integer, got ${i}`);
@@ -604,7 +681,7 @@ function Se(e, t, n, r = {}) {
 		let n = t / o, r = Math.max(0, Math.ceil(n - l)), i = Math.min(d, Math.floor(n + l)), s = 0;
 		for (let t = r; t <= i; t++) {
 			let r = n - t;
-			s += e[t] * c * xe(c * r) * be(r / l, a);
+			s += e[t] * c * ve(c * r) * _e(r / l, a);
 		}
 		u[t] = s;
 	}
@@ -612,7 +689,7 @@ function Se(e, t, n, r = {}) {
 }
 //#endregion
 //#region src/compute/ard/dct.ts
-var Ce = class {
+var be = class {
 	dims;
 	size;
 	axes;
@@ -629,7 +706,7 @@ var Ce = class {
 		let i = 1, a = 1;
 		for (let o = 0; o < e.length; o++) {
 			let s = e[o], c = n.get(s);
-			c || (c = le(s), n.set(s, c));
+			c || (c = oe(s), n.set(s, c));
 			let l = r.get(s);
 			if (!l) {
 				let e = new Float64Array(s), t = new Float64Array(s);
@@ -700,14 +777,14 @@ var Ce = class {
 		}
 	}
 };
-function we(e) {
+function xe(e) {
 	if (e.length === 0) throw Error("DCT plan needs at least one axis");
 	for (let t of e) if (!Number.isInteger(t) || t < 1) throw Error(`DCT extents must be positive integers, got [${e.join(", ")}]`);
-	return new Ce(e);
+	return new be(e);
 }
 //#endregion
 //#region src/compute/ard/dct-partition.ts
-var Te = class extends _ {
+var Se = class extends y {
 	kind = "dct";
 	includeSelfTerms = !0;
 	pressure;
@@ -718,7 +795,7 @@ var Te = class extends _ {
 	cosWdt;
 	forceCoef;
 	constructor(e) {
-		super(e), this.plan = we(this.dims), this.pressure = new Float64Array(this.size), this.modes = new Float64Array(this.size), this.prevModes = new Float64Array(this.size), this.forceModes = new Float64Array(this.size), this.cosWdt = new Float64Array(this.size), this.forceCoef = new Float64Array(this.size);
+		super(e), this.plan = xe(this.dims), this.pressure = new Float64Array(this.size), this.modes = new Float64Array(this.size), this.prevModes = new Float64Array(this.size), this.forceModes = new Float64Array(this.size), this.cosWdt = new Float64Array(this.size), this.forceCoef = new Float64Array(this.size);
 		let { nx: t, ny: n, nz: r, dx: i, c: a, dt: o } = this, s = t * i, c = n * i, l = r * i;
 		for (let e = 0; e < r; e++) {
 			let r = e / l;
@@ -760,7 +837,7 @@ var Te = class extends _ {
 		if (e.length !== this.size) throw Error(`Expected ${this.size} samples, got ${e.length}`);
 		this.pressure.set(e), this.plan.forward(this.pressure, this.modes), this.prevModes.set(this.modes);
 	}
-}, Ee = class extends _ {
+}, Ce = class extends y {
 	kind = "fdtd";
 	includeSelfTerms = !1;
 	pressure;
@@ -771,7 +848,7 @@ var Te = class extends _ {
 		if (super(e), this.pressure = new Float64Array(this.size), this.p = new Float64Array(this.size), this.pNew = new Float64Array(this.size), this.pOld = new Float64Array(this.size), this.courant > this.cflLimit) throw Error(`FDTD partition is CFL-unstable: Courant ${this.courant.toFixed(3)} exceeds ${this.cflLimit.toFixed(3)} for rank ${this.rank}. Reduce dt, or use a DctPartition, which has no CFL limit.`);
 	}
 	get cflLimit() {
-		return y(this.rank);
+		return C(this.rank);
 	}
 	step() {
 		let { nx: e, ny: t, nz: n, dx: r, c: i, dt: a, force: o, p: s, pOld: c, pNew: l } = this, u = 1 / (180 * r * r), d = i * i * a * a, f = a * a, p = e, m = e * t;
@@ -780,7 +857,7 @@ var Te = class extends _ {
 			for (let h = 0; h < e; h++) {
 				let g = a + h, _ = 0;
 				for (let a = 0; a < 7; a++) {
-					let o = a - 3, c = v[a];
+					let o = a - 3, c = w[a];
 					if (e > 1) {
 						let t = h + o;
 						t >= 0 && t < e && (_ += c * s[g + o]);
@@ -806,26 +883,26 @@ var Te = class extends _ {
 		if (e.length !== this.size) throw Error(`Expected ${this.size} samples, got ${e.length}`);
 		this.p.set(e), this.pOld.set(e), this.pressure.set(e);
 	}
-}, W = [
+}, U = [
 	"x",
 	"y",
 	"z"
-], G = [
+], W = [
 	"w",
 	"h",
 	"d"
 ];
-function K(e, t, n) {
-	return n ? e[W[t]] + e[G[t]] : e[W[t]] - 1;
+function G(e, t, n) {
+	return n ? e[U[t]] + e[W[t]] : e[U[t]] - 1;
 }
-function De(e, t, n, r) {
-	let { nx: i, ny: a, nz: o, cells: s } = e, [c, l] = S(n), u = t[G[c]], d = t[G[l]], f = t[W[c]], p = t[W[l]], m = K(t, n, r), h = (e, t, n) => e + i * (t + a * n), g = (e, t, n) => e >= 0 && t >= 0 && n >= 0 && e < i && t < a && n < o, _ = new Uint8Array(u * d), v = 0, y = [
+function we(e, t, n, r) {
+	let { nx: i, ny: a, nz: o, cells: s } = e, [c, l] = b(n), u = t[W[c]], d = t[W[l]], f = t[U[c]], p = t[U[l]], m = G(t, n, r), h = (e, t, n) => e + i * (t + a * n), g = (e, t, n) => e >= 0 && t >= 0 && n >= 0 && e < i && t < a && n < o, _ = new Uint8Array(u * d), v = 0, y = [
 		0,
 		0,
 		0
 	];
-	for (let e = 0; e < d; e++) for (let t = 0; t < u; t++) y[n] = m, y[c] = f + t, y[l] = p + e, g(y[0], y[1], y[2]) && s[h(y[0], y[1], y[2])] === j.Air || (_[t + u * e] = j.Air, v++);
-	return v === 0 ? [] : H({
+	for (let e = 0; e < d; e++) for (let t = 0; t < u; t++) y[n] = m, y[c] = f + t, y[l] = p + e, g(y[0], y[1], y[2]) && s[h(y[0], y[1], y[2])] === D.Air || (_[t + u * e] = D.Air, v++);
+	return v === 0 ? [] : R({
 		nx: u,
 		ny: d,
 		nz: 1,
@@ -848,8 +925,8 @@ function De(e, t, n, r) {
 		vMax: p + e.y + e.h
 	}));
 }
-function Oe(e, t, n, r, i) {
-	let [a, o] = S(t), s = K(r, t, n), c = /* @__PURE__ */ new Map(), l = [
+function Te(e, t, n, r, i) {
+	let [a, o] = b(t), s = G(r, t, n), c = /* @__PURE__ */ new Map(), l = [
 		0,
 		0,
 		0
@@ -864,8 +941,173 @@ function Oe(e, t, n, r, i) {
 	return d;
 }
 //#endregion
+//#region src/compute/ard/interface.ts
+var K = [
+	"w",
+	"h",
+	"d"
+], q = [
+	"x",
+	"y",
+	"z"
+];
+function J(e, t) {
+	return e[q[t]];
+}
+function Y(e, t) {
+	return e[q[t]] + e[K[t]];
+}
+function Ee(e, t) {
+	for (let n = v.X; n <= v.Z; n++) {
+		let r = null, i = null;
+		if (Y(e.box, n) === J(t.box, n)) r = e, i = t;
+		else if (Y(t.box, n) === J(e.box, n)) r = t, i = e;
+		else continue;
+		let [a, o] = b(n), s = Math.max(J(e.box, a), J(t.box, a)), c = Math.min(Y(e.box, a), Y(t.box, a)), l = Math.max(J(e.box, o), J(t.box, o)), u = Math.min(Y(e.box, o), Y(t.box, o));
+		if (!(c <= s || u <= l)) return {
+			axis: n,
+			lower: r,
+			upper: i,
+			overlap: {
+				uMin: s,
+				uMax: c,
+				vMin: l,
+				vMax: u
+			}
+		};
+	}
+	return null;
+}
+function De(e) {
+	let t = [];
+	for (let n = 0; n < e.length; n++) for (let r = n + 1; r < e.length; r++) {
+		let i = Ee(e[n], e[r]);
+		i && t.push(i);
+	}
+	return t;
+}
+function Oe(e, t, n, r, i, a) {
+	let [o, s] = b(t), c = [
+		0,
+		0,
+		0
+	];
+	return c[t] = n ? e.box[K[t]] - 1 - r : r, c[o] = i - e.box[q[o]], c[s] = a - e.box[q[s]], e.pressureAt(c[0], c[1], c[2]);
+}
+function ke(e, t, n, r, i, a, o) {
+	let [s, c] = b(t), l = [
+		0,
+		0,
+		0
+	];
+	l[t] = n ? e.box[K[t]] - 1 - r : r, l[s] = i - e.box[q[s]], l[c] = a - e.box[q[c]], e.addForce(l[0], l[1], l[2], o);
+}
+function Ae(e, t, n) {
+	let { axis: r, lower: i, upper: a, overlap: o } = e;
+	je(e, t, n);
+	let s = t * t / (180 * n * n), c = i.includeSelfTerms, l = a.includeSelfTerms, u = Math.min(T, i.box[K[r]]), d = Math.min(T, a.box[K[r]]), f = new Float64Array(T), p = new Float64Array(T);
+	for (let e = o.vMin; e < o.vMax; e++) for (let t = o.uMin; t < o.uMax; t++) {
+		for (let n = 0; n < T; n++) f[n] = n < u ? Oe(i, r, !0, n, t, e) : 0, p[n] = n < d ? Oe(a, r, !1, n, t, e) : 0;
+		for (let n = 1; n <= u; n++) {
+			let a = 0;
+			for (let e = 0; e + n <= T; e++) {
+				let t = w[3 + n + e];
+				a += t * (p[e] - (c ? f[e] : 0));
+			}
+			a !== 0 && ke(i, r, !0, n - 1, t, e, s * a);
+		}
+		for (let n = 1; n <= d; n++) {
+			let i = 0;
+			for (let e = 0; e + n <= T; e++) {
+				let t = w[3 + n + e];
+				i += t * (f[e] - (l ? p[e] : 0));
+			}
+			i !== 0 && ke(a, r, !1, n - 1, t, e, s * i);
+		}
+	}
+}
+function je(e, t, n) {
+	for (let [r, i] of [["lower", e.lower], ["upper", e.upper]]) {
+		if (i.c !== t) throw Error(`Interface forcing called with c = ${t} but the ${r} partition runs at ${i.c}`);
+		if (i.dx !== n) throw Error(`Interface forcing called with dx = ${n} but the ${r} partition runs at ${i.dx}`);
+	}
+	if (e.lower.dt !== e.upper.dt) throw Error(`Partitions across an interface must share a time step; got ${e.lower.dt} and ${e.upper.dt}`);
+}
+function Me(e, t, n) {
+	for (let r of e) Ae(r, t, n);
+}
+//#endregion
+//#region src/compute/ard/impedance.ts
+function Ne(e) {
+	if (!(e >= 0) || e > 1) throw Error(`Absorption coefficient must be in [0, 1], got ${e}`);
+	return m(e);
+}
+var Pe = .55, Fe = .05;
+function Ie(e) {
+	return Pe - Fe * Math.min(1, Math.max(0, e));
+}
+var Le = class {
+	partition;
+	axis;
+	high;
+	uMin;
+	uMax;
+	vMin;
+	vMax;
+	impedance;
+	depth;
+	beta;
+	history;
+	ghost;
+	own;
+	constructor(e) {
+		let { partition: t, axis: n, high: r, uMin: i, uMax: a, vMin: o, vMax: s, impedance: c } = e;
+		if (a <= i || s <= o) throw Error(`An impedance boundary needs a positive face area, got ${a - i} x ${s - o}`);
+		if (!(c > 0)) throw Error(`Impedance must be positive, got ${c}. A zero impedance is a pressure-release surface, which is not a room material.`);
+		this.partition = t, this.axis = n, this.high = r, this.uMin = i, this.uMax = a, this.vMin = o, this.vMax = s, this.impedance = c;
+		let l = [
+			t.box.w,
+			t.box.h,
+			t.box.d
+		][n];
+		this.depth = Math.min(T, l);
+		let u = t.c * t.dt / t.dx;
+		this.beta = new Float64Array(T);
+		for (let e = 0; e < T; e++) this.beta[e] = Number.isFinite(this.impedance) ? (e + .5) / (this.impedance * u) : 0;
+		this.history = new Float64Array((a - i) * (s - o) * T), this.ghost = new Float64Array(T), this.own = new Float64Array(T);
+	}
+	get cellCount() {
+		return (this.uMax - this.uMin) * (this.vMax - this.vMin);
+	}
+	reset() {
+		this.history.fill(0);
+	}
+	apply() {
+		let { partition: e, axis: t, high: n, depth: r, beta: i, history: a, ghost: o, own: s } = this, c = e.c * e.c / (180 * e.dx * e.dx), l = e.includeSelfTerms, u = this.uMax - this.uMin;
+		for (let d = this.vMin; d < this.vMax; d++) for (let f = this.uMin; f < this.uMax; f++) {
+			let p = ((d - this.vMin) * u + (f - this.uMin)) * T;
+			for (let c = 0; c < T; c++) {
+				if (c >= r) {
+					o[c] = 0, s[c] = 0;
+					continue;
+				}
+				let u = Oe(e, t, n, c, f, d), m = i[c], h = ((1 - m) * u + m * a[p + c]) / (1 + m);
+				a[p + c] = h + u, o[c] = h, s[c] = l ? u : 0;
+			}
+			for (let i = 1; i <= r; i++) {
+				let r = 0;
+				for (let e = 0; e + i <= T; e++) r += w[3 + i + e] * (o[e] - s[e]);
+				r !== 0 && ke(e, t, n, i - 1, f, d, c * r);
+			}
+		}
+	}
+};
+function Re(e) {
+	for (let t of e) t.apply();
+}
+//#endregion
 //#region src/compute/ard/boundaries-from-grid.ts
-function ke(e, t, n = {}) {
+function ze(e, t, n = {}) {
 	let { absorptionFor: r } = n, i = [
 		e.nx,
 		e.ny,
@@ -873,8 +1115,8 @@ function ke(e, t, n = {}) {
 	], a = [], o = [], s = 0, c = 0, l = 0;
 	for (let n = 0; n < t.boxes.length; n++) {
 		let o = t.boxes[n];
-		for (let t = g.X; t <= g.Z; t++) if (!(i[t] <= 1)) for (let i of [!1, !0]) for (let u of De(e, o, t, i)) {
-			let d = Oe(e, t, i, o, u), f = r ? r(d) : 1;
+		for (let t = v.X; t <= v.Z; t++) if (!(i[t] <= 1)) for (let i of [!1, !0]) for (let u of we(e, o, t, i)) {
+			let d = Te(e, t, i, o, u), f = r ? r(d) : 1;
 			if (r && f <= 1e-6) {
 				c++;
 				continue;
@@ -896,17 +1138,17 @@ function ke(e, t, n = {}) {
 		maxAbsorption: l
 	};
 }
-function Ae(e, t, n) {
+function Be(e, t, n) {
 	let { absorptionFor: r } = n, i = [], a = [];
 	for (let n of e.faces) {
 		let e = t[n.boxIndex];
 		if (!e) throw Error(`Impedance plan refers to box ${n.boxIndex}, but only ${t.length} partitions were given. The partition list must be in decomposition order.`);
-		let o = r(n.surfaceIndex), s = h(o);
-		if (!Number.isFinite(s)) {
+		let o = Ne(r(n.surfaceIndex));
+		if (!Number.isFinite(o)) {
 			a.push(`Surface ${n.surfaceIndex} absorbs nothing at build time though the plan expected it to; that face is rigid.`);
 			continue;
 		}
-		i.push(new D({
+		i.push(new Le({
 			partition: e,
 			axis: n.axis,
 			high: n.high,
@@ -914,7 +1156,7 @@ function Ae(e, t, n) {
 			uMax: n.uMax,
 			vMin: n.vMin,
 			vMax: n.vMax,
-			impedance: s
+			impedance: o
 		}));
 	}
 	return {
@@ -924,7 +1166,7 @@ function Ae(e, t, n) {
 }
 //#endregion
 //#region src/compute/ard/pml-partition.ts
-var q = .95, je = class extends _ {
+var X = .95, Ve = class extends y {
 	kind = "pml";
 	includeSelfTerms = !1;
 	axis;
@@ -960,13 +1202,13 @@ var q = .95, je = class extends _ {
 		];
 	}
 	get cflLimit() {
-		return q * y(this.rank);
+		return X * C(this.rank);
 	}
 	sigmaAt(e) {
 		return this.sigma[e] ?? 0;
 	}
 	axisCoord(e, t, n) {
-		return this.axis === g.X ? e : this.axis === g.Y ? t : n;
+		return this.axis === v.X ? e : this.axis === v.Y ? t : n;
 	}
 	step() {
 		let { nx: e, ny: t, nz: n, dx: r, c: i, dt: a, force: o, p: s, pOld: c, pNew: l, phi: u, phiNew: d, sigma: f } = this, p = [
@@ -977,7 +1219,7 @@ var q = .95, je = class extends _ {
 			e,
 			t,
 			n
-		], h = 1 / (180 * r * r), g = 1 / (12 * r), _ = i * i, y = a * a;
+		], h = 1 / (180 * r * r), g = 1 / (12 * r), _ = i * i, v = a * a;
 		for (let r = 0; r < n; r++) for (let n = 0; n < t; n++) {
 			let i = e * (n + t * r);
 			for (let t = 0; t < e; t++) {
@@ -985,22 +1227,22 @@ var q = .95, je = class extends _ {
 					t,
 					n,
 					r
-				], b = f[this.axisCoord(t, n, r)], S = 0, C = 0;
+				], y = f[this.axisCoord(t, n, r)], b = 0, x = 0;
 				for (let t = 0; t < 3; t++) {
 					if (m[t] <= 1) continue;
 					let n = p[t];
 					for (let r = 0; r < 7; r++) {
 						let i = r - 3, a = d[t] + i;
-						a >= 0 && a < m[t] && (S += v[r] * s[e + i * n]);
+						a >= 0 && a < m[t] && (b += w[r] * s[e + i * n]);
 					}
 					for (let r = 0; r < 5; r++) {
 						let i = r - 2, a = d[t] + i;
-						a >= 0 && a < m[t] && (C += x[r] * u[t][e + i * n]);
+						a >= 0 && a < m[t] && (x += E[r] * u[t][e + i * n]);
 					}
 				}
-				S *= h, C *= g;
-				let w = (s[e] - c[e]) / a;
-				l[e] = 2 * s[e] - c[e] + y * (_ * S + o[e] - b * w + C);
+				b *= h, x *= g;
+				let S = (s[e] - c[e]) / a;
+				l[e] = 2 * s[e] - c[e] + v * (_ * b + o[e] - y * S + x);
 			}
 		}
 		for (let r = 0; r < n; r++) for (let n = 0; n < t; n++) {
@@ -1019,7 +1261,7 @@ var q = .95, je = class extends _ {
 					let n = p[t], r = 0;
 					for (let i = 0; i < 5; i++) {
 						let a = i - 2, s = o[t] + a;
-						s >= 0 && s < m[t] && (r += x[i] * l[e + a * n]);
+						s >= 0 && s < m[t] && (r += E[i] * l[e + a * n]);
 					}
 					r *= g, d[t][e] = t === this.axis ? u[t][e] - a * s * (u[t][e] + _ * r) : u[t][e] + a * s * _ * r;
 				}
@@ -1045,23 +1287,23 @@ var q = .95, je = class extends _ {
 };
 //#endregion
 //#region src/compute/ard/wall.ts
-function Me(e) {
+function He(e) {
 	if (!(e >= 0) || e > 1) throw Error(`Absorption coefficient must be in [0, 1], got ${e}`);
 	return Math.sqrt(1 - e);
 }
-function Ne(e) {
+function Ue(e) {
 	if (!(e >= 0) || e > 1) throw Error(`Reflection magnitude must be in [0, 1], got ${e}`);
 	return 1 - e * e;
 }
-var J = {
+var Z = {
 	thickness: 20,
 	gradingExponent: 2,
 	courant: .4
 };
-function Pe(e, t = J) {
+function We(e, t = Z) {
 	let { thickness: n, gradingExponent: r, courant: i } = t, a = .05, o = i * a / 343, s = 256;
 	for (; s < 8 * n;) s *= 2;
-	let c = s >> 1, l = s - (s >> 2), u = (l - c) / i, d = (c + l) / i, f = u + 2 * (s - l) / i, p = 2 * n / i, m = d - 100, h = Math.ceil(m), _ = new Te({
+	let c = s >> 1, l = s - (s >> 2), u = (l - c) / i, d = (c + l) / i, f = u + 2 * (s - l) / i, p = 2 * n / i, m = d - 100, h = Math.ceil(m), g = new Se({
 		box: {
 			x: 0,
 			y: 0,
@@ -1073,7 +1315,7 @@ function Pe(e, t = J) {
 		dx: a,
 		c: 343,
 		dt: o
-	}), v = new je({
+	}), _ = new Ve({
 		box: {
 			x: s,
 			y: 0,
@@ -1085,32 +1327,32 @@ function Pe(e, t = J) {
 		dx: a,
 		c: 343,
 		dt: o,
-		axis: g.X,
+		axis: v.X,
 		increasing: !0,
 		sigmaMax: e * 343 / a,
 		gradingExponent: r
 	}), y = new Float64Array(s);
 	for (let e = 0; e < s; e++) y[e] = Math.exp(-.5 * ((e - c) / 4) ** 2);
-	_.setPressure(y);
-	let b = E([_, v]), x = new Float64Array(h);
-	for (let e = 0; e < h; e++) C(b, 343, a), _.step(), v.step(), x[e] = _.pressure[l];
+	g.setPressure(y);
+	let b = De([g, _]), x = new Float64Array(h);
+	for (let e = 0; e < h; e++) Me(b, 343, a), g.step(), _.step(), x[e] = g.pressure[l];
 	let S = (e, t) => {
 		let n = 0, r = Math.max(0, Math.floor(e)), i = Math.min(h, Math.ceil(t));
 		for (let e = r; e < i; e++) n = Math.max(n, Math.abs(x[e]));
 		return n;
-	}, w = S(u - 60, u + 100), T = S(f - 40, Math.min(m, f + p + 400));
-	return !(w > 0) || !Number.isFinite(T) ? NaN : T / w;
+	}, C = S(u - 60, u + 100), w = S(f - 40, Math.min(m, f + p + 400));
+	return !(C > 0) || !Number.isFinite(w) ? NaN : w / C;
 }
-var Fe = /* @__PURE__ */ new Map();
-function Ie(e) {
+var Ge = /* @__PURE__ */ new Map();
+function Ke(e) {
 	return `${e.thickness}|${e.gradingExponent}|${e.courant}`;
 }
-function Le(e = J) {
-	let t = Ie(e), n = Fe.get(t);
+function qe(e = Z) {
+	let t = Ke(e), n = Ge.get(t);
 	if (n) return n;
-	let r = [0], i = [Math.min(1, Pe(0, e))];
+	let r = [0], i = [Math.min(1, We(0, e))];
 	for (let t = .004; t <= 8; t *= 1.3) {
-		let n = Pe(t, e);
+		let n = We(t, e);
 		if (!Number.isFinite(n)) break;
 		r.push(t), i.push(n);
 	}
@@ -1123,13 +1365,13 @@ function Le(e = J) {
 		sigmaHat: Float64Array.from(o),
 		reflection: Float64Array.from(s),
 		minReflection: s[s.length - 1],
-		maxAbsorption: Ne(Math.min(1, s[s.length - 1]))
+		maxAbsorption: Ue(Math.min(1, s[s.length - 1]))
 	};
-	return Fe.set(t, c), c;
+	return Ge.set(t, c), c;
 }
-function Re(e, t = J) {
+function Je(e, t = Z) {
 	if (!(e >= 0) || e > 1) throw Error(`Reflection magnitude must be in [0, 1], got ${e}`);
-	let n = Le(t), { sigmaHat: r, reflection: i } = n;
+	let n = qe(t), { sigmaHat: r, reflection: i } = n;
 	if (e >= i[0]) return 0;
 	if (e < n.minReflection) throw Error(`A ${t.thickness}-cell PML at grading ${t.gradingExponent} reaches |R| = ${n.minReflection.toFixed(4)} at best (alpha <= ${n.maxAbsorption.toFixed(4)}); ${e.toFixed(4)} was requested. Use a thicker layer.`);
 	for (let t = 1; t < i.length; t++) if (e >= i[t]) {
@@ -1138,13 +1380,13 @@ function Re(e, t = J) {
 	}
 	return r[r.length - 1];
 }
-function ze(e, t = J) {
-	return Re(Me(e), t);
+function Ye(e, t = Z) {
+	return Je(He(e), t);
 }
-function Be(e) {
-	let { box: t, axis: n, high: r, alpha: i, dx: a, c: o, dt: s, thickness: c = J.thickness, gradingExponent: l = J.gradingExponent } = e, u = o * s / a, d = w(n === g.X ? c : t.w, n === g.Y ? c : t.h, n === g.Z ? c : t.d), f = q * y(d);
+function Xe(e) {
+	let { box: t, axis: n, high: r, alpha: i, dx: a, c: o, dt: s, thickness: c = Z.thickness, gradingExponent: l = Z.gradingExponent } = e, u = o * s / a, d = x(n === v.X ? c : t.w, n === v.Y ? c : t.h, n === v.Z ? c : t.d), f = X * C(d);
 	if (u > f) throw Error(`A wall on this face is a rank-${d} PML slab, limited to Courant ${f.toFixed(3)}, but dt gives ${u.toFixed(3)}. The wall slab sets the time step for the whole simulation — DctPartition interiors have no CFL limit — so reduce dt rather than the layer thickness.`);
-	let p = ze(i, {
+	let p = Ye(i, {
 		thickness: c,
 		gradingExponent: l,
 		courant: u
@@ -1156,9 +1398,9 @@ function Be(e) {
 		"w",
 		"h",
 		"d"
-	], _ = { ...t };
-	return _[h[n]] = c, _[m[n]] = r ? t[m[n]] + t[h[n]] : t[m[n]] - c, new je({
-		box: _,
+	], g = { ...t };
+	return g[h[n]] = c, g[m[n]] = r ? t[m[n]] + t[h[n]] : t[m[n]] - c, new Ve({
+		box: g,
 		dx: a,
 		c: o,
 		dt: s,
@@ -1170,67 +1412,67 @@ function Be(e) {
 }
 //#endregion
 //#region src/compute/ard/walls-from-grid.ts
-var Y = [
+var Q = [
 	"x",
 	"y",
 	"z"
-], X = [
+], $ = [
 	"w",
 	"h",
 	"d"
-], Ve = [
+], Ze = [
 	20,
 	16,
 	12,
 	8,
 	6,
 	4
-], He = 4, Ue = 1e-6;
-function We(e = 8) {
+], Qe = 4, $e = 1e-6;
+function et(e = 8) {
 	return e + 1;
 }
-function Ge(e, t, n = {}) {
+function tt(e, t, n = {}) {
 	let { maxThickness: r = 8, absorptionFor: i } = n, { nx: a, ny: o, nz: s, cells: c } = e, l = [
 		a,
 		o,
 		s
-	], u = [], d = [], f = new Uint8Array(a * o * s), p = 0, m = 0, h = 0, _ = (e, t, n) => e + a * (t + o * n), v = (e, t, n) => e >= 0 && t >= 0 && n >= 0 && e < a && t < o && n < s;
+	], u = [], d = [], f = new Uint8Array(a * o * s), p = 0, m = 0, h = 0, g = (e, t, n) => e + a * (t + o * n), _ = (e, t, n) => e >= 0 && t >= 0 && n >= 0 && e < a && t < o && n < s;
 	for (let n = 0; n < t.boxes.length; n++) {
 		let a = t.boxes[n];
-		for (let t = g.X; t <= g.Z; t++) if (!(l[t] <= 1)) for (let o of [!1, !0]) {
-			let [s, l] = S(t), g = K(a, t, o), y = o ? 1 : -1, b = De(e, a, t, o);
-			for (let x of b) {
-				let b = x.uMax - x.uMin, S = x.vMax - x.vMin, C = 0;
+		for (let t = v.X; t <= v.Z; t++) if (!(l[t] <= 1)) for (let o of [!1, !0]) {
+			let [s, l] = b(t), v = G(a, t, o), y = o ? 1 : -1, x = we(e, a, t, o);
+			for (let b of x) {
+				let x = b.uMax - b.uMin, S = b.vMax - b.vMin, C = 0;
 				grow: for (let e = 0; e < r; e++) {
-					for (let n = x.vMin; n < x.vMax; n++) for (let r = x.uMin; r < x.uMax; r++) {
+					for (let n = b.vMin; n < b.vMax; n++) for (let r = b.uMin; r < b.uMax; r++) {
 						let i = [
 							0,
 							0,
 							0
 						];
-						if (i[t] = g + y * e, i[s] = r, i[l] = n, !v(i[0], i[1], i[2])) break grow;
-						let a = _(i[0], i[1], i[2]);
-						if (c[a] === j.Air || f[a]) break grow;
+						if (i[t] = v + y * e, i[s] = r, i[l] = n, !_(i[0], i[1], i[2])) break grow;
+						let a = g(i[0], i[1], i[2]);
+						if (c[a] === D.Air || f[a]) break grow;
 					}
 					C = e + 1;
 				}
-				let w = Ve.find((e) => e <= C) ?? 0;
-				if (w < He) {
-					m++, d.push(`A wall face of box ${n} on ${o ? "+" : "-"}${"xyz"[t]} has only ${C} cells of solid behind it, below the ${He} an absorbing layer needs, so that face is left rigid. Voxelize with padCells >= ${r + 1} to give the slabs room.`);
+				let w = Ze.find((e) => e <= C) ?? 0;
+				if (w < Qe) {
+					m++, d.push(`A wall face of box ${n} on ${o ? "+" : "-"}${"xyz"[t]} has only ${C} cells of solid behind it, below the ${Qe} an absorbing layer needs, so that face is left rigid. Voxelize with padCells >= ${r + 1} to give the slabs room.`);
 					continue;
 				}
-				let T = Oe(e, t, o, a, x);
-				if (i && i(T) <= Ue) {
+				let T = Te(e, t, o, a, b);
+				if (i && i(T) <= $e) {
 					h++;
 					continue;
 				}
-				for (let e = 0; e < w; e++) for (let n = x.vMin; n < x.vMax; n++) for (let r = x.uMin; r < x.uMax; r++) {
+				for (let e = 0; e < w; e++) for (let n = b.vMin; n < b.vMax; n++) for (let r = b.uMin; r < b.uMax; r++) {
 					let i = [
 						0,
 						0,
 						0
 					];
-					i[t] = g + y * e, i[s] = r, i[l] = n, f[_(i[0], i[1], i[2])] = 1;
+					i[t] = v + y * e, i[s] = r, i[l] = n, f[g(i[0], i[1], i[2])] = 1;
 				}
 				let E = {
 					x: 0,
@@ -1240,7 +1482,7 @@ function Ge(e, t, n = {}) {
 					h: 1,
 					d: 1
 				};
-				E[Y[t]] = o ? g : g - (w - 1), E[X[t]] = w, E[Y[s]] = x.uMin, E[X[s]] = b, E[Y[l]] = x.vMin, E[X[l]] = S, u.push({
+				E[Q[t]] = o ? v : v - (w - 1), E[$[t]] = w, E[Q[s]] = b.uMin, E[$[s]] = x, E[Q[l]] = b.vMin, E[$[l]] = S, u.push({
 					boxIndex: n,
 					axis: t,
 					high: o,
@@ -1259,13 +1501,13 @@ function Ge(e, t, n = {}) {
 		skippedRigid: h
 	};
 }
-function Ke(e, t) {
+function nt(e, t) {
 	let { dx: n, c: r, dt: i, absorptionFor: a, gradingExponent: o = 2 } = t, s = [], c = [];
 	for (let t of e.faces) {
 		let e = a(t.surfaceIndex);
 		try {
-			s.push(Be({
-				box: qe(t),
+			s.push(Xe({
+				box: rt(t),
 				axis: t.axis,
 				high: t.high,
 				alpha: e,
@@ -1284,13 +1526,13 @@ function Ke(e, t) {
 		warnings: c
 	};
 }
-function qe(e) {
+function rt(e) {
 	let t = { ...e.box };
-	return t[X[e.axis]] = 0, t[Y[e.axis]] = e.high ? e.box[Y[e.axis]] : e.box[Y[e.axis]] + e.box[X[e.axis]], t;
+	return t[$[e.axis]] = 0, t[Q[e.axis]] = e.high ? e.box[Q[e.axis]] : e.box[Q[e.axis]] + e.box[$[e.axis]], t;
 }
 //#endregion
 //#region src/compute/ard/simulation.ts
-function Je(e) {
+function it(e) {
 	let { grid: t, decomposition: n, c: r, courant: i = .4, steps: a, duration: o, absorptionFor: s = () => 0, walls: c = !0, wallThickness: l = 8, boundary: u = "impedance", fMax: d } = e, f = [], p = t.dx;
 	if (!(r > 0)) throw Error(`Speed of sound must be positive, got ${r}`);
 	if (a === void 0 == (o === void 0)) throw Error("Pass exactly one of steps or duration");
@@ -1299,7 +1541,7 @@ function Je(e) {
 	if (n.boxes.length === 0) throw Error("Decomposition has no boxes; there is nothing to simulate");
 	let m = u === "pml";
 	if (u !== "pml" && u !== "impedance") throw Error(`Unknown boundary ${String(u)}; expected 'impedance' or 'pml'`);
-	let h = c && m ? Ge(t, n, {
+	let h = c && m ? tt(t, n, {
 		maxThickness: l,
 		absorptionFor: s
 	}) : {
@@ -1310,48 +1552,48 @@ function Je(e) {
 		skippedRigid: 0
 	};
 	f.push(...h.warnings);
-	let g = c && !m ? ke(t, n, { absorptionFor: s }) : {
+	let g = c && !m ? ze(t, n, { absorptionFor: s }) : {
 		faces: [],
 		warnings: [],
 		boundaryCells: 0,
 		skippedRigid: 0,
 		maxAbsorption: 0
 	};
-	if (f.push(...g.warnings), c && m && h.faces.length === 0 && h.droppedForSpace > 0) throw Error(`Walls were requested but all ${h.droppedForSpace} faces were dropped for lack of solid to grow into, so every room surface would be perfectly rigid. Voxelize with padCells >= ${We(l)} (currently the grid has too few), pass boundary: 'impedance' (which needs no padding at all), or pass walls: false if a rigid room is what you meant.`);
+	if (f.push(...g.warnings), c && m && h.faces.length === 0 && h.droppedForSpace > 0) throw Error(`Walls were requested but all ${h.droppedForSpace} faces were dropped for lack of solid to grow into, so every room surface would be perfectly rigid. Voxelize with padCells >= ${et(l)} (currently the grid has too few), pass boundary: 'impedance' (which needs no padding at all), or pass walls: false if a rigid room is what you meant.`);
 	if (h.faces.length > 0 && f.push("Using PML wall slabs. Slabs are clipped to their own face so no cell is inside two, which leaves the room's twelve edges and eight corners reflecting — measured as a reverberation time about 4.7x longer than Eyring predicts on a 3D shoebox. Prefer boundary: 'impedance', which has no corner to leave."), c && m && h.faces.length === 0 && f.push(`No wall slabs were built: all ${h.skippedRigid} faces have materials that absorb nothing, so every surface is rigid. The simulation runs without the PML CFL limit as a result.`), g.faces.length > 0 && d !== void 0 && d > 0) {
 		let e = r / (d * p);
 		e < 4 && f.push(`The grid carries ${e.toFixed(1)} cells per wavelength at ${d} Hz, below the 4 an impedance boundary needs to deliver the absorption it was asked for. Surfaces will be more reflective than their materials in the top octave of the run. Raise cellsPerWavelength, or lower fMax.`);
 	}
-	let _ = w(t.nx, t.ny, t.nz), v = h.faces.length > 0 ? q * y(_) : Infinity, x = n.kinds.includes("fdtd") ? y(_) : Infinity, S = g.faces.length > 0 ? b(g.maxAbsorption) : Infinity, C = Math.min(i, v, x, S);
-	if (C < i) {
-		let e = C === S ? `impedance boundaries at alpha up to ${g.maxAbsorption.toFixed(2)} are stable to here and no further` : `the ${v <= x ? "wall slabs" : "FDTD partitions"} are rank ${_} and cannot run faster`;
-		f.push(`Courant reduced from ${i} to ${C.toFixed(3)}: ${e}. DCT interiors have no such limit, but every partition shares a time step.`);
+	let _ = x(t.nx, t.ny, t.nz), v = h.faces.length > 0 ? X * C(_) : Infinity, y = n.kinds.includes("fdtd") ? C(_) : Infinity, b = g.faces.length > 0 ? Ie(g.maxAbsorption) : Infinity, S = Math.min(i, v, y, b);
+	if (S < i) {
+		let e = S === b ? `impedance boundaries at alpha up to ${g.maxAbsorption.toFixed(2)} are stable to here and no further` : `the ${v <= y ? "wall slabs" : "FDTD partitions"} are rank ${_} and cannot run faster`;
+		f.push(`Courant reduced from ${i} to ${S.toFixed(3)}: ${e}. DCT interiors have no such limit, but every partition shares a time step.`);
 	}
-	let T = C * p / r;
+	let w = S * p / r;
 	return {
-		dt: T,
-		courant: C,
-		steps: a ?? Math.max(1, Math.ceil(o / T)),
+		dt: w,
+		courant: S,
+		steps: a ?? Math.max(1, Math.ceil(o / w)),
 		gridRank: _,
 		wallPlan: h,
 		impedancePlan: g,
 		warnings: f
 	};
 }
-function Ye(e) {
-	let { grid: t, decomposition: n, c: r, sources: i, receivers: a, airAbsNepersPerMetre: o = 0, absorptionFor: s = () => 0, frameInterval: c = 0, sliceAxis: l = "z", sliceIndex: u } = e, d = t.dx, f = Je(e), { dt: p, courant: m, steps: h, wallPlan: _, impedancePlan: v } = f, y = [...f.warnings], b = n.boxes.map((e, t) => n.kinds[t] === "dct" ? new Te({
+function at(e) {
+	let { grid: t, decomposition: n, c: r, sources: i, receivers: a, airAbsNepersPerMetre: o = 0, absorptionFor: s = () => 0, frameInterval: c = 0, sliceAxis: l = "z", sliceIndex: u } = e, d = t.dx, f = it(e), { dt: p, courant: m, steps: h, wallPlan: g, impedancePlan: _ } = f, y = [...f.warnings], b = n.boxes.map((e, t) => n.kinds[t] === "dct" ? new Se({
 		box: e,
 		dx: d,
 		c: r,
 		dt: p
-	}) : new Ee({
+	}) : new Ce({
 		box: e,
 		dx: d,
 		c: r,
 		dt: p
 	})), x = [];
-	if (_.faces.length > 0) {
-		let e = Ke(_, {
+	if (g.faces.length > 0) {
+		let e = nt(g, {
 			dx: d,
 			c: r,
 			dt: p,
@@ -1359,18 +1601,18 @@ function Ye(e) {
 		});
 		x = e.partitions, y.push(...e.warnings);
 	}
-	let S = [...b, ...x], w = E(S), D = [];
-	if (v.faces.length > 0) {
-		let e = Ae(v, b, { absorptionFor: s });
-		D = e.boundaries, y.push(...e.warnings);
+	let S = [...b, ...x], C = De(S), w = [];
+	if (_.faces.length > 0) {
+		let e = Be(_, b, { absorptionFor: s });
+		w = e.boundaries, y.push(...e.warnings);
 	}
-	let O = b.reduce((e, t) => e + t.box.w * t.box.h * t.box.d, 0), k = x.reduce((e, t) => e + t.box.w * t.box.h * t.box.d, 0);
-	k > O && y.push(`Wall slabs add ${k} cells against the room's ${O} (${(k / O).toFixed(1)}x) — the simulation is mostly wall. Absorbing layers are expensive in cells; a locally-reacting impedance boundary would cost none.`);
-	let A = (e, r) => {
+	let T = b.reduce((e, t) => e + t.box.w * t.box.h * t.box.d, 0), E = x.reduce((e, t) => e + t.box.w * t.box.h * t.box.d, 0);
+	E > T && y.push(`Wall slabs add ${E} cells against the room's ${T} (${(E / T).toFixed(1)}x) — the simulation is mostly wall. Absorbing layers are expensive in cells; a locally-reacting impedance boundary would cost none.`);
+	let O = (e, r) => {
 		let [i, a, o] = e;
 		if (i < 0 || a < 0 || o < 0 || i >= t.nx || a >= t.ny || o >= t.nz) throw Error(`${r} at cell (${i}, ${a}, ${o}) is outside the grid`);
 		let s = i + t.nx * (a + t.ny * o);
-		if (t.cells[s] !== j.Air) throw Error(`${r} at cell (${i}, ${a}, ${o}) is inside a wall, not in the room`);
+		if (t.cells[s] !== D.Air) throw Error(`${r} at cell (${i}, ${a}, ${o}) is inside a wall, not in the room`);
 		let c = n.assignment[s];
 		if (c < 0) throw Error(`${r} at cell (${i}, ${a}, ${o}) is in air no partition covers`);
 		let l = b[c];
@@ -1382,92 +1624,92 @@ function Ye(e) {
 				o - l.box.z
 			]
 		};
-	}, M = i.map((e, t) => A(e.cell, `Source ${t}`)), N = a.map((e, t) => A(e.cell, `Receiver ${t}`)), P = l === "x" ? g.X : l === "y" ? g.Y : g.Z, F = [
+	}, k = i.map((e, t) => O(e.cell, `Source ${t}`)), A = a.map((e, t) => O(e.cell, `Receiver ${t}`)), j = l === "x" ? v.X : l === "y" ? v.Y : v.Z, M = [
 		t.nx,
 		t.ny,
 		t.nz
-	], I = u ?? Math.floor(F[P] / 2), [L, R] = P === g.X ? [t.ny, t.nz] : P === g.Y ? [t.nx, t.nz] : [t.nx, t.ny], z = o > 0 ? Math.exp(-o * r * p) : 1, B = new Float32Array(a.length), V = 0, H = {
+	], N = u ?? Math.floor(M[j] / 2), [P, F] = j === v.X ? [t.ny, t.nz] : j === v.Y ? [t.nx, t.nz] : [t.nx, t.ny], I = o > 0 ? Math.exp(-o * r * p) : 1, L = new Float32Array(a.length), R = 0, z = {
 		dt: p,
 		courant: m,
 		steps: h,
 		partitions: S,
-		interfaces: w,
-		wallPlan: _,
-		impedancePlan: v,
+		interfaces: C,
+		wallPlan: g,
+		impedancePlan: _,
 		cellCount: {
-			room: O,
-			walls: k,
-			boundary: D.reduce((e, t) => e + t.cellCount, 0)
+			room: T,
+			walls: E,
+			boundary: w.reduce((e, t) => e + t.cellCount, 0)
 		},
 		warnings: y,
 		get currentStep() {
-			return V;
+			return R;
 		},
 		step() {
-			C(w, r, d), T(D);
-			for (let e = 0; e < M.length; e++) {
+			Me(C, r, d), Re(w);
+			for (let e = 0; e < k.length; e++) {
 				let t = i[e].signal;
-				if (V >= t.length) continue;
-				let n = t[V];
+				if (R >= t.length) continue;
+				let n = t[R];
 				if (n === 0) continue;
-				let { partition: r, local: a } = M[e];
+				let { partition: r, local: a } = k[e];
 				r.addForce(a[0], a[1], a[2], n);
 			}
 			for (let e of S) e.step();
-			if (z !== 1) for (let e of b) e.scaleState(z);
-			for (let e = 0; e < N.length; e++) {
-				let { partition: t, local: n } = N[e];
-				B[e] = t.pressureAt(n[0], n[1], n[2]);
+			if (I !== 1) for (let e of b) e.scaleState(I);
+			for (let e = 0; e < A.length; e++) {
+				let { partition: t, local: n } = A[e];
+				L[e] = t.pressureAt(n[0], n[1], n[2]);
 			}
-			let e = V;
-			V++;
+			let e = R;
+			R++;
 			let t = c > 0 && e % c === 0;
 			return {
 				step: e,
-				receiverSamples: B.slice(),
-				slice: t ? ee() : void 0
+				receiverSamples: L.slice(),
+				slice: t ? B() : void 0
 			};
 		},
 		run() {
 			let e = a.map(() => new Float32Array(h));
-			for (; V < h;) {
-				let t = H.step();
+			for (; R < h;) {
+				let t = z.step();
 				for (let n = 0; n < a.length; n++) e[n][t.step] = t.receiverSamples[n];
 			}
 			return e;
 		},
 		dispose() {
 			for (let e of S) e.dispose();
-			for (let e of D) e.reset();
+			for (let e of w) e.reset();
 		}
 	};
-	function ee() {
-		let e = new Float32Array(L * R);
+	function B() {
+		let e = new Float32Array(P * F);
 		for (let t of b) {
 			let n = t.box, r = [
 				n.x,
 				n.y,
 				n.z
-			][P], i = r + [
+			][j], i = r + [
 				n.w,
 				n.h,
 				n.d
-			][P];
-			if (!(I < r || I >= i)) for (let r = n.z; r < n.z + n.d; r++) for (let i = n.y; i < n.y + n.h; i++) for (let a = n.x; a < n.x + n.w; a++) {
+			][j];
+			if (!(N < r || N >= i)) for (let r = n.z; r < n.z + n.d; r++) for (let i = n.y; i < n.y + n.h; i++) for (let a = n.x; a < n.x + n.w; a++) {
 				if ([
 					a,
 					i,
 					r
-				][P] !== I) continue;
-				let o = P === g.X ? i : (g.Y, a), s = P === g.X || P === g.Y ? r : i;
-				e[o + L * s] = t.pressureAt(a - n.x, i - n.y, r - n.z);
+				][j] !== N) continue;
+				let o = j === v.X ? i : (v.Y, a), s = j === v.X || j === v.Y ? r : i;
+				e[o + P * s] = t.pressureAt(a - n.x, i - n.y, r - n.z);
 			}
 		}
 		return e;
 	}
-	return H;
+	return z;
 }
-function Xe(e, t, n) {
+function ot(e, t, n) {
 	let r = 1 / (2 * Math.PI * n), i = 4 * r, a = new Float32Array(e), o = 0;
 	for (let n = 0; n < e; n++) {
 		let e = n * t - i, s = -(e / r) * Math.exp(-.5 * (e / r) ** 2);
@@ -1479,16 +1721,16 @@ function Xe(e, t, n) {
 }
 //#endregion
 //#region src/compute/ard/grid-slice.ts
-function Z(e) {
+function st(e) {
 	return e === "xz" ? 1 : 2;
 }
-function Ze(e, t, n) {
+function ct(e, t, n) {
 	let { nx: r, ny: i, nz: a } = e, o = t === 1 ? i : a;
 	if (!Number.isInteger(n) || n < 0 || n >= o) throw Error(`Slice index ${n} is outside the grid's ${o} layers on axis ${t}`);
 	let s = t === 1 ? 1 : i, c = t === 2 ? 1 : a, l = r * s * c, u = new Uint8Array(l), d = new Int32Array(l).fill(-1), f = 0;
 	for (let a = 0; a < c; a++) for (let o = 0; o < s; o++) for (let c = 0; c < r; c++) {
 		let l = t === 1 ? c + r * (n + i * a) : c + r * (o + i * n), p = c + r * (o + s * a);
-		u[p] = e.cells[l], d[p] = e.surfaceOf[l], u[p] === j.Air && f++;
+		u[p] = e.cells[l], d[p] = e.surfaceOf[l], u[p] === D.Air && f++;
 	}
 	let p = { ...e.origin };
 	return t === 1 ? p.y = e.origin.y + n * e.dx : p.z = e.origin.z + n * e.dx, {
@@ -1505,28 +1747,28 @@ function Ze(e, t, n) {
 		warnings: [...e.warnings]
 	};
 }
-function Qe(e, t, n) {
+function lt(e, t, n) {
 	let r = t === 1 ? e.ny : e.nz, i = t === 1 ? e.origin.y : e.origin.z, a = Math.round((n - i) / e.dx), o = Math.min(r - 1, Math.max(0, a));
 	return {
 		index: o,
 		clamped: o !== a
 	};
 }
-function $e(e, t, n) {
+function ut(e, t, n) {
 	let { nx: r, ny: i, nz: a } = e;
 	for (let o = 0; o < (t === 2 ? 1 : a); o++) for (let a = 0; a < (t === 1 ? 1 : i); a++) for (let s = 0; s < r; s++) {
 		let c = t === 1 ? s + r * (n + i * o) : s + r * (a + i * n);
-		if (e.cells[c] === j.Air) return !0;
+		if (e.cells[c] === D.Air) return !0;
 	}
 	return !1;
 }
-function et(e, t) {
+function dt(e, t) {
 	let { nx: n, ny: r, nz: i } = e, a = t === 1 ? r : i, o = (a - 1) / 2, s = 0, c = -1, l = Infinity;
 	for (let u = 0; u < a; u++) {
 		let a = 0;
 		for (let o = 0; o < (t === 2 ? 1 : i); o++) for (let i = 0; i < (t === 1 ? 1 : r); i++) for (let s = 0; s < n; s++) {
 			let c = t === 1 ? s + n * (u + r * o) : s + n * (i + r * u);
-			e.cells[c] === j.Air && a++;
+			e.cells[c] === D.Air && a++;
 		}
 		let d = Math.abs(u - o);
 		(a > c || a === c && d < l) && (s = u, c = a, l = d);
@@ -1535,8 +1777,8 @@ function et(e, t) {
 }
 //#endregion
 //#region src/compute/ard/voxelize-room.ts
-function tt(e) {
-	let t = e.allSurfaces, n = [], r = new A();
+function ft(e) {
+	let t = e.allSurfaces, n = [], r = new _();
 	for (let e = 0; e < t.length; e++) {
 		let i = t[e], a = i.geometry, o = a?.getAttribute("position");
 		if (!o) continue;
@@ -1566,17 +1808,17 @@ function tt(e) {
 		surfaces: t
 	};
 }
-function nt(e, t) {
-	let { triangles: n, surfaces: r } = tt(e);
+function pt(e, t) {
+	let { triangles: n, surfaces: r } = ft(e);
 	if (n.length === 0) throw Error("Room has no surface geometry to voxelize");
 	return {
-		grid: F(n, t),
+		grid: j(n, t),
 		surfaces: r
 	};
 }
 //#endregion
 //#region src/compute/ard/worker-host.ts
-function rt() {
+function mt() {
 	if (typeof Worker > "u") return null;
 	try {
 		return new Worker(new URL(
@@ -1590,7 +1832,7 @@ function rt() {
 }
 //#endregion
 //#region src/compute/ard/index.ts
-var it = [
+var ht = [
 	125,
 	250,
 	500,
@@ -1598,10 +1840,10 @@ var it = [
 	2e3,
 	4e3,
 	8e3
-], at = {
+], gt = {
 	impedance: 14e5,
 	pml: 13e5
-}, ot = 2e3, st = 256, ct = { name: "Adaptive Rectangular Decomposition" }, Q = class extends m {
+}, _t = 2e3, vt = 256, yt = { name: "Adaptive Rectangular Decomposition" }, bt = class extends h {
 	uuid;
 	roomID;
 	sourceIDs;
@@ -1624,8 +1866,8 @@ var it = [
 	cancelled;
 	activeWorker;
 	workerUsable;
-	constructor(t = ct) {
-		super(t), this.kind = "ard", this.name = t.name || ct.name, this.uuid = e();
+	constructor(t = yt) {
+		super(t), this.kind = "ard", this.name = t.name || yt.name, this.uuid = e();
 		let n = c.getState().getRooms();
 		this.roomID = t.roomID || (n.length > 0 ? n[0].uuid : ""), this.sourceIDs = t.sourceIDs || [], this.receiverIDs = t.receiverIDs || [], this.fMax = t.fMax ?? 1e3, this.cellsPerWavelength = t.cellsPerWavelength ?? 2.6, this.courant = t.courant ?? .4, this.irLength = t.irLength ?? 1, this.wallThickness = t.wallThickness ?? 8, this.boundary = t.boundary ?? "impedance", this.perBandRuns = t.perBandRuns ?? !1, this.sampleRate = t.sampleRate ?? 44100, this.humidity = t.humidity ?? 40, this.dimensions = t.dimensions ?? 3, this.slice = t.slice ?? "xz", this.sliceCoordinate = t.sliceCoordinate ?? null, this.progress = 0, this.lastRun = null, this.hasEmittedResults = !1, this.cancelled = !1, this.activeWorker = null, this.workerUsable = !0;
 	}
@@ -1659,7 +1901,7 @@ var it = [
 		if (!t) throw Error("ARD: no room selected");
 		let n = c.getState().containers, r = this.sourceIDs.map((e) => n[e]).filter((e) => e?.kind === "source"), i = this.receiverIDs.map((e) => n[e]).filter((e) => e?.kind === "receiver");
 		if (r.length === 0 || i.length === 0) throw Error("ARD: need at least one source and one receiver");
-		let a = p(this.temperature), s = M(this.fMax, a, this.cellsPerWavelength), l = $(r[0]), { grid: u, surfaces: m } = nt(t, {
+		let a = p(this.temperature), s = O(this.fMax, a, this.cellsPerWavelength), l = St(r[0]), { grid: u, surfaces: m } = pt(t, {
 			dx: s,
 			seed: l,
 			padCells: this.padCells
@@ -1667,9 +1909,9 @@ var it = [
 		if (u.leaked) throw Error("ARD: the room does not enclose a volume — the flood fill reached the outside of the grid. Close the geometry, or check that the first source is inside the room.");
 		let h = [...u.warnings], g = this.dimensions === 2 ? this.takeSlice(u, l, h) : u;
 		if (g.airCount === 0) throw Error("ARD: the chosen slice plane contains no room air. Move it inside the room, or run in three dimensions.");
-		let _ = H(g), v = (e) => g.cells[e] === j.Air && _.assignment[e] >= 0, y = 0, b = (e) => {
+		let _ = R(g), v = (e) => g.cells[e] === D.Air && _.assignment[e] >= 0, y = 0, b = (e) => {
 			if (this.dimensions !== 2) return e;
-			let t = Z(this.slice), n = t === 1 ? g.origin.y : g.origin.z, r = t === 1 ? e.y : e.z;
+			let t = st(this.slice), n = t === 1 ? g.origin.y : g.origin.z, r = t === 1 ? e.y : e.z;
 			return y = Math.max(y, Math.abs(r - n)), t === 1 ? {
 				...e,
 				y: n
@@ -1677,9 +1919,9 @@ var it = [
 				...e,
 				z: n
 			};
-		}, x = r.map((e, t) => ut(g, b($(e)), `Source ${e.name || t}`, v, h)), S = i.map((e, t) => ut(g, b($(e)), `Receiver ${e.name || t}`, v, h));
+		}, x = r.map((e, t) => Ct(g, b(St(e)), `Source ${e.name || t}`, v, h)), S = i.map((e, t) => Ct(g, b(St(e)), `Receiver ${e.name || t}`, v, h));
 		y > g.dx && h.push(`Sources and receivers are projected onto the 2D cut; the furthest moved ${y.toFixed(2)} m. A 2D run has no coordinate off the plane, so a probe placed well away from it answers about somewhere else.`);
-		let C = this.bands, w = r.length * C.length, T = m.map((e) => Math.max(...C.map((t) => dt(e.absorptionFunction(t))))), E = Je({
+		let C = this.bands, w = r.length * C.length, T = m.map((e) => Math.max(...C.map((t) => wt(e.absorptionFunction(t))))), E = it({
 			grid: g,
 			decomposition: _,
 			c: a,
@@ -1689,7 +1931,7 @@ var it = [
 			boundary: this.boundary,
 			fMax: this.fMax,
 			absorptionFor: (e) => e >= 0 && e < m.length ? T[e] : 0
-		}), D = Xe(E.steps, E.dt, this.fMax), O = [], k = E.courant, A = {
+		}), k = ot(E.steps, E.dt, this.fMax), A = [], j = E.courant, M = {
 			room: 0,
 			walls: 0,
 			boundary: 0
@@ -1706,7 +1948,7 @@ var it = [
 					steps: E.steps,
 					sources: [{
 						cell: x[e],
-						signal: D
+						signal: k
 					}],
 					receivers: S.map((e) => ({ cell: e })),
 					airAbsNepersPerMetre: s,
@@ -1722,29 +1964,29 @@ var it = [
 						message: `${this.name}:${l} source ${e + 1} of ${r.length} — ${Math.round(t * 100)}%`
 					});
 				});
-				k = u.courant, A = u.cellCount;
+				j = u.courant, M = u.cellCount;
 				for (let e of u.warnings) h.includes(e) || h.push(e);
 				t.push(u.irs), N++;
 			}
-			O.push(t);
+			A.push(t);
 		}
 		let P = this.emitResults({
 			sources: r,
 			receivers: i,
-			records: O,
+			records: A,
 			bands: C,
-			pulse: D,
+			pulse: k,
 			dt: E.dt,
 			dx: s,
 			c: a
 		}), F = {
 			dx: s,
 			dt: E.dt,
-			courant: k,
+			courant: j,
 			gridCells: g.nx * g.ny * g.nz,
 			airCells: g.airCount,
 			boxCount: _.boxes.length,
-			cellCount: A,
+			cellCount: M,
 			steps: E.steps,
 			runs: w,
 			seconds: (Date.now() - e) / 1e3,
@@ -1759,17 +2001,17 @@ var it = [
 		}), F;
 	}
 	takeSlice(e, t, n) {
-		let r = Z(this.slice), i = r === 1 ? "y" : "z", a = this.sliceCoordinate === null ? r === 1 ? t.y : t.z : this.sliceCoordinate, o = Qe(e, r, a), s = o.index;
-		if (o.clamped && $e(e, r, s)) {
+		let r = st(this.slice), i = r === 1 ? "y" : "z", a = this.sliceCoordinate === null ? r === 1 ? t.y : t.z : this.sliceCoordinate, o = lt(e, r, a), s = o.index;
+		if (o.clamped && ut(e, r, s)) {
 			let t = e.origin[i] + s * e.dx;
 			n.push(`The 2D slice at ${i} = ${a.toFixed(2)} m is outside the grid and was clamped to ${i} = ${t.toFixed(2)} m.`);
 		}
-		$e(e, r, s) || (s = et(e, r), n.push(`The 2D slice at ${i} = ${a.toFixed(2)} m contains no room air — it is outside the room, or in its padding. Cut at the widest plane instead.`));
-		let c = Ze(e, r, s), l = r === 1 ? c.origin.y : c.origin.z;
+		ut(e, r, s) || (s = dt(e, r), n.push(`The 2D slice at ${i} = ${a.toFixed(2)} m contains no room air — it is outside the room, or in its padding. Cut at the widest plane instead.`));
+		let c = ct(e, r, s), l = r === 1 ? c.origin.y : c.origin.z;
 		return n.push(`Running in two dimensions on the ${this.slice} plane at ${i} = ${l.toFixed(2)} m. A 2D result is the response of a room that is uniform and unbounded along the collapsed axis, not of this room — sound spreads as 1/sqrt(r) and there are no modes across that axis at all. Use it to see wavefronts in plan, not to read a reverberation time.`), c;
 	}
 	async runOne(e, t, n, r) {
-		let i = n.map((e) => dt(e.absorptionFunction(t))), a = (e) => e >= 0 && e < i.length ? i[e] : 0;
+		let i = n.map((e) => wt(e.absorptionFunction(t))), a = (e) => e >= 0 && e < i.length ? i[e] : 0;
 		return this.stepSimulation({
 			...e,
 			absorptionFor: a
@@ -1819,25 +2061,25 @@ var it = [
 		}) : this.stepInline(e, n, r);
 	}
 	acquireWorker() {
-		return this.activeWorker ? this.activeWorker : (this.activeWorker = rt(), this.activeWorker || (this.workerUsable = !1), this.activeWorker);
+		return this.activeWorker ? this.activeWorker : (this.activeWorker = mt(), this.activeWorker || (this.workerUsable = !1), this.activeWorker);
 	}
 	releaseWorker() {
 		this.activeWorker?.terminate(), this.activeWorker = null;
 	}
 	async stepInline(e, t, n) {
-		let r = Ye({
+		let r = at({
 			...e,
 			absorptionFor: t
-		}), i = r.steps, a = ft(e.receivers.length, i);
+		}), i = r.steps, a = Tt(e.receivers.length, i);
 		try {
 			for (; r.currentStep < i;) {
 				if (this.cancelled) throw Error("ARD: run cancelled");
-				let e = Math.min(r.currentStep + st, i);
+				let e = Math.min(r.currentStep + vt, i);
 				for (; r.currentStep < e;) {
 					let e = r.step();
 					for (let t = 0; t < a.length; t++) a[t][e.step] = e.receiverSamples[t];
 				}
-				n(r.currentStep / i), await pt();
+				n(r.currentStep / i), await Et();
 			}
 			return {
 				irs: a,
@@ -1851,21 +2093,21 @@ var it = [
 		}
 	}
 	emitResults(e) {
-		let { sources: t, receivers: n, records: r, bands: i, pulse: a, dt: o, dx: s, c } = e, l = 1 / o, d = a.length, f = he(d, a.length), p = i.length > 1 ? ve(f, l, i) : null, m = this.dimensions === 2, h = m ? fe(f, l, s, c) : null, g = m ? 1 : de(s, c), _ = /* @__PURE__ */ new Map();
+		let { sources: t, receivers: n, records: r, bands: i, pulse: a, dt: o, dx: s, c } = e, l = 1 / o, d = a.length, f = fe(d, a.length), p = i.length > 1 ? he(f, l, i) : null, m = this.dimensions === 2, h = m ? le(f, l, s, c) : null, g = m ? 1 : ce(s, c), _ = /* @__PURE__ */ new Map();
 		for (let e = 0; e < t.length; e++) {
 			let o = t[e], s = u(o.initialSPL);
 			for (let t = 0; t < n.length; t++) {
 				let c = n[t], u = new Float32Array(d);
 				for (let n = 0; n < i.length; n++) {
-					let i = _e(r[e][n][t], a, {
+					let i = me(r[e][n][t], a, {
 						sampleRate: l,
 						fMax: this.fMax,
-						window: lt(p?.[n], h)
+						window: xt(p?.[n], h)
 					});
 					for (let e = 0; e < d; e++) u[e] += i[e];
 				}
 				for (let e = 0; e < d; e++) u[e] *= g * s;
-				let f = l / this.sampleRate, m = Se(u, l, this.sampleRate);
+				let f = l / this.sampleRate, m = ye(u, l, this.sampleRate);
 				for (let e = 0; e < m.length; e++) m[e] *= f;
 				let v = `${o.uuid}->${c.uuid}`;
 				_.set(v, m), this.emitPair(o, c, m);
@@ -1880,7 +2122,7 @@ var it = [
 			sourceId: e.uuid,
 			receiverId: t.uuid
 		}, s = `${this.uuid}-ard-ir-${e.uuid}-${t.uuid}`;
-		ht({
+		Ot({
 			kind: l.ImpulseResponse,
 			name: `IR${a}: ${r} → ${i}`,
 			uuid: s,
@@ -1889,10 +2131,10 @@ var it = [
 				sampleRate: this.sampleRate,
 				...o
 			},
-			data: mt(n, this.sampleRate)
+			data: Dt(n, this.sampleRate)
 		});
-		let c = k(n), u = `${this.uuid}-ard-edc-${e.uuid}-${t.uuid}`;
-		ht({
+		let c = g(n), u = `${this.uuid}-ard-edc-${e.uuid}-${t.uuid}`;
+		Ot({
 			kind: l.EnergyDecay,
 			name: `ARD energy${a}: ${r} → ${i}`,
 			uuid: u,
@@ -1902,7 +2144,7 @@ var it = [
 				units: "energy",
 				...o
 			},
-			data: mt(c, this.sampleRate)
+			data: Dt(c, this.sampleRate)
 		}), this.hasEmittedResults = !0;
 	}
 	save() {
@@ -1948,10 +2190,10 @@ var it = [
 		return !this.hasEmittedResults;
 	}
 	get padCells() {
-		return this.boundary === "pml" ? We(this.wallThickness) : 1;
+		return this.boundary === "pml" ? et(this.wallThickness) : 1;
 	}
 	get cellSize() {
-		return M(this.fMax, p(this.temperature), this.cellsPerWavelength);
+		return O(this.fMax, p(this.temperature), this.cellsPerWavelength);
 	}
 	get estimatedGrid() {
 		let e = this.roomSize();
@@ -1975,17 +2217,17 @@ var it = [
 		let e = this.roomSize();
 		if (!e) return 0;
 		let t = this.cellSize, n = Math.max(1, Math.round(e.x / t) - 1), r = Math.max(1, Math.round(e.y / t) - 1), i = Math.max(1, Math.round(e.z / t) - 1);
-		this.dimensions === 2 && (Z(this.slice) === 1 ? r = 1 : i = 1);
+		this.dimensions === 2 && (st(this.slice) === 1 ? r = 1 : i = 1);
 		let a = n * r * i, o = 2 * ((n > 1 ? r * i : 0) + (r > 1 ? n * i : 0) + (i > 1 ? n * r : 0));
 		return this.boundary === "pml" ? a + o * this.wallThickness : a;
 	}
 	get estimatedSeconds() {
-		return this.estimatedSimulatedCells * this.estimatedSteps / at[this.boundary];
+		return this.estimatedSimulatedCells * this.estimatedSteps / gt[this.boundary];
 	}
 	roomSize() {
 		let e = this.room;
 		if (!e) return null;
-		let t = new A();
+		let t = new _();
 		try {
 			e.boundingBox.getSize(t);
 		} catch {
@@ -1999,14 +2241,14 @@ var it = [
 	}
 	get bands() {
 		if (!this.perBandRuns) return [this.referenceFrequency];
-		let e = it.filter((e) => e / Math.SQRT2 <= this.fMax);
-		return e.length > 0 ? [...e] : [it[0]];
+		let e = ht.filter((e) => e / Math.SQRT2 <= this.fMax);
+		return e.length > 0 ? [...e] : [ht[0]];
 	}
 	get referenceFrequency() {
 		return Math.min(500, this.fMax);
 	}
 	get estimatedStepsPerRun() {
-		let e = p(this.temperature), t = this.dimensions === 2 ? 2 : 3, n = this.boundary === "pml" ? q * y(t) : b(1), r = Math.min(this.courant, n) * this.cellSize / e;
+		let e = p(this.temperature), t = this.dimensions === 2 ? 2 : 3, n = this.boundary === "pml" ? X * C(t) : Ie(1), r = Math.min(this.courant, n) * this.cellSize / e;
 		return Math.ceil(this.irLength / r);
 	}
 	get estimatedRuns() {
@@ -2016,25 +2258,25 @@ var it = [
 		return this.estimatedStepsPerRun * this.estimatedRuns;
 	}
 };
-function lt(e, t) {
+function xt(e, t) {
 	if (!e) return t ?? void 0;
 	if (!t) return e;
 	let n = new Float64Array(e.length);
 	for (let r = 0; r < e.length; r++) n[r] = e[r] * t[r];
 	return n;
 }
-function $(e) {
-	let t = new A();
+function St(e) {
+	let t = new _();
 	return e.getWorldPosition(t), {
 		x: t.x,
 		y: t.y,
 		z: t.z
 	};
 }
-function ut(e, t, n, r, i) {
-	let a = `(${t.x.toFixed(2)}, ${t.y.toFixed(2)}, ${t.z.toFixed(2)})`, o = B(e, t);
+function Ct(e, t, n, r, i) {
+	let a = `(${t.x.toFixed(2)}, ${t.y.toFixed(2)}, ${t.z.toFixed(2)})`, o = I(e, t);
 	if (!o) throw Error(`ARD: ${n} at ${a} is outside the voxel grid — it is not in this room.`);
-	let s = z(e, o, (e) => r(e));
+	let s = F(e, o, (e) => r(e));
 	if (!s) throw Error(`ARD: ${n} at ${a} is inside a wall, and there is no room air within 8 cells of it. Move it into the room, or lower fMax for a coarser grid.`);
 	let c = Math.hypot(s.i - o.i, s.j - o.j, s.k - o.k);
 	return c > 0 && i.push(`${n} at ${a} landed on a wall cell and was moved ${(c * e.dx).toFixed(2)} m to the nearest room air. Every probe snaps to the grid — dx is ${e.dx.toFixed(3)} m here — but this one had to move further than rounding.`), [
@@ -2043,19 +2285,19 @@ function ut(e, t, n, r, i) {
 		s.k
 	];
 }
-function dt(e) {
+function wt(e) {
 	return Number.isFinite(e) ? Math.min(Math.max(e, 0), .999) : 0;
 }
-function ft(e, t) {
+function Tt(e, t) {
 	let n = [];
 	for (let r = 0; r < e; r++) n.push(new Float32Array(t));
 	return n;
 }
-function pt() {
+function Et() {
 	return new Promise((e) => setTimeout(e, 0));
 }
-function mt(e, t) {
-	let n = Math.max(1, Math.ceil(e.length / ot)), r = [];
+function Dt(e, t) {
+	let n = Math.max(1, Math.ceil(e.length / _t)), r = [];
 	for (let i = 0; i < e.length; i += n) r.push({
 		time: i / t,
 		amplitude: e[i]
@@ -2065,17 +2307,17 @@ function mt(e, t) {
 		amplitude: 0
 	}];
 }
-function ht(e) {
+function Ot(e) {
 	s.getState().results[e.uuid] ? o("UPDATE_RESULT", {
 		uuid: e.uuid,
 		result: e
 	}) : o("ADD_RESULT", e);
 }
-n("ADD_ARD", i(Q)), n("REMOVE_ARD", t), n("ARD_SET_PROPERTY", a), n("CALCULATE_ARD", (e) => {
+n("ADD_ARD", i(bt)), n("REMOVE_ARD", t), n("ARD_SET_PROPERTY", a), n("CALCULATE_ARD", (e) => {
 	let t = r.getState().solvers[e];
 	t && t.calculate();
 });
 //#endregion
-export { Q as ARD, Q as default };
+export { bt as ARD, bt as default };
 
-//# sourceMappingURL=ard-DSp2Qk27.mjs.map
+//# sourceMappingURL=ard-ONwi8teW.mjs.map

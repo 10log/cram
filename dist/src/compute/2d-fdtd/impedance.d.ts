@@ -112,6 +112,19 @@
  * coefficient instead and leaves the time step alone.
  */
 /**
+ * Absorption at or below this is a rigid surface, and gets no boundary at all.
+ *
+ * A twin of ARD's constant rather than an import of it. When #199 landed, this
+ * module took both this and the impedance mapping from `ard/impedance.ts`,
+ * because that was the only place in the repository with the correct branch —
+ * `acoustics/reflection-coefficient.ts` still carried the reciprocal one that
+ * #200 describes, and importing it would have made these walls *more*
+ * reflective as α rose. With #200 fixed, the mapping comes from the shared
+ * definition and the only thing left to borrow is a number, which is not worth
+ * an edge from this solver to the wave solver.
+ */
+export declare const RIGID_ALPHA_EPSILON = 0.000001;
+/**
  * Blue-channel value marking an air cell in the sourcemap.
  *
  * The shader's wall test is `b > 0`, so air is positive and a wall is zero or
@@ -140,6 +153,12 @@ export declare const MAX_GHOST_GAIN = 0.95;
  * Returns 0 — the rigid ghost — for a surface at or below
  * {@link RIGID_ALPHA_EPSILON}, so a rigid wall costs nothing and behaves
  * exactly as it did before impedance existed.
+ *
+ * `alpha` comes from a material lookup, so it is clamped rather than validated:
+ * out of range or non-finite behaves like an unpainted wall, which is the
+ * geometrical path's convention and the right one here. ARD throws on the same
+ * input because a solver assembling partitions should fail loudly; a wall being
+ * drawn from a surface should not take the whole field down.
  */
 export declare function ghostGainForAbsorption(alpha: number, courant: number): number;
 /**

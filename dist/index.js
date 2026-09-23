@@ -626,7 +626,7 @@ ei("ray-tracer", async (e, t) => {
 	let { default: n } = await import("./energy-decay-Bo6TsXNQ.mjs");
 	return new n();
 }), ei("fdtd-2d", async (e, t) => {
-	let { default: n } = await import("./2d-fdtd-DAgNVAPd.mjs");
+	let { default: n } = await import("./2d-fdtd-mIjGuGYc.mjs");
 	return new n();
 }), ei("beam-trace", async (e, t) => {
 	let { BeamTraceSolver: n } = await import("./beam-trace-B7Jz7hai.mjs");
@@ -635,7 +635,7 @@ ei("ray-tracer", async (e, t) => {
 	let { ART: n } = await import("./art-O3SL0weA.mjs");
 	return new n();
 }), ei("ard", async (e, t) => {
-	let { ARD: n } = await import("./ard-DSp2Qk27.mjs");
+	let { ARD: n } = await import("./ard-ONwi8teW.mjs");
 	return new n(t);
 });
 //#endregion
@@ -6710,14 +6710,14 @@ async function $o(e, t) {
 			return new e().restore(t);
 		}
 		case "ard": {
-			let { default: e } = await import("./ard-DSp2Qk27.mjs");
+			let { default: e } = await import("./ard-ONwi8teW.mjs");
 			return new e(t).restore(t);
 		}
 		default: throw Error(`Unknown solver kind: ${e}`);
 	}
 }
 function es() {
-	import("./events-BQVyv-wU.mjs").then((e) => e.default()), r("LOG_SOLVER", (e) => {
+	import("./events-CcyU_0gc.mjs").then((e) => e.default()), r("LOG_SOLVER", (e) => {
 		console.log(i.getState().solvers[e]);
 	}), r("REMOVE_SOLVERS", (e) => {
 		let t = i.getState().solvers, n = typeof e == "string" ? [e] : e;

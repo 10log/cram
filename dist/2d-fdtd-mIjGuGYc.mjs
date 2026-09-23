@@ -3,8 +3,8 @@ import { p as r, t as i } from "./renderer-Cj8dxF6d.mjs";
 import { g as a } from "./store-CUhn0IQy.mjs";
 import { t as o } from "./sound-speed-CfEkirc1.mjs";
 import { a as s, i as c, r as l } from "./recording-D5dcOUYq.mjs";
-import { t as u } from "./solver-DCp-VMaM.mjs";
-import { a as d } from "./impedance-BJDUOGSt.mjs";
+import { t as u } from "./reflection-coefficient-DOfZqTBY.mjs";
+import { t as d } from "./solver-DCp-VMaM.mjs";
 import { ClampToEdgeWrapping as f, Color as p, DataTexture as m, DoubleSide as h, FloatType as g, Mesh as _, MeshBasicMaterial as ee, MeshLambertMaterial as v, NearestFilter as y, PlaneGeometry as b, RGBAFormat as x, ShaderMaterial as S, UniformsLib as C, UniformsUtils as te, UnsignedByteType as w, Vector2 as T, Vector3 as E, WebGLRenderTarget as D } from "three";
 //#region node_modules/three/examples/jsm/misc/GPUComputationRenderer.js
 var O = class {
@@ -202,7 +202,7 @@ var U = .95;
 function W(e, t) {
 	if (!(t > 0)) throw Error(`Courant number must be positive, got ${t}`);
 	if (e <= 1e-6) return 0;
-	let n = d(e), r = Number.isFinite(n) ? 1 / (n * t) : 0;
+	let n = u(e), r = Number.isFinite(n) ? 1 / (n * t) : 0;
 	return Math.min(r, U);
 }
 function G(e) {
@@ -260,7 +260,7 @@ var Z = 256, Q = {
 	offsetX: 0,
 	offsetY: 0,
 	slice: "xz"
-}, $ = class extends u {
+}, $ = class extends d {
 	gpuCompute;
 	nx;
 	ny;
@@ -640,4 +640,4 @@ var Z = 256, Q = {
 //#endregion
 export { $ as FDTD_2D, $ as default };
 
-//# sourceMappingURL=2d-fdtd-DAgNVAPd.mjs.map
+//# sourceMappingURL=2d-fdtd-mIjGuGYc.mjs.map
