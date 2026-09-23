@@ -49,6 +49,40 @@ export function selectShootingPatch(unshotEnergy: DirectionalResponse[]): number
 }
 
 /**
+ * Along-normal offset for a ray leaving a patch, in metres.
+ *
+ * A barycentric sample sits exactly **on** the triangle plane, so a ray leaving
+ * it starts coplanar with its own surface, and the other triangles of the same
+ * wall sit at distance ~0 from that origin. Issue #120 read that as a leak and
+ * #207 repeated it; **measurement refuted it.** `localToWorld` maps every
+ * sampled direction into the patch normal's hemisphere, so a ray cannot turn
+ * back into its own plane and a coplanar sibling receives exactly 0 either way
+ * — with this offset and without it. The measured T30 and its Eyring ratio do
+ * not move.
+ *
+ * It is kept as a guard for the geometry where the hazard is real: a sample
+ * near a shared edge with a *non*-coplanar neighbour, which genuinely does sit
+ * at ~0 distance and is not protected by the hemisphere argument. A guard, not
+ * a fix — see `physics.spec.ts` for the measurement.
+ *
+ * 1e-4 m: far above the float noise on a room-scale coordinate, far below any
+ * geometric feature a room model has.
+ */
+export const RAY_ORIGIN_EPSILON = 1e-4;
+
+/**
+ * Slack in the gather's occlusion test, in metres.
+ *
+ * A hit counts as blocking only if it is meaningfully nearer than the receiver.
+ * This was 1 cm, which #120 called out as a fudge standing in for the missing
+ * origin offset — and it could not do that job anyway, since a sibling triangle
+ * registers at ~0 distance and 0 < dist − 0.01 for any receiver beyond a
+ * centimetre, so the patch read as occluded. With the origin lifted off the
+ * plane the slack only has to cover float noise.
+ */
+export const OCCLUSION_EPSILON = 1e-4;
+
+/**
  * Compute total unshot energy across all patches.
  */
 export function totalUnshotEnergy(unshotEnergy: DirectionalResponse[]): number {
@@ -87,8 +121,13 @@ export function shootFromPatch(ctx: ShootingContext, patchIdx: number): void {
     const gain = 1.0 / nRays;
 
     for (let r = 0; r < nRays; r++) {
-      // Generate ray origin: random point on source patch
-      const origin = samplePointOnPatch(srcPatch);
+      // Random point on the source patch, lifted off its own plane. Coplanar
+      // siblings are unreachable regardless — see RAY_ORIGIN_EPSILON — so this
+      // guards the non-coplanar neighbour at a shared edge.
+      const origin = samplePointOnPatch(srcPatch).addScaledVector(
+        srcPatch.normal,
+        RAY_ORIGIN_EPSILON,
+      );
 
       // Generate ray direction within BRDF slot k
       const localDir = sampleDirectionInSlot(brdf, k);
@@ -272,8 +311,12 @@ export function gatherAtReceiver(
     const cosTheta = patch.normal.dot(toReceiver);
     if (cosTheta <= 0) continue;
 
-    // Visibility check: trace ray from patch centroid to receiver
-    const hits = bvh.intersectRay(patch.centroid, toReceiver, false);
+    // Visibility check: trace from the patch toward the receiver, from an
+    // origin lifted off the patch plane for the same reason as the shoot.
+    const gatherOrigin = patch.centroid
+      .clone()
+      .addScaledVector(patch.normal, RAY_ORIGIN_EPSILON);
+    const hits = bvh.intersectRay(gatherOrigin, toReceiver, false);
     let occluded = false;
     if (hits) {
       for (const hit of hits) {
@@ -281,11 +324,11 @@ export function gatherAtReceiver(
         if (hitPatchIdx === i) continue;
         const hitPoint = hit.intersectionPoint;
         const hitDist = new Vector3(
-          hitPoint.x - patch.centroid.x,
-          hitPoint.y - patch.centroid.y,
-          hitPoint.z - patch.centroid.z
+          hitPoint.x - gatherOrigin.x,
+          hitPoint.y - gatherOrigin.y,
+          hitPoint.z - gatherOrigin.z
         ).length();
-        if (hitDist < dist - 0.01) {
+        if (hitDist < dist - OCCLUSION_EPSILON) {
           occluded = true;
           break;
         }
