@@ -1232,7 +1232,173 @@ present), a slice-plane visualization instead of a full-field one, and
 re-baselining the performance tests. Keep 2D selectable — on a floor-plan slice
 it is the only mode that reaches 4 kHz (§5).
 
-### Phase 10 — WebGPU (optional, and the only real answer to §5)
+### Phase 10 — WebGPU — **gated, and the gate changed the design**
+
+**Created** `src/compute/ard/__tests__/f32-budget.spec.ts`. No GPU code: the
+two questions this phase told itself to answer first both came back with
+answers that change what should be built, and one of them says the shape below
+is wrong.
+
+#### The f32 gate: passed, with a specific reformulation
+
+The plan said to settle f32 drift *before* committing, and the answer is more
+useful than yes or no: **the drift comes from storing `cos ωΔt`, not from
+storing the state.**
+
+Measured on the unforced recurrence over 20 000 steps, absolute error against
+the exact solution, amplitude 1:
+
+| `ωΔt` | Hz at `Δt` = 1.5e-4 | f64 | f32 all | f32 state only | f32 `cos` only | reformulated |
+|-------|--------|---------|---------|---------|---------|---------|
+| 0.005 | 5      | 9.7e-12 | 6.2e-2  | 1.1e-3  | 6.0e-2  | 8.0e-4  |
+| 0.020 | 21     | 1.1e-11 | 1.0e-2  | 1.1e-5  | 1.0e-2  | 1.4e-4  |
+| 0.050 | 53     | 7.4e-12 | 1.8e-3  | 6.9e-6  | 1.9e-3  | 4.0e-5  |
+| 0.200 | 212    | 1.0e-13 | 1.2e-3  | 3.1e-6  | 1.1e-3  | 4.2e-5  |
+| 1.000 | 1061   | 6.1e-14 | 3.6e-5  | 4.0e-8  | 3.5e-5  | 5.6e-6  |
+
+Rounding `cos` alone is as bad as rounding everything; rounding the state alone
+is two to three orders of magnitude better. The reason is cancellation:
+`cos ωΔt` for a low mode is `1 − (ωΔt)²/2`, and f32 cannot hold the small part
+next to the 1, so the stored value carries a *frequency* error of order
+`ε/(ωΔt)²`. That accumulates as phase, linearly in the step count — measured
+2.9e-4 at 2 000 steps growing to 3.2e-3 at 32 000, the signature of a bias
+rather than noise.
+
+The fix is to never store `cos ωΔt`:
+
+```
+M' = M + (M − P) − k·M,     k = 2(1 − cos ωΔt)
+```
+
+Algebraically identical, and `k` keeps full f32 relative precision because it
+*is* the small quantity. Measured: 45x better at 53 Hz, 73x at 21 Hz, and — the
+part that matters — **flat in step count** rather than growing.
+
+**Two refinements, both of which a kernel can get wrong while "following the
+reformulation".**
+
+*How `k` is computed decides whether any of this helps.* Evaluating
+`2(1 − cos ωΔt)` in f32 performs the very subtraction the reformulation exists
+to avoid, and comes out indistinguishable from the textbook form — 6.1e-2
+against 6.2e-2 at 5 Hz, with the same linear growth. Two routes work: precompute
+`k` in double on the CPU and upload it as f32, or use the half-angle identity
+`k = 4·sin²(ωΔt/2)`, which has no cancellation because `sin(ωΔt/2)` keeps full
+relative precision at a small angle. The half-angle route drifts slightly where
+the precomputed one does not (9.4e-6 at 2 000 steps against 4.4e-5 at 32 000)
+but stays two orders under the naive route.
+
+*The k-form is not a universal replacement.* It has a cancellation of its own —
+between `M + (M − P)` and `k·M` — once `k` is O(1), and `ωΔt` reaches
+`π·√3·Courant` ≈ 2.18 at the corner of the mode cube, so both regimes occur in
+a real run. Measured at 20 000 steps, textbook error over k-form error:
+
+| `ωΔt` | `k`  | ratio | | `ωΔt` | `k`  | ratio |
+|-------|------|-------|-|-------|------|-------|
+| 0.05  | 0.00 | 45x   | | 1.2   | 1.28 | 0.59x |
+| 0.20  | 0.04 | 28x   | | 1.8   | 2.45 | 0.18x |
+| 0.50  | 0.24 | 3.7x  | | 2.0   | 2.83 | 0.21x |
+
+So **pick per mode at the crossover, around `k = 0.5`** — the k-form below it,
+the textbook form above. That costs nothing when the coefficients are
+precomputed anyway, and above the crossover both forms are inside the 1e-3
+budget, so the choice is a preference rather than a compromise.
+
+The coefficient uploads are two arrays, not one. The homogeneous term needs `k`
+and the forced term needs `k/ω²`, which is the existing `forceCoef` — so the
+k-form *replaces* `cosWdt` rather than collapsing both into one buffer. Do not
+reconstruct one from the other in the kernel: `k = forceCoef·ω²` from an f32 `ω`
+reintroduces a cancellation at exactly the low modes this is all about.
+
+So a GPU port is viable in f32. It is **not** viable written from the published
+formula, and nothing in the f64 solver would catch the difference.
+
+The reformulation is deliberately **not** applied to `DctPartition`. In f64 the
+two forms agree to within their own noise (ratio 1.0 across every mode and
+horizon measured), so changing validated numerics for a path that does not
+exist would be churn. The constraint is recorded in a spec instead, with the
+numbers and the failure it prevents.
+
+#### The DCT is not the bulk of the work
+
+The section below asserts it is, and builds its whole "what is actually hard"
+list on that. Measured, per partition kind, on the assembled solver:
+
+| room (cells) | DCT partitions | PML slabs | DCT share | PML share |
+|--------------|----------------|-----------|-----------|-----------|
+| 16 × 14 × 12 | 1 / 2 688 c    | 6 / 9 344 c   | 12.9% | **87.1%** |
+| 24 × 20 × 16 | 1 / 7 680 c    | 6 / 18 944 c  | 24.1% | **75.9%** |
+| 32 × 32 × 16 | 1 / 16 384 c   | 6 / 32 768 c  | 6.8%  | **93.2%** |
+
+Per cell the two are comparable — 120–650 ns for the DCT against a flat ~830 ns
+for the PML — but Phase 5 established that wall slabs run 2–5x the room's own
+cell count, and Phase 8 measured that again from the cost side. So the slabs
+dominate by sheer volume.
+
+That inverts the phase's priorities. The PML and FDTD stencils are the case the
+plan already calls *"textbook stencil kernels"* and they are **76–93% of the
+work**; the DCT, which the plan calls the hard part and which would need a
+separable 1D FFT with explicit transposes and a Bluestein path, is **7–24%**.
+
+**A GPU port should do the stencil partitions and leave the DCT on the CPU.**
+By Amdahl — `1/((1−p) + p/s)` — a 20x stencil speedup gives **3.6x** at the
+75.9% row, 5.2x at 85%, and 8.7x at 93.2%. Quote the range rather than a
+midpoint: the 24 × 20 × 16 room has the largest DCT share of the three and is
+the realistic design point for leaving the DCT on the CPU, so **3-4x is the
+number to plan against**, not 5x. Still most of what is available, and without
+writing a GPU FFT at all. The per-step traffic that
+arrangement needs is the interface halos, not whole fields: three cells deep on
+each shared face, about 58 kB per direction per step on a 24 × 20 × 16 room,
+against a run already measured in minutes.
+
+The honest alternative reading is that the *real* answer to §5 is not a GPU at
+all but a locally-reacting impedance boundary (reference [6]), which Phases 5, 6
+and 8 each arrived at independently from different directions. It would delete
+the slabs rather than accelerate them: no 76–93%, no CFL clamp on the whole
+simulation from the walls, no 2–5x cell cost. That is a smaller piece of work
+than a GPU port and it makes the GPU port cheaper afterwards, because what is
+left to accelerate is then the DCT interior alone.
+
+Both findings are pinned by tests rather than left as prose:
+`__tests__/f32-budget.spec.ts` for the precision budget, and
+`__tests__/partition-cost.spec.ts` for the shares — the slab-to-room cell ratio
+tightly, since it is deterministic and is the structural cause, and the timing
+share loosely, at a bound that a genuine inversion fails and CI noise does not.
+
+#### What stopped the shader being written
+
+`src/compute/raytracer/gpu/` is a working WebGPU path, as the plan says. But
+its tests — `gpu-ray-tracer.spec.ts`, `gpu-bvh.spec.ts` — only construct,
+dispose and assert buffer-layout constants. **The shader is never executed**,
+because there is no WebGPU in jsdom or Node, and there is none in this
+environment either.
+
+Every numeric claim in Phases 1–9 was measured, and every mechanism was
+mutation-tested. WGSL written here could be neither. Shipping an unrunnable
+kernel as the capstone of that would be the first unvalidated code in the
+solver, and the one place it would hurt most: a stencil that is subtly wrong
+produces a field that looks like acoustics.
+
+#### What remains, scoped
+
+1. A `GpuPmlPartition` implementing the existing `Partition` interface — the
+   6th-order stencil, the 4th-order first difference and the three auxiliary
+   `φ` fields, in one WGSL kernel with ping-ponged storage buffers.
+2. The same for `FdtdPartition`, which is the same kernel with the damping
+   terms removed.
+3. Halo exchange per step for `interface.ts`, and `scaleState` as a trivial
+   elementwise kernel.
+4. Batching similarly-sized slabs into one dispatch, per Mehra et al. [4].
+5. A device harness that can run a kernel against the CPU partition cell by
+   cell, which is what makes any of the above verifiable.
+
+Item 5 is the prerequisite, not the afterthought.
+
+**Original specification follows — superseded in two places.** The bullet below
+claiming *"the DCT is the bulk of the work"* is **wrong**: measured, it is
+7-24% and the PML slabs are 76-93%. The bullet calling f32 drift *"an open
+question"* and asking for it to be settled is **done**: settled above, with the
+reformulation, the crossover and the two safe ways to compute `k`. Everything
+else in it stands.
 
 The CPU worker of Phase 6 is what makes ARD *correct*; it is not what makes it
 *fast*. The cost table in §5 is a CPU table, and the way past it is the GPU —
@@ -1253,17 +1419,15 @@ negotiation and the staging-buffer readback pattern. Keep the
   interface cells.
 
 **What is actually hard:**
-- **The DCT is the bulk of the work.** There is no WebGPU FFT or DCT in the
-  dependency tree, so Phase 1's plan must be rewritten as separable 1D passes
-  per axis, ping-ponging between storage buffers. The non-contiguous axes are
-  bandwidth-bound without an explicit transpose pass.
-- **WGSL has no `f64`.** The reference is `double` throughout, and the modal
-  recurrence `M_new = 2*M*cos(w*dt) - M_prev + ...` is a marginally-stable
-  second-order recurrence run for 10k-20k steps. f32 drift over that horizon is
-  an open question, not a rounding footnote. **Settle it before committing to
-  this phase:** run the Phase 6 CPU simulation in f32 and in f64 over a full
-  duration and compare the resulting IRs. The CPU path is the control for that
-  experiment, which is one more reason it is not throwaway.
+- ~~**The DCT is the bulk of the work.**~~ **Superseded — measured at 7-24%.**
+  It remains true that there is no WebGPU FFT or DCT in the dependency tree and
+  that porting one means separable 1D passes with explicit transposes. The
+  conclusion that changes is that this is not where the time is, so a first GPU
+  port should not attempt it.
+- ~~**WGSL has no `f64`** … settle it before committing to this phase.~~
+  **Superseded — settled above.** f32 is viable, provided the modal update is
+  reformulated below the `k = 0.5` crossover and `k` never goes through an f32
+  `1 − cos`.
 - **Partitions have very different sizes**, so either pad to a common size
   (wasted lanes) or issue many small dispatches (launch-overhead bound). Mehra
   et al. [4] batch partitions of similar size; do the same.
@@ -1309,7 +1473,10 @@ it; with power-of-two extents the 3D 1 kHz row drops from 9 min to about 1.7 min
 Treat every row here as "current", not "intrinsic".
 
 These are **single-threaded CPU** figures, which is what Phases 1-8 deliver.
-Phase 10 (WebGPU) is the way past them; per-partition threading is not, for the
+Phase 10 (WebGPU) is one way past them — 3-4x for a stencil-only port, measured
+in Phase 10 — and a locally-reacting impedance boundary is the other, which
+removes the 76-93% rather than accelerating it. Per-partition threading is
+neither, for the
 reasons in §3 D2.
 
 So ARD's place in CRAM is the **low-frequency band**, where the geometrical
@@ -1362,8 +1529,8 @@ should confirm no leaked worker or retained `Float64Array`s after solver removal
 | `src/compute/ard/simulation.ts` | **Done** | Portable time-loop driver |
 | `src/compute/ard/walls-from-grid.ts` | **Done** | Wall slab placement: corner avoidance, overlap claims |
 | `src/compute/ard/ard.worker.ts` | **Done** | Worker host with progress messaging |
-| `src/compute/ard/gpu/ard.wgsl` | Create (Phase 10) | Modal update, stencil and DCT compute kernels |
-| `src/compute/ard/gpu/gpu-ard.ts` | Create (Phase 10) | Buffer packing and dispatch, reusing `raytracer/gpu/gpu-context.ts` |
+| `src/compute/ard/gpu/ard.wgsl` | Create (Phase 10) | **Stencil** compute kernels — PML and FDTD. Not the DCT: measured at 7-24% of the time, against 76-93% for the slabs |
+| `src/compute/ard/gpu/gpu-ard.ts` | Create (Phase 10) | Buffer packing, dispatch and per-step halo exchange, reusing `raytracer/gpu/gpu-context.ts`. Needs a harness that runs a kernel against the CPU partition cell by cell first |
 | `src/compute/ard/visualization.ts` | Create | Pressure-field display mesh / slice plane |
 | `src/compute/ard/index.ts` | Create | `ARD extends Solver`, event wiring, result emission |
 | `src/compute/ard/__tests__/*.spec.ts` | Create | Suite from §6 |
