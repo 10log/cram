@@ -29,6 +29,7 @@ import {
   splitGhostGain,
   wallChannelFor,
   wallChannelForGhostGain,
+  withGhostGainDefine,
 } from '../impedance';
 import {
   applyCentredWallLoss,
@@ -70,7 +71,7 @@ function runTube(
   const np = new Float64Array(n);
   const nv = new Float64Array(n);
   const out = probes.map(() => new Float64Array(steps));
-  const { centred } = splitGhostGain(gamma);
+  const { backward, centred } = splitGhostGain(gamma);
   const last = n - 1;
   for (let t = 0; t < steps; t++) {
     for (let i = 0; i < last; i++) {
@@ -79,7 +80,7 @@ function runTube(
       nv[i] = vel;
       np[i] = p[i] + vel;
     }
-    const r = wallGhostPressure(p[last], v[last], gamma);
+    const r = wallGhostPressure(p[last], v[last], backward);
     const vel = applyCentredWallLoss(
       C2 * (p[last - 1] + r - 2 * p[last]) + v[last],
       v[last],
@@ -198,6 +199,29 @@ describe('Issue #199: FDTD 2D impedance walls', () => {
         expect(backward).toBe(MAX_GHOST_GAIN);
         expect(backward + centred).toBeCloseTo(gamma, 14);
       }
+    });
+
+    it('moves the split point only when asked, and Infinity switches it off', () => {
+      expect(splitGhostGain(1.2, Infinity)).toEqual({ backward: 1.2, centred: 0 });
+      expect(splitGhostGain(1.2, 1)).toEqual({ backward: 1, centred: 1.2 - 1 });
+      expect(splitGhostGain(1.2)).toEqual(splitGhostGain(1.2, MAX_GHOST_GAIN));
+    });
+
+    it('reads a negative or non-finite gain as rigid rather than propagating it', () => {
+      // Channel writers never produce these, but a NaN here would reach every
+      // neighbouring cell's update; a bad material is rigid everywhere else.
+      for (const bad of [NaN, -0.5, Infinity, -Infinity]) {
+        expect([bad, splitGhostGain(bad)]).toEqual([bad, { backward: 0, centred: 0 }]);
+      }
+    });
+
+    it('leaves the ghost to apply exactly the backward gain it is handed', () => {
+      // wallGhostPressure does not split. A caller holding a raw γ must go
+      // through splitGhostGain, and one that forgot would get the unstable
+      // ghost — loudly, in the stability tests — rather than a quiet 0.961 cap.
+      expect(wallGhostPressure(3, 2, 1.2)).toBe(3 - 1.2 * 2);
+      const { backward } = splitGhostGain(1.2);
+      expect(wallGhostPressure(3, 2, backward)).toBe(3 - MAX_GHOST_GAIN * 2);
     });
 
     it('leaves the velocity untouched when there is no centred remainder', () => {
@@ -437,8 +461,8 @@ describe('Issue #199: FDTD 2D impedance walls', () => {
     it('applies the ghost on every one of the four neighbours', () => {
       for (const dir of ['u', 'd', 'r', 'l']) {
         expect(frag).toContain(`if (${dir}_wall <= 0.0) {`);
-        expect(frag).toContain(`${dir}_pos = pos + max(${dir}_wall, -maxGhostGain) * vel;`);
-        expect(frag).toContain(`centredGain += max(-${dir}_wall - maxGhostGain, 0.0);`);
+        expect(frag).toContain(`${dir}_pos = pos + max(${dir}_wall, -MAX_GHOST_GAIN) * vel;`);
+        expect(frag).toContain(`centredGain += max(-${dir}_wall - MAX_GHOST_GAIN, 0.0);`);
       }
       // `pos + channel * vel` is `pos - gamma * vel` because the channel holds
       // -gamma; the CPU mirror spells the same thing the other way round.
@@ -446,14 +470,23 @@ describe('Issue #199: FDTD 2D impedance walls', () => {
     });
 
     it('applies the centred remainder the way applyCentredWallLoss does (#219)', () => {
-      expect(frag).toContain('uniform float maxGhostGain;');
       expect(frag).toContain('if (centredGain > 0.0) {');
       expect(frag).toContain('float beta = 0.5 * courantSq * centredGain;');
       expect(frag).toContain('newvel = (newvel - beta * vel) / (1.0 + beta);');
-      // And the solver feeds the uniform from the same constant the CPU
-      // mirror splits at, so the two cannot disagree about where it is.
+    });
+
+    it('takes the split point as a define it refuses to compile without', () => {
+      // A uniform that never bound would read 0 and make every absorbing wall
+      // fully centred — the scheme #219 rejected — with no error anywhere.
+      expect(frag).not.toMatch(/uniform\s+float\s+maxGhostGain/);
+      expect(frag).not.toMatch(/#define\s+MAX_GHOST_GAIN/);
+      expect(frag).toMatch(/#ifndef MAX_GHOST_GAIN\s*\n#error /);
+      // The define is the CPU mirror's own constant, as a GLSL float literal.
+      expect(withGhostGainDefine('body')).toBe(`#define MAX_GHOST_GAIN ${MAX_GHOST_GAIN}\nbody`);
+      expect(String(MAX_GHOST_GAIN)).toMatch(/\./);
+      // And the solver builds the shader through it.
       const solver = readFileSync(resolve(__dirname, '../index.ts'), 'utf8');
-      expect(solver).toContain('uniforms["maxGhostGain"] = { value: MAX_GHOST_GAIN }');
+      expect(solver).toContain('withGhostGainDefine(shaders.heightMapFrag)');
     });
 
     it('no longer tests walls with equality, which would ignore gamma', () => {

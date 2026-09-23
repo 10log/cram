@@ -46,8 +46,8 @@ import {
 import {
   AIR_CHANNEL,
   FDTD_CELLS_PER_WAVELENGTH_FOR_IMPEDANCE,
-  MAX_GHOST_GAIN,
   wallChannelFor,
+  withGhostGainDefine,
 } from "./impedance";
 import { DEFAULT_DAMPING, FDTD_REFERENCE_FREQUENCY } from "./index-constants";
 import { passesForElapsed, sampleRateFromDt } from "./recording";
@@ -351,7 +351,11 @@ class FDTD_2D extends Solver {
     this.fillSourceTexture();
     this.updateSourceTexture();
     this.fillTexture(heightmapInit);
-    this.heightmapVariable = this.gpuCompute.addVariable("heightmap", shaders.heightMapFrag, heightmapInit);
+    this.heightmapVariable = this.gpuCompute.addVariable(
+      "heightmap",
+      withGhostGainDefine(shaders.heightMapFrag),
+      heightmapInit,
+    );
     this.gpuCompute.setVariableDependencies(this.heightmapVariable, [this.heightmapVariable]);
 
     (this.heightmapVariable.material as ShaderMaterial).uniforms["sourcemap"] = { value: this.sourcemap };
@@ -367,7 +371,6 @@ class FDTD_2D extends Solver {
       { value: DEFAULT_DAMPING };
 
     (this.heightmapVariable.material as ShaderMaterial).uniforms["courantSq"] = { value: 0 };
-    (this.heightmapVariable.material as ShaderMaterial).uniforms["maxGhostGain"] = { value: MAX_GHOST_GAIN };
     this.applyWaveSpeed();
 
     (this.heightmapVariable.material as ShaderMaterial).uniforms["heightCompensation"] = { value: 0 };

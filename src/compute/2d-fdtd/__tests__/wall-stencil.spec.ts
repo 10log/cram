@@ -10,7 +10,11 @@ import {
   stepStrip,
   wallGhostPressure,
 } from "../wall-stencil";
-import { ghostGainForAbsorption, wallChannelForGhostGain } from "../impedance";
+import {
+  MAX_GHOST_GAIN,
+  ghostGainForAbsorption,
+  wallChannelForGhostGain,
+} from "../impedance";
 
 const C2 = 0.5; // CFL 1/√2
 const DAMPING = 1;
@@ -120,26 +124,36 @@ describe("Issue #199: the field stepper is the single-cell stencil, tiled", () =
       };
     };
 
-    stepField(field, 0.5, 1, {
-      pressure: new Float64Array(nx * ny),
-      velocity: new Float64Array(nx * ny),
-    });
+    // At the production split point, and with the split switched off — the
+    // setting the γ = 1 bound test runs at, so the two paths cannot drift
+    // apart there either.
+    for (const maxGhostGain of [MAX_GHOST_GAIN, Infinity]) {
+      field.pressure.set(before.pressure);
+      field.velocity.set(before.velocity);
+      stepField(field, 0.5, 1, {
+        pressure: new Float64Array(nx * ny),
+        velocity: new Float64Array(nx * ny),
+      }, maxGhostGain);
 
-    for (let j = 0; j < ny; j++) {
-      for (let i = 0; i < nx; i++) {
-        const expected = stepInteriorCell(
-          cell(i, j),
-          {
-            l: cell(i > 0 ? i - 1 : i, j),
-            r: cell(i < nx - 1 ? i + 1 : i, j),
-            d: cell(i, j > 0 ? j - 1 : j),
-            u: cell(i, j < ny - 1 ? j + 1 : j),
-          },
-          0.5,
-          1,
-        );
-        expect([i, j, field.pressure[j * nx + i]]).toEqual([i, j, expected.pressure]);
-        expect([i, j, field.velocity[j * nx + i]]).toEqual([i, j, expected.velocity]);
+      for (let j = 0; j < ny; j++) {
+        for (let i = 0; i < nx; i++) {
+          const expected = stepInteriorCell(
+            cell(i, j),
+            {
+              l: cell(i > 0 ? i - 1 : i, j),
+              r: cell(i < nx - 1 ? i + 1 : i, j),
+              d: cell(i, j > 0 ? j - 1 : j),
+              u: cell(i, j < ny - 1 ? j + 1 : j),
+            },
+            0.5,
+            1,
+            0,
+            maxGhostGain,
+          );
+          const at = [maxGhostGain, i, j];
+          expect([...at, field.pressure[j * nx + i]]).toEqual([...at, expected.pressure]);
+          expect([...at, field.velocity[j * nx + i]]).toEqual([...at, expected.velocity]);
+        }
       }
     }
   });

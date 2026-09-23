@@ -199,6 +199,34 @@ describe('Issue #199: T60 against statistical room acoustics', () => {
     expect(more).toBeLessThan(absorbing / 10);
   });
 
+  it('keeps getting deader past the old 0.961 cap (#219)', () => {
+    // Above α ≈ 0.9 the Eyring bracket above stops meaning anything: the energy
+    // is gone within two or three bounces, the field never becomes diffuse, and
+    // near α = 1 the bracket inverts. So this checks what the centred remainder
+    // must do at room scale instead — every corner cell summing two walls'
+    // remainders — which is to keep the late level falling as α rises. Before
+    // #219, 0.961, 0.98 and 1 were one clamped wall and read identically.
+    const dx = 0.08;
+    const lateLevel = (alpha: number) => {
+      const field = shoebox(WIDTH, HEIGHT, dx, alpha);
+      const { ir, dt } = impulseResponse(field, dx, 0.13);
+      const energy = (from: number, to: number) => {
+        let e = 0;
+        for (let i = Math.floor(from / dt); i < Math.floor(to / dt); i++) e += ir[i] * ir[i];
+        return e;
+      };
+      return 10 * Math.log10(energy(0.1, 0.13) / energy(0, 0.03));
+    };
+    const levels = [0.9, 0.961, 0.98, 1].map(lateLevel);
+    for (const level of levels) expect(Number.isFinite(level)).toBe(true);
+    for (let k = 1; k < levels.length; k++) {
+      expect([levels, levels[k] < levels[k - 1] - 3]).toEqual([levels, true]);
+    }
+    // Measured −62 dB at the old cap against −93 dB for a matched wall; 20 dB
+    // of that is asked for, so this fails if the remainder stops reaching rooms.
+    expect(levels[3]).toBeLessThan(levels[1] - 20);
+  });
+
   describe('the velocity sponge is off, and stays off', () => {
     it('is not the decay mechanism any more', () => {
       expect(DEFAULT_DAMPING).toBe(1);

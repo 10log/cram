@@ -8,7 +8,10 @@
  * `impedance.ts`; `γ = 0` gives `p_ghost = p_cell`, the rigid Neumann wall,
  * bit for bit. A wall whose gain exceeds `MAX_GHOST_GAIN` puts the excess into
  * a centred loss applied after the stencil — see
- * {@link applyCentredWallLoss}.
+ * {@link applyCentredWallLoss}. Splitting a wall's `γ` into the two is
+ * `splitGhostGain`'s job, and every caller here does it explicitly: a helper
+ * that split behind your back would let a caller that forgot the centred half
+ * reintroduce the old 0.961 cap without noticing.
  *
  * Global `damping` is a numerical sponge on velocity, not air absorption
  * and not a surface material. It defaults to 1 — surfaces absorb, the sponge
@@ -18,26 +21,31 @@
 import { MAX_GHOST_GAIN, isWallChannel, splitGhostGain } from './impedance';
 
 /**
- * Ghost pressure standing in for a wall neighbor.
+ * Ghost pressure standing in for a wall neighbor: `p − γ_b·v`.
  *
  * `cellVelocity` is this scheme's backward difference `p^n − p^{n−1}`, which is
  * what makes the impedance ghost a single multiply-add with no stored history.
- * Only the backward part of `ghostGain` goes here; the rest is
+ *
+ * `backwardGain` is the backward share of the wall's gain,
+ * `splitGhostGain(γ).backward`, not `γ` itself. This applies exactly what it is
+ * given — above 1 it is the unstable ghost — and the centred remainder is
  * {@link applyCentredWallLoss}'s.
  */
 export function wallGhostPressure(
   cellPressure: number,
   cellVelocity: number,
-  ghostGain: number,
+  backwardGain: number,
 ): number {
-  return cellPressure - splitGhostGain(ghostGain).backward * cellVelocity;
+  return cellPressure - backwardGain * cellVelocity;
 }
 
 /**
  * The centred remainder of a cell's wall gains, applied to the velocity the
  * stencil produced (#219).
  *
- * `centredGain` is `Σ γ_c` over the cell's wall neighbors. The loss
+ * `centredGain` is `Σ γ_c` over the cell's wall neighbors, each `γ_c` being
+ * only the excess of that wall's gain above `MAX_GHOST_GAIN`: the backward
+ * share is already in `stepped`, through the ghosts. The loss
  * `C²·(γ_c/2)·(p^{n+1} − p^{n−1})` has `p^{n+1}` on both sides, and solving
  * for it is one divide:
  *
@@ -77,9 +85,14 @@ export interface StencilCell {
   ghostGain?: number;
 }
 
-function neighborPressure(cell: StencilCell, neighbor: StencilCell): number {
+function neighborPressure(
+  cell: StencilCell,
+  neighbor: StencilCell,
+  maxGhostGain: number,
+): number {
   if (!neighbor.isWall) return neighbor.pressure;
-  return wallGhostPressure(cell.pressure, cell.velocity, neighbor.ghostGain ?? 0);
+  const { backward } = splitGhostGain(neighbor.ghostGain ?? 0, maxGhostGain);
+  return wallGhostPressure(cell.pressure, cell.velocity, backward);
 }
 
 /**
@@ -89,6 +102,8 @@ function neighborPressure(cell: StencilCell, neighbor: StencilCell): number {
  *   newvel = applyCentredWallLoss(newvel, vel, courantSq, Σγ_c)
  *   newpos = pos + newvel
  * Wall cells stay at rest.
+ *
+ * `maxGhostGain` is {@link stepField}'s, for the same reason.
  */
 export function stepInteriorCell(
   cell: StencilCell,
@@ -96,19 +111,20 @@ export function stepInteriorCell(
   courantSq: number,
   damping: number,
   restPressure = 0,
+  maxGhostGain = MAX_GHOST_GAIN,
 ): StencilCell {
   if (cell.isWall) {
     return { pressure: restPressure, velocity: 0, isWall: true, ghostGain: cell.ghostGain };
   }
-  const u = neighborPressure(cell, neighbors.u);
-  const d = neighborPressure(cell, neighbors.d);
-  const r = neighborPressure(cell, neighbors.r);
-  const l = neighborPressure(cell, neighbors.l);
+  const u = neighborPressure(cell, neighbors.u, maxGhostGain);
+  const d = neighborPressure(cell, neighbors.d, maxGhostGain);
+  const r = neighborPressure(cell, neighbors.r, maxGhostGain);
+  const l = neighborPressure(cell, neighbors.l, maxGhostGain);
   const mid = 0.25 * (u + d + r + l);
   let centredGain = 0;
   // Same order as stepField sums them, so the two agree to the bit.
   for (const n of [neighbors.l, neighbors.r, neighbors.d, neighbors.u]) {
-    if (n.isWall) centredGain += splitGhostGain(n.ghostGain ?? 0).centred;
+    if (n.isWall) centredGain += splitGhostGain(n.ghostGain ?? 0, maxGhostGain).centred;
   }
   const velocity = applyCentredWallLoss(
     4 * courantSq * (mid - cell.pressure) + cell.velocity * damping,
@@ -197,9 +213,11 @@ export function createField2D(nx: number, ny: number): Field2D {
  *
  * `scratch` is the caller's, so a loop of 100,000 steps allocates nothing.
  *
- * `maxGhostGain` is the shader's uniform of the same name. Only tests move it:
- * `Infinity` gives the pure backward ghost at any gain, which is how the
- * `γ = 1` bound that sets {@link MAX_GHOST_GAIN} stays measured.
+ * `maxGhostGain` is the split point `splitGhostGain` takes, and the shader's
+ * `MAX_GHOST_GAIN` define. Only tests move it: `Infinity` gives the pure
+ * backward ghost at any gain, which is how the `γ = 1` bound that sets
+ * {@link MAX_GHOST_GAIN} stays measured. {@link stepInteriorCell} takes the same
+ * argument, and the tiling test pins the two together at both settings.
  */
 export function stepField(
   field: Field2D,

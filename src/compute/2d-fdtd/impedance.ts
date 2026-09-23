@@ -120,7 +120,10 @@
  *        ⇒ v^{n+1} = (v* − β·v^n) / (1 + β),   β = ½·C²·Σ γ_c
  * ```
  *
- * where `p*`, `v*` are the update with the backward ghosts already in it. The
+ * where `p*`, `v*` are the update with the backward ghosts already in it.
+ * Unlike PFFDTD, where `p*` is rigid and the centred term carries a wall's
+ * whole admittance, `γ_c` here is only the excess above `MAX_GHOST_GAIN`; the
+ * backward share is already lossy and already in `p*`. The
  * centred term only ever removes energy: it is proportional to
  * `(p^{n+1} − p^{n−1})`, the discrete `∂p/∂t` straddling the step, so it cannot
  * feed the surface mode the way a one-sided difference does. Measured, the
@@ -178,10 +181,26 @@ export const FDTD_CELLS_PER_WAVELENGTH_FOR_IMPEDANCE = 6;
  * That ghost is stable for `γ < 1` — see the stability section above — and this
  * keeps 5% below it. A wall asking for more gets the rest from the centred
  * remainder, so this is no longer a cap on absorption, only the point where
- * one form of the boundary hands over to the other. The shader reads it as the
- * `maxGhostGain` uniform.
+ * one form of the boundary hands over to the other. The shader gets it as a
+ * compile-time define — see {@link withGhostGainDefine}.
  */
 export const MAX_GHOST_GAIN = 0.95;
+
+/**
+ * `source` with `#define MAX_GHOST_GAIN` prepended, for `height-map.frag`.
+ *
+ * A define rather than a uniform because a uniform fails *open*: one that never
+ * binds reads as 0 in GLSL, which would turn every absorbing wall into a fully
+ * centred one — the scheme #219 measured and rejected — with nothing to say so.
+ * The shader refuses to compile without this define, so a missing one fails
+ * loudly instead.
+ */
+export function withGhostGainDefine(source: string): string {
+  const value = Number.isInteger(MAX_GHOST_GAIN)
+    ? MAX_GHOST_GAIN.toFixed(1)
+    : String(MAX_GHOST_GAIN);
+  return `#define MAX_GHOST_GAIN ${value}\n${source}`;
+}
 
 /**
  * Ghost gain `γ = 1/(ξ·C)` for a surface of absorption `alpha` at Courant `C`.
@@ -207,15 +226,27 @@ export function ghostGainForAbsorption(alpha: number, courant: number): number {
 
 /**
  * A wall's gain as the two parts the update applies: the backward ghost's
- * `min(γ, MAX_GHOST_GAIN)` and the centred remainder above it.
+ * `min(γ, maxGhostGain)` and the centred remainder above it.
  *
  * The channel carries the single `γ` and the shader makes the same split, so a
  * wall that never needed the remainder writes exactly the value it always did.
+ *
+ * `maxGhostGain` defaults to the production split point. Only tests move it:
+ * `Infinity` hands the whole gain to the backward ghost, which is how the
+ * `γ = 1` bound that sets {@link MAX_GHOST_GAIN} stays measured.
+ *
+ * A negative or non-finite gain is a rigid wall, the same convention
+ * {@link ghostGainForAbsorption} follows for a bad material, rather than a
+ * `NaN` that would poison the neighbouring cell's update.
  */
-export function splitGhostGain(gamma: number): { backward: number; centred: number } {
+export function splitGhostGain(
+  gamma: number,
+  maxGhostGain = MAX_GHOST_GAIN,
+): { backward: number; centred: number } {
+  if (!(gamma >= 0 && Number.isFinite(gamma))) return { backward: 0, centred: 0 };
   return {
-    backward: Math.min(gamma, MAX_GHOST_GAIN),
-    centred: Math.max(gamma - MAX_GHOST_GAIN, 0),
+    backward: Math.min(gamma, maxGhostGain),
+    centred: Math.max(gamma - maxGhostGain, 0),
   };
 }
 
