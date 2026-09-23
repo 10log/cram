@@ -7,13 +7,14 @@ import { default as RT60 } from '../../compute/rt';
 import { default as ART } from '../../compute/radiance/art';
 import { default as EnergyDecay } from '../../compute/energy-decay';
 import { BeamTraceSolver } from '../../compute/beam-trace';
-type SetPropertyEventTypes = AllowedNames<EventTypes, SetPropertyPayload<FDTD_2D>> | AllowedNames<EventTypes, SetPropertyPayload<RayTracer>> | AllowedNames<EventTypes, SetPropertyPayload<ImageSourceSolver>> | AllowedNames<EventTypes, SetPropertyPayload<RT60>> | AllowedNames<EventTypes, SetPropertyPayload<EnergyDecay>> | AllowedNames<EventTypes, SetPropertyPayload<ART>> | AllowedNames<EventTypes, SetPropertyPayload<BeamTraceSolver>>;
-export declare function useSolverProperty<T extends RayTracer | FDTD_2D | ImageSourceSolver | RT60 | EnergyDecay | ART | BeamTraceSolver, K extends keyof T>(uuid: string, property: K, event: SetPropertyEventTypes): [T[K] | undefined, (e: any) => void];
+import { default as ARD } from '../../compute/ard';
+type SetPropertyEventTypes = AllowedNames<EventTypes, SetPropertyPayload<FDTD_2D>> | AllowedNames<EventTypes, SetPropertyPayload<RayTracer>> | AllowedNames<EventTypes, SetPropertyPayload<ImageSourceSolver>> | AllowedNames<EventTypes, SetPropertyPayload<RT60>> | AllowedNames<EventTypes, SetPropertyPayload<EnergyDecay>> | AllowedNames<EventTypes, SetPropertyPayload<ART>> | AllowedNames<EventTypes, SetPropertyPayload<BeamTraceSolver>> | AllowedNames<EventTypes, SetPropertyPayload<ARD>>;
+export declare function useSolverProperty<T extends RayTracer | FDTD_2D | ImageSourceSolver | RT60 | EnergyDecay | ART | BeamTraceSolver | ARD, K extends keyof T>(uuid: string, property: K, event: SetPropertyEventTypes): [T[K] | undefined, (e: any) => void];
 type PropertyRowInputElement = ({ value, onChange }: {
     value: any;
     onChange: any;
 }) => React.JSX.Element;
-type Props<T extends RayTracer | FDTD_2D | ImageSourceSolver | RT60 | EnergyDecay | ART | BeamTraceSolver, K extends keyof T> = {
+type Props<T extends RayTracer | FDTD_2D | ImageSourceSolver | RT60 | EnergyDecay | ART | BeamTraceSolver | ARD, K extends keyof T> = {
     uuid: string;
     property: K;
     label: string;
@@ -22,8 +23,8 @@ type Props<T extends RayTracer | FDTD_2D | ImageSourceSolver | RT60 | EnergyDeca
         [key: string]: any;
     };
 };
-export declare const createPropertyInput: <T extends RayTracer | FDTD_2D | ImageSourceSolver | RT60 | EnergyDecay | ART | BeamTraceSolver>(event: SetPropertyEventTypes, Element: PropertyRowInputElement) => <K extends keyof T>({ uuid, property, label, tooltip, elementProps }: Props<T, K>) => React.JSX.Element;
-export declare const createPropertyInputs: <T extends RayTracer | FDTD_2D | ImageSourceSolver | RT60 | EnergyDecay | ART | BeamTraceSolver>(event: SetPropertyEventTypes) => {
+export declare const createPropertyInput: <T extends RayTracer | FDTD_2D | ImageSourceSolver | RT60 | EnergyDecay | ART | BeamTraceSolver | ARD>(event: SetPropertyEventTypes, Element: PropertyRowInputElement) => <K extends keyof T>({ uuid, property, label, tooltip, elementProps }: Props<T, K>) => React.JSX.Element;
+export declare const createPropertyInputs: <T extends RayTracer | FDTD_2D | ImageSourceSolver | RT60 | EnergyDecay | ART | BeamTraceSolver | ARD>(event: SetPropertyEventTypes) => {
     PropertyTextInput: <K extends keyof T>({ uuid, property, label, tooltip, elementProps }: Props<T, K>) => React.JSX.Element;
     PropertyNumberInput: <K extends keyof T>({ uuid, property, label, tooltip, elementProps }: Props<T, K>) => React.JSX.Element;
     PropertyCheckboxInput: <K extends keyof T>({ uuid, property, label, tooltip, elementProps }: Props<T, K>) => React.JSX.Element;

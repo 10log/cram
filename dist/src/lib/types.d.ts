@@ -5,7 +5,7 @@ export type { ThemeMode };
 /**
  * Solver types that can be added via the imperative API
  */
-export type SolverType = 'raytracer' | 'image-source' | 'beam-trace' | 'fdtd-2d' | 'rt60' | 'energy-decay' | 'art';
+export type SolverType = 'raytracer' | 'image-source' | 'beam-trace' | 'fdtd-2d' | 'rt60' | 'energy-decay' | 'art' | 'ard';
 /**
  * Props for the CRAMEditor component
  */
