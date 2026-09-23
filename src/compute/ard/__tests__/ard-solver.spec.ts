@@ -14,7 +14,7 @@ import { BufferAttribute, BufferGeometry, Vector3 } from 'three';
 
 import { nextPowerOfTwo } from '../deconvolve';
 import { createComplexFftPlan } from '../fft';
-import { ARD, ARD_REFERENCE_FREQUENCY } from '../index';
+import { ARD, ARD_CELL_STEPS_PER_SECOND, ARD_REFERENCE_FREQUENCY } from '../index';
 import { vonNeumannCflLimit } from '../partition';
 import { PML_CFL_MARGIN } from '../pml-partition';
 
@@ -230,6 +230,168 @@ describe('ARD solver', () => {
     expect(solver.estimatedSteps).toBeGreaterThan(atHalf);
     solver.courant = 0.4;
   });
+
+  it('predicts the cells a shoebox will actually step', async () => {
+    // `estimatedSimulatedCells` is what the runtime estimate rides on, so it
+    // has to be the cells that get stepped — not the grid allocation, most of
+    // which is padding for the slabs to grow into.
+    //
+    // This room is deliberately coarse: at fMax 250 the grid is 53 cm and the
+    // air region is 5 x 4 x 3 cells, so the shell is most of the bounding box.
+    // Counting in metres over dx cubed over-predicted by 64% here; counting
+    // interior extents in cells gets both terms exact.
+    containers['room-1'] = makeRoom({ x: 3.2, y: 2.6, z: 2.2 }, 0.35);
+    containers['s1'] = makeSource('s1', [-0.8, 0, 0]);
+    containers['r1'] = makeReceiver('r1', [0.6, 0.3, 0]);
+
+    const solver = new ARD({
+      roomID: 'room-1', sourceIDs: ['s1'], receiverIDs: ['r1'],
+      fMax: 250, irLength: 0.03,
+    });
+    const predicted = solver.estimatedSimulatedCells;
+    const summary = await solver.run();
+    const actual = summary.cellCount.room + summary.cellCount.walls;
+
+    // Within 20%: the voxelizer rounds the room onto the grid and a face's
+    // slab is clipped to its own extent, so neither term stays exact on an
+    // arbitrary room — but it is the right quantity, unlike the allocation.
+    expect(predicted / actual).toBeGreaterThan(0.8);
+    expect(predicted / actual).toBeLessThan(1.2);
+
+    // And the allocation is much larger, which is the reason the two are
+    // separate getters rather than one.
+    expect(solver.estimatedCellCount).toBeGreaterThan(1.5 * actual);
+    expect(solver.estimatedCellCount).toBe(
+      solver.estimatedGrid.x * solver.estimatedGrid.y * solver.estimatedGrid.z,
+    );
+  }, 300_000);
+
+  it('estimates a runtime that tracks the work', () => {
+    containers['room-1'] = makeRoom({ x: 4, y: 3, z: 2.5 }, 0.2);
+    const solver = new ARD({ roomID: 'room-1', fMax: 500, irLength: 0.5 });
+
+    expect(solver.estimatedSeconds).toBeGreaterThan(0);
+    expect(solver.estimatedSeconds).toBeCloseTo(
+      (solver.estimatedSimulatedCells * solver.estimatedSteps) / ARD_CELL_STEPS_PER_SECOND,
+      9,
+    );
+
+    // Longer impulse response, proportionally longer run.
+    const short = solver.estimatedSeconds;
+    solver.irLength = 1;
+    expect(solver.estimatedSeconds / short).toBeCloseTo(2, 1);
+
+    // One full simulation per source, so sources multiply the cost exactly as
+    // bands do. `execute` runs `sources.length * bands.length` times, and an
+    // estimate that missed the first factor would be silently half right for
+    // two sources — the undercount this whole cost line exists to prevent.
+    const oneSource = solver.estimatedSeconds;
+    solver.sourceIDs = ['s1', 's2'];
+    expect(solver.estimatedRuns).toBe(2);
+    expect(solver.estimatedSeconds / oneSource).toBeCloseTo(2, 6);
+    solver.perBandRuns = true;
+    expect(solver.estimatedRuns).toBe(2 * solver.bands.length);
+    expect(solver.estimatedSteps).toBe(solver.estimatedStepsPerRun * solver.estimatedRuns);
+
+    // Receivers are probes into a field being computed anyway: free.
+    const before = solver.estimatedSeconds;
+    solver.receiverIDs = ['r1', 'r2', 'r3'];
+    expect(solver.estimatedSeconds).toBe(before);
+
+    // And with no sources configured the estimate is still a run's worth
+    // rather than zero.
+    solver.sourceIDs = [];
+    solver.perBandRuns = false;
+    expect(solver.estimatedRuns).toBe(1);
+
+    // A room with no geometry estimates nothing rather than NaN or Infinity.
+    solver.roomID = 'nope';
+    expect(solver.estimatedSeconds).toBe(0);
+    expect(solver.estimatedSimulatedCells).toBe(0);
+    expect(solver.estimatedGrid).toEqual({ x: 0, y: 0, z: 0 });
+  });
+
+  it('drives the app-wide progress indicator', async () => {
+    // A wave solve runs long enough that no indicator reads as a hang, so the
+    // solver drives the same SHOW/UPDATE/HIDE the ray tracer does rather than
+    // relying on a panel to subscribe to ARD_PROGRESS.
+    containers['room-1'] = makeRoom({ x: 3.2, y: 2.6, z: 2.2 }, 0.35);
+    containers['s1'] = makeSource('s1', [-0.8, 0, 0]);
+    containers['r1'] = makeReceiver('r1', [0.6, 0.3, 0]);
+
+    const solver = new ARD({
+      roomID: 'room-1', sourceIDs: ['s1'], receiverIDs: ['r1'],
+      fMax: 250, irLength: 0.03,
+    });
+    await solver.run();
+
+    const events = emitted.map((e) => e.event);
+    expect(events).toContain('SHOW_PROGRESS');
+    expect(events).toContain('UPDATE_PROGRESS');
+    expect(events).toContain('HIDE_PROGRESS');
+    expect(events.lastIndexOf('HIDE_PROGRESS')).toBeGreaterThan(events.indexOf('SHOW_PROGRESS'));
+
+    // Hidden even when the run fails, or the indicator sticks on screen.
+    emitted.length = 0;
+    await expect(
+      new ARD({ roomID: 'nope', sourceIDs: ['s1'], receiverIDs: ['r1'] }).run(),
+    ).rejects.toThrow();
+    expect(emitted.map((e) => e.event)).toContain('HIDE_PROGRESS');
+  }, 300_000);
+
+  it('leaves progress at a terminal value when a run is cancelled or fails', async () => {
+    // `ARD_PROGRESS` is how the UI knows a run is in flight, and anything
+    // keyed on "0 < progress < 1" latches on for good if the last event of a
+    // failed run is a fraction. The solver card is the sharp case: it disables
+    // its Calculate button while calculating, so a stuck state cannot be
+    // cleared by starting another run from there.
+    containers['room-1'] = makeRoom({ x: 4, y: 3, z: 2.6 }, 0.3);
+    containers['s1'] = makeSource('s1', [-1, 0, 0]);
+    containers['r1'] = makeReceiver('r1', [0.5, 0, 0]);
+
+    const progressOf = () =>
+      emitted
+        .filter((e) => e.event === 'ARD_PROGRESS')
+        .map((e) => (e.payload as { progress: number }).progress);
+
+    const solver = new ARD({
+      roomID: 'room-1', sourceIDs: ['s1'], receiverIDs: ['r1'], fMax: 400, irLength: 1.5,
+    });
+    const running = solver.run();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    solver.cancel();
+    await expect(running).rejects.toThrow(/cancelled/);
+
+    const cancelled = progressOf();
+    expect(cancelled.length).toBeGreaterThan(0);
+    expect(cancelled.some((p) => p > 0 && p < 1)).toBe(true); // it did report mid-flight
+    expect(cancelled[cancelled.length - 1]).toBe(0);
+    expect(solver.progress).toBe(0);
+
+    // Same for a run that throws rather than being cancelled.
+    emitted.length = 0;
+    const doomed = new ARD({
+      roomID: 'room-1', sourceIDs: ['s1'], receiverIDs: ['r1'], fMax: 400, irLength: 0.03,
+    });
+    void doomed.run().catch(() => undefined);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    // Break the room out from under it mid-run.
+    delete containers['room-1'];
+    doomed.cancel();
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    const last = progressOf();
+    if (last.length > 0) expect(last[last.length - 1] % 1).toBe(0); // 0 or 1, never a fraction
+
+    // A successful run ends at 1, not 0 — "finished" and "never ran" are
+    // different states even though both read as "not calculating".
+    emitted.length = 0;
+    containers['room-1'] = makeRoom({ x: 4, y: 3, z: 2.6 }, 0.3);
+    await new ARD({
+      roomID: 'room-1', sourceIDs: ['s1'], receiverIDs: ['r1'], fMax: 250, irLength: 0.03,
+    }).run();
+    const finished = progressOf();
+    expect(finished[finished.length - 1]).toBe(1);
+  }, 300_000);
 
   it('refuses to run without a room, a source or a receiver', async () => {
     const solver = new ARD({});

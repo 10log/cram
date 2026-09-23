@@ -13,6 +13,7 @@ import GridOnIcon from "@mui/icons-material/GridOn"; // FDTD
 import BarChartIcon from "@mui/icons-material/BarChart"; // RT60
 import GraphicEqIcon from "@mui/icons-material/GraphicEq"; // Energy Decay
 import BlurOnIcon from "@mui/icons-material/BlurOn"; // ART
+import WavesIcon from "@mui/icons-material/Waves"; // ARD
 import SettingsIcon from "@mui/icons-material/Settings"; // Renderer
 import TimelineIcon from "@mui/icons-material/Timeline"; // Beam Tracer
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
@@ -131,6 +132,7 @@ const SolverIconMap: Record<string, React.ElementType> = {
   "rt60": BarChartIcon,
   "energydecay": GraphicEqIcon,
   "art": BlurOnIcon,
+  "ard": WavesIcon,
   "renderer": SettingsIcon,
   "beam-trace": TimelineIcon,
 };

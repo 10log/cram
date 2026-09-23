@@ -19,6 +19,7 @@ import SourceTab from './SourceTab';
 import ReceiverTab from './ReceiverTab';
 import SurfaceTab from './SurfaceTab';
 import ARTTab from './ARTTab';
+import ARDTab from './ARDTab';
 import BeamTraceTab from './BeamTraceTab';
 import type Container from '../../objects/container';
 
@@ -60,6 +61,7 @@ const SolverComponentMap = new Map<string, TabComponent>([
   ["fdtd-2d", FDTD_2DTab],
   ["energydecay", EnergyDecayTab],
   ["art", ARTTab],
+  ["ard", ARDTab],
   ["beam-trace", BeamTraceTab]
 ]);
 

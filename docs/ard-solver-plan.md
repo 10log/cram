@@ -1007,7 +1007,93 @@ on("ARD_SET_PROPERTY", setSolverProperty);
 on("CALCULATE_ARD", (uuid) => { ... });
 ```
 
-### Phase 8 — UI and Wiring
+### Phase 8 — UI and Wiring — **implemented**
+
+**Created** `src/components/parameter-config/ARDTab.tsx`,
+`__tests__/ARDTab.spec.tsx` and `src/compute/__tests__/ard-wiring.spec.ts`.
+Modified all twelve files in the table below, plus `lib/CRAMEditor.tsx` and
+`lib/CRAMCanvas.tsx` (their `Record<SolverType, string>` maps are exhaustive, so
+adding `'ard'` to the union makes the compiler demand both) and
+`SourceReceiverMatrix.tsx` (its `eventType` union).
+
+**The cost line is measured, not guessed.** The plan asked for "estimated
+runtime" without saying where the number comes from; inventing one would be
+worse than showing nothing. Throughput of the assembled solver, across four
+room sizes:
+
+| room (cells)        | total cells | Mcell-steps/s |
+|---------------------|-------------|---------------|
+| 16 x 14 x 12        | 12 032      | 1.31          |
+| 24 x 20 x 16        | 26 624      | 1.39          |
+| 32 x 24 x 20        | 45 568      | 1.33          |
+| 32 x 32 x 16        | 49 152      | 1.61          |
+| 24 x 20 x 16, rigid | 7 680       | 1.90          |
+
+Flat to within ~5% once absorbing walls exist, which is the default. The two
+outliers are Phase 1 and Phase 5 findings seen from the other side:
+power-of-two extents take the radix-2 FFT path and run 20% faster, and a rigid
+room has no PML slabs — the most expensive partition kind — at all.
+`ARD_CELL_STEPS_PER_SECOND` takes the conservative end.
+
+**Estimated cells had to be counted in cells, not metres.** The obvious form —
+bounding volume over `Δx³` plus surface area over `Δx²` times the slab
+thickness — is exact on a hand-built grid and wrong on a real one, because the
+voxelized air region is one cell smaller than the bounding box on every side.
+At a coarse grid that is most of the room: on a 3.2 x 2.6 x 2.2 m room at
+`fMax` 250 (`Δx` 53 cm) the air region is 5 x 4 x 3 cells and the metric form
+over-counted the whole simulation by 64%. Counting interior extents in cells
+gets both terms exactly right there — 60 air cells and 94 face cells, against
+60 and 94 actual.
+
+The grid *allocation* and the cells actually *stepped* are therefore separate
+getters. They differ by more than a factor of two, because most of the
+allocated grid is padding for the slabs to grow into, and only the second one
+predicts runtime.
+
+**`SHOW_PROGRESS` / `UPDATE_PROGRESS` / `HIDE_PROGRESS`,** as the ray tracer
+drives them, in addition to `ARD_PROGRESS`. A run of this length with no
+indicator reads as a hang. `HIDE_PROGRESS` fires from a `finally`, so a failed
+or cancelled run does not leave the bar on screen.
+
+**Two departures from the table above.** The property is `wallThickness`, not
+`pmlThickness` — Phase 6 named it for what it is rather than for the partition
+kind that implements it. And there is no `visualize` checkbox: nothing consumes
+the slice frames the driver can emit, so the toggle would have been a control
+that does nothing. Both wait for a phase that gives them something to do.
+
+Three more from review, all of them the same shape — a number or a state that
+is right in one place and wrong in another:
+
+- **The cost line undercounted by the number of sources.** `execute` runs
+  `sources × bands` times, because a single simulation carrying several sources
+  leaves every receiver recording their sum. `estimatedSteps` counted only the
+  bands, so two sources read half the real cost — exactly the silent undercount
+  the line exists to prevent. Split into `estimatedStepsPerRun` and
+  `estimatedRuns`, and the tab now spells out every multiplier
+  (`2,600 x 2 sources x 4 bands`) rather than folding them into one number that
+  cannot be acted on. Receivers stay free: they are probes into a field that is
+  being computed anyway.
+- **A cancelled or failed run left `ARD_PROGRESS` mid-flight.** Nothing else
+  moves it afterwards, so anything keyed on "0 < progress < 1 means running"
+  latched on for good. The solver card is the sharp case, and a closed loop: it
+  disables its Calculate button while calculating, so the stuck state could not
+  be cleared by starting the run that would have cleared it. `run()` now resets
+  to 0 from its `finally` — zero, not one, because the run did not finish.
+- **The card would start a run the solver refuses.** Its `canCalculate` checked
+  only sources and receivers, while the parameter tab also checked the room. Two
+  entry points, two answers to whether the same solver can run, and the card's
+  answer produced a flash of progress bar and a throw.
+
+**The wiring checklist is a test.** Adding a solver kind means touching a dozen
+unrelated files, and missing one fails silently and specifically — no icon, or
+present in the Add menu but not the properties panel, or the quiet one: saves
+fine and comes back as nothing, with nothing anywhere reporting a problem.
+`ard-wiring.spec.ts` asserts each entry exists, following the source-text
+precedent in `temperature-air-absorption.spec.ts`; importing the modules would
+drag in MUI and a React tree to ask whether a map has a key, and several of the
+maps are module-local consts that are not exported at all.
+
+**Original specification follows.**
 
 **Create** `src/components/parameter-config/ARDTab.tsx`, modelled on
 `ARTTab.tsx`: `SolverControlBar`, a room `PropertyRowSelect`,

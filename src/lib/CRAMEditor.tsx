@@ -182,6 +182,7 @@ export const CRAMEditor = forwardRef<CRAMEditorRef, CRAMEditorProps>(
           'rt60': 'SHOULD_ADD_RT60',
           'energy-decay': 'SHOULD_ADD_ENERGYDECAY',
           'art': 'SHOULD_ADD_ART',
+          'ard': 'SHOULD_ADD_ARD',
         };
 
         const message = solverMessages[type];

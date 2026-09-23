@@ -12,6 +12,7 @@ import RT60Tab from "../parameter-config/RT60Tab";
 import FDTD_2DTab from "../parameter-config/FDTD_2DTab";
 import EnergyDecayTab from "../parameter-config/EnergyDecayTab";
 import ARTTab from "../parameter-config/ARTTab";
+import ARDTab from "../parameter-config/ARDTab";
 import BeamTraceTab from "../parameter-config/BeamTraceTab";
 
 const cardContainerSx: SxProps<Theme> = {
@@ -37,6 +38,7 @@ const SolverComponentMap = new Map<string, React.ComponentType<{ uuid: string }>
   ["fdtd-2d", FDTD_2DTab],
   ["energydecay", EnergyDecayTab],
   ["art", ARTTab],
+  ["ard", ARDTab],
   ["beam-trace", BeamTraceTab],
 ]);
 
@@ -71,6 +73,18 @@ export default function SolverCard({ uuid, defaultExpanded = false }: SolverCard
       });
       return () => { unsubStart(); unsubComplete(); };
     }
+    if (solver.kind === "ard") {
+      // ARD has no start/complete pair — it reports a fraction, and leaving
+      // (0, 1) is the end of it. A run that finishes reaches 1; one that is
+      // cancelled or throws is reset to 0 by the solver, which it has to be:
+      // this header disables Calculate while calculating, so a state that
+      // never clears cannot be cleared from here either.
+      const unsub = on("ARD_PROGRESS", ({ uuid: id, progress }) => {
+        if (id !== uuid) return;
+        setIsCalculating(progress > 0 && progress < 1);
+      });
+      return () => { unsub(); };
+    }
   }, [solver, uuid]);
 
   // Check if solver can calculate (has sources and receivers configured)
@@ -78,12 +92,20 @@ export default function SolverCard({ uuid, defaultExpanded = false }: SolverCard
   const canCalculate = useMemo(() => {
     if (!solver) return false;
     // Duck type for solvers with sourceIDs/receiverIDs
-    const s = solver as { sourceIDs?: string[]; receiverIDs?: string[] };
+    const s = solver as { sourceIDs?: string[]; receiverIDs?: string[]; roomID?: string };
+    const hasPairs = (s.sourceIDs?.length ?? 0) > 0 && (s.receiverIDs?.length ?? 0) > 0;
     switch (solver.kind) {
       case "beam-trace":
       case "image-source":
       case "ray-tracer":
-        return (s.sourceIDs?.length ?? 0) > 0 && (s.receiverIDs?.length ?? 0) > 0;
+        return hasPairs;
+      case "ard":
+        // ARD also needs a room: it voxelizes geometry rather than tracing
+        // against whatever is in the scene. Without this the button is enabled,
+        // the run starts, the progress bar flashes and the solver throws — and
+        // the parameter tab, which does check, disagrees with the card about
+        // whether the same solver can run.
+        return hasPairs && Boolean(s.roomID);
       case "rt60":
         return true;
       default:
@@ -103,6 +125,9 @@ export default function SolverCard({ uuid, defaultExpanded = false }: SolverCard
         break;
       case "ray-tracer":
         emit("RAYTRACER_SET_PROPERTY", { uuid, property: "isRunning", value: true });
+        break;
+      case "ard":
+        emit("CALCULATE_ARD", uuid);
         break;
     }
   }, [solver, uuid]);
@@ -130,7 +155,7 @@ export default function SolverCard({ uuid, defaultExpanded = false }: SolverCard
 
   // Determine if this solver supports calculate/clear
   // RT60 relies on auto-calculate, so no manual calculate button needed
-  const supportsCalculate = ["beam-trace", "image-source", "ray-tracer"].includes(solver.kind);
+  const supportsCalculate = ["beam-trace", "image-source", "ray-tracer", "ard"].includes(solver.kind);
   const supportsClear = ["beam-trace", "image-source", "ray-tracer"].includes(solver.kind);
 
   const ParameterComponent = SolverComponentMap.get(solver.kind);

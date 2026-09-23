@@ -90,3 +90,8 @@ registerSolverFactory("art", async (_cram, _props) => {
   const { ART } = await import("./radiance/art");
   return new ART();
 });
+
+registerSolverFactory("ard", async (_cram, props) => {
+  const { ARD } = await import("./ard");
+  return new ARD(props);
+});

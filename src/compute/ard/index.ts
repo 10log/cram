@@ -121,6 +121,15 @@ export const ARD_BAND_CENTRES = [125, 250, 500, 1000, 2000, 4000, 8000] as const
  */
 export const ARD_REFERENCE_FREQUENCY = 500;
 
+/**
+ * Throughput used for the pre-run time estimate, in cell-steps per second.
+ *
+ * Measured on this implementation; see {@link ARD.estimatedSeconds} for the
+ * table. Deliberately at the conservative end of the range — a run that
+ * finishes sooner than the warning said is a good surprise.
+ */
+export const ARD_CELL_STEPS_PER_SECOND = 1.35e6;
+
 /** Points kept for the store's chart, matching the ray tracer's convention. */
 const MAX_DISPLAY_POINTS = 2000;
 
@@ -299,11 +308,31 @@ export class ARD extends Solver {
     this.workerUsable = true;
     this.progress = 0;
 
+    // The app-wide indicator, as the ray tracer drives it. `ARD_PROGRESS`
+    // carries the same number for anything that wants it per solver; this is
+    // what actually appears on screen, and a wave solve is long enough that
+    // running without one reads as a hang.
+    emit('SHOW_PROGRESS', {
+      message: `Running ${this.name}…`,
+      progress: 0,
+      solverUuid: this.uuid,
+    });
+
     try {
       return await this.execute(started);
     } finally {
       this.releaseWorker();
       this.running = false;
+      // A cancelled or failed run leaves `progress` part-way, and nothing else
+      // will ever move it. Anything keyed on "0 < progress < 1 means running"
+      // then latches on for good — including the solver card, which disables
+      // its Calculate button while calculating and so cannot start the run
+      // that would have cleared it. Zero, not one: the run did not finish.
+      if (this.progress > 0 && this.progress < 1) {
+        this.progress = 0;
+        emit('ARD_PROGRESS', { uuid: this.uuid, progress: 0 });
+      }
+      emit('HIDE_PROGRESS', undefined);
     }
   }
 
@@ -421,9 +450,16 @@ export class ARD extends Solver {
           wallThickness: this.wallThickness,
         };
 
+        const bandLabel = bands.length > 1 ? ` ${frequency} Hz band,` : '';
         const result = await this.runOne(config, frequency, surfaces, (fraction) => {
           this.progress = (runIndex + fraction) / totalRuns;
           emit('ARD_PROGRESS', { uuid: this.uuid, progress: this.progress });
+          emit('UPDATE_PROGRESS', {
+            progress: Math.round(this.progress * 100),
+            message:
+              `${this.name}:${bandLabel} source ${s + 1} of ${sources.length} — ` +
+              `${Math.round(fraction * 100)}%`,
+          });
         });
 
         summaryCourant = result.courant;
@@ -820,29 +856,99 @@ export class ARD extends Solver {
   }
 
   /**
-   * Cells the run would allocate, from the room's bounding box.
+   * Grid extents the run would allocate, in cells.
    *
-   * An over-estimate: the real grid covers only the air region plus its shell
-   * and padding, and a room is rarely its own bounding box. It is the figure to
-   * show before pressing run, because it is available without voxelizing —
-   * which for a large room is itself slow.
+   * From the room's bounding box, so an over-estimate for anything concave:
+   * the real grid covers the air region plus its shell and padding, and a room
+   * is rarely its own bounding box. It is still the figure to show before
+   * pressing run, because it needs no voxelization — which on a large room is
+   * itself slow enough to be the thing you were trying to warn about.
    */
+  get estimatedGrid(): { x: number; y: number; z: number } {
+    const size = this.roomSize();
+    if (!size) return { x: 0, y: 0, z: 0 };
+    const dx = this.cellSize;
+    const pad = 2 * padCellsForWalls(this.wallThickness);
+    return {
+      x: Math.ceil(size.x / dx) + pad,
+      y: Math.ceil(size.y / dx) + pad,
+      z: Math.ceil(size.z / dx) + pad,
+    };
+  }
+
+  /** Cells the grid would allocate. See {@link estimatedGrid}. */
   get estimatedCellCount(): number {
+    const grid = this.estimatedGrid;
+    return grid.x * grid.y * grid.z;
+  }
+
+  /**
+   * Cells that would actually be stepped: the air region plus the wall slabs.
+   *
+   * Not the same thing as {@link estimatedCellCount}, and the gap is wide —
+   * most of the allocated grid is padding for the slabs to grow into. Runtime
+   * follows this one.
+   *
+   * Counted in **cells, from the interior extents**, not in metres from the
+   * bounding box. The voxelized air region is one cell smaller than the box on
+   * each side, because the shell is solid, and at a coarse grid that is most of
+   * the room: on a 3.2 x 2.6 x 2.2 m room at `fMax` 250 (`dx` 53 cm) the air
+   * region is 5 x 4 x 3 cells, and the metric form over-counted it by 2x. The
+   * cell form gets both terms exactly right there — 60 air cells and 94 face
+   * cells, against 60 and 94 actual.
+   */
+  get estimatedSimulatedCells(): number {
+    const size = this.roomSize();
+    if (!size) return 0;
+    const dx = this.cellSize;
+    // Interior extents: the shell occupies the outermost cell on each side.
+    const nx = Math.max(1, Math.round(size.x / dx) - 1);
+    const ny = Math.max(1, Math.round(size.y / dx) - 1);
+    const nz = Math.max(1, Math.round(size.z / dx) - 1);
+    const air = nx * ny * nz;
+    const faceCells = 2 * (nx * ny + ny * nz + nx * nz);
+    return air + faceCells * this.wallThickness;
+  }
+
+  /**
+   * Roughly how long a run would take, in seconds.
+   *
+   * An order of magnitude, not a quote — but the order of magnitude is exactly
+   * what is worth knowing before pressing a button that can block for minutes,
+   * and `fMax` is an `O(fMax⁴)` dial. Throughput measured on this
+   * implementation across four room sizes:
+   *
+   * | room (cells)  | total cells | Mcell-steps/s |
+   * |---------------|-------------|---------------|
+   * | 16 x 14 x 12  | 12 032      | 1.31          |
+   * | 24 x 20 x 16  | 26 624      | 1.39          |
+   * | 32 x 24 x 20  | 45 568      | 1.33          |
+   * | 32 x 32 x 16  | 49 152      | 1.61          |
+   * | 24 x 20 x 16, rigid | 7 680 | 1.90          |
+   *
+   * Flat to within about 5% once absorbing walls exist, which is the default.
+   * The two outliers are both the same Phase 1 finding from the other side:
+   * power-of-two extents take the radix-2 FFT path and run 20% faster, and a
+   * rigid room has no PML slabs — the most expensive partition kind — at all.
+   * {@link ARD_CELL_STEPS_PER_SECOND} takes the conservative end.
+   */
+  get estimatedSeconds(): number {
+    return (this.estimatedSimulatedCells * this.estimatedSteps) / ARD_CELL_STEPS_PER_SECOND;
+  }
+
+  /** Bounding-box size of the room in metres, or null if there is no room. */
+  private roomSize(): { x: number; y: number; z: number } | null {
     const room = this.room;
-    if (!room) return 0;
+    if (!room) return null;
     const size = new Vector3();
     try {
       room.boundingBox.getSize(size);
     } catch {
-      return 0;
+      // A room with no geometry has no bounding box. Nothing to estimate from.
+      return null;
     }
-    const dx = this.cellSize;
-    const pad = 2 * padCellsForWalls(this.wallThickness);
-    return (
-      (Math.ceil(size.x / dx) + pad) *
-      (Math.ceil(size.y / dx) + pad) *
-      (Math.ceil(size.z / dx) + pad)
-    );
+    if (!(size.x > 0) || !(size.y > 0) || !(size.z > 0)) return null;
+    return { x: size.x, y: size.y, z: size.z };
   }
 
   /**
@@ -877,7 +983,7 @@ export class ARD extends Solver {
   }
 
   /**
-   * Steps the run would take.
+   * Steps in a single simulation run.
    *
    * Uses the clamped Courant number, not the requested one. Wall slabs are
    * `PmlPartition`s and every partition shares a time step, so on a 3D room the
@@ -887,11 +993,28 @@ export class ARD extends Solver {
    * rigid-only run, which is the right direction for a figure shown before
    * pressing run.
    */
-  get estimatedSteps(): number {
+  get estimatedStepsPerRun(): number {
     const c = soundSpeed(this.temperature);
     const courant = Math.min(this.courant, PML_CFL_MARGIN * vonNeumannCflLimit(3));
     const dt = (courant * this.cellSize) / c;
-    return Math.ceil(this.irLength / dt) * this.bands.length;
+    return Math.ceil(this.irLength / dt);
+  }
+
+  /**
+   * Simulation runs the solver would perform: one per source, per band.
+   *
+   * A single simulation can carry several sources at once, but then every
+   * receiver records their sum and no per-pair impulse response can be
+   * recovered — so sources multiply the cost the same way bands do. Receivers
+   * do not: they are probes into a field that is being computed anyway.
+   */
+  get estimatedRuns(): number {
+    return Math.max(1, this.sourceIDs.length) * this.bands.length;
+  }
+
+  /** Steps across every run. This is what {@link estimatedSeconds} rides on. */
+  get estimatedSteps(): number {
+    return this.estimatedStepsPerRun * this.estimatedRuns;
   }
 }
 

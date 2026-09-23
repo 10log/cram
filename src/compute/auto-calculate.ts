@@ -20,7 +20,16 @@ let isAutoCalculating = false;
 /** Flag to track if progress is currently shown */
 let isProgressVisible = false;
 
-/** Solver kinds that have a calculate method implemented */
+/**
+ * Solver kinds that have a calculate method implemented.
+ *
+ * **`"ard"` is deliberately absent.** It has a `calculate()` like the rest, but
+ * auto-calculate fires on a 300 ms debounce after any scene edit, and an ARD
+ * run is a wave solve measured in seconds to minutes — dragging a receiver
+ * would queue one per pause. It also refuses to start while one is in flight,
+ * so the second trigger onward would only log errors. Adding it here needs an
+ * explicit opt-in first, not just the entry.
+ */
 const CALCULATABLE_SOLVER_KINDS = ["beam-trace", "rt60", "art"];
 
 /**

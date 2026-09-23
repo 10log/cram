@@ -13,10 +13,12 @@ import type { ImageSourceSaveObject } from "./raytracer/image-source";
 import type ART from "./radiance/art";
 import type { ARTSaveObject, ARTProps } from "./radiance/art";
 import type { BeamTraceSolver, BeamTraceSaveObject } from "./beam-trace";
+import type ARD from "./ard";
+import type { ARDSaveObject, ARDProps } from "./ard";
 
 declare global {
   interface EventTypes {
-    RESTORE_SOLVERS: (RayTracerSaveObject | RT60SaveObject | ImageSourceSaveObject | ARTSaveObject | BeamTraceSaveObject)[];
+    RESTORE_SOLVERS: (RayTracerSaveObject | RT60SaveObject | ImageSourceSaveObject | ARTSaveObject | BeamTraceSaveObject | ARDSaveObject)[];
     REMOVE_SOLVERS: string|string[];
     LOG_SOLVER: string;
     RUN_SOLVER: string;
@@ -45,6 +47,10 @@ async function restoreSolver(kind: string, saveObject: unknown): Promise<Solver>
     case "beam-trace": {
       const { BeamTraceSolver } = await import("./beam-trace");
       return new BeamTraceSolver().restore(saveObject as BeamTraceSaveObject);
+    }
+    case "ard": {
+      const { default: ARDClass } = await import("./ard");
+      return new ARDClass(saveObject as ARDProps).restore(saveObject as ARDSaveObject);
     }
     default:
       throw new Error(`Unknown solver kind: ${kind}`);
@@ -91,6 +97,9 @@ export default function registerSolverEvents(){
             break;
           case "beam-trace":
             emit("ADD_BEAMTRACE", restored as BeamTraceSolver);
+            break;
+          case "ard":
+            emit("ADD_ARD", restored as ARD);
             break;
         }
       } catch (e) {
