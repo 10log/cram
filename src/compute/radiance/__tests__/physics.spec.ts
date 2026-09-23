@@ -238,9 +238,19 @@ describe("Issue #121: one-bounce energy", () => {
     const shot = ctx.unshotEnergy[0].sum();
     shootFromPatch(ctx, 0);
 
-    // Patches 0 and 1 are the two triangles of the same wall; 0 is the shooter
-    // and is cleared, so 1 is where same-surface leakage would show up.
-    expect(ctx.unshotEnergy[1].sum() / shot).toBeLessThan(1e-9);
+    // Find the shooter's coplanar siblings by normal rather than by index: in
+    // a shoebox every wall normal points inward, so the only patches sharing
+    // this one's direction are the other triangles of the same wall. Indices 0
+    // and 1 happen to be that pair today, but a change to triangle emission
+    // order would silently point the assertion at a different wall.
+    const shooterNormal = patchSet.patches[0].normal;
+    const siblings = patchSet.patches
+      .map((q, i) => [i, q] as const)
+      .filter(([i, q]) => i !== 0 && q.normal.dot(shooterNormal) > 0.999)
+      .map(([i]) => i);
+    expect(siblings.length).toBeGreaterThan(0);
+    const leaked = siblings.reduce((sum, i) => sum + ctx.unshotEnergy[i].sum(), 0);
+    expect([siblings, leaked / shot < 1e-9]).toEqual([siblings, true]);
     // And the energy did go somewhere: across the room, not nowhere.
     expect(totalUnshotEnergy(ctx.unshotEnergy) / shot).toBeGreaterThan(0.999);
   }, 60_000);

@@ -49,17 +49,21 @@ export function selectShootingPatch(unshotEnergy: DirectionalResponse[]): number
 }
 
 /**
- * Compute total unshot energy across all patches.
- */
-/**
  * Along-normal offset for a ray leaving a patch, in metres.
  *
  * A barycentric sample sits exactly **on** the triangle plane, so a ray leaving
- * it starts coplanar with its own surface. The self-patch is excluded by index,
- * but its *siblings* — the other triangles of the same wall — are not, and they
- * sit at distance ~0. Without this offset a shoot deposits energy back onto the
- * wall it came from and a gather reads the receiver as occluded by the patch
- * next door, which is what issue #120 described and #207 found still unfixed.
+ * it starts coplanar with its own surface, and the other triangles of the same
+ * wall sit at distance ~0 from that origin. Issue #120 read that as a leak and
+ * #207 repeated it; **measurement refuted it.** `localToWorld` maps every
+ * sampled direction into the patch normal's hemisphere, so a ray cannot turn
+ * back into its own plane and a coplanar sibling receives exactly 0 either way
+ * — with this offset and without it. The measured T30 and its Eyring ratio do
+ * not move.
+ *
+ * It is kept as a guard for the geometry where the hazard is real: a sample
+ * near a shared edge with a *non*-coplanar neighbour, which genuinely does sit
+ * at ~0 distance and is not protected by the hemisphere argument. A guard, not
+ * a fix — see `physics.spec.ts` for the measurement.
  *
  * 1e-4 m: far above the float noise on a room-scale coordinate, far below any
  * geometric feature a room model has.
@@ -78,6 +82,9 @@ export const RAY_ORIGIN_EPSILON = 1e-4;
  */
 export const OCCLUSION_EPSILON = 1e-4;
 
+/**
+ * Compute total unshot energy across all patches.
+ */
 export function totalUnshotEnergy(unshotEnergy: DirectionalResponse[]): number {
   let total = 0;
   for (let i = 0; i < unshotEnergy.length; i++) {
@@ -114,8 +121,9 @@ export function shootFromPatch(ctx: ShootingContext, patchIdx: number): void {
     const gain = 1.0 / nRays;
 
     for (let r = 0; r < nRays; r++) {
-      // Random point on the source patch, lifted off its own plane so the
-      // sibling triangles of this wall are not sitting at distance zero.
+      // Random point on the source patch, lifted off its own plane. Coplanar
+      // siblings are unreachable regardless — see RAY_ORIGIN_EPSILON — so this
+      // guards the non-coplanar neighbour at a shared edge.
       const origin = samplePointOnPatch(srcPatch).addScaledVector(
         srcPatch.normal,
         RAY_ORIGIN_EPSILON,
