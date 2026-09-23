@@ -272,6 +272,20 @@ export class PmlPartition extends PartitionBase {
     this.clearForce();
   }
 
+  scaleState(factor: number): void {
+    for (let i = 0; i < this.size; i++) {
+      this.p[i] *= factor;
+      this.pOld[i] *= factor;
+      this.pressure[i] *= factor;
+    }
+    // The auxiliary fields are part of the state too; leaving them unscaled
+    // would let them keep driving a field that has been damped away.
+    for (let d = 0; d < 3; d++) {
+      const phi = this.phi[d];
+      for (let i = 0; i < this.size; i++) phi[i] *= factor;
+    }
+  }
+
   /** Seed both time levels, for tests. */
   setPressure(values: ArrayLike<number>): void {
     if (values.length !== this.size) {

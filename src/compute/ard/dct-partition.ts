@@ -120,6 +120,16 @@ export class DctPartition extends PartitionBase {
     this.clearForce();
   }
 
+  scaleState(factor: number): void {
+    // The modes are the state; the pressure field is recomputed from them each
+    // step, so scaling it here would be undone immediately.
+    for (let i = 0; i < this.size; i++) {
+      this.modes[i] *= factor;
+      this.prevModes[i] *= factor;
+      this.pressure[i] *= factor;
+    }
+  }
+
   /**
    * Conserved modal energy.
    *

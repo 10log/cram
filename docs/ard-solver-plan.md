@@ -670,7 +670,98 @@ combined size — this is the single most important correctness test in the port
 `reflectionMagnitude(0) === 1` and `reflectionMagnitude(1) === 0`; a wall
 configured for `alpha = 0.3` reflects `|R| = sqrt(0.7) ± 0.05` in a 1D test.
 
-### Phase 6 — Simulation Driver and Worker
+### Phase 6 — Simulation Driver and Worker — **implemented**
+
+**Created** `src/compute/ard/{simulation,walls-from-grid,ard.worker}.ts` and
+`__tests__/{simulation,walls-from-grid,ard.worker}.spec.ts`.
+
+All three physics checks below pass: the direct arrival lands within one sample
+of `round(distance / (c·Δt))` at three distances, its amplitude follows `1/r`,
+field energy does not grow once the source stops (and decays with absorbing
+walls where it holds flat with rigid ones), and a rigid shoebox's spectrum shows
+peaks at the analytic mode frequencies.
+
+Three findings, each of which changes something outside this phase:
+
+**The source must be DC-free, and a plain Gaussian is not.** Injecting an
+all-positive forcing pulse pushes net volume into a sealed rigid room, which
+drives the DC mode — `ω = 0`, no restoring force — so the mean pressure ramps
+linearly and the field energy grows without bound. Measured: a plain Gaussian
+grew the energy 27x between steps 120 and 600 with the source long silent, and
+buried the modal peaks under the ramp. `bandlimitedPulse` is therefore the
+first derivative of a Gaussian, whose integral is exactly zero; it holds at
+1.1x. The growth is real physics, just not what an acoustic source does.
+
+**Absorbing walls reimpose a CFL limit on everything, and §5 undercounts their
+cost by 3x.** A wall slab is a `PmlPartition` running an explicit update, so it
+is CFL-limited where a `DctPartition` is not — and since every partition shares
+one `Δt`, the walls set the time step for the whole simulation: about Courant
+0.446 on a 3D room rather than this plan's default 0.5. Worse, slabs are not
+free in cells. Measured on a 3 x 2.4 x 2 m room at `dx = 0.1`:
+
+| thickness | max α | slab cells |
+|-----------|-------|------------|
+| 4         | 0.813 | ~1.0x room |
+| 8         | 0.958 | ~2.1x room |
+| 12        | 0.992 | ~3.1x room |
+| 20        | 0.999 | ~5.2x room |
+
+**§5's table counts room cells only, so its rows are optimistic by roughly 3x
+once walls are included.** The default thickness is 8 — α up to 0.958, past any
+material in the database. Both problems disappear with a locally-reacting
+impedance boundary (reference [6]), which costs no cells and has no CFL limit;
+that is now the most valuable single change available to this solver.
+
+**Phase 2's default padding makes walls impossible.** A slab grows outward from
+a room face into solid cells, and a voxelized room's shell is one cell thick, so
+the space has to come from the grid's padding — which defaults to 1. At that
+setting every face is dropped and the room comes out perfectly rigid, carrying
+no absorption at all. `padCellsForWalls(thickness)` gives the figure, and
+`createArdSimulation` **throws** rather than warns when walls were asked for and
+every face was dropped for lack of room: the run would otherwise complete and
+return a reverberation time set by nothing but the room's volume, which looks
+entirely publishable. `WallPlan.droppedForSpace` is what distinguishes that from
+the legitimate case of every material being perfectly reflective, which is
+`skippedRigid` and only warns.
+
+PML corners are avoided as the Phase 5 contract requires: slabs are clipped to
+their own face's extent, so the corner region beyond two faces is simply left
+empty and no cell is ever inside two slabs. Partly-shared faces are covered by
+running `decompose` on the face's exposed mask, and slabs claim the solid cells
+they occupy so two never overlap inside a thin pillar.
+`__tests__/walls-from-grid.spec.ts` checks each of those three against the mask
+rule directly, including the concave corner of an L-room where two faces want
+the same cells and one must lose.
+
+Four smaller corrections, from review:
+
+- **A face whose material absorbs nothing gets no slab.** A PML at `α = 0` is
+  acoustically identical to a rigid face while costing its cells and pinning the
+  whole simulation to the PML's CFL limit. Skipping it means a fully rigid room
+  keeps the requested Courant number, which is the observable difference.
+- **The CFL clamp keys off slabs actually placed, not the `walls` flag.** The
+  two diverge exactly in the case above.
+- **Air attenuation is applied to room partitions only.** A PML slab's damping
+  is already calibrated to a target reflection coefficient; scaling its state on
+  top of that makes the wall more absorbing than its material, and also scales
+  the auxiliary `φ` fields, which are not pressure.
+- **`bandlimitedPulse` subtracts the sample mean.** The Gaussian derivative's
+  integral is zero over `(−∞, ∞)`, which a finite buffer is not. Measured on a
+  buffer truncated 1.3σ past the peak: mean-pressure drift over 600 silent steps
+  is 0.24 of the field peak uncorrected and 2e-8 corrected, the latter being the
+  float32 buffer's own quantization floor.
+
+**The worker's cancel state is per run, not per module.** The chunked loop
+yields with `setTimeout`, so between chunks the worker is idle and dispatches
+whatever arrives next. A module-level `cancelled` flag does not survive that: a
+second `start` resets it to `false` and two loops then interleave on one flag,
+so a `cancel` aimed at the second stops both and both post their own `done`. The
+token is created per run and closed over by that run's chunks, a second `start`
+is refused while one is live, and a throw inside a chunk — which runs outside
+the `start` handler's `try` — is caught and reported rather than leaving the
+worker silent and permanently marked busy.
+
+**Original specification follows.**
 
 **Create** `src/compute/ard/simulation.ts`, `src/compute/ard/ard.worker.ts`
 
@@ -896,6 +987,11 @@ room (a shoebox decomposes to a single box, which is ARD's best case). It is a
 injection and recording all add on top, and a room that decomposes into many
 boxes pays more.
 
+**Phase 6 quantified the largest of those.** Absorbing wall slabs at the default
+8-cell thickness add about twice the room's cell count, so a simulation with
+walls is roughly **3x** the figures below. Multiply every row accordingly until
+a boundary condition that does not cost cells replaces the PML (Phase 6 notes).
+
 An earlier revision of this table carried estimates that were optimistic by
 roughly 10x. They were replaced once Phase 1 could be benchmarked. Phase 1 also
 identified the reason the numbers are as bad as they are — Bluestein transforms
@@ -954,8 +1050,9 @@ should confirm no leaked worker or retained `Float64Array`s after solver removal
 | `src/compute/ard/interface.ts` | **Done** | 6th-order interface residual forcing |
 | `src/compute/ard/wall.ts` | **Done** | alpha -> PML damping calibration for room boundaries |
 | `src/compute/ard/source.ts` | Create | Bandlimited Gaussian pulse, calibration, deconvolution |
-| `src/compute/ard/simulation.ts` | Create | Portable time-loop driver |
-| `src/compute/ard/ard.worker.ts` | Create | Worker host with progress messaging |
+| `src/compute/ard/simulation.ts` | **Done** | Portable time-loop driver |
+| `src/compute/ard/walls-from-grid.ts` | **Done** | Wall slab placement: corner avoidance, overlap claims |
+| `src/compute/ard/ard.worker.ts` | **Done** | Worker host with progress messaging |
 | `src/compute/ard/gpu/ard.wgsl` | Create (Phase 10) | Modal update, stencil and DCT compute kernels |
 | `src/compute/ard/gpu/gpu-ard.ts` | Create (Phase 10) | Buffer packing and dispatch, reusing `raytracer/gpu/gpu-context.ts` |
 | `src/compute/ard/visualization.ts` | Create | Pressure-field display mesh / slice plane |
