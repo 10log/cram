@@ -1,5 +1,12 @@
 import * as THREE from "three";
-import Surface from "../../objects/surface";
+// Type-only. Importing the `Surface` *class* here pulled its whole dependency
+// chain — messenger, the container store, and `compute/csg`, whose modeling
+// bundle top-level-awaits a browser URL — into the ray tracer's numerical core,
+// which is why nothing in `__tests__/` could execute `traceRay` and every spec
+// in this directory tests the source text instead. The one runtime use was an
+// `instanceof` guarding a hit counter; it is duck-typed below, the way
+// `SurfaceProperties.tsx` already checks for the same property.
+import type Surface from "../../objects/surface";
 import { probability } from '../../common/probability';
 import { BandEnergy, Chain, RayPath, SELF_INTERSECTION_OFFSET } from "./types";
 import { reflectDirection, worldHitNormal } from "./world-normal";
@@ -134,8 +141,12 @@ export function traceRay(
         energy,
       });
 
-      if (intersections[0].object.parent instanceof Surface) {
-        intersections[0].object.parent.numHits += 1;
+      // Anything carrying a numeric `numHits` gets it bumped. In a real scene
+      // that is exactly the `Surface` instances the `instanceof` used to match,
+      // since nothing else in the hierarchy declares it.
+      const hitParent = intersections[0].object.parent as { numHits?: number } | null;
+      if (hitParent && typeof hitParent.numHits === "number") {
+        hitParent.numHits += 1;
       }
 
       const normal = nWorld;
