@@ -2,12 +2,14 @@ import { ShaderMaterial, Mesh, DataTexture, IUniform, WebGLRenderTarget } from '
 import { GPUComputationRenderer, Variable } from '../../../node_modules/@types/three/examples/jsm/misc/GPUComputationRenderer.js';
 import { default as Solver } from '../solver';
 import { FdtdSlice } from './slice';
+import { DEFAULT_DAMPING, FDTD_REFERENCE_FREQUENCY } from './index-constants';
 import { default as Source } from '../../objects/source';
 import { default as Receiver } from '../../objects/receiver';
 import { default as FDTDWall, FDTDWallProps } from './fdtd-wall';
 import { default as Surface } from '../../objects/surface';
 import { KeyValuePair } from '../../common/key-value-pair';
 import { EditorModes } from '../../constants';
+export { DEFAULT_DAMPING, FDTD_REFERENCE_FREQUENCY };
 export declare const FDTD_2D_Defaults: {
     width: number;
     height: number;
@@ -109,6 +111,13 @@ declare class FDTD_2D extends Solver {
     addWallsFromSurfaceEdges(surface: Surface): void;
     fillSourceTexture(): void;
     toggleWall(index: number): void;
+    /** Courant number the field runs at. The CFL locus puts it at 1/√2. */
+    get courant(): number;
+    /**
+     * Highest frequency the walls deliver their coefficient at, within about
+     * 0.05 in α. Above it they read as more reflective than their materials.
+     */
+    get impedanceFrequencyLimit(): number;
     updateWalls(): void;
     updateSourceTexture(): void;
     fillTexture(texture: DataTexture): void;

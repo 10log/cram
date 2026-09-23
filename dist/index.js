@@ -626,7 +626,7 @@ ei("ray-tracer", async (e, t) => {
 	let { default: n } = await import("./energy-decay-Bo6TsXNQ.mjs");
 	return new n();
 }), ei("fdtd-2d", async (e, t) => {
-	let { default: n } = await import("./2d-fdtd-Cv3UztGp.mjs");
+	let { default: n } = await import("./2d-fdtd-DAgNVAPd.mjs");
 	return new n();
 }), ei("beam-trace", async (e, t) => {
 	let { BeamTraceSolver: n } = await import("./beam-trace-B7Jz7hai.mjs");
@@ -635,7 +635,7 @@ ei("ray-tracer", async (e, t) => {
 	let { ART: n } = await import("./art-O3SL0weA.mjs");
 	return new n();
 }), ei("ard", async (e, t) => {
-	let { ARD: n } = await import("./ard-DFJXgs0-.mjs");
+	let { ARD: n } = await import("./ard-DSp2Qk27.mjs");
 	return new n(t);
 });
 //#endregion
@@ -6710,14 +6710,14 @@ async function $o(e, t) {
 			return new e().restore(t);
 		}
 		case "ard": {
-			let { default: e } = await import("./ard-DFJXgs0-.mjs");
+			let { default: e } = await import("./ard-DSp2Qk27.mjs");
 			return new e(t).restore(t);
 		}
 		default: throw Error(`Unknown solver kind: ${e}`);
 	}
 }
 function es() {
-	import("./events-B2lInp82.mjs").then((e) => e.default()), r("LOG_SOLVER", (e) => {
+	import("./events-BQVyv-wU.mjs").then((e) => e.default()), r("LOG_SOLVER", (e) => {
 		console.log(i.getState().solvers[e]);
 	}), r("REMOVE_SOLVERS", (e) => {
 		let t = i.getState().solvers, n = typeof e == "string" ? [e] : e;
@@ -11344,10 +11344,10 @@ var gd = {
 				id: "damping",
 				label: "Damping",
 				labelPosition: "left",
-				tooltipText: "Numerical sponge on velocity — not air absorption and not a surface material",
-				min: .7,
+				tooltipText: "Numerical sponge on velocity, not absorption. 1 is off and is the default — surfaces carry their own materials. Below 1 it double-counts against them, imposes a decay that changes with cell size, and is only conditionally stable: 0.999 diverges on a 6 x 4 m room at 6 cm cells.",
+				min: .999,
 				max: 1,
-				step: .001,
+				step: 1e-5,
 				hasToolTip: x,
 				value: l,
 				onChange: (e) => {
@@ -11447,8 +11447,8 @@ var gd = {
 			})] }, e))]
 		}),
 		/* @__PURE__ */ z(J, { children: /* @__PURE__ */ z(Y, {
-			label: `Simulated ${Number(r.time).toFixed(4)} s · ${Math.round(1 / r.dt)} Hz`,
-			tooltip: "Simulated time and FDTD sample rate (1/dt). Independent of monitor refresh."
+			label: `Simulated ${Number(r.time).toFixed(4)} s · ${Math.round(1 / r.dt)} Hz · walls to ${Math.round(r.impedanceFrequencyLimit)} Hz`,
+			tooltip: "Simulated time, FDTD sample rate (1/dt), and the highest frequency the walls deliver their absorption at on this grid. Above that they read as more reflective than their materials — use a smaller cell size."
 		}) }),
 		/* @__PURE__ */ B(J, { children: [/* @__PURE__ */ z(Y, {
 			label: "Run/Pause",
