@@ -50,8 +50,27 @@
  * geometrical solvers cannot drift apart about what a material is.
  */
 export function impedanceForAbsorption(α: number): number {
-  const rootOneMinusAlpha = Math.sqrt(Math.max(0, 1 - Math.min(1, α)));
-  return rootOneMinusAlpha >= 1 ? Infinity : (1 + rootOneMinusAlpha) / (1 - rootOneMinusAlpha);
+  const r = reflectionMagnitude(α);
+  return r >= 1 ? Infinity : (1 + r) / (1 - r);
+}
+
+/**
+ * `sqrt(1 − α)` — the normal-incidence reflection magnitude — over a clamped α.
+ *
+ * Both public functions go through this so the clamp cannot drift between the
+ * `ξ` form and the division-free one. `α` outside [0, 1] clamps, and a
+ * **non-finite** α falls back to 0, i.e. rigid: `Math.min(1, NaN)` is `NaN` and
+ * would otherwise propagate all the way out as a `NaN` reflection, so a failed
+ * material lookup would silently poison an entire ray path rather than behave
+ * like an unpainted wall.
+ *
+ * `θ` is deliberately **not** given the same treatment. A `NaN` angle means a
+ * degenerate surface normal, which is a geometry bug worth surfacing rather
+ * than defaulting; there is no sensible angle to substitute.
+ */
+function reflectionMagnitude(α: number): number {
+  const clamped = Number.isFinite(α) ? Math.min(1, Math.max(0, α)) : 0;
+  return Math.sqrt(1 - clamped);
 }
 
 /**
@@ -71,7 +90,7 @@ export function impedanceForAbsorption(α: number): number {
  * the same form for that reason.
  */
 export function pressureReflectionCoefficient(α: number, θ: number): number {
-  const r = Math.sqrt(Math.max(0, 1 - Math.min(1, α)));
+  const r = reflectionMagnitude(α);
   const cosθ = Math.abs(Math.cos(θ));
   const numerator = (1 + r) * cosθ - (1 - r);
   const denominator = (1 + r) * cosθ + (1 - r);

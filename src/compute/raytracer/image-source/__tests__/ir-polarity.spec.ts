@@ -68,16 +68,30 @@ describe("Issue #124: signed specular IR", () => {
   // sign change inverts where a rigid one does not. `Math.abs` on R would pass
   // both tests above and fail this one.
   test("first-order sign follows R past its zero crossing", () => {
-    const alpha = 0.3;
+    // alpha = 0.6 puts the crossing at 77 degrees, leaving 13 degrees of room
+    // before grazing; at 0.3 it sits at 84.9 and there is barely 5. The angle is
+    // then chosen far enough past it that |R| is 0.44 rather than a value
+    // hugging the null, so this measures a sign and not the noise floor -- the
+    // same theta also feeds the energy path, which would otherwise scale the
+    // sample toward zero exactly where the sign is being read.
+    const alpha = 0.6;
     const xi = impedanceForAbsorption(alpha);
-    const grazingOfCrossing = Math.acos(1 / xi) + 0.05;
-    expect(pressureReflectionCoefficient(alpha, grazingOfCrossing)).toBeLessThan(0);
+    const crossing = Math.acos(1 / xi);
+    const pastCrossing = (85 * Math.PI) / 180;
+    expect(pastCrossing).toBeGreaterThan(crossing);
+    expect(pastCrossing).toBeLessThan(Math.PI / 2);
+
+    const R = pressureReflectionCoefficient(alpha, pastCrossing);
+    expect(R).toBeLessThan(0);
+    // Margin stated rather than assumed: a null-hugging angle would pass the
+    // sign assertions below on an arbitrarily small sample.
+    expect(Math.abs(R)).toBeGreaterThan(0.3);
 
     const upright = imageSourceArrivalPressureIR([100], [1000], oneBounce(2, 0), 20);
     const inverted = imageSourceArrivalPressureIR(
       [100],
       [1000],
-      oneBounceAt(2, alpha, grazingOfCrossing),
+      oneBounceAt(2, alpha, pastCrossing),
       20,
     );
     expect(upright[0]).toBeGreaterThan(0);

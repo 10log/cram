@@ -111,6 +111,30 @@ describe('Issue #200: locally-reacting impedance branch', () => {
     expect(impedanceForAbsorption(-0.1)).toBe(Infinity);
   });
 
+  it('falls back to rigid for a coefficient that is not a number', () => {
+    // The clamp handles out-of-range, but `Math.min(1, NaN)` is NaN and would
+    // have propagated all the way out: a failed material lookup would return a
+    // NaN reflection and poison an entire ray path rather than behave like an
+    // unpainted wall. Both public functions go through one clamp so this cannot
+    // hold for the impedance and not for the reflection.
+    for (const bad of [NaN, undefined as unknown as number, Infinity, -Infinity]) {
+      expect(impedanceForAbsorption(bad)).toBe(Infinity);
+      for (const deg of [0, 45, 89]) {
+        const theta = (deg * Math.PI) / 180;
+        expect(pressureReflectionCoefficient(bad, theta)).toBeCloseTo(1, 12);
+        expect(reflectionCoefficient(bad, theta)).toBeCloseTo(1, 12);
+      }
+    }
+    // Out of range still clamps rather than extrapolating.
+    expect(impedanceForAbsorption(-0.5)).toBe(Infinity);
+    expect(impedanceForAbsorption(1.5)).toBe(1);
+
+    // theta is deliberately not gated: a NaN angle is a degenerate surface
+    // normal, which is a geometry bug worth surfacing, and there is no sensible
+    // angle to substitute.
+    expect(Number.isNaN(pressureReflectionCoefficient(0.3, NaN))).toBe(true);
+  });
+
   it('matches the xi form it is algebraically equal to', () => {
     // `pressureReflectionCoefficient` avoids ever forming xi, so that the GPU
     // path can evaluate the same expression in f32 without `inf`. That is an
@@ -171,14 +195,18 @@ describe('reflectionCoefficient', () => {
 
   describe('High Absorption (α = 1)', () => {
     it('returns small reflection for α=1 at oblique angle', () => {
-      // When α = 1: sqrt(1-α) = 0, ξo = (1-0)/(1+0) = 1
+      // α = 1 is the one coefficient where both roots of α = 1 − R² coincide:
+      // r = sqrt(1-α) = 0 gives ξ = (1+0)/(1-0) = 1 either way, the matched
+      // surface. That is why the numbers in this block survived the branch fix
+      // in #200 unchanged, and why they could not have caught it — see the
+      // `Issue #200` block at the top of this file for the assertions that do.
       // At π/4: R = ((1*cos(π/4) - 1) / (1*cos(π/4) + 1))² ≈ 0.029
       const R = reflectionCoefficient(1, Math.PI / 4);
       expect(R).toBeCloseTo(0.029, 2);
     });
 
     it('returns 0 at normal incidence for α = 1 (perfect absorption)', () => {
-      // At θ = 0: cos(0) = 1, ξo = 1
+      // At θ = 0: cos(0) = 1 and ξ = 1 (matched, see above)
       // R = ((1*1 - 1) / (1*1 + 1))² = 0
       // Full absorption at normal incidence — physically correct
       const R = reflectionCoefficient(1, 0);
@@ -186,8 +214,9 @@ describe('reflectionCoefficient', () => {
     });
 
     it('approaches 1 at grazing incidence for α = 1', () => {
-      // At θ → π/2: cos(θ) → 0, so ξo*cos(θ) → 0
-      // R = ((0 - 1) / (0 + 1))² = 1 (total reflection at grazing)
+      // At θ → π/2: cos(θ) → 0, so ξ*cos(θ) → 0
+      // R = ((0 - 1) / (0 + 1))² = 1 (total reflection at grazing).
+      // True for any finite ξ, which is why this one is also branch-blind.
       const R = reflectionCoefficient(1, Math.PI / 2 - 0.001);
       expect(R).toBeCloseTo(1, 1);
     });
