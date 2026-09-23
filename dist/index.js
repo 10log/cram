@@ -590,7 +590,7 @@ async function ti(e, t, n) {
 	return r(t, n);
 }
 ei("ray-tracer", async (e, t) => {
-	let { default: n } = await import("./raytracer-Bi-3291e.mjs");
+	let { default: n } = await import("./raytracer-DDauHADw.mjs");
 	return new n(t);
 }), ei("image-source", async (e, t) => {
 	let { ImageSourceSolver: n } = await import("./image-source-Zd9bD6ML.mjs");
@@ -629,7 +629,7 @@ ei("ray-tracer", async (e, t) => {
 	let { default: n } = await import("./2d-fdtd-mIjGuGYc.mjs");
 	return new n();
 }), ei("beam-trace", async (e, t) => {
-	let { BeamTraceSolver: n } = await import("./beam-trace-B7Jz7hai.mjs");
+	let { BeamTraceSolver: n } = await import("./beam-trace-udODWtLp.mjs");
 	return new n();
 }), ei("art", async (e, t) => {
 	let { ART: n } = await import("./art-O3SL0weA.mjs");
@@ -6690,7 +6690,7 @@ function Qo() {
 async function $o(e, t) {
 	switch (e) {
 		case "ray-tracer": {
-			let { default: e } = await import("./raytracer-Bi-3291e.mjs");
+			let { default: e } = await import("./raytracer-DDauHADw.mjs");
 			return new e(t).restore(t);
 		}
 		case "rt60": {
@@ -6706,7 +6706,7 @@ async function $o(e, t) {
 			return new e(t).restore(t);
 		}
 		case "beam-trace": {
-			let { BeamTraceSolver: e } = await import("./beam-trace-B7Jz7hai.mjs");
+			let { BeamTraceSolver: e } = await import("./beam-trace-udODWtLp.mjs");
 			return new e().restore(t);
 		}
 		case "ard": {

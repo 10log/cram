@@ -2,7 +2,7 @@ import { f as lerp } from "./renderer-Cj8dxF6d.mjs";
 import "./acoustics-SIlOec_Y.mjs";
 import { r as airAttenuation } from "./air-attenuation-CZldbT4Y.mjs";
 import { t as soundSpeed } from "./sound-speed-CfEkirc1.mjs";
-import { i as numbersEqualWithinTolerence, r as Surface } from "./room-2mGM6oBF.mjs";
+import { i as numbersEqualWithinTolerence } from "./room-2mGM6oBF.mjs";
 import { r as loadDecoderFilters } from "./hrtf-data-D6qGJN2M.mjs";
 import * as THREE from "three";
 //#region src/compute/acoustics/util/sum.ts
@@ -2829,7 +2829,7 @@ topology.compareCells = compareCells;
 function compareZipped(e, t) {
 	return compareCells(e[0], t[0]);
 }
-function normalize(e, t) {
+function normalize$1(e, t) {
 	if (t) {
 		for (var n = e.length, r = Array(n), i = 0; i < n; ++i) r[i] = [e[i], t[i]];
 		r.sort(compareZipped);
@@ -2838,7 +2838,7 @@ function normalize(e, t) {
 	}
 	return e.sort(compareCells), e;
 }
-topology.normalize = normalize;
+topology.normalize = normalize$1;
 function unique(e) {
 	if (e.length === 0) return [];
 	for (var t = 1, n = e.length, r = 1; r < n; ++r) {
@@ -2885,7 +2885,7 @@ function explode(e) {
 		for (var c = [], l = 0; l < a; ++l) o >>> l & 1 && c.push(i[l]);
 		t.push(c);
 	}
-	return normalize(t);
+	return normalize$1(t);
 }
 topology.explode = explode;
 function skeleton(e, t) {
@@ -2894,7 +2894,7 @@ function skeleton(e, t) {
 		for (var s = Array(t + 1), c = 0, l = 0; l < a.length; ++l) o & 1 << l && (s[c++] = a[l]);
 		n.push(s);
 	}
-	return normalize(n);
+	return normalize$1(n);
 }
 topology.skeleton = skeleton;
 function boundary(e) {
@@ -2902,7 +2902,7 @@ function boundary(e) {
 		for (var s = Array(i.length - 1), c = 0, l = 0; c < o; ++c) c !== a && (s[l++] = i[c]);
 		t.push(s);
 	}
-	return normalize(t);
+	return normalize$1(t);
 }
 topology.boundary = boundary;
 function connectedComponents_dense(e, t) {
@@ -2915,7 +2915,7 @@ function connectedComponents_dense(e, t) {
 	return s;
 }
 function connectedComponents_sparse(e) {
-	for (var t = unique(normalize(skeleton(e, 0))), n = new UnionFind(t.length), r = 0; r < e.length; ++r) for (var i = e[r], a = 0; a < i.length; ++a) for (var o = findCell(t, [i[a]]), s = a + 1; s < i.length; ++s) n.link(o, findCell(t, [i[s]]));
+	for (var t = unique(normalize$1(skeleton(e, 0))), n = new UnionFind(t.length), r = 0; r < e.length; ++r) for (var i = e[r], a = 0; a < i.length; ++a) for (var o = findCell(t, [i[a]]), s = a + 1; s < i.length; ++s) n.link(o, findCell(t, [i[s]]));
 	for (var c = [], l = n.ranks, r = 0; r < l.length; ++r) l[r] = -1;
 	for (var r = 0; r < e.length; ++r) {
 		var u = n.find(findCell(t, [e[r][0]]));
@@ -16334,7 +16334,62 @@ async function calculateBinauralFromAmbisonic(e) {
 }
 //#endregion
 //#region src/compute/shared/quick-estimate-types.ts
-var QUICK_ESTIMATE_MAX_ORDER = 1e3, RT60_DECAY_RATIO = 1e6;
+var QUICK_ESTIMATE_MAX_ORDER = 1e3, RT60_DECAY_RATIO = 1e6, SELF_INTERSECTION_OFFSET = .01, RESPONSE_TIME_PADDING = .05, MAX_DISPLAY_POINTS = 2e3, defaults = {
+	name: "Ray Tracer",
+	roomID: "",
+	sourceIDs: [],
+	surfaceIDs: [],
+	receiverIDs: [],
+	updateInterval: 5,
+	reflectionOrder: 50,
+	isRunning: !1,
+	runningWithoutReceivers: !1,
+	passes: 100,
+	pointSize: 2,
+	raysVisible: !0,
+	pointsVisible: !0,
+	invertedDrawStyle: !1,
+	paths: {},
+	plotStyle: { mode: "lines" },
+	frequencies: [
+		125,
+		250,
+		500,
+		1e3,
+		2e3,
+		4e3,
+		8e3
+	],
+	convergenceThreshold: .01,
+	autoStop: !0,
+	rrThreshold: .1,
+	maxStoredPaths: 1e5,
+	edgeDiffractionEnabled: !1,
+	lateReverbTailEnabled: !1,
+	tailCrossfadeTime: 0,
+	tailCrossfadeDuration: .05,
+	gpuEnabled: !1,
+	gpuBatchSize: 1e4
+}, DRAWSTYLE = /* @__PURE__ */ function(e) {
+	return e[e.ENERGY = 0] = "ENERGY", e[e.ANGLE = 1] = "ANGLE", e[e.ANGLE_ENERGY = 2] = "ANGLE_ENERGY", e;
+}({});
+function normalize(e) {
+	let t = Math.abs(e[0]);
+	for (let n = 1; n < e.length; n++) Math.abs(e[n]) > t && (t = Math.abs(e[n]));
+	if (t !== 0) for (let n = 0; n < e.length; n++) e[n] /= t;
+	return e;
+}
+//#endregion
+//#region src/compute/raytracer/world-normal.ts
+function worldHitNormal(e, t, n) {
+	if (e.normal && e.normal.lengthSq() > 0) t.copy(e.normal);
+	else if (e.face) t.copy(e.face.normal);
+	else return null;
+	return e.object?.matrixWorld ? t.transformDirection(e.object.matrixWorld) : t.normalize(), n && t.dot(n) > 0 && t.multiplyScalar(-1), t;
+}
+function reflectDirection(e, t, n) {
+	return n.copy(e).addScaledVector(t, -2 * e.dot(t));
+}
 //#endregion
 //#region src/compute/shared/quick-estimate.ts
 function quickEstimateStep(e, t, n, r, i, a, o = QUICK_ESTIMATE_MAX_ORDER) {
@@ -16342,33 +16397,33 @@ function quickEstimateStep(e, t, n, r, i, a, o = QUICK_ESTIMATE_MAX_ORDER) {
 	do
 		u = Math.random() * 2 - 1, d = Math.random() * 2 - 1, f = Math.random() * 2 - 1, p = u * u + d * d + f * f;
 	while (p > 1 || p < 1e-6);
-	let m = new THREE.Vector3(u, d, f).normalize(), h = 0, g = Array(i.length).fill(r), _ = 0, v = !1, y = 0;
+	let m = new THREE.Vector3(u, d, f).normalize(), h = 0, g = new THREE.Vector3(), _ = Array(i.length).fill(r), v = 0, y = !1, b = 0;
 	airAttenuation(i, a);
-	let b = {};
-	for (; !v && _ < o;) {
+	let x = {};
+	for (; !y && v < o;) {
 		e.ray.set(l, m);
 		let n = e.intersectObjects(t, !0);
 		if (n.length > 0) {
-			h = m.clone().multiplyScalar(-1).angleTo(n[0].face.normal), y += n[0].distance;
-			let e = n[0].object.parent;
-			for (let t = 0; t < i.length; t++) {
-				let n = i[t], a = 1;
-				e.kind === "surface" && (a = e.reflectionFunction(n, h)), g[t] *= a;
-				let o = r / g[t] > RT60_DECAY_RATIO;
-				o && (c[t] = y / s), v ||= o;
+			let e = worldHitNormal(n[0], g, m);
+			h = e ? m.clone().multiplyScalar(-1).angleTo(e) : 0, b += n[0].distance;
+			let t = n[0].object.parent;
+			for (let e = 0; e < i.length; e++) {
+				let n = i[e], a = 1;
+				t.kind === "surface" && (a = t.reflectionFunction(n, h)), _[e] *= a;
+				let o = r / _[e] > RT60_DECAY_RATIO;
+				o && (c[e] = b / s), y ||= o;
 			}
-			n[0].object.parent instanceof Surface && (n[0].object.parent.numHits += 1);
-			let t = n[0].face.normal.normalize();
-			m.sub(t.clone().multiplyScalar(m.dot(t)).multiplyScalar(2)).normalize(), l.copy(n[0].point), b = n[0];
+			let a = n[0].object.parent;
+			a && typeof a.numHits == "number" && (a.numHits += 1), e && m.addScaledVector(e, -2 * m.dot(e)).normalize(), l.copy(n[0].point), e && l.addScaledVector(e, SELF_INTERSECTION_OFFSET), x = n[0];
 		}
-		_ += 1;
+		v += 1;
 	}
 	return {
-		distance: y,
+		distance: b,
 		rt60s: c,
 		angle: h,
 		direction: m,
-		lastIntersection: b
+		lastIntersection: x
 	};
 }
 //#endregion
@@ -16600,6 +16655,6 @@ function findDiffractionPaths(e, t, n, r, i, a, o, s) {
 	return c;
 }
 //#endregion
-export { resampleResponseByIntensity as _, QUICK_ESTIMATE_MAX_ORDER as a, HISTOGRAM_NUM_BINS as b, applyAmbisonicTail as c, synthesizeTail as d, encodeBufferFromDirection as f, calculateT60 as g, calculateT30 as h, quickEstimateStep as i, assembleFinalIR as l, calculateT20 as m, buildEdgeGraph as n, RT60_DECAY_RATIO as o, getAmbisonicChannelCount as p, lookingBackArrivalDirection as r, calculateBinauralFromAmbisonic as s, findDiffractionPaths as t, extractDecayParameters as u, linearRegression as v, HISTOGRAM_BIN_WIDTH as y };
+export { calculateT30 as C, HISTOGRAM_BIN_WIDTH as D, linearRegression as E, HISTOGRAM_NUM_BINS as O, calculateT20 as S, resampleResponseByIntensity as T, assembleFinalIR as _, reflectDirection as a, encodeBufferFromDirection as b, MAX_DISPLAY_POINTS as c, defaults as d, normalize as f, applyAmbisonicTail as g, calculateBinauralFromAmbisonic as h, quickEstimateStep as i, RESPONSE_TIME_PADDING as l, RT60_DECAY_RATIO as m, buildEdgeGraph as n, worldHitNormal as o, QUICK_ESTIMATE_MAX_ORDER as p, lookingBackArrivalDirection as r, DRAWSTYLE as s, findDiffractionPaths as t, SELF_INTERSECTION_OFFSET as u, extractDecayParameters as v, calculateT60 as w, getAmbisonicChannelCount as x, synthesizeTail as y };
 
-//# sourceMappingURL=diffraction-DjC8s5Qd.mjs.map
+//# sourceMappingURL=diffraction-lRKm2HaF.mjs.map

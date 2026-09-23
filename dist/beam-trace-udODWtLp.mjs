@@ -4,7 +4,7 @@ import { a as d, g as f, i as p } from "./store-CUhn0IQy.mjs";
 import { n as m, r as h, t as g } from "./audio-engine-Cfjjb4lc.mjs";
 import "./acoustics-SIlOec_Y.mjs";
 import { i as _ } from "./convert-GmiMppOk.mjs";
-import { _ as v, b as y, c as ee, d as b, f as te, i as x, l as ne, n as re, p as ie, r as S, s as ae, t as oe, u as C, y as w } from "./diffraction-DjC8s5Qd.mjs";
+import { D as v, O as y, T as b, _ as x, b as ee, g as te, h as S, i as ne, n as re, r as C, t as ie, v as w, x as ae, y as oe } from "./diffraction-lRKm2HaF.mjs";
 import { t as se } from "./sound-speed-CfEkirc1.mjs";
 import { n as ce } from "./room-2mGM6oBF.mjs";
 import { t as le } from "./solver-DCp-VMaM.mjs";
@@ -1048,20 +1048,20 @@ async function He(e) {
 	}
 	let _ = h;
 	if (a && o) {
-		let e = C(o, n, s, w), { tailSamples: t, tailStartSample: r } = b(e, u), i = Math.floor(c * u);
-		_ = ne(h, t, r, i);
+		let e = w(o, n, s, v), { tailSamples: t, tailStartSample: r } = oe(e, u), i = Math.floor(c * u);
+		_ = x(h, t, r, i);
 	}
-	let v = q();
+	let y = q();
 	return new Promise((e, t) => {
-		v.postMessage({ samples: _ }), v.onmessage = (n) => {
+		y.postMessage({ samples: _ }), y.onmessage = (n) => {
 			let r = n.data.samples, i = new Float32Array(r[0].length >> 1), a = 0;
 			for (let e = 0; e < r.length; e++) for (let t = 0; t < i.length; t++) i[t] += r[e][t], Math.abs(i[t]) > a && (a = Math.abs(i[t]));
 			let o = m(i), s = g.createOfflineContext(1, i.length, u), c = g.createBufferSource(o, s);
 			c.connect(s.destination), c.start(), g.renderContextAsync(s).then((t) => {
 				l(t, u), e(t);
-			}).catch(t).finally(() => v.terminate());
-		}, v.onerror = (e) => {
-			v.terminate(), t(e);
+			}).catch(t).finally(() => y.terminate());
+		}, y.onerror = (e) => {
+			y.terminate(), t(e);
 		};
 	});
 }
@@ -1098,7 +1098,7 @@ async function We(e) {
 	if (f <= 0) throw Error("Invalid impulse response duration");
 	let p = Math.floor(u * f) * 2;
 	if (p < 2) throw Error("Impulse response too short to process");
-	let m = ie(l), h = [];
+	let m = ae(l), h = [];
 	for (let e = 0; e < n.length; e++) {
 		h.push([]);
 		for (let t = 0; t < m; t++) h[e].push(new Float32Array(p));
@@ -1109,13 +1109,13 @@ async function We(e) {
 		let s = /* @__PURE__ */ new Float32Array(1), c = e.arrivalDirection;
 		for (let e = 0; e < n.length; e++) {
 			s[0] = a[e] * t;
-			let n = te(s, c.x, c.y, c.z, l, "threejs");
+			let n = ee(s, c.x, c.y, c.z, l, "threejs");
 			for (let t = 0; t < m; t++) h[e][t][o] += n[t][0];
 		}
 	}
 	if (a && o) {
-		let e = C(o, n, s, w), t = Math.floor(c * u);
-		ee(h, e, u, t);
+		let e = w(o, n, s, v), t = Math.floor(c * u);
+		te(h, e, u, t);
 	}
 	let _ = async (e) => new Promise((t) => {
 		let r = [];
@@ -1126,17 +1126,17 @@ async function We(e) {
 			for (let e = 0; e < n.length; e++) for (let t = 0; t < r.length; t++) r[t] += n[e][t];
 			i.terminate(), t(r);
 		};
-	}), v = await Promise.all(Array.from({ length: m }, (e, t) => _(t))), y = 0;
-	for (let e of v) for (let t = 0; t < e.length; t++) Math.abs(e[t]) > y && (y = Math.abs(e[t]));
-	if (y > 0) for (let e of v) for (let t = 0; t < e.length; t++) e[t] /= y;
-	let b = v[0].length;
-	if (b === 0) throw Error("Filtered signal has zero length");
-	let x = g.createOfflineContext(m, b, u).createBuffer(m, b, u);
-	for (let e = 0; e < m; e++) x.copyToChannel(new Float32Array(v[e]), e);
-	return x;
+	}), y = await Promise.all(Array.from({ length: m }, (e, t) => _(t))), b = 0;
+	for (let e of y) for (let t = 0; t < e.length; t++) Math.abs(e[t]) > b && (b = Math.abs(e[t]));
+	if (b > 0) for (let e of y) for (let t = 0; t < e.length; t++) e[t] /= b;
+	let x = y[0].length;
+	if (x === 0) throw Error("Filtered signal has zero length");
+	let S = g.createOfflineContext(m, x, u).createBuffer(m, x, u);
+	for (let e = 0; e < m; e++) S.copyToChannel(new Float32Array(y[e]), e);
+	return S;
 }
 async function Ge(e) {
-	return ae(e);
+	return S(e);
 }
 function Ke(e) {
 	let { validPaths: t, frequencies: n, receiver: r, arrivalPressure: i, filename: a } = e, o = e.sampleRate ?? g.sampleRate;
@@ -1162,7 +1162,7 @@ function qe(e) {
 	for (let e = 0; e < a; e++) o.push(new Float32Array(y));
 	let s = Array(a).fill(100);
 	for (let e of t) {
-		let t = Math.floor(e.arrivalTime / w);
+		let t = Math.floor(e.arrivalTime / v);
 		if (t < 0 || t >= 1e4) continue;
 		let n = i(s, e, J(r, e));
 		for (let e = 0; e < a; e++) o[e][t] += n[e] * n[e];
@@ -1207,7 +1207,7 @@ function Ye(e) {
 		freqs: n,
 		response: l
 	} } };
-	return v(u, 256) ?? u;
+	return b(u, 256) ?? u;
 }
 //#endregion
 //#region src/compute/beam-trace/quick-estimate.ts
@@ -1220,7 +1220,7 @@ function Xe(e, t, n = 500) {
 	e.quickEstimateResults = [], e.estimatedT30 = null;
 	let i = 0;
 	e._quickEstimateInterval = window.setInterval(() => {
-		for (let a = 0; a < 10 && i < n; a++, i++) e.quickEstimateResults.push(x(e._raycaster, r, t.position, t.initialIntensity, e.frequencies, e.temperature));
+		for (let a = 0; a < 10 && i < n; a++, i++) e.quickEstimateResults.push(ne(e._raycaster, r, t.position, t.initialIntensity, e.frequencies, e.temperature));
 		if (i >= n) {
 			window.clearInterval(e._quickEstimateInterval), e._quickEstimateInterval = null;
 			let t = e.frequencies.length, n = Array(t).fill(0), r = Array(t).fill(0);
@@ -1278,7 +1278,7 @@ function Ze(e) {
 function Qe(e, t, n) {
 	let r = e.map((e) => new E.Vector3(e.position[0], e.position[1], e.position[2])), i = G(e), a = Ne(e, n), o = K(e), s = e.map((e) => e.polygonId), c;
 	if (r.length >= 2) {
-		let [e, t, n] = S(r[0], r[1]);
+		let [e, t, n] = C(r[0], r[1]);
 		c = new E.Vector3(e, t, n);
 	} else c = new E.Vector3(0, 0, 1);
 	let l = t?.reflections.map((e) => ({
@@ -1416,7 +1416,7 @@ function rt(e) {
 	t.surfaces.traverse((e) => {
 		e.kind && e.kind === "surface" && h.push(e.mesh);
 	});
-	let g = oe(l, u, p, i, a, o, c, h), _ = [];
+	let g = ie(l, u, p, i, a, o, c, h), _ = [];
 	for (let e of g) {
 		let t = d.get(e.sourceId);
 		if (t) {
@@ -1431,7 +1431,7 @@ function rt(e) {
 			x: n[0],
 			y: n[1],
 			z: n[2]
-		}, [o, s, c] = S(a, r), l = new E.Vector3(o, s, c), f = u.get(e.sourceId), m = new E.Vector3(n[0], n[1], n[2]), h = new E.Vector3(e.diffractionPoint[0], e.diffractionPoint[1], e.diffractionPoint[2]), g = new E.Vector3(f[0], f[1], f[2]);
+		}, [o, s, c] = C(a, r), l = new E.Vector3(o, s, c), f = u.get(e.sourceId), m = new E.Vector3(n[0], n[1], n[2]), h = new E.Vector3(e.diffractionPoint[0], e.diffractionPoint[1], e.diffractionPoint[2]), g = new E.Vector3(f[0], f[1], f[2]);
 		_.push({
 			points: [
 				m,
@@ -2264,4 +2264,4 @@ Ze($);
 //#endregion
 export { $ as BeamTraceSolver, $ as default };
 
-//# sourceMappingURL=beam-trace-B7Jz7hai.mjs.map
+//# sourceMappingURL=beam-trace-udODWtLp.mjs.map
