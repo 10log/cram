@@ -192,6 +192,33 @@ describe('Issue #199: FDTD 2D impedance walls', () => {
       expect(() => ghostGainForAbsorption(0.3, 0)).toThrow(/Courant/);
       expect(() => ghostGainForAbsorption(0.3, -1)).toThrow(/Courant/);
     });
+
+    it('clamps a bad absorption instead of throwing, unlike ARD', () => {
+      // `alpha` arrives from a material lookup, so the geometrical path's
+      // convention applies: out of range or non-finite behaves like an
+      // unpainted wall. ARD throws on the same input because a solver
+      // assembling partitions should fail loudly; a wall being drawn from a
+      // surface should not take the field down with it.
+      // Non-finite is a failed lookup, and falls back to rigid — including
+      // `Infinity`, which is *not* read as "infinitely absorbing". The shared
+      // mapping makes that choice; the alternative would turn a broken material
+      // into the most absorbing surface in the room, which is the direction
+      // that hides itself.
+      for (const bad of [NaN, undefined as unknown as number, Infinity, -Infinity]) {
+        expect([bad, ghostGainForAbsorption(bad, C)]).toEqual([bad, 0]);
+      }
+      // A finite value out of range clamps to the nearer end: below 0 is rigid,
+      // above 1 is fully absorbing and then the stability bound.
+      expect(ghostGainForAbsorption(-1, C)).toBe(0);
+      expect(ghostGainForAbsorption(1.5, C)).toBe(MAX_GHOST_GAIN);
+      // And the clamp reaches the sourcemap, so a bad material writes a wall
+      // rather than a NaN channel that would poison every neighbouring cell.
+      for (const bad of [NaN, -1, 1.5]) {
+        const channel = wallChannelFor({ enabled: true, absorption: bad }, C);
+        expect([bad, Number.isFinite(channel)]).toEqual([bad, true]);
+        expect([bad, isWallChannel(channel)]).toEqual([bad, true]);
+      }
+    });
   });
 
   describe('what a wall writes into the sourcemap', () => {
