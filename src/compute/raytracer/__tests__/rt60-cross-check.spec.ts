@@ -81,12 +81,22 @@ function bracket(alpha: number) {
 /**
  * One wall, wound so its geometric normal faces the room.
  *
- * Built from raw triangles rather than a rotated `PlaneGeometry`, because
- * `worldHitNormal` returns the geometric normal and does **not** orient it
- * against the incoming ray. With rotated planes half the walls came out wound
- * outward: 104 of 200 first-hit reflections pointed out of the room, the
- * offset origin landed on the far side, and the ray tunnelled out. The winding
- * is asserted here so that cannot come back silently.
+ * Built from raw triangles in world coordinates rather than from a rotated
+ * `PlaneGeometry`. The original fixture used rotated planes and leaked: 104 of
+ * 200 first-hit reflections pointed out of the room, the offset origin landed
+ * on the far side, and the ray tunnelled out.
+ *
+ * That was written up as `worldHitNormal` not orienting its normal against the
+ * ray. #213 measured it and the diagnosis was wrong: three.js already flips
+ * `intersection.normal`, and these walls have vertex normals, so orientation
+ * was never the problem here. The cause was that `worldHitNormal` returned
+ * that normal in **object-local** space — on a plane rotated 90° a head-on hit
+ * read as 90° grazing, and the reflection was mirrored about a normal pointing
+ * anywhere at all. Identity transforms are what this fixture actually relies
+ * on, and `transformed` below is the arm that tests the fix.
+ *
+ * The winding is still asserted, because it is a real invariant of the
+ * geometry and the `geometric` variant of the normal is read against it.
  *
  * The surface is duck-typed rather than a real `Surface`: that class pulls in
  * the messenger, the container store and `compute/csg`, whose modeling bundle
@@ -98,6 +108,8 @@ function wall(
   centre: THREE.Vector3,
   alpha: number,
   scattering: number,
+  winding: Winding = "inward",
+  transformed = false,
 ): THREE.Object3D {
   let [a, b, c, d] = corners;
   const normalOf = (p: THREE.Vector3, q: THREE.Vector3, r: THREE.Vector3) =>
@@ -111,12 +123,22 @@ function wall(
   }
   const inward = normalOf(a, b, c).dot(new THREE.Vector3().subVectors(centre, a));
   if (!(inward > 0)) throw new Error("fixture wall could not be wound inward");
+  if (winding === "outward") [a, b, c, d] = [d, c, b, a];
+
+  // With `transformed`, the same wall is stored in a rotated and translated
+  // frame and put back by the mesh's matrix: identical geometry in world
+  // space, reached through a non-identity `matrixWorld`. That is the only
+  // difference between the two arms of the transform test.
+  const frame = transformed ? wallFrame() : null;
+  const toLocal = frame ? frame.clone().invert() : null;
+  const corner = (p: THREE.Vector3) =>
+    toLocal ? p.clone().applyMatrix4(toLocal) : p;
 
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute(
     "position",
     new THREE.Float32BufferAttribute(
-      [a, b, c, a, c, d].flatMap((p) => [p.x, p.y, p.z]),
+      [a, b, c, a, c, d].map(corner).flatMap((p) => [p.x, p.y, p.z]),
       3,
     ),
   );
@@ -124,8 +146,18 @@ function wall(
 
   const mesh = new THREE.Mesh(
     geometry,
-    new THREE.MeshBasicMaterial({ side: THREE.FrontSide }),
+    // `Surface`'s own material is DoubleSide, so a wall wound away from the
+    // room is hit rather than culled — which is the only reason the winding
+    // comparison below tests anything. FrontSide for the default arm keeps
+    // the bracket tests reading a wall the way they always did.
+    new THREE.MeshBasicMaterial({
+      side: winding === "inward" ? THREE.FrontSide : THREE.DoubleSide,
+    }),
   );
+  if (frame) {
+    mesh.matrixAutoUpdate = false;
+    mesh.matrix.copy(frame);
+  }
   const group = new THREE.Group() as THREE.Group & Record<string, unknown>;
   group.add(mesh);
   group.reflectionFunction = (_f: number, theta: number) =>
@@ -136,17 +168,41 @@ function wall(
   return group;
 }
 
-function buildRoom(alpha: number, scattering: number, receiverRadius = 0.25) {
+type Winding = "inward" | "outward" | "inward-double";
+
+/**
+ * A fixed, arbitrary non-identity transform, so a wall's geometry is stored in
+ * its own frame rather than in world coordinates. Chosen once and shared, so
+ * the two arms of the transform comparison differ in nothing else.
+ */
+function wallFrame(): THREE.Matrix4 {
+  return new THREE.Matrix4().compose(
+    new THREE.Vector3(-3.1, 7.4, 2.6),
+    new THREE.Quaternion().setFromAxisAngle(
+      new THREE.Vector3(0.3, -0.8, 0.5).normalize(),
+      1.1,
+    ),
+    new THREE.Vector3(1, 1, 1),
+  );
+}
+
+function buildRoom(
+  alpha: number,
+  scattering: number,
+  receiverRadius = 0.25,
+  winding: Winding = "inward",
+  transformed = false,
+) {
   const { lx, ly, lz } = ROOM;
   const V = (x: number, y: number, z: number) => new THREE.Vector3(x, y, z);
   const centre = V(lx / 2, ly / 2, lz / 2);
   const objects: THREE.Object3D[] = [
-    wall([V(0, 0, 0), V(lx, 0, 0), V(lx, 0, lz), V(0, 0, lz)], centre, alpha, scattering),
-    wall([V(0, ly, 0), V(lx, ly, 0), V(lx, ly, lz), V(0, ly, lz)], centre, alpha, scattering),
-    wall([V(0, 0, 0), V(0, ly, 0), V(0, ly, lz), V(0, 0, lz)], centre, alpha, scattering),
-    wall([V(lx, 0, 0), V(lx, ly, 0), V(lx, ly, lz), V(lx, 0, lz)], centre, alpha, scattering),
-    wall([V(0, 0, 0), V(lx, 0, 0), V(lx, ly, 0), V(0, ly, 0)], centre, alpha, scattering),
-    wall([V(0, 0, lz), V(lx, 0, lz), V(lx, ly, lz), V(0, ly, lz)], centre, alpha, scattering),
+    wall([V(0, 0, 0), V(lx, 0, 0), V(lx, 0, lz), V(0, 0, lz)], centre, alpha, scattering, winding, transformed),
+    wall([V(0, ly, 0), V(lx, ly, 0), V(lx, ly, lz), V(0, ly, lz)], centre, alpha, scattering, winding, transformed),
+    wall([V(0, 0, 0), V(0, ly, 0), V(0, ly, lz), V(0, 0, lz)], centre, alpha, scattering, winding, transformed),
+    wall([V(lx, 0, 0), V(lx, ly, 0), V(lx, ly, lz), V(lx, 0, lz)], centre, alpha, scattering, winding, transformed),
+    wall([V(0, 0, 0), V(lx, 0, 0), V(lx, ly, 0), V(0, ly, 0)], centre, alpha, scattering, winding, transformed),
+    wall([V(0, 0, lz), V(lx, 0, lz), V(lx, ly, lz), V(0, ly, lz)], centre, alpha, scattering, winding, transformed),
   ];
 
   const receiver = new THREE.Mesh(
@@ -174,8 +230,15 @@ function randomDirection(): THREE.Vector3 {
 const SAMPLE_RATE = 1000;
 
 /** Shoot rays and bin the energy that reaches the receiver by arrival time. */
-function shoot(alpha: number, scattering: number, rays: number, order = 400) {
-  const objects = buildRoom(alpha, scattering);
+function shoot(
+  alpha: number,
+  scattering: number,
+  rays: number,
+  order = 400,
+  winding: Winding = "inward",
+  transformed = false,
+) {
+  const objects = buildRoom(alpha, scattering, 0.25, winding, transformed);
   const raycaster = new THREE.Raycaster();
   const source = new THREE.Vector3(ROOM.lx * 0.28, ROOM.ly * 0.55, ROOM.lz * 0.34);
   const bins = new Float64Array(4000);
@@ -261,9 +324,12 @@ describe("Issue #201: ray tracer decay against statistical room acoustics", () =
   });
 
   test("every wall reflects back into the room", () => {
-    // `worldHitNormal` does not orient its normal against the ray, so a wall
-    // wound outward reflects *through* itself. This is the fixture invariant
-    // that the winding check in `wall()` exists to hold.
+    // The fixture invariant the winding check in `wall()` exists to hold:
+    // every wall is wound so its *geometric* normal faces the room. Read with
+    // `worldHitNormal` and no ray direction, which is the one call in the
+    // repository that wants the unflipped normal — passing `rd` would make
+    // this pass for any winding at all, which is the point of #213 and would
+    // be the point of nothing here.
     const objects = buildRoom(ALPHA, SCATTERING);
     const raycaster = new THREE.Raycaster();
     const source = new THREE.Vector3(ROOM.lx * 0.28, ROOM.ly * 0.55, ROOM.lz * 0.34);
@@ -275,7 +341,7 @@ describe("Issue #201: ray tracer decay against statistical room acoustics", () =
       raycaster.set(source, direction.clone());
       const hits = raycaster.intersectObjects(objects, true);
       if (!hits.length) continue;
-      const normal = worldHitNormal(hits[0] as never, target);
+      const normal = worldHitNormal(hits[0] as never, target); // no `rd`: geometric
       expect(normal).not.toBeNull();
       // Incoming ray must meet the face from the front.
       expect(direction.dot(normal!)).toBeLessThan(0);
@@ -305,6 +371,57 @@ describe("Issue #201: ray tracer decay against statistical room acoustics", () =
     expect(t30 / t20).toBeGreaterThan(0.85);
     expect(t30 / t20).toBeLessThan(1.15);
   });
+
+  test("#213: a room reached through a non-identity transform decays the same", () => {
+    // The defect, at room scale. Both arms are the same room in world space;
+    // one stores its walls in world coordinates and the other in a rotated,
+    // translated frame put back by the mesh matrix. `worldHitNormal` returned
+    // the object-local normal, so the second arm measured incidence against a
+    // normal pointing somewhere else entirely — a head-on hit reading as 90°
+    // grazing — and mirrored the bounce about it, which is how the original
+    // #201 fixture leaked 79% of its rays through rotated planes.
+    //
+    // `Surface` carries its own position, rotation and scale, restored from
+    // the save file and settable from the transform controls, and a `Room`
+    // does too, so this is the ordinary case rather than a contrived one.
+    const rays = 3000;
+    const plain = shoot(ALPHA, SCATTERING, rays, 400, "inward", false);
+    const framed = shoot(ALPHA, SCATTERING, rays, 400, "inward", true);
+
+    for (const [label, run] of [["plain", plain], ["framed", framed]] as const) {
+      expect([label, run.escaped / rays < 0.02]).toEqual([label, true]);
+      expect([label, run.arrivals > 500]).toEqual([label, true]);
+    }
+
+    const a = decayTime(plain.bins, -5, -35);
+    const b = decayTime(framed.bins, -5, -35);
+    expect(Number.isFinite(a)).toBe(true);
+    expect(Number.isFinite(b)).toBe(true);
+    // Monte Carlo scatter at 3000 rays is ~0.015 s against a T30 near 0.22 s,
+    // so 20% is several times the noise and nowhere near what the bug did.
+    expect([a, b, Math.abs(a - b) / a < 0.2]).toEqual([a, b, true]);
+  }, 180_000);
+
+  test("#213: and the same room wound the wrong way decays the same too", () => {
+    // Winding is the half of #213 that three.js already handles for geometry
+    // with vertex normals — it flips `intersection.normal` itself — so this
+    // arm passes without the flip in `worldHitNormal` and is not what kills
+    // that mutant. It is here because `Surface` is DoubleSide, so an
+    // outward-wound wall is hit rather than culled, and the property is worth
+    // holding whether three keeps doing it or the flip starts carrying it.
+    const rays = 3000;
+    const inward = shoot(ALPHA, SCATTERING, rays, 400, "inward-double");
+    const outward = shoot(ALPHA, SCATTERING, rays, 400, "outward");
+
+    for (const [label, run] of [["inward", inward], ["outward", outward]] as const) {
+      expect([label, run.escaped / rays < 0.02]).toEqual([label, true]);
+      expect([label, run.arrivals > 500]).toEqual([label, true]);
+    }
+
+    const a = decayTime(inward.bins, -5, -35);
+    const b = decayTime(outward.bins, -5, -35);
+    expect([a, b, Math.abs(a - b) / a < 0.2]).toEqual([a, b, true]);
+  }, 180_000);
 
   test("it sits in the diffuse half of the bracket, as a geometrical solver should", () => {
     // The assertion that separates this solver's expected answer from the wave
