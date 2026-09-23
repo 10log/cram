@@ -119,8 +119,11 @@ export function shootFromPatch(ctx: ShootingContext, patchIdx: number): void {
 
       const rcvPatchIdx = triangleToPatch[closestHit.triangleIndex];
       const rcvPatch = patches[rcvPatchIdx];
-      const recvCos = incomingLambert(rcvPatch.normal, worldDir);
-      if (recvCos <= 0) continue;
+      // Orientation gate only, never a scale factor. A ray that arrives on the
+      // back of a patch is a geometry miss and is dropped; one that arrives on
+      // the front delivers all the energy it carries. Scaling the deposit by
+      // this cosine is what issue #205 was: see the note above `scaledGain`.
+      if (incomingLambert(rcvPatch.normal, worldDir) <= 0) continue;
 
       // Propagation delay in samples
       const delaySamples = (closestDist / speedOfSound) * sampleRate;
@@ -138,9 +141,19 @@ export function shootFromPatch(ctx: ShootingContext, patchIdx: number): void {
       brdf.computeCoefficients(rcvAbsorption, rcvScattering);
       const outgoingWeights = brdf.getOutgoingWeights(incomingSlot);
 
-      // Deposit energy at receiver patch
+      // Deposit energy at receiver patch.
+      //
+      // `gain` alone, with no receiver cosine. This is a particle method: the
+      // slot's energy is divided equally among `nRays` rays, each ray carries
+      // `1/nRays` of it, and a ray that lands on a patch delivers all of it. The
+      // receiver's projected area is already accounted for — a tilted patch
+      // subtends less solid angle from the source and so is *hit by fewer rays*,
+      // which is the form factor. Multiplying by `cos θ` as well counts it
+      // twice, and because a raw cosine averages below 1 it also destroys
+      // energy: measured 0.70-0.74 retention per bounce at α = 0, compounding to
+      // a reverberation time 2-4x short (issue #205).
       const sourceResponse = srcEnergy.responses[k];
-      const scaledGain = gain * airAtten * recvCos;
+      const scaledGain = gain * airAtten;
 
       for (let outSlot = 0; outSlot < brdf.nSlots; outSlot++) {
         const weight = outgoingWeights[outSlot] * scaledGain;
@@ -200,8 +213,11 @@ export function injectSourceEnergy(
 
     const patchIdx = triangleToPatch[closestHit.triangleIndex];
     const patch = patches[patchIdx];
-    const recvCos = incomingLambert(patch.normal, dir);
-    if (recvCos <= 0) continue;
+    // Orientation gate only, as in `shootFromPatch` — see the note on
+    // `scaledGain` there. A point source divides its energy equally among rays
+    // and each ray delivers what it carries; scaling by the receiver's cosine
+    // cost about 20% of the injected energy before it entered the room at all.
+    if (incomingLambert(patch.normal, dir) <= 0) continue;
 
     const delaySamples = (closestDist / speedOfSound) * sampleRate;
     const airAtten = Math.exp(-airAbsNepers * closestDist);
@@ -218,7 +234,7 @@ export function injectSourceEnergy(
 
     // Create a unit impulse as the source emission
     const impulse = new Response(1);
-    impulse.buffer[0] = gain * airAtten * recvCos * (rayWeight ? rayWeight(dir) : 1);
+    impulse.buffer[0] = gain * airAtten * (rayWeight ? rayWeight(dir) : 1);
 
     for (let outSlot = 0; outSlot < brdf.nSlots; outSlot++) {
       const w = outWeights[outSlot];
