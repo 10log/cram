@@ -213,6 +213,38 @@ describe("Issue #121: one-bounce energy", () => {
     expect(baffled).toBeGreaterThan(0.5);
   }, 60_000);
 
+  test("a shoot lands no energy back on its own surface", () => {
+    // Issue #120's first acceptance criterion, finally written down — and worth
+    // reading with its result, because the criterion passes for a reason other
+    // than the one #120 assumed.
+    //
+    // #120 argued that a ray leaving a point *on* the triangle plane would have
+    // its coplanar siblings stolen at ~0 distance. It cannot: `localToWorld`
+    // maps the sampled direction into the patch normal's hemisphere, so the ray
+    // moves away from its own plane and never re-intersects it. Measured, the
+    // sibling receives exactly 0 either way — with the along-normal offset and
+    // without it.
+    //
+    // The offset (#207) is kept as a guard for the geometry where the hazard is
+    // real: a sample near a shared edge with a *non*-coplanar neighbour, where
+    // the neighbour genuinely does sit at ~0 distance. This test holds the
+    // property that matters, and would catch a change to the direction sampling
+    // that let rays below the horizon through.
+    const patchSet = shoebox(4, 3, 2.5, () => 0, () => 1);
+    const ctx = makeCtx(patchSet, { alpha: 0, scatter: 1, rays: 400 });
+    for (let k = 0; k < ctx.brdf.nSlots; k++) {
+      ctx.unshotEnergy[0].responses[k].buffer[0] = 1;
+    }
+    const shot = ctx.unshotEnergy[0].sum();
+    shootFromPatch(ctx, 0);
+
+    // Patches 0 and 1 are the two triangles of the same wall; 0 is the shooter
+    // and is cleared, so 1 is where same-surface leakage would show up.
+    expect(ctx.unshotEnergy[1].sum() / shot).toBeLessThan(1e-9);
+    // And the energy did go somewhere: across the room, not nowhere.
+    expect(totalUnshotEnergy(ctx.unshotEnergy) / shot).toBeGreaterThan(0.999);
+  }, 60_000);
+
   test("injectSourceEnergy deposits what it is given, less one absorption", () => {
     // ~0.798 of the requested 1.0 before #205, for the same reason: the point
     // source's rays were scaled by the receiving patch's cosine. A ray carries
