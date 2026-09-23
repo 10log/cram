@@ -4,7 +4,9 @@ import * as ac from "../acoustics";
 
 /**
  * Minimal surface contract used by the specular reflection loop.
- * `Surface.reflectionFunction` already returns energy (R²).
+ *
+ * `Surface.reflectionFunction` already returns energy (R²), and is expected to
+ * be non-negative — the loop multiplies it straight into an intensity.
  */
 export interface ArrivalSurface {
   reflectionFunction: (freq: number, theta: number) => number;
@@ -178,8 +180,15 @@ export function calculateArrivalPressure(
     reflectionIdx++;
 
     for (let f = 0; f < frequencies.length; f++) {
-      const R = Math.abs(surface.reflectionFunction(frequencies[f], angle));
-      intensities[f] *= R;
+      // `reflectionFunction` already returns **energy** (R²), so this is a
+      // direct multiply into an intensity. The name says so because the value
+      // sits next to a carefully signed pressure-R story elsewhere in the
+      // repository (#200) and a reader reconciling the two could otherwise
+      // square it again. It used to be wrapped in `Math.abs`, which was a
+      // no-op on a non-negative quantity and the same redundant guard #200's
+      // review removed from `ray-trace.wgsl`.
+      const energyR = surface.reflectionFunction(frequencies[f], angle);
+      intensities[f] *= energyR;
     }
   });
 
