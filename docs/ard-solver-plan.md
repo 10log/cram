@@ -1552,15 +1552,20 @@ coefficient it is given. A 3.36 x 2.64 x 2.16 m shoebox at a uniform α = 0.2,
 driven to 500 Hz, measured by Schroeder integration of a receiver impulse
 response:
 
-| | T20 | T30 |
-|---|-----|-----|
-| **impedance** | 0.238 s | 0.262 s |
-| PML, thickness 8 | 1.822 s | 1.836 s |
-| Eyring at α_normal = 0.2 | | 0.392 s |
-| Eyring at α_random = 0.396 (Paris) | | 0.174 s |
+| 4 x 3.2 x 2.8 m | T20 | T30 | Eyring at α_normal | Eyring at α_random (Paris) |
+|---|-----|-----|---|---|
+| **impedance**, α = 0.2 | 0.238 s | 0.262 s | 0.392 s | 0.174 s (α_stat 0.396) |
+| PML t=8, α = 0.2 | 1.822 s | 1.836 s | " | " |
+| **impedance**, α = 0.4 | 0.130 s | 0.247 s | 0.171 s | 0.030 s (α_stat 0.849) |
+| PML t=8, α = 0.4 | 0.823 s | 1.011 s | " | " |
 
-(The larger 4 x 3.2 x 2.8 m room; the spec uses a smaller one to keep the run
-under a minute, with the same conclusion.)
+Two coefficients, and the slab overshoots the upper bound by **4.7x** at both —
+so this is a property of the slab path, not one awkward room. The spec uses a
+smaller 3.36 x 2.64 x 2.16 m room to keep the run under a minute, with the same
+conclusion, and pins α = 0.2: at 0.4 the impedance decay is visibly
+non-exponential (T30/T20 = 1.9), which is the least-absorbed modes grazing the
+surfaces and is exactly what a locally-reacting boundary should do — correct
+physics, but not something to assert a single decay time against.
 
 The bracket is the whole of what statistical acoustics can assert here. Sabine
 and Eyring take a *random-incidence* coefficient; the database stores a
