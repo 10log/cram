@@ -48,3 +48,15 @@ export function airAttenuationEnergy(airAbsDbPerMeter: number, distance: number)
 export function airAbsDbToEnergyNepers(airAbsDbPerMeter: number): number {
   return airAbsDbPerMeter / (10 / Math.LN10);
 }
+
+/**
+ * Nepers/m for **pressure amplitude**, so that `exp(-n · r)` is the amplitude
+ * factor over distance `r` — half the energy figure above.
+ *
+ * Wave solvers carry pressure, not energy, so they need this one. Using the
+ * energy nepers on a pressure field attenuates twice as fast in dB as the
+ * standard says, which reads as a plausible but short reverberation time.
+ */
+export function airAbsDbToPressureNepers(airAbsDbPerMeter: number): number {
+  return airAbsDbPerMeter / (20 / Math.LN10);
+}

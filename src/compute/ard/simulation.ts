@@ -86,7 +86,18 @@ export interface ArdSimulationConfig {
   courant?: number;
   sources: ArdSource[];
   receivers: ArdReceiver[];
-  steps: number;
+  /**
+   * How many steps to run. Mutually exclusive with {@link duration}.
+   *
+   * Prefer `duration` from calling code: `dt` is not known until the wall
+   * slabs have been planned and the CFL clamp applied, so a caller that
+   * computes `steps` from its *requested* Courant number asks for the wrong
+   * number of steps whenever the clamp bites — quietly producing a shorter
+   * impulse response than it meant to.
+   */
+  steps?: number;
+  /** Seconds of simulated time. Mutually exclusive with {@link steps}. */
+  duration?: number;
   /** Air attenuation in nepers per metre. 0 disables it. */
   airAbsNepersPerMetre?: number;
   /** Absorption coefficient per surface index; -1 means no surface recorded. */
@@ -137,30 +148,66 @@ interface Probe {
   local: [number, number, number];
 }
 
-export function createArdSimulation(config: ArdSimulationConfig): ArdSimulation {
+/** What {@link planArdTimeStep} settles, ahead of building anything. */
+export interface ArdTimeStepPlan {
+  /** Time step in seconds. */
+  dt: number;
+  /** Courant number actually used, at or below the one requested. */
+  courant: number;
+  /** Steps the run will take, whether `steps` or `duration` was given. */
+  steps: number;
+  /** Axes of the grid with extent above 1. */
+  gridRank: number;
+  wallPlan: WallPlan;
+  warnings: string[];
+}
+
+/**
+ * What the time step will be, and where the wall slabs go, without building
+ * anything.
+ *
+ * Split out of {@link createArdSimulation} because a caller often needs `dt`
+ * *before* it can finish assembling the configuration — the driving pulse has
+ * to be sampled at the simulation's own rate, and `dt` is not settled until the
+ * wall slabs have been planned and the CFL clamp applied. Constructing a
+ * throwaway simulation to read `dt` off it would work and would cost a full set
+ * of PML calibration curves, about a second each.
+ *
+ * It is also what a caller needs to hand a configuration to
+ * `ard.worker.ts`: the worker builds the simulation on the far side of a
+ * structured clone, so the pulse must already be in the message.
+ *
+ * All of the configuration's validation happens here, so calling this first
+ * does not defer any error.
+ */
+export function planArdTimeStep(
+  config: Omit<ArdSimulationConfig, 'sources' | 'receivers'> &
+    Partial<Pick<ArdSimulationConfig, 'sources' | 'receivers'>>,
+): ArdTimeStepPlan {
   const {
     grid,
     decomposition,
     c,
     courant: requestedCourant = 0.4,
-    sources,
-    receivers,
-    steps,
-    airAbsNepersPerMetre = 0,
+    steps: requestedSteps,
+    duration,
     absorptionFor = () => 0,
     walls = true,
     wallThickness = DEFAULT_WALL_THICKNESS,
-    frameInterval = 0,
-    sliceAxis = 'z',
-    sliceIndex,
   } = config;
 
   const warnings: string[] = [];
   const dx = grid.dx;
 
   if (!(c > 0)) throw new Error(`Speed of sound must be positive, got ${c}`);
-  if (!Number.isInteger(steps) || steps < 1) {
-    throw new Error(`steps must be a positive integer, got ${steps}`);
+  if ((requestedSteps === undefined) === (duration === undefined)) {
+    throw new Error('Pass exactly one of steps or duration');
+  }
+  if (requestedSteps !== undefined && (!Number.isInteger(requestedSteps) || requestedSteps < 1)) {
+    throw new Error(`steps must be a positive integer, got ${requestedSteps}`);
+  }
+  if (duration !== undefined && !(duration > 0)) {
+    throw new Error(`duration must be positive, got ${duration}`);
   }
   if (decomposition.boxes.length === 0) {
     throw new Error('Decomposition has no boxes; there is nothing to simulate');
@@ -220,6 +267,33 @@ export function createArdSimulation(config: ArdSimulationConfig): ArdSimulation 
     );
   }
   const dt = (courant * dx) / c;
+  // Resolved here, not above, because `dt` is only known once the clamp has
+  // been applied — which is the whole reason `duration` exists.
+  const steps = requestedSteps ?? Math.max(1, Math.ceil((duration as number) / dt));
+
+  return { dt, courant, steps, gridRank, wallPlan, warnings };
+}
+
+export function createArdSimulation(config: ArdSimulationConfig): ArdSimulation {
+  const {
+    grid,
+    decomposition,
+    c,
+    sources,
+    receivers,
+    airAbsNepersPerMetre = 0,
+    absorptionFor = () => 0,
+    frameInterval = 0,
+    sliceAxis = 'z',
+    sliceIndex,
+  } = config;
+
+  const dx = grid.dx;
+  // Validation, the wall plan and the CFL clamp all live in the planner, so
+  // that a caller who needs `dt` up front gets exactly the same answer.
+  const plan = planArdTimeStep(config);
+  const { dt, courant, steps, wallPlan } = plan;
+  const warnings = [...plan.warnings];
 
   // --- Partitions ------------------------------------------------------------
   const roomPartitions: Partition[] = decomposition.boxes.map((box, n) =>

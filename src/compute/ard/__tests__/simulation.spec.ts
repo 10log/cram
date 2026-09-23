@@ -235,6 +235,56 @@ describe('createArdSimulation', () => {
     sim.dispose();
   });
 
+  it('resolves duration against the clamped time step, not the requested one', () => {
+    // This is the whole reason `duration` exists. A caller that computes
+    // `steps` itself has to use the Courant number it *asked for*, because the
+    // clamped one is not known until the simulation is built — and every time
+    // the clamp bites, the run comes out short. Here it bites by 12%, so a
+    // second of impulse response would have been 0.88 s.
+    const pad = 9;
+    const o = airOrigin(pad);
+    const dx = 0.1;
+    const grid = shoeboxGrid(16, 14, 12, dx, pad);
+    const requested = 0.5;
+    const duration = 0.02;
+
+    const sim = createArdSimulation({
+      grid,
+      decomposition: decompose(grid),
+      c: C,
+      courant: requested,
+      sources: [{ cell: [o + 8, o + 7, o + 6], signal: new Float32Array(1) }],
+      receivers: [],
+      duration,
+      absorptionFor: () => 0.3,
+    });
+
+    expect(sim.courant).toBeLessThan(requested);
+    expect(sim.steps).toBe(Math.ceil(duration / sim.dt));
+    // Strictly more steps than the requested Courant number would have given,
+    // which is what a caller doing its own arithmetic would have asked for.
+    expect(sim.steps).toBeGreaterThan(Math.ceil(duration / ((requested * dx) / C)));
+    sim.dispose();
+  });
+
+  it('wants exactly one of steps and duration', () => {
+    const grid = shoeboxGrid(12, 12, 12, 0.1);
+    const base = {
+      grid,
+      decomposition: decompose(grid),
+      c: C,
+      walls: false,
+      sources: [{ cell: [7, 7, 7] as [number, number, number], signal: new Float32Array(1) }],
+      receivers: [],
+    };
+    expect(() => createArdSimulation({ ...base })).toThrow(/exactly one of steps or duration/);
+    expect(() => createArdSimulation({ ...base, steps: 4, duration: 0.01 })).toThrow(
+      /exactly one of steps or duration/,
+    );
+    expect(() => createArdSimulation({ ...base, duration: 0 })).toThrow(/duration must be positive/);
+    expect(() => createArdSimulation({ ...base, steps: 2.5 })).toThrow(/positive integer/);
+  });
+
   it('rejects probes that are not in the room', () => {
     const grid = shoeboxGrid(14, 14, 14, 0.1);
     const decomposition = decompose(grid);

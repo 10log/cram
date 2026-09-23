@@ -10,6 +10,7 @@ import {
   Cell,
   cellSizeFor,
   cellToWorld,
+  nearestCell,
   voxelizeTriangles,
   worldToCell,
   type VoxelGrid,
@@ -344,5 +345,80 @@ describe('voxelizeTriangles', () => {
     expect(() =>
       voxelizeTriangles(boxSurfaces([0, 0, 0], [10, 10, 10]), { dx: 0.001 }),
     ).toThrow(/over the limit/);
+  });
+});
+
+describe('nearestCell', () => {
+  /** A grid whose air is a box inset by `shell` cells. */
+  function boxGrid(n: number, shell: number): VoxelGrid {
+    const cells = new Uint8Array(n * n * n);
+    let airCount = 0;
+    for (let k = shell; k < n - shell; k++) {
+      for (let j = shell; j < n - shell; j++) {
+        for (let i = shell; i < n - shell; i++) {
+          cells[i + n * (j + n * k)] = Cell.Air;
+          airCount++;
+        }
+      }
+    }
+    return {
+      nx: n, ny: n, nz: n, dx: 0.1,
+      origin: { x: 0, y: 0, z: 0 },
+      cells,
+      surfaceOf: new Int32Array(n * n * n).fill(-1),
+      airCount,
+      solidCount: n * n * n - airCount,
+      leaked: false,
+      warnings: [],
+    };
+  }
+
+  const isAir = (grid: VoxelGrid) => (index: number) => grid.cells[index] === Cell.Air;
+
+  it('returns the cell unchanged when it already qualifies', () => {
+    const grid = boxGrid(12, 2);
+    expect(nearestCell(grid, { i: 6, j: 6, k: 6 }, isAir(grid))).toEqual({ i: 6, j: 6, k: 6 });
+  });
+
+  it('steps off a wall by exactly one cell, along the face normal', () => {
+    // A probe flush against the +x wall should move inward on x alone —
+    // shortest distance, not scan order and not toward the grid centre.
+    const grid = boxGrid(12, 2);
+    // Air spans i in [2, 10), so i = 10 is the first wall cell on +x.
+    expect(nearestCell(grid, { i: 10, j: 6, k: 6 }, isAir(grid))).toEqual({ i: 9, j: 6, k: 6 });
+    expect(nearestCell(grid, { i: 1, j: 5, k: 5 }, isAir(grid))).toEqual({ i: 2, j: 5, k: 5 });
+  });
+
+  it('crosses a thick shell when it has to', () => {
+    const grid = boxGrid(16, 4);
+    // Two cells outside the air region on x: has to travel two cells.
+    const found = nearestCell(grid, { i: 2, j: 8, k: 8 }, isAir(grid))!;
+    expect(found).toEqual({ i: 4, j: 8, k: 8 });
+  });
+
+  it('gives up rather than wandering, and honours the radius', () => {
+    const grid = boxGrid(40, 12);
+    // Twelve cells of shell, default radius eight: nothing reachable.
+    expect(nearestCell(grid, { i: 0, j: 20, k: 20 }, isAir(grid))).toBeNull();
+    expect(nearestCell(grid, { i: 0, j: 20, k: 20 }, isAir(grid), 12)).not.toBeNull();
+  });
+
+  it('honours the predicate, not just solidity', () => {
+    // A caller that also requires the cell to be covered by a decomposition
+    // gets that, rather than an air cell no partition owns.
+    const grid = boxGrid(12, 2);
+    const banned = new Set([6 + 12 * (6 + 12 * 6)]);
+    const found = nearestCell(
+      grid,
+      { i: 6, j: 6, k: 6 },
+      (index) => grid.cells[index] === Cell.Air && !banned.has(index),
+    );
+    expect(found).not.toEqual({ i: 6, j: 6, k: 6 });
+    expect(found).not.toBeNull();
+  });
+
+  it('returns null for a start well outside the grid', () => {
+    const grid = boxGrid(12, 2);
+    expect(nearestCell(grid, { i: -40, j: -40, k: -40 }, isAir(grid))).toBeNull();
   });
 });
