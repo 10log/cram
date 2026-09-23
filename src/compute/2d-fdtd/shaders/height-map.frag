@@ -42,25 +42,28 @@ void main()	{
     float l_wall = texture2D( sourcemap, uv - rl_offset ).b;
     
     
-    // Rigid wall (Neumann): ghost pressure equals this cell.
-    // Opposite-neighbor sampling is neither Dirichlet nor rigid (#111).
-    // TODO: locally-reacting impedance from Surface.absorptionFunction.
+    // Locally-reacting impedance wall (#199): the ghost is pos - gamma*vel,
+    // where gamma = 1/(xi*C) comes from Surface.absorption. The sourcemap's
+    // blue channel is positive for air and -gamma for a wall, so gamma = 0 —
+    // the rigid Neumann ghost of #111 — keeps the old encoding of exactly 0
+    // and the old behaviour bit for bit. Opposite-neighbor sampling is
+    // neither Dirichlet nor rigid and is what #111 removed.
     float u_pos = u.r;
     float d_pos = d.r;
     float r_pos = r.r;
     float l_pos = l.r;
 
-    if (u_wall == 0.0) {
-      u_pos = pos;
+    if (u_wall <= 0.0) {
+      u_pos = pos + u_wall * vel;
     }
-    if (d_wall == 0.0) {
-      d_pos = pos;
+    if (d_wall <= 0.0) {
+      d_pos = pos + d_wall * vel;
     }
-    if (r_wall == 0.0) {
-      r_pos = pos;
+    if (r_wall <= 0.0) {
+      r_pos = pos + r_wall * vel;
     }
-    if (l_wall == 0.0) {
-      l_pos = pos;
+    if (l_wall <= 0.0) {
+      l_pos = pos + l_wall * vel;
     }
 
     float mid = 0.25*(u_pos+d_pos+r_pos+l_pos);
