@@ -169,12 +169,19 @@ class Radix2Fft extends FftPlanBase {
 }
 
 /**
- * Bluestein's chirp-z algorithm, for lengths that are not powers of two.
+ * Bluestein's chirp-z algorithm, for lengths with a prime factor above
+ * {@link MAX_MIXED_RADIX_FACTOR}.
+ *
+ * The fallback of last resort, not the general case: 14, 15, 24 and every other
+ * {2,3,5,7}-smooth length take {@link MixedRadixFft} instead. What is left is a
+ * length like 11, 22 or 61, where a Cooley-Tukey split would need a butterfly
+ * as expensive as the transform.
  *
  * Rewrites the DFT as a cyclic convolution of length `m >= 2n - 1` using
- * `n*k = (n^2 + k^2 - (k-n)^2) / 2`. The chirp tables and the transformed
- * convolution kernel are built once here; `forward` only touches preallocated
- * scratch.
+ * `n*k = (n^2 + k^2 - (k-n)^2) / 2`, which is why it is the expensive path:
+ * three power-of-two transforms of at least twice the length, plus two chirp
+ * passes. The chirp tables and the transformed convolution kernel are built
+ * once here; `forward` only touches preallocated scratch.
  */
 class BluesteinFft extends FftPlanBase {
   readonly n: number;
