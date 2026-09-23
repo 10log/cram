@@ -283,12 +283,25 @@ fn traceClosest(
 
 // ─── Reflection coefficient (matches CPU reflection-coefficient.ts) ──
 
+// Impedance branch: xi = (1 + r)/(1 - r) >= 1, so a rigid surface (alpha = 0)
+// is rigid rather than pressure-release. See issue #200. Written without ever
+// forming xi, by multiplying through by (1 - r): in f32 the xi form is `inf`
+// at alpha = 0 and `(inf - 1)/(inf + 1)` is NaN at every angle, not only at
+// grazing.
 fn reflectionCoefficient(alpha: f32, theta: f32) -> f32 {
-  let rootOneMinusAlpha = sqrt(max(1.0 - alpha, 0.0));
-  let xi_o = (1.0 - rootOneMinusAlpha) / (1.0 + rootOneMinusAlpha);
+  let r = sqrt(max(1.0 - min(alpha, 1.0), 0.0));
   let cosTheta = abs(cos(theta));
-  let xi_o_cosTheta = xi_o * cosTheta;
-  let R = (xi_o_cosTheta - 1.0) / (xi_o_cosTheta + 1.0);
+  let numerator = (1.0 + r) * cosTheta - (1.0 - r);
+  let denominator = (1.0 + r) * cosTheta + (1.0 - r);
+  // Reachable only at alpha = 0 exactly at grazing; the limit there is +1.
+  // An `if` rather than `select`, which evaluates both arms: `select` would
+  // compute 0.0/0.0 on that path and then throw the NaN away, so the CPU and
+  // GPU would agree on the value while differing in control flow. Same shape
+  // as the CPU ternary keeps the two genuinely in lockstep.
+  if (denominator == 0.0) {
+    return 1.0;
+  }
+  let R = numerator / denominator;
   return R * R;
 }
 
@@ -433,8 +446,12 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
       let alpha = surfAcoustic[acousticOffset];
       let scatter = surfAcoustic[acousticOffset + 1u];
 
-      let R = reflectionCoefficient(alpha, angle);
-      bandEnergy[b] *= abs(R);
+      // `reflectionCoefficient` returns R-squared, an energy ratio already in
+      // [0, 1], so `abs` was a no-op. Named and used as energy here so that a
+      // later reader cannot mistake it for the signed pressure R that
+      // `pressureReflectionCoefficient` returns and square it a second time.
+      let energyR = reflectionCoefficient(alpha, angle);
+      bandEnergy[b] *= energyR;
       bandEnergy[b] *= pow(10.0, -getAirAtt(b) * hitT / 10.0);
 
       broadbandScatter += scatter * bandEnergy[b];
