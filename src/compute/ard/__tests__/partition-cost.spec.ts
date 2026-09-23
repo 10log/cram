@@ -73,7 +73,7 @@ const ROOMS = [
   [32, 32, 16],
 ] as const;
 
-function build(ax: number, ay: number, az: number) {
+function build(ax: number, ay: number, az: number, boundary: 'pml' | 'impedance' = 'pml') {
   const grid = shoebox(ax, ay, az, 0.13, 9);
   const sim = createArdSimulation({
     grid,
@@ -83,6 +83,9 @@ function build(ax: number, ay: number, az: number) {
     steps: 60,
     sources: [{ cell: [13, 13, 13], signal: new Float32Array(60) }],
     receivers: [],
+    // Pinned: this whole spec is the evidence for what a PML slab costs, which
+    // is why the default boundary is no longer one.
+    boundary,
     absorptionFor: () => 0.3,
   });
   const of = (kind: string) => sim.partitions.filter((p) => p.kind === kind);

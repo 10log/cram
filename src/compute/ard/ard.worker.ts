@@ -51,7 +51,7 @@ export type ArdWorkerResponse =
       irs: Float32Array[];
       dt: number;
       courant: number;
-      cellCount: { room: number; walls: number };
+      cellCount: { room: number; walls: number; boundary: number };
       warnings: string[];
     }
   | { type: 'cancelled'; step: number }

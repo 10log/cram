@@ -97,7 +97,7 @@ function highEdge(box: Box, axis: Axis): number {
 }
 
 /** The two axes perpendicular to `axis`, in ascending order. */
-function transverseAxes(axis: Axis): [Axis, Axis] {
+export function transverseAxes(axis: Axis): [Axis, Axis] {
   if (axis === Axis.X) return [Axis.Y, Axis.Z];
   if (axis === Axis.Y) return [Axis.X, Axis.Z];
   return [Axis.X, Axis.Y];
@@ -160,7 +160,7 @@ export function findInterfaces(partitions: readonly Partition[]): PartitionInter
  * selects which face — the partition's high edge on `axis` (it is the `lower`
  * partition) or its low edge (it is the `upper` one).
  */
-function pressureAtDepth(
+export function pressureAtDepth(
   part: Partition,
   axis: Axis,
   fromHigh: boolean,
@@ -176,7 +176,7 @@ function pressureAtDepth(
   return part.pressureAt(local[0], local[1], local[2]);
 }
 
-function addForceAtDepth(
+export function addForceAtDepth(
   part: Partition,
   axis: Axis,
   fromHigh: boolean,

@@ -130,6 +130,7 @@ import { Cell, cellSizeFor, nearestCell, worldToCell, type VoxelGrid } from './v
 import { voxelizeRoom } from './voxelize-room';
 import { DEFAULT_WALL_THICKNESS, padCellsForWalls } from './walls-from-grid';
 import { createArdWorker } from './worker-host';
+import { impedanceCourantLimit } from './impedance';
 import { PML_CFL_MARGIN } from './pml-partition';
 import { vonNeumannCflLimit } from './partition';
 
@@ -171,11 +172,22 @@ export interface ARDProps extends SolverParams {
   fMax?: number;
   /** Spatial sampling density at `fMax`. ARD's whole point is that 2.6 works. */
   cellsPerWavelength?: number;
-  /** Requested Courant number. Wall slabs may force it lower. */
+  /** Requested Courant number. PML wall slabs may force it lower. */
   courant?: number;
+  /**
+   * How a room surface absorbs. `'impedance'` (the default) is a boundary
+   * condition on the face; `'pml'` is an absorbing slab outside it.
+   *
+   * The slab costs 2-5x the room in cells, needs the grid padded by
+   * `wallThickness + 1` on every side, clamps the Courant number for the whole
+   * simulation, and measures further from the requested absorption coefficient
+   * at every grid resolution tested. It is kept because it is what Phases 5-9
+   * were validated against. See `impedance.ts`.
+   */
+  boundary?: 'impedance' | 'pml';
   /** Length of the impulse response, in seconds. */
   irLength?: number;
-  /** Absorbing layer thickness in cells. See `walls-from-grid.ts`. */
+  /** Absorbing layer thickness in cells. `'pml'` only; see `walls-from-grid.ts`. */
   wallThickness?: number;
   /** Run once per octave band instead of once at 500 Hz. Costs 7x. */
   perBandRuns?: boolean;
@@ -212,6 +224,7 @@ export type ARDSaveObject = {
   courant?: number;
   irLength?: number;
   wallThickness?: number;
+  boundary?: 'impedance' | 'pml';
   perBandRuns?: boolean;
   sampleRate?: number;
   humidity?: number;
@@ -232,7 +245,7 @@ export interface ARDRunSummary {
   airCells: number;
   boxCount: number;
   /** Cells in room partitions, and cells added by absorbing wall slabs. */
-  cellCount: { room: number; walls: number };
+  cellCount: { room: number; walls: number; boundary: number };
   steps: number;
   /** Simulation runs performed: sources x bands. */
   runs: number;
@@ -268,6 +281,7 @@ export class ARD extends Solver {
   public courant: number;
   public irLength: number;
   public wallThickness: number;
+  public boundary: 'impedance' | 'pml';
   public perBandRuns: boolean;
   public sampleRate: number;
   public humidity: number;
@@ -304,6 +318,7 @@ export class ARD extends Solver {
     this.courant = props.courant ?? 0.4;
     this.irLength = props.irLength ?? 1;
     this.wallThickness = props.wallThickness ?? DEFAULT_WALL_THICKNESS;
+    this.boundary = props.boundary ?? 'impedance';
     this.perBandRuns = props.perBandRuns ?? false;
     this.sampleRate = props.sampleRate ?? 44100;
     this.humidity = props.humidity ?? 40;
@@ -412,7 +427,7 @@ export class ARD extends Solver {
     const { grid: volumeGrid, surfaces } = voxelizeRoom(room, {
       dx,
       seed,
-      padCells: padCellsForWalls(this.wallThickness),
+      padCells: this.padCells,
     });
     if (volumeGrid.leaked) {
       throw new Error(
@@ -507,6 +522,8 @@ export class ARD extends Solver {
       courant: this.courant,
       duration: this.irLength,
       wallThickness: this.wallThickness,
+      boundary: this.boundary,
+      fMax: this.fMax,
       absorptionFor: (index) => (index >= 0 && index < surfaces.length ? unionAbsorption[index] : 0),
     });
     const pulse = bandlimitedPulse(plan.steps, plan.dt, this.fMax);
@@ -515,7 +532,7 @@ export class ARD extends Solver {
     // responses, before any deconvolution.
     const records: Float32Array[][][] = [];
     let summaryCourant = plan.courant;
-    let summaryCells = { room: 0, walls: 0 };
+    let summaryCells = { room: 0, walls: 0, boundary: 0 };
     let runIndex = 0;
 
     for (let s = 0; s < sources.length; s++) {
@@ -542,6 +559,8 @@ export class ARD extends Solver {
           receivers: receiverCells.map((cell) => ({ cell })),
           airAbsNepersPerMetre: airAbs,
           wallThickness: this.wallThickness,
+          boundary: this.boundary,
+          fMax: this.fMax,
         };
 
         const bandLabel = bands.length > 1 ? ` ${frequency} Hz band,` : '';
@@ -671,7 +690,7 @@ export class ARD extends Solver {
   ): Promise<{
     irs: Float32Array[];
     courant: number;
-    cellCount: { room: number; walls: number };
+    cellCount: { room: number; walls: number; boundary: number };
     warnings: string[];
   }> {
     // One alpha per surface index, which is both what the partitions need and
@@ -721,7 +740,7 @@ export class ARD extends Solver {
     irs: Float32Array[];
     dt: number;
     courant: number;
-    cellCount: { room: number; walls: number };
+    cellCount: { room: number; walls: number; boundary: number };
     warnings: string[];
   }> {
     const worker = this.workerUsable ? this.acquireWorker() : null;
@@ -823,7 +842,7 @@ export class ARD extends Solver {
     irs: Float32Array[];
     dt: number;
     courant: number;
-    cellCount: { room: number; walls: number };
+    cellCount: { room: number; walls: number; boundary: number };
     warnings: string[];
   }> {
     const simulation = createArdSimulation({ ...config, absorptionFor });
@@ -975,12 +994,12 @@ export class ARD extends Solver {
   save() {
     const {
       name, kind, uuid, autoCalculate, roomID, sourceIDs, receiverIDs,
-      fMax, cellsPerWavelength, courant, irLength, wallThickness,
+      fMax, cellsPerWavelength, courant, irLength, wallThickness, boundary,
       perBandRuns, sampleRate, humidity, dimensions, slice, sliceCoordinate,
     } = this;
     return {
       name, kind, uuid, autoCalculate, roomID, sourceIDs, receiverIDs,
-      fMax, cellsPerWavelength, courant, irLength, wallThickness,
+      fMax, cellsPerWavelength, courant, irLength, wallThickness, boundary,
       perBandRuns, sampleRate, humidity, dimensions, slice, sliceCoordinate,
     } as ARDSaveObject;
   }
@@ -996,6 +1015,7 @@ export class ARD extends Solver {
     if (state.courant !== undefined) this.courant = state.courant;
     if (state.irLength !== undefined) this.irLength = state.irLength;
     if (state.wallThickness !== undefined) this.wallThickness = state.wallThickness;
+    if (state.boundary !== undefined) this.boundary = state.boundary;
     if (state.perBandRuns !== undefined) this.perBandRuns = state.perBandRuns;
     if (state.sampleRate !== undefined) this.sampleRate = state.sampleRate;
     if (state.humidity !== undefined) this.humidity = state.humidity;
@@ -1025,6 +1045,19 @@ export class ARD extends Solver {
     return !this.hasEmittedResults;
   }
 
+  /**
+   * Cells of padding the grid needs on every side.
+   *
+   * A PML slab grows outward from a room face through solid cells, so it needs
+   * somewhere to grow: `wallThickness + 1`, which at the default is 9 cells on
+   * every side and dominates the allocated grid. An impedance boundary
+   * occupies nothing outside the face and needs only the one-cell shell the
+   * voxelizer already produces.
+   */
+  get padCells(): number {
+    return this.boundary === 'pml' ? padCellsForWalls(this.wallThickness) : 1;
+  }
+
   /** Cell size the current settings imply, in metres. */
   get cellSize(): number {
     return cellSizeFor(this.fMax, soundSpeed(this.temperature), this.cellsPerWavelength);
@@ -1043,7 +1076,7 @@ export class ARD extends Solver {
     const size = this.roomSize();
     if (!size) return { x: 0, y: 0, z: 0 };
     const dx = this.cellSize;
-    const pad = 2 * padCellsForWalls(this.wallThickness);
+    const pad = 2 * this.padCells;
     return {
       x: Math.ceil(size.x / dx) + pad,
       y: Math.ceil(size.y / dx) + pad,
@@ -1096,7 +1129,10 @@ export class ARD extends Solver {
     const faceCells =
       2 *
       ((nx > 1 ? ny * nz : 0) + (ny > 1 ? nx * nz : 0) + (nz > 1 ? nx * ny : 0));
-    return air + faceCells * this.wallThickness;
+    // An impedance boundary adds no stepped cells at all — it forces cells the
+    // air region already contains. That is the whole of the saving, and it is
+    // the reason this number can be 3x smaller for the same room.
+    return this.boundary === 'pml' ? air + faceCells * this.wallThickness : air;
   }
 
   /**
@@ -1174,22 +1210,28 @@ export class ARD extends Solver {
   /**
    * Steps in a single simulation run.
    *
-   * Uses the clamped Courant number, not the requested one. Wall slabs are
-   * `PmlPartition`s and every partition shares a time step, so on a 3D room the
-   * clamp is `PML_CFL_MARGIN × vonNeumann(3)` ≈ 0.446 — about 12% more steps
-   * than the requested 0.5 implies. This getter has no grid, so it cannot call
-   * `planArdTimeStep`; applying the bound unconditionally over-estimates a
-   * rigid-only run, which is the right direction for a figure shown before
-   * pressing run.
+   * Uses the clamped Courant number, not the requested one. Both boundary kinds
+   * clamp it, for different reasons and by different amounts: a wall slab is a
+   * `PmlPartition` and every partition shares a time step, so a 3D room is held
+   * to `PML_CFL_MARGIN × vonNeumann(3)` ≈ 0.446, while an impedance boundary's
+   * residual is feedback and holds it to `0.6 − 0.1α`. This getter has no grid
+   * and no materials, so it cannot call `planArdTimeStep`; it takes the
+   * impedance bound at its worst (α = 1, giving 0.5), which over-estimates the
+   * step count for anything less absorbing. That is the right direction for a
+   * figure shown before pressing run.
    */
   get estimatedStepsPerRun(): number {
     const c = soundSpeed(this.temperature);
-    // Rank follows the mode: a sliced plane is rank 2, where the bound is
+    // Rank follows the mode: a sliced plane is rank 2, where the PML bound is
     // 0.575 rather than 0.470. Using the 3D bound for a 2D run over-states the
-    // step count — latent at the default Courant 0.4, where neither clamp
-    // bites, and real at 0.5.
+    // step count — latent at the default Courant 0.4, where no clamp bites, and
+    // real at 0.5.
     const rank = this.dimensions === 2 ? 2 : 3;
-    const courant = Math.min(this.courant, PML_CFL_MARGIN * vonNeumannCflLimit(rank));
+    const limit =
+      this.boundary === 'pml'
+        ? PML_CFL_MARGIN * vonNeumannCflLimit(rank)
+        : impedanceCourantLimit(1);
+    const courant = Math.min(this.courant, limit);
     const dt = (courant * this.cellSize) / c;
     return Math.ceil(this.irLength / dt);
   }

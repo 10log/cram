@@ -19,8 +19,21 @@
  *
  * The cost is that the corner is not modelled: a wave arriving there at a
  * grazing angle runs off the side of a slab, which zero-pads and so reflects it
- * as a pressure-release surface. The error is local to the corner and bounded;
- * the alternative was a partition kind that does not exist.
+ * as a pressure-release surface.
+ *
+ * **This comment used to say the error was local to the corner and bounded. It
+ * is neither.** Measured end to end (`__tests__/rt60-cross-check.spec.ts`, and
+ * the table in the plan's Phase 11): a 4 x 3.2 x 2.8 m shoebox at a uniform
+ * α = 0.2 decays with T30 = 1.84 s through 8-cell slabs, against 0.39 s from
+ * Eyring at the normal-incidence coefficient and 0.26 s through an impedance
+ * boundary. Twelve edges and eight corners left reflecting is most of a small
+ * room's absorption, and no test in this suite could see it, because every test
+ * compared the slab path against itself.
+ *
+ * It is the reason `boundary: 'impedance'` is the default. Nothing here was
+ * changed to fix it: covering a corner needs a partition kind that damps two
+ * axes, which does not exist, and the boundary that needs no corner at all
+ * now does.
  *
  * ## Partly-shared faces
  *
@@ -57,9 +70,14 @@
  *
  * {@link DEFAULT_WALL_THICKNESS} is 8: it reaches α = 0.958, past any material
  * in the database, for about twice the room in cells. Note what this does to
- * the plan's §5 cost table, which counts room cells only — with walls the real
- * figure is three times its rows. A locally-reacting impedance boundary (plan
- * reference [6]) would cost no cells at all and is the way out.
+ * the plan's §5 cost table, which counts room cells only — with slabs the real
+ * figure is three times its rows.
+ *
+ * **This is no longer the default boundary.** `impedance.ts` costs no cells,
+ * needs no padding, needs no calibration, clamps the time step less, and
+ * measures closer to the requested absorption coefficient at every grid
+ * resolution tested. Everything here is still reachable, unchanged, through
+ * `boundary: 'pml'`, and is what the solver was originally validated against.
  *
  * ## Thin solid structures
  *
@@ -71,8 +89,13 @@
  * absorbing one is a result worth knowing about.
  */
 
-import { decompose } from './decompose';
 import type { Decomposition } from './decompose';
+import {
+  dominantSurface,
+  exposedFaceRects,
+  outerLayer,
+  transverseAxes,
+} from './face-rects';
 import { Axis, type Box } from './partition';
 import { PmlPartition } from './pml-partition';
 import { Cell, type VoxelGrid } from './voxelize';
@@ -111,12 +134,6 @@ export interface WallPlan {
 
 const ORIGIN: readonly ['x', 'y', 'z'] = ['x', 'y', 'z'];
 const EXTENT: readonly ['w', 'h', 'd'] = ['w', 'h', 'd'];
-
-function transverseAxes(axis: Axis): [Axis, Axis] {
-  if (axis === Axis.X) return [Axis.Y, Axis.Z];
-  if (axis === Axis.Y) return [Axis.X, Axis.Z];
-  return [Axis.X, Axis.Y];
-}
 
 /**
  * Thicknesses a slab may be built at.
@@ -171,7 +188,7 @@ export function planWalls(
   options: PlanWallsOptions = {},
 ): WallPlan {
   const { maxThickness = DEFAULT_WALL_THICKNESS, absorptionFor } = options;
-  const { nx, ny, nz, cells, surfaceOf } = grid;
+  const { nx, ny, nz, cells } = grid;
   const dims = [nx, ny, nz];
   const faces: WallFace[] = [];
   const warnings: string[] = [];
@@ -195,67 +212,29 @@ export function planWalls(
 
       for (const high of [false, true]) {
         const [uAxis, vAxis] = transverseAxes(axis);
-        const uSpan = box[EXTENT[uAxis]];
-        const vSpan = box[EXTENT[vAxis]];
-        const uBase = box[ORIGIN[uAxis]];
-        const vBase = box[ORIGIN[vAxis]];
         // The first cell outside the face, along `axis`.
-        const outer = high
-          ? box[ORIGIN[axis]] + box[EXTENT[axis]]
-          : box[ORIGIN[axis]] - 1;
+        const outer = outerLayer(box, axis, high);
         const stepOut = high ? 1 : -1;
 
-        // Exposed mask: a face cell is a wall where the cell beyond it is not
-        // air. Where it is air, another partition is there and Phase 5's
-        // interface forcing handles the join instead.
-        const mask = new Uint8Array(uSpan * vSpan);
-        let exposed = 0;
-        for (let v = 0; v < vSpan; v++) {
-          for (let u = 0; u < uSpan; u++) {
-            const at = [0, 0, 0];
-            at[axis] = outer;
-            at[uAxis] = uBase + u;
-            at[vAxis] = vBase + v;
-            const outside =
-              inGrid(at[0], at[1], at[2]) && cells[index(at[0], at[1], at[2])] === Cell.Air;
-            if (!outside) {
-              mask[u + uSpan * v] = Cell.Air;
-              exposed++;
-            }
-          }
-        }
-        if (exposed === 0) continue;
+        // Which parts of this face are room surface rather than a join with a
+        // neighbouring partition, covered with rectangles. Shared with the
+        // impedance planner so the two cannot disagree.
+        const rects = exposedFaceRects(grid, box, axis, high);
 
-        // Cover the exposed mask with rectangles. Reusing `decompose` on a
-        // one-cell-deep grid keeps this consistent with how the air region
-        // itself is covered.
-        const faceGrid: VoxelGrid = {
-          nx: uSpan,
-          ny: vSpan,
-          nz: 1,
-          dx: grid.dx,
-          origin: { x: 0, y: 0, z: 0 },
-          cells: mask,
-          surfaceOf: new Int32Array(uSpan * vSpan).fill(-1),
-          airCount: exposed,
-          solidCount: uSpan * vSpan - exposed,
-          leaked: false,
-          warnings: [],
-        };
-        const cover = decompose(faceGrid, { minBoxEdge: 1 });
-
-        for (const rect of cover.boxes) {
+        for (const rect of rects) {
+          const rectW = rect.uMax - rect.uMin;
+          const rectH = rect.vMax - rect.vMin;
           // How far outward can this rectangle grow through solid, unclaimed
           // cells? The whole rectangle has to clear, or the slab would be
           // ragged.
           let available = 0;
           grow: for (let t = 0; t < maxThickness; t++) {
-            for (let v = 0; v < rect.h; v++) {
-              for (let u = 0; u < rect.w; u++) {
+            for (let v = rect.vMin; v < rect.vMax; v++) {
+              for (let u = rect.uMin; u < rect.uMax; u++) {
                 const at = [0, 0, 0];
                 at[axis] = outer + stepOut * t;
-                at[uAxis] = uBase + rect.x + u;
-                at[vAxis] = vBase + rect.y + v;
+                at[uAxis] = u;
+                at[vAxis] = v;
                 if (!inGrid(at[0], at[1], at[2])) break grow;
                 const idx = index(at[0], at[1], at[2]);
                 if (cells[idx] === Cell.Air || claimed[idx]) break grow;
@@ -278,29 +257,11 @@ export function planWalls(
             continue;
           }
 
-          // Which surface is behind this face? One absorption coefficient per
-          // slab, so a face spanning two materials takes whichever covers more
-          // of it. Splitting per material would be more faithful and is left
-          // for later; the slab count, and with it the cost, would rise.
-          const dominant = new Map<number, number>();
-          for (let v = 0; v < rect.h; v++) {
-            for (let u = 0; u < rect.w; u++) {
-              const at = [0, 0, 0];
-              at[axis] = outer;
-              at[uAxis] = uBase + rect.x + u;
-              at[vAxis] = vBase + rect.y + v;
-              const surface = surfaceOf[index(at[0], at[1], at[2])];
-              if (surface >= 0) dominant.set(surface, (dominant.get(surface) ?? 0) + 1);
-            }
-          }
-          let surfaceIndex = -1;
-          let best = 0;
-          for (const [surface, count] of dominant) {
-            if (count > best) {
-              best = count;
-              surfaceIndex = surface;
-            }
-          }
+          // One absorption coefficient per slab, so a face spanning two
+          // materials takes whichever covers more of it. Splitting per material
+          // would be more faithful and is left for later; the slab count, and
+          // with it the cost, would rise.
+          const surfaceIndex = dominantSurface(grid, axis, high, box, rect);
 
           // A face that absorbs nothing needs no slab. Building one would be
           // acoustically identical to leaving it rigid while costing its cells
@@ -314,12 +275,12 @@ export function planWalls(
           // slab is certain to be built — a face left rigid must not reserve
           // space a neighbouring slab could have used.
           for (let t = 0; t < thickness; t++) {
-            for (let v = 0; v < rect.h; v++) {
-              for (let u = 0; u < rect.w; u++) {
+            for (let v = rect.vMin; v < rect.vMax; v++) {
+              for (let u = rect.uMin; u < rect.uMax; u++) {
                 const at = [0, 0, 0];
                 at[axis] = outer + stepOut * t;
-                at[uAxis] = uBase + rect.x + u;
-                at[vAxis] = vBase + rect.y + v;
+                at[uAxis] = u;
+                at[vAxis] = v;
                 claimed[index(at[0], at[1], at[2])] = 1;
               }
             }
@@ -328,10 +289,10 @@ export function planWalls(
           const slab: Box = { x: 0, y: 0, z: 0, w: 1, h: 1, d: 1 };
           slab[ORIGIN[axis]] = high ? outer : outer - (thickness - 1);
           slab[EXTENT[axis]] = thickness;
-          slab[ORIGIN[uAxis]] = uBase + rect.x;
-          slab[EXTENT[uAxis]] = rect.w;
-          slab[ORIGIN[vAxis]] = vBase + rect.y;
-          slab[EXTENT[vAxis]] = rect.h;
+          slab[ORIGIN[uAxis]] = rect.uMin;
+          slab[EXTENT[uAxis]] = rectW;
+          slab[ORIGIN[vAxis]] = rect.vMin;
+          slab[EXTENT[vAxis]] = rectH;
 
           faces.push({ boxIndex, axis, high, box: slab, thickness, surfaceIndex });
           slabCells += slab.w * slab.h * slab.d;

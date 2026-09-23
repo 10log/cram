@@ -62,9 +62,9 @@
  *
  * Normal incidence only, and frequency-independent — both intrinsic to the
  * method, not to this implementation. Angle-dependent absorption needs a
- * different boundary condition (a locally-reacting impedance surface, as in
- * Bilbao 2013, reference [6] in the plan), and per-band α needs one simulation
- * run per octave band, which is design decision D3.
+ * different boundary condition, which `impedance.ts` now provides and the
+ * driver defaults to; per-band α needs one simulation run per octave band,
+ * which is design decision D3.
  */
 
 import { DctPartition } from './dct-partition';
