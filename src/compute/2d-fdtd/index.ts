@@ -43,6 +43,12 @@ import {
   vacatedSourcePixel,
   writeFieldPixel,
 } from "./field-encoding";
+import {
+  AIR_CHANNEL,
+  FDTD_CELLS_PER_WAVELENGTH_FOR_IMPEDANCE,
+  wallChannelFor,
+} from "./impedance";
+import { DEFAULT_DAMPING, FDTD_REFERENCE_FREQUENCY } from "./index-constants";
 import { passesForElapsed, sampleRateFromDt } from "./recording";
 import { disposeGpuCompute } from "./dispose-gpu";
 
@@ -57,6 +63,8 @@ import { useContainer } from "../../store";
 import { renderer } from "../../render/renderer";
 
 const CELL_RESOLUTION = 256;
+
+export { DEFAULT_DAMPING, FDTD_REFERENCE_FREQUENCY };
 
 export const FDTD_2D_Defaults = {
   width: 10,
@@ -351,9 +359,11 @@ class FDTD_2D extends Solver {
 
     (this.heightmapVariable.material as ShaderMaterial).uniforms["mouseSize"] = { value: 0.0 };
 
-    // Numerical sponge on velocity — not air absorption and not a Surface material.
-    // Walls in height-map.frag are perfectly rigid (Neumann) until impedance exists.
-    (this.heightmapVariable.material as ShaderMaterial).uniforms["damping"] = { value: 0.9999 };
+    // Numerical sponge on velocity — not air absorption and not a Surface
+    // material. Off by default now that walls absorb; see DEFAULT_DAMPING for
+    // what it used to impose and why nothing below 1 is safe at every grid.
+    (this.heightmapVariable.material as ShaderMaterial).uniforms["damping"] =
+      { value: DEFAULT_DAMPING };
 
     (this.heightmapVariable.material as ShaderMaterial).uniforms["courantSq"] = { value: 0 };
     this.applyWaveSpeed();
@@ -537,11 +547,15 @@ class FDTD_2D extends Solver {
     const y1 = clamp(Math.floor((props.y1 - this.offsetY) / this.cellSize), 0, this.ny - 1);
     const x2 = clamp(Math.floor((props.x2 - this.offsetX) / this.cellSize), 0, this.nx - 1);
     const y2 = clamp(Math.floor((props.y2 - this.offsetY) / this.cellSize), 0, this.ny - 1);
-    this.walls.push(new FDTDWall({ x1, y1, x2, y2 }));
+    this.walls.push(new FDTDWall({ x1, y1, x2, y2, absorption: props.absorption }));
     this.updateWalls();
   }
   addWallsFromSurfaceEdges(surface: Surface) {
     surface.updateMatrixWorld(true);
+    // One coefficient stands in for the curve — see FDTD_REFERENCE_FREQUENCY.
+    // A surface with no material reads 0, which is the rigid wall this solver
+    // gave every surface before #199.
+    const absorption = surface.absorptionFunction?.(FDTD_REFERENCE_FREQUENCY) ?? 0;
     const edges = surface.edges;
     edges.updateMatrixWorld(true);
     const positionAttr = (edges.geometry as BufferGeometry).getAttribute('position');
@@ -556,7 +570,7 @@ class FDTD_2D extends Solver {
       const y1 = clamp(Math.floor((pa.v - this.offsetY) / this.cellSize), 0, this.ny - 1);
       const x2 = clamp(Math.floor((pb.u - this.offsetX) / this.cellSize), 0, this.nx - 1);
       const y2 = clamp(Math.floor((pb.v - this.offsetY) / this.cellSize), 0, this.ny - 1);
-      this.walls.push(new FDTDWall({ x1, y1, x2, y2 }));
+      this.walls.push(new FDTDWall({ x1, y1, x2, y2, absorption }));
     }
     this.updateWalls();
   }
@@ -569,7 +583,7 @@ class FDTD_2D extends Solver {
       for (let i = 0; i < this.nx; i++) {
         pixels[p + 0] = REST_PRESSURE;
         pixels[p + 1] = REST_VELOCITY;
-        pixels[p + 2] = 1;
+        pixels[p + 2] = AIR_CHANNEL;
         pixels[p + 3] = 1;
         p += 4;
       }
@@ -583,27 +597,37 @@ class FDTD_2D extends Solver {
     }
   }
 
+  /** Courant number the field runs at. The CFL locus puts it at 1/√2. */
+  get courant(): number {
+    return this.cellSize > 0 ? (this.waveSpeed * this.dt) / this.cellSize : 0;
+  }
+
+  /**
+   * Highest frequency the walls deliver their coefficient at, within about
+   * 0.05 in α. Above it they read as more reflective than their materials.
+   */
+  get impedanceFrequencyLimit(): number {
+    return this.cellSize > 0
+      ? this.waveSpeed / (FDTD_CELLS_PER_WAVELENGTH_FOR_IMPEDANCE * this.cellSize)
+      : 0;
+  }
+
   updateWalls() {
     const data = this.sourcemap.image.data;
     if (!data) return;
     for (let i = 0; i < this.walls.length; i++) {
-      if (this.walls[i].shouldClearPreviousCells) {
-        for (let j = 0; j < this.walls[i].previousCells.length; j++) {
-          const index = 4 * (this.walls[i].previousCells[j][1] * this.nx + this.walls[i].previousCells[j][0]);
-          data[index + 2] = 1;
+      const wall = this.walls[i];
+      if (wall.shouldClearPreviousCells) {
+        for (let j = 0; j < wall.previousCells.length; j++) {
+          const index = 4 * (wall.previousCells[j][1] * this.nx + wall.previousCells[j][0]);
+          data[index + 2] = AIR_CHANNEL;
         }
-        this.walls[i].shouldClearPreviousCells = false;
+        wall.shouldClearPreviousCells = false;
       }
-      if (this.walls[i].enabled) {
-        for (let j = 0; j < this.walls[i].cells.length; j++) {
-          const index = 4 * (this.walls[i].cells[j][1] * this.nx + this.walls[i].cells[j][0]);
-          data[index + 2] = 0;
-        }
-      } else {
-        for (let j = 0; j < this.walls[i].cells.length; j++) {
-          const index = 4 * (this.walls[i].cells[j][1] * this.nx + this.walls[i].cells[j][0]);
-          data[index + 2] = 1;
-        }
+      const channel = wallChannelFor(wall, this.courant);
+      for (let j = 0; j < wall.cells.length; j++) {
+        const index = 4 * (wall.cells[j][1] * this.nx + wall.cells[j][0]);
+        data[index + 2] = channel;
       }
     }
     this.sourcemap.needsUpdate = true;
@@ -643,7 +667,7 @@ class FDTD_2D extends Solver {
       for (let i = 0; i < this.nx; i++) {
         pixels[p + 0] = REST_PRESSURE;
         pixels[p + 1] = REST_VELOCITY;
-        pixels[p + 2] = 1;
+        pixels[p + 2] = AIR_CHANNEL;
         pixels[p + 3] = 1;
         p += 4;
       }

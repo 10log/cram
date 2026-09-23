@@ -5,6 +5,12 @@ export interface FDTDWallProps {
   y1: number;
   x2: number;
   y2: number;
+  /**
+   * Absorption coefficient of the surface this wall came from, at the
+   * solver's reference frequency. 0 — a perfectly rigid wall — is the
+   * default, which is what every wall was before #199.
+   */
+  absorption?: number;
 }
 
 class FDTDWall {
@@ -16,7 +22,9 @@ class FDTDWall {
   cells: number[][];
   previousCells: number[][];
   shouldClearPreviousCells: boolean;
+  absorption: number;
   constructor(props: FDTDWallProps) {
+    this.absorption = props.absorption ?? 0;
     this.x1 = props.x1;
     this.y1 = props.y1;
     this.x2 = props.x2;
@@ -29,6 +37,7 @@ class FDTDWall {
   
   move(props: FDTDWallProps) {
     this.previousCells = this.cells;
+    if (props.absorption !== undefined) this.absorption = props.absorption;
     this.x1 = props.x1;
     this.y1 = props.y1;
     this.x2 = props.x2;

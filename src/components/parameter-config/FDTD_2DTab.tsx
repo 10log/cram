@@ -120,10 +120,10 @@ export const FDTD_2DTab = ({uuid}: {uuid: string}) => {
           id="damping"
           label="Damping"
           labelPosition="left"
-          tooltipText="Numerical sponge on velocity — not air absorption and not a surface material"
-          min={0.7}
+          tooltipText="Numerical sponge on velocity, not absorption. 1 is off and is the default — surfaces carry their own materials. Below 1 it double-counts against them, imposes a decay that changes with cell size, and is only conditionally stable: 0.999 diverges on a 6 x 4 m room at 6 cm cells."
+          min={0.999}
           max={1.0}
-          step={0.001}
+          step={0.00001}
           hasToolTip={simParamFolderOpen}
           value={damping}
           onChange={(e: SliderChangeEvent) => {
@@ -239,8 +239,8 @@ export const FDTD_2DTab = ({uuid}: {uuid: string}) => {
       </PropertyRowFolder>
       <PropertyRow>
         <PropertyRowLabel
-          label={`Simulated ${Number(solver.time).toFixed(4)} s · ${Math.round(1 / solver.dt)} Hz`}
-          tooltip="Simulated time and FDTD sample rate (1/dt). Independent of monitor refresh."
+          label={`Simulated ${Number(solver.time).toFixed(4)} s · ${Math.round(1 / solver.dt)} Hz · walls to ${Math.round(solver.impedanceFrequencyLimit)} Hz`}
+          tooltip="Simulated time, FDTD sample rate (1/dt), and the highest frequency the walls deliver their absorption at on this grid. Above that they read as more reflective than their materials — use a smaller cell size."
         />
       </PropertyRow>
       <PropertyRow>
