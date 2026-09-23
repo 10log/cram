@@ -1,7 +1,9 @@
 import * as THREE from "three";
 /**
  * Minimal surface contract used by the specular reflection loop.
- * `Surface.reflectionFunction` already returns energy (R²).
+ *
+ * `Surface.reflectionFunction` already returns energy (R²), and is expected to
+ * be non-negative — the loop multiplies it straight into an intensity.
  */
 export interface ArrivalSurface {
     reflectionFunction: (freq: number, theta: number) => number;

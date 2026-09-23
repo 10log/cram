@@ -50,7 +50,7 @@ function l(o, l, u) {
 		}
 		y++;
 		for (let e = 0; e < d.length; e++) {
-			let t = Math.abs(n.reflectionFunction(d[e], r));
+			let t = n.reflectionFunction(d[e], r);
 			_[e] *= t;
 		}
 	});
@@ -63,4 +63,4 @@ function l(o, l, u) {
 //#endregion
 export { c as n, l as t };
 
-//# sourceMappingURL=arrival-pressure-A8n8xtfD.mjs.map
+//# sourceMappingURL=arrival-pressure-b0eLyj3R.mjs.map
