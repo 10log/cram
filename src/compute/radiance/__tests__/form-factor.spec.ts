@@ -1,6 +1,34 @@
 import { Vector3 } from 'three';
+import { BRDF } from '../brdf';
 import { DirectionalResponse } from '../directional-response';
-import { selectShootingPatch, totalUnshotEnergy, incomingLambert } from '../form-factor';
+import {
+  incomingLambert,
+  injectSourceEnergy,
+  selectShootingPatch,
+  shootFromPatch,
+  totalUnshotEnergy,
+} from '../form-factor';
+import { buildPatchesFromTriangles, type PatchSet } from '../patch';
+
+/** A closed, convex, rigid shoebox — the fixture the deposit tests need. */
+function shoebox(lx: number, ly: number, lz: number): PatchSet {
+  const p = (x: number, y: number, z: number) => new Vector3(x, y, z);
+  const face = (a: Vector3, b: Vector3, c: Vector3, d: Vector3) => [
+    { a: a.clone(), b: b.clone(), c: c.clone(), absorption: () => 0, scattering: () => 1 },
+    { a: a.clone(), b: c.clone(), c: d.clone(), absorption: () => 0, scattering: () => 1 },
+  ];
+  return buildPatchesFromTriangles(
+    [
+      ...face(p(0, 0, 0), p(lx, 0, 0), p(lx, 0, lz), p(0, 0, lz)),
+      ...face(p(0, ly, 0), p(0, ly, lz), p(lx, ly, lz), p(lx, ly, 0)),
+      ...face(p(0, 0, 0), p(0, 0, lz), p(0, ly, lz), p(0, ly, 0)),
+      ...face(p(lx, 0, 0), p(lx, ly, 0), p(lx, ly, lz), p(lx, 0, lz)),
+      ...face(p(0, 0, 0), p(0, ly, 0), p(lx, ly, 0), p(lx, 0, 0)),
+      ...face(p(0, 0, lz), p(lx, 0, lz), p(lx, ly, lz), p(0, ly, lz)),
+    ],
+    new Vector3(lx / 2, ly / 2, lz / 2),
+  );
+}
 
 describe('form-factor helpers', () => {
   describe('selectShootingPatch', () => {
@@ -78,12 +106,52 @@ describe("Issue #120: incoming Lambert cosine", () => {
     expect(incomingLambert(new Vector3(0, -1, 0), dir)).toBe(0);
   });
 
-  test("shoot and inject multiply deposited energy by incomingLambert", () => {
-    const fs = require("fs");
-    const path = require("path");
-    const src = fs.readFileSync(path.resolve(__dirname, "../form-factor.ts"), "utf8");
-    expect(src.match(/incomingLambert/g)?.length).toBeGreaterThanOrEqual(3);
-    expect(src).toMatch(/recvCos/);
-  });
+  /**
+   * This test used to read the source of `form-factor.ts` and assert that
+   * `incomingLambert` appeared at least three times and that the identifier
+   * `recvCos` existed, under the title "shoot and inject multiply deposited
+   * energy by incomingLambert".
+   *
+   * Two things were wrong with that. It was a text match, so it pinned an
+   * identifier rather than a property and would pass on a file that used the
+   * cosine for anything at all. And its title asserted the defect: multiplying
+   * deposited energy by the receiver's cosine cost ~28% of every bounce (#205),
+   * because in a particle method the receiver's projected area is already
+   * expressed in *how many rays reach it*, not in how much each one carries.
+   * It also sat under #120, which is about ray-origin epsilon and says nothing
+   * about any of this.
+   *
+   * Replaced with the behavioural property it should have been: the cosine
+   * decides *whether* a ray deposits, never *how much*. Reinstating it as a
+   * scale in either function fails this.
+   */
+  test("the cosine gates a deposit, it does not scale one", () => {
+    const patchSet = shoebox(4, 3, 2.5);
+    const brdf = new BRDF(0);
+    const n = patchSet.patches.length;
+    const ctx = {
+      patchSet,
+      unshotEnergy: Array.from({ length: n }, () => new DirectionalResponse(brdf.nSlots, 600)),
+      totalEnergy: Array.from({ length: n }, () => new DirectionalResponse(brdf.nSlots, 600)),
+      brdf,
+      absorptions: patchSet.patches.map(() => 0),
+      scatterings: patchSet.patches.map(() => 1),
+      airAbsNepers: 0,
+      speedOfSound: 343.2,
+      sampleRate: 1000,
+      raysPerShoot: 300,
+    };
+    for (let k = 0; k < brdf.nSlots; k++) ctx.unshotEnergy[0].responses[k].buffer[0] = 1;
+    const shot = totalUnshotEnergy(ctx.unshotEnergy);
+    shootFromPatch(ctx, 0);
+    // Rigid, closed, convex: every ray lands on a front face and delivers all it
+    // carries, so the room keeps exactly what was shot.
+    expect(totalUnshotEnergy(ctx.unshotEnergy) / shot).toBeCloseTo(1, 3);
+
+    // And injection likewise deposits what it is handed.
+    const fresh = { ...ctx, unshotEnergy: Array.from({ length: n }, () => new DirectionalResponse(brdf.nSlots, 600)), totalEnergy: Array.from({ length: n }, () => new DirectionalResponse(brdf.nSlots, 600)) };
+    injectSourceEnergy(new Vector3(1.2, 1.2, 0.8), 1, fresh, 400);
+    expect(totalUnshotEnergy(fresh.unshotEnergy)).toBeCloseTo(1, 2);
+  }, 60_000);
 });
 

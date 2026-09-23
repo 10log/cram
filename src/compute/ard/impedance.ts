@@ -161,6 +161,7 @@
  * boundary model, which is real-valued and frequency-independent within a run.
  */
 
+import { impedanceForAbsorption as sharedImpedanceForAbsorption } from '../acoustics/reflection-coefficient';
 import { INTERFACE_DEPTH, addForceAtDepth, pressureAtDepth } from './interface';
 import { Axis, STENCIL_6TH, STENCIL_6TH_DIV, type Partition } from './partition';
 
@@ -190,9 +191,13 @@ export function impedanceForAbsorption(alpha: number): number {
   if (!(alpha >= 0) || alpha > 1) {
     throw new Error(`Absorption coefficient must be in [0, 1], got ${alpha}`);
   }
-  const r = Math.sqrt(1 - alpha);
-  // α = 1 is R = 0 is ξ = 1, the matched surface. α = 0 is R = 1 is ξ = ∞.
-  return r >= 1 ? Infinity : (1 + r) / (1 - r);
+  // Delegates rather than duplicating. `acoustics/reflection-coefficient.ts`
+  // owns this mapping for the whole repository, so the geometrical solvers and
+  // this one cannot drift apart about what a material is — which they did,
+  // taking opposite roots, until issue #200. The validation stays here because
+  // a solver assembling partitions should fail loudly on a bad coefficient,
+  // where the geometrical path clamps in a hot loop.
+  return sharedImpedanceForAbsorption(alpha);
 }
 
 /**

@@ -109,7 +109,18 @@ function eyring(volume: number, surface: number, alpha: number): number {
   return (0.161 * volume) / (-surface * Math.log(1 - alpha));
 }
 
-/** Decay time from the Schroeder curve between two levels, extrapolated to 60 dB. */
+/**
+ * Decay time from the Schroeder curve between two levels, extrapolated to 60 dB.
+ *
+ * A two-point lookup rather than an ISO 3382-1 least-squares fit, deliberately
+ * local to this spec for independence from the code under test. #137 objects to
+ * exactly that in the shipped energy-decay code, and when it produces a real
+ * fit **this helper and the twin in `radiance/__tests__/physics.spec.ts` should
+ * move onto it in one pass** — two oracles that define T30 differently would
+ * drift, and drift between oracles is worse than a shared approximation. The
+ * twin differs only in not squaring its input, since ART's response is energy
+ * where this one is pressure.
+ */
 function decayTime(ir: Float32Array, dt: number, from: number, to: number): number {
   const edc = new Float64Array(ir.length);
   let acc = 0;

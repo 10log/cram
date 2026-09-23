@@ -77,14 +77,15 @@ describe('ARD separable DCT', () => {
       [8],
       [37],
       [4, 4],
-      [8, 5], // non-square, both powers-of-two-free on one axis
+      [8, 5], // non-square, one axis off the radix-2 path
       [37, 13], // both Bluestein
-      [61, 4],
+      [61, 4], // one axis each on Bluestein and radix-2
       [16, 1], // a 1-thick axis, as a 2D run sees it
       [1, 16],
       [4, 5, 6],
       [8, 3, 5],
-      [13, 7, 11], // all three Bluestein
+      [13, 7, 11], // 13 and 11 Bluestein, 7 mixed radix
+      [14, 15, 9], // mixed radix on every axis, covering radices 2, 3, 5 and 7
       [12, 9, 1],
     ];
 
