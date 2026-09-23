@@ -107,6 +107,14 @@ describe("Issue #199: the field stepper is the single-cell stencil, tiled", () =
       }
     }
     field.channel[4 * nx + 5] = wallChannelForGhostGain(0.3);
+    // Staircase weights (#220) on every wall cell, different per axis, so a
+    // face read across the wrong axis would show up here.
+    for (let k = 0; k < nx * ny; k++) {
+      if (!(field.channel[k] > 0)) {
+        field.weightX[k] = 0.25 + 0.5 * (random() + 0.5);
+        field.weightY[k] = 0.1 + 0.8 * (random() + 0.5);
+      }
+    }
 
     const before = {
       pressure: Float64Array.from(field.pressure),
@@ -121,6 +129,8 @@ describe("Issue #199: the field stepper is the single-cell stencil, tiled", () =
         velocity: before.velocity[idx],
         isWall: !(channel > 0),
         ghostGain: channel > 0 ? 0 : -channel,
+        weightX: field.weightX[idx],
+        weightY: field.weightY[idx],
       };
     };
 

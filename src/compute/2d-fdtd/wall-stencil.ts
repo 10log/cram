@@ -83,15 +83,29 @@ export interface StencilCell {
   isWall: boolean;
   /** Impedance ghost gain of *this* cell as a wall. Absent or 0 is rigid. */
   ghostGain?: number;
+  /**
+   * Staircase face weights `|n·e|` of this cell as a wall (#220): `weightX`
+   * scales `ghostGain` across an x-face, `weightY` across a y-face. Absent is
+   * 1, the uncorrected wall.
+   */
+  weightX?: number;
+  weightY?: number;
+}
+
+/** A wall neighbor's gain as seen across a face on `axis`, weighted (#220). */
+function faceGain(neighbor: StencilCell, axis: 'x' | 'y'): number {
+  const weight = (axis === 'x' ? neighbor.weightX : neighbor.weightY) ?? 1;
+  return (neighbor.ghostGain ?? 0) * weight;
 }
 
 function neighborPressure(
   cell: StencilCell,
   neighbor: StencilCell,
+  axis: 'x' | 'y',
   maxGhostGain: number,
 ): number {
   if (!neighbor.isWall) return neighbor.pressure;
-  const { backward } = splitGhostGain(neighbor.ghostGain ?? 0, maxGhostGain);
+  const { backward } = splitGhostGain(faceGain(neighbor, axis), maxGhostGain);
   return wallGhostPressure(cell.pressure, cell.velocity, backward);
 }
 
@@ -116,15 +130,21 @@ export function stepInteriorCell(
   if (cell.isWall) {
     return { pressure: restPressure, velocity: 0, isWall: true, ghostGain: cell.ghostGain };
   }
-  const u = neighborPressure(cell, neighbors.u, maxGhostGain);
-  const d = neighborPressure(cell, neighbors.d, maxGhostGain);
-  const r = neighborPressure(cell, neighbors.r, maxGhostGain);
-  const l = neighborPressure(cell, neighbors.l, maxGhostGain);
+  const u = neighborPressure(cell, neighbors.u, 'y', maxGhostGain);
+  const d = neighborPressure(cell, neighbors.d, 'y', maxGhostGain);
+  const r = neighborPressure(cell, neighbors.r, 'x', maxGhostGain);
+  const l = neighborPressure(cell, neighbors.l, 'x', maxGhostGain);
   const mid = 0.25 * (u + d + r + l);
   let centredGain = 0;
   // Same order as stepField sums them, so the two agree to the bit.
-  for (const n of [neighbors.l, neighbors.r, neighbors.d, neighbors.u]) {
-    if (n.isWall) centredGain += splitGhostGain(n.ghostGain ?? 0, maxGhostGain).centred;
+  const faces = [
+    [neighbors.l, 'x'],
+    [neighbors.r, 'x'],
+    [neighbors.d, 'y'],
+    [neighbors.u, 'y'],
+  ] as const;
+  for (const [n, axis] of faces) {
+    if (n.isWall) centredGain += splitGhostGain(faceGain(n, axis), maxGhostGain).centred;
   }
   const velocity = applyCentredWallLoss(
     4 * courantSq * (mid - cell.pressure) + cell.velocity * damping,
@@ -195,6 +215,12 @@ export interface Field2D {
   pressure: Float64Array;
   velocity: Float64Array;
   channel: Float64Array;
+  /**
+   * Staircase face weights of each wall cell (#220), the wallmap texture's
+   * `1 − r` and `1 − g`. 1 everywhere is the uncorrected field.
+   */
+  weightX: Float64Array;
+  weightY: Float64Array;
 }
 
 export function createField2D(nx: number, ny: number): Field2D {
@@ -205,6 +231,8 @@ export function createField2D(nx: number, ny: number): Field2D {
     pressure: new Float64Array(size),
     velocity: new Float64Array(size),
     channel: new Float64Array(size).fill(1),
+    weightX: new Float64Array(size).fill(1),
+    weightY: new Float64Array(size).fill(1),
   };
 }
 
@@ -226,7 +254,7 @@ export function stepField(
   scratch: { pressure: Float64Array; velocity: Float64Array },
   maxGhostGain = MAX_GHOST_GAIN,
 ): void {
-  const { nx, ny, pressure, velocity, channel } = field;
+  const { nx, ny, pressure, velocity, channel, weightX, weightY } = field;
   const nextP = scratch.pressure;
   const nextV = scratch.velocity;
   for (let j = 0; j < ny; j++) {
@@ -250,12 +278,14 @@ export function stepField(
           : n === 1 ? (i < nx - 1 ? idx + 1 : idx)
           : n === 2 ? (j > 0 ? idx - nx : idx)
           : (j < ny - 1 ? idx + nx : idx);
-        const c = channel[nb];
-        if (c > 0) {
+        const raw = channel[nb];
+        if (raw > 0) {
           sum += pressure[nb];
         } else {
-          // The channel holds -γ: the backward ghost takes up to
+          // The channel holds -γ, weighted by the face's |n·e| (#220): n < 2
+          // is an x-face, the rest y-faces. The backward ghost takes up to
           // maxGhostGain of it, the centred loss the rest.
+          const c = raw * (n < 2 ? weightX[nb] : weightY[nb]);
           sum += p + Math.max(c, -maxGhostGain) * v;
           centredGain += Math.max(-c - maxGhostGain, 0);
         }

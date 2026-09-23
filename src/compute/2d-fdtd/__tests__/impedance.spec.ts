@@ -461,8 +461,8 @@ describe('Issue #199: FDTD 2D impedance walls', () => {
     it('applies the ghost on every one of the four neighbours', () => {
       for (const dir of ['u', 'd', 'r', 'l']) {
         expect(frag).toContain(`if (${dir}_wall <= 0.0) {`);
-        expect(frag).toContain(`${dir}_pos = pos + max(${dir}_wall, -MAX_GHOST_GAIN) * vel;`);
-        expect(frag).toContain(`centredGain += max(-${dir}_wall - MAX_GHOST_GAIN, 0.0);`);
+        expect(frag).toContain(`${dir}_pos = pos + max(${dir}_gain, -MAX_GHOST_GAIN) * vel;`);
+        expect(frag).toContain(`centredGain += max(-${dir}_gain - MAX_GHOST_GAIN, 0.0);`);
       }
       // `pos + channel * vel` is `pos - gamma * vel` because the channel holds
       // -gamma; the CPU mirror spells the same thing the other way round.
