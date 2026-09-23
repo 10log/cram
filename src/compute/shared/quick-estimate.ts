@@ -12,11 +12,23 @@ import type { QuickEstimateStepResult } from "./quick-estimate-types";
 import { QUICK_ESTIMATE_MAX_ORDER, RT60_DECAY_RATIO } from "./quick-estimate-types";
 
 /**
- * Shoot one random ray from sourcePosition, bounce until 60dB decay,
- * and return per-band RT60 estimates.
+ * Shoot one random ray from sourcePosition, bounce until every band has
+ * decayed 60 dB, and return per-band RT60 estimates.
  *
  * This is the core logic extracted from RayTracer.quickEstimateStep(),
  * shared between RayTracer and BeamTraceSolver.
+ *
+ * Energy is lost to two things, and until #217 only one of them was applied
+ * here: the surface coefficient at each bounce, and air absorption over each
+ * segment. Both full solves apply both, so the estimate was systematically
+ * long in the bands where air dominates — and only there, which is why it read
+ * as plausible.
+ *
+ * A band that has not crossed within `maxOrder` bounces reports 0, which the
+ * callers drop from their average. Running until the *last* band finishes
+ * rather than the first costs nothing in a room where they finish together,
+ * and in a room with a very reflective low band it can now run to `maxOrder`
+ * where it previously stopped early with that band unreported.
  */
 export function quickEstimateStep(
   raycaster: THREE.Raycaster,
@@ -54,7 +66,16 @@ export function quickEstimateStep(
 
   let iter = 0;
 
-  let doneDecaying = false;
+  // Per band, because bands no longer finish together. Before #217 this was a
+  // single flag set by the *first* band to cross 60 dB, which also ended the
+  // loop — so every slower band returned 0, and the callers drop zeros from
+  // their average (`if (r.rt60s[f] > 0)`), leaving those bands blank in the
+  // UI. With only surface absorption and one coefficient per band the
+  // crossings were near-simultaneous and nothing showed. Air absorption pulls
+  // them apart by an order of magnitude, so the two changes here are not
+  // separable: adding air without this would blank every band below the top.
+  const bandDone = Array(frequencies.length).fill(false) as boolean[];
+  let bandsDone = 0;
 
   let distance = 0;
 
@@ -63,7 +84,7 @@ export function quickEstimateStep(
 
   let lastIntersection = {} as THREE.Intersection;
 
-  while (!doneDecaying && iter < maxOrder) {
+  while (bandsDone < frequencies.length && iter < maxOrder) {
     // set the starting position and direction
     raycaster.ray.set(position, direction);
 
@@ -81,23 +102,36 @@ export function quickEstimateStep(
       const nWorld = worldHitNormal(intersections[0], normal, direction);
       angle = nWorld ? direction.clone().multiplyScalar(-1).angleTo(nWorld) : 0;
 
-      distance += intersections[0].distance;
+      const segment = intersections[0].distance;
+      distance += segment;
 
       const surface = intersections[0].object.parent as Surface;
 
       // for each frequency
       for (let f = 0; f < frequencies.length; f++) {
+        if (bandDone[f]) continue;
         const freq = frequencies[f];
         let coefficient = 1;
         if (surface.kind === 'surface') {
           coefficient = surface.reflectionFunction(freq, angle);
         }
-        intensities[f] *= coefficient;
-        const freqDoneDecaying = initialIntensity / intensities[f] > RT60_DECAY_RATIO;
-        if (freqDoneDecaying) {
+        // Air over the segment just travelled, then the surface. `dB / 10`
+        // because these are intensities, matching `ray-core.ts`. Until #217
+        // this coefficient was computed and thrown away, so the estimate had
+        // no air absorption at all while both full solves did — and air is
+        // what actually ends the decay in the top bands: at 8 kHz it alone
+        // accounts for 60 dB in 460 m of path, so any room whose 8 kHz
+        // estimate exceeded about 1.3 s was reporting a figure air would have
+        // capped.
+        intensities[f] *= coefficient * Math.pow(10, (-airAttenuationdB[f] * segment) / 10);
+        if (initialIntensity / intensities[f] > RT60_DECAY_RATIO) {
+          // The decay is read at the end of the segment that crossed, so it is
+          // quantized by segment length — as the surface drop always was, and
+          // by a comparable amount.
           rt60s[f] = distance / soundSpeed;
+          bandDone[f] = true;
+          bandsDone += 1;
         }
-        doneDecaying = doneDecaying || freqDoneDecaying;
       }
 
       // Anything carrying a numeric `numHits` gets it bumped; in a real scene
