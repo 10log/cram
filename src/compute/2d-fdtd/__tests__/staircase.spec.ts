@@ -13,14 +13,24 @@ import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import rasterizeLine from '../rasterize-line';
 import {
+  AIR_CHANNEL,
+  MAX_GHOST_GAIN,
   faceWeightChannel,
   faceWeightFromChannel,
   ghostGainForAbsorption,
+  splitGhostGain,
   wallChannelFor,
   wallFaceWeights,
   wallmapTexelFor,
 } from '../impedance';
-import { createField2D, stepField, type Field2D } from '../wall-stencil';
+import {
+  applyCentredWallLoss,
+  createField2D,
+  stepField,
+  stepInteriorCell,
+  wallGhostPressure,
+  type Field2D,
+} from '../wall-stencil';
 
 const C = Math.SQRT1_2;
 const C2 = 0.5;
@@ -209,26 +219,25 @@ describe('Issue #220: staircase face weights', () => {
     it('decays inside the 2D Eyring bracket at every rotation, which it did not before', () => {
       const raw: number[] = [];
       const weighted: number[] = [];
-      let lower = 0;
-      let upper = 0;
       for (const degrees of [0, 25, 55]) {
         const plain = polygonRoom(N, corners(degrees), ALPHA, false);
         const fixed = polygonRoom(N, corners(degrees), ALPHA, true);
-        lower = eyringSteps(fixed.area, fixed.perimeter, diffuseAbsorption2D(ALPHA));
-        upper = eyringSteps(fixed.area, fixed.perimeter, ALPHA);
-        raw.push(decaySteps(plain.field, 4400));
-        weighted.push(decaySteps(fixed.field, 4400));
-      }
-      // Weighted: within the bracket, at the diffuse end where a room with no
-      // parallel walls belongs (measured 7–14% above it).
-      for (const t of weighted) {
-        expect([weighted, t > 0.95 * lower && t < upper]).toEqual([weighted, true]);
-      }
-      // Uncorrected: faster than even the diffuse end allows, the most
-      // absorbing reading of the materials, at every rotation (measured 9–15%
-      // below it). This is the defect.
-      for (const t of raw) {
-        expect([raw, t < lower]).toEqual([raw, true]);
+        // Each rotation against its own bracket: corners are rounded after
+        // rotating, so area and perimeter differ slightly between rotations.
+        const lower = eyringSteps(fixed.area, fixed.perimeter, diffuseAbsorption2D(ALPHA));
+        const upper = eyringSteps(fixed.area, fixed.perimeter, ALPHA);
+        const before = decaySteps(plain.field, 4400);
+        const after = decaySteps(fixed.field, 4400);
+        raw.push(before);
+        weighted.push(after);
+        const at = { degrees, lower, upper, before, after };
+        // Weighted: within the bracket, at the diffuse end where a room with
+        // no parallel walls belongs (measured 1.07–1.14 × the diffuse end).
+        expect([at, after > 0.95 * lower && after < upper]).toEqual([at, true]);
+        // Uncorrected: faster than even the diffuse end allows, the most
+        // absorbing reading of the materials (measured 0.85–0.91 ×). This is
+        // the defect.
+        expect([at, before < lower]).toEqual([at, true]);
       }
       // And the rotation spread narrows.
       const spread = (xs: number[]) => Math.max(...xs) / Math.min(...xs);
@@ -252,6 +261,75 @@ describe('Issue #220: staircase face weights', () => {
     });
   });
 
+  describe('with the #219 centred remainder', () => {
+    // The weight scales γ *before* splitGhostGain divides it. For γ above
+    // MAX_GHOST_GAIN that is not the same as splitting first: γ = 1.5 at
+    // w = 0.5 is a face gain of 0.75, all backward, where split-then-weight
+    // would leave 0.475 backward and 0.275 centred. The shader weights first
+    // too (`u_gain = u_wall * w`, then the max()), so this pins the order.
+    const gamma = 1.5;
+    const weight = 0.5;
+    const cell = { pressure: 0.3, velocity: 0.2, isWall: false };
+    const air = { pressure: -0.1, velocity: 0, isWall: false };
+    const wall = { pressure: 0, velocity: 0, isWall: true, ghostGain: gamma, weightX: weight, weightY: 1 };
+
+    it('splits the weighted gain, not the weight of each split part', () => {
+      expect(splitGhostGain(gamma * weight)).toEqual({ backward: gamma * weight, centred: 0 });
+      const stepped = stepInteriorCell(cell, { l: wall, r: air, u: air, d: air }, C2, 1);
+      // Weight first: the wall is a plain backward ghost of gain 0.75.
+      const ghost = wallGhostPressure(cell.pressure, cell.velocity, gamma * weight);
+      const expected = cell.pressure + C2 * (ghost + 3 * air.pressure - 4 * cell.pressure) + cell.velocity;
+      expect(stepped.pressure).toBeCloseTo(expected, 15);
+      // Split first would have carried a centred remainder and a different
+      // backward share; make sure that is distinguishable here.
+      const { backward, centred } = splitGhostGain(gamma);
+      const wrongGhost = wallGhostPressure(cell.pressure, cell.velocity, backward * weight);
+      const wrong = applyCentredWallLoss(
+        C2 * (wrongGhost + 3 * air.pressure - 4 * cell.pressure) + cell.velocity,
+        cell.velocity,
+        C2,
+        centred * weight,
+      );
+      expect(Math.abs(stepped.pressure - (cell.pressure + wrong))).toBeGreaterThan(1e-3);
+    });
+
+    it('does the same in stepField, where a weighted gain still above the split keeps a remainder', () => {
+      // 1.5 at w = 0.8 is 1.2: backward MAX_GHOST_GAIN, centred 0.25.
+      // The centre cell (4) has walls left (3, an x-face), below (1) and above
+      // (7, y-faces), and air to its right (5).
+      const field = createField2D(3, 3);
+      field.pressure[4] = cell.pressure;
+      field.velocity[4] = cell.velocity;
+      field.pressure[5] = air.pressure;
+      field.channel[5] = AIR_CHANNEL;
+      for (const k of [1, 3, 7]) field.channel[k] = -gamma;
+      field.weightX[3] = 0.8;
+      field.weightY[1] = 0.5;
+      field.weightY[7] = 1;
+      const scratch = { pressure: new Float64Array(9), velocity: new Float64Array(9) };
+      const expectedCell = stepInteriorCell(
+        { pressure: cell.pressure, velocity: cell.velocity, isWall: false },
+        {
+          l: { ...wall, weightX: 0.8 },
+          r: { pressure: air.pressure, velocity: 0, isWall: false },
+          d: { ...wall, weightY: 0.5 },
+          u: { ...wall, weightY: 1 },
+        },
+        C2,
+        1,
+      );
+      stepField(field, C2, 1, scratch);
+      expect(field.pressure[4]).toBeCloseTo(expectedCell.pressure, 14);
+      // And the remainders are the weighted gains' own: 1.2 − 0.95 and
+      // 1.5 − 0.95 carried, 0.75 not.
+      const remainder = [0.8, 0.5, 1].reduce(
+        (sum, w) => sum + splitGhostGain(gamma * w).centred,
+        0,
+      );
+      expect(remainder).toBeCloseTo((1.2 - MAX_GHOST_GAIN) + (1.5 - MAX_GHOST_GAIN), 14);
+    });
+  });
+
   describe('the shader and solver carry the same weights', () => {
     const frag = readFileSync(resolve(__dirname, '../shaders/height-map.frag'), 'utf8');
     const solver = readFileSync(resolve(__dirname, '../index.ts'), 'utf8');
@@ -266,6 +344,9 @@ describe('Issue #220: staircase face weights', () => {
 
     it('binds the wallmap, writes it with the sourcemap, and disposes it', () => {
       expect(solver).toContain('uniforms["wallmap"] = { value: this.wallmap }');
+      // Rebound each pass beside the sourcemap, so an init that replaced the
+      // texture object cannot leave the shader reading a stale one.
+      expect(solver).toContain('this.heightmapVariable.material["uniforms"]["wallmap"].value = this.wallmap;');
       expect(solver).toContain('const texel = wallmapTexelFor(wall);');
       expect(solver).toContain('weights[index + 0] = texel.r;');
       expect(solver).toContain('weights[index + 1] = texel.g;');

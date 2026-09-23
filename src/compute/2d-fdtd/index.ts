@@ -626,16 +626,24 @@ class FDTD_2D extends Solver {
 
   updateWalls() {
     const data = this.sourcemap.image.data;
+    if (!data) return;
+    // The staircase weights are a correction on top of the walls, so a
+    // missing wallmap must not stop absorption itself from updating: the
+    // sourcemap is still written, and the walls run uncorrected.
     const weights = this.wallmap?.image?.data;
-    if (!data || !weights) return;
+    if (!weights) {
+      console.warn('FDTD 2D: wallmap missing; walls are written without staircase correction (#220).');
+    }
     for (let i = 0; i < this.walls.length; i++) {
       const wall = this.walls[i];
       if (wall.shouldClearPreviousCells) {
         for (let j = 0; j < wall.previousCells.length; j++) {
           const index = 4 * (wall.previousCells[j][1] * this.nx + wall.previousCells[j][0]);
           data[index + 2] = AIR_CHANNEL;
-          weights[index + 0] = 0;
-          weights[index + 1] = 0;
+          if (weights) {
+            weights[index + 0] = 0;
+            weights[index + 1] = 0;
+          }
         }
         wall.shouldClearPreviousCells = false;
       }
@@ -644,12 +652,14 @@ class FDTD_2D extends Solver {
       for (let j = 0; j < wall.cells.length; j++) {
         const index = 4 * (wall.cells[j][1] * this.nx + wall.cells[j][0]);
         data[index + 2] = channel;
-        weights[index + 0] = texel.r;
-        weights[index + 1] = texel.g;
+        if (weights) {
+          weights[index + 0] = texel.r;
+          weights[index + 1] = texel.g;
+        }
       }
     }
     this.sourcemap.needsUpdate = true;
-    this.wallmap.needsUpdate = true;
+    if (weights) this.wallmap.needsUpdate = true;
   }
 
   updateSourceTexture() {
@@ -741,6 +751,7 @@ class FDTD_2D extends Solver {
       this.updateSourceTexture();
 
       this.heightmapVariable.material["uniforms"]["sourcemap"].value = this.sourcemap;
+      this.heightmapVariable.material["uniforms"]["wallmap"].value = this.wallmap;
 
       // Do the gpu computation
       this.gpuCompute.compute();

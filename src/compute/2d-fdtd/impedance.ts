@@ -159,10 +159,12 @@
  * end caps of a free-standing wall — which are not surface — become rigid.
  *
  * The weight is a diffuse-field argument, and it holds where the field is
- * diffuse. Measured on irregular rooms rotated through 0–75°, uncorrected walls
- * decay 8–22% faster than even the diffuse end of the 2D Eyring bracket
- * allows; weighted, every rotation lands inside it and the spread across
- * rotations halves. A square room at exactly 45° is the exception: its decay
+ * diffuse. On the irregular pentagon in `__tests__/staircase.spec.ts`, at 0°,
+ * 25° and 55°, uncorrected walls decay 9–15% faster than even the diffuse end
+ * of the 2D Eyring bracket allows; weighted, every rotation lands 7–14% above
+ * that end, inside the bracket. (An earlier probe on a larger grid, over 0–75°
+ * and a second irregular room, found the same: 8–22% below uncorrected, inside
+ * weighted, and the spread across rotations roughly halved.) A square room at exactly 45° is the exception: its decay
  * is held by a handful of modes striking a perfectly periodic staircase at one
  * angle, not by a diffuse field, and the weight over-corrects it.
  */
