@@ -1,6 +1,13 @@
 import * as THREE from "three";
 import * as ac from "../acoustics";
-import Surface from "../../objects/surface";
+// Type-only, for the same reason `ray-core.ts` is (#201): importing the
+// `Surface` *class* pulls the messenger, the container store and `compute/csg`
+// — whose modeling bundle top-level-awaits a browser URL — into this module,
+// and nothing could then execute `quickEstimateStep` headlessly. The one
+// runtime use was an `instanceof` guarding a hit counter, duck-typed below.
+import type Surface from "../../objects/surface";
+import { SELF_INTERSECTION_OFFSET } from "../raytracer/types";
+import { worldHitNormal } from "../raytracer/world-normal";
 import type { QuickEstimateStepResult } from "./quick-estimate-types";
 import { QUICK_ESTIMATE_MAX_ORDER, RT60_DECAY_RATIO } from "./quick-estimate-types";
 
@@ -39,6 +46,10 @@ export function quickEstimateStep(
 
   let angle = 0;
 
+  // Scratch for the hit normal, so a bounce allocates nothing and nothing
+  // writes back into three's own face-normal object.
+  const normal = new THREE.Vector3();
+
   const intensities = Array(frequencies.length).fill(initialIntensity);
 
   let iter = 0;
@@ -61,8 +72,14 @@ export function quickEstimateStep(
 
     // if there was an intersection
     if (intersections.length > 0) {
-      // find the incident angle
-      angle = direction.clone().multiplyScalar(-1).angleTo(intersections[0].face!.normal);
+      // Find the incident angle, from the *world-space* normal facing this
+      // ray. This used raw `face.normal`, which is object-local and unoriented
+      // (#213): on a rotated surface it read a head-on hit as 90° grazing, and
+      // it reflected about the local normal as well. `worldHitNormal` is the
+      // same source the full solve uses, so the estimate and the solve cannot
+      // disagree about which way a wall faces.
+      const nWorld = worldHitNormal(intersections[0], normal, direction);
+      angle = nWorld ? direction.clone().multiplyScalar(-1).angleTo(nWorld) : 0;
 
       distance += intersections[0].distance;
 
@@ -83,17 +100,29 @@ export function quickEstimateStep(
         doneDecaying = doneDecaying || freqDoneDecaying;
       }
 
-      if (intersections[0].object.parent instanceof Surface) {
-        intersections[0].object.parent.numHits += 1;
+      // Anything carrying a numeric `numHits` gets it bumped; in a real scene
+      // that is exactly the `Surface` instances the `instanceof` used to match.
+      const hitParent = intersections[0].object.parent as { numHits?: number } | null;
+      if (hitParent && typeof hitParent.numHits === "number") {
+        hitParent.numHits += 1;
       }
 
-      // get the normal direction of the intersection
-      const normal = intersections[0].face!.normal.normalize();
+      // find the reflected direction, about the same normal
+      if (nWorld) {
+        direction.addScaledVector(nWorld, -2 * direction.dot(nWorld)).normalize();
+      }
 
-      // find the reflected direction
-      direction.sub(normal.clone().multiplyScalar(direction.dot(normal)).multiplyScalar(2)).normalize();
-
+      // Lift the next origin off the surface, as `ray-core.ts` does. Without
+      // it the ray restarts exactly on the plane it just left and, half the
+      // time, immediately re-hits the same triangle at zero distance —
+      // measured at **299 of 300 bounces** in a shoebox, mean segment 0.005 m
+      // against 2.18 m with the offset. Each of those self-hits applies the
+      // reflection coefficient again while adding no path length, so the
+      // estimate decayed to -60 dB in about a four-hundredth of the distance
+      // it should have. That is separate from the normal fix above, but it
+      // lives on the same two lines and left the estimate untestable.
       position.copy(intersections[0].point);
+      if (nWorld) position.addScaledVector(nWorld, SELF_INTERSECTION_OFFSET);
 
       lastIntersection = intersections[0];
     }

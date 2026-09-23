@@ -74,7 +74,7 @@ export function traceRay(
 
     //check to see if the intersection was with a receiver
     if (intersections[0].object.userData?.kind === 'receiver') {
-      const nWorld = worldHitNormal(intersections[0], _normalCopy);
+      const nWorld = worldHitNormal(intersections[0], _normalCopy, rd);
       const angle = nWorld && _negRd.copy(rd).multiplyScalar(-1).angleTo(nWorld);
 
       // apply air absorption for the final segment to the receiver
@@ -124,10 +124,17 @@ export function traceRay(
         arrivalDirection,
       } as RayPath;
     } else {
-      const nWorld = worldHitNormal(intersections[0], _normalCopy);
+      const nWorld = worldHitNormal(intersections[0], _normalCopy, rd);
       const angle = nWorld && _negRd.copy(rd).multiplyScalar(-1).angleTo(nWorld);
 
-      // push the intersection onto the chain
+      // push the intersection onto the chain. `faceNormal` is the world-space
+      // normal *as this ray saw it* — flipped to face the incoming direction
+      // where the triangle is wound the other way — which is the same vector
+      // the angle, the reflection and the next origin are computed from. It is
+      // recorded rather than the geometric normal because nothing downstream
+      // reads it for physics, and a chain entry that disagreed with the bounce
+      // it describes would be worse than one that cannot distinguish a
+      // back-face hit.
       chain.push({
         object: intersections[0].object.parent!.uuid,
         angle: angle!,
