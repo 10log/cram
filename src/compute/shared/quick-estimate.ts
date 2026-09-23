@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import * as ac from "../acoustics";
+import { airAttenuationEnergy } from "../acoustics/air-attenuation";
 // Type-only, for the same reason `ray-core.ts` is (#201): importing the
 // `Surface` *class* pulls the messenger, the container store and `compute/csg`
 // — whose modeling bundle top-level-awaits a browser URL — into this module,
@@ -115,15 +116,16 @@ export function quickEstimateStep(
         if (surface.kind === 'surface') {
           coefficient = surface.reflectionFunction(freq, angle);
         }
-        // Air over the segment just travelled, then the surface. `dB / 10`
-        // because these are intensities, matching `ray-core.ts`. Until #217
-        // this coefficient was computed and thrown away, so the estimate had
-        // no air absorption at all while both full solves did — and air is
-        // what actually ends the decay in the top bands: at 8 kHz it alone
-        // accounts for 60 dB in 460 m of path, so any room whose 8 kHz
-        // estimate exceeded about 1.3 s was reporting a figure air would have
-        // capped.
-        intensities[f] *= coefficient * Math.pow(10, (-airAttenuationdB[f] * segment) / 10);
+        // Air over the segment just travelled, then the surface. Through
+        // `airAttenuationEnergy` rather than an inline `10 ** (-dB·r/10)`,
+        // because that helper is where the 10-vs-20 convention is written
+        // down and this is an intensity. Until #217 the coefficient was
+        // computed and thrown away, so the estimate had no air absorption at
+        // all while both full solves did — and air is what actually ends the
+        // decay in the top bands: at 8 kHz it alone accounts for 60 dB in
+        // 460 m of path, so any room whose 8 kHz estimate exceeded about
+        // 1.3 s was reporting a figure air would have capped.
+        intensities[f] *= coefficient * airAttenuationEnergy(airAttenuationdB[f], segment);
         if (initialIntensity / intensities[f] > RT60_DECAY_RATIO) {
           // The decay is read at the end of the segment that crossed, so it is
           // quantized by segment length — as the surface drop always was, and
@@ -159,6 +161,15 @@ export function quickEstimateStep(
       if (nWorld) position.addScaledVector(nWorld, SELF_INTERSECTION_OFFSET);
 
       lastIntersection = intersections[0];
+    } else {
+      // The ray found nothing, so it has left the model. `position` and
+      // `direction` are unchanged, so continuing would recast the identical
+      // ray for the rest of the budget without ever making progress — a
+      // busy-loop that was survivable while the *first* band to decay ended
+      // the loop, and is not now that the slowest band does. Bands that have
+      // not crossed keep their 0, which the callers already read as "no
+      // estimate from this ray".
+      break;
     }
     iter += 1;
   }
