@@ -122,7 +122,7 @@ export function shootFromPatch(ctx: ShootingContext, patchIdx: number): void {
       // Orientation gate only, never a scale factor. A ray that arrives on the
       // back of a patch is a geometry miss and is dropped; one that arrives on
       // the front delivers all the energy it carries. Scaling the deposit by
-      // this cosine is what issue #205 was: see the note above `scaledGain`.
+      // this cosine is what issue #205 was: see the note above `depositGain`.
       if (incomingLambert(rcvPatch.normal, worldDir) <= 0) continue;
 
       // Propagation delay in samples
@@ -153,10 +153,10 @@ export function shootFromPatch(ctx: ShootingContext, patchIdx: number): void {
       // energy: measured 0.70-0.74 retention per bounce at α = 0, compounding to
       // a reverberation time 2-4x short (issue #205).
       const sourceResponse = srcEnergy.responses[k];
-      const scaledGain = gain * airAtten;
+      const depositGain = gain * airAtten;
 
       for (let outSlot = 0; outSlot < brdf.nSlots; outSlot++) {
-        const weight = outgoingWeights[outSlot] * scaledGain;
+        const weight = outgoingWeights[outSlot] * depositGain;
         if (weight < 1e-20) continue;
         unshotEnergy[rcvPatchIdx].responses[outSlot].delayMultiplyAdd(
           sourceResponse, delaySamples, weight
@@ -214,7 +214,7 @@ export function injectSourceEnergy(
     const patchIdx = triangleToPatch[closestHit.triangleIndex];
     const patch = patches[patchIdx];
     // Orientation gate only, as in `shootFromPatch` — see the note on
-    // `scaledGain` there. A point source divides its energy equally among rays
+    // `depositGain` there. A point source divides its energy equally among rays
     // and each ray delivers what it carries; scaling by the receiver's cosine
     // cost about 20% of the injected energy before it entered the room at all.
     if (incomingLambert(patch.normal, dir) <= 0) continue;
