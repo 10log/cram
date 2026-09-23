@@ -283,12 +283,18 @@ fn traceClosest(
 
 // ─── Reflection coefficient (matches CPU reflection-coefficient.ts) ──
 
+// Impedance branch: xi = (1 + r)/(1 - r) >= 1, so a rigid surface (alpha = 0)
+// is rigid rather than pressure-release. See issue #200. Written without ever
+// forming xi, by multiplying through by (1 - r): in f32 the xi form is `inf`
+// at alpha = 0 and `(inf - 1)/(inf + 1)` is NaN at every angle, not only at
+// grazing.
 fn reflectionCoefficient(alpha: f32, theta: f32) -> f32 {
-  let rootOneMinusAlpha = sqrt(max(1.0 - alpha, 0.0));
-  let xi_o = (1.0 - rootOneMinusAlpha) / (1.0 + rootOneMinusAlpha);
+  let r = sqrt(max(1.0 - min(alpha, 1.0), 0.0));
   let cosTheta = abs(cos(theta));
-  let xi_o_cosTheta = xi_o * cosTheta;
-  let R = (xi_o_cosTheta - 1.0) / (xi_o_cosTheta + 1.0);
+  let numerator = (1.0 + r) * cosTheta - (1.0 - r);
+  let denominator = (1.0 + r) * cosTheta + (1.0 - r);
+  // Reachable only at alpha = 0 exactly at grazing; the limit there is +1.
+  let R = select(numerator / denominator, 1.0, denominator == 0.0);
   return R * R;
 }
 
