@@ -132,30 +132,140 @@ describe("Issue #121: one-bounce energy", () => {
   });
 });
 
+/**
+ * Decay time from the Schroeder curve of an **energy** response.
+ *
+ * ART's gathered buffer already holds energy, so the curve is the running
+ * reverse sum of the buffer itself — no squaring — and the level is
+ * `10*log10`, not 20. Extrapolated to 60 dB from the span between two levels,
+ * which is what T20 and T30 mean.
+ *
+ * A two-point lookup rather than an ISO 3382-1 least-squares fit, deliberately
+ * local to this spec: #137 objects to exactly that in the shipped energy-decay
+ * code, and if it produces a real fit this should move onto it.
+ */
+function decayTime(
+  buffer: ArrayLike<number>,
+  sampleRate: number,
+  fromDb: number,
+  toDb: number,
+): number {
+  const n = buffer.length;
+  const edc = new Float64Array(n);
+  let acc = 0;
+  for (let i = n - 1; i >= 0; i--) {
+    acc += buffer[i];
+    edc[i] = acc;
+  }
+  const peak = edc[0];
+  if (!(peak > 0)) return NaN;
+  const db = (i: number) => 10 * Math.log10(edc[i] / peak);
+
+  let from = -1;
+  let to = -1;
+  for (let i = 0; i < n; i++) {
+    if (from < 0 && db(i) <= fromDb) from = i;
+    if (db(i) <= toDb) {
+      to = i;
+      break;
+    }
+  }
+  if (from < 0 || to < 0 || to <= from) return NaN;
+  const slope = (db(to) - db(from)) / ((to - from) / sampleRate);
+  return -60 / slope;
+}
+
+/** Eyring reverberation time. Sabine's, with the correct log. */
+function eyring(volume: number, surface: number, alpha: number): number {
+  return (0.161 * volume) / (-surface * Math.log(1 - alpha));
+}
+
 describe("Issue #121: Sabine ballpark", () => {
-  test("empty box α=0.2: Sabine formula holds and the gather decays", () => {
-    const Lx = 4;
-    const Ly = 3;
-    const Lz = 2.5;
-    const V = Lx * Ly * Lz;
-    const S = 2 * (Lx * Ly + Lx * Lz + Ly * Lz);
-    const alpha = 0.2;
-    const sabine = (0.161 * V) / (alpha * S);
+  const Lx = 4;
+  const Ly = 3;
+  const Lz = 2.5;
+  const V = Lx * Ly * Lz;
+  const S = 2 * (Lx * Ly + Lx * Lz + Ly * Lz);
+  const alpha = 0.2;
+
+  // One converged run, shared by the three tests below. Shooting a 4 x 3 x 2.5 m
+  // shoebox to convergence costs more than vitest's 10 s default, and paying
+  // for it three times was the first version of this block.
+  let ir: ReturnType<typeof gatherAtReceiver>;
+
+  beforeAll(() => {
     const patchSet = shoebox(Lx, Ly, Lz, () => alpha, () => 1);
-    const ctx = makeCtx(patchSet, { alpha, scatter: 1, rays: 80, rate: 500 });
+    const ctx = makeCtx(patchSet, { alpha, scatter: 1, rays: 200, rate: 1000 });
     injectSourceEnergy(new Vector3(1.2, 1.2, 0.8), 1, ctx, 200);
-    for (let i = 0; i < 40; i++) {
+    const injected = totalUnshotEnergy(ctx.unshotEnergy);
+    expect(injected).toBeGreaterThan(0);
+    for (let i = 0; i < 150; i++) {
       const idx = selectShootingPatch(ctx.unshotEnergy);
       if (ctx.unshotEnergy[idx].sum() < 1e-12) break;
       shootFromPatch(ctx, idx);
     }
-    const ir = gatherAtReceiver(new Vector3(2.8, 1.4, 1.6), ctx);
+    // Converged, so the tail below is the room's and not the iteration cap's.
+    // Measured T30 moves under 2% between 200/150 and 400/250, so the cheaper
+    // setting is not costing the answer.
+    //
+    // Relative to what was injected, not an absolute floor: the injected total
+    // depends on α and on the ray count, so an absolute threshold is a
+    // different test at every setting and sits one tweak away from flaking.
+    expect(totalUnshotEnergy(ctx.unshotEnergy) / injected).toBeLessThan(1e-4);
+    ir = gatherAtReceiver(new Vector3(2.8, 1.4, 1.6), ctx);
+  }, 120_000);
+
+  test("empty box α=0.2: the gather decays", () => {
+    // This assertion is all the block used to make about ART. It is worth
+    // keeping — it catches a solver that does not decay at all — but note what
+    // it does not do: `sabine` appeared in exactly one assertion, against the
+    // literal 0.41, which checks that 0.161·V/(αS) is arithmetic. Any decay
+    // rate passed. See #202.
     const mid = Math.floor(ir.buffer.length / 4);
     const early = ir.buffer.slice(0, mid).reduce((s, x) => s + x, 0);
     const late = ir.buffer.slice(-mid).reduce((s, x) => s + x, 0);
-    expect(sabine).toBeCloseTo(0.41, 1);
     expect(early).toBeGreaterThan(0);
     expect(early).toBeGreaterThan(late);
+  });
+
+  /**
+   * The comparison #121 criterion 3 actually asked for:
+   *
+   * > ART EDC T30 vs `0.161 V / (α S)` within a factor of ~2 (ART is
+   * > directional; this is a sanity bound, not a 1% match)
+   *
+   * Against Eyring rather than Sabine, which differ by 12% even at α = 0.2 and
+   * more as α rises. No random-incidence correction is needed here, unlike the
+   * wave solver's equivalent in `ard/__tests__/rt60-cross-check.spec.ts`: ART's
+   * BRDF uses `reflectance = 1 − α` at every angle, so the database coefficient
+   * *is* the coefficient Eyring wants.
+   *
+   * **Expected to fail until #205.** ART loses ~28% of energy per bounce
+   * independent of absorption, so measured T30 is 0.146 s against Eyring's
+   * 0.367 s — a factor of 2.5, outside the factor of 2 asked for. Marked
+   * `.fails` rather than skipped so that it is a live signal: when #205 is
+   * fixed this reports "expected to fail but passed" and the marker comes off.
+   */
+  test.fails("empty box α=0.2: T20 and T30 are within a factor of 2 of Eyring", () => {
+    const reference = eyring(V, S, alpha);
+    expect(reference).toBeCloseTo(0.367, 3);
+
+    for (const t of [decayTime(ir.buffer, 1000, -5, -25), decayTime(ir.buffer, 1000, -5, -35)]) {
+      expect(Number.isFinite(t)).toBe(true);
+      expect(t).toBeGreaterThan(reference / 2);
+      expect(t).toBeLessThan(reference * 2);
+    }
+  });
+
+  test("the decay is at least the right order, and biased short not long", () => {
+    // A live guard while #205 stands. It pins the direction of the error, so a
+    // change that made ART decay *slower* than theory — a different bug — would
+    // not slip past under cover of the known one.
+    const reference = eyring(V, S, alpha);
+    const t30 = decayTime(ir.buffer, 1000, -5, -35);
+    expect(Number.isFinite(t30)).toBe(true);
+    expect(t30).toBeLessThan(reference);
+    expect(t30).toBeGreaterThan(reference / 5);
   });
 });
 
