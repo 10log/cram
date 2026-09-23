@@ -41,7 +41,7 @@ import { describe, expect, it } from 'vitest';
 
 import { decompose } from '../decompose';
 import { impedanceForAbsorption } from '../impedance';
-import { bandlimitedPulse, createArdSimulation } from '../simulation';
+import { bandlimitedPulse, createArdSimulation, planArdTimeStep } from '../simulation';
 import { Cell, type VoxelGrid } from '../voxelize';
 
 const C = 343;
@@ -145,22 +145,37 @@ describe('T60 against statistical room acoustics', () => {
     const surface = 2 * (lx * ly + lx * lz + ly * lz);
 
     const grid = shoeboxGrid(air[0], air[1], air[2], dx);
-    const dt = (0.4 * dx) / C;
-    const steps = Math.ceil(0.8 / dt);
+    const decomposition = decompose(grid);
 
-    const sim = createArdSimulation({
+    // `dt` comes from the planner, not from the requested Courant number. It
+    // happens not to be clamped here — `impedanceCourantLimit(0.2)` is 0.54,
+    // above the 0.4 asked for — but computing it by hand is the exact trap
+    // `planArdTimeStep` and `duration` exist to close: the pulse is sampled at
+    // `dt` and the Schroeder times are read in `dt`, so a clamp that bit would
+    // desync the IR clock from the simulation's and the decay times would be
+    // wrong by the ratio without anything failing.
+    const base = {
       grid,
-      decomposition: decompose(grid),
+      decomposition,
       c: C,
       courant: 0.4,
+      duration: 0.8,
+      fMax: 500,
+      absorptionFor: () => alpha,
+    };
+    const plan = planArdTimeStep(base);
+    const dt = plan.dt;
+
+    const sim = createArdSimulation({
+      ...base,
       // Off-centre source and receiver, so no symmetry leaves whole families of
       // modes unexcited or unheard.
       sources: [{ cell: [8, 7, 6], signal: bandlimitedPulse(80, dt, 500) }],
       receivers: [{ cell: [21, 16, 13] }],
-      steps,
-      fMax: 500,
-      absorptionFor: () => alpha,
     });
+    // The clock the pulse was written at is the clock the simulation runs on.
+    expect(sim.dt).toBe(dt);
+    expect(sim.steps).toBe(plan.steps);
     expect(sim.impedancePlan.faces).toHaveLength(6);
     // 5.7 cells per wavelength at 500 Hz, inside the envelope the boundary
     // delivers its coefficient in — so this measures the boundary, not the grid.

@@ -161,12 +161,7 @@
  * boundary model, which is real-valued and frequency-independent within a run.
  */
 
-import {
-  INTERFACE_DEPTH,
-  addForceAtDepth,
-  pressureAtDepth,
-  transverseAxes,
-} from './interface';
+import { INTERFACE_DEPTH, addForceAtDepth, pressureAtDepth } from './interface';
 import { Axis, STENCIL_6TH, STENCIL_6TH_DIV, type Partition } from './partition';
 
 /** Normal-incidence pressure reflection coefficient of a real impedance. */
@@ -378,6 +373,3 @@ export function applyAllImpedanceForcing(
 ): void {
   for (const boundary of boundaries) boundary.apply();
 }
-
-/** Re-export so callers do not have to reach into `interface.ts` for it. */
-export { transverseAxes };

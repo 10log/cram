@@ -1034,7 +1034,12 @@ Flat to within ~5% once absorbing walls exist, which is the default. The two
 outliers are Phase 1 and Phase 5 findings seen from the other side:
 power-of-two extents take the radix-2 FFT path and run 20% faster, and a rigid
 room has no PML slabs — the most expensive partition kind — at all.
-`ARD_CELL_STEPS_PER_SECOND` takes the conservative end.
+`ARD_CELL_STEPS_PER_SECOND` takes the conservative end of each. Phase 11 split it
+per boundary and re-measured: the impedance path is **3-5x faster in wall clock**
+but *lower* per stepped cell (0.99-1.26 against the slab's 1.25-1.54), because
+the cells it keeps are the dear ones and it does boundary work the cell count
+does not see. Multiplying the 3x smaller impedance cell count by the old single
+1.35e6 was optimistic rather than pessimistic.
 
 **Estimated cells had to be counted in cells, not metres.** The obvious form —
 bounding volume over `Δx³` plus surface area over `Δx²` times the slab
@@ -1470,7 +1475,8 @@ changed.
 |---|---|---|
 | cells added | 2-5x the room | **none** |
 | grid padding | `wallThickness + 1` every side (9 at the default) | **1**, the voxelizer's own |
-| share of step time (Phase 10) | 76-93% | **not measured separately; it is three cells per face** |
+| share of step time (Phase 10) | 76-93% | three cells per face |
+| **wall clock per step**, same room | 9.4-36.1 ms | **2.7-12.2 ms — 3.0-5.4x faster** |
 | calibration | one measured `\|R\|` curve per distinct thickness, ~1 s each | **closed form** |
 | Courant clamp on the whole simulation | 0.446 on a 3D room, any material | **0.55 - 0.05α**, so 0.50-0.55 |
 | delivered α at 6 cells/wavelength, requested 0.7 | 0.611-0.692 | **0.700-0.710** |

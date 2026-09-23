@@ -21,7 +21,7 @@
  *  - **A looser time step.** A slab is a `PmlPartition` running an explicit
  *    stencil, and since every partition shares one `Δt` it sets the time step
  *    for the whole simulation — about Courant 0.446 on a 3D room regardless of
- *    material. An impedance boundary has its own measured limit, `0.6 − 0.1α`,
+ *    material. An impedance boundary has its own measured limit, `0.55 − 0.05α`,
  *    which is above that at every absorption coefficient. Hence
  *    {@link ImpedancePlan.maxAbsorption}: the planner reports the most
  *    absorbing face so the driver can apply it.

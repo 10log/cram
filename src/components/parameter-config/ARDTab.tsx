@@ -229,8 +229,8 @@ export const ARDTab = ({ uuid }: ARDTabProps) => {
             value={formatSeconds(cost.seconds)}
             tooltip={
               cost.boundary === 'pml'
-                ? 'Rough, from measured throughput of about 1.35 million cell-steps per second. An order of magnitude, not a quote — and it does not include voxelization or the per-thickness wall calibration.'
-                : 'Rough, from measured throughput of about 1.35 million cell-steps per second. An order of magnitude, not a quote, and conservative for this boundary: the figure was measured with PML slabs, which carry a heavier per-cell update than the DCT interiors left here.'
+                ? 'Rough, from measured throughput of about 1.25 million cell-steps per second on this boundary. An order of magnitude, not a quote — and it does not include voxelization or the per-thickness wall calibration. Note the rate is per stepped cell and a slab has two to five times as many of them, so a PML run is three to five times slower in wall clock than the same room on an impedance boundary.'
+                : 'Rough, from measured throughput of about 1.0 million cell-steps per second on this boundary. An order of magnitude, not a quote. A room whose cell extents are all powers of two runs two to three times faster, because the DCT takes its radix-2 path instead of Bluestein.'
             }
             warn={cost.seconds > SLOW_RUN_SECONDS}
           />
@@ -349,7 +349,7 @@ export const ARDTab = ({ uuid }: ARDTabProps) => {
         tooltip={
           boundary === 'pml'
             ? 'Requested c·Δt/Δx. The DCT interior has no stability limit at all, but absorbing wall slabs do and every partition shares one time step, so on a 3D room this is capped near 0.446 however high you set it.'
-            : 'Requested c·Δt/Δx. The DCT interior has no stability limit; impedance boundaries have a measured one of 0.6 − 0.1α, so a room of highly absorbing surfaces is capped near 0.5 and a live one near 0.6. Either way that is above the 0.446 a PML slab would impose.'
+            : 'Requested c·Δt/Δx. The DCT interior has no stability limit; impedance boundaries have a measured one of 0.55 − 0.05α, so a room of highly absorbing surfaces is capped at 0.50 and a live one at 0.55. Either way that is above the 0.446 a PML slab would impose.'
         }
         elementProps={{ step: 0.05, min: 0.05, max: 1 }}
       />

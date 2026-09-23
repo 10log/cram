@@ -342,6 +342,51 @@ describe('createArdSimulation', () => {
     silent.dispose();
   });
 
+  it('warns that the slab path leaves the room corners reflecting', () => {
+    // The corner gap costs about 4.7x in reverberation time
+    // (`rt60-cross-check.spec.ts`), which is not something to leave for a reader
+    // of `walls-from-grid.ts` to discover. It reaches anyone on the slab path,
+    // including anyone who inherited it from a project saved before the
+    // impedance boundary existed.
+    const grid = shoeboxGrid(16, 14, 12, 0.1, 9);
+    const o = airOrigin(9);
+    const build = (boundary: 'impedance' | 'pml') =>
+      createArdSimulation({
+        grid,
+        decomposition: decompose(grid),
+        c: C,
+        courant: 0.4,
+        sources: [{ cell: [o + 8, o + 7, o + 6], signal: new Float32Array(2) }],
+        receivers: [],
+        steps: 2,
+        boundary,
+        absorptionFor: () => 0.3,
+      });
+
+    const pml = build('pml');
+    expect(pml.warnings.join(' ')).toMatch(/edges and eight corners reflecting/);
+    pml.dispose();
+
+    const impedance = build('impedance');
+    expect(impedance.warnings.join(' ')).not.toMatch(/corners reflecting/);
+    impedance.dispose();
+
+    // Not emitted for a rigid room either: no slab, no corner gap.
+    const rigid = createArdSimulation({
+      grid,
+      decomposition: decompose(grid),
+      c: C,
+      courant: 0.4,
+      sources: [{ cell: [o + 8, o + 7, o + 6], signal: new Float32Array(2) }],
+      receivers: [],
+      steps: 2,
+      boundary: 'pml',
+      absorptionFor: () => 0,
+    });
+    expect(rigid.warnings.join(' ')).not.toMatch(/corners reflecting/);
+    rigid.dispose();
+  });
+
   it('rejects a boundary kind it does not implement', () => {
     const grid = shoeboxGrid(12, 12, 12, 0.1);
     expect(() =>

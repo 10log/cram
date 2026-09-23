@@ -58,6 +58,7 @@ import {
   INTERFACE_DEPTH,
   STENCIL_6TH,
   STENCIL_6TH_DIV,
+  transverseAxes,
   type Box,
   type Partition,
 } from './partition';
@@ -94,13 +95,6 @@ function lowEdge(box: Box, axis: Axis): number {
 
 function highEdge(box: Box, axis: Axis): number {
   return box[ORIGIN[axis]] + box[EXTENT[axis]];
-}
-
-/** The two axes perpendicular to `axis`, in ascending order. */
-export function transverseAxes(axis: Axis): [Axis, Axis] {
-  if (axis === Axis.X) return [Axis.Y, Axis.Z];
-  if (axis === Axis.Y) return [Axis.X, Axis.Z];
-  return [Axis.X, Axis.Y];
 }
 
 /**

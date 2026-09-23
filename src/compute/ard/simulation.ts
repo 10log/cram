@@ -46,9 +46,9 @@
  * to the requested absorption coefficient than the slab at every grid
  * resolution tested — see `impedance.ts` for both tables. It is not free of a
  * time-step constraint, though: its residual is feedback from the field onto
- * itself and diverges past `0.6 − 0.1α`. That is above the slab's 0.446 at
- * every absorption coefficient, by 12% at the most absorbing material in the
- * database, so the clamp is loosened rather than lifted. `'pml'` remains
+ * itself and diverges past `0.55 − 0.05α`. That is above the slab's 0.446 at
+ * every absorption coefficient — by 12% at a perfect absorber and 23% at a
+ * rigid one — so the clamp is loosened rather than lifted. `'pml'` remains
  * available and unchanged; it is what the slab machinery in
  * `walls-from-grid.ts` still serves.
  *
@@ -133,7 +133,7 @@ export interface ArdSimulationConfig {
    *
    * `'impedance'` (the default) puts a locally-reacting impedance boundary on
    * the face itself: no added cells, no calibration, a time step clamped to
-   * `0.6 − 0.1α` rather than to 0.446, and measurably closer to the requested
+   * `0.55 − 0.05α` rather than to 0.446, and measurably closer to the requested
    * absorption coefficient than the alternative — see `impedance.ts`. `'pml'`
    * is the original graded-sigma slab outside the face, which needs
    * `padCells >= wallThickness + 1` on the grid and costs 2-5x the room in
@@ -306,6 +306,22 @@ export function planArdTimeStep(
         'walls: false if a rigid room is what you meant.',
     );
   }
+  // Anyone running the slab path should be told what it costs in accuracy, not
+  // just in cells. The corner gap is not a refinement: it leaves twelve edges
+  // and eight corners of the room reflecting, and `rt60-cross-check.spec.ts`
+  // measures the resulting reverberation time 4.7x longer than Eyring at two
+  // absorption coefficients. This reaches the user whether they chose 'pml'
+  // deliberately or inherited it from a project saved before the impedance
+  // boundary existed.
+  if (wallPlan.faces.length > 0) {
+    warnings.push(
+      'Using PML wall slabs. Slabs are clipped to their own face so no cell is inside ' +
+        'two, which leaves the room\'s twelve edges and eight corners reflecting — ' +
+        'measured as a reverberation time about 4.7x longer than Eyring predicts on a ' +
+        "3D shoebox. Prefer boundary: 'impedance', which has no corner to leave.",
+    );
+  }
+
   if (walls && usePml && wallPlan.faces.length === 0) {
     // The other way to get no slabs: every material is perfectly reflective.
     // That is the caller's choice, faithfully carried out.

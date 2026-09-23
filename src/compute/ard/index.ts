@@ -150,13 +150,25 @@ export const ARD_BAND_CENTRES = [125, 250, 500, 1000, 2000, 4000, 8000] as const
 export const ARD_REFERENCE_FREQUENCY = 500;
 
 /**
- * Throughput used for the pre-run time estimate, in cell-steps per second.
+ * Throughput used for the pre-run time estimate, in cell-steps per second, per
+ * boundary kind.
+ *
+ * Two figures because the cost *per stepped cell* genuinely differs. A PML slab
+ * cell runs an explicit stencil, which is cheap per cell and there are two to
+ * five times as many of them; an impedance run has only the room's DCT cells,
+ * each dearer, plus a boundary residual on every face cell that this count does
+ * not see. So removing the slabs cuts total work by about 3x while *raising*
+ * the average cost of the cells that remain — the two effects pull opposite
+ * ways and one constant cannot carry both.
  *
  * Measured on this implementation; see {@link ARD.estimatedSeconds} for the
- * table. Deliberately at the conservative end of the range — a run that
- * finishes sooner than the warning said is a good surprise.
+ * table. Both take the conservative end of their range — a run that finishes
+ * sooner than the warning said is a good surprise.
  */
-export const ARD_CELL_STEPS_PER_SECOND = 1.35e6;
+export const ARD_CELL_STEPS_PER_SECOND = {
+  impedance: 1.0e6,
+  pml: 1.25e6,
+} as const;
 
 /** Points kept for the store's chart, matching the ray tracer's convention. */
 const MAX_DISPLAY_POINTS = 2000;
@@ -170,7 +182,24 @@ export interface ARDProps extends SolverParams {
   receiverIDs?: string[];
   /** Upper frequency limit in Hz. The cost dial — see the module comment. */
   fMax?: number;
-  /** Spatial sampling density at `fMax`. ARD's whole point is that 2.6 works. */
+  /**
+   * Spatial sampling density at `fMax`.
+   *
+   * 2.6 is enough for the *interior*, which is ARD's headline property: the
+   * modal update is exact per mode, with no numerical dispersion to out-run.
+   * It is **not** enough for the boundary. Phase 11 measured the impedance
+   * mapping holding to about 0.01 in α down to 4 cells per wavelength and
+   * falling off underneath — at 2.6 the top octave sits at 77% of the grid's
+   * spatial Nyquist and a requested 0.3 comes back as 0.12, so surfaces are
+   * more reflective than their materials there. The PML is worse at the same
+   * resolution, so this is a property of the default rather than of the
+   * boundary that surfaced it.
+   *
+   * The default stays 2.6 because cost goes as roughly the fourth power of this
+   * number; the driver warns instead, via
+   * {@link ARD_CELLS_PER_WAVELENGTH_FOR_IMPEDANCE}. Raise it when the
+   * absorption matters more than the run time.
+   */
   cellsPerWavelength?: number;
   /** Requested Courant number. PML wall slabs may force it lower. */
   courant?: number;
@@ -1015,7 +1044,17 @@ export class ARD extends Solver {
     if (state.courant !== undefined) this.courant = state.courant;
     if (state.irLength !== undefined) this.irLength = state.irLength;
     if (state.wallThickness !== undefined) this.wallThickness = state.wallThickness;
-    if (state.boundary !== undefined) this.boundary = state.boundary;
+    // A project saved before impedance boundaries existed carries no `boundary`
+    // key, and its results were produced — and read — through PML slabs. Taking
+    // the constructor's new default here would silently change the physics of
+    // somebody's saved simulation on load: padding 9 -> 1, a different cell
+    // count, and a reverberation time about five times shorter on a 3D room.
+    // That is not a migration to perform without being asked, however much
+    // better the new boundary is, so an absent key restores as 'pml'. The run
+    // then warns about the corner problem (see `planArdTimeStep`) and the
+    // Boundary control shows which one is in force, so the choice is visible
+    // and one click away rather than made on the user's behalf.
+    this.boundary = state.boundary ?? 'pml';
     if (state.perBandRuns !== undefined) this.perBandRuns = state.perBandRuns;
     if (state.sampleRate !== undefined) this.sampleRate = state.sampleRate;
     if (state.humidity !== undefined) this.humidity = state.humidity;
@@ -1143,22 +1182,39 @@ export class ARD extends Solver {
    * and `fMax` is an `O(fMax⁴)` dial. Throughput measured on this
    * implementation across four room sizes:
    *
-   * | room (cells)  | total cells | Mcell-steps/s |
-   * |---------------|-------------|---------------|
-   * | 16 x 14 x 12  | 12 032      | 1.31          |
-   * | 24 x 20 x 16  | 26 624      | 1.39          |
-   * | 32 x 24 x 20  | 45 568      | 1.33          |
-   * | 32 x 32 x 16  | 49 152      | 1.61          |
-   * | 24 x 20 x 16, rigid | 7 680 | 1.90          |
+   * Re-measured for Phase 11, all three configurations in one run so the rows
+   * are comparable with each other (`dx` 0.13, Courant 0.4, α 0.3, min of four
+   * timed passes after a warm-up):
    *
-   * Flat to within about 5% once absorbing walls exist, which is the default.
-   * The two outliers are both the same Phase 1 finding from the other side:
-   * power-of-two extents take the radix-2 FFT path and run 20% faster, and a
-   * rigid room has no PML slabs — the most expensive partition kind — at all.
-   * {@link ARD_CELL_STEPS_PER_SECOND} takes the conservative end.
+   * | room (cells) | rigid | impedance | PML | ms/step, impedance vs PML |
+   * |--------------|-------|-----------|-----|---------------------------|
+   * | 16 x 14 x 12 | 2.14  | 0.99      | 1.28 | 2.71 vs 9.40 — **3.5x** |
+   * | 24 x 20 x 16 | 1.76  | 1.17      | 1.25 | 6.54 vs 21.24 — **3.2x** |
+   * | 32 x 24 x 20 | 1.77  | 1.26      | 1.26 | 12.23 vs 36.13 — **3.0x** |
+   * | 32 x 32 x 16 | 6.27  | 2.76      | 1.54 | 5.94 vs 31.83 — **5.4x** |
+   *
+   * (Mcell-steps/s, over `estimatedSimulatedCells`-equivalent stepped cells.)
+   *
+   * Read the rate columns and the wall-clock column together, because they say
+   * different things. **Wall clock is 3-5x better on the impedance path**, which
+   * is the number a user experiences. The *rate* is lower there, which looks
+   * like a regression and is not: the rate is per stepped cell, slab cells are
+   * cheaper per cell than DCT cells, and an impedance run also does boundary
+   * work on every face cell that the cell count does not include. Fewer, dearer
+   * cells.
+   *
+   * The consequence for this estimate is the one that matters: multiplying the
+   * (3x smaller) impedance cell count by the old 1.35e6 was **optimistic**, not
+   * pessimistic — typical rooms measure 0.99-1.26. Hence the per-boundary
+   * constants. The last row is the Phase 1 finding from the other side:
+   * power-of-two extents take the radix-2 FFT path, and on the impedance path,
+   * where the DCT is most of the work, that is worth 2.2x rather than 20%.
    */
   get estimatedSeconds(): number {
-    return (this.estimatedSimulatedCells * this.estimatedSteps) / ARD_CELL_STEPS_PER_SECOND;
+    return (
+      (this.estimatedSimulatedCells * this.estimatedSteps) /
+      ARD_CELL_STEPS_PER_SECOND[this.boundary]
+    );
   }
 
   /** Bounding-box size of the room in metres, or null if there is no room. */
@@ -1214,7 +1270,7 @@ export class ARD extends Solver {
    * clamp it, for different reasons and by different amounts: a wall slab is a
    * `PmlPartition` and every partition shares a time step, so a 3D room is held
    * to `PML_CFL_MARGIN × vonNeumann(3)` ≈ 0.446, while an impedance boundary's
-   * residual is feedback and holds it to `0.6 − 0.1α`. This getter has no grid
+   * residual is feedback and holds it to `0.55 − 0.05α`. This getter has no grid
    * and no materials, so it cannot call `planArdTimeStep`; it takes the
    * impedance bound at its worst (α = 1, giving 0.5), which over-estimates the
    * step count for anything less absorbing. That is the right direction for a

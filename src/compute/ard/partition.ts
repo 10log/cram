@@ -223,6 +223,23 @@ export abstract class PartitionBase implements Partition {
   }
 }
 
+/**
+ * The two axes perpendicular to `axis`, in ascending order.
+ *
+ * Lives here, with `Axis`, because four modules need it — the interface
+ * residual, both boundary planners and the impedance boundary — and every one of
+ * them uses it to index a `[u, v]` pair into a face. Two copies that disagreed
+ * about the order would transpose one module's faces against another's, which is
+ * a silent geometric error rather than a crash. It was briefly duplicated
+ * between `interface.ts` and `face-rects.ts`; that is exactly the hazard
+ * `face-rects.ts` was extracted to avoid, so it is a single export now.
+ */
+export function transverseAxes(axis: Axis): [Axis, Axis] {
+  if (axis === Axis.X) return [Axis.Y, Axis.Z];
+  if (axis === Axis.Y) return [Axis.X, Axis.Z];
+  return [Axis.X, Axis.Y];
+}
+
 /** Number of axes with extent greater than 1, clamped to at least 1. */
 export function spatialRank(nx: number, ny: number, nz: number): number {
   return Math.max(1, (nx > 1 ? 1 : 0) + (ny > 1 ? 1 : 0) + (nz > 1 ? 1 : 0));

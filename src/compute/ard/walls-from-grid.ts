@@ -90,13 +90,8 @@
  */
 
 import type { Decomposition } from './decompose';
-import {
-  dominantSurface,
-  exposedFaceRects,
-  outerLayer,
-  transverseAxes,
-} from './face-rects';
-import { Axis, type Box } from './partition';
+import { dominantSurface, exposedFaceRects, outerLayer } from './face-rects';
+import { Axis, transverseAxes, type Box } from './partition';
 import { PmlPartition } from './pml-partition';
 import { Cell, type VoxelGrid } from './voxelize';
 import { createWall } from './wall';

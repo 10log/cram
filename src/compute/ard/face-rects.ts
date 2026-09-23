@@ -20,18 +20,11 @@
  */
 
 import { decompose } from './decompose';
-import { Axis, type Box } from './partition';
+import { Axis, transverseAxes, type Box } from './partition';
 import { Cell, type VoxelGrid } from './voxelize';
 
 const ORIGIN: readonly ['x', 'y', 'z'] = ['x', 'y', 'z'];
 const EXTENT: readonly ['w', 'h', 'd'] = ['w', 'h', 'd'];
-
-/** The two axes perpendicular to `axis`, in ascending order. */
-export function transverseAxes(axis: Axis): [Axis, Axis] {
-  if (axis === Axis.X) return [Axis.Y, Axis.Z];
-  if (axis === Axis.Y) return [Axis.X, Axis.Z];
-  return [Axis.X, Axis.Y];
-}
 
 /** A rectangle of one partition face, in global cell coordinates. */
 export interface FaceRect {
