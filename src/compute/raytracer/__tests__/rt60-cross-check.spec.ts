@@ -13,39 +13,41 @@
  * coefficients, real scattering and recursion — and checks the answer against a
  * formula that knows nothing about any of it.
  *
- * ## Why the oracle is a bracket, and a different bracket from ARD's
+ * ## The oracle: an independent Monte Carlo, inside an Eyring ceiling
  *
- * Sabine and Eyring take a **random-incidence** absorption coefficient. The
- * material database stores a **normal-incidence** one, which is what
- * `reflectionCoefficient(α, θ)` is handed. For a locally-reacting surface those
- * differ a great deal — Paris's formula integrates the reflection coefficient
- * over a diffuse hemisphere:
+ * Sabine and Eyring take a **random-incidence** absorption coefficient. This
+ * fixture hands `reflectionCoefficient(α, θ)` a **normal-incidence** one, and
+ * for a locally-reacting surface the two differ a great deal. Paris's formula
+ * integrates the reflection over a diffuse hemisphere
+ * (`acoustics/random-incidence.ts`); at α_normal = 0.2 it gives 0.323.
  *
- * ```
- * α_stat = (8/ξ)·[1 − (1/ξ)·ln(1+ξ) + 1/(1+ξ)]
- * ```
+ *  - **Ceiling**: Eyring at α_normal, as if every reflection were at normal
+ *    incidence. A locally-reacting wall absorbs more off-normal, so the decay
+ *    must be faster than this. It is a real bound.
+ *  - **Reference**: {@link referenceDecay}, a forty-line Monte Carlo of the same
+ *    room in plain arithmetic, with no three.js, raycaster, `worldHitNormal` or
+ *    `traceRay`. It has the same physics: Lambertian reflection, energy
+ *    `R(θ)²`, and a ray ending at its first pass through the receiver sphere.
+ *    The ray tracer must agree with it.
  *
- * At α_normal = 0.2 that is 0.396, nearly double. So the two ends are:
+ * Eyring at Paris's α used to be the *lower* bound here (#232). It is not a
+ * bound. With every reflection diffuse it is the textbook estimate, and the
+ * real box misses it in both directions. The reference is 6% above it at
+ * α = 0.2 and 17% above at α = 0.4. At α = 0.1 it is 2% below, because a ray
+ * that ends at the receiver stops contributing to later times, which adds
+ * about 2.2 s⁻¹ of decay for this receiver. The bound was only ever met
+ * because the spec's Paris formula was mistranscribed. That put the "bound"
+ * at 0.162 s instead of 0.210 s. Corrected, the ray tracer crossed it at
+ * α = 0.1, exactly as the reference does.
  *
- *  - **Upper**: Eyring at α_normal, i.e. as if every reflection were
- *    normal-incidence. The decay must be faster than this, because a
- *    locally-reacting surface absorbs more off-normal.
- *  - **Lower**: Eyring at α_stat, the fully diffuse limit.
- *
- * A *geometrical* solver samples angles and reflects many times, so it should
- * approach the diffuse limit and land in the **lower** half of the bracket —
- * which is asserted, and is the one thing here that distinguishes this solver's
- * expected answer from `ard/__tests__/rt60-cross-check.spec.ts`. The wave solver
- * sits higher in the same bracket because a small room below its Schroeder
- * frequency is modal, not diffuse.
- *
- * Measured T30 over four repeats: 0.214-0.229 s against a bracket of
- * [0.162, 0.367]. Spread 0.015, so both bounds sit at several times the Monte
- * Carlo scatter.
+ * Measured T30 at 6000 rays, three repeats each: α = 0.1 → 0.410–0.423
+ * (reference 0.417), α = 0.2 → 0.215–0.225 (0.223), α = 0.4 → 0.105–0.117
+ * (0.115).
  */
 
 import * as THREE from "three";
 
+import { parisAbsorption } from "../../acoustics/random-incidence";
 import {
   impedanceForAbsorption,
   reflectionCoefficient,
@@ -59,21 +61,20 @@ const VOLUME = ROOM.lx * ROOM.ly * ROOM.lz;
 const SURFACE =
   2 * (ROOM.lx * ROOM.ly + ROOM.lx * ROOM.lz + ROOM.ly * ROOM.lz);
 
-/** Paris's random-incidence absorption for a real impedance. */
-function randomIncidenceAbsorption(xi: number): number {
-  return (8 / xi) * (1 - (1 / xi) * Math.log(1 + xi) + 1 / (1 + xi));
-}
-
 /** Eyring reverberation time. Sabine's, with the correct log. */
 function eyring(volume: number, surface: number, alpha: number): number {
   return (0.161 * volume) / (-surface * Math.log(1 - alpha));
 }
 
-/** The two ends of what statistical acoustics can assert about this room. */
-function bracket(alpha: number) {
+/**
+ * Statistical estimates for this room: Eyring at Paris's diffuse-field α
+ * (an estimate, not a bound; see the header) and Eyring at α_normal (a
+ * bound).
+ */
+function statistical(alpha: number) {
   const xi = impedanceForAbsorption(alpha);
   return {
-    lower: eyring(VOLUME, SURFACE, randomIncidenceAbsorption(xi)),
+    diffuse: eyring(VOLUME, SURFACE, parisAbsorption(xi)),
     upper: eyring(VOLUME, SURFACE, alpha),
   };
 }
@@ -305,6 +306,102 @@ function decayTime(bins: Float64Array, fromDb: number, toDb: number): number {
   return -60 / ((db(to) - db(from)) / ((to - from) / SAMPLE_RATE));
 }
 
+/**
+ * The same room, source, receiver and walls as {@link shoot}, traced in plain
+ * arithmetic: an independent oracle for `traceRay` (#232).
+ *
+ * Nothing is shared with the code under test except `decayTime` and the
+ * normal-incidence → ξ mapping. It has its own wall intersection, its own
+ * cosine-weighted scattering and its own receiver test (an exact sphere,
+ * where `shoot` uses a 16×12 mesh). It is seeded, so it gives the same answer
+ * on every run.
+ *
+ * Like `traceRay`, a ray ends at its first pass through the receiver. That is
+ * a property of the solver under test, not of the room (see #234), and the
+ * reference copies it so that the comparison checks the tracer and does not
+ * penalise a known modelling choice.
+ */
+function referenceDecay(alpha: number, rays = 40_000, seed = 0x5eed): number {
+  let state = seed >>> 0;
+  const random = () => {
+    // mulberry32
+    state = (state + 0x6d2b79f5) >>> 0;
+    let t = state;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  const size = [ROOM.lx, ROOM.ly, ROOM.lz];
+  const source = [ROOM.lx * 0.28, ROOM.ly * 0.55, ROOM.lz * 0.34];
+  const receiver = [ROOM.lx * 0.7, ROOM.ly * 0.45, ROOM.lz * 0.62];
+  const radius = 0.25;
+  const xi = impedanceForAbsorption(alpha);
+  const bins = new Float64Array(4000);
+
+  for (let n = 0; n < rays; n++) {
+    const p = [...source];
+    const z = random() * 2 - 1;
+    const phi = random() * 2 * Math.PI;
+    const s = Math.sqrt(1 - z * z);
+    let d = [s * Math.cos(phi), s * Math.sin(phi), z];
+    let energy = 1;
+    let travelled = 0;
+
+    for (let order = 0; order < 400 && energy > 1e-12; order++) {
+      let tWall = Infinity;
+      let axis = 0;
+      for (let a = 0; a < 3; a++) {
+        const t = d[a] > 0 ? (size[a] - p[a]) / d[a] : d[a] < 0 ? -p[a] / d[a] : Infinity;
+        if (t < tWall) {
+          tWall = t;
+          axis = a;
+        }
+      }
+
+      const o = [p[0] - receiver[0], p[1] - receiver[1], p[2] - receiver[2]];
+      const b = o[0] * d[0] + o[1] * d[1] + o[2] * d[2];
+      const disc = b * b - (o[0] ** 2 + o[1] ** 2 + o[2] ** 2 - radius * radius);
+      if (disc > 0) {
+        const t = -b - Math.sqrt(disc);
+        if (t > 0 && t < tWall) {
+          const bin = Math.round(((travelled + t) / C) * SAMPLE_RATE);
+          if (bin < bins.length) bins[bin] += energy;
+          break;
+        }
+      }
+
+      travelled += tWall;
+      for (let a = 0; a < 3; a++) p[a] += d[a] * tWall;
+      const normal = [0, 0, 0];
+      normal[axis] = d[axis] > 0 ? -1 : 1;
+      const cos = -d[axis] * normal[axis];
+      const R = (xi * cos - 1) / (xi * cos + 1);
+      energy *= R * R;
+
+      // Lambertian: a uniform point on the sphere plus the normal.
+      let q: number[];
+      let q2: number;
+      do {
+        q = [random() * 2 - 1, random() * 2 - 1, random() * 2 - 1];
+        q2 = q[0] ** 2 + q[1] ** 2 + q[2] ** 2;
+      } while (q2 > 1 || q2 < 1e-6);
+      const ql = Math.sqrt(q2);
+      d = [q[0] / ql + normal[0], q[1] / ql + normal[1], q[2] / ql + normal[2]];
+      const dl = Math.hypot(d[0], d[1], d[2]);
+      d = d.map((x) => x / dl);
+    }
+  }
+  return decayTime(bins, -5, -35);
+}
+
+/**
+ * How far the ray tracer may sit from {@link referenceDecay}. Scatter at 6000
+ * rays is about ±5% and the reference's about ±2%, and the largest miss
+ * measured was 7.5%. The old bracket was [0.162, 0.367] s around 0.22 s,
+ * so this is tighter by a factor of four.
+ */
+const REFERENCE_TOLERANCE = 0.12;
+
 describe("Issue #201: ray tracer decay against statistical room acoustics", () => {
   const ALPHA = 0.2;
   const SCATTERING = 1;
@@ -350,19 +447,22 @@ describe("Issue #201: ray tracer decay against statistical room acoustics", () =
     expect(checked).toBeGreaterThan(150);
   }, 60_000);
 
-  test("T20 and T30 land inside the statistical bracket", () => {
-    const { lower, upper } = bracket(ALPHA);
-    // Sanity on the oracle itself, so a broken formula cannot widen the bracket
-    // into something nothing could fail.
-    expect(lower).toBeCloseTo(0.162, 3);
+  test("T20 and T30 agree with an independent Monte Carlo, under the Eyring ceiling", () => {
+    const { diffuse, upper } = statistical(ALPHA);
+    // Sanity on the oracles themselves, so a broken formula cannot move the
+    // target. 0.210 is Eyring at Paris's α = 0.323; #232 found this spec
+    // computing 0.162 from a mistranscribed formula.
+    expect(diffuse).toBeCloseTo(0.2097, 3);
     expect(upper).toBeCloseTo(0.367, 3);
-    expect(upper / lower).toBeLessThan(3);
+    const reference = referenceDecay(ALPHA);
+    expect(reference / diffuse).toBeGreaterThan(0.9);
+    expect(reference / diffuse).toBeLessThan(1.15);
 
     const t20 = decayTime(result.bins, -5, -25);
     const t30 = decayTime(result.bins, -5, -35);
     for (const t of [t20, t30]) {
       expect(Number.isFinite(t)).toBe(true);
-      expect(t).toBeGreaterThan(lower);
+      expect(Math.abs(t / reference - 1)).toBeLessThan(REFERENCE_TOLERANCE);
       expect(t).toBeLessThan(upper);
     }
 
@@ -370,7 +470,7 @@ describe("Issue #201: ray tracer decay against statistical room acoustics", () =
     // an exponential decay and diverge on a truncated one.
     expect(t30 / t20).toBeGreaterThan(0.85);
     expect(t30 / t20).toBeLessThan(1.15);
-  });
+  }, 60_000);
 
   test("#213: a room reached through a non-identity transform decays the same", () => {
     // The defect, at room scale. Both arms are the same room in world space;
@@ -423,30 +523,32 @@ describe("Issue #201: ray tracer decay against statistical room acoustics", () =
     expect([a, b, Math.abs(a - b) / a < 0.2]).toEqual([a, b, true]);
   }, 180_000);
 
-  test("it sits in the diffuse half of the bracket, as a geometrical solver should", () => {
+  test("it sits near the diffuse estimate, as a geometrical solver should", () => {
     // The assertion that separates this solver's expected answer from the wave
-    // solver's. Sampling angles over many reflections drives the effective
-    // absorption toward the random-incidence average, so the decay belongs near
-    // the lower end. ARD sits higher in the same bracket because a small room
-    // below its Schroeder frequency is modal rather than diffuse.
-    const { lower, upper } = bracket(ALPHA);
+    // solver's. Fully diffuse reflection drives the effective absorption to
+    // the random-incidence average, so the decay belongs near Eyring at
+    // Paris's α. It is not pinned there, only kept well clear of the
+    // normal-incidence ceiling. ARD sits higher because a small room below its
+    // Schroeder frequency is modal rather than diffuse.
+    const { diffuse, upper } = statistical(ALPHA);
     const t30 = decayTime(result.bins, -5, -35);
-    expect((t30 - lower) / (upper - lower)).toBeLessThan(0.5);
+    expect((t30 - diffuse) / (upper - diffuse)).toBeLessThan(0.5);
   });
 
-  test("more absorption decays faster, and each α lands in its own bracket", () => {
+  test("more absorption decays faster, and each α matches its reference", () => {
     // The discriminator. A solver that ignored the coefficient entirely, or
     // applied it with the wrong sign, passes a single-α band far more easily
     // than it passes this.
     const measured = [0.1, 0.4].map((alpha) => ({
       alpha,
       t30: decayTime(shoot(alpha, SCATTERING, 6000).bins, -5, -35),
-      ...bracket(alpha),
+      reference: referenceDecay(alpha),
+      ...statistical(alpha),
     }));
 
-    for (const { t30, lower, upper } of measured) {
+    for (const { t30, reference, upper } of measured) {
       expect(Number.isFinite(t30)).toBe(true);
-      expect(t30).toBeGreaterThan(lower);
+      expect(Math.abs(t30 / reference - 1)).toBeLessThan(REFERENCE_TOLERANCE);
       expect(t30).toBeLessThan(upper);
     }
     expect(measured[1].t30).toBeLessThan(measured[0].t30);
