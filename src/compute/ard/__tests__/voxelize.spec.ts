@@ -183,6 +183,31 @@ describe('voxelizeTriangles', () => {
     }
   });
 
+  it('seals a face lying exactly on the boundary between two cells (#230)', () => {
+    // The origin puts cell centres on the floor, so a ceiling at (m + ½)·dx
+    // sits on a shared face, at distance h from both neighbouring centres.
+    // Before #230, rounding in `origin + k·dx` left neither cell claiming it
+    // for about a third of these heights, and the fill escaped through the
+    // ceiling.
+    for (const dx of [0.1, 0.12]) {
+      for (let m = 8; m <= 20; m++) {
+        const lz = (m + 0.5) * dx;
+        const grid = voxelizeTriangles(boxSurfaces([0, 0, 0], [2.6, 2.0, lz]), {
+          dx,
+          seed: { x: 1.3, y: 1.0, z: lz / 2 },
+        });
+        expect(grid.leaked, `dx = ${dx}, height = ${lz}`).toBe(false);
+        // Both cells either side of the ceiling are wall; the one below the
+        // shared face is the top of the room, which must not be air.
+        const i = Math.round(1.3 / dx) + 1;
+        const j = Math.round(1.0 / dx) + 1;
+        expect(at(grid, i, j, m + 1)).toBe(Cell.Solid);
+        expect(at(grid, i, j, m + 2)).toBe(Cell.Solid);
+        expect(at(grid, i, j, m)).toBe(Cell.Air);
+      }
+    }
+  });
+
   it('handles an L-shaped room as one connected region', () => {
     // Two overlapping boxes sharing an opening. Both arms must fill from one
     // seed, which is what makes the decomposition see a single air region.
