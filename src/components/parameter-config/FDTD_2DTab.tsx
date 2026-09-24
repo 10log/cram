@@ -51,6 +51,7 @@ export const FDTD_2DTab = ({uuid}: {uuid: string}) => {
   const [running, setRunning] = useState(solver.running);
   const [recording, setRecording] = useState(solver.recording);
   const [wireframeVisible, setWireframeVisible] = useState(solver.getWireframeVisible());
+  const [frequencyDependentWalls, setFrequencyDependentWalls] = useState(solver.frequencyDependentWalls);
   const [viewFolderOpen, setViewFolderOpen] = useState(false);
   const [simParamFolderOpen, setSimParamFolderOpen] = useState(false);
   const [sourcesFolderOpen, setSourcesFolderOpen] = useState(false);
@@ -131,6 +132,20 @@ export const FDTD_2DTab = ({uuid}: {uuid: string}) => {
             setDamping(e.value);
           }}
         />
+        <PropertyRow>
+          <PropertyRowLabel
+            hasToolTip={simParamFolderOpen}
+            label="Frequency-dependent walls"
+            tooltip="Each wall follows its material's whole octave-band spectrum in one run, fitted as passive resonant (series-RLC) branches, instead of one coefficient at 500 Hz. Switching restarts the field."
+          />
+          <PropertyRowCheckbox
+            onChange={(e) => {
+              solver.setFrequencyDependentWalls(e.value);
+              setFrequencyDependentWalls(e.value);
+            }}
+            value={frequencyDependentWalls}
+          />
+        </PropertyRow>
         <Slider
           id="numPasses"
           label="Passes"

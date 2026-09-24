@@ -19,7 +19,8 @@ import {
   UnsignedByteType,
   BufferGeometry,
   MeshBasicMaterial,
-  MeshLambertMaterial
+  MeshLambertMaterial,
+  FloatType
 } from "three";
 import {
   GPUComputationRenderer,
@@ -53,6 +54,9 @@ import {
 import { DEFAULT_DAMPING, FDTD_REFERENCE_FREQUENCY } from "./index-constants";
 import { passesForElapsed, sampleRateFromDt } from "./recording";
 import { disposeGpuCompute } from "./dispose-gpu";
+import { RLC_MAX_BRANCHES, RLC_TEXTURES, RlcMaterialTable, rlcWallmapChannel } from "./rlc-wall";
+import { rlcBranchShader, withRlc } from "./rlc-shaders";
+import { fitRlcToOctaveBands, type RlcBranch } from "../acoustics/rlc-admittance";
 
 import Source from "../../objects/source";
 import Receiver from "../../objects/receiver";
@@ -87,6 +91,29 @@ export interface FDTD_2D_Props {
   slice?: FdtdSlice;
   /** Air temperature in °C. Default 20, matching the other solvers. */
   temperature?: number;
+  /**
+   * Walls follow their materials' octave bands in one run (#222), as fitted
+   * series-RLC branches, instead of one coefficient at
+   * FDTD_REFERENCE_FREQUENCY. Default off.
+   */
+  frequencyDependentWalls?: boolean;
+}
+
+/**
+ * Fitted branches per material spectrum, shared by every solver: a fit costs
+ * a fraction of a second and the same materials recur across surfaces.
+ */
+const rlcFitCache = new Map<string, RlcBranch[]>();
+
+/** The 2D fit of a wall's octave bands (#222), or none for a rigid material. */
+export function rlcBranchesForBands(bands: { frequencies: number[]; absorption: number[] }): RlcBranch[] {
+  const key = JSON.stringify(bands);
+  let branches = rlcFitCache.get(key);
+  if (!branches) {
+    branches = fitRlcToOctaveBands(bands.frequencies, bands.absorption, { dims: 2 }).branches;
+    rlcFitCache.set(key, branches);
+  }
+  return branches;
 }
 
 export interface Uniforms {
@@ -117,8 +144,19 @@ class FDTD_2D extends Solver {
   heightmapVariable!: Variable;
   sourcemapVariable!: Variable;
   sourcemap!: DataTexture;
-  /** Staircase face weights per wall cell, as `1 − w` (#220). */
+  /**
+   * Staircase face weights per wall cell, as `1 − w` (#220), in r and g; the
+   * wall's RLC material index plus one in b (#222).
+   */
   wallmap!: DataTexture;
+  /** See FDTD_2D_Props.frequencyDependentWalls. */
+  frequencyDependentWalls: boolean;
+  /** Branch-state variables, RLC_TEXTURES of them when frequencyDependentWalls. */
+  rlcVariables: Variable[] = [];
+  /** (b, bd, bDh, bFh) per branch and material, for the current dt. */
+  rlcCoefficients?: DataTexture;
+  rlcTable = new RlcMaterialTable();
+  zeroShader?: ShaderMaterial;
   readLevelShader!: ShaderMaterial;
   readLevelImage!: Uint8Array;
   readLevelRenderTarget!: WebGLRenderTarget;
@@ -156,6 +194,7 @@ class FDTD_2D extends Solver {
     this.frame = 0;
     this.numPasses = 1;
     this._temperature = props?.temperature ?? 20;
+    this.frequencyDependentWalls = props?.frequencyDependentWalls ?? false;
     this.waveSpeed = soundSpeed(this._temperature);
     this.recording = false;
     this.lastTickMs = null;
@@ -356,12 +395,29 @@ class FDTD_2D extends Solver {
     this.fillSourceTexture();
     this.updateSourceTexture();
     this.fillTexture(heightmapInit);
+    const rlcTextures = this.frequencyDependentWalls ? RLC_TEXTURES : 0;
     this.heightmapVariable = this.gpuCompute.addVariable(
       "heightmap",
-      withGhostGainDefine(shaders.heightMapFrag),
+      withRlc(withGhostGainDefine(shaders.heightMapFrag), rlcTextures),
       heightmapInit,
     );
-    this.gpuCompute.setVariableDependencies(this.heightmapVariable, [this.heightmapVariable]);
+    // Branch state (#222): zero to start, every pass reading the previous
+    // frame's heightmap and its own previous state.
+    this.rlcVariables = [];
+    for (let k = 0; k < rlcTextures; k++) {
+      this.rlcVariables.push(
+        this.gpuCompute.addVariable(`rlc${k}`, rlcBranchShader(k), this.gpuCompute.createTexture()),
+      );
+    }
+    this.gpuCompute.setVariableDependencies(this.heightmapVariable, [
+      this.heightmapVariable,
+      ...this.rlcVariables,
+    ]);
+    for (const variable of this.rlcVariables) {
+      this.gpuCompute.setVariableDependencies(variable, [this.heightmapVariable, variable]);
+      (variable.material as ShaderMaterial).uniforms["sourcemap"] = { value: this.sourcemap };
+      (variable.material as ShaderMaterial).uniforms["wallmap"] = { value: this.wallmap };
+    }
 
     (this.heightmapVariable.material as ShaderMaterial).uniforms["sourcemap"] = { value: this.sourcemap };
     (this.heightmapVariable.material as ShaderMaterial).uniforms["wallmap"] = { value: this.wallmap };
@@ -385,12 +441,17 @@ class FDTD_2D extends Solver {
 
     (this.heightmapVariable.material as ShaderMaterial).uniforms["inv_cell_size"] = { value: 1 / this.cellSize };
 
+    this.rlcCoefficients?.dispose();
+    this.rlcCoefficients = undefined;
+    this.updateRlcCoefficients();
+
     const error = this.gpuCompute.init();
     if (error !== null) {
       console.error(error);
     }
 
     this.clearShader = this.gpuCompute["createShaderMaterial"](shaders.clearFrag, { clearTexture: { value: null } });
+    this.zeroShader = this.gpuCompute["createShaderMaterial"]("void main() { gl_FragColor = vec4(0.0); }", {});
 
     this.readLevelShader = this.gpuCompute["createShaderMaterial"](shaders.readLevelFrag, {
       point1: { value: new Vector2() },
@@ -433,6 +494,9 @@ class FDTD_2D extends Solver {
     this.wallmap?.dispose();
     this.clearShader?.dispose();
     this.readLevelShader?.dispose();
+    this.zeroShader?.dispose();
+    this.rlcCoefficients?.dispose();
+    this.rlcCoefficients = undefined;
     disposeGpuCompute(this.gpuCompute);
   }
 
@@ -484,6 +548,44 @@ class FDTD_2D extends Solver {
     if (material?.uniforms?.courantSq && this.cellSize > 0) {
       material.uniforms.courantSq.value = (this.waveSpeed * this.dt / this.cellSize) ** 2;
     }
+    // The branches are discretised for dt (#222).
+    this.updateRlcCoefficients();
+  }
+
+  /**
+   * Rebuild the RLC coefficient texture for the current materials and dt,
+   * and bind it, with the Courant number, to every pass that reads it.
+   */
+  updateRlcCoefficients() {
+    if (!this.frequencyDependentWalls || !this.heightmapVariable || !(this.dt > 0)) return;
+    const rows = Math.max(1, this.rlcTable.size);
+    const data = this.rlcTable.texels(this.dt);
+    if (!this.rlcCoefficients || this.rlcCoefficients.image.height !== rows) {
+      this.rlcCoefficients?.dispose();
+      this.rlcCoefficients = new DataTexture(data, RLC_MAX_BRANCHES, rows, RGBAFormat, FloatType);
+      this.rlcCoefficients.minFilter = NearestFilter;
+      this.rlcCoefficients.magFilter = NearestFilter;
+    } else {
+      (this.rlcCoefficients.image.data as Float32Array).set(data);
+    }
+    this.rlcCoefficients.needsUpdate = true;
+    for (const variable of [this.heightmapVariable, ...this.rlcVariables]) {
+      const uniforms = (variable.material as ShaderMaterial).uniforms;
+      uniforms["rlcCoefficients"] = { value: this.rlcCoefficients };
+      uniforms["rlcMaterialCount"] = { value: rows };
+      uniforms["courant"] = { value: this.courant };
+    }
+  }
+
+  /**
+   * Switch frequency-dependent walls (#222) on or off. The GPU passes are
+   * rebuilt, so the field restarts from rest.
+   */
+  setFrequencyDependentWalls(on: boolean) {
+    if (on === this.frequencyDependentWalls) return;
+    this.frequencyDependentWalls = on;
+    this.init();
+    this.updateWalls();
   }
 
   get sampleRate() {
@@ -568,6 +670,12 @@ class FDTD_2D extends Solver {
     // A surface with no material reads 0, which is the rigid wall this solver
     // gave every surface before #199.
     const absorption = surface.absorptionFunction?.(FDTD_REFERENCE_FREQUENCY) ?? 0;
+    // The whole spectrum as well, for frequency-dependent walls (#222).
+    const spectrum = surface.acousticMaterial?.absorption as Record<string, number> | undefined;
+    const frequencies = spectrum ? Object.keys(spectrum).map(Number).sort((a, b) => a - b) : [];
+    const bands = frequencies.length > 0
+      ? { frequencies, absorption: frequencies.map((f) => spectrum![String(f)]) }
+      : undefined;
     const edges = surface.edges;
     edges.updateMatrixWorld(true);
     const positionAttr = (edges.geometry as BufferGeometry).getAttribute('position');
@@ -582,7 +690,7 @@ class FDTD_2D extends Solver {
       const y1 = clamp(Math.floor((pa.v - this.offsetY) / this.cellSize), 0, this.ny - 1);
       const x2 = clamp(Math.floor((pb.u - this.offsetX) / this.cellSize), 0, this.nx - 1);
       const y2 = clamp(Math.floor((pb.v - this.offsetY) / this.cellSize), 0, this.ny - 1);
-      this.walls.push(new FDTDWall({ x1, y1, x2, y2, absorption }));
+      this.walls.push(new FDTDWall({ x1, y1, x2, y2, absorption, bands }));
     }
     this.updateWalls();
   }
@@ -634,6 +742,9 @@ class FDTD_2D extends Solver {
     if (!weights) {
       console.warn('FDTD 2D: wallmap missing; walls are written without staircase correction (#220).');
     }
+    // Materials are re-indexed from scratch, so a wall that changed or went
+    // away leaves nothing behind in the table (#222).
+    this.rlcTable = new RlcMaterialTable();
     for (let i = 0; i < this.walls.length; i++) {
       const wall = this.walls[i];
       if (wall.shouldClearPreviousCells) {
@@ -643,23 +754,38 @@ class FDTD_2D extends Solver {
           if (weights) {
             weights[index + 0] = 0;
             weights[index + 1] = 0;
+            weights[index + 2] = 0;
           }
         }
         wall.shouldClearPreviousCells = false;
       }
       const channel = wallChannelFor(wall, this.courant);
       const texel = wallmapTexelFor(wall);
+      const material = rlcWallmapChannel(this.rlcMaterialFor(wall));
       for (let j = 0; j < wall.cells.length; j++) {
         const index = 4 * (wall.cells[j][1] * this.nx + wall.cells[j][0]);
         data[index + 2] = channel;
         if (weights) {
           weights[index + 0] = texel.r;
           weights[index + 1] = texel.g;
+          weights[index + 2] = material;
         }
       }
     }
     this.sourcemap.needsUpdate = true;
     if (weights) this.wallmap.needsUpdate = true;
+    this.updateRlcCoefficients();
+  }
+
+  /**
+   * A wall's RLC material index (#222), or null to keep its single
+   * coefficient: frequency-dependent walls off, a disabled wall, a wall with
+   * no spectrum, or a spectrum that is rigid in every band.
+   */
+  private rlcMaterialFor(wall: FDTDWall): number | null {
+    if (!this.frequencyDependentWalls || !wall.enabled || !wall.bands) return null;
+    const branches = rlcBranchesForBands(wall.bands);
+    return branches.length > 0 ? this.rlcTable.indexFor(branches) : null;
   }
 
   updateSourceTexture() {
@@ -696,7 +822,8 @@ class FDTD_2D extends Solver {
       for (let i = 0; i < this.nx; i++) {
         pixels[p + 0] = REST_PRESSURE;
         pixels[p + 1] = REST_VELOCITY;
-        pixels[p + 2] = AIR_CHANNEL;
+        // The previous velocity, which frequency-dependent walls read (#222).
+        pixels[p + 2] = REST_VELOCITY;
         pixels[p + 3] = 1;
         p += 4;
       }
@@ -734,6 +861,13 @@ class FDTD_2D extends Solver {
     this.gpuCompute.doRenderTarget(this.clearShader, alternateRenderTarget);
     this.clearShader.uniforms["clearTexture"].value = alternateRenderTarget["texture"];
     this.gpuCompute.doRenderTarget(this.clearShader, currentRenderTarget);
+    // Branch state back to rest with the field (#222).
+    if (this.zeroShader) {
+      for (const variable of this.rlcVariables) {
+        this.gpuCompute.doRenderTarget(this.zeroShader, this.gpuCompute.getCurrentRenderTarget(variable));
+        this.gpuCompute.doRenderTarget(this.zeroShader, this.gpuCompute.getAlternateRenderTarget(variable));
+      }
+    }
     this.time = 0;
     this.frame = 0;
     this.lastTickMs = null;
@@ -752,6 +886,10 @@ class FDTD_2D extends Solver {
 
       this.heightmapVariable.material["uniforms"]["sourcemap"].value = this.sourcemap;
       this.heightmapVariable.material["uniforms"]["wallmap"].value = this.wallmap;
+      for (const variable of this.rlcVariables) {
+        variable.material["uniforms"]["sourcemap"].value = this.sourcemap;
+        variable.material["uniforms"]["wallmap"].value = this.wallmap;
+      }
 
       // Do the gpu computation
       this.gpuCompute.compute();

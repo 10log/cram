@@ -11,6 +11,8 @@ void main()	{
 
 	textureValue.r = 127.5;
 	textureValue.g = 0.0;
+	// The previous velocity frequency-dependent walls read (#222).
+	textureValue.b = 0.0;
 
 	gl_FragColor = textureValue;
 

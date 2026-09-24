@@ -134,3 +134,67 @@ export function createRlcFieldState(
     integral: new Float64Array(size * branches),
   };
 }
+
+/**
+ * Branch-state textures on the GPU (#222): two branches each, so up to
+ * `2·RLC_TEXTURES` branches per material. The fitter gives one per octave
+ * band, and the material database has eight.
+ */
+export const RLC_TEXTURES = 4;
+export const RLC_MAX_BRANCHES = 2 * RLC_TEXTURES;
+
+/**
+ * The RLC materials a solver's walls use, each once. It hands out the index a
+ * wall writes into the wallmap, and packs the coefficient texture the shaders
+ * read.
+ */
+export class RlcMaterialTable {
+  private readonly entries: { key: string; branches: RlcBranch[] }[] = [];
+
+  /** Index of a material, adding it the first time it is seen. */
+  indexFor(branches: readonly RlcBranch[]): number {
+    if (branches.length === 0) throw new Error('A material with no branches is a rigid wall, not an RLC one');
+    if (branches.length > RLC_MAX_BRANCHES) {
+      throw new Error(`${branches.length} branches; the GPU carries at most ${RLC_MAX_BRANCHES}`);
+    }
+    const key = JSON.stringify(branches.map(({ D, E, F }) => [D, E, F]));
+    const found = this.entries.findIndex((e) => e.key === key);
+    if (found >= 0) return found;
+    this.entries.push({ key, branches: branches.map((b) => ({ ...b })) });
+    return this.entries.length - 1;
+  }
+
+  get size(): number {
+    return this.entries.length;
+  }
+
+  /** Materials in index order, discretised for `dt`: the CPU mirror's `materials`. */
+  coefficients(dt: number): RlcCoefficients[] {
+    return this.entries.map((e) => discretizeRlc(e.branches, dt));
+  }
+
+  /**
+   * RGBA texels `(b, bd, bDh, bFh)`, `RLC_MAX_BRANCHES` wide and one row per
+   * material (at least one row, so the texture is never empty). Unused
+   * branch slots are zero, which the shaders read as no branch.
+   */
+  texels(dt: number): Float32Array {
+    const rows = Math.max(1, this.entries.length);
+    const out = new Float32Array(4 * RLC_MAX_BRANCHES * rows);
+    this.coefficients(dt).forEach((m, row) => {
+      for (let k = 0; k < m.count; k++) {
+        const at = 4 * (row * RLC_MAX_BRANCHES + k);
+        out[at] = m.b[k];
+        out[at + 1] = m.bd[k];
+        out[at + 2] = m.bDh[k];
+        out[at + 3] = m.bFh[k];
+      }
+    });
+    return out;
+  }
+}
+
+/** The wallmap's blue channel for a wall: its RLC material index plus one, or 0 for none. */
+export function rlcWallmapChannel(material: number | null | undefined): number {
+  return material != null && material >= 0 ? material + 1 : 0;
+}

@@ -11,6 +11,11 @@ export interface FDTDWallProps {
    * default, which is what every wall was before #199.
    */
   absorption?: number;
+  /**
+   * The surface's octave-band absorption, for frequency-dependent walls
+   * (#222). Absent for a wall drawn by hand, which keeps its one coefficient.
+   */
+  bands?: { frequencies: number[]; absorption: number[] };
 }
 
 class FDTDWall {
@@ -23,8 +28,10 @@ class FDTDWall {
   previousCells: number[][];
   shouldClearPreviousCells: boolean;
   absorption: number;
+  bands?: { frequencies: number[]; absorption: number[] };
   constructor(props: FDTDWallProps) {
     this.absorption = props.absorption ?? 0;
+    this.bands = props.bands;
     this.x1 = props.x1;
     this.y1 = props.y1;
     this.x2 = props.x2;
@@ -38,6 +45,7 @@ class FDTDWall {
   move(props: FDTDWallProps) {
     this.previousCells = this.cells;
     if (props.absorption !== undefined) this.absorption = props.absorption;
+    if (props.bands !== undefined) this.bands = props.bands;
     this.x1 = props.x1;
     this.y1 = props.y1;
     this.x2 = props.x2;
