@@ -3,6 +3,7 @@ import { FaceRect } from './face-rects';
 import { ImpedanceBoundary, impedanceCourantLimit } from './impedance';
 import { Axis, Partition } from './partition';
 import { VoxelGrid } from './voxelize';
+import { GlobalField } from './interface';
 export { impedanceCourantLimit };
 /** One rectangle of one partition face, carrying one material. */
 export interface ImpedanceFace extends FaceRect {
@@ -31,10 +32,13 @@ export interface ImpedancePlan {
 }
 export interface PlanImpedanceOptions {
     /**
-     * Absorption per surface index. A face at α = 0 is rigid, which is what a
-     * partition already does on its own, so it gets no boundary and costs
-     * nothing — unlike a PML slab at α = 0, which is acoustically identical to a
-     * rigid face and still costs its cells.
+     * Absorption per surface index. A face at α = 0 is rigid, and this plan
+     * gives it no boundary. For a DCT partition that is free — it mirrors, which
+     * is the rigid wall — unlike a PML slab at α = 0, which is acoustically
+     * identical to a rigid face and still costs its cells. An FDTD partition does
+     * *not* mirror (it reads zero past its array: pressure release), so its
+     * skipped rigid faces are filled in afterwards by
+     * {@link buildRigidFdtdBoundaries} (#228).
      */
     absorptionFor?: (surfaceIndex: number) => number;
 }
@@ -43,6 +47,8 @@ export declare function planImpedanceBoundaries(grid: VoxelGrid, decomposition: 
 export interface BuildImpedanceOptions {
     /** Absorption coefficient for a surface index. -1 means no surface recorded. */
     absorptionFor: (surfaceIndex: number) => number;
+    /** The room's pressure by global cell, for faces on thin partitions (#228). */
+    field?: GlobalField;
 }
 /**
  * Build the boundaries for a plan.
@@ -55,3 +61,22 @@ export declare function buildImpedanceBoundaries(plan: ImpedancePlan, partitions
     boundaries: ImpedanceBoundary[];
     warnings: string[];
 };
+/** Key identifying one face rectangle of one box, shared by every boundary plan. */
+export declare function faceKey(boxIndex: number, axis: Axis, high: boolean, rect: FaceRect): string;
+/**
+ * Rigid boundaries for every exposed face of an FDTD partition that no other
+ * boundary covers (#228).
+ *
+ * A DCT partition is rigid on its own — it mirrors — so the planners skip a
+ * face whose material absorbs nothing. An FDTD partition is not: it reads
+ * zero outside its array, which is a pressure-release wall, echo inverted. So
+ * each of its exposed faces needs a boundary even at α = 0, and an impedance
+ * boundary at ξ = ∞ is exactly the rigid mirror (β = 0, ghost = p). This
+ * fills in the faces the impedance plan skipped as rigid, the faces a PML
+ * plan gave no slab, and every face when the room was asked for without walls.
+ *
+ * `covered` holds the {@link faceKey} of every face another boundary already
+ * handles; the cover comes from the same `exposedFaceRects` both planners use,
+ * so the keys line up.
+ */
+export declare function buildRigidFdtdBoundaries(grid: VoxelGrid, decomposition: Decomposition, partitions: readonly Partition[], covered: ReadonlySet<string>, field?: GlobalField): ImpedanceBoundary[];
