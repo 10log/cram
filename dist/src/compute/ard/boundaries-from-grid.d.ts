@@ -13,6 +13,11 @@ export interface ImpedanceFace extends FaceRect {
     high: boolean;
     /** Surface index behind the face, or -1 when the grid recorded none. */
     surfaceIndex: number;
+    /**
+     * Staircase weight per face cell (#220), from `faceWeights`. Absent when
+     * the grid carries none, which is the uncorrected boundary.
+     */
+    weights?: Float64Array;
 }
 export interface ImpedancePlan {
     faces: ImpedanceFace[];
@@ -29,7 +34,36 @@ export interface ImpedancePlan {
      * {@link impedanceCourantLimit}.
      */
     maxAbsorption: number;
+    /**
+     * Absorbing area per surface, before and after the staircase correction
+     * (#220), in the order surfaces were first met. See {@link StaircaseArea}.
+     */
+    staircaseArea: StaircaseArea[];
 }
+/**
+ * How much absorbing area one surface presents to the grid, the diagnostic
+ * PFFDTD's voxelizer prints (#220). All in m².
+ *
+ * `staircased` counts every exposed cell face at full strength, which is what
+ * the boundaries did before #220. For a surface of unit normal `n` it runs
+ * `|nₓ| + |n_y| + |n_z|` times the true area, up to √3. `corrected` weights
+ * each face by `|n·e|`, and is what the boundaries now use. `true` is the
+ * triangles' own area, absent when the grid does not carry it (a 2D slice, or
+ * a grid built by hand).
+ *
+ * `corrected` still reads below `true` by the shell's inset. The voxelizer
+ * marks every cell a surface touches as solid, so the air region, and every
+ * face of it, sits up to a cell inside the geometry. That is the same shrink
+ * the air volume shows, and it is not a staircase effect.
+ */
+export interface StaircaseArea {
+    surfaceIndex: number;
+    staircased: number;
+    corrected: number;
+    true?: number;
+}
+/** One line per surface, in the spirit of PFFDTD's per-material printout. */
+export declare function describeStaircaseArea(rows: readonly StaircaseArea[]): string[];
 export interface PlanImpedanceOptions {
     /**
      * Absorption per surface index. A face at α = 0 is rigid, and this plan

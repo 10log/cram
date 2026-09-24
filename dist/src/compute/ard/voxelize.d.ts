@@ -80,6 +80,20 @@ export interface VoxelGrid {
     cells: Uint8Array;
     /** Parent surface index on solid boundary cells, -1 elsewhere. */
     surfaceOf: Int32Array;
+    /**
+     * Staircase face weights (#220), three per cell: for each axis, the largest
+     * `|n_axis|` among the unit normals of the triangles overlapping the cell,
+     * or -1 where no triangle did. See {@link faceWeight}.
+     *
+     * Optional because a grid built by hand, as the tests' shoeboxes are, is
+     * axis-aligned and needs no correction — absent reads as weight 1.
+     */
+    faceWeightOf?: Float32Array;
+    /**
+     * True area in m² of each surface index's triangles, for the staircase
+     * diagnostic (#220). Optional for the same reason as `faceWeightOf`.
+     */
+    surfaceArea?: Record<number, number>;
     airCount: number;
     solidCount: number;
     /**
@@ -113,6 +127,21 @@ export declare function cellSizeFor(fMax: number, c?: number, cellsPerWavelength
  * it.
  */
 export declare function voxelizeTriangles(triangles: readonly VoxelTriangle[], options: VoxelizeOptions): VoxelGrid;
+/**
+ * Staircase weight `|n·e|` of the face a solid cell presents across `axis`
+ * (#220).
+ *
+ * A surface that is not axis-aligned voxelizes into a staircase, and every
+ * exposed cell face of it would otherwise absorb as though it were real
+ * surface: `|nₓ| + |n_y| + |n_z|` times the true area, √3 at worst. Weighting
+ * each face's admittance by the cosine between the surface and that face makes
+ * the weighted area `Σ nₐ² = 1` per unit of surface, which is PFFDTD's
+ * surface-area correction.
+ *
+ * 1 — uncorrected — for a grid without weights, a cell no triangle reached
+ * (padding, or a face against the grid edge), or an index off the grid.
+ */
+export declare function faceWeight(grid: VoxelGrid, index: number, axis: 0 | 1 | 2): number;
 /**
  * The nearest cell to `from` that `accept` allows, searched outward.
  *

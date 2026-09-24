@@ -80,6 +80,13 @@ export interface ImpedanceBoundaryParams {
     /** Normalized specific acoustic impedance. `Infinity` is a rigid wall. */
     impedance: number;
     /**
+     * Staircase weight per face cell (#220), in `apply`'s cell order, each in
+     * [0, 1]. It scales that cell's admittance, `β_k·w`, which is the surface
+     * seen as `ξ/w`: 1 is the face as given, 0 is rigid. Absent is 1 everywhere,
+     * bit for bit.
+     */
+    weights?: Float64Array;
+    /**
      * The room's pressure by global cell (#228). A face on a partition thinner
      * than INTERFACE_DEPTH needs mirror cells that lie in the partition beyond
      * it; without this they read zero, the stencil loses its −27 and 2 taps, and
@@ -110,6 +117,8 @@ export declare class ImpedanceBoundary {
     private readonly field;
     /** `β_k` per ghost depth. */
     private readonly beta;
+    /** Staircase weight per face cell, or undefined for 1 everywhere. */
+    private readonly weights;
     /** `s_k = ghost_k^{n−1} + p_k^{n−1}`, one per ghost per face cell. */
     private readonly history;
     /** Scratch for the current cell's ghosts, so `apply` allocates nothing. */

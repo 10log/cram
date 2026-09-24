@@ -24,6 +24,15 @@ export declare function outerLayer(box: Box, axis: Axis, high: boolean): number;
  */
 export declare function exposedFaceRects(grid: VoxelGrid, box: Box, axis: Axis, high: boolean): FaceRect[];
 /**
+ * Staircase weight of each cell of a face rectangle (#220), in the order
+ * `ImpedanceBoundary` walks them: `(v − vMin)·uSpan + (u − uMin)`.
+ *
+ * Each is the {@link faceWeight} of the solid cell beyond that face cell,
+ * across `axis`. `undefined` when the grid carries no weights at all, so a
+ * hand-built grid plans exactly the boundaries it always did.
+ */
+export declare function faceWeights(grid: VoxelGrid, axis: Axis, high: boolean, box: Box, rect: FaceRect): Float64Array | undefined;
+/**
  * Which surface sits behind a face rectangle.
  *
  * One coefficient per rectangle, so a rectangle spanning two materials takes
