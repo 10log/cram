@@ -47,6 +47,11 @@ export declare function planImpedanceBoundaries(grid: VoxelGrid, decomposition: 
 export interface BuildImpedanceOptions {
     /** Absorption coefficient for a surface index. -1 means no surface recorded. */
     absorptionFor: (surfaceIndex: number) => number;
+    /**
+     * Spatial rank of the run, which picks the diffuse-field model a material's
+     * random-incidence α is inverted against (#221). Defaults to 3.
+     */
+    rank?: number;
     /** The room's pressure by global cell, for faces on thin partitions (#228). */
     field?: GlobalField;
 }

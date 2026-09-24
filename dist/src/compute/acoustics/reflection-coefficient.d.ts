@@ -10,8 +10,11 @@
  *
  * ## Which root of `α = 1 − R²`
  *
- * The database stores a normal-incidence absorption coefficient, which fixes
- * `|R(0)| = sqrt(1 − α)` and leaves the sign free. Both roots are physical —
+ * This module reads α as a normal-incidence coefficient, which fixes
+ * `|R(0)| = sqrt(1 − α)` and leaves the sign free. (The database itself holds
+ * random-incidence, Sabine, data; the wave solvers invert that through
+ * `random-incidence.ts` instead (#221). The geometrical solvers still take this
+ * normal-incidence reading, pending their own change.) Both roots are physical —
  * `ξ > 1` for a surface stiffer than air, `ξ < 1` for one softer — so the
  * choice has to be made deliberately rather than fallen into:
  *

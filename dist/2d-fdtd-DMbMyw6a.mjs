@@ -3,8 +3,8 @@ import { p as r, t as i } from "./renderer-Cj8dxF6d.mjs";
 import { g as a } from "./store-CUhn0IQy.mjs";
 import { t as o } from "./sound-speed-CfEkirc1.mjs";
 import { a as s, i as c, r as l } from "./recording-D5dcOUYq.mjs";
-import { t as u } from "./reflection-coefficient-DOfZqTBY.mjs";
-import { t as d } from "./solver-DCp-VMaM.mjs";
+import { t as u } from "./solver-DCp-VMaM.mjs";
+import { t as d } from "./random-incidence-C2tZkwdg.mjs";
 import { ClampToEdgeWrapping as f, Color as p, DataTexture as m, DoubleSide as h, FloatType as g, Mesh as _, MeshBasicMaterial as ee, MeshLambertMaterial as te, NearestFilter as v, PlaneGeometry as y, RGBAFormat as b, ShaderMaterial as x, UniformsLib as S, UniformsUtils as ne, UnsignedByteType as C, Vector2 as w, Vector3 as T, WebGLRenderTarget as E } from "three";
 //#region node_modules/three/examples/jsm/misc/GPUComputationRenderer.js
 var D = class {
@@ -204,11 +204,14 @@ function B(e) {
 }
 function V(e, t) {
 	if (!(t > 0)) throw Error(`Courant number must be positive, got ${t}`);
-	if (e <= 1e-6) return 0;
-	let n = u(e);
-	return Number.isFinite(n) ? 1 / (n * t) : 0;
+	if (!(e > 0)) throw Error(`Impedance must be positive, got ${e}`);
+	return Number.isFinite(e) ? 1 / (e * t) : 0;
 }
-function H(e) {
+function H(e, t) {
+	if (!(t > 0)) throw Error(`Courant number must be positive, got ${t}`);
+	return e > 1e-6 ? V(d(e, 2), t) : 0;
+}
+function U(e) {
 	let t = e.x2 - e.x1, n = e.y2 - e.y1, r = Math.hypot(t, n);
 	return r > 0 ? {
 		x: Math.abs(n) / r,
@@ -218,29 +221,29 @@ function H(e) {
 		y: 1
 	};
 }
-function U(e) {
+function W(e) {
 	return 1 - e;
 }
-function W(e) {
+function G(e) {
 	if (!e.enabled) return {
 		r: 0,
 		g: 0
 	};
-	let t = H(e);
+	let t = U(e);
 	return {
-		r: U(t.x),
-		g: U(t.y)
+		r: W(t.x),
+		g: W(t.y)
 	};
 }
-function G(e) {
+function K(e) {
 	return e === 0 ? 0 : -e;
 }
-function K(e, t) {
-	return e.enabled ? G(V(e.absorption, t)) : 1;
+function q(e, t) {
+	return e.enabled ? K(H(e.absorption, t)) : 1;
 }
 //#endregion
 //#region src/compute/2d-fdtd/dispose-gpu.ts
-function q(e) {
+function oe(e) {
 	if (!e) return;
 	let t = e.variables ?? [];
 	for (let e of t) e.renderTargets?.forEach((e) => e.dispose()), e.material?.dispose?.();
@@ -287,7 +290,7 @@ var Z = 256, Q = {
 	offsetX: 0,
 	offsetY: 0,
 	slice: "xz"
-}, $ = class extends d {
+}, $ = class extends u {
 	gpuCompute;
 	nx;
 	ny;
@@ -460,7 +463,7 @@ var Z = 256, Q = {
 			let e = this.mesh.material;
 			Array.isArray(e) ? e.forEach((e) => e.dispose()) : e.dispose();
 		}
-		this.readLevelRenderTarget?.dispose(), this.sourcemap?.dispose(), this.wallmap?.dispose(), this.clearShader?.dispose(), this.readLevelShader?.dispose(), q(this.gpuCompute);
+		this.readLevelRenderTarget?.dispose(), this.sourcemap?.dispose(), this.wallmap?.dispose(), this.clearShader?.dispose(), this.readLevelShader?.dispose(), oe(this.gpuCompute);
 	}
 	dispose() {
 		if (this.stop(), this.disposeGpu(), this.editMesh) {
@@ -595,7 +598,7 @@ var Z = 256, Q = {
 				}
 				r.shouldClearPreviousCells = !1;
 			}
-			let i = K(r, this.courant), a = W(r);
+			let i = q(r, this.courant), a = G(r);
 			for (let n = 0; n < r.cells.length; n++) {
 				let o = 4 * (r.cells[n][1] * this.nx + r.cells[n][0]);
 				e[o + 2] = i, t && (t[o + 0] = a.r, t[o + 1] = a.g);
@@ -669,4 +672,4 @@ var Z = 256, Q = {
 //#endregion
 export { $ as FDTD_2D, $ as default };
 
-//# sourceMappingURL=2d-fdtd-CTaAGoQx.mjs.map
+//# sourceMappingURL=2d-fdtd-DMbMyw6a.mjs.map
