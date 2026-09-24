@@ -75,6 +75,47 @@ export interface ImpedancePlan {
    * {@link impedanceCourantLimit}.
    */
   maxAbsorption: number;
+  /**
+   * Absorbing area per surface, before and after the staircase correction
+   * (#220), in the order surfaces were first met. See {@link StaircaseArea}.
+   */
+  staircaseArea: StaircaseArea[];
+}
+
+/**
+ * How much absorbing area one surface presents to the grid, the diagnostic
+ * PFFDTD's voxelizer prints (#220). All in m².
+ *
+ * `staircased` counts every exposed cell face at full strength, which is what
+ * the boundaries did before #220. For a surface of unit normal `n` it runs
+ * `|nₓ| + |n_y| + |n_z|` times the true area, up to √3. `corrected` weights
+ * each face by `|n·e|`, and is what the boundaries now use. `true` is the
+ * triangles' own area, absent when the grid does not carry it (a 2D slice, or
+ * a grid built by hand).
+ *
+ * `corrected` still reads below `true` by the shell's inset. The voxelizer
+ * marks every cell a surface touches as solid, so the air region, and every
+ * face of it, sits up to a cell inside the geometry. That is the same shrink
+ * the air volume shows, and it is not a staircase effect.
+ */
+export interface StaircaseArea {
+  surfaceIndex: number;
+  staircased: number;
+  corrected: number;
+  true?: number;
+}
+
+/** One line per surface, in the spirit of PFFDTD's per-material printout. */
+export function describeStaircaseArea(rows: readonly StaircaseArea[]): string[] {
+  return rows.map(({ surfaceIndex, staircased, corrected, true: area }) => {
+    const vs = (x: number) =>
+      area && area > 0 ? ` (${x >= area ? '+' : ''}${(100 * (x / area - 1)).toFixed(1)}%)` : '';
+    return (
+      `surface ${surfaceIndex}: staircased ${staircased.toFixed(3)} m²${vs(staircased)}, ` +
+      `corrected ${corrected.toFixed(3)} m²${vs(corrected)}` +
+      (area !== undefined ? `, true ${area.toFixed(3)} m²` : '')
+    );
+  });
 }
 
 export interface PlanImpedanceOptions {
@@ -103,6 +144,8 @@ export function planImpedanceBoundaries(
   let boundaryCells = 0;
   let skippedRigid = 0;
   let maxAbsorption = 0;
+  const areas = new Map<number, StaircaseArea>();
+  const cellArea = grid.dx * grid.dx;
 
   for (let boxIndex = 0; boxIndex < decomposition.boxes.length; boxIndex++) {
     const box = decomposition.boxes[boxIndex];
@@ -126,7 +169,21 @@ export function planImpedanceBoundaries(
 
           const weights = faceWeights(grid, axis, high, box, rect);
           faces.push({ boxIndex, axis, high, surfaceIndex, ...rect, ...(weights && { weights }) });
-          boundaryCells += (rect.uMax - rect.uMin) * (rect.vMax - rect.vMin);
+          const cells = (rect.uMax - rect.uMin) * (rect.vMax - rect.vMin);
+          boundaryCells += cells;
+          let row = areas.get(surfaceIndex);
+          if (!row) {
+            const area = grid.surfaceArea?.[surfaceIndex];
+            row = { surfaceIndex, staircased: 0, corrected: 0, ...(area !== undefined && { true: area }) };
+            areas.set(surfaceIndex, row);
+          }
+          row.staircased += cells * cellArea;
+          let weighted = cells;
+          if (weights) {
+            weighted = 0;
+            for (let i = 0; i < weights.length; i++) weighted += weights[i];
+          }
+          row.corrected += weighted * cellArea;
           maxAbsorption = Math.max(maxAbsorption, Math.min(1, alpha));
         }
       }
@@ -145,7 +202,14 @@ export function planImpedanceBoundaries(
     );
   }
 
-  return { faces, warnings, boundaryCells, skippedRigid, maxAbsorption };
+  return {
+    faces,
+    warnings,
+    boundaryCells,
+    skippedRigid,
+    maxAbsorption,
+    staircaseArea: [...areas.values()],
+  };
 }
 
 export interface BuildImpedanceOptions {

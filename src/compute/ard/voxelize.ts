@@ -83,6 +83,11 @@ export interface VoxelGrid {
    * axis-aligned and needs no correction — absent reads as weight 1.
    */
   faceWeightOf?: Float32Array;
+  /**
+   * True area in m² of each surface index's triangles, for the staircase
+   * diagnostic (#220). Optional for the same reason as `faceWeightOf`.
+   */
+  surfaceArea?: Record<number, number>;
   airCount: number;
   solidCount: number;
   /**
@@ -242,6 +247,7 @@ export function voxelizeTriangles(
   const cells = new Uint8Array(total);
   const surfaceOf = new Int32Array(total).fill(-1);
   const faceWeightOf = new Float32Array(3 * total).fill(-1);
+  const surfaceArea: Record<number, number> = {};
   const strideY = nx;
   const strideZ = nx * ny;
 
@@ -258,6 +264,7 @@ export function voxelizeTriangles(
     const crossZ = ux * vy - uy * vx;
     const crossLength = Math.hypot(crossX, crossY, crossZ);
     const hasNormal = crossLength > 0;
+    surfaceArea[t.surfaceIndex] = (surfaceArea[t.surfaceIndex] ?? 0) + crossLength / 2;
     const absN = hasNormal
       ? [Math.abs(crossX) / crossLength, Math.abs(crossY) / crossLength, Math.abs(crossZ) / crossLength]
       : [0, 0, 0];
@@ -432,6 +439,7 @@ export function voxelizeTriangles(
     cells,
     surfaceOf,
     faceWeightOf,
+    surfaceArea,
     airCount,
     solidCount: total - airCount,
     leaked,
