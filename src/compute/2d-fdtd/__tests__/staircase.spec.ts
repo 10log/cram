@@ -12,6 +12,7 @@
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import rasterizeLine from '../rasterize-line';
+import { impedanceForRandomIncidenceAbsorption } from '../../acoustics/random-incidence';
 import {
   AIR_CHANNEL,
   MAX_GHOST_GAIN,
@@ -188,10 +189,8 @@ describe('Issue #220: staircase face weights', () => {
     const eyringSteps = (area: number, perimeter: number, alpha: number) =>
       (6 * ((Math.PI * area) / perimeter)) / (-C * Math.log10(1 - alpha));
 
-    /** Diffuse-field absorption of a real impedance in 2D, as rt60-cross-check. */
-    function diffuseAbsorption2D(alpha: number): number {
-      const r = Math.sqrt(1 - alpha);
-      const xi = (1 + r) / (1 - r);
+    /** Diffuse-field absorption of a real impedance in 2D, by direct integration — independent of the solver's module. */
+    function diffuseAbsorption2D(xi: number): number {
       const n = 20000;
       let total = 0;
       for (let i = 0; i < n; i++) {
@@ -224,8 +223,11 @@ describe('Issue #220: staircase face weights', () => {
         const fixed = polygonRoom(N, corners(degrees), ALPHA, true);
         // Each rotation against its own bracket: corners are rounded after
         // rotating, so area and perimeter differ slightly between rotations.
-        const lower = eyringSteps(fixed.area, fixed.perimeter, diffuseAbsorption2D(ALPHA));
-        const upper = eyringSteps(fixed.area, fixed.perimeter, ALPHA);
+        // The bracket of the wall the solver built (#221): its diffuse-field
+        // absorption is ALPHA, its normal-incidence absorption lower.
+        const xi = impedanceForRandomIncidenceAbsorption(ALPHA, 2);
+        const lower = eyringSteps(fixed.area, fixed.perimeter, diffuseAbsorption2D(xi));
+        const upper = eyringSteps(fixed.area, fixed.perimeter, 1 - ((xi - 1) / (xi + 1)) ** 2);
         const before = decaySteps(plain.field, 4400);
         const after = decaySteps(fixed.field, 4400);
         raw.push(before);

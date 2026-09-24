@@ -152,8 +152,11 @@
  * cleared every measurement but by only 3% at α = 0.2 — inside the sampling
  * grain, so not actually cleared at all.
  *
- * Normal incidence, like the PML: α is a normal-incidence coefficient and the
- * database stores nothing else. A locally-reacting surface does have the right
+ * The accuracy tables above are stated at normal incidence, like the PML's,
+ * because that is what a two-probe rig measures. A *material's* α is another
+ * matter: the database holds random-incidence (Sabine) absorption, and
+ * {@link impedanceForMaterialAbsorption} builds the wall whose diffuse-field
+ * absorption equals it (#221). A locally-reacting surface does have the right
  * *angular* behaviour for a given ξ — reflection rising towards grazing as
  * `(ξcosθ − 1)/(ξcosθ + 1)` — which a graded-σ sponge does not, so this is the
  * better of the two at oblique incidence as well. Per-band α is carried by
@@ -162,6 +165,10 @@
  */
 
 import { impedanceForAbsorption as sharedImpedanceForAbsorption } from '../acoustics/reflection-coefficient';
+import {
+  impedanceForRandomIncidenceAbsorption,
+  maxRandomIncidenceAbsorption,
+} from '../acoustics/random-incidence';
 import {
   INTERFACE_DEPTH,
   addForceAtDepth,
@@ -204,6 +211,41 @@ export function impedanceForAbsorption(alpha: number): number {
   // a solver assembling partitions should fail loudly on a bad coefficient,
   // where the geometrical path clamps in a hot loop.
   return sharedImpedanceForAbsorption(alpha);
+}
+
+/**
+ * Impedance for a *material's* coefficient (#221).
+ *
+ * The database holds random-incidence (Sabine) absorption, so a wall is built
+ * whose diffuse-field absorption is `alpha` in the dimensionality of the run:
+ * Paris's formula in 3D, its half-plane form for a 2D slice, and plain
+ * `1 − R(0)²` in 1D, where normal incidence is the only incidence there is.
+ * {@link impedanceForAbsorption} stays the normal-incidence mapping — it is
+ * what the boundary's own accuracy measurements are stated in.
+ *
+ * A negative or non-finite coefficient throws, for the same reason as there:
+ * a solver assembling partitions should fail loudly on a broken material. A
+ * coefficient above the model's maximum (0.951 in 3D) — including above 1,
+ * which chamber data can reach — builds the most absorbing wall there is, as
+ * the shared inverse and FDTD 2D do; the driver warns, see
+ * {@link exceedsMaterialAbsorptionLimit}.
+ */
+export function impedanceForMaterialAbsorption(alpha: number, rank: number): number {
+  if (!(alpha >= 0) || !Number.isFinite(alpha)) {
+    throw new Error(`Absorption coefficient must be a finite number >= 0, got ${alpha}`);
+  }
+  if (rank <= 1) return sharedImpedanceForAbsorption(alpha);
+  return impedanceForRandomIncidenceAbsorption(alpha, rank >= 3 ? 3 : 2);
+}
+
+/**
+ * Whether a material asks for more diffuse-field absorption than a
+ * locally-reacting wall can give in a run of this rank. Chamber data does,
+ * routinely; the driver says so rather than silently delivering less.
+ */
+export function exceedsMaterialAbsorptionLimit(alpha: number, rank: number): boolean {
+  if (rank <= 1) return false;
+  return alpha > maxRandomIncidenceAbsorption(rank >= 3 ? 3 : 2);
 }
 
 /**

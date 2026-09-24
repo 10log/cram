@@ -10,37 +10,30 @@
  *
  * ## Why it is a bracket and not a number
  *
- * Sabine and Eyring take a *random-incidence* absorption coefficient. The
- * material database stores a *normal-incidence* one, and that is what an
- * impedance boundary is given. For a real impedance the two differ, and by a
- * lot: Paris's formula integrates the locally-reacting reflection coefficient
- * over a diffuse hemisphere and gives
+ * The material's α is random-incidence (Sabine) absorption, and since #221 the
+ * wall is built so that its diffuse-field absorption *is* α (Paris's formula,
+ * inverted). A diffuse field would therefore decay at Eyring's T60 at α, and
+ * that is the **lower** bound: nothing the wall does can absorb more.
  *
- * ```
- * α_stat = (8/ξ)·[1 − (1/ξ)ln(1+ξ) + 1/(1+ξ)]
- * ```
+ * The **upper** bound is Eyring at the same wall's normal-incidence
+ * absorption, which is lower than α — a locally-reacting surface absorbs most
+ * between normal and grazing incidence. A field that never went diffuse, with
+ * energy trapped in axial modes striking the walls head-on, decays at that
+ * rate. The room here is in the modal region below about 250 Hz and the run
+ * carries 0–500 Hz, so the answer sits between the two.
  *
- * which for α_normal = 0.2 (ξ = 17.94) is **0.396** — nearly double. A
- * locally-reacting surface really does absorb more from a diffuse field than
- * from a normal-incidence wave, so the true T60 must sit **below** Eyring at
- * α_normal.
- *
- * It must also sit **above** Eyring at α_stat, because the field in a room this
- * size at these frequencies is not diffuse. The Schroeder frequency here is
- * around 250 Hz and the run carries content from 0 to 500 Hz, so a good part of
- * the band is in the modal region where statistical theory does not hold and the
- * decay is slower than a diffuse-field estimate.
- *
- * Between those two is the whole of what statistical acoustics can assert about
- * this run. It is a factor of 2.3 wide, and both bounds are one-sided errors
- * that a broken boundary fails: a surface that does not absorb enough runs past
- * the upper bound, one that absorbs too much falls under the lower.
+ * Both bounds are one-sided errors a broken boundary fails: a surface that does
+ * not absorb enough runs past the upper bound, one that absorbs too much falls
+ * under the lower. Before #221 the bracket was built around a softer wall — the
+ * one that absorbs α at normal incidence — and quoted its diffuse absorption as
+ * 0.396 at α = 0.2 from a mis-transcribed Paris formula; the correct figure is
+ * 0.323.
  */
 
 import { describe, expect, it } from 'vitest';
 
 import { decompose } from '../decompose';
-import { impedanceForAbsorption } from '../impedance';
+import { absorptionForImpedance, impedanceForMaterialAbsorption } from '../impedance';
 import { bandlimitedPulse, createArdSimulation, planArdTimeStep } from '../simulation';
 import { Cell, type VoxelGrid } from '../voxelize';
 
@@ -95,13 +88,19 @@ function shoeboxGrid(ax: number, ay: number, az: number, dx: number): VoxelGrid 
 }
 
 /**
- * Paris's random-incidence absorption coefficient for a real impedance.
- *
- * The diffuse-field average of `1 − |R(θ)|²` over a hemisphere, with
- * `R(θ) = (ξcosθ − 1)/(ξcosθ + 1)`.
+ * Diffuse-field absorption of a real impedance in 3D: `1 − |R(θ)|²` averaged
+ * over a hemisphere with the `cosθ·sinθ` weight, by direct integration — kept
+ * independent of `acoustics/random-incidence.ts`, which is under test here.
  */
-function randomIncidenceAbsorption(xi: number): number {
-  return (8 / xi) * (1 - (1 / xi) * Math.log(1 + xi) + 1 / (1 + xi));
+function diffuseAbsorption3D(xi: number): number {
+  const n = 20000;
+  let total = 0;
+  for (let i = 0; i < n; i++) {
+    const t = ((i + 0.5) / n) * (Math.PI / 2);
+    const R = (xi * Math.cos(t) - 1) / (xi * Math.cos(t) + 1);
+    total += (1 - R * R) * 2 * Math.cos(t) * Math.sin(t) * (Math.PI / 2 / n);
+  }
+  return total;
 }
 
 /** Eyring reverberation time. Sabine's, with the correct log. */
@@ -200,8 +199,11 @@ describe('T60 against statistical room acoustics', () => {
     expect(Number.isFinite(t30)).toBe(true);
     expect(Number.isFinite(t20)).toBe(true);
 
-    const upper = eyring(volume, surface, alpha);
-    const lower = eyring(volume, surface, randomIncidenceAbsorption(impedanceForAbsorption(alpha)));
+    const xi = impedanceForMaterialAbsorption(alpha, 3);
+    const lower = eyring(volume, surface, diffuseAbsorption3D(xi));
+    const upper = eyring(volume, surface, absorptionForImpedance(xi));
+    // The wall built absorbs the material's α from a diffuse field.
+    expect(lower).toBeCloseTo(eyring(volume, surface, alpha), 6);
     // Sanity on the bracket itself, so a broken formula cannot widen it to
     // something nothing could fail.
     expect(lower).toBeLessThan(upper);
@@ -210,6 +212,10 @@ describe('T60 against statistical room acoustics', () => {
     for (const t of [t20, t30]) {
       expect(t).toBeGreaterThan(lower);
       expect(t).toBeLessThan(upper);
+      // And near Eyring at the material's own α, which is what #221 is about:
+      // measured 1.08 (T20) and 1.18 (T30) of it, where the old softer wall
+      // decayed at 0.71 and 0.87 — faster than the material allows.
+      expect(t).toBeLessThan(1.3 * lower);
     }
     // T20 and T30 measure the same slope over different spans; a decay that is
     // not roughly exponential would separate them.
