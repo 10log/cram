@@ -6,7 +6,7 @@
 import {
   DISPLAY_HALF_RANGE,
   FIELD_ALPHA,
-  PRESSURE_DISPLAY_SCALE,
+  SOURCE_FORCING_SCALE,
   REST_PRESSURE,
   REST_VELOCITY,
   restFieldPixel,
@@ -29,7 +29,7 @@ describe("FDTD 2D field encoding", () => {
 
   test("a soft source is forced by its signal's change, not its value (#224)", () => {
     expect(softSourcePixel(0)).toEqual(restFieldPixel());
-    expect(softSourcePixel(0.25).forcing).toBe(0.25 * PRESSURE_DISPLAY_SCALE);
+    expect(softSourcePixel(0.25).forcing).toBe(0.25 * SOURCE_FORCING_SCALE);
     // No cell is ever overwritten: the alpha is the field's everywhere.
     expect(softSourcePixel(1).alpha).toBe(FIELD_ALPHA);
   });
@@ -82,5 +82,20 @@ describe("production wiring", () => {
     expect(forced).toBeLessThan(height.indexOf("(1.0 + total)"));
     expect(read("../shaders/clear.frag")).toContain("textureValue.r = 0.0;");
     expect(read("../shaders/water.vert")).not.toContain("127.5");
+  });
+
+  test("the display's half range is one constant, in TypeScript and GLSL", () => {
+    const water = read("../shaders/water.frag");
+    expect(water).not.toContain("127.5");
+    expect(water).toContain("vHeight/DISPLAY_HALF_RANGE*colorBrightness");
+    expect(water).toMatch(/#ifndef DISPLAY_HALF_RANGE\s*\n#error/);
+    expect(index).toContain("#define DISPLAY_HALF_RANGE ${DISPLAY_HALF_RANGE.toFixed(1)}");
+  });
+
+  test("clear() restarts sources from rest, so the next forcing is not a jump", () => {
+    const section = index.match(/  clear\(\) \{[\s\S]*?\n  \}/);
+    expect(section).not.toBeNull();
+    expect(section![0]).toContain("source.previousValue = 0;");
+    expect(section![0]).toContain("source.value = 0;");
   });
 });

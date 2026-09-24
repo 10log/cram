@@ -1,3 +1,6 @@
+#ifndef DISPLAY_HALF_RANGE
+#error DISPLAY_HALF_RANGE must be defined; index.ts prepends it from field-encoding.ts
+#endif
 #define PHONG
 
 varying float vHeight;
@@ -66,12 +69,13 @@ void main() {
 
 	#include <envmap_fragment>
 
+	// DISPLAY_HALF_RANGE is field-encoding.ts's, prepended by index.ts (#224).
 	vec3 col = vec3(0.0,0.0,0.0);
 	if(vHeight > 0.0){
-		col.r = vHeight/127.5*colorBrightness;
+		col.r = vHeight/DISPLAY_HALF_RANGE*colorBrightness;
 	}
 	else if(vHeight <= 0.0){
-		col.g = -vHeight/127.5*colorBrightness;
+		col.g = -vHeight/DISPLAY_HALF_RANGE*colorBrightness;
 	}
 
 	gl_FragColor = vec4( col, 1.0 );

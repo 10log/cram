@@ -18,7 +18,7 @@
  * adds a forcing to the cell's velocity, inside the update and before the
  * centred wall divide, the same place as the CPU mirror's `stepField`
  * `source`. The forcing is the *difference* of the source signal,
- * `PRESSURE_DISPLAY_SCALE · (xⁿ − xⁿ⁻¹)`, which carries no DC. The room's
+ * `SOURCE_FORCING_SCALE · (xⁿ − xⁿ⁻¹)`, which carries no DC. The room's
  * mean pressure then follows the running sum of the signal itself, not of
  * its running sum: a tone leaves it where it was, and a single pulse moves it
  * once and leaves it there. Forcing with the signal as it is would pump the
@@ -44,8 +44,11 @@ export const DISPLAY_HALF_RANGE = 127.5;
 /** Every cell's sourcemap alpha. There is no Dirichlet source any more (#224). */
 export const FIELD_ALPHA = 1;
 
-/** Display units of forcing per unit change in Source.value. */
-export const PRESSURE_DISPLAY_SCALE = 8;
+/**
+ * Velocity forcing, in display units, per unit change in Source.value. (It
+ * was PRESSURE_DISPLAY_SCALE when a hard source wrote a displayed pressure.)
+ */
+export const SOURCE_FORCING_SCALE = 8;
 
 export interface FieldPixel {
   /** Additive velocity forcing for this cell (sourcemap.r). */
@@ -64,7 +67,7 @@ export function restFieldPixel(): FieldPixel {
  */
 export function softSourcePixel(delta: number): FieldPixel {
   return {
-    forcing: Number.isFinite(delta) ? PRESSURE_DISPLAY_SCALE * delta : 0,
+    forcing: Number.isFinite(delta) ? SOURCE_FORCING_SCALE * delta : 0,
     alpha: FIELD_ALPHA,
   };
 }

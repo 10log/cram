@@ -367,7 +367,8 @@ class FDTD_2D extends Solver {
       }
     ]);
     const vertexShader = shaders.waterVert;
-    const fragmentShader = shaders.waterFrag;
+    // One constant for the display's half range, in TypeScript and GLSL (#224).
+    const fragmentShader = `#define DISPLAY_HALF_RANGE ${DISPLAY_HALF_RANGE.toFixed(1)}\n${shaders.waterFrag}`;
     const side = DoubleSide;
     const material = new ShaderMaterial({
       uniforms,
@@ -873,6 +874,16 @@ class FDTD_2D extends Solver {
       for (const variable of this.rlcVariables) {
         this.gpuCompute.doRenderTarget(this.zeroShader, this.gpuCompute.getCurrentRenderTarget(variable));
         this.gpuCompute.doRenderTarget(this.zeroShader, this.gpuCompute.getAlternateRenderTarget(variable));
+      }
+    }
+    // Sources restart from rest too, so the first forcing after a clear is
+    // their first sample, not a jump from where they were (#224).
+    for (const key of this.sourceKeys) {
+      const source = this.sources[key];
+      if (source) {
+        source.value = 0;
+        source.previousValue = 0;
+        source.velocity = 0;
       }
     }
     this.time = 0;
