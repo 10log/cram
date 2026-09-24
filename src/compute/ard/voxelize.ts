@@ -74,6 +74,15 @@ export interface VoxelGrid {
   cells: Uint8Array;
   /** Parent surface index on solid boundary cells, -1 elsewhere. */
   surfaceOf: Int32Array;
+  /**
+   * Staircase face weights (#220), three per cell: for each axis, the largest
+   * `|n_axis|` among the unit normals of the triangles overlapping the cell,
+   * or -1 where no triangle did. See {@link faceWeight}.
+   *
+   * Optional because a grid built by hand, as the tests' shoeboxes are, is
+   * axis-aligned and needs no correction — absent reads as weight 1.
+   */
+  faceWeightOf?: Float32Array;
   airCount: number;
   solidCount: number;
   /**
@@ -232,12 +241,27 @@ export function voxelizeTriangles(
 
   const cells = new Uint8Array(total);
   const surfaceOf = new Int32Array(total).fill(-1);
+  const faceWeightOf = new Float32Array(3 * total).fill(-1);
   const strideY = nx;
   const strideZ = nx * ny;
 
   // --- Pass 1: rasterize the shell -------------------------------------------
   const h = dx / 2;
   for (const t of triangles) {
+    // |n| per axis, for the staircase weights. A degenerate triangle has no
+    // normal and contributes none, leaving its cells at weight 1 unless a
+    // proper triangle also overlaps them.
+    const ux = t.bx - t.ax, uy = t.by - t.ay, uz = t.bz - t.az;
+    const vx = t.cx - t.ax, vy = t.cy - t.ay, vz = t.cz - t.az;
+    const crossX = uy * vz - uz * vy;
+    const crossY = uz * vx - ux * vz;
+    const crossZ = ux * vy - uy * vx;
+    const crossLength = Math.hypot(crossX, crossY, crossZ);
+    const hasNormal = crossLength > 0;
+    const absN = hasNormal
+      ? [Math.abs(crossX) / crossLength, Math.abs(crossY) / crossLength, Math.abs(crossZ) / crossLength]
+      : [0, 0, 0];
+
     const tMinX = Math.min(t.ax, t.bx, t.cx);
     const tMinY = Math.min(t.ay, t.by, t.cy);
     const tMinZ = Math.min(t.az, t.bz, t.cz);
@@ -276,6 +300,15 @@ export function voxelizeTriangles(
           // is attributed to whichever triangle reached it first; Phase 6 may
           // want an area-weighted rule for per-band absorption at corners.
           if (surfaceOf[idx] < 0) surfaceOf[idx] = t.surfaceIndex;
+          // The weight is per axis and takes the largest over every triangle
+          // here, not the first writer's: where a wall meets the ceiling, the
+          // face seen from below belongs to the ceiling whichever triangle
+          // claimed the cell, and a first-writer normal would make it rigid.
+          if (hasNormal) {
+            for (let a = 0; a < 3; a++) {
+              if (absN[a] > faceWeightOf[3 * idx + a]) faceWeightOf[3 * idx + a] = absN[a];
+            }
+          }
         }
       }
     }
@@ -398,11 +431,33 @@ export function voxelizeTriangles(
     origin,
     cells,
     surfaceOf,
+    faceWeightOf,
     airCount,
     solidCount: total - airCount,
     leaked,
     warnings,
   };
+}
+
+/**
+ * Staircase weight `|n·e|` of the face a solid cell presents across `axis`
+ * (#220).
+ *
+ * A surface that is not axis-aligned voxelizes into a staircase, and every
+ * exposed cell face of it would otherwise absorb as though it were real
+ * surface: `|nₓ| + |n_y| + |n_z|` times the true area, √3 at worst. Weighting
+ * each face's admittance by the cosine between the surface and that face makes
+ * the weighted area `Σ nₐ² = 1` per unit of surface, which is PFFDTD's
+ * surface-area correction.
+ *
+ * 1 — uncorrected — for a grid without weights, a cell no triangle reached
+ * (padding, or a face against the grid edge), or an index off the grid.
+ */
+export function faceWeight(grid: VoxelGrid, index: number, axis: 0 | 1 | 2): number {
+  const weights = grid.faceWeightOf;
+  if (!weights || index < 0 || 3 * index + axis >= weights.length) return 1;
+  const w = weights[3 * index + axis];
+  return w >= 0 ? w : 1;
 }
 
 /** Does the filled region touch the padded rim? */

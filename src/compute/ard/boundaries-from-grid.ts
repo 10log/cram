@@ -31,7 +31,7 @@
  */
 
 import type { Decomposition } from './decompose';
-import { dominantSurface, exposedFaceRects, type FaceRect } from './face-rects';
+import { dominantSurface, exposedFaceRects, faceWeights, type FaceRect } from './face-rects';
 import {
   ImpedanceBoundary,
   RIGID_ALPHA_EPSILON,
@@ -51,6 +51,11 @@ export interface ImpedanceFace extends FaceRect {
   high: boolean;
   /** Surface index behind the face, or -1 when the grid recorded none. */
   surfaceIndex: number;
+  /**
+   * Staircase weight per face cell (#220), from `faceWeights`. Absent when
+   * the grid carries none, which is the uncorrected boundary.
+   */
+  weights?: Float64Array;
 }
 
 export interface ImpedancePlan {
@@ -114,7 +119,8 @@ export function planImpedanceBoundaries(
             continue;
           }
 
-          faces.push({ boxIndex, axis, high, surfaceIndex, ...rect });
+          const weights = faceWeights(grid, axis, high, box, rect);
+          faces.push({ boxIndex, axis, high, surfaceIndex, ...rect, ...(weights && { weights }) });
           boundaryCells += (rect.uMax - rect.uMin) * (rect.vMax - rect.vMin);
           maxAbsorption = Math.max(maxAbsorption, Math.min(1, alpha));
         }
@@ -190,6 +196,7 @@ export function buildImpedanceBoundaries(
         vMin: face.vMin,
         vMax: face.vMax,
         impedance,
+        weights: face.weights,
       }),
     );
   }

@@ -70,6 +70,11 @@ export function sliceGrid(grid: VoxelGrid, axis: 1 | 2, index: number): VoxelGri
   const size = nx * outNy * outNz;
   const cells = new Uint8Array(size);
   const surfaceOf = new Int32Array(size).fill(-1);
+  const faceWeightOf = grid.faceWeightOf ? new Float32Array(3 * size).fill(-1) : undefined;
+  // The two axes that stay in the plane. A slice runs a 2D field, so its
+  // staircase is the cut of each surface with the plane: the in-plane
+  // components, renormalised, are that line's normal (#220).
+  const inPlane: [number, number] = axis === 1 ? [0, 2] : [0, 1];
   let airCount = 0;
 
   for (let k = 0; k < outNz; k++) {
@@ -80,6 +85,17 @@ export function sliceGrid(grid: VoxelGrid, axis: 1 | 2, index: number): VoxelGri
         const target = i + nx * (j + outNy * k);
         cells[target] = grid.cells[sourceIndex];
         surfaceOf[target] = grid.surfaceOf[sourceIndex];
+        if (faceWeightOf && grid.faceWeightOf) {
+          const [a, b] = inPlane;
+          const wa = grid.faceWeightOf[3 * sourceIndex + a];
+          const wb = grid.faceWeightOf[3 * sourceIndex + b];
+          const length = Math.hypot(wa, wb);
+          // Unweighted (-1) or edge-on to the plane: leave it unweighted.
+          if (wa >= 0 && wb >= 0 && length > 0) {
+            faceWeightOf[3 * target + a] = wa / length;
+            faceWeightOf[3 * target + b] = wb / length;
+          }
+        }
         if (cells[target] === Cell.Air) airCount++;
       }
     }
@@ -108,6 +124,7 @@ export function sliceGrid(grid: VoxelGrid, axis: 1 | 2, index: number): VoxelGri
     origin,
     cells,
     surfaceOf,
+    faceWeightOf,
     airCount,
     solidCount: size - airCount,
     // A slice of a sound grid is sound: the fill already proved the room
