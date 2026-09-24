@@ -43,6 +43,13 @@ export declare class Receiver extends Container {
     save(): ReceiverSaveObject;
     restore(state: ReceiverSaveObject): this;
     clearSamples(): void;
+    /**
+     * The recording as the listener heard the source: FDTD 2D forces with the
+     * source's difference (#224), so this integrates it back out and removes
+     * DC. Without a sample rate there is nothing to filter against, so the raw
+     * samples come back.
+     */
+    fdtdOutput(): number[];
     saveSamples(): void;
     getColorAsNumber(): number;
     getColorAsString(): string;

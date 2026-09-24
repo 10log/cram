@@ -26,7 +26,17 @@ function i(e, t) {
 	}
 	return i;
 }
+function a(e, t, n = 10) {
+	if (!(t > 0)) throw Error(`Sample rate must be positive, got ${t}`);
+	if (!(n > 0) || n >= t / 2) throw Error(`Cutoff must be in (0, ${t / 2}) Hz, got ${n}`);
+	let r = 2 * t, i = r * Math.tan(Math.PI * n / t), a = Math.SQRT2 * i, o = i * i, s = r * r + a * r + o, c = r * r / s, l = (2 * o - 2 * r * r) / s, u = (r * r - a * r + o) / s, d = Array(e.length), f = 0, p = 0, m = 0;
+	for (let t = 0; t < e.length; t++) {
+		let n = e[t], r = c * (n - f) - l * p - u * m;
+		d[t] = r, f = n, m = p, p = r;
+	}
+	return d;
+}
 //#endregion
-export { e as a, t as i, r as n, n as r, i as t };
+export { t as a, n as i, r as n, e as o, a as r, i as t };
 
-//# sourceMappingURL=recording-D5dcOUYq.mjs.map
+//# sourceMappingURL=recording-D6qgIUE6.mjs.map
