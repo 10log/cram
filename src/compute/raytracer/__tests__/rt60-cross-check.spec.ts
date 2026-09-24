@@ -321,7 +321,11 @@ function decayTime(bins: Float64Array, fromDb: number, toDb: number): number {
  * reference copies it so that the comparison checks the tracer and does not
  * penalise a known modelling choice.
  */
-function referenceDecay(alpha: number, rays = 40_000, seed = 0x5eed): number {
+function referenceDecay(
+  alpha: number,
+  rays = 40_000,
+  seed = 0x5eed,
+): { t20: number; t30: number } {
   let state = seed >>> 0;
   const random = () => {
     // mulberry32
@@ -391,7 +395,7 @@ function referenceDecay(alpha: number, rays = 40_000, seed = 0x5eed): number {
       d = d.map((x) => x / dl);
     }
   }
-  return decayTime(bins, -5, -35);
+  return { t20: decayTime(bins, -5, -25), t30: decayTime(bins, -5, -35) };
 }
 
 /**
@@ -455,14 +459,20 @@ describe("Issue #201: ray tracer decay against statistical room acoustics", () =
     expect(diffuse).toBeCloseTo(0.2097, 3);
     expect(upper).toBeCloseTo(0.367, 3);
     const reference = referenceDecay(ALPHA);
-    expect(reference / diffuse).toBeGreaterThan(0.9);
-    expect(reference / diffuse).toBeLessThan(1.15);
+    // Pinned as well as bracketed, so a broken reference cannot drift inside
+    // the gate below and still bless a wrong tracer. Seeded, so exact:
+    // T20 0.2195 s, T30 0.2229 s.
+    expect(reference.t20).toBeCloseTo(0.22, 2);
+    expect(reference.t30).toBeCloseTo(0.223, 2);
+    expect(reference.t30 / diffuse).toBeGreaterThan(0.9);
+    expect(reference.t30 / diffuse).toBeLessThan(1.15);
 
     const t20 = decayTime(result.bins, -5, -25);
     const t30 = decayTime(result.bins, -5, -35);
-    for (const t of [t20, t30]) {
+    // Each window against the same window of the reference.
+    for (const [t, ref] of [[t20, reference.t20], [t30, reference.t30]]) {
       expect(Number.isFinite(t)).toBe(true);
-      expect(Math.abs(t / reference - 1)).toBeLessThan(REFERENCE_TOLERANCE);
+      expect(Math.abs(t / ref - 1)).toBeLessThan(REFERENCE_TOLERANCE);
       expect(t).toBeLessThan(upper);
     }
 
@@ -542,7 +552,7 @@ describe("Issue #201: ray tracer decay against statistical room acoustics", () =
     const measured = [0.1, 0.4].map((alpha) => ({
       alpha,
       t30: decayTime(shoot(alpha, SCATTERING, 6000).bins, -5, -35),
-      reference: referenceDecay(alpha),
+      reference: referenceDecay(alpha).t30,
       ...statistical(alpha),
     }));
 
