@@ -543,11 +543,12 @@ class RayTracer extends Solver {
     initialTheta: number,
     iter: number = 1,
     chain: Partial<Chain>[] = [],
+    arrivals?: RayPath[],
   ) {
     return traceRayFn(
       this.raycaster, this.intersectableObjects, this.frequencies,
       this._cachedAirAtt, this.rrThreshold,
-      ro, rd, order, bandEnergy, source, initialPhi, initialTheta, iter, chain,
+      ro, rd, order, bandEnergy, source, initialPhi, initialTheta, iter, chain, arrivals,
     );
   }
 
@@ -685,11 +686,11 @@ class RayTracer extends Solver {
             initialBandEnergy[f] = energy;
           }
 
-          const path = this.traceRay(position, direction, this.reflectionOrder, initialBandEnergy, sourceId, phi, theta);
+          // Rays pass through receivers (#234): every crossing is an arrival.
+          const arrivals: RayPath[] = [];
+          const path = this.traceRay(position, direction, this.reflectionOrder, initialBandEnergy, sourceId, phi, theta, 1, [], arrivals);
 
-          if (path) {
-            this._handleTracedPath(path, position, sourceId);
-          }
+          this._handleTracedPath(path, position, sourceId, arrivals);
 
           (this.stats.numRaysShot.value as number)++;
         }
@@ -697,9 +698,16 @@ class RayTracer extends Solver {
     }
   }
 
-  /** Common path handling for both step() and stepStratified() */
-  _handleTracedPath(path: RayPath, position: THREE.Vector3, sourceId: string) {
+  /**
+   * Common path handling for both step() and stepStratified().
+   *
+   * `path` is the ray's own path however it ended (undefined if it left the
+   * model), and `arrivals` every receiver crossing along it (#234). Each
+   * arrival is a separate path to its receiver.
+   */
+  _handleTracedPath(path: RayPath | undefined, position: THREE.Vector3, sourceId: string, arrivals: RayPath[] = []) {
     if (this._runningWithoutReceivers) {
+      if (!path) return;
       this.appendRay(
         [position.x, position.y, position.z],
         path.chain[0].point,
@@ -712,25 +720,36 @@ class RayTracer extends Solver {
       const index = path.chain[path.chain.length - 1].object;
       this._pushPathWithEviction(index, path);
       (useContainer.getState().containers[sourceId] as Source).numRays += 1;
-    } else if (path.intersectedReceiver) {
-      this.appendRay(
-        [position.x, position.y, position.z],
-        path.chain[0].point,
-        path.chain[0].energy || 1.0,
-        path.chain[0].angle
-      );
-      for (let j = 1; j < path.chain.length; j++) {
-        this.appendRay(path.chain[j - 1].point, path.chain[j].point, path.chain[j].energy || 1.0, path.chain[j].angle);
-      }
-      (this.stats.numValidRayPaths.value as number)++;
+    } else if (arrivals.length > 0) {
+      // Draw the whole ray when it ended on a wall; if it left the model, its
+      // last crossing is as far as there is a chain for.
+      this._drawChain(position, path?.chain.length ? path.chain : arrivals[arrivals.length - 1].chain);
+      // "Valid Rays" counts rays that reached a receiver at least once;
+      // numValidRayPaths counts arrivals, which since #234 can be several
+      // per ray.
       this.validRayCount += 1;
+      for (const arrival of arrivals) {
+        (this.stats.numValidRayPaths.value as number)++;
+        const receiverId = arrival.chain[arrival.chain.length - 1].object;
+        this._pushPathWithEviction(receiverId, arrival);
+        // Update energy histogram for convergence monitoring
+        this._addToEnergyHistogram(receiverId, arrival);
+      }
       renderer.overlays.global.setCellValue(this.uuid + "-valid-ray-count", this.validRayCount);
-      const receiverId = path.chain[path.chain.length - 1].object;
-      this._pushPathWithEviction(receiverId, path);
       (useContainer.getState().containers[sourceId] as Source).numRays += 1;
+    }
+  }
 
-      // Update energy histogram for convergence monitoring
-      this._addToEnergyHistogram(receiverId, path);
+  /** Append a traced chain to the ray display, starting at the source. */
+  _drawChain(position: THREE.Vector3, chain: Chain[]) {
+    this.appendRay(
+      [position.x, position.y, position.z],
+      chain[0].point,
+      chain[0].energy || 1.0,
+      chain[0].angle
+    );
+    for (let j = 1; j < chain.length; j++) {
+      this.appendRay(chain[j - 1].point, chain[j].point, chain[j].energy || 1.0, chain[j].angle);
     }
   }
 
@@ -816,81 +835,11 @@ class RayTracer extends Solver {
         initialBandEnergy[f] = energy;
       }
 
-      // get the path traced by the ray
-      const path = this.traceRay(position, direction, this.reflectionOrder, initialBandEnergy, this.sourceIDs[i], phi, theta);
-
-      // if path exists
-      if (path) {
-        //  ignoring receiver intersections
-        if (this._runningWithoutReceivers) {
-          // add the first ray onto the buffer
-          this.appendRay(
-            [position.x, position.y, position.z],
-            path.chain[0].point,
-            path.chain[0].energy || 1.0,
-            path.chain[0].angle
-          );
-
-          // add the rest of the rays onto the buffer
-          for (let j = 1; j < path.chain.length; j++) {
-            // starting at i=1 to avoid an if statement in here
-            this.appendRay(
-              // the previous point
-              path.chain[j - 1].point,
-
-              // the current point
-              path.chain[j].point,
-
-              // the energy content displayed as a color + alpha
-              path.chain[j].energy || 1.0,
-              path.chain[j].angle
-            );
-          }
-
-          // get the uuid of the intersected receiver that way we can filter by receiver
-          const index = path.chain[path.chain.length - 1].object;
-
-          // if the receiver uuid is already defined, push the path on, else define it
-          this._pushPathWithEviction(index, path);
-
-          // increment the sources ray counter
-          (useContainer.getState().containers[this.sourceIDs[i]] as Source).numRays += 1;
-        }
-
-        //  if we are checking receiver intersections
-        else if (path["intersectedReceiver"]) {
-          // add the ray to the buffer
-          this.appendRay(
-            [position.x, position.y, position.z],
-            path.chain[0].point,
-            path.chain[0].energy || 1.0,
-            path.chain[0].angle
-          );
-
-          // add the rest of the rays
-          for (let i = 1; i < path.chain.length; i++) {
-            this.appendRay(
-              // the previous point
-              path.chain[i - 1].point,
-
-              // the current point
-              path.chain[i].point,
-
-              // the energy content displayed as a color + alpha
-              path.chain[i].energy || 1.0,
-              path.chain[i].angle
-            );
-          }
-          (this.stats.numValidRayPaths.value as number)++;
-          this.validRayCount += 1;
-          renderer.overlays.global.setCellValue(this.uuid + "-valid-ray-count", this.validRayCount);
-          const index = path.chain[path.chain.length - 1].object;
-          this._pushPathWithEviction(index, path);
-
-          // increment the sources ray counter
-          (useContainer.getState().containers[this.sourceIDs[i]] as Source).numRays += 1;
-        }
-      }
+      // get the path traced by the ray; it passes through receivers, and
+      // every crossing is an arrival (#234)
+      const arrivals: RayPath[] = [];
+      const path = this.traceRay(position, direction, this.reflectionOrder, initialBandEnergy, this.sourceIDs[i], phi, theta, 1, [], arrivals);
+      this._handleTracedPath(path, position, this.sourceIDs[i], arrivals);
 
       (this.stats.numRaysShot.value as number)++;
     }
@@ -1237,7 +1186,8 @@ class RayTracer extends Solver {
         frequencies,
       };
     }
-    return calcIRForDisplayFn(this.receiverIDs, this.sourceIDs, this.paths, initialSPL, frequencies, this.temperature, sampleRate, tailOptions, recId);
+    const launched = Number(this.stats.numRaysShot?.value) || undefined;
+    return calcIRForDisplayFn(this.receiverIDs, this.sourceIDs, this.paths, initialSPL, frequencies, this.temperature, sampleRate, tailOptions, recId, launched);
   }
   clearRays() {
     if (this.room) {
@@ -1930,7 +1880,9 @@ class RayTracer extends Solver {
             const position = (useContainer.getState().containers[sourceId] as Source).position;
             path.source = sourceId;
 
-            this._handleTracedPath(path, position, sourceId);
+            // The GPU kernel still ends a ray at its first receiver (see
+            // #242), so a path that reached one is that ray's only arrival.
+            this._handleTracedPath(path, position, sourceId, path.intersectedReceiver ? [path] : []);
           }
 
           this.flushRayBuffer();

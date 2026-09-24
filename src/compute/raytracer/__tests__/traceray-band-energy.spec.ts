@@ -47,11 +47,11 @@ describe('per-band energy tracking', () => {
   });
 
   it('receiver chain entry includes bandEnergy, RayPath return includes bandEnergy', () => {
-    // At least one chain.push (receiver hit) should include bandEnergy
-    const chainPushes = rayCoreSource.match(/chain\.push\(\{[\s\S]*?\}\)/g);
-    expect(chainPushes).not.toBeNull();
-    const hasBandEnergy = chainPushes!.some(push => push.includes('bandEnergy'));
-    expect(hasBandEnergy).toBe(true);
+    // The receiver's chain entry should include bandEnergy. Since #234 it is
+    // the last element of the arrival's own copy of the chain, not a push.
+    const arrivalChain = rayCoreSource.match(/const arrivalChain = \[[\s\S]*?\] *;/);
+    expect(arrivalChain).not.toBeNull();
+    expect(arrivalChain![0]).toContain('bandEnergy');
 
     // The RayPath return should include bandEnergy
     const returnMatch = rayCoreSource.match(/return\s*\{[\s\S]*?intersectedReceiver:\s*true[\s\S]*?\}\s*as\s*RayPath/);
