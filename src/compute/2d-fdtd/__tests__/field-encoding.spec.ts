@@ -1,78 +1,86 @@
 /**
- * Issue #110: vacated / removed source cells must match field rest.
- * Rest pressure is 127.5, rest velocity is 0. Pressure 0 is a −127.5 spike.
+ * Issue #110, as #224 left it: a vacated or removed source cell must match a
+ * never-driven one. Since #224 the field rests at zero and a source is soft,
+ * so "matching" is simply carrying no forcing.
  */
 import {
-  REST_PRESSURE,
-  REST_VELOCITY,
-  SOURCE_ALPHA,
+  DISPLAY_HALF_RANGE,
   FIELD_ALPHA,
   PRESSURE_DISPLAY_SCALE,
-  encodePressure,
+  REST_PRESSURE,
+  REST_VELOCITY,
   restFieldPixel,
-  dirichletSourcePixel,
+  softSourcePixel,
   vacatedSourcePixel,
   writeFieldPixel,
 } from "../field-encoding";
 
-describe("Issue #110: FDTD 2D source rest state", () => {
-  test("clear() / fillTexture rest is (127.5, 0)", () => {
-    const rest = restFieldPixel();
-    expect(rest.pressure).toBe(REST_PRESSURE);
-    expect(rest.velocity).toBe(REST_VELOCITY);
-    expect(rest.pressure).toBe(127.5);
-    expect(rest.velocity).toBe(0);
-    expect(rest.alpha).toBe(FIELD_ALPHA);
+describe("FDTD 2D field encoding", () => {
+  test("the field rests at zero; the 127.5 lives only in the display (#224)", () => {
+    expect(REST_PRESSURE).toBe(0);
+    expect(REST_VELOCITY).toBe(0);
+    expect(DISPLAY_HALF_RANGE).toBe(127.5);
   });
 
-  test("a vacated source cell is identical to a never-driven cell", () => {
+  test("a vacated source cell is identical to a never-driven cell (#110)", () => {
     expect(vacatedSourcePixel()).toEqual(restFieldPixel());
+    expect(restFieldPixel()).toEqual({ forcing: 0, alpha: FIELD_ALPHA });
   });
 
-  test("a source at rest (value = 0) writes rest pressure and rest velocity", () => {
-    const pixel = dirichletSourcePixel(0);
-    expect(pixel.pressure).toBe(REST_PRESSURE);
-    expect(pixel.velocity).toBe(REST_VELOCITY);
-    expect(pixel.alpha).toBe(SOURCE_ALPHA);
+  test("a soft source is forced by its signal's change, not its value (#224)", () => {
+    expect(softSourcePixel(0)).toEqual(restFieldPixel());
+    expect(softSourcePixel(0.25).forcing).toBe(0.25 * PRESSURE_DISPLAY_SCALE);
+    // No cell is ever overwritten: the alpha is the field's everywhere.
+    expect(softSourcePixel(1).alpha).toBe(FIELD_ALPHA);
   });
 
-  test("oscillator amplitude 1 is a small perturbation, not ~50% of the display", () => {
-    const delta = Math.abs(encodePressure(1) - REST_PRESSURE);
-    expect(delta).toBe(PRESSURE_DISPLAY_SCALE);
-    expect(delta).toBeLessThan(127.5 * 0.1);
-    // Old map(value, -2, 2, 0, 255) put amplitude 1 at 191.25 — half the 0–255 span from rest.
-    expect(delta).toBeLessThan(Math.abs(191.25 - 127.5) / 2);
+  test("a non-finite change forces nothing rather than poisoning the field", () => {
+    expect(softSourcePixel(NaN).forcing).toBe(0);
+    expect(softSourcePixel(Infinity).forcing).toBe(0);
   });
 
-  test("writeFieldPixel does not touch the wall channel (index + 2)", () => {
-    const pixels = [9, 9, 0.42, 9];
-    writeFieldPixel(pixels, 0, vacatedSourcePixel());
-    expect(pixels[0]).toBe(REST_PRESSURE);
-    expect(pixels[1]).toBe(REST_VELOCITY);
-    expect(pixels[2]).toBe(0.42);
-    expect(pixels[3]).toBe(FIELD_ALPHA);
+  test("writeFieldPixel touches the forcing and alpha only", () => {
+    const pixels = [9, 0.5, 0.42, 9];
+    writeFieldPixel(pixels, 0, softSourcePixel(0.5));
+    expect(pixels).toEqual([4, 0.5, 0.42, FIELD_ALPHA]);
   });
 });
 
-describe("Issue #110: production wiring", () => {
+describe("production wiring", () => {
   const fs = require("fs");
   const path = require("path");
-  const source = fs.readFileSync(path.resolve(__dirname, "../index.ts"), "utf8");
+  const read = (name: string) => fs.readFileSync(path.resolve(__dirname, name), "utf8");
+  const index = read("../index.ts");
 
-  test("index.ts uses field-encoding helpers instead of raw 0 on vacate", () => {
-    expect(source).toMatch(/from ["']\.\/field-encoding["']/);
-    expect(source).toMatch(/vacatedSourcePixel/);
-    expect(source).toMatch(/dirichletSourcePixel/);
-    expect(source).toMatch(/writeFieldPixel/);
+  test("index.ts forces sources softly and vacates with the shared helpers", () => {
+    expect(index).toMatch(/from ["']\.\/field-encoding["']/);
+    expect(index).toMatch(/softSourcePixel\(source\.velocity\)/);
+    expect(index).toMatch(/vacatedSourcePixel/);
+    expect(index).not.toMatch(/dirichletSourcePixel/);
   });
 
-  test("the old vacate write of pressure = 0 is gone", () => {
-    expect(source).not.toMatch(/pixels\[previndex \+ 0\] = 0/);
-  });
-
-  test("removeSource vacates the cell instead of leaving Dirichlet alpha = 0", () => {
-    const section = source.match(/removeSource\([\s\S]*?\n  \}/);
+  test("removeSource vacates the cell (#110)", () => {
+    const section = index.match(/removeSource\([\s\S]*?\n  \}/);
     expect(section).not.toBeNull();
     expect(section![0]).toMatch(/vacateSourceCell/);
+  });
+
+  test("receivers read the zero-centred state in display units", () => {
+    expect(index).toContain("level / DISPLAY_HALF_RANGE");
+    expect(index).not.toMatch(/level\s*-\s*127\.5/);
+  });
+
+  test("the shaders keep no 127.5 in the state, and no Dirichlet overwrite (#224)", () => {
+    const height = read("../shaders/height-map.frag");
+    expect(height).not.toContain("127.5");
+    expect(height).not.toContain("sourcemapValue.a == 0.0");
+    expect(height).toContain("newpos = 0.0;");
+    // The forcing goes in before any centred or RLC divide, as in stepField.
+    const forced = height.indexOf("newvel = med*(mid-pos)+vel*damping+sourcemapValue.r;");
+    expect(forced).toBeGreaterThan(0);
+    expect(forced).toBeLessThan(height.indexOf("(1.0 + beta)"));
+    expect(forced).toBeLessThan(height.indexOf("(1.0 + total)"));
+    expect(read("../shaders/clear.frag")).toContain("textureValue.r = 0.0;");
+    expect(read("../shaders/water.vert")).not.toContain("127.5");
   });
 });

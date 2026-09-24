@@ -40,7 +40,8 @@ import {
 import {
   REST_PRESSURE,
   REST_VELOCITY,
-  dirichletSourcePixel,
+  DISPLAY_HALF_RANGE,
+  softSourcePixel,
   vacatedSourcePixel,
   writeFieldPixel,
 } from "./field-encoding";
@@ -797,21 +798,24 @@ class FDTD_2D extends Solver {
       const source = this.sources[this.sourceKeys[i]];
       source.updateWave(this.time, this.frame, this.dt);
       const index = this.planeCellIndex(source.position);
-      if (index != null) {
-        writeFieldPixel(pixels, index, dirichletSourcePixel(source.value));
-      }
 
+      // A soft source (#224): the cell it left just stops being forced.
+      // Vacate before writing, so a move within one cell keeps its forcing.
       if (source.shouldClearPreviousPosition) {
         const prevIndex = this.planeCellIndex({
           x: source.previousX,
           y: source.previousY,
           z: source.previousZ,
         });
-        if (prevIndex != null) {
+        if (prevIndex != null && prevIndex !== index) {
           writeFieldPixel(pixels, prevIndex, vacatedSourcePixel());
         }
         source.shouldClearPreviousPosition = false;
         source.updatePreviousPosition();
+      }
+      if (index != null) {
+        // Forced by the signal's difference, which carries no DC (#224).
+        writeFieldPixel(pixels, index, softSourcePixel(source.velocity));
       }
     }
     this.sourcemap.needsUpdate = true;
@@ -852,7 +856,8 @@ class FDTD_2D extends Solver {
         );
         const pixels = new Float32Array(this.readLevelImage.buffer);
         const level = pixels[0];
-        this.receivers[key].fdtdSamples.push((level-127.5)/127.5);
+        // Zero-centred state (#224), in display units of the half range.
+        this.receivers[key].fdtdSamples.push(level / DISPLAY_HALF_RANGE);
       }
     }
   }

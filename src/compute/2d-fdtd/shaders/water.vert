@@ -54,7 +54,8 @@ void main() {
 
 	//# include <begin_vertex>
 	vec4 heightmapValue = texture2D( heightmap, uv );
-	float heightValue = heightmapValue.x - 127.5;
+	// The state is zero-centred (#224); no offset to remove.
+	float heightValue = heightmapValue.x;
 	vHeight = heightValue;
 	vWall = heightmapValue.a;
 	

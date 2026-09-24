@@ -9,7 +9,8 @@ void main()	{
 
 	vec4 textureValue = texture2D( clearTexture, uv );
 
-	textureValue.r = 127.5;
+	// Rest is zero in the state (#224).
+	textureValue.r = 0.0;
 	textureValue.g = 0.0;
 	// The previous velocity frequency-dependent walls read (#222).
 	textureValue.b = 0.0;

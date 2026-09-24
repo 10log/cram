@@ -135,7 +135,9 @@ void main()	{
     float mid = 0.25*(u_pos+d_pos+r_pos+l_pos);
   
     float med = 4.0 * courantSq;
-    newvel = med*(mid-pos)+vel*damping;
+    // sourcemap.r is a soft source's forcing (#224), zero elsewhere. It goes
+    // in before the centred divide, as stepField's `source` does.
+    newvel = med*(mid-pos)+vel*damping+sourcemapValue.r;
 #if RLC_TEXTURES > 0
     // Centred loss and RLC branch flux (#222), solved together for p^{n+1}:
     // v^{n+1} = (v* - (beta_c + K) v^n - H0) / (1 + beta_c + K).
@@ -175,15 +177,11 @@ void main()	{
     }
 #endif
     newpos = pos+newvel;
-    
-    if(sourcemapValue.a == 0.0){  
-      newvel = sourcemapValue.g;
-      newpos = sourcemapValue.r;
-    }    
   }
   else {
     newvel = 0.0;
-    newpos = 127.5;
+    // The field rests at zero (#224); the display adds its own offset.
+    newpos = 0.0;
   }
   
   

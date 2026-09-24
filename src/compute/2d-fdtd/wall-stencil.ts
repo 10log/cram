@@ -204,11 +204,11 @@ export function stepStrip(
  * wall. Out-of-grid neighbors clamp to the cell itself, which is what
  * `ClampToEdgeWrapping` makes the shader do, and which reads as rigid.
  *
- * Pressure here is referenced to zero, where the textures carry the water
- * demo's `REST_PRESSURE` offset of 127.5. Nothing in the update notices: the
- * ghost is `p − γv`, the Laplacian is `Σghost − 4p` and the centred loss acts
- * on velocity, all of which are invariant to a constant added to every
- * pressure.
+ * Pressure is referenced to zero, as the textures are since #224 (they
+ * used to carry the water demo's 127.5 offset). The update is invariant to a
+ * constant added to every pressure anyway: the ghost is `p − γv`, the
+ * Laplacian is `Σghost − 4p`, and the centred loss acts on velocity. What the
+ * offset did cost was float32 precision in exactly that constant mode.
  */
 export interface Field2D {
   nx: number;
