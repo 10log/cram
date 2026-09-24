@@ -40,6 +40,11 @@
  * Surfaces that are not axis-aligned become stair steps. That is intrinsic to
  * grid methods and a real accuracy limit, not something this implementation
  * chooses; it is the reason the plan keeps ARD to the low-frequency band.
+ *
+ * A face lying exactly on the boundary between two cells marks both of them
+ * (#230), so on such faces the air region sits up to half a cell further in
+ * than on a face that cuts through cells. Worth remembering when comparing
+ * the air volume with the model's.
  */
 
 /** Cell states. After `voxelize` only these two remain. */
@@ -253,6 +258,13 @@ export function voxelizeTriangles(
 
   // --- Pass 1: rasterize the shell -------------------------------------------
   const h = dx / 2;
+  // The overlap test's half-size, a hair over h. A face lying exactly on the
+  // boundary between two cells is at distance h from both centres, and the
+  // rounding in `origin + k·dx` can put it a last bit outside each, so neither
+  // claims it and the fill leaks through a one-cell gap (#230). The slack is
+  // far above that rounding and far below anything that changes a wall's
+  // thickness; a face on a boundary now marks both cells.
+  const hTest = h * (1 + 1e-7);
   for (const t of triangles) {
     // |n| per axis, for the staircase weights. A degenerate triangle has no
     // normal and contributes none, leaving its cells at weight 1 unless a
@@ -296,7 +308,7 @@ export function voxelizeTriangles(
               t.ax - cx, t.ay - cy, t.az - cz,
               t.bx - cx, t.by - cy, t.bz - cz,
               t.cx - cx, t.cy - cy, t.cz - cz,
-              h, h, h,
+              hTest, hTest, hTest,
             )
           ) {
             continue;
