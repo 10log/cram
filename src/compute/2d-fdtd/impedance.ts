@@ -65,7 +65,8 @@
  * | 0.3         | 0.299  | 0.296  | 0.289  | 0.276 | 0.257 | 0.207 |
  * | 0.5         | 0.499  | 0.495  | 0.487  | 0.470 | 0.446 | 0.376 |
  * | 0.8         | 0.799  | 0.797  | 0.791  | 0.778 | 0.759 | 0.696 |
- * | 1.0         | 1.000  | 0.999  | 0.998  | 0.996 | 0.992 | 0.973 |
+ * | 0.98        | 0.980  | 0.979  | 0.976  | 0.971 | 0.962 | 0.929 |
+ * | 1.0         | 1.000  | 0.998  | 0.995  | 0.988 | 0.978 | 0.938 |
  *
  * Rigid is lossless at every resolution, as the algebra says it must be. The
  * error grows with the ghost's first-order placement of `∂p/∂t` — 0.013 at 12
@@ -101,15 +102,46 @@
  * The transition is at `γ = 1` and it is sharp: below it the mode decays, at it
  * the mode sits there forever, above it the field diverges within a few
  * thousand steps. `γ = 1` has a tidy reading — the ghost becomes
- * `p − (p^n − p^{n−1}) = p^{n−1}`, a pure one-step delay — and it means
- * `ξ > 1/C`, so at this Courant number a wall cannot be made perfectly matched.
- * {@link MAX_GHOST_GAIN} keeps a margin below it and
- * {@link maxStableAbsorption} says what coefficient that allows: 0.961, which
- * only the most absorbing materials in the database reach.
+ * `p − (p^n − p^{n−1}) = p^{n−1}`, a pure one-step delay. The same threshold
+ * holds on every geometry tried (diagonal walls, a one-cell corridor, pillars,
+ * dead-end pockets): it is a property of each wall face, not of the room.
+ *
+ * ## Past the bound: the centred remainder (#219)
+ *
+ * A perfectly matched wall needs `γ = 1/C = √2`, and 216 of the 982 database
+ * materials ask for more than `γ = 0.95` at the reference frequency. So the
+ * gain is split per face. The backward ghost takes `min(γ, MAX_GHOST_GAIN)`,
+ * exactly as before, and whatever is left, `γ_c = γ − MAX_GHOST_GAIN`, is
+ * applied with a *centred* time difference, the form PFFDTD uses for all of its
+ * walls:
+ *
+ * ```
+ * p^{n+1} = p* − C²·Σ (γ_c/2)·(p^{n+1} − p^{n−1})
+ *        ⇒ v^{n+1} = (v* − β·v^n) / (1 + β),   β = ½·C²·Σ γ_c
+ * ```
+ *
+ * where `p*`, `v*` are the update with the backward ghosts already in it.
+ * Unlike PFFDTD, where `p*` is rigid and the centred term carries a wall's
+ * whole admittance, `γ_c` here is only the excess above `MAX_GHOST_GAIN`; the
+ * backward share is already lossy and already in `p*`. The
+ * centred term only ever removes energy: it is proportional to
+ * `(p^{n+1} − p^{n−1})`, the discrete `∂p/∂t` straddling the step, so it cannot
+ * feed the surface mode the way a one-sided difference does. Measured, the
+ * backward part still decides stability (`γ_b < 1`), and a remainder of any
+ * size, up to `γ = 10` on the geometries above, leaves the field bounded.
+ *
+ * Why not make every wall centred and drop the backward ghost? It was tried
+ * (#219) and it is worse. The loss sits at the cell centre, half a cell in
+ * front of the face, and the centred difference leaves that `e^{ik/2}` phase
+ * uncompensated; the backward difference's own half-step lag happens to cancel
+ * most of it. Fully centred walls deliver 0.709 for a requested 0.8 at 6 cells
+ * per wavelength, against 0.759 here. The split keeps every wall with
+ * `γ ≤ 0.95` bit-for-bit what it was and spends the centred form only on the
+ * part the backward one cannot carry.
  *
  * ARD needed a *Courant* clamp for its version of this boundary, because its
- * residual forcing feeds back through a 6th-order stencil. This one clamps the
- * coefficient instead and leaves the time step alone.
+ * residual forcing feeds back through a 6th-order stencil. This one needs
+ * neither a Courant clamp nor, any longer, a coefficient clamp.
  */
 
 import { impedanceForAbsorption } from '../acoustics/reflection-coefficient';
@@ -144,22 +176,40 @@ export const AIR_CHANNEL = 1;
 export const FDTD_CELLS_PER_WAVELENGTH_FOR_IMPEDANCE = 6;
 
 /**
- * Largest ghost gain the field stays stable at.
+ * Largest gain the *backward* ghost `p − γ·v` carries.
  *
- * The bound is `γ < 1` — see the stability section above — and this keeps 5%
- * below it. The transition is sharp enough that a margin is worth having and
- * cheap enough that 5% costs nothing: it caps absorption at 0.961 rather than
- * at 0.971.
+ * That ghost is stable for `γ < 1` — see the stability section above — and this
+ * keeps 5% below it. A wall asking for more gets the rest from the centred
+ * remainder, so this is no longer a cap on absorption, only the point where
+ * one form of the boundary hands over to the other. The shader gets it as a
+ * compile-time define — see {@link withGhostGainDefine}.
  */
 export const MAX_GHOST_GAIN = 0.95;
 
 /**
- * Ghost gain `γ = 1/(ξ·C)` for a surface of absorption `alpha` at Courant `C`,
- * clamped to {@link MAX_GHOST_GAIN}.
+ * `source` with `#define MAX_GHOST_GAIN` prepended, for `height-map.frag`.
+ *
+ * A define rather than a uniform because a uniform fails *open*: one that never
+ * binds reads as 0 in GLSL, which would turn every absorbing wall into a fully
+ * centred one — the scheme #219 measured and rejected — with nothing to say so.
+ * The shader refuses to compile without this define, so a missing one fails
+ * loudly instead.
+ */
+export function withGhostGainDefine(source: string): string {
+  const value = Number.isInteger(MAX_GHOST_GAIN)
+    ? MAX_GHOST_GAIN.toFixed(1)
+    : String(MAX_GHOST_GAIN);
+  return `#define MAX_GHOST_GAIN ${value}\n${source}`;
+}
+
+/**
+ * Ghost gain `γ = 1/(ξ·C)` for a surface of absorption `alpha` at Courant `C`.
  *
  * Returns 0 — the rigid ghost — for a surface at or below
  * {@link RIGID_ALPHA_EPSILON}, so a rigid wall costs nothing and behaves
- * exactly as it did before impedance existed.
+ * exactly as it did before impedance existed. Not clamped: `ξ ≥ 1` for any
+ * `α ≤ 1`, so `γ ≤ 1/C`, and the part above {@link MAX_GHOST_GAIN} goes to the
+ * centred remainder (see {@link splitGhostGain}).
  *
  * `alpha` comes from a material lookup, so it is clamped rather than validated:
  * out of range or non-finite behaves like an unpainted wall, which is the
@@ -171,23 +221,33 @@ export function ghostGainForAbsorption(alpha: number, courant: number): number {
   if (!(courant > 0)) throw new Error(`Courant number must be positive, got ${courant}`);
   if (alpha <= RIGID_ALPHA_EPSILON) return 0;
   const xi = impedanceForAbsorption(alpha);
-  const gamma = Number.isFinite(xi) ? 1 / (xi * courant) : 0;
-  return Math.min(gamma, MAX_GHOST_GAIN);
+  return Number.isFinite(xi) ? 1 / (xi * courant) : 0;
 }
 
 /**
- * Highest absorption coefficient the clamp lets a wall deliver at `courant`.
+ * A wall's gain as the two parts the update applies: the backward ghost's
+ * `min(γ, maxGhostGain)` and the centred remainder above it.
  *
- * 0.961 at the CFL locus. A surface above this is simulated as this — the
- * alternative is a field that diverges, and the difference between 0.96 and
- * 1.00 absorbing is a fraction of a dB per bounce.
+ * The channel carries the single `γ` and the shader makes the same split, so a
+ * wall that never needed the remainder writes exactly the value it always did.
+ *
+ * `maxGhostGain` defaults to the production split point. Only tests move it:
+ * `Infinity` hands the whole gain to the backward ghost, which is how the
+ * `γ = 1` bound that sets {@link MAX_GHOST_GAIN} stays measured.
+ *
+ * A negative or non-finite gain is a rigid wall, the same convention
+ * {@link ghostGainForAbsorption} follows for a bad material, rather than a
+ * `NaN` that would poison the neighbouring cell's update.
  */
-export function maxStableAbsorption(courant: number): number {
-  if (!(courant > 0)) throw new Error(`Courant number must be positive, got ${courant}`);
-  const xi = 1 / (MAX_GHOST_GAIN * courant);
-  if (!(xi > 1)) return 1;
-  const r = (xi - 1) / (xi + 1);
-  return 1 - r * r;
+export function splitGhostGain(
+  gamma: number,
+  maxGhostGain = MAX_GHOST_GAIN,
+): { backward: number; centred: number } {
+  if (!(gamma >= 0 && Number.isFinite(gamma))) return { backward: 0, centred: 0 };
+  return {
+    backward: Math.min(gamma, maxGhostGain),
+    centred: Math.max(gamma - maxGhostGain, 0),
+  };
 }
 
 /**

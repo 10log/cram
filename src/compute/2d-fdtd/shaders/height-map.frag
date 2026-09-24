@@ -5,6 +5,13 @@ uniform float mouseSize;
 uniform float damping;
 uniform float heightCompensation;
 uniform float courantSq;
+
+// Prepended by withGhostGainDefine (impedance.ts). A uniform would read 0 if
+// it never bound and silently make every wall fully centred (#219), so this
+// refuses to compile instead.
+#ifndef MAX_GHOST_GAIN
+#error MAX_GHOST_GAIN must be defined; build this shader with withGhostGainDefine
+#endif
 uniform sampler2D sourcemap;
 
 void main()	{
@@ -48,28 +55,42 @@ void main()	{
     // the rigid Neumann ghost of #111 — keeps the old encoding of exactly 0
     // and the old behaviour bit for bit. Opposite-neighbor sampling is
     // neither Dirichlet nor rigid and is what #111 removed.
+    //
+    // The backward ghost is only stable below gamma = 1, so it takes at most
+    // MAX_GHOST_GAIN; any excess is a centred loss applied after the stencil
+    // (#219). A wall at or below MAX_GHOST_GAIN computes exactly what it did.
     float u_pos = u.r;
     float d_pos = d.r;
     float r_pos = r.r;
     float l_pos = l.r;
+    float centredGain = 0.0;
 
     if (u_wall <= 0.0) {
-      u_pos = pos + u_wall * vel;
+      u_pos = pos + max(u_wall, -MAX_GHOST_GAIN) * vel;
+      centredGain += max(-u_wall - MAX_GHOST_GAIN, 0.0);
     }
     if (d_wall <= 0.0) {
-      d_pos = pos + d_wall * vel;
+      d_pos = pos + max(d_wall, -MAX_GHOST_GAIN) * vel;
+      centredGain += max(-d_wall - MAX_GHOST_GAIN, 0.0);
     }
     if (r_wall <= 0.0) {
-      r_pos = pos + r_wall * vel;
+      r_pos = pos + max(r_wall, -MAX_GHOST_GAIN) * vel;
+      centredGain += max(-r_wall - MAX_GHOST_GAIN, 0.0);
     }
     if (l_wall <= 0.0) {
-      l_pos = pos + l_wall * vel;
+      l_pos = pos + max(l_wall, -MAX_GHOST_GAIN) * vel;
+      centredGain += max(-l_wall - MAX_GHOST_GAIN, 0.0);
     }
 
     float mid = 0.25*(u_pos+d_pos+r_pos+l_pos);
   
     float med = 4.0 * courantSq;
     newvel = med*(mid-pos)+vel*damping;
+    // Centred loss C²·(γc/2)·(p^{n+1} − p^{n−1}), solved for p^{n+1}.
+    if (centredGain > 0.0) {
+      float beta = 0.5 * courantSq * centredGain;
+      newvel = (newvel - beta * vel) / (1.0 + beta);
+    }
     newpos = pos+newvel;
     
     if(sourcemapValue.a == 0.0){  
