@@ -87,6 +87,7 @@ export class FdtdPartition extends PartitionBase {
 
   step(): void {
     const { nx, ny, nz, dx, c, dt, force, p, pOld, pNew } = this;
+    const [activeX, activeY, activeZ] = this.activeAxes;
 
     const lapScale = 1 / (STENCIL_6TH_DIV * dx * dx);
     const c2dt2 = c * c * dt * dt;
@@ -101,24 +102,26 @@ export class FdtdPartition extends PartitionBase {
         for (let x = 0; x < nx; x++) {
           const i = rowBase + x;
 
-          // An axis of extent 1 carries no second derivative. It must be
-          // skipped entirely: with zero padding its stencil would collapse to
-          // the centre tap alone and inject a spurious -490*p into the
-          // Laplacian, so a 2D run (nz === 1) would solve the wrong equation.
+          // An axis the simulation is collapsed on carries no second
+          // derivative and must be skipped: with zero padding its stencil would
+          // collapse to the centre tap alone and inject a spurious -490*p, so a
+          // 2D run (nz === 1) would solve the wrong equation. An axis where only
+          // this box is one cell thick is *not* skipped (#228): there the
+          // centre tap is real, and the interface residual brings the rest.
           let lap = 0;
           for (let k = 0; k < 7; k++) {
             const o = k - 3;
             const coef = STENCIL_6TH[k];
 
-            if (nx > 1) {
+            if (activeX) {
               const xo = x + o;
               if (xo >= 0 && xo < nx) lap += coef * p[i + o];
             }
-            if (ny > 1) {
+            if (activeY) {
               const yo = y + o;
               if (yo >= 0 && yo < ny) lap += coef * p[i + o * strideY];
             }
-            if (nz > 1) {
+            if (activeZ) {
               const zo = z + o;
               if (zo >= 0 && zo < nz) lap += coef * p[i + o * strideZ];
             }

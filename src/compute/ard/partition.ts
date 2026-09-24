@@ -61,6 +61,9 @@ export const enum Axis {
   Z = 2,
 }
 
+/** Per axis, whether the simulation has extent along it. See {@link PartitionParams.activeAxes}. */
+export type ActiveAxes = readonly [boolean, boolean, boolean];
+
 export interface PartitionParams {
   /** Extent and placement in global cell coordinates. */
   box: Box;
@@ -70,6 +73,22 @@ export interface PartitionParams {
   c: number;
   /** Time step in seconds. */
   dt: number;
+  /**
+   * Which axes the *simulation* extends along — the grid's, not this box's.
+   *
+   * An axis the whole run is collapsed on (a 2D slice's third axis) carries no
+   * second derivative, and a stencil partition must skip it. An axis where
+   * only this box happens to be one cell thick is different: in a 3D room it
+   * still carries the Laplacian, whose centre tap the partition supplies and
+   * whose neighbours arrive through the interface residual. Skipping that axis
+   * drops the centre tap and leaves the neighbours' — the instability of #228,
+   * where a rotated room's staircase decomposes into one-cell-thick slivers.
+   *
+   * Defaults to "every axis with extent > 1", which is right for a partition
+   * that *is* the whole domain, as in most unit tests. Anything assembled into
+   * a larger grid should pass the grid's axes.
+   */
+  activeAxes?: ActiveAxes;
 }
 
 export interface Partition {
@@ -144,8 +163,11 @@ export abstract class PartitionBase implements Partition {
   abstract readonly pressure: Float64Array;
   protected readonly force: Float64Array;
 
+  /** Axes the simulation extends along; see {@link PartitionParams.activeAxes}. */
+  readonly activeAxes: ActiveAxes;
+
   constructor(params: PartitionParams) {
-    const { box, dx, c, dt } = params;
+    const { box, dx, c, dt, activeAxes } = params;
     // Integers, not just positive. `new Float64Array(10.5)` truncates to length
     // 10 while `for (x = 0; x < nx; x++)` with `nx = 10.5` still visits x = 10,
     // so a fractional extent reads and writes off the end of the array. A
@@ -170,6 +192,16 @@ export abstract class PartitionBase implements Partition {
     if (!(dx > 0) || !(c > 0) || !(dt > 0)) {
       throw new Error(`Partition needs positive dx, c and dt; got ${dx}, ${c}, ${dt}`);
     }
+
+    const resolvedAxes: ActiveAxes = activeAxes ?? [box.w > 1, box.h > 1, box.d > 1];
+    [box.w, box.h, box.d].forEach((extent, axis) => {
+      if (extent > 1 && !resolvedAxes[axis]) {
+        throw new Error(
+          `Partition has extent ${extent} on axis ${axis}, which activeAxes marks as collapsed`,
+        );
+      }
+    });
+    this.activeAxes = resolvedAxes;
 
     this.box = { ...box };
     this.nx = box.w;
@@ -217,9 +249,12 @@ export abstract class PartitionBase implements Partition {
     return (this.c * this.dt) / this.dx;
   }
 
-  /** Number of axes with extent > 1. A 1-thick axis carries no derivative. */
+  /**
+   * Number of active axes — see {@link PartitionParams.activeAxes}. A thin box
+   * in a 3D room is rank 3, and takes the 3D CFL limit.
+   */
   get rank(): number {
-    return spatialRank(this.nx, this.ny, this.nz);
+    return Math.max(1, this.activeAxes.filter(Boolean).length);
   }
 }
 
