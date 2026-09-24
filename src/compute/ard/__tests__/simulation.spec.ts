@@ -7,10 +7,11 @@
  * assembled pipeline computes acoustics rather than merely running.
  */
 
+import { parisAbsorption } from '../../acoustics/random-incidence';
 import { bandlimitedPulse, createArdSimulation } from '../simulation';
 import { decompose } from '../decompose';
 import { createComplexFftPlan } from '../fft';
-import { impedanceCourantLimit } from '../impedance';
+import { impedanceCourantLimit, impedanceForAbsorption } from '../impedance';
 import { spatialRank, vonNeumannCflLimit } from '../partition';
 import { PML_CFL_MARGIN } from '../pml-partition';
 import { Cell, type VoxelGrid } from '../voxelize';
@@ -696,7 +697,10 @@ describe('energy does not grow once the source stops', () => {
       };
 
       const rigid = runTo(0);
-      const absorbing = runTo(0.6);
+      // The wall this test has always used — normal-incidence 0.6 — stated as
+      // the diffuse-field coefficient a material now gives (#221), so the
+      // physics under test is unchanged.
+      const absorbing = runTo(parisAbsorption(impedanceForAbsorption(0.6)));
 
       // Rigid walls conserve: the field is still there at the end.
       expect(rigid.final / rigid.settled).toBeGreaterThan(0.5);

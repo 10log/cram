@@ -19,11 +19,18 @@
  */
 
 import { readFileSync } from 'fs';
+import { impedanceForAbsorption } from '../../acoustics/reflection-coefficient';
+import {
+  diffuseAbsorption2D,
+  impedanceForRandomIncidenceAbsorption,
+  maxRandomIncidenceAbsorption,
+} from '../../acoustics/random-incidence';
 import { resolve } from 'path';
 import {
   AIR_CHANNEL,
   MAX_GHOST_GAIN,
   ghostGainForAbsorption,
+  ghostGainForImpedance,
   ghostGainFromChannel,
   isWallChannel,
   splitGhostGain,
@@ -131,7 +138,10 @@ function deliveredAbsorption(alpha: number, cellsPerWavelength: number): number 
   const steps = 6000;
   const p1 = 3900;
   const p2 = p1 - 5;
-  const gamma = ghostGainForAbsorption(alpha, C);
+  // `alpha` here is the boundary's own normal-incidence coefficient: this
+  // measures the boundary, so it is driven by impedance, not by the database
+  // convention (#221), which ghostGainForAbsorption applies.
+  const gamma = ghostGainForImpedance(impedanceForAbsorption(alpha), C);
   const omega = omegaForCellsPerWavelength(cellsPerWavelength);
   const drive = (t: number) => Math.min(1, t / 200) * Math.sin(omega * t);
   const [s1, s2] = runTube(n, steps, gamma, src, [p1, p2], drive);
@@ -163,12 +173,22 @@ describe('Issue #199: FDTD 2D impedance walls', () => {
       expect(isWallChannel(AIR_CHANNEL)).toBe(false);
     });
 
-    it('is 1/(xi*C), rising with absorption', () => {
-      // xi = (1 + sqrt(1-a)) / (1 - sqrt(1-a)); the branch matters — the
-      // reciprocal would make a rigid wall the *most* absorbing one.
+    it('is 1/(xi*C) for an impedance', () => {
+      for (const xi of [1, 1.5, 4, 40]) expect(ghostGainForImpedance(xi, C)).toBeCloseTo(1 / (xi * C), 14);
+      expect(ghostGainForImpedance(Infinity, C)).toBe(0);
+      expect(() => ghostGainForImpedance(0, C)).toThrow(/Impedance/);
+    });
+
+    it('reads the database coefficient as 2D diffuse-field absorption (#221), rising with it', () => {
+      // Not xi = (1 + sqrt(1-a)) / (1 - sqrt(1-a)): that is the normal-incidence
+      // reading, whose wall absorbs more of a diffuse field than the material.
       for (const alpha of [0.1, 0.3, 0.5, 0.9]) {
+        const xi = impedanceForRandomIncidenceAbsorption(alpha, 2);
+        expect(ghostGainForAbsorption(alpha, C)).toBeCloseTo(1 / (xi * C), 12);
+        expect(diffuseAbsorption2D(1 / (ghostGainForAbsorption(alpha, C) * C))).toBeCloseTo(alpha, 9);
+        // Stiffer than the normal-incidence reading of the same number.
         const r = Math.sqrt(1 - alpha);
-        expect(ghostGainForAbsorption(alpha, C)).toBeCloseTo((1 - r) / ((1 + r) * C), 12);
+        expect(ghostGainForAbsorption(alpha, C)).toBeLessThan((1 - r) / ((1 + r) * C));
       }
       let previous = -1;
       for (const alpha of [0, 0.05, 0.2, 0.4, 0.6, 0.8]) {
@@ -178,15 +198,17 @@ describe('Issue #199: FDTD 2D impedance walls', () => {
       }
     });
 
-    it('is not clamped: a matched wall asks for 1/C and gets it (#219)', () => {
+    it('is not clamped at MAX_GHOST_GAIN: the most absorbing material still gets its own gain (#219)', () => {
       // The backward ghost diverges above gamma = 1, so this used to clamp at
-      // MAX_GHOST_GAIN and cap absorption at 0.961. The excess now goes to the
-      // centred loss instead, and the gain is the material's own.
-      expect(ghostGainForAbsorption(1, C)).toBeCloseTo(1 / C, 12);
-      for (const alpha of [0.5, 0.8, 0.95, 0.97, 0.99]) {
-        const r = Math.sqrt(1 - alpha);
-        expect(ghostGainForAbsorption(alpha, C)).toBeCloseTo((1 - r) / ((1 + r) * C), 12);
-      }
+      // MAX_GHOST_GAIN. The excess now goes to the centred loss instead. A
+      // matched wall is 1/C; the most absorbing *material*, read as diffuse
+      // absorption, is the 2D diffuse peak — still above MAX_GHOST_GAIN.
+      expect(ghostGainForImpedance(1, C)).toBeCloseTo(1 / C, 12);
+      const peak = ghostGainForAbsorption(1, C);
+      expect(peak).toBeGreaterThan(MAX_GHOST_GAIN);
+      expect(peak).toBeCloseTo(1.083, 3);
+      expect(diffuseAbsorption2D(1 / (peak * C))).toBeCloseTo(maxRandomIncidenceAbsorption(2), 9);
+      for (const alpha of [0.97, 1, 1.2]) expect(ghostGainForAbsorption(alpha, C)).toBe(peak);
     });
 
     it('splits at MAX_GHOST_GAIN, leaving every gain below it to the backward ghost alone', () => {
@@ -262,9 +284,9 @@ describe('Issue #199: FDTD 2D impedance walls', () => {
         expect([bad, ghostGainForAbsorption(bad, C)]).toEqual([bad, 0]);
       }
       // A finite value out of range clamps to the nearer end: below 0 is rigid,
-      // above 1 is fully absorbing.
+      // above the model maximum is the most absorbing wall there is.
       expect(ghostGainForAbsorption(-1, C)).toBe(0);
-      expect(ghostGainForAbsorption(1.5, C)).toBeCloseTo(1 / C, 12);
+      expect(ghostGainForAbsorption(1.5, C)).toBe(ghostGainForAbsorption(1, C));
       // And the clamp reaches the sourcemap, so a bad material writes a wall
       // rather than a NaN channel that would poison every neighbouring cell.
       for (const bad of [NaN, -1, 1.5]) {
@@ -405,7 +427,7 @@ describe('Issue #199: FDTD 2D impedance walls', () => {
     it('decays the wall checkerboard at every gain a material can ask for', () => {
       // The same 1.01 that diverges above, split: 0.95 backward and 0.06
       // centred. Then a matched wall, the most a material can ask for.
-      for (const gamma of [MAX_GHOST_GAIN, 1.01, ghostGainForAbsorption(1, C)]) {
+      for (const gamma of [MAX_GHOST_GAIN, 1.01, ghostGainForImpedance(1, C)]) {
         expect([gamma, checkerboard(gamma, MAX_GHOST_GAIN) < 1e-3]).toEqual([gamma, true]);
       }
       // Far past it the wall is over-damped — mismatched, so it reflects and
@@ -426,7 +448,7 @@ describe('Issue #199: FDTD 2D impedance walls', () => {
         pillars: (i, j) => i % 3 === 0 && j % 3 === 0,
         pockets: (i, j) => (i % 4 !== 1 && j % 4 === 0) || (i % 4 === 0 && j % 4 !== 2 && j > 16),
       };
-      const gammas = [0, 0.5, MAX_GHOST_GAIN, ghostGainForAbsorption(1, C), 5];
+      const gammas = [0, 0.5, MAX_GHOST_GAIN, ghostGainForImpedance(1, C), 5];
       for (const [name, inner] of Object.entries(rooms)) {
         const field = createField2D(N, N);
         for (let j = 0; j < N; j++) {

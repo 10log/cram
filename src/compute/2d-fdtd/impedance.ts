@@ -108,8 +108,11 @@
  *
  * ## Past the bound: the centred remainder (#219)
  *
- * A perfectly matched wall needs `γ = 1/C = √2`, and 216 of the 982 database
- * materials ask for more than `γ = 0.95` at the reference frequency. So the
+ * A perfectly matched wall needs `γ = 1/C = √2`. No material asks for that
+ * any more — read as diffuse-field absorption (#221), the most absorbing wall
+ * is the 2D diffuse peak, `ξ = 1.306`, `γ = 1.083` — but 216 of the 982
+ * database materials still ask for more than `γ = 0.95` at the reference
+ * frequency. So the
  * gain is split per face. The backward ghost takes `min(γ, MAX_GHOST_GAIN)`,
  * exactly as before, and whatever is left, `γ_c = γ − MAX_GHOST_GAIN`, is
  * applied with a *centred* time difference, the form PFFDTD uses for all of its
@@ -169,7 +172,7 @@
  * angle, not by a diffuse field, and the weight over-corrects it.
  */
 
-import { impedanceForAbsorption } from '../acoustics/reflection-coefficient';
+import { impedanceForRandomIncidenceAbsorption } from '../acoustics/random-incidence';
 
 /**
  * Absorption at or below this is a rigid surface, and gets no boundary at all.
@@ -228,13 +231,34 @@ export function withGhostGainDefine(source: string): string {
 }
 
 /**
- * Ghost gain `γ = 1/(ξ·C)` for a surface of absorption `alpha` at Courant `C`.
+ * Ghost gain `γ = 1/(ξ·C)` for a normalized impedance `ξ` at Courant `C`.
+ *
+ * The boundary itself, independent of how a material's α becomes a `ξ`:
+ * `Infinity` is the rigid ghost, 0. The accuracy measurements in
+ * `__tests__/impedance.spec.ts` drive it through this, so they measure the
+ * boundary and not the α convention.
+ */
+export function ghostGainForImpedance(xi: number, courant: number): number {
+  if (!(courant > 0)) throw new Error(`Courant number must be positive, got ${courant}`);
+  if (!(xi > 0)) throw new Error(`Impedance must be positive, got ${xi}`);
+  return Number.isFinite(xi) ? 1 / (xi * courant) : 0;
+}
+
+/**
+ * Ghost gain for a surface of database absorption `alpha` at Courant `C`.
+ *
+ * `alpha` is **random-incidence** (Sabine) absorption, which is what the
+ * material database holds (#221), and a 2D field's walls see a diffuse field
+ * over a half-plane, so `ξ` comes from inverting the 2D diffuse average —
+ * `impedanceForRandomIncidenceAbsorption(α, 2)` — not from `α = 1 − R(0)²`.
+ * A coefficient above that model's maximum, 0.966, gets the most absorbing
+ * wall there is (`ξ = 1.306`, `γ = 1.083` at the CFL locus); the part above
+ * {@link MAX_GHOST_GAIN} goes to the centred remainder (see
+ * {@link splitGhostGain}).
  *
  * Returns 0 — the rigid ghost — for a surface at or below
  * {@link RIGID_ALPHA_EPSILON}, so a rigid wall costs nothing and behaves
- * exactly as it did before impedance existed. Not clamped: `ξ ≥ 1` for any
- * `α ≤ 1`, so `γ ≤ 1/C`, and the part above {@link MAX_GHOST_GAIN} goes to the
- * centred remainder (see {@link splitGhostGain}).
+ * exactly as it did before impedance existed.
  *
  * `alpha` comes from a material lookup, so it is clamped rather than validated:
  * out of range or non-finite behaves like an unpainted wall, which is the
@@ -244,9 +268,8 @@ export function withGhostGainDefine(source: string): string {
  */
 export function ghostGainForAbsorption(alpha: number, courant: number): number {
   if (!(courant > 0)) throw new Error(`Courant number must be positive, got ${courant}`);
-  if (alpha <= RIGID_ALPHA_EPSILON) return 0;
-  const xi = impedanceForAbsorption(alpha);
-  return Number.isFinite(xi) ? 1 / (xi * courant) : 0;
+  if (!(alpha > RIGID_ALPHA_EPSILON)) return 0;
+  return ghostGainForImpedance(impedanceForRandomIncidenceAbsorption(alpha, 2), courant);
 }
 
 /**

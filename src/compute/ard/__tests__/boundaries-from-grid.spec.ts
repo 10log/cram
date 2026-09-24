@@ -10,6 +10,7 @@
  * the join becomes an absorbing wall in the middle of the room.
  */
 
+import { parisAbsorption } from '../../acoustics/random-incidence';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -18,7 +19,7 @@ import {
 } from '../boundaries-from-grid';
 import { decompose } from '../decompose';
 import { DctPartition } from '../dct-partition';
-import { impedanceForAbsorption } from '../impedance';
+import { impedanceForMaterialAbsorption } from '../impedance';
 import { Axis, type Partition } from '../partition';
 import { planWalls } from '../walls-from-grid';
 import { Cell, type VoxelGrid } from '../voxelize';
@@ -256,7 +257,10 @@ describe('buildImpedanceBoundaries', () => {
     expect(boundaries).toHaveLength(plan.faces.length);
     for (let i = 0; i < boundaries.length; i++) {
       expect(boundaries[i].partition).toBe(partitions[plan.faces[i].boxIndex]);
-      expect(boundaries[i].impedance).toBeCloseTo(impedanceForAbsorption(0.5), 12);
+      // The material's 0.5 is random-incidence absorption (#221): the wall
+      // built absorbs 0.5 of a diffuse field, not of a normal-incidence wave.
+      expect(boundaries[i].impedance).toBeCloseTo(impedanceForMaterialAbsorption(0.5, 3), 12);
+      expect(parisAbsorption(boundaries[i].impedance)).toBeCloseTo(0.5, 9);
     }
     // The boundaries' cells add up to what the plan promised.
     expect(boundaries.reduce((t, b) => t + b.cellCount, 0)).toBe(plan.boundaryCells);

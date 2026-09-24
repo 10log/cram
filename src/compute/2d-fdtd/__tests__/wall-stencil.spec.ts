@@ -160,9 +160,15 @@ describe("Issue #199: the field stepper is the single-cell stencil, tiled", () =
             0,
             maxGhostGain,
           );
+          // To rounding, not to the bit: stepInteriorCell is the shader's
+          // `4c²·(¼(u+d+r+l) − p)`, stepField the inlined `c²·(Σ − 4p)`, and
+          // the two orders of operations may differ in the last place (#221
+          // changed the gains and they did). Any real drift — a wrong axis, a
+          // missing split — is many orders larger.
           const at = [maxGhostGain, i, j];
-          expect([...at, field.pressure[j * nx + i]]).toEqual([...at, expected.pressure]);
-          expect([...at, field.velocity[j * nx + i]]).toEqual([...at, expected.velocity]);
+          const close = (a: number, b: number) => Math.abs(a - b) <= 1e-14 * Math.max(1, Math.abs(b));
+          expect([...at, close(field.pressure[j * nx + i], expected.pressure)]).toEqual([...at, true]);
+          expect([...at, close(field.velocity[j * nx + i], expected.velocity)]).toEqual([...at, true]);
         }
       }
     }

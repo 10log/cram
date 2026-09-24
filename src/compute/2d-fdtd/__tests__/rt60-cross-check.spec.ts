@@ -10,10 +10,12 @@
  * T60 = 6·(πS/P) / (−c·log10(1 − α))
  * ```
  *
- * and the measured decay is bracketed between that evaluated at the requested
- * normal-incidence coefficient — the most absorbing reading, so the shortest
- * T60 — and at its diffuse-field average, which is smaller because a
- * locally-reacting surface reflects more at grazing incidence.
+ * The material's α is diffuse-field (Sabine) absorption, and since #221 the
+ * wall is built so that its 2D diffuse-field absorption *is* α. So the decay is
+ * compared with Eyring at α itself, and bounded above by Eyring at the wall's
+ * normal-incidence absorption — lower than α, since a locally-reacting surface
+ * absorbs most between normal and grazing incidence, so that end is the
+ * longest T60 a field could have that never went diffuse.
  *
  * What this replaces: before impedance walls, every surface was perfectly
  * rigid and the only decay was the global `damping` sponge. Since the step
@@ -26,20 +28,27 @@
 import { DEFAULT_DAMPING } from '../index-constants';
 import {
   ghostGainForAbsorption,
+  ghostGainForImpedance,
   wallChannelForGhostGain,
 } from '../impedance';
+import { impedanceForAbsorption } from '../../acoustics/reflection-coefficient';
+import { impedanceForRandomIncidenceAbsorption } from '../../acoustics/random-incidence';
 import { createField2D, stepField, type Field2D } from '../wall-stencil';
 
 const C = Math.SQRT1_2;
 const C2 = 0.5;
 const SOUND_SPEED = 343;
 
-/** A rectangular room with a one-cell wall ring of the given absorption. */
-function shoebox(widthM: number, heightM: number, dx: number, alpha: number): Field2D {
+/**
+ * A rectangular room with a one-cell wall ring of the given database
+ * absorption — or of an explicit ghost gain, for the tests that drive the
+ * boundary rather than the material convention.
+ */
+function shoebox(widthM: number, heightM: number, dx: number, alpha: number, gain?: number): Field2D {
   const nx = Math.round(widthM / dx) + 2;
   const ny = Math.round(heightM / dx) + 2;
   const field = createField2D(nx, ny);
-  const channel = wallChannelForGhostGain(ghostGainForAbsorption(alpha, C));
+  const channel = wallChannelForGhostGain(gain ?? ghostGainForAbsorption(alpha, C));
   for (let j = 0; j < ny; j++) {
     for (let i = 0; i < nx; i++) {
       if (i === 0 || j === 0 || i === nx - 1 || j === ny - 1) {
@@ -131,10 +140,6 @@ function diffuseAbsorption2D(xi: number): number {
   return total;
 }
 
-function impedance(alpha: number): number {
-  const r = Math.sqrt(1 - alpha);
-  return (1 + r) / (1 - r);
-}
 
 const WIDTH = 6;
 const HEIGHT = 4;
@@ -142,7 +147,7 @@ const AREA = WIDTH * HEIGHT;
 const PERIMETER = 2 * (WIDTH + HEIGHT);
 
 describe('Issue #199: T60 against statistical room acoustics', () => {
-  it.each([0.2, 0.3])('decays within the 2D Eyring bracket at alpha %s', (alpha) => {
+  it.each([0.2, 0.3])('decays at Eyring for the material’s own α (%s), read as diffuse absorption (#221)', (alpha) => {
     const dx = 0.05;
     const field = shoebox(WIDTH, HEIGHT, dx, alpha);
     const { ir, dt } = impulseResponse(field, dx, 1.2 * eyring2D(AREA, PERIMETER, alpha));
@@ -151,18 +156,21 @@ describe('Issue #199: T60 against statistical room acoustics', () => {
     expect(Number.isFinite(t30)).toBe(true);
     expect(Number.isFinite(t20)).toBe(true);
 
-    const upper = eyring2D(AREA, PERIMETER, alpha);
-    const lower = eyring2D(AREA, PERIMETER, diffuseAbsorption2D(impedance(alpha)));
-    // Sanity on the bracket itself, so a broken formula cannot widen it to
-    // something nothing could fail.
+    // The bracket of the wall actually built: its diffuse-field absorption is
+    // the material's α by construction, so the diffuse end is Eyring at α;
+    // its normal-incidence absorption is lower, so that end is longer.
+    const xi = impedanceForRandomIncidenceAbsorption(alpha, 2);
+    const lower = eyring2D(AREA, PERIMETER, diffuseAbsorption2D(xi));
+    const upper = eyring2D(AREA, PERIMETER, 1 - ((xi - 1) / (xi + 1)) ** 2);
+    expect(lower).toBeCloseTo(eyring2D(AREA, PERIMETER, alpha), 9);
     expect(lower).toBeLessThan(upper);
-    expect(upper / lower).toBeLessThan(2);
 
     for (const t of [t20, t30]) {
-      // The measured decay lands within a few percent of the diffuse end,
-      // which is the end a room with four walls and no scattering should sit
-      // at; the margin is for the finite mode count in a room this small.
-      expect([alpha, t, t > 0.9 * lower]).toEqual([alpha, t, true]);
+      // Measured 1.07–1.10 × Eyring at α: just above the diffuse end, where a
+      // room this small with four walls and no scattering sits. Before #221
+      // the same bracket was built around a softer wall, and the room decayed
+      // faster than Eyring at the material's own coefficient allowed.
+      expect([alpha, t, t > 0.95 * lower && t < 1.2 * lower]).toEqual([alpha, t, true]);
       expect([alpha, t, t < upper]).toEqual([alpha, t, true]);
     }
   });
@@ -206,9 +214,11 @@ describe('Issue #199: T60 against statistical room acoustics', () => {
     // must do at room scale instead — every corner cell summing two walls'
     // remainders — which is to keep the late level falling as α rises. Before
     // #219, 0.961, 0.98 and 1 were one clamped wall and read identically.
+    // The α here are normal-incidence, driving the boundary directly: read as
+    // diffuse absorption (#221), no material reaches a matched wall.
     const dx = 0.08;
     const lateLevel = (alpha: number) => {
-      const field = shoebox(WIDTH, HEIGHT, dx, alpha);
+      const field = shoebox(WIDTH, HEIGHT, dx, alpha, ghostGainForImpedance(impedanceForAbsorption(alpha), C));
       const { ir, dt } = impulseResponse(field, dx, 0.13);
       const energy = (from: number, to: number) => {
         let e = 0;

@@ -36,7 +36,8 @@ import {
   ImpedanceBoundary,
   RIGID_ALPHA_EPSILON,
   impedanceCourantLimit,
-  impedanceForAbsorption,
+  exceedsMaterialAbsorptionLimit,
+  impedanceForMaterialAbsorption,
 } from './impedance';
 import { Axis, type Partition } from './partition';
 import type { VoxelGrid } from './voxelize';
@@ -140,6 +141,11 @@ export function planImpedanceBoundaries(
 export interface BuildImpedanceOptions {
   /** Absorption coefficient for a surface index. -1 means no surface recorded. */
   absorptionFor: (surfaceIndex: number) => number;
+  /**
+   * Spatial rank of the run, which picks the diffuse-field model a material's
+   * random-incidence α is inverted against (#221). Defaults to 3.
+   */
+  rank?: number;
 }
 
 /**
@@ -154,9 +160,10 @@ export function buildImpedanceBoundaries(
   partitions: readonly Partition[],
   options: BuildImpedanceOptions,
 ): { boundaries: ImpedanceBoundary[]; warnings: string[] } {
-  const { absorptionFor } = options;
+  const { absorptionFor, rank = 3 } = options;
   const boundaries: ImpedanceBoundary[] = [];
   const warnings: string[] = [];
+  const overLimit = new Set<number>();
 
   for (const face of plan.faces) {
     const partition = partitions[face.boxIndex];
@@ -168,7 +175,15 @@ export function buildImpedanceBoundaries(
     }
 
     const alpha = absorptionFor(face.surfaceIndex);
-    const impedance = impedanceForAbsorption(alpha);
+    const impedance = impedanceForMaterialAbsorption(alpha, rank);
+    if (exceedsMaterialAbsorptionLimit(alpha, rank) && !overLimit.has(face.surfaceIndex)) {
+      overLimit.add(face.surfaceIndex);
+      warnings.push(
+        `Surface ${face.surfaceIndex} asks for ${alpha.toFixed(3)} random-incidence absorption, ` +
+          'more than a locally-reacting wall can absorb from a diffuse field; it is simulated ' +
+          'as the most absorbing wall there is.',
+      );
+    }
     if (!Number.isFinite(impedance)) {
       // α = 0 after the plan was made — a caller passing a different
       // `absorptionFor` to `build` than to `plan`. A rigid boundary is a no-op,

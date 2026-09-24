@@ -67,7 +67,9 @@ import {
 import {
   ARD_CELLS_PER_WAVELENGTH_FOR_IMPEDANCE,
   applyAllImpedanceForcing,
+  absorptionForImpedance,
   impedanceCourantLimit,
+  impedanceForMaterialAbsorption,
   type ImpedanceBoundary,
 } from './impedance';
 import {
@@ -419,7 +421,13 @@ export function createArdSimulation(config: ArdSimulationConfig): ArdSimulation 
 
   let wallPartitions: Partition[] = [];
   if (wallPlan.faces.length > 0) {
-    const built = buildWalls(wallPlan, { dx, c, dt, absorptionFor });
+    // A slab is calibrated to a normal-incidence coefficient. Hand it the
+    // normal-incidence absorption of the wall the impedance path would build
+    // for the same material (#221), so the two boundary kinds agree on what a
+    // material is.
+    const slabAbsorption = (surfaceIndex: number) =>
+      absorptionForImpedance(impedanceForMaterialAbsorption(absorptionFor(surfaceIndex), plan.gridRank));
+    const built = buildWalls(wallPlan, { dx, c, dt, absorptionFor: slabAbsorption });
     wallPartitions = built.partitions;
     warnings.push(...built.warnings);
   }
@@ -432,7 +440,10 @@ export function createArdSimulation(config: ArdSimulationConfig): ArdSimulation 
   // `planArdTimeStep` only ever returns one non-empty plan.
   let boundaries: ImpedanceBoundary[] = [];
   if (impedancePlan.faces.length > 0) {
-    const built = buildImpedanceBoundaries(impedancePlan, roomPartitions, { absorptionFor });
+    const built = buildImpedanceBoundaries(impedancePlan, roomPartitions, {
+      absorptionFor,
+      rank: plan.gridRank,
+    });
     boundaries = built.boundaries;
     warnings.push(...built.warnings);
   }
