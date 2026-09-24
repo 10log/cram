@@ -68,7 +68,7 @@
  */
 
 import { DctPartition } from './dct-partition';
-import { Axis, spatialRank, vonNeumannCflLimit } from './partition';
+import { Axis, spatialRank, vonNeumannCflLimit, type ActiveAxes } from './partition';
 import { PML_CFL_MARGIN, PmlPartition } from './pml-partition';
 import { applyAllInterfaceForcing, findInterfaces } from './interface';
 
@@ -334,6 +334,8 @@ export function createWall(options: {
   dt: number;
   thickness?: number;
   gradingExponent?: number;
+  /** The grid's axes — see `PartitionParams.activeAxes`. Defaults to the slab's own. */
+  activeAxes?: ActiveAxes;
 }): PmlPartition {
   const {
     box,
@@ -345,6 +347,7 @@ export function createWall(options: {
     dt,
     thickness = DEFAULT_CALIBRATION.thickness,
     gradingExponent = DEFAULT_CALIBRATION.gradingExponent,
+    activeAxes,
   } = options;
 
   const courant = (c * dt) / dx;
@@ -356,11 +359,13 @@ export function createWall(options: {
   // The calibration rig is 1D — rank 1, limit ~0.81 — so it would happily build
   // and cache a curve for a dt the real slab cannot run at. Fail here, where
   // the geometry is known, rather than inside the constructor with no context.
-  const slabRank = spatialRank(
-    axis === Axis.X ? thickness : box.w,
-    axis === Axis.Y ? thickness : box.h,
-    axis === Axis.Z ? thickness : box.d,
-  );
+  const slabRank = activeAxes
+    ? Math.max(1, activeAxes.filter(Boolean).length)
+    : spatialRank(
+        axis === Axis.X ? thickness : box.w,
+        axis === Axis.Y ? thickness : box.h,
+        axis === Axis.Z ? thickness : box.d,
+      );
   const limit = PML_CFL_MARGIN * vonNeumannCflLimit(slabRank);
   if (courant > limit) {
     throw new Error(
@@ -391,5 +396,6 @@ export function createWall(options: {
     increasing: high,
     sigmaMax: (sigmaHat * c) / dx,
     gradingExponent,
+    activeAxes,
   });
 }

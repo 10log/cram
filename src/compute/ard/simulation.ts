@@ -411,15 +411,19 @@ export function createArdSimulation(config: ArdSimulationConfig): ArdSimulation 
   const warnings = [...plan.warnings];
 
   // --- Partitions ------------------------------------------------------------
+  // The grid's axes, not each box's: a box one cell thick in a 3D room still
+  // carries that axis's Laplacian (#228). Only a collapsed grid axis — a 2D
+  // slice — drops it.
+  const activeAxes = [grid.nx > 1, grid.ny > 1, grid.nz > 1] as const;
   const roomPartitions: Partition[] = decomposition.boxes.map((box, n) =>
     decomposition.kinds[n] === 'dct'
-      ? new DctPartition({ box, dx, c, dt })
-      : new FdtdPartition({ box, dx, c, dt }),
+      ? new DctPartition({ box, dx, c, dt, activeAxes })
+      : new FdtdPartition({ box, dx, c, dt, activeAxes }),
   );
 
   let wallPartitions: Partition[] = [];
   if (wallPlan.faces.length > 0) {
-    const built = buildWalls(wallPlan, { dx, c, dt, absorptionFor });
+    const built = buildWalls(wallPlan, { dx, c, dt, absorptionFor, activeAxes });
     wallPartitions = built.partitions;
     warnings.push(...built.warnings);
   }

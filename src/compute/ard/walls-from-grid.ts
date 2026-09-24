@@ -91,7 +91,7 @@
 
 import type { Decomposition } from './decompose';
 import { dominantSurface, exposedFaceRects, outerLayer } from './face-rects';
-import { Axis, transverseAxes, type Box } from './partition';
+import { Axis, transverseAxes, type ActiveAxes, type Box } from './partition';
 import { PmlPartition } from './pml-partition';
 import { Cell, type VoxelGrid } from './voxelize';
 import { createWall } from './wall';
@@ -306,6 +306,8 @@ export interface BuildWallsOptions {
   /** Absorption coefficient for a surface index. -1 means "no surface recorded". */
   absorptionFor: (surfaceIndex: number) => number;
   gradingExponent?: number;
+  /** The grid's axes, passed to every slab — see `PartitionParams.activeAxes`. */
+  activeAxes?: ActiveAxes;
 }
 
 /**
@@ -319,7 +321,7 @@ export function buildWalls(
   plan: WallPlan,
   options: BuildWallsOptions,
 ): { partitions: PmlPartition[]; warnings: string[] } {
-  const { dx, c, dt, absorptionFor, gradingExponent = 2 } = options;
+  const { dx, c, dt, absorptionFor, gradingExponent = 2, activeAxes } = options;
   const partitions: PmlPartition[] = [];
   const warnings: string[] = [];
 
@@ -340,6 +342,7 @@ export function buildWalls(
           dt,
           thickness: face.thickness,
           gradingExponent,
+          activeAxes,
         }),
       );
     } catch (error) {
