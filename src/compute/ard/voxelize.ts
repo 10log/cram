@@ -40,6 +40,11 @@
  * Surfaces that are not axis-aligned become stair steps. That is intrinsic to
  * grid methods and a real accuracy limit, not something this implementation
  * chooses; it is the reason the plan keeps ARD to the low-frequency band.
+ *
+ * A face lying exactly on the boundary between two cells marks both of them
+ * (#230), so on such faces the air region sits up to half a cell further in
+ * than on a face that cuts through cells. Worth remembering when comparing
+ * the air volume with the model's.
  */
 
 /** Cell states. After `voxelize` only these two remain. */
