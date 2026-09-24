@@ -217,14 +217,16 @@ export function impedanceForAbsorption(alpha: number): number {
  * {@link impedanceForAbsorption} stays the normal-incidence mapping — it is
  * what the boundary's own accuracy measurements are stated in.
  *
- * Validated like it, for the same reason: a solver assembling partitions
- * should fail loudly on a bad coefficient. Above the model's maximum (0.951
- * in 3D) the most absorbing wall there is gets built; see
+ * A negative or non-finite coefficient throws, for the same reason as there:
+ * a solver assembling partitions should fail loudly on a broken material. A
+ * coefficient above the model's maximum (0.951 in 3D) — including above 1,
+ * which chamber data can reach — builds the most absorbing wall there is, as
+ * the shared inverse and FDTD 2D do; the driver warns, see
  * {@link exceedsMaterialAbsorptionLimit}.
  */
 export function impedanceForMaterialAbsorption(alpha: number, rank: number): number {
-  if (!(alpha >= 0) || alpha > 1) {
-    throw new Error(`Absorption coefficient must be in [0, 1], got ${alpha}`);
+  if (!(alpha >= 0) || !Number.isFinite(alpha)) {
+    throw new Error(`Absorption coefficient must be a finite number >= 0, got ${alpha}`);
   }
   if (rank <= 1) return sharedImpedanceForAbsorption(alpha);
   return impedanceForRandomIncidenceAbsorption(alpha, rank >= 3 ? 3 : 2);

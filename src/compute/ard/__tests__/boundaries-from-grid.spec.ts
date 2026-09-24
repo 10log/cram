@@ -10,7 +10,7 @@
  * the join becomes an absorbing wall in the middle of the room.
  */
 
-import { parisAbsorption } from '../../acoustics/random-incidence';
+import { maxRandomIncidenceAbsorption, parisAbsorption } from '../../acoustics/random-incidence';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -264,6 +264,39 @@ describe('buildImpedanceBoundaries', () => {
     }
     // The boundaries' cells add up to what the plan promised.
     expect(boundaries.reduce((t, b) => t + b.cellCount, 0)).toBe(plan.boundaryCells);
+  });
+
+  it('builds the most absorbing wall for chamber values above the model maximum, and says so once per surface', () => {
+    // Chamber data exceeds the 0.951 a locally-reacting wall can absorb from a
+    // diffuse field, and can exceed 1. Neither throws (#221); both get the
+    // peak wall, and the driver hears about it — once per surface, however
+    // many faces that surface covers.
+    const grid = shoebox(8);
+    const decomposition = decompose(grid);
+    const partitions = partitionsFor(grid, decomposition.boxes);
+    const peak = impedanceForMaterialAbsorption(maxRandomIncidenceAbsorption(3), 3);
+    for (const alpha of [0.97, 1, 1.15]) {
+      const plan = planImpedanceBoundaries(grid, decomposition, { absorptionFor: () => alpha });
+      expect(plan.faces.length).toBeGreaterThan(1);
+      const { boundaries, warnings } = buildImpedanceBoundaries(plan, partitions, {
+        absorptionFor: () => alpha,
+      });
+      expect(boundaries).toHaveLength(plan.faces.length);
+      for (const b of boundaries) expect(b.impedance).toBe(peak);
+      const overLimit = warnings.filter((w) => /more than a locally-reacting wall can absorb/.test(w));
+      expect([alpha, overLimit.length]).toEqual([alpha, 1]);
+      expect(overLimit[0]).toContain(alpha.toFixed(3));
+    }
+    // Below the maximum, no such warning.
+    const plan = planImpedanceBoundaries(grid, decomposition, { absorptionFor: () => 0.9 });
+    const { warnings } = buildImpedanceBoundaries(plan, partitions, { absorptionFor: () => 0.9 });
+    expect(warnings.some((w) => /locally-reacting wall/.test(w))).toBe(false);
+  });
+
+  it('still refuses a broken material coefficient loudly', () => {
+    for (const bad of [NaN, -0.1, Infinity]) {
+      expect(() => impedanceForMaterialAbsorption(bad, 3)).toThrow(/finite number >= 0/);
+    }
   });
 
   it('refuses a partition list that is not in decomposition order', () => {

@@ -112,7 +112,10 @@
  * any more — read as diffuse-field absorption (#221), the most absorbing wall
  * is the 2D diffuse peak, `ξ = 1.306`, `γ = 1.083` — but 216 of the 982
  * database materials still ask for more than `γ = 0.95` at the reference
- * frequency. So the
+ * frequency. (Re-counted under #221's reading, not carried over from #219:
+ * `γ > 0.95` is `ξ < 1.489`, which is 2D diffuse α above 0.962 at 500 Hz; the
+ * normal-incidence threshold it replaced, 0.961, happens to select the same
+ * 216.) So the
  * gain is split per face. The backward ghost takes `min(γ, MAX_GHOST_GAIN)`,
  * exactly as before, and whatever is left, `γ_c = γ − MAX_GHOST_GAIN`, is
  * applied with a *centred* time difference, the form PFFDTD uses for all of its
