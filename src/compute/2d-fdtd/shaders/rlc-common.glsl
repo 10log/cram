@@ -2,11 +2,13 @@
 // and stepField's RLC path; spliced into height-map.frag and rlc-branch.frag
 // at their RLC_CHUNK marker, after their sourcemap and wallmap uniforms.
 //
-// RLC_TEXTURES branch-state textures hold (y, g, y, g) for two branches each,
-// at the half step before the one being computed. Every pass reads the
-// previous frame's textures, so the height-map pass cannot see what the
-// branch passes write this frame. Both advance the state by one step
-// themselves, with rlcAdvance on the same inputs, and so agree.
+// RLC_TEXTURES branch-state textures hold (y, g, y, g) for two branches each.
+// Every pass reads the previous frame's textures, so with the height map at
+// (p^n, v^n, v^{n-1}) the stored state is at n - 3/2, one step behind what
+// stepField uses to compute v^{n+1}. The height-map pass advances it to
+// n - 1/2 with s = v^n + v^{n-1} before using it; the branch passes make the
+// same advance on the same inputs and store it, for the next frame. The
+// dataflow is emulated against stepField in __tests__/rlc-gpu.spec.ts.
 #if RLC_TEXTURES > 0
 #define RLC_MAX_BRANCHES (2 * RLC_TEXTURES)
 

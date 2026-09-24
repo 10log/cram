@@ -16,6 +16,7 @@ void main() {
   vec2 faces = rlcFaces(uv, cellSize);
   if (faces.x <= 0.0) return;
   vec4 here = texture2D(heightmap, uv);
-  // here.g is v^{n+1}, here.b is v^n: their sum is p^{n+1} - p^{n-1}.
+  // here.g is v^n, here.b is v^{n-1}: their sum is p^n - p^{n-2}, the s that
+  // takes the stored state from n - 3/2 to n - 1/2.
   gl_FragColor = rlcAdvance(texture2D(RLC_SELF, uv), RLC_PAIR, faces.y, here.g + here.b);
 }

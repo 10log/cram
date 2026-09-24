@@ -138,9 +138,13 @@ void main()	{
     newvel = med*(mid-pos)+vel*damping;
 #if RLC_TEXTURES > 0
     // Centred loss and RLC branch flux (#222), solved together for p^{n+1}:
-    // v = (v* - (beta_c + K) v^n - H0) / (1 + beta_c + K). The branches are
-    // first advanced to n + 1/2 from s = v^{n+1} + v^n, as the branch passes
-    // do this frame.
+    // v^{n+1} = (v* - (beta_c + K) v^n - H0) / (1 + beta_c + K).
+    // This pass reads (p^n, v^n, v^{n-1}) and branch state at n - 3/2: the
+    // branch passes wrote it last frame, from that frame's input. stepField
+    // solves this step with the state at n - 1/2, so the state is first
+    // advanced one step with s = v^n + v^{n-1} = p^n - p^{n-2}, exactly as
+    // the branch passes advance it this frame. Taking H0 from the texture
+    // without advancing would use state one step stale.
     float total = 0.5 * courantSq * centredGain;
     float push = 0.0;
     vec2 faces = rlcFaces(uv, cellSize);
@@ -184,7 +188,7 @@ void main()	{
   
   
 #if RLC_TEXTURES > 0
-  // .b carries this step's v^{n+1} forward as the next step's v^n, for s.
+  // .b carries the input v^n forward: next pass it is v^{n-1}, for s.
   gl_FragColor = vec4(newpos, newvel, sourcemapValue.b > 0.0 ? heightmapValue.g : 0.0, sourcemapValue.b);
 #else
   gl_FragColor = vec4(newpos, newvel, heightmapValue.b, sourcemapValue.b);

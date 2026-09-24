@@ -33,7 +33,8 @@
  * Sabine data. This fitter goes straight at the quantity the data is: the
  * model's **random-incidence** absorption averaged over each band
  * ({@link bandAbsorption}) is driven to the band's coefficient (#221), in 2D
- * or 3D. It uses a fixed-point iteration on each `Ŷ`. Only non-negative
+ * or 3D. It uses a stiff-side search on each `Ŷ` in turn (see
+ * {@link fitRlcToOctaveBands}). Only non-negative
  * `Ŷ` is ever produced, so every fitted branch is passive by construction.
  */
 

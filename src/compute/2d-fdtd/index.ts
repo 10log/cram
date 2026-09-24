@@ -102,6 +102,8 @@ export interface FDTD_2D_Props {
 /**
  * Fitted branches per material spectrum, shared by every solver: a fit costs
  * a fraction of a second and the same materials recur across surfaces.
+ * Unbounded, which is fine for a scene's handful of materials; a session that
+ * fits thousands of spectra would want an eviction policy here.
  */
 const rlcFitCache = new Map<string, RlcBranch[]>();
 
