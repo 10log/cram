@@ -296,7 +296,7 @@ export function planArdTimeStep(
   const impedancePlan: ImpedancePlan =
     walls && !usePml
       ? planImpedanceBoundaries(grid, decomposition, { absorptionFor })
-      : { faces: [], warnings: [], boundaryCells: 0, skippedRigid: 0, maxAbsorption: 0 };
+      : { faces: [], warnings: [], boundaryCells: 0, skippedRigid: 0, maxAbsorption: 0, staircaseArea: [] };
   warnings.push(...impedancePlan.warnings);
 
   if (walls && usePml && wallPlan.faces.length === 0 && wallPlan.droppedForSpace > 0) {

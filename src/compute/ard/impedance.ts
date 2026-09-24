@@ -298,6 +298,13 @@ export interface ImpedanceBoundaryParams {
   /** Normalized specific acoustic impedance. `Infinity` is a rigid wall. */
   impedance: number;
   /**
+   * Staircase weight per face cell (#220), in `apply`'s cell order, each in
+   * [0, 1]. It scales that cell's admittance, `β_k·w`, which is the surface
+   * seen as `ξ/w`: 1 is the face as given, 0 is rigid. Absent is 1 everywhere,
+   * bit for bit.
+   */
+  weights?: Float64Array;
+  /**
    * The room's pressure by global cell (#228). A face on a partition thinner
    * than INTERFACE_DEPTH needs mirror cells that lie in the partition beyond
    * it; without this they read zero, the stencil loses its −27 and 2 taps, and
@@ -331,6 +338,8 @@ export class ImpedanceBoundary {
 
   /** `β_k` per ghost depth. */
   private readonly beta: Float64Array;
+  /** Staircase weight per face cell, or undefined for 1 everywhere. */
+  private readonly weights: Float64Array | undefined;
   /** `s_k = ghost_k^{n−1} + p_k^{n−1}`, one per ghost per face cell. */
   private readonly history: Float64Array;
   /** Scratch for the current cell's ghosts, so `apply` allocates nothing. */
@@ -338,7 +347,7 @@ export class ImpedanceBoundary {
   private readonly own: Float64Array;
 
   constructor(params: ImpedanceBoundaryParams) {
-    const { partition, axis, high, uMin, uMax, vMin, vMax, impedance, field } = params;
+    const { partition, axis, high, uMin, uMax, vMin, vMax, impedance, weights, field } = params;
     if (uMax <= uMin || vMax <= vMin) {
       throw new Error(
         `An impedance boundary needs a positive face area, got ` +
@@ -360,6 +369,21 @@ export class ImpedanceBoundary {
     this.vMin = vMin;
     this.vMax = vMax;
     this.impedance = impedance;
+
+    if (weights) {
+      const cells = (uMax - uMin) * (vMax - vMin);
+      if (weights.length !== cells) {
+        throw new Error(
+          `Staircase weights must have one entry per face cell (${cells}), got ${weights.length}`,
+        );
+      }
+      for (const w of weights) {
+        if (!(w >= 0 && w <= 1)) {
+          throw new Error(`Staircase weights must be in [0, 1], got ${w}`);
+        }
+      }
+    }
+    this.weights = weights;
 
     const extent = [partition.box.w, partition.box.h, partition.box.d][axis];
     this.depth = Math.min(INTERFACE_DEPTH, extent);
@@ -396,7 +420,7 @@ export class ImpedanceBoundary {
 
   /** Accumulate this face's residual into the partition's forcing field. */
   apply(): void {
-    const { partition, axis, high, depth, beta, history, ghost, own, field } = this;
+    const { partition, axis, high, depth, beta, history, ghost, own, weights, field } = this;
     // Mirror cells past a thin partition come from the global field, walking
     // inward from the face cell `inner` — reflecting off any wall the walk
     // meets, so a run of air shorter than the stencil gets its even extension.
@@ -415,7 +439,11 @@ export class ImpedanceBoundary {
 
     for (let gv = this.vMin; gv < this.vMax; gv++) {
       for (let gu = this.uMin; gu < this.uMax; gu++) {
-        const base = ((gv - this.vMin) * uSpan + (gu - this.uMin)) * INTERFACE_DEPTH;
+        const cell = (gv - this.vMin) * uSpan + (gu - this.uMin);
+        const base = cell * INTERFACE_DEPTH;
+        // β is linear in the admittance 1/ξ, so the staircase weight scales it
+        // directly. `w = 1` multiplies by one — the unweighted face, exactly.
+        const w = weights ? weights[cell] : 1;
 
         for (let k = 0; k < INTERFACE_DEPTH; k++) {
           if (k >= ghostDepth) {
@@ -431,7 +459,7 @@ export class ImpedanceBoundary {
             origin[vAxis] = gv;
             p = reflectedAlongLine(field!, axis, origin, inward as 1 | -1, k) ?? 0;
           }
-          const b = beta[k];
+          const b = beta[k] * w;
           const g = ((1 - b) * p + b * history[base + k]) / (1 + b);
           history[base + k] = g + p;
           ghost[k] = g;

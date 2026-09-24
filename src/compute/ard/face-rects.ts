@@ -21,7 +21,7 @@
 
 import { decompose } from './decompose';
 import { Axis, transverseAxes, type Box } from './partition';
-import { Cell, type VoxelGrid } from './voxelize';
+import { Cell, faceWeight, type VoxelGrid } from './voxelize';
 
 const ORIGIN: readonly ['x', 'y', 'z'] = ['x', 'y', 'z'];
 const EXTENT: readonly ['w', 'h', 'd'] = ['w', 'h', 'd'];
@@ -111,6 +111,43 @@ export function exposedFaceRects(
     vMin: vBase + rect.y,
     vMax: vBase + rect.y + rect.h,
   }));
+}
+
+/**
+ * Staircase weight of each cell of a face rectangle (#220), in the order
+ * `ImpedanceBoundary` walks them: `(v − vMin)·uSpan + (u − uMin)`.
+ *
+ * Each is the {@link faceWeight} of the solid cell beyond that face cell,
+ * across `axis`. `undefined` when the grid carries no weights at all, so a
+ * hand-built grid plans exactly the boundaries it always did.
+ */
+export function faceWeights(
+  grid: VoxelGrid,
+  axis: Axis,
+  high: boolean,
+  box: Box,
+  rect: FaceRect,
+): Float64Array | undefined {
+  if (!grid.faceWeightOf) return undefined;
+  const [uAxis, vAxis] = transverseAxes(axis);
+  const outer = outerLayer(box, axis, high);
+  const uSpan = rect.uMax - rect.uMin;
+  const weights = new Float64Array(uSpan * (rect.vMax - rect.vMin));
+  const at = [0, 0, 0];
+  for (let v = rect.vMin; v < rect.vMax; v++) {
+    for (let u = rect.uMin; u < rect.uMax; u++) {
+      at[axis] = outer;
+      at[uAxis] = u;
+      at[vAxis] = v;
+      const inGrid =
+        at[0] >= 0 && at[1] >= 0 && at[2] >= 0 &&
+        at[0] < grid.nx && at[1] < grid.ny && at[2] < grid.nz;
+      weights[(v - rect.vMin) * uSpan + (u - rect.uMin)] = inGrid
+        ? faceWeight(grid, at[0] + grid.nx * (at[1] + grid.ny * at[2]), axis as 0 | 1 | 2)
+        : 1;
+    }
+  }
+  return weights;
 }
 
 /**
