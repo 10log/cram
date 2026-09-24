@@ -7,7 +7,6 @@ import {
   WebGLRenderer,
   DataTexture,
   UniformsUtils,
-  Color,
   DoubleSide,
   Vector2,
   Vector3,
@@ -343,23 +342,12 @@ class FDTD_2D extends Solver {
       sliceHeight: this.sliceHeight,
     });
     const heightmap = { value: null };
+    // The display is unlit (#240): its shaders read the height, the colour
+    // scale, and three's fog, log-depth and clipping uniforms, nothing more.
     const uniforms = UniformsUtils.merge([
       UniformsLib.common,
-      UniformsLib.specularmap,
-      UniformsLib.envmap,
-      UniformsLib.aomap,
-      UniformsLib.lightmap,
-      UniformsLib.emissivemap,
-      UniformsLib.bumpmap,
-      UniformsLib.normalmap,
-      UniformsLib.displacementmap,
-      UniformsLib.gradientmap,
       UniformsLib.fog,
-      UniformsLib.lights,
       {
-        emissive: { value: new Color(0x000000) },
-        specular: { value: new Color(0x111111) },
-        shininess: { value: 30 },
         colorBrightness: { value: 10 },
         cell_size: { value: this.cellSize },
         inv_cell_size: { value: 1 / this.cellSize },
@@ -377,7 +365,6 @@ class FDTD_2D extends Solver {
       side,
       name: "fdtd-2d-material"
     });
-    material.lights = true;
 
     this.uniforms = material.uniforms;
     this.mesh = new Mesh(geometry, material);
