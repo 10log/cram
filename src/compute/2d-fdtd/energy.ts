@@ -37,8 +37,12 @@
  *
  * ```
  * H^{n+½} = ½ Σ_i a_i·(v_i^{n+1})²  −  ½ ⟨p^{n+1}, L p^n⟩,     a_i = (1 + d)/(2λ²) − ½B_i
- * H^{n+½} − H^{n−½} = −½ Σ_i [ (1 − d)/λ² + B_i + G_i ]·s_i²  +  Σ_i s_i·f_i / λ²
+ * H^{n+½} − H^{n−½} = −¼ Σ_i [ (1 − d)/λ² + B_i + G_i ]·s_i²  +  ½ Σ_i s_i·f_i / λ²
  * ```
+ *
+ * (Summing the update times `s` gives the identity for `2H`: loss
+ * `½·[…]·s²`, work `s·f/λ²`. `H` carries the overall ½, so its flows carry it
+ * too. These are exactly what {@link stepEnergyFlow} returns.)
  *
  * The first sum on the right is always ≤ 0. It is the energy the walls and
  * the damping remove, with the centred share entering as cleanly as PFFDTD's.
@@ -63,6 +67,13 @@
  * still conserved, but `H` is indefinite. The field can then grow without
  * limit while `H` falls, which is what {@link energyMargin} and the tests
  * show.
+ *
+ * ## Scope
+ *
+ * This is the Float64 CPU mirror's energy. It certifies the scheme and the
+ * mirror, not `height-map.frag` as the GPU runs it in float32 with the rest
+ * offset. The two share their update line for line (the tiling tests pin
+ * that), but rounding in float32 is not covered here.
  *
  * ## Conventions
  *
@@ -169,7 +180,7 @@ export function stepEnergyFlow(
     lost += 0.5 * (dampingLoss + backward[idx] + centred[idx]) * s * s;
     if (source) input += (s * source[idx]) / courantSq;
   }
-  // H carries the overall ½, so the flows do too.
+  // The sums above are 2H's flows (see the module doc); H carries the ½.
   return { lost: 0.5 * lost, input: 0.5 * input };
 }
 
