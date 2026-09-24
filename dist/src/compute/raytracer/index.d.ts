@@ -140,13 +140,21 @@ declare class RayTracer extends Solver {
     appendRay(p1: [number, number, number], p2: [number, number, number], energy?: number, angle?: number): void;
     flushRayBuffer(): void;
     inFrontOf(a: THREE.Triangle, b: THREE.Triangle): boolean;
-    traceRay(ro: THREE.Vector3, rd: THREE.Vector3, order: number, bandEnergy: BandEnergy, source: string, initialPhi: number, initialTheta: number, iter?: number, chain?: Partial<Chain>[]): RayPath | undefined;
+    traceRay(ro: THREE.Vector3, rd: THREE.Vector3, order: number, bandEnergy: BandEnergy, source: string, initialPhi: number, initialTheta: number, iter?: number, chain?: Partial<Chain>[], arrivals?: RayPath[]): RayPath | undefined;
     startQuickEstimate(frequencies?: number[], numRays?: number): void;
     quickEstimateStep(source: Source, frequencies: number[], numRays: number): QuickEstimateStepResult;
     startAllMonteCarlo(): void;
     stepStratified(numRays: number): void;
-    /** Common path handling for both step() and stepStratified() */
-    _handleTracedPath(path: RayPath, position: THREE.Vector3, sourceId: string): void;
+    /**
+     * Common path handling for both step() and stepStratified().
+     *
+     * `path` is the ray's own path however it ended (undefined if it left the
+     * model), and `arrivals` every receiver crossing along it (#234). Each
+     * arrival is a separate path to its receiver.
+     */
+    _handleTracedPath(path: RayPath | undefined, position: THREE.Vector3, sourceId: string, arrivals?: RayPath[]): void;
+    /** Append a traced chain to the ray display, starting at the source. */
+    _drawChain(position: THREE.Vector3, chain: Chain[]): void;
     /** Push a path onto the paths array, evicting oldest if over maxStoredPaths */
     _pushPathWithEviction(index: string, path: RayPath): void;
     /** Add a ray path's energy to the convergence histogram */
