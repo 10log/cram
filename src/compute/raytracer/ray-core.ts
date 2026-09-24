@@ -64,8 +64,10 @@ function receiverArrival(
   const receiverTotalEnergy = receiverBandEnergy.reduce((a, b) => a + b, 0);
   const receiverEnergy = receiverBandEnergy.length > 0 ? receiverTotalEnergy / receiverBandEnergy.length : 0;
 
-  // The chain so far plus the receiver. A copy: with pass-through (#234) the
-  // ray carries on and keeps appending to `chain`.
+  // The chain so far plus the receiver. A copy of the array: with
+  // pass-through (#234) the ray carries on and keeps appending to `chain`.
+  // The entries themselves are shared with it, which is safe because a hop
+  // is never changed after it is pushed; copy them too if that ever changes.
   const arrivalChain = [
     ...chain,
     {

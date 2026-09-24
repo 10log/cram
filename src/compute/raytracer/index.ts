@@ -721,11 +721,15 @@ class RayTracer extends Solver {
       this._pushPathWithEviction(index, path);
       (useContainer.getState().containers[sourceId] as Source).numRays += 1;
     } else if (arrivals.length > 0) {
-      // Draw the ray up to its last receiver crossing, which covers them all.
-      this._drawChain(position, arrivals[arrivals.length - 1].chain);
+      // Draw the whole ray when it ended on a wall; if it left the model, its
+      // last crossing is as far as there is a chain for.
+      this._drawChain(position, path?.chain.length ? path.chain : arrivals[arrivals.length - 1].chain);
+      // "Valid Rays" counts rays that reached a receiver at least once;
+      // numValidRayPaths counts arrivals, which since #234 can be several
+      // per ray.
+      this.validRayCount += 1;
       for (const arrival of arrivals) {
         (this.stats.numValidRayPaths.value as number)++;
-        this.validRayCount += 1;
         const receiverId = arrival.chain[arrival.chain.length - 1].object;
         this._pushPathWithEviction(receiverId, arrival);
         // Update energy histogram for convergence monitoring
