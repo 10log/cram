@@ -342,15 +342,13 @@ class FDTD_2D extends Solver {
       sliceHeight: this.sliceHeight,
     });
     const heightmap = { value: null };
-    // The display is unlit (#240): its shaders read the height, the colour
-    // scale, and three's fog, log-depth and clipping uniforms, nothing more.
+    // The display is unlit (#240): its shaders read the height and the colour
+    // scale, plus three's fog uniforms (log depth and clipping planes are
+    // supplied by the renderer), and nothing more.
     const uniforms = UniformsUtils.merge([
-      UniformsLib.common,
       UniformsLib.fog,
       {
         colorBrightness: { value: 10 },
-        cell_size: { value: this.cellSize },
-        inv_cell_size: { value: 1 / this.cellSize },
         heightmap
       }
     ]);
