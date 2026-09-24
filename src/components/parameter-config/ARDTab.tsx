@@ -364,7 +364,7 @@ export const ARDTab = ({ uuid }: ARDTabProps) => {
         <PropertyRowLabel
           label="Boundary"
           hasToolTip
-          tooltip="How a room surface absorbs. Impedance puts the condition on the face itself: no extra cells, no grid padding, a looser time step, and measurably closer to the material's absorption coefficient at every grid resolution tested. PML parks a graded absorbing slab outside each face — 2 to 5 times the room in cells, padding on every side to grow into, and a tighter cap on the Courant number. PML is kept because it is what the solver was originally validated against."
+          tooltip="How a room surface absorbs. Impedance puts the condition on the face itself: no extra cells, no grid padding, a looser time step, and measurably closer to the material's absorption coefficient at every grid resolution tested. PML parks a graded absorbing slab outside each face — 2 to 5 times the room in cells, padding on every side to grow into, and a tighter cap on the Courant number. PML is kept because it is what the solver was originally validated against. Either way, a material's absorption coefficient is read as random-incidence (Sabine) absorption: each wall is built to absorb that fraction of a diffuse field, which is how the coefficients in the material database were measured."
         />
         <PropertyRowSelect
           value={boundary ?? 'impedance'}

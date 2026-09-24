@@ -65,7 +65,8 @@
  * | 0.3         | 0.299  | 0.296  | 0.289  | 0.276 | 0.257 | 0.207 |
  * | 0.5         | 0.499  | 0.495  | 0.487  | 0.470 | 0.446 | 0.376 |
  * | 0.8         | 0.799  | 0.797  | 0.791  | 0.778 | 0.759 | 0.696 |
- * | 1.0         | 1.000  | 0.999  | 0.998  | 0.996 | 0.992 | 0.973 |
+ * | 0.98        | 0.980  | 0.979  | 0.976  | 0.971 | 0.962 | 0.929 |
+ * | 1.0         | 1.000  | 0.998  | 0.995  | 0.988 | 0.978 | 0.938 |
  *
  * Rigid is lossless at every resolution, as the algebra says it must be. The
  * error grows with the ghost's first-order placement of `∂p/∂t` — 0.013 at 12
@@ -101,15 +102,77 @@
  * The transition is at `γ = 1` and it is sharp: below it the mode decays, at it
  * the mode sits there forever, above it the field diverges within a few
  * thousand steps. `γ = 1` has a tidy reading — the ghost becomes
- * `p − (p^n − p^{n−1}) = p^{n−1}`, a pure one-step delay — and it means
- * `ξ > 1/C`, so at this Courant number a wall cannot be made perfectly matched.
- * {@link MAX_GHOST_GAIN} keeps a margin below it and
- * {@link maxStableAbsorption} says what coefficient that allows: 0.961, which
- * only the most absorbing materials in the database reach.
+ * `p − (p^n − p^{n−1}) = p^{n−1}`, a pure one-step delay. The same threshold
+ * holds on every geometry tried (diagonal walls, a one-cell corridor, pillars,
+ * dead-end pockets): it is a property of each wall face, not of the room.
+ *
+ * ## Past the bound: the centred remainder (#219)
+ *
+ * A perfectly matched wall needs `γ = 1/C = √2`. No material asks for that
+ * any more — read as diffuse-field absorption (#221), the most absorbing wall
+ * is the 2D diffuse peak, `ξ = 1.306`, `γ = 1.083` — but 216 of the 982
+ * database materials still ask for more than `γ = 0.95` at the reference
+ * frequency. (Re-counted under #221's reading, not carried over from #219:
+ * `γ > 0.95` is `ξ < 1.489`, which is 2D diffuse α above 0.962 at 500 Hz; the
+ * normal-incidence threshold it replaced, 0.961, happens to select the same
+ * 216.) So the
+ * gain is split per face. The backward ghost takes `min(γ, MAX_GHOST_GAIN)`,
+ * exactly as before, and whatever is left, `γ_c = γ − MAX_GHOST_GAIN`, is
+ * applied with a *centred* time difference, the form PFFDTD uses for all of its
+ * walls:
+ *
+ * ```
+ * p^{n+1} = p* − C²·Σ (γ_c/2)·(p^{n+1} − p^{n−1})
+ *        ⇒ v^{n+1} = (v* − β·v^n) / (1 + β),   β = ½·C²·Σ γ_c
+ * ```
+ *
+ * where `p*`, `v*` are the update with the backward ghosts already in it.
+ * Unlike PFFDTD, where `p*` is rigid and the centred term carries a wall's
+ * whole admittance, `γ_c` here is only the excess above `MAX_GHOST_GAIN`; the
+ * backward share is already lossy and already in `p*`. The
+ * centred term only ever removes energy: it is proportional to
+ * `(p^{n+1} − p^{n−1})`, the discrete `∂p/∂t` straddling the step, so it cannot
+ * feed the surface mode the way a one-sided difference does. Measured, the
+ * backward part still decides stability (`γ_b < 1`), and a remainder of any
+ * size, up to `γ = 10` on the geometries above, leaves the field bounded.
+ *
+ * Why not make every wall centred and drop the backward ghost? It was tried
+ * (#219) and it is worse. The loss sits at the cell centre, half a cell in
+ * front of the face, and the centred difference leaves that `e^{ik/2}` phase
+ * uncompensated; the backward difference's own half-step lag happens to cancel
+ * most of it. Fully centred walls deliver 0.709 for a requested 0.8 at 6 cells
+ * per wavelength, against 0.759 here. The split keeps every wall with
+ * `γ ≤ 0.95` bit-for-bit what it was and spends the centred form only on the
+ * part the backward one cannot carry.
  *
  * ARD needed a *Courant* clamp for its version of this boundary, because its
- * residual forcing feeds back through a 6th-order stencil. This one clamps the
- * coefficient instead and leaves the time step alone.
+ * residual forcing feeds back through a 6th-order stencil. This one needs
+ * neither a Courant clamp nor, any longer, a coefficient clamp.
+ *
+ * ## Staircased walls (#220)
+ *
+ * A wall that is not axis-aligned is rasterized into a staircase, and every
+ * cell face of that staircase absorbs as though it were real surface. For a
+ * wall of unit normal `n`, the exposed face length per unit of wall is
+ * `|nₓ| + |n_y|` — √2 at 45° — so a slanted room absorbs over up to 41% more
+ * surface than it has, and its decay depends on how it is rotated.
+ *
+ * Following PFFDTD's voxelizer, each face's gain is weighted by `|n·e|`, the
+ * cosine between the wall and that face: `γ·|nₓ|` across an x-face, `γ·|n_y|`
+ * across a y-face ({@link wallFaceWeights}). The weighted length is then
+ * `nₓ² + n_y² = 1` per unit of wall, exactly. An axis-aligned wall has weights
+ * of 1 and 0: its faces into the room are unchanged, bit for bit, and only the
+ * end caps of a free-standing wall — which are not surface — become rigid.
+ *
+ * The weight is a diffuse-field argument, and it holds where the field is
+ * diffuse. On the irregular pentagon in `__tests__/staircase.spec.ts`, at 0°,
+ * 25° and 55°, uncorrected walls decay 9–15% faster than even the diffuse end
+ * of the 2D Eyring bracket allows; weighted, every rotation lands 7–14% above
+ * that end, inside the bracket. (An earlier probe on a larger grid, over 0–75°
+ * and a second irregular room, found the same: 8–22% below uncorrected, inside
+ * weighted, and the spread across rotations roughly halved.) A square room at exactly 45° is the exception: its decay
+ * is held by a handful of modes striking a perfectly periodic staircase at one
+ * angle, not by a diffuse field, and the weight over-corrects it.
  */
 /**
  * Absorption at or below this is a rigid surface, and gets no boundary at all.
@@ -138,17 +201,45 @@ export declare const AIR_CHANNEL = 1;
  */
 export declare const FDTD_CELLS_PER_WAVELENGTH_FOR_IMPEDANCE = 6;
 /**
- * Largest ghost gain the field stays stable at.
+ * Largest gain the *backward* ghost `p − γ·v` carries.
  *
- * The bound is `γ < 1` — see the stability section above — and this keeps 5%
- * below it. The transition is sharp enough that a margin is worth having and
- * cheap enough that 5% costs nothing: it caps absorption at 0.961 rather than
- * at 0.971.
+ * That ghost is stable for `γ < 1` — see the stability section above — and this
+ * keeps 5% below it. A wall asking for more gets the rest from the centred
+ * remainder, so this is no longer a cap on absorption, only the point where
+ * one form of the boundary hands over to the other. The shader gets it as a
+ * compile-time define — see {@link withGhostGainDefine}.
  */
 export declare const MAX_GHOST_GAIN = 0.95;
 /**
- * Ghost gain `γ = 1/(ξ·C)` for a surface of absorption `alpha` at Courant `C`,
- * clamped to {@link MAX_GHOST_GAIN}.
+ * `source` with `#define MAX_GHOST_GAIN` prepended, for `height-map.frag`.
+ *
+ * A define rather than a uniform because a uniform fails *open*: one that never
+ * binds reads as 0 in GLSL, which would turn every absorbing wall into a fully
+ * centred one — the scheme #219 measured and rejected — with nothing to say so.
+ * The shader refuses to compile without this define, so a missing one fails
+ * loudly instead.
+ */
+export declare function withGhostGainDefine(source: string): string;
+/**
+ * Ghost gain `γ = 1/(ξ·C)` for a normalized impedance `ξ` at Courant `C`.
+ *
+ * The boundary itself, independent of how a material's α becomes a `ξ`:
+ * `Infinity` is the rigid ghost, 0. The accuracy measurements in
+ * `__tests__/impedance.spec.ts` drive it through this, so they measure the
+ * boundary and not the α convention.
+ */
+export declare function ghostGainForImpedance(xi: number, courant: number): number;
+/**
+ * Ghost gain for a surface of database absorption `alpha` at Courant `C`.
+ *
+ * `alpha` is **random-incidence** (Sabine) absorption, which is what the
+ * material database holds (#221), and a 2D field's walls see a diffuse field
+ * over a half-plane, so `ξ` comes from inverting the 2D diffuse average —
+ * `impedanceForRandomIncidenceAbsorption(α, 2)` — not from `α = 1 − R(0)²`.
+ * A coefficient above that model's maximum, 0.966, gets the most absorbing
+ * wall there is (`ξ = 1.306`, `γ = 1.083` at the CFL locus); the part above
+ * {@link MAX_GHOST_GAIN} goes to the centred remainder (see
+ * {@link splitGhostGain}).
  *
  * Returns 0 — the rigid ghost — for a surface at or below
  * {@link RIGID_ALPHA_EPSILON}, so a rigid wall costs nothing and behaves
@@ -162,13 +253,68 @@ export declare const MAX_GHOST_GAIN = 0.95;
  */
 export declare function ghostGainForAbsorption(alpha: number, courant: number): number;
 /**
- * Highest absorption coefficient the clamp lets a wall deliver at `courant`.
+ * A wall's gain as the two parts the update applies: the backward ghost's
+ * `min(γ, maxGhostGain)` and the centred remainder above it.
  *
- * 0.961 at the CFL locus. A surface above this is simulated as this — the
- * alternative is a field that diverges, and the difference between 0.96 and
- * 1.00 absorbing is a fraction of a dB per bounce.
+ * The channel carries the single `γ` and the shader makes the same split, so a
+ * wall that never needed the remainder writes exactly the value it always did.
+ *
+ * `maxGhostGain` defaults to the production split point. Only tests move it:
+ * `Infinity` hands the whole gain to the backward ghost, which is how the
+ * `γ = 1` bound that sets {@link MAX_GHOST_GAIN} stays measured.
+ *
+ * A negative or non-finite gain is a rigid wall, the same convention
+ * {@link ghostGainForAbsorption} follows for a bad material, rather than a
+ * `NaN` that would poison the neighbouring cell's update.
  */
-export declare function maxStableAbsorption(courant: number): number;
+export declare function splitGhostGain(gamma: number, maxGhostGain?: number): {
+    backward: number;
+    centred: number;
+};
+/**
+ * Face weights `|n·e|` for a wall from `(x1, y1)` to `(x2, y2)` (#220).
+ *
+ * `x` weighs the wall's faces seen across the x axis (its left and right
+ * neighbours), `y` those seen across y. They are the components of the wall's
+ * unit normal: `|Δy|/L` and `|Δx|/L`. A wall of no length has no direction to
+ * correct for and keeps weights of 1, the uncorrected wall.
+ */
+export declare function wallFaceWeights(wall: {
+    x1: number;
+    y1: number;
+    x2: number;
+    y2: number;
+}): {
+    x: number;
+    y: number;
+};
+/**
+ * Wallmap channel value for a face weight: `1 − w`.
+ *
+ * Stored as the complement so the texture's zero — what `createTexture`
+ * allocates, and what an air cell holds — means weight 1, the uncorrected
+ * wall. A wallmap that was never written, or never bound, degrades to the
+ * boundary as it was before #220 rather than to a room of rigid walls.
+ */
+export declare function faceWeightChannel(weight: number): number;
+/** Inverse of {@link faceWeightChannel}; the shader does the same `1.0 - c`. */
+export declare function faceWeightFromChannel(channel: number): number;
+/**
+ * Wallmap texel for one wall: its x-face weight in `r`, y-face in `g`, both
+ * as {@link faceWeightChannel}. A disabled wall is air and writes zeros, the
+ * texture's resting value. Factored out of `updateWalls` for the same reason
+ * as {@link wallChannelFor}: the solver itself needs a WebGL context.
+ */
+export declare function wallmapTexelFor(wall: {
+    enabled: boolean;
+    x1: number;
+    y1: number;
+    x2: number;
+    y2: number;
+}): {
+    r: number;
+    g: number;
+};
 /**
  * Pack a ghost gain into the sourcemap's blue channel.
  *

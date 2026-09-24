@@ -152,8 +152,11 @@
  * cleared every measurement but by only 3% at α = 0.2 — inside the sampling
  * grain, so not actually cleared at all.
  *
- * Normal incidence, like the PML: α is a normal-incidence coefficient and the
- * database stores nothing else. A locally-reacting surface does have the right
+ * The accuracy tables above are stated at normal incidence, like the PML's,
+ * because that is what a two-probe rig measures. A *material's* α is another
+ * matter: the database holds random-incidence (Sabine) absorption, and
+ * {@link impedanceForMaterialAbsorption} builds the wall whose diffuse-field
+ * absorption equals it (#221). A locally-reacting surface does have the right
  * *angular* behaviour for a given ξ — reflection rising towards grazing as
  * `(ξcosθ − 1)/(ξcosθ + 1)` — which a graded-σ sponge does not, so this is the
  * better of the two at oblique incidence as well. Per-band α is carried by
@@ -162,8 +165,18 @@
  */
 
 import { impedanceForAbsorption as sharedImpedanceForAbsorption } from '../acoustics/reflection-coefficient';
-import { INTERFACE_DEPTH, addForceAtDepth, pressureAtDepth } from './interface';
-import { Axis, STENCIL_6TH, STENCIL_6TH_DIV, type Partition } from './partition';
+import {
+  impedanceForRandomIncidenceAbsorption,
+  maxRandomIncidenceAbsorption,
+} from '../acoustics/random-incidence';
+import {
+  INTERFACE_DEPTH,
+  addForceAtDepth,
+  pressureAtDepth,
+  reflectedAlongLine,
+  type GlobalField,
+} from './interface';
+import { Axis, STENCIL_6TH, STENCIL_6TH_DIV, transverseAxes, type Partition } from './partition';
 
 /** Normal-incidence pressure reflection coefficient of a real impedance. */
 export function reflectionForImpedance(xi: number): number {
@@ -198,6 +211,41 @@ export function impedanceForAbsorption(alpha: number): number {
   // a solver assembling partitions should fail loudly on a bad coefficient,
   // where the geometrical path clamps in a hot loop.
   return sharedImpedanceForAbsorption(alpha);
+}
+
+/**
+ * Impedance for a *material's* coefficient (#221).
+ *
+ * The database holds random-incidence (Sabine) absorption, so a wall is built
+ * whose diffuse-field absorption is `alpha` in the dimensionality of the run:
+ * Paris's formula in 3D, its half-plane form for a 2D slice, and plain
+ * `1 − R(0)²` in 1D, where normal incidence is the only incidence there is.
+ * {@link impedanceForAbsorption} stays the normal-incidence mapping — it is
+ * what the boundary's own accuracy measurements are stated in.
+ *
+ * A negative or non-finite coefficient throws, for the same reason as there:
+ * a solver assembling partitions should fail loudly on a broken material. A
+ * coefficient above the model's maximum (0.951 in 3D) — including above 1,
+ * which chamber data can reach — builds the most absorbing wall there is, as
+ * the shared inverse and FDTD 2D do; the driver warns, see
+ * {@link exceedsMaterialAbsorptionLimit}.
+ */
+export function impedanceForMaterialAbsorption(alpha: number, rank: number): number {
+  if (!(alpha >= 0) || !Number.isFinite(alpha)) {
+    throw new Error(`Absorption coefficient must be a finite number >= 0, got ${alpha}`);
+  }
+  if (rank <= 1) return sharedImpedanceForAbsorption(alpha);
+  return impedanceForRandomIncidenceAbsorption(alpha, rank >= 3 ? 3 : 2);
+}
+
+/**
+ * Whether a material asks for more diffuse-field absorption than a
+ * locally-reacting wall can give in a run of this rank. Chamber data does,
+ * routinely; the driver says so rather than silently delivering less.
+ */
+export function exceedsMaterialAbsorptionLimit(alpha: number, rank: number): boolean {
+  if (rank <= 1) return false;
+  return alpha > maxRandomIncidenceAbsorption(rank >= 3 ? 3 : 2);
 }
 
 /**
@@ -256,6 +304,14 @@ export interface ImpedanceBoundaryParams {
    * bit for bit.
    */
   weights?: Float64Array;
+  /**
+   * The room's pressure by global cell (#228). A face on a partition thinner
+   * than INTERFACE_DEPTH needs mirror cells that lie in the partition beyond
+   * it; without this they read zero, the stencil loses its −27 and 2 taps, and
+   * a one-cell sliver against an absorbing wall grows. Optional so a boundary
+   * on a thick partition, or in a unit test, is built exactly as before.
+   */
+  field?: GlobalField;
 }
 
 /**
@@ -276,8 +332,9 @@ export class ImpedanceBoundary {
   readonly vMax: number;
   readonly impedance: number;
 
-  /** Ghost depths this face can actually read, `min(3, extent along axis)`. */
+  /** Depths this face forces — the partition's own cells, `min(3, extent along axis)`. */
   readonly depth: number;
+  private readonly field: GlobalField | undefined;
 
   /** `β_k` per ghost depth. */
   private readonly beta: Float64Array;
@@ -290,7 +347,7 @@ export class ImpedanceBoundary {
   private readonly own: Float64Array;
 
   constructor(params: ImpedanceBoundaryParams) {
-    const { partition, axis, high, uMin, uMax, vMin, vMax, impedance, weights } = params;
+    const { partition, axis, high, uMin, uMax, vMin, vMax, impedance, weights, field } = params;
     if (uMax <= uMin || vMax <= vMin) {
       throw new Error(
         `An impedance boundary needs a positive face area, got ` +
@@ -330,6 +387,8 @@ export class ImpedanceBoundary {
 
     const extent = [partition.box.w, partition.box.h, partition.box.d][axis];
     this.depth = Math.min(INTERFACE_DEPTH, extent);
+    this.field = field;
+
 
     const courant = (partition.c * partition.dt) / partition.dx;
     this.beta = new Float64Array(INTERFACE_DEPTH);
@@ -361,7 +420,19 @@ export class ImpedanceBoundary {
 
   /** Accumulate this face's residual into the partition's forcing field. */
   apply(): void {
-    const { partition, axis, high, depth, beta, history, ghost, own, weights } = this;
+    const { partition, axis, high, depth, beta, history, ghost, own, weights, field } = this;
+    // Mirror cells past a thin partition come from the global field, walking
+    // inward from the face cell `inner` — reflecting off any wall the walk
+    // meets, so a run of air shorter than the stencil gets its even extension.
+    const inner = high
+      ? [partition.box.x, partition.box.y, partition.box.z][axis] +
+        [partition.box.w, partition.box.h, partition.box.d][axis] - 1
+      : [partition.box.x, partition.box.y, partition.box.z][axis];
+    const inward = high ? -1 : 1;
+    const [uAxis, vAxis] = transverseAxes(axis);
+    const origin: [number, number, number] = [0, 0, 0];
+    origin[axis] = inner;
+    const ghostDepth = field ? INTERFACE_DEPTH : depth;
     const scale = (partition.c * partition.c) / (STENCIL_6TH_DIV * partition.dx * partition.dx);
     const selfTerms = partition.includeSelfTerms;
     const uSpan = this.uMax - this.uMin;
@@ -375,12 +446,19 @@ export class ImpedanceBoundary {
         const w = weights ? weights[cell] : 1;
 
         for (let k = 0; k < INTERFACE_DEPTH; k++) {
-          if (k >= depth) {
+          if (k >= ghostDepth) {
             ghost[k] = 0;
             own[k] = 0;
             continue;
           }
-          const p = pressureAtDepth(partition, axis, high, k, gu, gv);
+          let p: number;
+          if (k < depth) {
+            p = pressureAtDepth(partition, axis, high, k, gu, gv);
+          } else {
+            origin[uAxis] = gu;
+            origin[vAxis] = gv;
+            p = reflectedAlongLine(field!, axis, origin, inward as 1 | -1, k) ?? 0;
+          }
           const b = beta[k] * w;
           const g = ((1 - b) * p + b * history[base + k]) / (1 + b);
           history[base + k] = g + p;

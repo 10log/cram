@@ -1,4 +1,4 @@
-import { Axis } from './partition';
+import { Axis, ActiveAxes } from './partition';
 import { PmlPartition } from './pml-partition';
 /** Normal-incidence pressure reflection magnitude for an absorption coefficient. */
 export declare function reflectionMagnitude(alpha: number): number;
@@ -80,4 +80,6 @@ export declare function createWall(options: {
     dt: number;
     thickness?: number;
     gradingExponent?: number;
+    /** The grid's axes — see `PartitionParams.activeAxes`. Defaults to the slab's own. */
+    activeAxes?: ActiveAxes;
 }): PmlPartition;

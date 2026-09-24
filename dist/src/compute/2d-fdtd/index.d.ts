@@ -52,6 +52,8 @@ declare class FDTD_2D extends Solver {
     heightmapVariable: Variable;
     sourcemapVariable: Variable;
     sourcemap: DataTexture;
+    /** Staircase face weights per wall cell, as `1 − w` (#220). */
+    wallmap: DataTexture;
     readLevelShader: ShaderMaterial;
     readLevelImage: Uint8Array;
     readLevelRenderTarget: WebGLRenderTarget;

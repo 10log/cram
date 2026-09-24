@@ -1,3 +1,4 @@
+import { GlobalField } from './interface';
 import { Axis, Partition } from './partition';
 /** Normal-incidence pressure reflection coefficient of a real impedance. */
 export declare function reflectionForImpedance(xi: number): number;
@@ -13,6 +14,30 @@ export declare function absorptionForImpedance(xi: number): number;
  * `α → 0`, which is what a caller asking for `α = 0` means.
  */
 export declare function impedanceForAbsorption(alpha: number): number;
+/**
+ * Impedance for a *material's* coefficient (#221).
+ *
+ * The database holds random-incidence (Sabine) absorption, so a wall is built
+ * whose diffuse-field absorption is `alpha` in the dimensionality of the run:
+ * Paris's formula in 3D, its half-plane form for a 2D slice, and plain
+ * `1 − R(0)²` in 1D, where normal incidence is the only incidence there is.
+ * {@link impedanceForAbsorption} stays the normal-incidence mapping — it is
+ * what the boundary's own accuracy measurements are stated in.
+ *
+ * A negative or non-finite coefficient throws, for the same reason as there:
+ * a solver assembling partitions should fail loudly on a broken material. A
+ * coefficient above the model's maximum (0.951 in 3D) — including above 1,
+ * which chamber data can reach — builds the most absorbing wall there is, as
+ * the shared inverse and FDTD 2D do; the driver warns, see
+ * {@link exceedsMaterialAbsorptionLimit}.
+ */
+export declare function impedanceForMaterialAbsorption(alpha: number, rank: number): number;
+/**
+ * Whether a material asks for more diffuse-field absorption than a
+ * locally-reacting wall can give in a run of this rank. Chamber data does,
+ * routinely; the driver says so rather than silently delivering less.
+ */
+export declare function exceedsMaterialAbsorptionLimit(alpha: number, rank: number): boolean;
 /**
  * Cells per wavelength at which the mapping is still good to about 0.01 in α.
  *
@@ -54,6 +79,14 @@ export interface ImpedanceBoundaryParams {
     vMax: number;
     /** Normalized specific acoustic impedance. `Infinity` is a rigid wall. */
     impedance: number;
+    /**
+     * The room's pressure by global cell (#228). A face on a partition thinner
+     * than INTERFACE_DEPTH needs mirror cells that lie in the partition beyond
+     * it; without this they read zero, the stencil loses its −27 and 2 taps, and
+     * a one-cell sliver against an absorbing wall grows. Optional so a boundary
+     * on a thick partition, or in a unit test, is built exactly as before.
+     */
+    field?: GlobalField;
 }
 /**
  * One rectangle of one partition face, carrying a locally-reacting impedance.
@@ -72,8 +105,9 @@ export declare class ImpedanceBoundary {
     readonly vMin: number;
     readonly vMax: number;
     readonly impedance: number;
-    /** Ghost depths this face can actually read, `min(3, extent along axis)`. */
+    /** Depths this face forces — the partition's own cells, `min(3, extent along axis)`. */
     readonly depth: number;
+    private readonly field;
     /** `β_k` per ghost depth. */
     private readonly beta;
     /** `s_k = ghost_k^{n−1} + p_k^{n−1}`, one per ghost per face cell. */

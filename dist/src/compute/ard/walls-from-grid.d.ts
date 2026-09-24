@@ -1,5 +1,5 @@
 import { Decomposition } from './decompose';
-import { Axis, Box } from './partition';
+import { Axis, ActiveAxes, Box } from './partition';
 import { PmlPartition } from './pml-partition';
 import { VoxelGrid } from './voxelize';
 /** A rectangle of one partition face that faces a room surface. */
@@ -74,6 +74,8 @@ export interface BuildWallsOptions {
     /** Absorption coefficient for a surface index. -1 means "no surface recorded". */
     absorptionFor: (surfaceIndex: number) => number;
     gradingExponent?: number;
+    /** The grid's axes, passed to every slab — see `PartitionParams.activeAxes`. */
+    activeAxes?: ActiveAxes;
 }
 /**
  * Build the PML partitions for a wall plan.

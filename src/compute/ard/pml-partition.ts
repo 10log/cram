@@ -204,7 +204,9 @@ export class PmlPartition extends PartitionBase {
           let lap = 0;
           let divPhi = 0;
           for (let d = 0; d < 3; d++) {
-            if (extents[d] <= 1) continue; // a 1-thick axis carries no derivative
+            // A collapsed axis carries no derivative; a box that is merely one
+            // cell thick in a 3D room still does (#228).
+            if (!this.activeAxes[d]) continue;
             const stride = strides[d];
             for (let k = 0; k < 7; k++) {
               const o = k - 3;
@@ -236,7 +238,9 @@ export class PmlPartition extends PartitionBase {
           const s = sigma[this.axisCoord(x, y, z)];
 
           for (let d = 0; d < 3; d++) {
-            if (extents[d] <= 1) {
+            // Same rule as pass 1. On an active axis one cell thick the
+            // centred first derivative has no centre tap and reads zero anyway.
+            if (!this.activeAxes[d]) {
               phiNew[d][i] = 0;
               continue;
             }

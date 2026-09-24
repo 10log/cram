@@ -58,6 +58,8 @@ export declare const enum Axis {
     Y = 1,
     Z = 2
 }
+/** Per axis, whether the simulation has extent along it. See {@link PartitionParams.activeAxes}. */
+export type ActiveAxes = readonly [boolean, boolean, boolean];
 export interface PartitionParams {
     /** Extent and placement in global cell coordinates. */
     box: Box;
@@ -67,6 +69,22 @@ export interface PartitionParams {
     c: number;
     /** Time step in seconds. */
     dt: number;
+    /**
+     * Which axes the *simulation* extends along — the grid's, not this box's.
+     *
+     * An axis the whole run is collapsed on (a 2D slice's third axis) carries no
+     * second derivative, and a stencil partition must skip it. An axis where
+     * only this box happens to be one cell thick is different: in a 3D room it
+     * still carries the Laplacian, whose centre tap the partition supplies and
+     * whose neighbours arrive through the interface residual. Skipping that axis
+     * drops the centre tap and leaves the neighbours' — the instability of #228,
+     * where a rotated room's staircase decomposes into one-cell-thick slivers.
+     *
+     * Defaults to "every axis with extent > 1", which is right for a partition
+     * that *is* the whole domain, as in most unit tests. Anything assembled into
+     * a larger grid should pass the grid's axes.
+     */
+    activeAxes?: ActiveAxes;
 }
 export interface Partition {
     readonly kind: 'dct' | 'fdtd' | 'pml';
@@ -136,6 +154,8 @@ export declare abstract class PartitionBase implements Partition {
     readonly dt: number;
     abstract readonly pressure: Float64Array;
     protected readonly force: Float64Array;
+    /** Axes the simulation extends along; see {@link PartitionParams.activeAxes}. */
+    readonly activeAxes: ActiveAxes;
     constructor(params: PartitionParams);
     /** Linear index of a local cell, or -1 if outside. */
     protected index(x: number, y: number, z: number): number;
@@ -147,7 +167,10 @@ export declare abstract class PartitionBase implements Partition {
     dispose(): void;
     /** Courant number `c·dt/dx`, for stability reporting and tests. */
     get courant(): number;
-    /** Number of axes with extent > 1. A 1-thick axis carries no derivative. */
+    /**
+     * Number of active axes — see {@link PartitionParams.activeAxes}. A thin box
+     * in a 3D room is rank 3, and takes the 3D CFL limit.
+     */
     get rank(): number;
 }
 /**

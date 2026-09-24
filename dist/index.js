@@ -626,7 +626,7 @@ ei("ray-tracer", async (e, t) => {
 	let { default: n } = await import("./energy-decay-Bo6TsXNQ.mjs");
 	return new n();
 }), ei("fdtd-2d", async (e, t) => {
-	let { default: n } = await import("./2d-fdtd-mIjGuGYc.mjs");
+	let { default: n } = await import("./2d-fdtd-DMbMyw6a.mjs");
 	return new n();
 }), ei("beam-trace", async (e, t) => {
 	let { BeamTraceSolver: n } = await import("./beam-trace-8u3UCES9.mjs");
@@ -635,7 +635,7 @@ ei("ray-tracer", async (e, t) => {
 	let { ART: n } = await import("./art-Df2Uydhk.mjs");
 	return new n();
 }), ei("ard", async (e, t) => {
-	let { ARD: n } = await import("./ard-ONwi8teW.mjs");
+	let { ARD: n } = await import("./ard-RZDf5D1t.mjs");
 	return new n(t);
 });
 //#endregion
@@ -6710,14 +6710,14 @@ async function $o(e, t) {
 			return new e().restore(t);
 		}
 		case "ard": {
-			let { default: e } = await import("./ard-ONwi8teW.mjs");
+			let { default: e } = await import("./ard-RZDf5D1t.mjs");
 			return new e(t).restore(t);
 		}
 		default: throw Error(`Unknown solver kind: ${e}`);
 	}
 }
 function es() {
-	import("./events-CcyU_0gc.mjs").then((e) => e.default()), r("LOG_SOLVER", (e) => {
+	import("./events-CI8CGvXj.mjs").then((e) => e.default()), r("LOG_SOLVER", (e) => {
 		console.log(i.getState().solvers[e]);
 	}), r("REMOVE_SOLVERS", (e) => {
 		let t = i.getState().solvers, n = typeof e == "string" ? [e] : e;
@@ -11448,7 +11448,7 @@ var gd = {
 		}),
 		/* @__PURE__ */ z(J, { children: /* @__PURE__ */ z(Y, {
 			label: `Simulated ${Number(r.time).toFixed(4)} s · ${Math.round(1 / r.dt)} Hz · walls to ${Math.round(r.impedanceFrequencyLimit)} Hz`,
-			tooltip: "Simulated time, FDTD sample rate (1/dt), and the highest frequency the walls deliver their absorption at on this grid. Above that they read as more reflective than their materials — use a smaller cell size."
+			tooltip: "Simulated time, FDTD sample rate (1/dt), and the highest frequency the walls deliver their absorption at on this grid. Above that they read as more reflective than their materials — use a smaller cell size. A material's coefficient is read as random-incidence (Sabine) absorption, as the database measured it: each wall absorbs that fraction of a diffuse field."
 		}) }),
 		/* @__PURE__ */ B(J, { children: [/* @__PURE__ */ z(Y, {
 			label: "Run/Pause",
@@ -11798,7 +11798,7 @@ var jd = ({ uuid: e }) => {
 		/* @__PURE__ */ B(J, { children: [/* @__PURE__ */ z(Y, {
 			label: "Boundary",
 			hasToolTip: !0,
-			tooltip: "How a room surface absorbs. Impedance puts the condition on the face itself: no extra cells, no grid padding, a looser time step, and measurably closer to the material's absorption coefficient at every grid resolution tested. PML parks a graded absorbing slab outside each face — 2 to 5 times the room in cells, padding on every side to grow into, and a tighter cap on the Courant number. PML is kept because it is what the solver was originally validated against."
+			tooltip: "How a room surface absorbs. Impedance puts the condition on the face itself: no extra cells, no grid padding, a looser time step, and measurably closer to the material's absorption coefficient at every grid resolution tested. PML parks a graded absorbing slab outside each face — 2 to 5 times the room in cells, padding on every side to grow into, and a tighter cap on the Courant number. PML is kept because it is what the solver was originally validated against. Either way, a material's absorption coefficient is read as random-incidence (Sabine) absorption: each wall is built to absorb that fraction of a diffuse field, which is how the coefficients in the material database were measured."
 		}), /* @__PURE__ */ z(il, {
 			value: y ?? "impedance",
 			onChange: b,

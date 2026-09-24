@@ -240,7 +240,7 @@ export const FDTD_2DTab = ({uuid}: {uuid: string}) => {
       <PropertyRow>
         <PropertyRowLabel
           label={`Simulated ${Number(solver.time).toFixed(4)} s · ${Math.round(1 / solver.dt)} Hz · walls to ${Math.round(solver.impedanceFrequencyLimit)} Hz`}
-          tooltip="Simulated time, FDTD sample rate (1/dt), and the highest frequency the walls deliver their absorption at on this grid. Above that they read as more reflective than their materials — use a smaller cell size."
+          tooltip="Simulated time, FDTD sample rate (1/dt), and the highest frequency the walls deliver their absorption at on this grid. Above that they read as more reflective than their materials — use a smaller cell size. A material's coefficient is read as random-incidence (Sabine) absorption, as the database measured it: each wall absorbs that fraction of a diffuse field."
         />
       </PropertyRow>
       <PropertyRow>
