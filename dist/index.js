@@ -629,7 +629,7 @@ ei("ray-tracer", async (e, t) => {
 	let { default: n } = await import("./energy-decay-Bo6TsXNQ.mjs");
 	return new n();
 }), ei("fdtd-2d", async (e, t) => {
-	let { default: n } = await import("./2d-fdtd-0SswEx91.mjs");
+	let { default: n } = await import("./2d-fdtd-D6j5iNA3.mjs");
 	return new n();
 }), ei("beam-trace", async (e, t) => {
 	let { BeamTraceSolver: n } = await import("./beam-trace-8u3UCES9.mjs");
@@ -6720,7 +6720,7 @@ async function $o(e, t) {
 	}
 }
 function es() {
-	import("./events-COm4fuqf.mjs").then((e) => e.default()), r("LOG_SOLVER", (e) => {
+	import("./events-Drn8_BuE.mjs").then((e) => e.default()), r("LOG_SOLVER", (e) => {
 		console.log(i.getState().solvers[e]);
 	}), r("REMOVE_SOLVERS", (e) => {
 		let t = i.getState().solvers, n = typeof e == "string" ? [e] : e;

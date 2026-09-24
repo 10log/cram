@@ -7,7 +7,7 @@ function i() {
 			t.solvers[e.uuid] = e;
 		});
 		else {
-			let { FDTD_2D: e } = await import("./2d-fdtd-0SswEx91.mjs"), t = new e();
+			let { FDTD_2D: e } = await import("./2d-fdtd-D6j5iNA3.mjs"), t = new e();
 			n.getState().set((e) => {
 				e.solvers[t.uuid] = t;
 			});
@@ -17,4 +17,4 @@ function i() {
 //#endregion
 export { i as default };
 
-//# sourceMappingURL=events-COm4fuqf.mjs.map
+//# sourceMappingURL=events-Drn8_BuE.mjs.map

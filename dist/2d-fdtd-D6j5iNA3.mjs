@@ -5,12 +5,12 @@ import { t as o } from "./sound-speed-CfEkirc1.mjs";
 import { a as s, i as c, o as l } from "./recording-D6qgIUE6.mjs";
 import { t as u } from "./solver-DCp-VMaM.mjs";
 import { n as d, t as f } from "./random-incidence-C2tZkwdg.mjs";
-import { ClampToEdgeWrapping as p, Color as m, DataTexture as h, DoubleSide as g, FloatType as _, Mesh as v, MeshBasicMaterial as y, MeshLambertMaterial as b, NearestFilter as x, PlaneGeometry as S, RGBAFormat as C, ShaderMaterial as w, UniformsLib as T, UniformsUtils as ee, UnsignedByteType as te, Vector2 as E, Vector3 as D, WebGLRenderTarget as O } from "three";
+import { ClampToEdgeWrapping as p, DataTexture as m, DoubleSide as h, FloatType as g, Mesh as _, MeshBasicMaterial as v, MeshLambertMaterial as y, NearestFilter as b, PlaneGeometry as x, RGBAFormat as S, ShaderMaterial as C, UniformsLib as w, UniformsUtils as T, UnsignedByteType as ee, Vector2 as E, Vector3 as D, WebGLRenderTarget as O } from "three";
 //#region node_modules/three/examples/jsm/misc/GPUComputationRenderer.js
-var ne = class {
+var te = class {
 	constructor(e, t, n) {
 		this.variables = [], this.currentTextureIndex = 0;
-		let i = _, a = { passThruTexture: { value: null } }, o = l(d(), a), s = new r(o);
+		let i = g, a = { passThruTexture: { value: null } }, o = l(d(), a), s = new r(o);
 		this.setDataType = function(e) {
 			return i = e, this;
 		}, this.addVariable = function(e, t, n) {
@@ -22,8 +22,8 @@ var ne = class {
 				renderTargets: [],
 				wrapS: null,
 				wrapT: null,
-				minFilter: x,
-				magFilter: x
+				minFilter: b,
+				magFilter: b
 			};
 			return this.variables.push(r), r;
 		}, this.setVariableDependencies = function(e, t) {
@@ -83,7 +83,7 @@ var ne = class {
 		this.addResolutionDefine = c;
 		function l(e, t) {
 			t ||= {};
-			let n = new w({
+			let n = new C({
 				name: "GPUComputationShader",
 				uniforms: t,
 				vertexShader: u(),
@@ -92,17 +92,17 @@ var ne = class {
 			return c(n), n;
 		}
 		this.createShaderMaterial = l, this.createRenderTarget = function(n, r, a, o, s, c) {
-			return n ||= e, r ||= t, a ||= p, o ||= p, s ||= x, c ||= x, new O(n, r, {
+			return n ||= e, r ||= t, a ||= p, o ||= p, s ||= b, c ||= b, new O(n, r, {
 				wrapS: a,
 				wrapT: o,
 				minFilter: s,
 				magFilter: c,
-				format: C,
+				format: S,
 				type: i,
 				depthBuffer: !1
 			});
 		}, this.createTexture = function() {
-			let n = new Float32Array(e * t * 4), r = new h(n, e, t, C, _);
+			let n = new Float32Array(e * t * 4), r = new m(n, e, t, S, g);
 			return r.needsUpdate = !0, r;
 		}, this.renderTexture = function(e, t) {
 			a.passThruTexture.value = e, this.doRenderTarget(o, t), a.passThruTexture.value = null;
@@ -121,19 +121,19 @@ var ne = class {
 	heightMapFrag: "#include <common>\n\nuniform vec2 mousePos;\nuniform float mouseSize;\nuniform float damping;\nuniform float heightCompensation;\nuniform float courantSq;\n\n// Prepended by withGhostGainDefine (impedance.ts). A uniform would read 0 if\n// it never bound and silently make every wall fully centred (#219), so this\n// refuses to compile instead.\n#ifndef MAX_GHOST_GAIN\n#error MAX_GHOST_GAIN must be defined; build this shader with withGhostGainDefine\n#endif\n// Prepended by withRlc (rlc-shaders.ts), 0 for no frequency-dependent walls.\n// An undefined name in #if is an error in GLSL ES 3.0, not a 0, so say why.\n#ifndef RLC_TEXTURES\n#error RLC_TEXTURES must be defined; build this shader with withRlc\n#endif\nuniform sampler2D sourcemap;\n// Staircase face weights (#220), stored as 1 - w: r for x-faces, g for\n// y-faces. Zero — an unwritten texel — is weight 1, the uncorrected wall.\nuniform sampler2D wallmap;\n\n// RLC_CHUNK\n\nvoid main()	{\n\n  vec2 cellSize = 1.0 / resolution.xy;\n\n  vec2 uv = gl_FragCoord.xy * cellSize;\n    \n  float newvel = 0.;\n  float newpos = 0.;\n\n\n  vec4 heightmapValue = texture2D( heightmap, uv );\n  vec4 sourcemapValue = texture2D( sourcemap, uv);\n  \n\n\n  if(sourcemapValue.b > 0.0){\n    float pos = heightmapValue.r;\n    float vel = heightmapValue.g;\n    \n    \n    \n    vec2 ud_offset = vec2( 0.0, cellSize.y );\n    vec2 rl_offset = vec2( cellSize.x, 0.0 );\n    \n    vec4 u = texture2D( heightmap, uv + ud_offset );    \n    vec4 d = texture2D( heightmap, uv - ud_offset );\n    vec4 r = texture2D( heightmap, uv + rl_offset );\n    vec4 l = texture2D( heightmap, uv - rl_offset );\n    \n    float u_wall = texture2D( sourcemap, uv + ud_offset ).b;\n    float d_wall = texture2D( sourcemap, uv - ud_offset ).b;\n    float r_wall = texture2D( sourcemap, uv + rl_offset ).b;\n    float l_wall = texture2D( sourcemap, uv - rl_offset ).b;\n    \n    \n    // Locally-reacting impedance wall (#199): the ghost is pos - gamma*vel,\n    // where gamma = 1/(xi*C) comes from Surface.absorption. The sourcemap's\n    // blue channel is positive for air and -gamma for a wall, so gamma = 0 —\n    // the rigid Neumann ghost of #111 — keeps the old encoding of exactly 0\n    // and the old behaviour bit for bit. Opposite-neighbor sampling is\n    // neither Dirichlet nor rigid and is what #111 removed.\n    //\n    // The backward ghost is only stable below gamma = 1, so it takes at most\n    // MAX_GHOST_GAIN; any excess is a centred loss applied after the stencil\n    // (#219). A wall at or below MAX_GHOST_GAIN computes exactly what it did.\n    //\n    // Each face's gain is weighted by |n.e| (#220), so a staircased wall\n    // absorbs over its real length rather than every step's. Up/down\n    // neighbours are y-faces (wallmap.g), left/right x-faces (wallmap.r).\n    float u_pos = u.r;\n    float d_pos = d.r;\n    float r_pos = r.r;\n    float l_pos = l.r;\n    float centredGain = 0.0;\n\n    if (u_wall <= 0.0) {\n#if RLC_TEXTURES > 0\n      // An RLC face (#222) is rigid here; its flux comes in the solve below.\n      if (texture2D( wallmap, uv + ud_offset ).b > 0.5) {\n        u_pos = pos;\n      } else\n#endif\n      {\n        float u_gain = u_wall * (1.0 - texture2D( wallmap, uv + ud_offset ).g);\n        u_pos = pos + max(u_gain, -MAX_GHOST_GAIN) * vel;\n        centredGain += max(-u_gain - MAX_GHOST_GAIN, 0.0);\n      }\n    }\n    if (d_wall <= 0.0) {\n#if RLC_TEXTURES > 0\n      // An RLC face (#222) is rigid here; its flux comes in the solve below.\n      if (texture2D( wallmap, uv - ud_offset ).b > 0.5) {\n        d_pos = pos;\n      } else\n#endif\n      {\n        float d_gain = d_wall * (1.0 - texture2D( wallmap, uv - ud_offset ).g);\n        d_pos = pos + max(d_gain, -MAX_GHOST_GAIN) * vel;\n        centredGain += max(-d_gain - MAX_GHOST_GAIN, 0.0);\n      }\n    }\n    if (r_wall <= 0.0) {\n#if RLC_TEXTURES > 0\n      // An RLC face (#222) is rigid here; its flux comes in the solve below.\n      if (texture2D( wallmap, uv + rl_offset ).b > 0.5) {\n        r_pos = pos;\n      } else\n#endif\n      {\n        float r_gain = r_wall * (1.0 - texture2D( wallmap, uv + rl_offset ).r);\n        r_pos = pos + max(r_gain, -MAX_GHOST_GAIN) * vel;\n        centredGain += max(-r_gain - MAX_GHOST_GAIN, 0.0);\n      }\n    }\n    if (l_wall <= 0.0) {\n#if RLC_TEXTURES > 0\n      // An RLC face (#222) is rigid here; its flux comes in the solve below.\n      if (texture2D( wallmap, uv - rl_offset ).b > 0.5) {\n        l_pos = pos;\n      } else\n#endif\n      {\n        float l_gain = l_wall * (1.0 - texture2D( wallmap, uv - rl_offset ).r);\n        l_pos = pos + max(l_gain, -MAX_GHOST_GAIN) * vel;\n        centredGain += max(-l_gain - MAX_GHOST_GAIN, 0.0);\n      }\n    }\n\n    float mid = 0.25*(u_pos+d_pos+r_pos+l_pos);\n  \n    float med = 4.0 * courantSq;\n    // sourcemap.r is a soft source's forcing (#224), zero elsewhere. It goes\n    // in before the centred divide, as stepField's `source` does.\n    newvel = med*(mid-pos)+vel*damping+sourcemapValue.r;\n#if RLC_TEXTURES > 0\n    // Centred loss and RLC branch flux (#222), solved together for p^{n+1}:\n    // v^{n+1} = (v* - (beta_c + K) v^n - H0) / (1 + beta_c + K).\n    // This pass reads (p^n, v^n, v^{n-1}) and branch state at n - 3/2: the\n    // branch passes wrote it last frame, from that frame's input. stepField\n    // solves this step with the state at n - 1/2, so the state is first\n    // advanced one step with s = v^n + v^{n-1} = p^n - p^{n-2}, exactly as\n    // the branch passes advance it this frame. Taking H0 from the texture\n    // without advancing would use state one step stale.\n    float total = 0.5 * courantSq * centredGain;\n    float push = 0.0;\n    vec2 faces = rlcFaces(uv, cellSize);\n    if (faces.x > 0.0) {\n      float s = vel + heightmapValue.b;\n      vec2 flux = rlcFlux(rlcAdvance(texture2D(rlc0, uv), 0.0, faces.y, s), 0.0, faces.y);\n#if RLC_TEXTURES > 1\n      flux += rlcFlux(rlcAdvance(texture2D(rlc1, uv), 1.0, faces.y, s), 1.0, faces.y);\n#endif\n#if RLC_TEXTURES > 2\n      flux += rlcFlux(rlcAdvance(texture2D(rlc2, uv), 2.0, faces.y, s), 2.0, faces.y);\n#endif\n#if RLC_TEXTURES > 3\n      flux += rlcFlux(rlcAdvance(texture2D(rlc3, uv), 3.0, faces.y, s), 3.0, faces.y);\n#endif\n      float scale = 0.5 * courant * faces.x;\n      total += scale * flux.x;\n      push = scale * flux.y;\n    }\n    if (total > 0.0) {\n      newvel = (newvel - total * vel - push) / (1.0 + total);\n    }\n#else\n    // Centred loss C²·(γc/2)·(p^{n+1} − p^{n−1}), solved for p^{n+1}.\n    if (centredGain > 0.0) {\n      float beta = 0.5 * courantSq * centredGain;\n      newvel = (newvel - beta * vel) / (1.0 + beta);\n    }\n#endif\n    newpos = pos+newvel;\n  }\n  else {\n    newvel = 0.0;\n    // The field rests at zero (#224); the display adds its own offset.\n    newpos = 0.0;\n  }\n  \n  \n#if RLC_TEXTURES > 0\n  // .b carries the input v^n forward: next pass it is v^{n-1}, for s.\n  gl_FragColor = vec4(newpos, newvel, sourcemapValue.b > 0.0 ? heightmapValue.g : 0.0, sourcemapValue.b);\n#else\n  gl_FragColor = vec4(newpos, newvel, heightmapValue.b, sourcemapValue.b);\n#endif\n\n\n}\n",
 	readLevelFrag: "uniform vec2 point1;\nuniform float cell_size;\nuniform float inv_cell_size;\n\nuniform sampler2D levelTexture;\n\n// Integer to float conversion from https://stackoverflow.com/questions/17981163/webgl-read-pixels-from-floating-point-render-target\n\nfloat shift_right( float v, float amt ) {\n\n	v = floor( v ) + 0.5;\n	return floor( v / exp2( amt ) );\n\n}\n\nfloat shift_left( float v, float amt ) {\n\n	return floor( v * exp2( amt ) + 0.5 );\n\n}\n\nfloat mask_last( float v, float bits ) {\n\n	return mod( v, shift_left( 1.0, bits ) );\n\n}\n\nfloat extract_bits( float num, float from, float to ) {\n\n	from = floor( from + 0.5 ); to = floor( to + 0.5 );\n	return mask_last( shift_right( num, from ), to - from );\n\n}\n\nvec4 encode_float( float val ) {\n	if ( val == 0.0 ) return vec4( 0, 0, 0, 0 );\n	float sign = val > 0.0 ? 0.0 : 1.0;\n	val = abs( val );\n	float exponent = floor( log2( val ) );\n	float biased_exponent = exponent + 127.0;\n	float fraction = ( ( val / exp2( exponent ) ) - 1.0 ) * 8388608.0;\n	float t = biased_exponent / 2.0;\n	float last_bit_of_biased_exponent = fract( t ) * 2.0;\n	float remaining_bits_of_biased_exponent = floor( t );\n	float byte4 = extract_bits( fraction, 0.0, 8.0 ) / 255.0;\n	float byte3 = extract_bits( fraction, 8.0, 16.0 ) / 255.0;\n	float byte2 = ( last_bit_of_biased_exponent * 128.0 + extract_bits( fraction, 16.0, 23.0 ) ) / 255.0;\n	float byte1 = ( sign * 128.0 + remaining_bits_of_biased_exponent ) / 255.0;\n	return vec4( byte4, byte3, byte2, byte1 );\n}\n\nvoid main()	{\n\n	vec2 cellSize = vec2(cell_size);\n\n	float waterLevel = texture2D( levelTexture, point1 ).x;\n\n	vec2 normal = vec2(\n		( texture2D( levelTexture, point1 + vec2( - cellSize.x, 0 ) ).x - texture2D( levelTexture, point1 + vec2( cellSize.x, 0 ) ).x ) * inv_cell_size,\n		( texture2D( levelTexture, point1 + vec2( 0, - cellSize.y ) ).x - texture2D( levelTexture, point1 + vec2( 0, cellSize.y ) ).x ) * inv_cell_size );\n\n	if ( gl_FragCoord.x < 1.5 ) {\n\n		gl_FragColor = encode_float( waterLevel );\n\n	} else if ( gl_FragCoord.x < 2.5 ) {\n\n		gl_FragColor = encode_float( normal.x );\n\n	} else if ( gl_FragCoord.x < 3.5 ) {\n\n		gl_FragColor = encode_float( normal.y );\n\n	} else {\n\n		gl_FragColor = encode_float( 0.0 );\n\n	}\n\n}",
 	clearFrag: "uniform sampler2D clearTexture;\n\nvoid main()	{\n\n	vec2 cellSize = 1.0 / resolution.xy;\n\n	vec2 uv = gl_FragCoord.xy * cellSize;\n\n\n	vec4 textureValue = texture2D( clearTexture, uv );\n\n	// Rest is zero in the state (#224).\n	textureValue.r = 0.0;\n	textureValue.g = 0.0;\n	// The previous velocity frequency-dependent walls read (#222).\n	textureValue.b = 0.0;\n\n	gl_FragColor = textureValue;\n\n}\n",
-	waterVert: "uniform sampler2D heightmap;\nuniform float inv_cell_size;\nuniform float cell_size;\nvarying float vHeight;\nvarying float vWall;\n#define PHONG\n\nvarying vec3 vViewPosition;\n\n#ifndef FLAT_SHADED\n\n	varying vec3 vNormal;\n\n#endif\n\n#include <common>\n#include <uv_pars_vertex>\n#include <uv2_pars_vertex>\n#include <displacementmap_pars_vertex>\n#include <envmap_pars_vertex>\n#include <color_pars_vertex>\n#include <morphtarget_pars_vertex>\n#include <skinning_pars_vertex>\n#include <shadowmap_pars_vertex>\n#include <logdepthbuf_pars_vertex>\n#include <clipping_planes_pars_vertex>\n\nvoid main() {\n\n	vec2 cellSize = vec2( cell_size );\n\n	#include <uv_vertex>\n	#include <uv2_vertex>\n	#include <color_vertex>\n\n	// # include <beginnormal_vertex>\n	// Compute normal from heightmap\n	vec3 objectNormal = vec3(\n		( texture2D( heightmap, uv + vec2( - cellSize.x, 0 ) ).x - texture2D( heightmap, uv + vec2( cellSize.x, 0 ) ).x ) * inv_cell_size,\n		( texture2D( heightmap, uv + vec2( 0, - cellSize.y ) ).x - texture2D( heightmap, uv + vec2( 0, cellSize.y ) ).x ) * inv_cell_size,\n		1.0 );\n	//<beginnormal_vertex>\n\n	#include <morphnormal_vertex>\n	#include <skinbase_vertex>\n	#include <skinnormal_vertex>\n	#include <defaultnormal_vertex>\n\n#ifndef FLAT_SHADED // Normal computed with derivatives when FLAT_SHADED\n\n	vNormal = normalize( transformedNormal );\n\n#endif\n\n	//# include <begin_vertex>\n	vec4 heightmapValue = texture2D( heightmap, uv );\n	// The state is zero-centred (#224); no offset to remove.\n	float heightValue = heightmapValue.x;\n	vHeight = heightValue;\n	vWall = heightmapValue.a;\n	\n	vec3 transformed = vec3( position.x, position.y, heightValue );\n	//<begin_vertex>\n\n	#include <morphtarget_vertex>\n	#include <skinning_vertex>\n	#include <displacementmap_vertex>\n	#include <project_vertex>\n	#include <logdepthbuf_vertex>\n	#include <clipping_planes_vertex>\n\n	vViewPosition = - mvPosition.xyz;\n\n	#include <worldpos_vertex>\n	#include <envmap_vertex>\n	#include <shadowmap_vertex>\n\n}\n",
-	waterFrag: "#ifndef DISPLAY_HALF_RANGE\n#error DISPLAY_HALF_RANGE must be defined; index.ts prepends it from field-encoding.ts\n#endif\n#define PHONG\n\nvarying float vHeight;\nvarying float vWall;\n\nuniform vec3 diffuse;\nuniform vec3 emissive;\nuniform vec3 specular;\nuniform float shininess;\nuniform float opacity;\nuniform float colorBrightness;\n\n#include <common>\n#include <packing>\n#include <dithering_pars_fragment>\n#include <color_pars_fragment>\n#include <uv_pars_fragment>\n#include <uv2_pars_fragment>\n#include <map_pars_fragment>\n#include <alphamap_pars_fragment>\n#include <aomap_pars_fragment>\n#include <lightmap_pars_fragment>\n#include <emissivemap_pars_fragment>\n#include <envmap_common_pars_fragment>\n#include <envmap_pars_fragment>\n#include <gradientmap_pars_fragment>\n#include <fog_pars_fragment>\n#include <bsdfs>\n#include <lights_pars_begin>\n#include <lights_phong_pars_fragment>\n#include <shadowmap_pars_fragment>\n#include <bumpmap_pars_fragment>\n#include <normalmap_pars_fragment>\n#include <specularmap_pars_fragment>\n#include <logdepthbuf_pars_fragment>\n#include <clipping_planes_pars_fragment>\n\nvoid main() {\n\n	#include <clipping_planes_fragment>\n\n	vec4 diffuseColor = vec4( diffuse, opacity );\n	ReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );\n	vec3 totalEmissiveRadiance = emissive;\n\n	#include <logdepthbuf_fragment>\n	#include <map_fragment>\n	#include <color_fragment>\n	#include <alphamap_fragment>\n	#include <alphatest_fragment>\n	#include <specularmap_fragment>\n	#include <normal_fragment_begin>\n	#include <normal_fragment_maps>\n	#include <emissivemap_fragment>\n\n	// accumulation\n	#include <lights_phong_fragment>\n	#include <lights_fragment_begin>\n	#include <lights_fragment_maps>\n	#include <lights_fragment_end>\n\n	// modulation\n	#include <aomap_fragment>\n\n	vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + reflectedLight.directSpecular + reflectedLight.indirectSpecular + totalEmissiveRadiance;\n\n	#include <envmap_fragment>\n\n	// DISPLAY_HALF_RANGE is field-encoding.ts's, prepended by index.ts (#224).\n	vec3 col = vec3(0.0,0.0,0.0);\n	if(vHeight > 0.0){\n		col.r = vHeight/DISPLAY_HALF_RANGE*colorBrightness;\n	}\n	else if(vHeight <= 0.0){\n		col.g = -vHeight/DISPLAY_HALF_RANGE*colorBrightness;\n	}\n\n	gl_FragColor = vec4( col, 1.0 );\n\n	#include <tonemapping_fragment>\n	#include <encodings_fragment>\n	#include <fog_fragment>\n	#include <premultiplied_alpha_fragment>\n	#include <dithering_fragment>\n\n}",
+	waterVert: "// The 2D FDTD field as a displaced, coloured sheet (#240).\n//\n// This was a copy of three's old Phong vertex shader. Its lighting was never\n// used (the fragment shader colours by height alone), and its uv2 chunks were\n// removed from three.js, so it no longer compiled. What the picture needs is\n// here: the height displacement, and the height for colouring.\nuniform sampler2D heightmap;\nvarying float vHeight;\n\n#include <common>\n#include <fog_pars_vertex>\n#include <logdepthbuf_pars_vertex>\n#include <clipping_planes_pars_vertex>\n\nvoid main() {\n\n	// The state is zero-centred (#224); no offset to remove.\n	float heightValue = texture2D( heightmap, uv ).x;\n	vHeight = heightValue;\n\n	vec3 transformed = vec3( position.x, position.y, heightValue );\n\n	#include <project_vertex>\n	#include <logdepthbuf_vertex>\n	#include <clipping_planes_vertex>\n	#include <fog_vertex>\n\n}\n",
+	waterFrag: "#ifndef DISPLAY_HALF_RANGE\n#error DISPLAY_HALF_RANGE must be defined; index.ts prepends it from field-encoding.ts\n#endif\n// The 2D FDTD field: red above rest, green below, scaled by colorBrightness\n// (#240). Unlit, as it always effectively was: the Phong shader this replaced\n// computed lighting and then discarded it for this colour.\n\nuniform float colorBrightness;\nvarying float vHeight;\n\n#include <common>\n#include <fog_pars_fragment>\n#include <logdepthbuf_pars_fragment>\n#include <clipping_planes_pars_fragment>\n\nvoid main() {\n\n	#include <clipping_planes_fragment>\n	#include <logdepthbuf_fragment>\n\n	// DISPLAY_HALF_RANGE is field-encoding.ts's, prepended by index.ts (#224).\n	vec3 col = vec3(0.0,0.0,0.0);\n	if(vHeight > 0.0){\n		col.r = vHeight/DISPLAY_HALF_RANGE*colorBrightness;\n	}\n	else if(vHeight <= 0.0){\n		col.g = -vHeight/DISPLAY_HALF_RANGE*colorBrightness;\n	}\n\n	gl_FragColor = vec4( col, 1.0 );\n\n	#include <tonemapping_fragment>\n	#include <colorspace_fragment>\n	#include <fog_fragment>\n\n}\n",
 	rlcCommon: "// Frequency-dependent (series-RLC) walls, #222. The GPU twin of rlc-wall.ts\n// and stepField's RLC path; spliced into height-map.frag and rlc-branch.frag\n// at their RLC_CHUNK marker, after their sourcemap and wallmap uniforms.\n//\n// RLC_TEXTURES branch-state textures hold (y, g, y, g) for two branches each.\n// Every pass reads the previous frame's textures, so with the height map at\n// (p^n, v^n, v^{n-1}) the stored state is at n - 3/2, one step behind what\n// stepField uses to compute v^{n+1}. The height-map pass advances it to\n// n - 1/2 with s = v^n + v^{n-1} before using it; the branch passes make the\n// same advance on the same inputs and store it, for the next frame. The\n// dataflow is emulated against stepField in __tests__/rlc-gpu.spec.ts.\n#if RLC_TEXTURES > 0\n#define RLC_MAX_BRANCHES (2 * RLC_TEXTURES)\n\n// (b, bd, bDh, bFh) per branch (x) and material (y); zeros past a\n// material's own branches, which then contribute nothing.\nuniform sampler2D rlcCoefficients;\nuniform float rlcMaterialCount;\nuniform float courant;\n\n// An air cell's RLC faces: their summed staircase weight (x), and the\n// material they all use (y), the first RLC wall met in the order left,\n// right, down, up, as stepField scans. The wallmap's blue channel is the\n// material index plus one; zero is a wall without branches.\nvec2 rlcFaces(vec2 uv, vec2 cellSize) {\n  float weight = 0.0;\n  float material = -1.0;\n  for (int n = 0; n < 4; n++) {\n    vec2 at = uv + (n == 0 ? vec2(-cellSize.x, 0.0)\n      : n == 1 ? vec2(cellSize.x, 0.0)\n      : n == 2 ? vec2(0.0, -cellSize.y)\n      : vec2(0.0, cellSize.y));\n    if (texture2D(sourcemap, at).b > 0.0) continue;\n    vec4 w = texture2D(wallmap, at);\n    if (w.b < 0.5) continue;\n    weight += n < 2 ? 1.0 - w.r : 1.0 - w.g;\n    if (material < 0.0) material = w.b - 1.0;\n  }\n  return vec2(weight, material);\n}\n\nvec4 rlcCoefficient(float branch, float material) {\n  return texture2D(rlcCoefficients, vec2(\n    (branch + 0.5) / float(RLC_MAX_BRANCHES),\n    (material + 0.5) / rlcMaterialCount));\n}\n\n// One step of branch pair `pair`: (y, g, y, g) at n - 1/2 to n + 1/2, given\n// s = p^{n+1} - p^{n-1}. y+ = b s + bd y- - 2 bFh g-,  g+ = g- + (y+ + y-)/2.\nvec4 rlcAdvance(vec4 state, float pair, float material, float s) {\n  vec4 a = rlcCoefficient(2.0 * pair, material);\n  vec4 b = rlcCoefficient(2.0 * pair + 1.0, material);\n  float ya = a.x * s + a.y * state.x - 2.0 * a.w * state.y;\n  float yb = b.x * s + b.y * state.z - 2.0 * b.w * state.w;\n  return vec4(ya, state.y + 0.5 * (ya + state.x), yb, state.w + 0.5 * (yb + state.z));\n}\n\n// A pair's share of the implicit update: (Σ b, Σ 4 bDh y - 2 bFh g).\nvec2 rlcFlux(vec4 state, float pair, float material) {\n  vec4 a = rlcCoefficient(2.0 * pair, material);\n  vec4 b = rlcCoefficient(2.0 * pair + 1.0, material);\n  return vec2(\n    a.x + b.x,\n    4.0 * a.z * state.x - 2.0 * a.w * state.y + 4.0 * b.z * state.z - 2.0 * b.w * state.w);\n}\n#endif\n",
 	rlcBranchFrag: "// Branch state for frequency-dependent walls (#222): one pass per texture,\n// RLC_PAIR its pair and RLC_SELF its own variable (withRlcDefines).\n// Advances the pair by the step the height-map pass took from the same\n// inputs, so the next frame's height-map pass starts from it.\nuniform sampler2D sourcemap;\nuniform sampler2D wallmap;\n\n// RLC_CHUNK\n\nvoid main() {\n  vec2 cellSize = 1.0 / resolution.xy;\n  vec2 uv = gl_FragCoord.xy * cellSize;\n  gl_FragColor = vec4(0.0);\n  // Walls, and air with no RLC face, carry no branch state.\n  if (texture2D(sourcemap, uv).b <= 0.0) return;\n  vec2 faces = rlcFaces(uv, cellSize);\n  if (faces.x <= 0.0) return;\n  vec4 here = texture2D(heightmap, uv);\n  // here.g is v^n, here.b is v^{n-1}: their sum is p^n - p^{n-2}, the s that\n  // takes the stored state from n - 3/2 to n - 1/2.\n  gl_FragColor = rlcAdvance(texture2D(RLC_SELF, uv), RLC_PAIR, faces.y, here.g + here.b);\n}\n"
 };
 //#endregion
 //#region src/compute/2d-fdtd/timestep.ts
-function re(e, t) {
+function ne(e, t) {
 	return e / (t * Math.SQRT2);
 }
 //#endregion
 //#region src/compute/2d-fdtd/slice.ts
-function ie(e) {
+function re(e) {
 	return Math.abs(e.dx * e.dz) >= Math.abs(e.dx * e.dy) ? "xz" : "xy";
 }
 function A(e, t) {
@@ -145,23 +145,23 @@ function A(e, t) {
 		v: e.y
 	};
 }
-function ae(e, t, n) {
+function ie(e, t, n) {
 	let r = A(e, t), i = Math.round((r.u - n.offsetX) / n.cellSize), a = Math.round((r.v - n.offsetY) / n.cellSize);
 	return i < 0 || a < 0 || i >= n.nx || a >= n.ny ? null : {
 		x: i,
 		y: a
 	};
 }
-function oe(e, t, n) {
-	let r = ae(e, t, n);
+function ae(e, t, n) {
+	let r = ie(e, t, n);
 	return r ? 4 * (r.y * n.nx + r.x) : null;
 }
-function se(e, t) {
+function oe(e, t) {
 	let n = {
 		dx: e.max.x - e.min.x,
 		dy: e.max.y - e.min.y,
 		dz: e.max.z - e.min.z
-	}, r = t ?? ie(n), i = A(e.min, r), a = A(e.max, r);
+	}, r = t ?? re(n), i = A(e.min, r), a = A(e.max, r);
 	return {
 		slice: r,
 		width: Math.abs(a.u - i.u),
@@ -177,38 +177,38 @@ function j(e, t) {
 //#endregion
 //#region src/compute/2d-fdtd/field-encoding.ts
 var M = 127.5;
-function ce() {
+function se() {
 	return {
 		forcing: 0,
 		alpha: 1
 	};
 }
-function le(e) {
+function ce(e) {
 	return {
 		forcing: Number.isFinite(e) ? 8 * e : 0,
 		alpha: 1
 	};
 }
 function N() {
-	return ce();
+	return se();
 }
 function P(e, t, n) {
 	e[t + 0] = n.forcing, e[t + 3] = n.alpha;
 }
-var ue = .95;
-function de(e) {
-	return `#define MAX_GHOST_GAIN ${String(ue)}\n${e}`;
+var le = .95;
+function ue(e) {
+	return `#define MAX_GHOST_GAIN ${String(le)}\n${e}`;
 }
-function fe(e, t) {
+function de(e, t) {
 	if (!(t > 0)) throw Error(`Courant number must be positive, got ${t}`);
 	if (!(e > 0)) throw Error(`Impedance must be positive, got ${e}`);
 	return Number.isFinite(e) ? 1 / (e * t) : 0;
 }
-function pe(e, t) {
+function fe(e, t) {
 	if (!(t > 0)) throw Error(`Courant number must be positive, got ${t}`);
-	return e > 1e-6 ? fe(f(e, 2), t) : 0;
+	return e > 1e-6 ? de(f(e, 2), t) : 0;
 }
-function me(e) {
+function pe(e) {
 	let t = e.x2 - e.x1, n = e.y2 - e.y1, r = Math.hypot(t, n);
 	return r > 0 ? {
 		x: Math.abs(n) / r,
@@ -221,26 +221,26 @@ function me(e) {
 function F(e) {
 	return 1 - e;
 }
-function he(e) {
+function me(e) {
 	if (!e.enabled) return {
 		r: 0,
 		g: 0
 	};
-	let t = me(e);
+	let t = pe(e);
 	return {
 		r: F(t.x),
 		g: F(t.y)
 	};
 }
-function ge(e) {
+function he(e) {
 	return e === 0 ? 0 : -e;
 }
-function _e(e, t) {
-	return e.enabled ? ge(pe(e.absorption, t)) : 1;
+function ge(e, t) {
+	return e.enabled ? he(fe(e.absorption, t)) : 1;
 }
 //#endregion
 //#region src/compute/2d-fdtd/dispose-gpu.ts
-function ve(e) {
+function _e(e) {
 	if (!e) return;
 	let t = e.variables ?? [];
 	for (let e of t) e.renderTargets?.forEach((e) => e.dispose()), e.material?.dispose?.();
@@ -248,7 +248,7 @@ function ve(e) {
 }
 //#endregion
 //#region src/compute/2d-fdtd/rlc-wall.ts
-function ye(e, t) {
+function ve(e, t) {
 	if (!(t > 0)) throw Error(`Time step must be positive, got ${t}`);
 	let n = e.length, r = {
 		count: n,
@@ -291,7 +291,7 @@ var I = class {
 		return this.entries.length;
 	}
 	coefficients(e) {
-		return this.entries.map((t) => ye(t.branches, e));
+		return this.entries.map((t) => ve(t.branches, e));
 	}
 	texels(e) {
 		let t = Math.max(1, this.entries.length), n = new Float32Array(32 * t);
@@ -303,7 +303,7 @@ var I = class {
 		}), n;
 	}
 };
-function be(e) {
+function ye(e) {
 	return e != null && e >= 0 ? e + 1 : 0;
 }
 //#endregion
@@ -330,7 +330,7 @@ function B(e, t) {
 	}
 	return [r, i];
 }
-function xe(e, t) {
+function be(e, t) {
 	let [n, r] = B(e, t), i = n * n + r * r;
 	return i > 0 ? [n / i, -r / i] : null;
 }
@@ -351,7 +351,7 @@ var V = [], H = [];
 		V.push(t), H.push(2 / ((1 - t * t) * n * n));
 	}
 })();
-var Se = (() => {
+var xe = (() => {
 	let e = [Math.PI / 2];
 	for (; e[e.length - 1] > 1e-9;) e.push(e[e.length - 1] / 2);
 	e.push(0);
@@ -363,7 +363,7 @@ function U(e, t) {
 	let [n, r] = e;
 	if (!(n > 0)) return 0;
 	let i = 0;
-	for (let [e, a] of Se) {
+	for (let [e, a] of xe) {
 		let o = (a - e) / 2, s = (e + a) / 2;
 		for (let e = 0; e < V.length; e++) {
 			let a = s + o * V[e], c = Math.sin(a), l = n * c + 1, u = r * c, d = 4 * n * c / (l * l + u * u), f = t === 3 ? 2 * Math.cos(a) * c : c;
@@ -372,20 +372,20 @@ function U(e, t) {
 	}
 	return i;
 }
-function Ce(e, t, n) {
-	let r = xe(e, t);
+function Se(e, t, n) {
+	let r = be(e, t);
 	return r ? U(r, n) : 0;
 }
 var W = 9;
-function we(e, t, n) {
+function Ce(e, t, n) {
 	let r = 0;
 	for (let i = 0; i < W; i++) {
 		let a = t * 2 ** ((i + .5) / W - .5);
-		r += Ce(e, a, n);
+		r += Se(e, a, n);
 	}
 	return r / W;
 }
-function Te(e, t, n = Math.SQRT1_2) {
+function we(e, t, n = Math.SQRT1_2) {
 	let r = 2 * Math.PI * t, i = r * n;
 	return {
 		D: 1 / (e * i),
@@ -405,13 +405,13 @@ function G(e, t, n) {
 		F: i * r
 	};
 }
-var Ee = [
+var Te = [
 	Math.SQRT1_2,
 	.5,
 	.35,
 	.25
-], K = Math.log(1e-8), De = Math.log(50);
-function Oe(e, t, n) {
+], K = Math.log(1e-8), Ee = Math.log(50);
+function De(e, t, n) {
 	let { dims: r, tolerance: i = .001, maxIterations: a = 30, relativeBandwidth: o = Math.SQRT1_2 } = n;
 	if (e.length !== t.length) throw Error(`${e.length} bands but ${t.length} coefficients`);
 	let s = d(r), c = t.map((e) => Number.isFinite(e) ? Math.min(Math.max(e, 0), s) : 0), l = c.map((e) => e > 1e-6), u = c.map((e) => {
@@ -422,7 +422,7 @@ function Oe(e, t, n) {
 		D: 0,
 		E: 1 / n,
 		F: 0
-	} : t === 0 ? G(n, e[t] * m[t], "low") : t === p ? G(n, e[t] * m[t], "high") : Te(n, e[t], m[t]), g = (t) => e.length === 1 ? [0] : t === 0 ? [
+	} : t === 0 ? G(n, e[t] * m[t], "low") : t === p ? G(n, e[t] * m[t], "high") : we(n, e[t], m[t]), g = (t) => e.length === 1 ? [0] : t === 0 ? [
 		Math.SQRT2,
 		1,
 		Math.SQRT1_2
@@ -430,7 +430,7 @@ function Oe(e, t, n) {
 		Math.SQRT1_2,
 		1,
 		Math.SQRT2
-	] : [o, ...Ee.filter((e) => e !== o)], _ = () => e.flatMap((e, t) => l[t] && u[t] > 0 ? [h(t, u[t])] : []), v = (e) => Array.from({ length: W }, (t, n) => e * 2 ** ((n + .5) / W - .5)), y = -1, b = [], x = (t, n) => {
+	] : [o, ...Te.filter((e) => e !== o)], _ = () => e.flatMap((e, t) => l[t] && u[t] > 0 ? [h(t, u[t])] : []), v = (e) => Array.from({ length: W }, (t, n) => e * 2 ** ((n + .5) / W - .5)), y = -1, b = [], x = (t, n) => {
 		let i = v(e[t]);
 		if (y !== t) {
 			let n = e.flatMap((e, n) => n !== t && l[n] && u[n] > 0 ? [h(n, u[n])] : []);
@@ -443,7 +443,7 @@ function Oe(e, t, n) {
 		}
 		return o / i.length;
 	}, S = (e) => {
-		let t = (Math.sqrt(5) - 1) / 2, n = K, r = De, i = r - t * (r - n), a = n + t * (r - n), o = x(e, i), s = x(e, a);
+		let t = (Math.sqrt(5) - 1) / 2, n = K, r = Ee, i = r - t * (r - n), a = n + t * (r - n), o = x(e, i), s = x(e, a);
 		for (let c = 0; c < 60 && r - n > 1e-6; c++) o > s ? (r = a, a = i, s = o, i = r - t * (r - n), o = x(e, i)) : (n = i, i = a, o = s, a = n + t * (r - n), s = x(e, a));
 		let l = (n + r) / 2;
 		if (c[e] >= x(e, l)) return Math.exp(l);
@@ -454,7 +454,7 @@ function Oe(e, t, n) {
 		}
 		return Math.exp((u + d) / 2);
 	}, C = () => {
-		let t = _(), n = e.map((e) => we(t, e, r));
+		let t = _(), n = e.map((e) => Ce(t, e, r));
 		return {
 			branches: t,
 			fitted: n,
@@ -529,9 +529,9 @@ var X = 256, Z = {
 	offsetY: 0,
 	slice: "xz"
 }, Q = /* @__PURE__ */ new Map();
-function ke(e) {
+function Oe(e) {
 	let t = JSON.stringify(e), n = Q.get(t);
-	return n || (n = Oe(e.frequencies, e.absorption, { dims: 2 }).branches, Q.set(t, n)), n;
+	return n || (n = De(e.frequencies, e.absorption, { dims: 2 }).branches, Q.set(t, n)), n;
 }
 var $ = class extends u {
 	gpuCompute;
@@ -585,7 +585,7 @@ var $ = class extends u {
 			let t = s.mesh.geometry.boundingBox;
 			if (t) {
 				let n = t.min.clone().applyMatrix4(s.mesh.matrixWorld), r = t.max.clone().applyMatrix4(s.mesh.matrixWorld);
-				c = se({
+				c = oe({
 					min: {
 						x: n.x,
 						y: n.y,
@@ -601,7 +601,7 @@ var $ = class extends u {
 		}
 		let l = e && e.width || Z.width, u = e && e.height || Z.height;
 		this.offsetX = e && e.offsetX || Z.offsetX, this.offsetY = e && e.offsetY || Z.offsetY, this.slice = e && e.slice || c?.slice || Z.slice, this.sliceHeight = c?.sliceHeight ?? 0, this.cellSize = e && e.cellSize || Math.max(l, u) / X, this.nx = Math.ceil(l / this.cellSize), this.ny = Math.ceil(u / this.cellSize), this.width = this.nx * this.cellSize, this.height = this.ny * this.cellSize, this.dt = 0, this.applyWaveSpeed(), this.sources = {}, this.sourceKeys = [], this.receivers = {}, this.receiverKeys = [], this.walls = [], this.messageHandlers = [], this.eventListeners = [];
-		let d = new S(this.width, this.height, 1, 1);
+		let d = new x(this.width, this.height, 1, 1);
 		j(d, {
 			slice: this.slice,
 			width: this.width,
@@ -610,17 +610,17 @@ var $ = class extends u {
 			offsetY: this.offsetY,
 			sliceHeight: this.sliceHeight
 		});
-		let f = [new y({
+		let f = [new v({
 			wireframe: !0,
-			side: g,
+			side: h,
 			color: 7368816
-		}), new b({
+		}), new y({
 			transparent: !0,
 			opacity: .35,
-			side: g,
+			side: h,
 			color: 7368816
 		})];
-		this.editMesh = new v(d, f[0]), this.editMesh.name = "fdtd-2d-edit-mesh", this.editMesh.visible = !1, i.fdtdItems.add(this.editMesh), this.fillTexture = this.fillTexture.bind(this), this.init = this.init.bind(this), this.render = this.render.bind(this), this.updateWalls = this.updateWalls.bind(this), this.updateSourceTexture = this.updateSourceTexture.bind(this), this.addWallsFromSurfaceEdges = this.addWallsFromSurfaceEdges.bind(this), this.setWireframeVisible = this.setWireframeVisible.bind(this), this.getWireframeVisible = this.getWireframeVisible.bind(this), this.toggleWall = this.toggleWall.bind(this), this.clear = this.clear.bind(this), this.init(), this.eventListeners.push(t("RENDERER_UPDATED", () => {
+		this.editMesh = new _(d, f[0]), this.editMesh.name = "fdtd-2d-edit-mesh", this.editMesh.visible = !1, i.fdtdItems.add(this.editMesh), this.fillTexture = this.fillTexture.bind(this), this.init = this.init.bind(this), this.render = this.render.bind(this), this.updateWalls = this.updateWalls.bind(this), this.updateSourceTexture = this.updateSourceTexture.bind(this), this.addWallsFromSurfaceEdges = this.addWallsFromSurfaceEdges.bind(this), this.setWireframeVisible = this.setWireframeVisible.bind(this), this.getWireframeVisible = this.getWireframeVisible.bind(this), this.toggleWall = this.toggleWall.bind(this), this.clear = this.clear.bind(this), this.init(), this.eventListeners.push(t("RENDERER_UPDATED", () => {
 			this.running && this.render();
 		})), this.onModeChange(n("GET_EDITOR_MODE")[0]), s && this.addWallsFromSurfaceEdges(s);
 	}
@@ -646,7 +646,7 @@ var $ = class extends u {
 	}
 	init() {
 		this.disposeGpu();
-		let e = new S(this.width, this.height, this.nx - 1, this.ny - 1);
+		let e = new x(this.width, this.height, this.nx - 1, this.ny - 1);
 		e.name = "fdtd-2d-plane-geometry", j(e, {
 			slice: this.slice,
 			width: this.width,
@@ -655,40 +655,21 @@ var $ = class extends u {
 			offsetY: this.offsetY,
 			sliceHeight: this.sliceHeight
 		});
-		let t = ee.merge([
-			T.common,
-			T.specularmap,
-			T.envmap,
-			T.aomap,
-			T.lightmap,
-			T.emissivemap,
-			T.bumpmap,
-			T.normalmap,
-			T.displacementmap,
-			T.gradientmap,
-			T.fog,
-			T.lights,
-			{
-				emissive: { value: new m(0) },
-				specular: { value: new m(1118481) },
-				shininess: { value: 30 },
-				colorBrightness: { value: 10 },
-				cell_size: { value: this.cellSize },
-				inv_cell_size: { value: 1 / this.cellSize },
-				heightmap: { value: null }
-			}
-		]), n = k.waterVert, r = `#define DISPLAY_HALF_RANGE ${M.toFixed(1)}\n${k.waterFrag}`, a = new w({
+		let t = T.merge([w.fog, {
+			colorBrightness: { value: 10 },
+			heightmap: { value: null }
+		}]), n = k.waterVert, r = `#define DISPLAY_HALF_RANGE ${M.toFixed(1)}\n${k.waterFrag}`, a = new C({
 			uniforms: t,
 			vertexShader: n,
 			fragmentShader: r,
-			side: g,
+			side: h,
 			name: "fdtd-2d-material"
 		});
-		a.lights = !0, this.uniforms = a.uniforms, this.mesh = new v(e, a), this.mesh.matrixAutoUpdate = !1, this.mesh.updateMatrix(), this.mesh.material.wireframe = !1, this.mesh.matrixAutoUpdate = !0, this.mesh.scale.setZ(.01), i.fdtdItems.add(this.mesh), this.gpuCompute = new ne(this.nx, this.ny, i.renderer);
+		this.uniforms = a.uniforms, this.mesh = new _(e, a), this.mesh.matrixAutoUpdate = !1, this.mesh.updateMatrix(), this.mesh.material.wireframe = !1, this.mesh.matrixAutoUpdate = !0, this.mesh.scale.setZ(.01), i.fdtdItems.add(this.mesh), this.gpuCompute = new te(this.nx, this.ny, i.renderer);
 		let o = this.gpuCompute.createTexture();
 		this.sourcemap = this.gpuCompute.createTexture(), this.wallmap = this.gpuCompute.createTexture(), this.fillSourceTexture(), this.updateSourceTexture(), this.fillTexture(o);
 		let s = this.frequencyDependentWalls ? 4 : 0;
-		this.heightmapVariable = this.gpuCompute.addVariable("heightmap", R(de(k.heightMapFrag), s), o), this.rlcVariables = [];
+		this.heightmapVariable = this.gpuCompute.addVariable("heightmap", R(ue(k.heightMapFrag), s), o), this.rlcVariables = [];
 		for (let e = 0; e < s; e++) this.rlcVariables.push(this.gpuCompute.addVariable(`rlc${e}`, z(e), this.gpuCompute.createTexture()));
 		this.gpuCompute.setVariableDependencies(this.heightmapVariable, [this.heightmapVariable, ...this.rlcVariables]);
 		for (let e of this.rlcVariables) this.gpuCompute.setVariableDependencies(e, [this.heightmapVariable, e]), e.material.uniforms.sourcemap = { value: this.sourcemap }, e.material.uniforms.wallmap = { value: this.wallmap };
@@ -702,10 +683,10 @@ var $ = class extends u {
 		}), this.readLevelImage = /* @__PURE__ */ new Uint8Array(16), this.readLevelRenderTarget = new O(4, 1, {
 			wrapS: p,
 			wrapT: p,
-			minFilter: x,
-			magFilter: x,
-			format: C,
-			type: te,
+			minFilter: b,
+			magFilter: b,
+			format: S,
+			type: ee,
 			stencilBuffer: !1,
 			depthBuffer: !1
 		}), this.render(), this.clear();
@@ -717,7 +698,7 @@ var $ = class extends u {
 			let e = this.mesh.material;
 			Array.isArray(e) ? e.forEach((e) => e.dispose()) : e.dispose();
 		}
-		this.readLevelRenderTarget?.dispose(), this.sourcemap?.dispose(), this.wallmap?.dispose(), this.clearShader?.dispose(), this.readLevelShader?.dispose(), this.zeroShader?.dispose(), this.rlcCoefficients?.dispose(), this.rlcCoefficients = void 0, ve(this.gpuCompute);
+		this.readLevelRenderTarget?.dispose(), this.sourcemap?.dispose(), this.wallmap?.dispose(), this.clearShader?.dispose(), this.readLevelShader?.dispose(), this.zeroShader?.dispose(), this.rlcCoefficients?.dispose(), this.rlcCoefficients = void 0, _e(this.gpuCompute);
 	}
 	dispose() {
 		if (this.stop(), this.disposeGpu(), this.editMesh) {
@@ -745,14 +726,14 @@ var $ = class extends u {
 		return o(this._temperature);
 	}
 	applyWaveSpeed() {
-		this.waveSpeed = this.c, this.cellSize > 0 && (this.dt = re(this.cellSize, this.waveSpeed));
+		this.waveSpeed = this.c, this.cellSize > 0 && (this.dt = ne(this.cellSize, this.waveSpeed));
 		let e = this.heightmapVariable?.material;
 		e?.uniforms?.courantSq && this.cellSize > 0 && (e.uniforms.courantSq.value = (this.waveSpeed * this.dt / this.cellSize) ** 2), this.updateRlcCoefficients();
 	}
 	updateRlcCoefficients() {
 		if (!this.frequencyDependentWalls || !this.heightmapVariable || !(this.dt > 0)) return;
 		let e = Math.max(1, this.rlcTable.size), t = this.rlcTable.texels(this.dt);
-		!this.rlcCoefficients || this.rlcCoefficients.image.height !== e ? (this.rlcCoefficients?.dispose(), this.rlcCoefficients = new h(t, 8, e, C, _), this.rlcCoefficients.minFilter = x, this.rlcCoefficients.magFilter = x) : this.rlcCoefficients.image.data.set(t), this.rlcCoefficients.needsUpdate = !0;
+		!this.rlcCoefficients || this.rlcCoefficients.image.height !== e ? (this.rlcCoefficients?.dispose(), this.rlcCoefficients = new m(t, 8, e, S, g), this.rlcCoefficients.minFilter = b, this.rlcCoefficients.magFilter = b) : this.rlcCoefficients.image.data.set(t), this.rlcCoefficients.needsUpdate = !0;
 		for (let t of [this.heightmapVariable, ...this.rlcVariables]) {
 			let n = t.material.uniforms;
 			n.rlcCoefficients = { value: this.rlcCoefficients }, n.rlcMaterialCount = { value: e }, n.courant = { value: this.courant };
@@ -787,7 +768,7 @@ var $ = class extends u {
 		t && (this.vacateSourceCell(t.position), delete this.sources[e], this.sourceKeys = this.sourceKeys.filter((t) => t !== e));
 	}
 	planeCellIndex(e) {
-		return oe(e, this.slice, {
+		return ae(e, this.slice, {
 			offsetX: this.offsetX,
 			offsetY: this.offsetY,
 			cellSize: this.cellSize,
@@ -868,7 +849,7 @@ var $ = class extends u {
 				}
 				r.shouldClearPreviousCells = !1;
 			}
-			let i = _e(r, this.courant), a = he(r), o = be(this.rlcMaterialFor(r));
+			let i = ge(r, this.courant), a = me(r), o = ye(this.rlcMaterialFor(r));
 			for (let n = 0; n < r.cells.length; n++) {
 				let s = 4 * (r.cells[n][1] * this.nx + r.cells[n][0]);
 				e[s + 2] = i, t && (t[s + 0] = a.r, t[s + 1] = a.g, t[s + 2] = o);
@@ -878,7 +859,7 @@ var $ = class extends u {
 	}
 	rlcMaterialFor(e) {
 		if (!this.frequencyDependentWalls || !e.enabled || !e.bands) return null;
-		let t = ke(e.bands);
+		let t = Oe(e.bands);
 		return t.length > 0 ? this.rlcTable.indexFor(t) : null;
 	}
 	updateSourceTexture() {
@@ -896,7 +877,7 @@ var $ = class extends u {
 					});
 					t != null && t !== r && P(e, t, N()), n.shouldClearPreviousPosition = !1, n.updatePreviousPosition();
 				}
-				r != null && P(e, r, le(n.velocity));
+				r != null && P(e, r, ce(n.velocity));
 			}
 			this.sourcemap.needsUpdate = !0;
 		}
@@ -955,4 +936,4 @@ var $ = class extends u {
 //#endregion
 export { $ as FDTD_2D, $ as default };
 
-//# sourceMappingURL=2d-fdtd-0SswEx91.mjs.map
+//# sourceMappingURL=2d-fdtd-D6j5iNA3.mjs.map
