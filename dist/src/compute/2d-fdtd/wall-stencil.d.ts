@@ -1,22 +1,4 @@
-/**
- * Wall neighbor for the 2D FDTD Laplacian, and the CPU mirror of
- * `shaders/height-map.frag`.
- *
- * A wall neighbor contributes a ghost pressure — not the opposite interior
- * cell, which is neither Dirichlet nor rigid (#111). The ghost is
- * `p_cell − γ_b·v_cell`, the locally-reacting impedance boundary derived in
- * `impedance.ts`; `γ = 0` gives `p_ghost = p_cell`, the rigid Neumann wall,
- * bit for bit. A wall whose gain exceeds `MAX_GHOST_GAIN` puts the excess into
- * a centred loss applied after the stencil — see
- * {@link applyCentredWallLoss}. Splitting a wall's `γ` into the two is
- * `splitGhostGain`'s job, and every caller here does it explicitly: a helper
- * that split behind your back would let a caller that forgot the centred half
- * reintroduce the old 0.961 cap without noticing.
- *
- * Global `damping` is a numerical sponge on velocity, not air absorption
- * and not a surface material. It defaults to 1 — surfaces absorb, the sponge
- * does not.
- */
+import { RlcFieldState } from './rlc-wall';
 /**
  * Ghost pressure standing in for a wall neighbor: `p − γ_b·v`.
  *
@@ -110,6 +92,8 @@ export interface Field2D {
      */
     weightX: Float64Array;
     weightY: Float64Array;
+    /** Frequency-dependent (RLC) walls and their branch state (#222). Absent is none. */
+    rlc?: RlcFieldState;
 }
 export declare function createField2D(nx: number, ny: number): Field2D;
 /**

@@ -3,6 +3,8 @@ import { GPUComputationRenderer, Variable } from '../../../node_modules/@types/t
 import { default as Solver } from '../solver';
 import { FdtdSlice } from './slice';
 import { DEFAULT_DAMPING, FDTD_REFERENCE_FREQUENCY } from './index-constants';
+import { RlcMaterialTable } from './rlc-wall';
+import { RlcBranch } from '../acoustics/rlc-admittance';
 import { default as Source } from '../../objects/source';
 import { default as Receiver } from '../../objects/receiver';
 import { default as FDTDWall, FDTDWallProps } from './fdtd-wall';
@@ -28,7 +30,18 @@ export interface FDTD_2D_Props {
     slice?: FdtdSlice;
     /** Air temperature in °C. Default 20, matching the other solvers. */
     temperature?: number;
+    /**
+     * Walls follow their materials' octave bands in one run (#222), as fitted
+     * series-RLC branches, instead of one coefficient at
+     * FDTD_REFERENCE_FREQUENCY. Default off.
+     */
+    frequencyDependentWalls?: boolean;
 }
+/** The 2D fit of a wall's octave bands (#222), or none for a rigid material. */
+export declare function rlcBranchesForBands(bands: {
+    frequencies: number[];
+    absorption: number[];
+}): RlcBranch[];
 export interface Uniforms {
     [uniform: string]: IUniform;
 }
@@ -52,8 +65,19 @@ declare class FDTD_2D extends Solver {
     heightmapVariable: Variable;
     sourcemapVariable: Variable;
     sourcemap: DataTexture;
-    /** Staircase face weights per wall cell, as `1 − w` (#220). */
+    /**
+     * Staircase face weights per wall cell, as `1 − w` (#220), in r and g; the
+     * wall's RLC material index plus one in b (#222).
+     */
     wallmap: DataTexture;
+    /** See FDTD_2D_Props.frequencyDependentWalls. */
+    frequencyDependentWalls: boolean;
+    /** Branch-state variables, RLC_TEXTURES of them when frequencyDependentWalls. */
+    rlcVariables: Variable[];
+    /** (b, bd, bDh, bFh) per branch and material, for the current dt. */
+    rlcCoefficients?: DataTexture;
+    rlcTable: RlcMaterialTable;
+    zeroShader?: ShaderMaterial;
     readLevelShader: ShaderMaterial;
     readLevelImage: Uint8Array;
     readLevelRenderTarget: WebGLRenderTarget;
@@ -98,6 +122,16 @@ declare class FDTD_2D extends Solver {
     get c(): number;
     /** Keep waveSpeed, dt, and courantSq on the CFL 1/√2 locus. */
     applyWaveSpeed(): void;
+    /**
+     * Rebuild the RLC coefficient texture for the current materials and dt,
+     * and bind it, with the Courant number, to every pass that reads it.
+     */
+    updateRlcCoefficients(): void;
+    /**
+     * Switch frequency-dependent walls (#222) on or off. The GPU passes are
+     * rebuilt, so the field restarts from rest.
+     */
+    setFrequencyDependentWalls(on: boolean): void;
     get sampleRate(): number;
     startRecording(): void;
     stopRecording(): void;
@@ -121,6 +155,12 @@ declare class FDTD_2D extends Solver {
      */
     get impedanceFrequencyLimit(): number;
     updateWalls(): void;
+    /**
+     * A wall's RLC material index (#222), or null to keep its single
+     * coefficient: frequency-dependent walls off, a disabled wall, a wall with
+     * no spectrum, or a spectrum that is rigid in every band.
+     */
+    private rlcMaterialFor;
     updateSourceTexture(): void;
     fillTexture(texture: DataTexture): void;
     readReceiverLevels(): void;

@@ -626,7 +626,7 @@ ei("ray-tracer", async (e, t) => {
 	let { default: n } = await import("./energy-decay-Bo6TsXNQ.mjs");
 	return new n();
 }), ei("fdtd-2d", async (e, t) => {
-	let { default: n } = await import("./2d-fdtd-DMbMyw6a.mjs");
+	let { default: n } = await import("./2d-fdtd-CdQ8juwy.mjs");
 	return new n();
 }), ei("beam-trace", async (e, t) => {
 	let { BeamTraceSolver: n } = await import("./beam-trace-8u3UCES9.mjs");
@@ -6717,7 +6717,7 @@ async function $o(e, t) {
 	}
 }
 function es() {
-	import("./events-CI8CGvXj.mjs").then((e) => e.default()), r("LOG_SOLVER", (e) => {
+	import("./events-CI-6vVFn.mjs").then((e) => e.default()), r("LOG_SOLVER", (e) => {
 		console.log(i.getState().solvers[e]);
 	}), r("REMOVE_SOLVERS", (e) => {
 		let t = i.getState().solvers, n = typeof e == "string" ? [e] : e;
@@ -11287,13 +11287,13 @@ var gd = {
 	fontSize: "0.75rem",
 	py: .5
 }, vd = ({ uuid: e }) => {
-	let t = Vr(), n = qr(), r = i((t) => t.solvers[e]), [a, o] = I(r.uniforms.colorBrightness.value), [s, c] = I(r.mesh.scale.z), [l, u] = I(r.heightmapVariable.material.uniforms.damping.value), [d, f] = I(r.numPasses), [p, m] = I(r.running), [h, g] = I(r.recording), [_, v] = I(r.getWireframeVisible()), [y, b] = I(!1), [x, S] = I(!1), [C, w] = I(!1), [T, ee] = I(r.sourceKeys), E = t.filter((e) => !r.sources[e.uuid]), [te, ne] = I(!1), [re, D] = I(r.receiverKeys), ie = n.filter((e) => !r.receivers[e.uuid]);
+	let t = Vr(), n = qr(), r = i((t) => t.solvers[e]), [a, o] = I(r.uniforms.colorBrightness.value), [s, c] = I(r.mesh.scale.z), [l, u] = I(r.heightmapVariable.material.uniforms.damping.value), [d, f] = I(r.numPasses), [p, m] = I(r.running), [h, g] = I(r.recording), [_, v] = I(r.getWireframeVisible()), [y, b] = I(r.frequencyDependentWalls), [x, S] = I(!1), [C, w] = I(!1), [T, ee] = I(!1), [E, te] = I(r.sourceKeys), ne = t.filter((e) => !r.sources[e.uuid]), [re, D] = I(!1), [ie, ae] = I(r.receiverKeys), oe = n.filter((e) => !r.receivers[e.uuid]);
 	return /* @__PURE__ */ B("div", { children: [
 		/* @__PURE__ */ B(Hc, {
 			id: "view",
 			label: "View",
-			open: y,
-			onOpenClose: () => b(!y),
+			open: x,
+			onOpenClose: () => S(!x),
 			children: [
 				/* @__PURE__ */ z(hd, {
 					id: "colorBrightness",
@@ -11304,7 +11304,7 @@ var gd = {
 					max: 40,
 					step: .1,
 					value: a,
-					hasToolTip: y,
+					hasToolTip: x,
 					onChange: (e) => {
 						r.uniforms.colorBrightness.value = e.value, o(e.value);
 					}
@@ -11317,14 +11317,14 @@ var gd = {
 					min: 0,
 					max: 1,
 					step: .001,
-					hasToolTip: y,
+					hasToolTip: x,
 					value: s,
 					onChange: (e) => {
 						r.mesh.scale.setZ(e.value === 0 ? .001 : e.value), c(e.value);
 					}
 				}),
 				/* @__PURE__ */ B(J, { children: [/* @__PURE__ */ z(Y, {
-					hasToolTip: y,
+					hasToolTip: x,
 					label: "Wireframe",
 					tooltip: "Display mesh as wirefame"
 				}), /* @__PURE__ */ z(Yc, {
@@ -11338,43 +11338,56 @@ var gd = {
 		/* @__PURE__ */ B(Hc, {
 			id: "sim-params",
 			label: "Simulation Parameters",
-			open: x,
-			onOpenClose: () => S(!x),
-			children: [/* @__PURE__ */ z(hd, {
-				id: "damping",
-				label: "Damping",
-				labelPosition: "left",
-				tooltipText: "Numerical sponge on velocity, not absorption. 1 is off and is the default — surfaces carry their own materials. Below 1 it double-counts against them, imposes a decay that changes with cell size, and is only conditionally stable: 0.999 diverges on a 6 x 4 m room at 6 cm cells.",
-				min: .999,
-				max: 1,
-				step: 1e-5,
-				hasToolTip: x,
-				value: l,
-				onChange: (e) => {
-					r.heightmapVariable.material.uniforms.damping.value = e.value, u(e.value);
-				}
-			}), /* @__PURE__ */ z(hd, {
-				id: "numPasses",
-				label: "Passes",
-				labelPosition: "left",
-				tooltipText: "Display steps per frame. Recording uses wall-clock / dt, not this slider.",
-				min: 1,
-				max: 30,
-				step: 1,
-				hasToolTip: x,
-				value: d,
-				onChange: (e) => {
-					r.numPasses = e.value, f(e.value);
-				}
-			})]
+			open: C,
+			onOpenClose: () => w(!C),
+			children: [
+				/* @__PURE__ */ z(hd, {
+					id: "damping",
+					label: "Damping",
+					labelPosition: "left",
+					tooltipText: "Numerical sponge on velocity, not absorption. 1 is off and is the default — surfaces carry their own materials. Below 1 it double-counts against them, imposes a decay that changes with cell size, and is only conditionally stable: 0.999 diverges on a 6 x 4 m room at 6 cm cells.",
+					min: .999,
+					max: 1,
+					step: 1e-5,
+					hasToolTip: C,
+					value: l,
+					onChange: (e) => {
+						r.heightmapVariable.material.uniforms.damping.value = e.value, u(e.value);
+					}
+				}),
+				/* @__PURE__ */ B(J, { children: [/* @__PURE__ */ z(Y, {
+					hasToolTip: C,
+					label: "Frequency-dependent walls",
+					tooltip: "Each wall follows its material's whole octave-band spectrum in one run, fitted as passive resonant (series-RLC) branches, instead of one coefficient at 500 Hz. Switching restarts the field."
+				}), /* @__PURE__ */ z(Yc, {
+					onChange: (e) => {
+						r.setFrequencyDependentWalls(e.value), b(e.value);
+					},
+					value: y
+				})] }),
+				/* @__PURE__ */ z(hd, {
+					id: "numPasses",
+					label: "Passes",
+					labelPosition: "left",
+					tooltipText: "Display steps per frame. Recording uses wall-clock / dt, not this slider.",
+					min: 1,
+					max: 30,
+					step: 1,
+					hasToolTip: C,
+					value: d,
+					onChange: (e) => {
+						r.numPasses = e.value, f(e.value);
+					}
+				})
+			]
 		}),
 		/* @__PURE__ */ B(Hc, {
 			id: "sim-sources",
 			label: "Sources",
-			open: C,
-			onOpenClose: () => w(!C),
+			open: T,
+			onOpenClose: () => ee(!T),
 			children: [/* @__PURE__ */ B(J, { children: [/* @__PURE__ */ z(Y, {
-				hasToolTip: C,
+				hasToolTip: T,
 				label: "Source",
 				tooltip: "All available sources"
 			}), /* @__PURE__ */ B(Xn, {
@@ -11383,7 +11396,7 @@ var gd = {
 				displayEmpty: !0,
 				onChange: (e) => {
 					let n = t.filter((t) => t.uuid === e.target.value);
-					n[0] && r.addSource(n[0]), ee(r.sourceKeys);
+					n[0] && r.addSource(n[0]), te(r.sourceKeys);
 				},
 				sx: gd,
 				MenuProps: { PaperProps: { sx: { bgcolor: "background.paper" } } },
@@ -11392,28 +11405,28 @@ var gd = {
 					disabled: !0,
 					sx: _d,
 					children: "Select Source"
-				}), E.map((e) => /* @__PURE__ */ z(dn, {
+				}), ne.map((e) => /* @__PURE__ */ z(dn, {
 					value: e.uuid,
 					sx: _d,
 					children: e.name
 				}, e.uuid))]
-			})] }), T.map((e) => /* @__PURE__ */ B(J, { children: [/* @__PURE__ */ z(Y, {
+			})] }), E.map((e) => /* @__PURE__ */ B(J, { children: [/* @__PURE__ */ z(Y, {
 				hasToolTip: !1,
 				label: r.sources[e] && r.sources[e].name
 			}), /* @__PURE__ */ z(fl, {
 				label: "Remove",
 				onClick: (t) => {
-					ee(r.sourceKeys.filter((t) => t !== e)), r.removeSource(e);
+					te(r.sourceKeys.filter((t) => t !== e)), r.removeSource(e);
 				}
 			})] }, e))]
 		}),
 		/* @__PURE__ */ B(Hc, {
 			id: "sim-receivers",
 			label: "Receivers",
-			open: te,
-			onOpenClose: () => ne(!te),
+			open: re,
+			onOpenClose: () => D(!re),
 			children: [/* @__PURE__ */ B(J, { children: [/* @__PURE__ */ z(Y, {
-				hasToolTip: te,
+				hasToolTip: re,
 				label: "Receiver",
 				tooltip: "All available receivers"
 			}), /* @__PURE__ */ B(Xn, {
@@ -11422,7 +11435,7 @@ var gd = {
 				displayEmpty: !0,
 				onChange: (e) => {
 					let t = n.filter((t) => t.uuid === e.target.value);
-					t[0] && r.addReceiver(t[0]), D(r.receiverKeys);
+					t[0] && r.addReceiver(t[0]), ae(r.receiverKeys);
 				},
 				sx: gd,
 				MenuProps: { PaperProps: { sx: { bgcolor: "background.paper" } } },
@@ -11431,18 +11444,18 @@ var gd = {
 					disabled: !0,
 					sx: _d,
 					children: "Select Receiver"
-				}), ie.map((e) => /* @__PURE__ */ z(dn, {
+				}), oe.map((e) => /* @__PURE__ */ z(dn, {
 					value: e.uuid,
 					sx: _d,
 					children: e.name
 				}, e.uuid))]
-			})] }), re.map((e) => /* @__PURE__ */ B(J, { children: [/* @__PURE__ */ z(Y, {
+			})] }), ie.map((e) => /* @__PURE__ */ B(J, { children: [/* @__PURE__ */ z(Y, {
 				hasToolTip: !1,
 				label: r.receivers[e].name
 			}), /* @__PURE__ */ z(fl, {
 				label: "Remove",
 				onClick: (t) => {
-					D(r.receiverKeys.filter((t) => t !== e)), r.removeReceiver(e);
+					ae(r.receiverKeys.filter((t) => t !== e)), r.removeReceiver(e);
 				}
 			})] }, e))]
 		}),

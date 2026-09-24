@@ -15,7 +15,7 @@ export declare function fieldEnergy(field: Field2D, courantSq: number, damping?:
  * itself is the state after it. `source` is the same array `stepField`
  * was given, or absent.
  */
-export declare function stepEnergyFlow(field: Field2D, previousVelocity: Float64Array, courantSq: number, damping?: number, maxGhostGain?: number, source?: Float64Array): {
+export declare function stepEnergyFlow(field: Field2D, previousVelocity: Float64Array, courantSq: number, damping?: number, maxGhostGain?: number, source?: Float64Array, previousBranchVelocity?: Float64Array): {
     lost: number;
     input: number;
 };
