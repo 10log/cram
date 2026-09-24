@@ -6,6 +6,10 @@
 
 // Constants
 const MAX_BOUNCES: u32 = 64u;
+// Chain slots per ray: wall bounces and receiver crossings share them since
+// rays pass through receivers (#242), so twice the bounces. A ray whose chain
+// fills stops, so no recorded chain ever skips a hop.
+const CHAIN_SLOTS: u32 = 128u;
 const MAX_BANDS: u32 = 7u;
 const BVH_STACK_SIZE: u32 = 64u;
 const SELF_INTERSECTION_OFFSET: f32 = 0.01;
@@ -330,71 +334,74 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
   }
 
   // Output
-  let chainBase = rayIdx * MAX_BOUNCES;
+  let chainBase = rayIdx * CHAIN_SLOTS;
   var chainLen: u32 = 0u;
   var hitReceiver: u32 = 0u;
   var receiverIdx: u32 = 0u;
   var arrivalDir = vec3<f32>(0.0, 0.0, 0.0);
 
   for (var bounce = 0u; bounce < maxBounces; bounce++) {
-    // Check receiver spheres first (find closest)
-    var closestRecT: f32 = 1e30;
-    var closestRecIdx: u32 = 0u;
-    var recHit = false;
-    for (var ri = 0u; ri < params.numReceivers; ri++) {
-      let rb = ri * 4u;
-      let rcx = receiverSpheres[rb];
-      let rcy = receiverSpheres[rb + 1u];
-      let rcz = receiverSpheres[rb + 2u];
-      let rr = receiverSpheres[rb + 3u];
-      let t = raySphereIntersect(ox, oy, oz, dx, dy, dz, rcx, rcy, rcz, rr);
-      if (t > 0.0 && t < closestRecT) {
-        closestRecT = t;
-        closestRecIdx = ri;
-        recHit = true;
-      }
-    }
-
     // BVH closest triangle hit
     let triHit = traceClosest(ox, oy, oz, dx, dy, dz);
+    let segmentEnd = select(1e30, triHit.t, triHit.hit);
 
-    // Receiver is closer than any surface — ray enters receiver
-    if (recHit && closestRecT < triHit.t) {
-      // Apply air absorption for receiver segment
-      for (var b = 0u; b < numBands; b++) {
-        bandEnergy[b] *= pow(10.0, -getAirAtt(b) * closestRecT / 10.0);
-      }
-
-      // Compute mean energy
-      var totalE: f32 = 0.0;
-      for (var b = 0u; b < numBands; b++) { totalE += bandEnergy[b]; }
-      let meanE = totalE / f32(numBands);
-
-      // Record chain entry at receiver position
-      if (chainLen < MAX_BOUNCES) {
-        let ci = chainBase + chainLen;
-        chainBuffer[ci].px = ox + dx * closestRecT;
-        chainBuffer[ci].py = oy + dy * closestRecT;
-        chainBuffer[ci].pz = oz + dz * closestRecT;
-        chainBuffer[ci].distance = closestRecT;
-        // Store receiver index encoded as surface index + numSurfaces offset
-        chainBuffer[ci].surfaceIndex = params.numSurfaces + closestRecIdx;
-        chainBuffer[ci].angle = 0.0;
-        chainBuffer[ci].energy = meanE;
-        for (var b = 0u; b < numBands; b++) {
-          chainBuffer[ci].bandEnergy[b] = bandEnergy[b];
+    // Rays pass through receivers (#234, #242). Every receiver sphere this
+    // segment crosses before its wall is recorded as a chain entry, nearest
+    // first, with the energy that reaches it; the ray itself carries on
+    // unchanged. The host turns each such entry into an arrival.
+    var lastT: f32 = 0.0;
+    for (var k = 0u; k < params.numReceivers; k++) {
+      var nextT: f32 = segmentEnd;
+      var nextIdx: u32 = 0u;
+      var found = false;
+      for (var ri = 0u; ri < params.numReceivers; ri++) {
+        let rb = ri * 4u;
+        let t = raySphereIntersect(
+          ox, oy, oz, dx, dy, dz,
+          receiverSpheres[rb], receiverSpheres[rb + 1u], receiverSpheres[rb + 2u], receiverSpheres[rb + 3u],
+        );
+        if (t > lastT && t < nextT) {
+          nextT = t;
+          nextIdx = ri;
+          found = true;
         }
+      }
+      if (!found) { break; }
+      lastT = nextT;
+
+      if (chainLen < CHAIN_SLOTS) {
+        let ci = chainBase + chainLen;
+        chainBuffer[ci].px = ox + dx * nextT;
+        chainBuffer[ci].py = oy + dy * nextT;
+        chainBuffer[ci].pz = oz + dz * nextT;
+        chainBuffer[ci].distance = nextT;
+        // Receiver index encoded as surface index + numSurfaces offset
+        chainBuffer[ci].surfaceIndex = params.numSurfaces + nextIdx;
+        chainBuffer[ci].angle = 0.0;
+        // Air absorption over the segment so far, without touching the
+        // ray's own energy, which the wall's reflection takes from here.
+        var totalE: f32 = 0.0;
+        for (var b = 0u; b < numBands; b++) {
+          let e = bandEnergy[b] * pow(10.0, -getAirAtt(b) * nextT / 10.0);
+          chainBuffer[ci].bandEnergy[b] = e;
+          totalE += e;
+        }
+        chainBuffer[ci].energy = totalE / f32(numBands);
         chainLen += 1u;
       }
 
-      hitReceiver = 1u;
-      receiverIdx = closestRecIdx;
-      arrivalDir = normalize3(-dx, -dy, -dz);
-      break;
+      if (hitReceiver == 0u) {
+        hitReceiver = 1u;
+        receiverIdx = nextIdx;
+        arrivalDir = normalize3(-dx, -dy, -dz);
+      }
     }
 
-    // No surface hit — ray escapes
+    // No surface hit — ray escapes (after any receivers it crossed)
     if (!triHit.hit) { break; }
+
+    // A full chain ends the ray rather than recording hops with gaps.
+    if (chainLen >= CHAIN_SLOTS) { break; }
 
     // Surface hit
     let hitT = triHit.t;
@@ -421,8 +428,8 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
     for (var b = 0u; b < numBands; b++) { totalEBefore += bandEnergy[b]; }
     let meanEBefore = totalEBefore / f32(numBands);
 
-    // Record chain entry
-    if (chainLen < MAX_BOUNCES) {
+    // Record chain entry (room is guaranteed by the check above)
+    {
       let ci = chainBase + chainLen;
       chainBuffer[ci].px = hx;
       chainBuffer[ci].py = hy;

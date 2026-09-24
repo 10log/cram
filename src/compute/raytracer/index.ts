@@ -1868,8 +1868,8 @@ class RayTracer extends Solver {
           const raysPerSource = Math.max(1, Math.floor(actualRayCount / Math.max(1, this.sourceIDs.length)));
 
           for (let p = 0; p < results.length; p++) {
-            const path = results[p];
-            if (!path) continue; // Ray produced no intersections
+            const { path, arrivals } = results[p];
+            if (!path && arrivals.length === 0) continue; // Ray produced no intersections
 
             // Determine which source this ray belongs to (index mapping is preserved)
             const srcArrayIdx = Math.min(
@@ -1878,11 +1878,12 @@ class RayTracer extends Solver {
             );
             const sourceId = this.sourceIDs[srcArrayIdx];
             const position = (useContainer.getState().containers[sourceId] as Source).position;
-            path.source = sourceId;
+            if (path) path.source = sourceId;
+            for (const arrival of arrivals) arrival.source = sourceId;
 
-            // The GPU kernel still ends a ray at its first receiver (see
-            // #242), so a path that reached one is that ray's only arrival.
-            this._handleTracedPath(path, position, sourceId, path.intersectedReceiver ? [path] : []);
+            // Rays pass through receivers on the GPU too (#242): every
+            // crossing is an arrival, as on the CPU (#234).
+            this._handleTracedPath(path ?? undefined, position, sourceId, arrivals);
           }
 
           this.flushRayBuffer();
