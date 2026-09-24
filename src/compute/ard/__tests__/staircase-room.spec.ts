@@ -55,12 +55,12 @@ function windowLevels(ir: Float32Array, dt: number, seconds: number): number[] {
   return levels;
 }
 
-function run(degrees: number, alpha: number) {
+function run(degrees: number, alpha: number, minBoxEdge?: number) {
   const grid = voxelizeTriangles(rotatedBox(2.6, 2.1, 1.6, degrees), {
     dx: 0.12,
     seed: { x: 0.05, y: 0.05, z: 0.8 },
   });
-  const decomposition = decompose(grid);
+  const decomposition = decompose(grid, minBoxEdge === undefined ? {} : { minBoxEdge });
   const base = {
     grid, decomposition, c: 343, courant: 0.4, duration: 0.25, fMax: 500,
     absorptionFor: () => alpha,
@@ -84,7 +84,9 @@ describe('Issue #228: ARD on a staircased room', () => {
   it.each([22.5, 45])('stays bounded with rigid walls at %s°', (degrees) => {
     const { ir, dt, decomposition } = run(degrees, 0);
     // The case this is about: the staircase really did become one-cell slivers.
-    const thin = decomposition.boxes.filter((b, n) => decomposition.kinds[n] === 'fdtd' && Math.min(b.w, b.h) === 1);
+    const thin = decomposition.boxes.filter(
+      (b, n) => decomposition.kinds[n] === 'fdtd' && Math.min(b.w, b.h, b.d) === 1,
+    );
     expect(thin.length).toBeGreaterThan(0);
 
     expect(ir.every(Number.isFinite)).toBe(true);
@@ -100,6 +102,18 @@ describe('Issue #228: ARD on a staircased room', () => {
     const levels = windowLevels(ir, dt, 0.05);
     // Falling, and by a room's worth: tens of dB over the run, not a
     // stalled or growing tail.
+    expect(levels[levels.length - 1]).toBeLessThan(levels[1] - 20);
+  }, 120_000);
+
+  it('decays with absorbing walls on thin DCT partitions too (Mode B)', () => {
+    // Not reachable through the app — the decomposer makes every DCT box at
+    // least 7 on each axis — but a caller may force minBoxEdge down. Before
+    // #228 this diverged; the field-backed ghosts fixed it along with Mode A.
+    const { ir, dt, decomposition } = run(22.5, 0.2, 1);
+    expect(decomposition.kinds.every((k) => k === 'dct')).toBe(true);
+    expect(decomposition.boxes.some((b) => Math.min(b.w, b.h, b.d) < 3)).toBe(true);
+    expect(ir.every(Number.isFinite)).toBe(true);
+    const levels = windowLevels(ir, dt, 0.05);
     expect(levels[levels.length - 1]).toBeLessThan(levels[1] - 20);
   }, 120_000);
 });

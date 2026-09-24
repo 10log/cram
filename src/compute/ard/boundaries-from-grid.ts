@@ -73,10 +73,13 @@ export interface ImpedancePlan {
 
 export interface PlanImpedanceOptions {
   /**
-   * Absorption per surface index. A face at α = 0 is rigid, which is what a
-   * partition already does on its own, so it gets no boundary and costs
-   * nothing — unlike a PML slab at α = 0, which is acoustically identical to a
-   * rigid face and still costs its cells.
+   * Absorption per surface index. A face at α = 0 is rigid, and this plan
+   * gives it no boundary. For a DCT partition that is free — it mirrors, which
+   * is the rigid wall — unlike a PML slab at α = 0, which is acoustically
+   * identical to a rigid face and still costs its cells. An FDTD partition does
+   * *not* mirror (it reads zero past its array: pressure release), so its
+   * skipped rigid faces are filled in afterwards by
+   * {@link buildRigidFdtdBoundaries} (#228).
    */
   absorptionFor?: (surfaceIndex: number) => number;
 }
