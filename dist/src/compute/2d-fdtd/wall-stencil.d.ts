@@ -122,8 +122,12 @@ export declare function createField2D(nx: number, ny: number): Field2D;
  * backward ghost at any gain, which is how the `γ = 1` bound that sets
  * {@link MAX_GHOST_GAIN} stays measured. {@link stepInteriorCell} takes the same
  * argument, and the tiling test pins the two together at both settings.
+ *
+ * `source`, if given, is added to each cell's velocity inside the update,
+ * before the centred divide: a soft source, and the forcing term `f` of the
+ * energy balance in `energy.ts` (#223). Absent is the unforced step, exactly.
  */
 export declare function stepField(field: Field2D, courantSq: number, damping: number, scratch: {
     pressure: Float64Array;
     velocity: Float64Array;
-}, maxGhostGain?: number): void;
+}, maxGhostGain?: number, source?: Float64Array): void;
