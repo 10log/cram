@@ -85,13 +85,18 @@
 import { MAX_GHOST_GAIN, isWallChannel } from './impedance';
 import type { Field2D } from './wall-stencil';
 
-/** Each air cell's backward and centred wall sums, `B_i` and `G_i`, and its air-neighbour count. */
+/**
+ * Each air cell's backward and centred wall sums, `B_i` and `G_i`, its
+ * air-neighbour count, and its RLC face weight and material (#222).
+ */
 function wallSums(field: Field2D, maxGhostGain: number) {
-  const { nx, ny, channel, weightX, weightY } = field;
+  const { nx, ny, channel, weightX, weightY, rlc } = field;
   const size = nx * ny;
   const backward = new Float64Array(size);
   const centred = new Float64Array(size);
   const degree = new Uint8Array(size);
+  const rlcWeight = new Float64Array(size);
+  const rlcMaterial = new Int32Array(size).fill(-1);
   for (let j = 0; j < ny; j++) {
     for (let i = 0; i < nx; i++) {
       const idx = j * nx + i;
@@ -108,13 +113,19 @@ function wallSums(field: Field2D, maxGhostGain: number) {
           if (nb !== idx) degree[idx]++;
           continue;
         }
+        if (rlc && rlc.wallMaterial[nb] >= 0) {
+          // Same rule as stepField: the first RLC material met serves them all.
+          rlcWeight[idx] += n < 2 ? weightX[nb] : weightY[nb];
+          if (rlcMaterial[idx] < 0) rlcMaterial[idx] = rlc.wallMaterial[nb];
+          continue;
+        }
         const c = raw * (n < 2 ? weightX[nb] : weightY[nb]);
         backward[idx] += -Math.max(c, -maxGhostGain);
         centred[idx] += Math.max(-c - maxGhostGain, 0);
       }
     }
   }
-  return { backward, centred, degree };
+  return { backward, centred, degree, rlcWeight, rlcMaterial };
 }
 
 /**
@@ -130,17 +141,32 @@ export function fieldEnergy(
   damping = 1,
   maxGhostGain = MAX_GHOST_GAIN,
 ): number {
-  const { nx, ny, pressure, velocity, channel } = field;
-  const { backward } = wallSums(field, maxGhostGain);
+  const { nx, ny, pressure, velocity, channel, rlc } = field;
+  const { backward, rlcWeight, rlcMaterial } = wallSums(field, maxGhostGain);
   const kineticScale = (1 + damping) / (2 * courantSq);
+  const courant = Math.sqrt(courantSq);
   let kinetic = 0;
   let potential = 0;
+  let branches = 0;
   for (let j = 0; j < ny; j++) {
     for (let i = 0; i < nx; i++) {
       const idx = j * nx + i;
       if (isWallChannel(channel[idx])) continue;
       const v = velocity[idx];
       kinetic += (kineticScale - 0.5 * backward[idx]) * v * v;
+      if (rlc && rlcWeight[idx] > 0) {
+        // The branches' own energy (#222): (w/C)·Σ (Ď·y² + Ḟ·g²), in the
+        // same 2H units as the rest of this sum.
+        const m = rlc.materials[rlcMaterial[idx]];
+        const base = idx * rlc.branches;
+        let e = 0;
+        for (let k = 0; k < m.count; k++) {
+          const y = rlc.velocity[base + k];
+          const g = rlc.integral[base + k];
+          e += m.Dh[k] * y * y + m.Fh[k] * g * g;
+        }
+        branches += (rlcWeight[idx] / courant) * e;
+      }
       // Each air–air edge once, to the right and downward.
       const p = pressure[idx];
       const q = p - v;
@@ -150,7 +176,7 @@ export function fieldEnergy(
       }
     }
   }
-  return 0.5 * (kinetic + potential);
+  return 0.5 * (kinetic + potential + branches);
 }
 
 /**
@@ -168,10 +194,15 @@ export function stepEnergyFlow(
   damping = 1,
   maxGhostGain = MAX_GHOST_GAIN,
   source?: Float64Array,
+  previousBranchVelocity?: Float64Array,
 ): { lost: number; input: number } {
-  const { velocity, channel } = field;
-  const { backward, centred } = wallSums(field, maxGhostGain);
+  const { velocity, channel, rlc } = field;
+  const { backward, centred, rlcWeight, rlcMaterial } = wallSums(field, maxGhostGain);
+  if (rlc && !previousBranchVelocity) {
+    throw new Error('A field with RLC walls needs the branch velocities from before the step');
+  }
   const dampingLoss = (1 - damping) / courantSq;
+  const courant = Math.sqrt(courantSq);
   let lost = 0;
   let input = 0;
   for (let idx = 0; idx < velocity.length; idx++) {
@@ -179,6 +210,17 @@ export function stepEnergyFlow(
     const s = velocity[idx] + previousVelocity[idx];
     lost += 0.5 * (dampingLoss + backward[idx] + centred[idx]) * s * s;
     if (source) input += (s * source[idx]) / courantSq;
+    if (rlc && rlcWeight[idx] > 0) {
+      // Branch resistance (#222): (w/(2C))·Σ E·(y⁺ + y⁻)² in 2H units.
+      const m = rlc.materials[rlcMaterial[idx]];
+      const base = idx * rlc.branches;
+      let e = 0;
+      for (let k = 0; k < m.count; k++) {
+        const sum = rlc.velocity[base + k] + previousBranchVelocity![base + k];
+        e += m.E[k] * sum * sum;
+      }
+      lost += (rlcWeight[idx] / (2 * courant)) * e;
+    }
   }
   // The sums above are 2H's flows (see the module doc); H carries the ½.
   return { lost: 0.5 * lost, input: 0.5 * input };

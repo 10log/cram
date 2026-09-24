@@ -162,6 +162,15 @@
  * better of the two at oblique incidence as well. Per-band α is carried by
  * ARD's one-run-per-octave-band structure (design decision D3), not by the
  * boundary model, which is real-valued and frequency-independent within a run.
+ *
+ * That stays so after #222, which gave the 2D FDTD solver frequency-dependent
+ * walls (`acoustics/rlc-admittance.ts`, `2d-fdtd/rlc-wall.ts`). There the
+ * branches attach to one boundary cell and fold into its update, and the
+ * energy balance shows them passive. Here the wall is a ghost residual three
+ * cells deep through a 6th-order stencil. Each ghost depth would need its own
+ * branch state, and no energy argument yet says that is passive, while
+ * `perBandRuns` is exact per band and costs only run time. Adopting branches
+ * here needs a feasibility spike of its own, with `perBandRuns` as the oracle.
  */
 
 import { impedanceForAbsorption as sharedImpedanceForAbsorption } from '../acoustics/reflection-coefficient';

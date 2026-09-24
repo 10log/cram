@@ -19,6 +19,7 @@
  */
 
 import { MAX_GHOST_GAIN, isWallChannel, splitGhostGain } from './impedance';
+import type { RlcFieldState } from './rlc-wall';
 
 /**
  * Ghost pressure standing in for a wall neighbor: `p − γ_b·v`.
@@ -221,6 +222,8 @@ export interface Field2D {
    */
   weightX: Float64Array;
   weightY: Float64Array;
+  /** Frequency-dependent (RLC) walls and their branch state (#222). Absent is none. */
+  rlc?: RlcFieldState;
 }
 
 export function createField2D(nx: number, ny: number): Field2D {
@@ -259,9 +262,10 @@ export function stepField(
   maxGhostGain = MAX_GHOST_GAIN,
   source?: Float64Array,
 ): void {
-  const { nx, ny, pressure, velocity, channel, weightX, weightY } = field;
+  const { nx, ny, pressure, velocity, channel, weightX, weightY, rlc } = field;
   const nextP = scratch.pressure;
   const nextV = scratch.velocity;
+  const courant = Math.sqrt(courantSq);
   for (let j = 0; j < ny; j++) {
     for (let i = 0; i < nx; i++) {
       const idx = j * nx + i;
@@ -277,6 +281,10 @@ export function stepField(
       // tests, and a closure per cell showed up in their wall clock.
       let sum = 0;
       let centredGain = 0;
+      // RLC faces (#222): rigid in the stencil, plus the branch flux below.
+      // All of them use the first RLC material met, left, right, down, up.
+      let rlcWeight = 0;
+      let rlcMaterial = -1;
       for (let n = 0; n < 4; n++) {
         const nb =
           n === 0 ? (i > 0 ? idx - 1 : idx)
@@ -286,6 +294,10 @@ export function stepField(
         const raw = channel[nb];
         if (raw > 0) {
           sum += pressure[nb];
+        } else if (rlc && rlc.wallMaterial[nb] >= 0) {
+          sum += p;
+          rlcWeight += n < 2 ? weightX[nb] : weightY[nb];
+          if (rlcMaterial < 0) rlcMaterial = rlc.wallMaterial[nb];
         } else {
           // The channel holds -γ, weighted by the face's |n·e| (#220): n < 2
           // is an x-face, the rest y-faces. The backward ghost takes up to
@@ -295,12 +307,31 @@ export function stepField(
           centredGain += Math.max(-c - maxGhostGain, 0);
         }
       }
-      const vel = applyCentredWallLoss(
-        courantSq * (sum - 4 * p) + v * damping + (source ? source[idx] : 0),
-        v,
-        courantSq,
-        centredGain,
-      );
+      const stepped = courantSq * (sum - 4 * p) + v * damping + (source ? source[idx] : 0);
+      let vel: number;
+      if (rlcWeight > 0) {
+        // v^{n+1} = v* − β_c·s − K·s − H₀, with s = v^{n+1} + v^n: #219's
+        // centred loss and the branch flux, solved together in one divide.
+        const m = rlc!.materials[rlcMaterial];
+        const base = idx * rlc!.branches;
+        const scale = 0.5 * courant * rlcWeight;
+        let h0 = 0;
+        for (let k = 0; k < m.count; k++) {
+          h0 += 4 * m.bDh[k] * rlc!.velocity[base + k] - 2 * m.bFh[k] * rlc!.integral[base + k];
+        }
+        const total = 0.5 * courantSq * centredGain + scale * m.beta;
+        vel = (stepped - total * v - scale * h0) / (1 + total);
+        const s = vel + v;
+        for (let k = 0; k < m.count; k++) {
+          const y0 = rlc!.velocity[base + k];
+          const g0 = rlc!.integral[base + k];
+          const y1 = m.b[k] * s + m.bd[k] * y0 - 2 * m.bFh[k] * g0;
+          rlc!.velocity[base + k] = y1;
+          rlc!.integral[base + k] = g0 + 0.5 * (y1 + y0);
+        }
+      } else {
+        vel = applyCentredWallLoss(stepped, v, courantSq, centredGain);
+      }
       nextV[idx] = vel;
       nextP[idx] = p + vel;
     }
