@@ -275,10 +275,13 @@ describe('Issue #220: ARD staircase face weights', () => {
     // than with Eyring. Measured: 0° 0.263 s; 22.5° 0.233 s uncorrected
     // (−11%), 0.269 s weighted (+2%).
     //
-    // Not at 45°. There a handful of modes strike a perfectly periodic
-    // staircase at one angle, the uncorrected decay happens to match 0°, and
-    // the weight over-corrects it (+19%) — the exception the 2D half found on
-    // a square room at 45° too. The prism above is the general case.
+    // Not at 45°, at this resolution. At dx = 0.12 (six cells per wavelength
+    // at 500 Hz) the uncorrected 45° box happens to match 0° and the weight
+    // over-corrects it (+19%). That is the grid, not the angle: at dx = 0.06
+    // the same box reads −22% uncorrected and −3% weighted (22.5°: −22% and
+    // −8%). The staircase's excess area is only fully felt once the steps are
+    // small against the wavelength, and the correction removes it there. Too
+    // slow to run here (≈4 min a room), so it is recorded, not asserted.
     const flat = decay(rotatedBox(2.6, 2.1, 1.6, 0), true).t20;
     const before = decay(rotatedBox(2.6, 2.1, 1.6, 22.5), false).t20;
     const after = decay(rotatedBox(2.6, 2.1, 1.6, 22.5), true).t20;
