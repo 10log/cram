@@ -7,7 +7,7 @@ import { EditorModes } from "../constants/editor-modes";
 import { on } from "../messenger";
 import { addContainer, removeContainer, setContainerProperty } from "../store";
 import { renderer } from "../render/renderer";
-import { encodeWavPcm16, formatSampleText } from "../compute/2d-fdtd/recording";
+import { encodeWavPcm16, formatSampleText, integrateAndHighpass } from "../compute/2d-fdtd/recording";
 // import { vs, fs } from '../render/shaders/glow';
 
 export enum ReceiverPattern {
@@ -158,13 +158,24 @@ export class Receiver extends Container {
   clearSamples() {
     this.fdtdSamples = [] as number[];
   }
+  /**
+   * The recording as the listener heard the source: FDTD 2D forces with the
+   * source's difference (#224), so this integrates it back out and removes
+   * DC. Without a sample rate there is nothing to filter against, so the raw
+   * samples come back.
+   */
+  fdtdOutput(): number[] {
+    if (!(this.fdtdSampleRate && this.fdtdSampleRate > 0)) return [...this.fdtdSamples];
+    return integrateAndHighpass(this.fdtdSamples, this.fdtdSampleRate);
+  }
   saveSamples() {
     if (this.fdtdSamples.length === 0) return;
-    const text = formatSampleText(this.fdtdSamples, this.fdtdSampleRate);
+    const output = this.fdtdOutput();
+    const text = formatSampleText(output, this.fdtdSampleRate);
     FileSaver.saveAs(new Blob([text], { type: "text/plain;charset=utf-8" }), `fdtdsamples-receiver-${this.name}.txt`);
     if (this.fdtdSampleRate && this.fdtdSampleRate > 0) {
       FileSaver.saveAs(
-        new Blob([encodeWavPcm16(this.fdtdSamples, this.fdtdSampleRate)], { type: "audio/wav" }),
+        new Blob([encodeWavPcm16(output, this.fdtdSampleRate)], { type: "audio/wav" }),
         `fdtdsamples-receiver-${this.name}.wav`,
       );
     }
