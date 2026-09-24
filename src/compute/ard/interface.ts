@@ -66,6 +66,24 @@ import {
 export { INTERFACE_DEPTH };
 
 /**
+ * The whole room's pressure, by global cell, for taps that reach past the
+ * immediate neighbour (#228).
+ *
+ * A face's residual needs the three cells beyond it. When the neighbour across
+ * the face is thinner than that, the far taps are in whatever lies beyond the
+ * neighbour — another partition, or a wall — and a pairwise interface cannot
+ * see them. Reading them as zero drops the 6th-order stencil's −27 and 2
+ * couplings, which leaves a one-cell partition next to another one-cell
+ * partition with a row sum of +50 instead of 0: an operator that is no longer
+ * negative semidefinite, and a field that grows. A rotated room's staircase is
+ * made of exactly such chains.
+ */
+export interface GlobalField {
+  /** Pressure in the air cell at global `(i, j, k)`, or `null` if it is not air in any partition. */
+  pressureAt(i: number, j: number, k: number): number | null;
+}
+
+/**
  * A shared face between two partitions.
  *
  * `lower` is the partition on the negative side of `axis`, `upper` the one on
@@ -195,7 +213,12 @@ export function addForceAtDepth(
  * uses. Forcing accumulates, so several interfaces may touch the same cell (a
  * partition corner) without any of them being lost.
  */
-export function applyInterfaceForcing(iface: PartitionInterface, c: number, dx: number): void {
+export function applyInterfaceForcing(
+  iface: PartitionInterface,
+  c: number,
+  dx: number,
+  field?: GlobalField,
+): void {
   const { axis, lower, upper, overlap } = iface;
   assertGridMatches(iface, c, dx);
   const scale = (c * c) / (STENCIL_6TH_DIV * dx * dx);
@@ -210,6 +233,12 @@ export function applyInterfaceForcing(iface: PartitionInterface, c: number, dx: 
 
   const lowerFace = new Float64Array(INTERFACE_DEPTH);
   const upperFace = new Float64Array(INTERFACE_DEPTH);
+  // What each side sees across the face. Within the neighbour's depth it is
+  // the neighbour's own cells, exactly as before; past it, the global field.
+  const acrossLower = new Float64Array(INTERFACE_DEPTH);
+  const acrossUpper = new Float64Array(INTERFACE_DEPTH);
+  const face = highEdge(lower.box, axis);
+  const [uAxis, vAxis] = transverseAxes(axis);
 
   for (let gv = overlap.vMin; gv < overlap.vMax; gv++) {
     for (let gu = overlap.uMin; gu < overlap.uMax; gu++) {
@@ -218,13 +247,21 @@ export function applyInterfaceForcing(iface: PartitionInterface, c: number, dx: 
         lowerFace[t] = t < lowerDepth ? pressureAtDepth(lower, axis, true, t, gu, gv) : 0;
         upperFace[t] = t < upperDepth ? pressureAtDepth(upper, axis, false, t, gu, gv) : 0;
       }
+      acrossLower.set(upperFace);
+      acrossUpper.set(lowerFace);
+      if (field && upperDepth < INTERFACE_DEPTH) {
+        tapsBeyond(field, axis, uAxis, vAxis, gu, gv, face - 1, +1, upperDepth, acrossLower);
+      }
+      if (field && lowerDepth < INTERFACE_DEPTH) {
+        tapsBeyond(field, axis, uAxis, vAxis, gu, gv, face, -1, lowerDepth, acrossUpper);
+      }
 
       // Lower side: `across` is the upper partition, `own` is its own mirror.
       for (let d = 1; d <= lowerDepth; d++) {
         let r = 0;
         for (let t = 0; t + d <= INTERFACE_DEPTH; t++) {
           const coef = STENCIL_6TH[3 + d + t];
-          r += coef * (upperFace[t] - (lowerSelf ? lowerFace[t] : 0));
+          r += coef * (acrossLower[t] - (lowerSelf ? lowerFace[t] : 0));
         }
         if (r !== 0) addForceAtDepth(lower, axis, true, d - 1, gu, gv, scale * r);
       }
@@ -234,11 +271,75 @@ export function applyInterfaceForcing(iface: PartitionInterface, c: number, dx: 
         let r = 0;
         for (let t = 0; t + d <= INTERFACE_DEPTH; t++) {
           const coef = STENCIL_6TH[3 + d + t];
-          r += coef * (lowerFace[t] - (upperSelf ? upperFace[t] : 0));
+          r += coef * (acrossUpper[t] - (upperSelf ? upperFace[t] : 0));
         }
         if (r !== 0) addForceAtDepth(upper, axis, false, d - 1, gu, gv, scale * r);
       }
     }
+  }
+}
+
+/**
+ * Pressure `steps` cells from an air cell along one grid line, with rigid walls
+ * as mirrors (#228).
+ *
+ * Walk one cell at a time from `origin` in `direction`. Stepping into a cell
+ * that is not air reflects: stay put and reverse. That is the half-cell mirror
+ * a DCT partition's Neumann walls assume — the ghost one cell past a wall face
+ * is the cell in front of it — applied as often as the line needs, so an air
+ * run shorter than the stencil between two walls gets its even extension
+ * rather than zeros. Zeros there drop the stencil's −27 and 2 taps and leave a
+ * positive row sum, which is how a staircase grows a field with rigid walls.
+ *
+ * `null` only if `origin` itself is not air.
+ */
+export function reflectedAlongLine(
+  field: GlobalField,
+  axis: Axis,
+  origin: readonly [number, number, number],
+  direction: 1 | -1,
+  steps: number,
+): number | null {
+  const at: [number, number, number] = [origin[0], origin[1], origin[2]];
+  let value = field.pressureAt(at[0], at[1], at[2]);
+  if (value === null) return null;
+  let d: number = direction;
+  for (let n = 0; n < steps; n++) {
+    at[axis] += d;
+    const next = field.pressureAt(at[0], at[1], at[2]);
+    if (next === null) {
+      at[axis] -= d;
+      d = -d;
+    } else {
+      value = next;
+    }
+  }
+  return value;
+}
+
+/**
+ * Fill `out[from..]` with the pressure `t + 1` cells out along `axis` from the
+ * receiving side's face cell, reading past a neighbour too thin to supply
+ * them (#228). Walls reflect — see {@link reflectedAlongLine}.
+ */
+function tapsBeyond(
+  field: GlobalField,
+  axis: Axis,
+  uAxis: Axis,
+  vAxis: Axis,
+  gu: number,
+  gv: number,
+  receiverFaceCell: number,
+  step: 1 | -1,
+  from: number,
+  out: Float64Array,
+): void {
+  const origin: [number, number, number] = [0, 0, 0];
+  origin[axis] = receiverFaceCell;
+  origin[uAxis] = gu;
+  origin[vAxis] = gv;
+  for (let t = from; t < INTERFACE_DEPTH; t++) {
+    out[t] = reflectedAlongLine(field, axis, origin, step, t + 1) ?? 0;
   }
 }
 
@@ -278,6 +379,7 @@ export function applyAllInterfaceForcing(
   interfaces: readonly PartitionInterface[],
   c: number,
   dx: number,
+  field?: GlobalField,
 ): void {
-  for (const iface of interfaces) applyInterfaceForcing(iface, c, dx);
+  for (const iface of interfaces) applyInterfaceForcing(iface, c, dx, field);
 }
