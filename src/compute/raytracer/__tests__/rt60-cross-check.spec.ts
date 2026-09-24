@@ -27,22 +27,22 @@
  *  - **Reference**: {@link referenceDecay}, a forty-line Monte Carlo of the same
  *    room in plain arithmetic, with no three.js, raycaster, `worldHitNormal` or
  *    `traceRay`. It has the same physics: Lambertian reflection, energy
- *    `R(θ)²`, and a ray ending at its first pass through the receiver sphere.
- *    The ray tracer must agree with it.
+ *    `R(θ)²`, and a ray that passes through the receiver sphere, counting
+ *    every crossing (#234). The ray tracer must agree with it.
  *
  * Eyring at Paris's α used to be the *lower* bound here (#232). It is not a
  * bound. With every reflection diffuse it is the textbook estimate, and the
- * real box misses it in both directions. The reference is 6% above it at
- * α = 0.2 and 17% above at α = 0.4. At α = 0.1 it is 2% below, because a ray
- * that ends at the receiver stops contributing to later times, which adds
- * about 2.2 s⁻¹ of decay for this receiver. The bound was only ever met
- * because the spec's Paris formula was mistranscribed. That put the "bound"
- * at 0.162 s instead of 0.210 s. Corrected, the ray tracer crossed it at
- * α = 0.1, exactly as the reference does.
+ * real box does not have to meet it. The reference is 7% above it at
+ * α = 0.1, 11% above at α = 0.2 and 20% above at α = 0.4. (Until #234 the
+ * tracer, and this reference with it, ended a ray at its first receiver
+ * crossing. That added about 2.2 s⁻¹ of decay for this receiver and put
+ * α = 0.1 2% *below* Eyring.) The bound was only ever met because the spec's
+ * Paris formula was mistranscribed. That put the "bound" at 0.162 s instead
+ * of 0.210 s.
  *
- * Measured T30 at 6000 rays, three repeats each: α = 0.1 → 0.410–0.423
- * (reference 0.417), α = 0.2 → 0.215–0.225 (0.223), α = 0.4 → 0.105–0.117
- * (0.115).
+ * Measured T30 at 6000 rays, three repeats each: α = 0.1 → 0.451–0.454
+ * (reference 0.454), α = 0.2 → 0.231–0.233 (0.233), α = 0.4 → 0.111–0.116
+ * (0.118). Before #234 they were 0.410–0.423, 0.215–0.225 and 0.105–0.117.
  */
 
 import * as THREE from "three";
@@ -53,6 +53,7 @@ import {
   reflectionCoefficient,
 } from "../../acoustics/reflection-coefficient";
 import { traceRay } from "../ray-core";
+import type { RayPath } from "../types";
 import { worldHitNormal } from "../world-normal";
 
 const C = 343;
@@ -247,6 +248,8 @@ function shoot(
   let escaped = 0;
 
   for (let i = 0; i < rays; i++) {
+    // Rays pass through the receiver (#234): each crossing is an arrival.
+    const crossings: RayPath[] = [];
     const path = traceRay(
       raycaster,
       objects,
@@ -260,22 +263,24 @@ function shoot(
       "source",
       0,
       0,
+      1,
+      [],
+      crossings,
     );
     // `traceRay` returns the recursive call directly, so a ray that finds
-    // nothing at any depth collapses the whole path to `undefined`.
-    if (!path) {
-      escaped++;
-      continue;
-    }
-    if (!path.intersectedReceiver) continue;
-    const distance = (path.chain as { distance?: number }[]).reduce(
-      (total, hop) => total + (hop.distance ?? 0),
-      0,
-    );
-    const bin = Math.round((distance / C) * SAMPLE_RATE);
-    if (bin < bins.length) {
-      bins[bin] += path.bandEnergy![0];
-      arrivals++;
+    // nothing at some depth collapses its own path to `undefined`. Its
+    // crossings before that still count.
+    if (!path) escaped++;
+    for (const arrival of crossings) {
+      const distance = (arrival.chain as { distance?: number }[]).reduce(
+        (total, hop) => total + (hop.distance ?? 0),
+        0,
+      );
+      const bin = Math.round((distance / C) * SAMPLE_RATE);
+      if (bin < bins.length) {
+        bins[bin] += arrival.bandEnergy![0];
+        arrivals++;
+      }
     }
   }
   return { bins, arrivals, escaped };
@@ -316,10 +321,9 @@ function decayTime(bins: Float64Array, fromDb: number, toDb: number): number {
  * where `shoot` uses a 16×12 mesh). It is seeded, so it gives the same answer
  * on every run.
  *
- * Like `traceRay`, a ray ends at its first pass through the receiver. That is
- * a property of the solver under test, not of the room (see #234), and the
- * reference copies it so that the comparison checks the tracer and does not
- * penalise a known modelling choice.
+ * Like `traceRay` since #234, a ray passes through the receiver and every
+ * crossing counts. Before that both ended the ray at its first crossing,
+ * which under-counted late energy by the receiver's capture rate.
  */
 function referenceDecay(
   alpha: number,
@@ -368,9 +372,10 @@ function referenceDecay(
       if (disc > 0) {
         const t = -b - Math.sqrt(disc);
         if (t > 0 && t < tWall) {
+          // Record the crossing and carry on to the wall, as traceRay does
+          // since #234.
           const bin = Math.round(((travelled + t) / C) * SAMPLE_RATE);
           if (bin < bins.length) bins[bin] += energy;
-          break;
         }
       }
 
@@ -461,9 +466,9 @@ describe("Issue #201: ray tracer decay against statistical room acoustics", () =
     const reference = referenceDecay(ALPHA);
     // Pinned as well as bracketed, so a broken reference cannot drift inside
     // the gate below and still bless a wrong tracer. Seeded, so exact:
-    // T20 0.2195 s, T30 0.2229 s.
-    expect(reference.t20).toBeCloseTo(0.22, 2);
-    expect(reference.t30).toBeCloseTo(0.223, 2);
+    // T20 0.2336 s, T30 0.2328 s (0.2195 and 0.2229 before #234).
+    expect(reference.t20).toBeCloseTo(0.234, 2);
+    expect(reference.t30).toBeCloseTo(0.233, 2);
     expect(reference.t30 / diffuse).toBeGreaterThan(0.9);
     expect(reference.t30 / diffuse).toBeLessThan(1.15);
 

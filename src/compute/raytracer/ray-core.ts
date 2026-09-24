@@ -37,6 +37,87 @@ export function inFrontOf(a: THREE.Triangle, b: THREE.Triangle) {
   return _pleq.dot(_avec4) > 0 || _pleq.dot(_bvec4) > 0 || _pleq.dot(_cvec4) > 0;
 }
 
+/**
+ * A receiver crossing as a finished path: the chain so far plus the receiver,
+ * with air absorption over the last segment.
+ */
+function receiverArrival(
+  hit: THREE.Intersection,
+  rd: THREE.Vector3,
+  bandEnergy: BandEnergy,
+  cachedAirAtt: number[],
+  chain: Partial<Chain>[],
+  source: string,
+  initialPhi: number,
+  initialTheta: number,
+): RayPath {
+  const nWorld = worldHitNormal(hit, _normalCopy, rd);
+  const angle = nWorld && _negRd.copy(rd).multiplyScalar(-1).angleTo(nWorld);
+
+  // apply air absorption for the final segment to the receiver
+  const receiverSegmentDist = hit.distance;
+  const receiverBandEnergy = bandEnergy.map((e, f) =>
+    e * Math.pow(10, -cachedAirAtt[f] * receiverSegmentDist / 10)
+  );
+
+  // broadband average energy for scalar backward compat (recompute after air absorption)
+  const receiverTotalEnergy = receiverBandEnergy.reduce((a, b) => a + b, 0);
+  const receiverEnergy = receiverBandEnergy.length > 0 ? receiverTotalEnergy / receiverBandEnergy.length : 0;
+
+  // The chain so far plus the receiver. A copy: with pass-through (#234) the
+  // ray carries on and keeps appending to `chain`.
+  const arrivalChain = [
+    ...chain,
+    {
+      object: hit.object.parent!.uuid,
+      angle: angle!,
+      distance: hit.distance,
+      faceNormal: nWorld
+        ? [nWorld.x, nWorld.y, nWorld.z]
+        : [hit.face!.normal.x, hit.face!.normal.y, hit.face!.normal.z],
+      faceMaterialIndex: hit.face!.materialIndex,
+      faceIndex: hit.faceIndex!,
+      point: [hit.point.x, hit.point.y, hit.point.z],
+      energy: receiverEnergy,
+      bandEnergy: [...receiverBandEnergy],
+    } as Partial<Chain>,
+  ];
+
+  // Compute arrival direction (direction ray arrives FROM, normalized)
+  // This is the opposite of the ray direction (ray travels toward receiver)
+  _arrivalDir.copy(rd).normalize().negate();
+  const arrivalDirection: [number, number, number] = [_arrivalDir.x, _arrivalDir.y, _arrivalDir.z];
+
+  return {
+    chain: arrivalChain,
+    chainLength: arrivalChain.length,
+    intersectedReceiver: true,
+    energy: receiverEnergy,
+    bandEnergy: [...receiverBandEnergy],
+    source,
+    initialPhi,
+    initialTheta,
+    arrivalDirection,
+  } as RayPath;
+}
+
+/**
+ * Trace one ray through its reflections.
+ *
+ * ## Receivers (#234)
+ *
+ * With an `arrivals` collector, a ray **passes through** receivers. Every
+ * receiver the ray crosses before the next wall is recorded there as an
+ * arrival (a path ending at the receiver), and the ray then reflects off that
+ * wall as if the receiver were not there. The return value is the ray's own
+ * path, however it ended. Ending a ray at its first receiver, as before, took
+ * it out of every later time bin: a loss of `c·πr²/V` per second on top of
+ * the walls, which read T30 3–8% short in `rt60-cross-check.spec.ts`'s room.
+ *
+ * Without a collector it keeps the old behaviour, returning the first
+ * arrival and ending there, so callers that expect one path per ray are
+ * unchanged.
+ */
 export function traceRay(
   raycaster: THREE.Raycaster,
   intersectableObjects: THREE.Object3D[],
@@ -52,6 +133,7 @@ export function traceRay(
   initialTheta: number,
   iter: number = 1,
   chain: Partial<Chain>[] = [],
+  arrivals?: RayPath[],
 ): RayPath | undefined {
   // normalize the ray
   rd = rd.normalize();
@@ -72,58 +154,27 @@ export function traceRay(
     const totalEnergy = bandEnergy.reduce((a, b) => a + b, 0);
     const energy = bandEnergy.length > 0 ? totalEnergy / bandEnergy.length : 0;
 
-    //check to see if the intersection was with a receiver
-    if (intersections[0].object.userData?.kind === 'receiver') {
-      const nWorld = worldHitNormal(intersections[0], _normalCopy, rd);
-      const angle = nWorld && _negRd.copy(rd).multiplyScalar(-1).angleTo(nWorld);
+    // Receivers before the first wall, nearest first. A double-sided sphere
+    // is hit on the way in and on the way out; only the entry counts.
+    let wall = 0;
+    const crossed = new Set<string>();
+    while (wall < intersections.length && intersections[wall].object.userData?.kind === 'receiver') {
+      const hit = intersections[wall];
+      const id = hit.object.parent!.uuid;
+      if (!crossed.has(id)) {
+        crossed.add(id);
+        const arrival = receiverArrival(hit, rd, bandEnergy, cachedAirAtt, chain, source, initialPhi, initialTheta);
+        // Without a collector, end here as the ray always used to.
+        if (!arrivals) return arrival;
+        arrivals.push(arrival);
+      }
+      wall++;
+    }
+    // Through the receiver(s) and out of the model.
+    if (wall >= intersections.length) return undefined;
+    if (wall > 0) intersections.splice(0, wall);
 
-      // apply air absorption for the final segment to the receiver
-      const receiverSegmentDist = intersections[0].distance;
-      const receiverBandEnergy = bandEnergy.map((e, f) =>
-        e * Math.pow(10, -cachedAirAtt[f] * receiverSegmentDist / 10)
-      );
-
-      // broadband average energy for scalar backward compat (recompute after air absorption)
-      const receiverTotalEnergy = receiverBandEnergy.reduce((a, b) => a + b, 0);
-      const receiverEnergy = receiverBandEnergy.length > 0 ? receiverTotalEnergy / receiverBandEnergy.length : 0;
-
-      // push the intersection data onto the chain
-      chain.push({
-        object: intersections[0].object.parent!.uuid,
-        angle: angle!,
-        distance: intersections[0].distance,
-        faceNormal: nWorld
-          ? [nWorld.x, nWorld.y, nWorld.z]
-          : [
-              intersections[0].face!.normal.x,
-              intersections[0].face!.normal.y,
-              intersections[0].face!.normal.z
-            ],
-        faceMaterialIndex: intersections[0].face!.materialIndex,
-        faceIndex: intersections[0].faceIndex!,
-        point: [intersections[0].point.x, intersections[0].point.y, intersections[0].point.z],
-        energy: receiverEnergy,
-        bandEnergy: [...receiverBandEnergy],
-      });
-
-      // Compute arrival direction (direction ray arrives FROM, normalized)
-      // This is the opposite of the ray direction (ray travels toward receiver)
-      _arrivalDir.copy(rd).normalize().negate();
-      const arrivalDirection: [number, number, number] = [_arrivalDir.x, _arrivalDir.y, _arrivalDir.z];
-
-      // end the chain here
-      return {
-        chain,
-        chainLength: chain.length,
-        intersectedReceiver: true,
-        energy: receiverEnergy,
-        bandEnergy: [...receiverBandEnergy],
-        source,
-        initialPhi,
-        initialTheta,
-        arrivalDirection,
-      } as RayPath;
-    } else {
+    {
       const nWorld = worldHitNormal(intersections[0], _normalCopy, rd);
       const angle = nWorld && _negRd.copy(rd).multiplyScalar(-1).angleTo(nWorld);
 
@@ -229,6 +280,7 @@ export function traceRay(
             initialTheta,
             iter + 1,
             chain,
+            arrivals,
           );
         }
       }

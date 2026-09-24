@@ -169,6 +169,7 @@ export async function calculateImpulseResponseForDisplay(
   sampleRate = audioEngine.sampleRate,
   tailOptions?: TailOptions,
   receiverId?: string,
+  numRays?: number,
 ): Promise<{ signal: Float32Array; normalizedSignal: Float32Array }> {
   if (receiverIDs.length == 0) throw Error("No receivers have been assigned to the raytracer");
   if (sourceIDs.length == 0) throw Error("No sources have been assigned to the raytracer");
@@ -190,7 +191,10 @@ export async function calculateImpulseResponseForDisplay(
 
   // add in raytracer paths (apply receiver directivity)
   const recForDisplay = useContainer.getState().containers[recId] as Receiver;
-  const mcWeight = monteCarloWeight(sorted.length);
+  // Per ray launched, as calculateImpulseResponseForPair weights it. Since
+  // #234 a ray can reach a receiver more than once, so the stored path count
+  // is no longer the ray count.
+  const mcWeight = monteCarloWeight(numRays ?? sorted.length);
   for (let i = 0; i < sorted.length; i++) {
     const sign = monteCarloSign(rayOrderFromChain(sorted[i]));
     const t = sorted[i].time;
