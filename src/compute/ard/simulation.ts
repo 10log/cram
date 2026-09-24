@@ -61,6 +61,8 @@ import { DctPartition } from './dct-partition';
 import { FdtdPartition } from './fdtd-partition';
 import {
   buildImpedanceBoundaries,
+  buildRigidFdtdBoundaries,
+  faceKey,
   planImpedanceBoundaries,
   type ImpedancePlan,
 } from './boundaries-from-grid';
@@ -73,11 +75,13 @@ import {
 import {
   applyAllInterfaceForcing,
   findInterfaces,
+  type GlobalField,
   type PartitionInterface,
 } from './interface';
 import {
   Axis,
   spatialRank,
+  transverseAxes,
   vonNeumannCflLimit,
   type Partition,
 } from './partition';
@@ -431,15 +435,50 @@ export function createArdSimulation(config: ArdSimulationConfig): ArdSimulation 
   const partitions: Partition[] = [...roomPartitions, ...wallPartitions];
   const interfaces = findInterfaces(partitions);
 
+  // The room's pressure by global cell, for interface taps that reach past a
+  // neighbour thinner than the stencil (#228). Room partitions only: a wall
+  // slab is at least INTERFACE_DEPTH thick, so nothing reads past one.
+  const field: GlobalField = {
+    pressureAt(i, j, k) {
+      if (i < 0 || j < 0 || k < 0 || i >= grid.nx || j >= grid.ny || k >= grid.nz) return null;
+      const idx = i + grid.nx * (j + grid.ny * k);
+      if (grid.cells[idx] !== Cell.Air) return null;
+      const boxIndex = decomposition.assignment[idx];
+      if (boxIndex < 0) return null;
+      const owner = roomPartitions[boxIndex];
+      return owner.pressureAt(i - owner.box.x, j - owner.box.y, k - owner.box.z);
+    },
+  };
+
   // Impedance boundaries attach to the room partitions, indexed by box, and
   // never to a wall slab: the two boundary kinds are alternatives, and
   // `planArdTimeStep` only ever returns one non-empty plan.
   let boundaries: ImpedanceBoundary[] = [];
   if (impedancePlan.faces.length > 0) {
-    const built = buildImpedanceBoundaries(impedancePlan, roomPartitions, { absorptionFor });
+    const built = buildImpedanceBoundaries(impedancePlan, roomPartitions, { absorptionFor, field });
     boundaries = built.boundaries;
     warnings.push(...built.warnings);
   }
+
+  // Every FDTD face nothing else covers gets a rigid boundary: an FDTD
+  // partition reads zero past its array, which is pressure release, not the
+  // rigid wall a DCT partition's mirror gives for free (#228).
+  const covered = new Set<string>();
+  for (const face of impedancePlan.faces) covered.add(faceKey(face.boxIndex, face.axis, face.high, face));
+  for (const face of wallPlan.faces) {
+    const [uAxis, vAxis] = transverseAxes(face.axis);
+    const origin = [face.box.x, face.box.y, face.box.z];
+    const extent = [face.box.w, face.box.h, face.box.d];
+    covered.add(
+      faceKey(face.boxIndex, face.axis, face.high, {
+        uMin: origin[uAxis],
+        uMax: origin[uAxis] + extent[uAxis],
+        vMin: origin[vAxis],
+        vMax: origin[vAxis] + extent[vAxis],
+      }),
+    );
+  }
+  boundaries.push(...buildRigidFdtdBoundaries(grid, decomposition, roomPartitions, covered, field));
 
   const roomCells = roomPartitions.reduce((t, p) => t + p.box.w * p.box.h * p.box.d, 0);
   const wallCells = wallPartitions.reduce((t, p) => t + p.box.w * p.box.h * p.box.d, 0);
@@ -512,7 +551,7 @@ export function createArdSimulation(config: ArdSimulationConfig): ArdSimulation 
     },
 
     step(): ArdStepResult {
-      applyAllInterfaceForcing(interfaces, c, dx);
+      applyAllInterfaceForcing(interfaces, c, dx, field);
       applyAllImpedanceForcing(boundaries);
 
       for (let n = 0; n < sourceProbes.length; n++) {

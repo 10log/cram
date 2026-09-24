@@ -40,6 +40,7 @@ import {
 } from './impedance';
 import { Axis, type Partition } from './partition';
 import type { VoxelGrid } from './voxelize';
+import type { GlobalField } from './interface';
 
 export { impedanceCourantLimit };
 
@@ -140,6 +141,8 @@ export function planImpedanceBoundaries(
 export interface BuildImpedanceOptions {
   /** Absorption coefficient for a surface index. -1 means no surface recorded. */
   absorptionFor: (surfaceIndex: number) => number;
+  /** The room's pressure by global cell, for faces on thin partitions (#228). */
+  field?: GlobalField;
 }
 
 /**
@@ -154,7 +157,7 @@ export function buildImpedanceBoundaries(
   partitions: readonly Partition[],
   options: BuildImpedanceOptions,
 ): { boundaries: ImpedanceBoundary[]; warnings: string[] } {
-  const { absorptionFor } = options;
+  const { absorptionFor, field } = options;
   const boundaries: ImpedanceBoundary[] = [];
   const warnings: string[] = [];
 
@@ -190,9 +193,67 @@ export function buildImpedanceBoundaries(
         vMin: face.vMin,
         vMax: face.vMax,
         impedance,
+        field,
       }),
     );
   }
 
   return { boundaries, warnings };
 }
+
+/** Key identifying one face rectangle of one box, shared by every boundary plan. */
+export function faceKey(boxIndex: number, axis: Axis, high: boolean, rect: FaceRect): string {
+  return `${boxIndex}:${axis}:${high ? 1 : 0}:${rect.uMin},${rect.uMax},${rect.vMin},${rect.vMax}`;
+}
+
+/**
+ * Rigid boundaries for every exposed face of an FDTD partition that no other
+ * boundary covers (#228).
+ *
+ * A DCT partition is rigid on its own — it mirrors — so the planners skip a
+ * face whose material absorbs nothing. An FDTD partition is not: it reads
+ * zero outside its array, which is a pressure-release wall, echo inverted. So
+ * each of its exposed faces needs a boundary even at α = 0, and an impedance
+ * boundary at ξ = ∞ is exactly the rigid mirror (β = 0, ghost = p). This
+ * fills in the faces the impedance plan skipped as rigid, the faces a PML
+ * plan gave no slab, and every face when the room was asked for without walls.
+ *
+ * `covered` holds the {@link faceKey} of every face another boundary already
+ * handles; the cover comes from the same `exposedFaceRects` both planners use,
+ * so the keys line up.
+ */
+export function buildRigidFdtdBoundaries(
+  grid: VoxelGrid,
+  decomposition: Decomposition,
+  partitions: readonly Partition[],
+  covered: ReadonlySet<string>,
+  field?: GlobalField,
+): ImpedanceBoundary[] {
+  const dims = [grid.nx, grid.ny, grid.nz];
+  const boundaries: ImpedanceBoundary[] = [];
+  for (let boxIndex = 0; boxIndex < decomposition.boxes.length; boxIndex++) {
+    if (decomposition.kinds[boxIndex] !== 'fdtd') continue;
+    const box = decomposition.boxes[boxIndex];
+    const partition = partitions[boxIndex];
+    for (let axis = Axis.X; axis <= Axis.Z; axis++) {
+      if (dims[axis] <= 1) continue;
+      for (const high of [false, true]) {
+        for (const rect of exposedFaceRects(grid, box, axis, high)) {
+          if (covered.has(faceKey(boxIndex, axis, high, rect))) continue;
+          boundaries.push(
+            new ImpedanceBoundary({
+              partition,
+              axis,
+              high,
+              ...rect,
+              impedance: Infinity,
+              field,
+            }),
+          );
+        }
+      }
+    }
+  }
+  return boundaries;
+}
+

@@ -162,8 +162,14 @@
  */
 
 import { impedanceForAbsorption as sharedImpedanceForAbsorption } from '../acoustics/reflection-coefficient';
-import { INTERFACE_DEPTH, addForceAtDepth, pressureAtDepth } from './interface';
-import { Axis, STENCIL_6TH, STENCIL_6TH_DIV, type Partition } from './partition';
+import {
+  INTERFACE_DEPTH,
+  addForceAtDepth,
+  pressureAtDepth,
+  reflectedAlongLine,
+  type GlobalField,
+} from './interface';
+import { Axis, STENCIL_6TH, STENCIL_6TH_DIV, transverseAxes, type Partition } from './partition';
 
 /** Normal-incidence pressure reflection coefficient of a real impedance. */
 export function reflectionForImpedance(xi: number): number {
@@ -249,6 +255,14 @@ export interface ImpedanceBoundaryParams {
   vMax: number;
   /** Normalized specific acoustic impedance. `Infinity` is a rigid wall. */
   impedance: number;
+  /**
+   * The room's pressure by global cell (#228). A face on a partition thinner
+   * than INTERFACE_DEPTH needs mirror cells that lie in the partition beyond
+   * it; without this they read zero, the stencil loses its −27 and 2 taps, and
+   * a one-cell sliver against an absorbing wall grows. Optional so a boundary
+   * on a thick partition, or in a unit test, is built exactly as before.
+   */
+  field?: GlobalField;
 }
 
 /**
@@ -269,8 +283,9 @@ export class ImpedanceBoundary {
   readonly vMax: number;
   readonly impedance: number;
 
-  /** Ghost depths this face can actually read, `min(3, extent along axis)`. */
+  /** Depths this face forces — the partition's own cells, `min(3, extent along axis)`. */
   readonly depth: number;
+  private readonly field: GlobalField | undefined;
 
   /** `β_k` per ghost depth. */
   private readonly beta: Float64Array;
@@ -281,7 +296,7 @@ export class ImpedanceBoundary {
   private readonly own: Float64Array;
 
   constructor(params: ImpedanceBoundaryParams) {
-    const { partition, axis, high, uMin, uMax, vMin, vMax, impedance } = params;
+    const { partition, axis, high, uMin, uMax, vMin, vMax, impedance, field } = params;
     if (uMax <= uMin || vMax <= vMin) {
       throw new Error(
         `An impedance boundary needs a positive face area, got ` +
@@ -306,6 +321,8 @@ export class ImpedanceBoundary {
 
     const extent = [partition.box.w, partition.box.h, partition.box.d][axis];
     this.depth = Math.min(INTERFACE_DEPTH, extent);
+    this.field = field;
+
 
     const courant = (partition.c * partition.dt) / partition.dx;
     this.beta = new Float64Array(INTERFACE_DEPTH);
@@ -337,7 +354,19 @@ export class ImpedanceBoundary {
 
   /** Accumulate this face's residual into the partition's forcing field. */
   apply(): void {
-    const { partition, axis, high, depth, beta, history, ghost, own } = this;
+    const { partition, axis, high, depth, beta, history, ghost, own, field } = this;
+    // Mirror cells past a thin partition come from the global field, walking
+    // inward from the face cell `inner` — reflecting off any wall the walk
+    // meets, so a run of air shorter than the stencil gets its even extension.
+    const inner = high
+      ? [partition.box.x, partition.box.y, partition.box.z][axis] +
+        [partition.box.w, partition.box.h, partition.box.d][axis] - 1
+      : [partition.box.x, partition.box.y, partition.box.z][axis];
+    const inward = high ? -1 : 1;
+    const [uAxis, vAxis] = transverseAxes(axis);
+    const origin: [number, number, number] = [0, 0, 0];
+    origin[axis] = inner;
+    const ghostDepth = field ? INTERFACE_DEPTH : depth;
     const scale = (partition.c * partition.c) / (STENCIL_6TH_DIV * partition.dx * partition.dx);
     const selfTerms = partition.includeSelfTerms;
     const uSpan = this.uMax - this.uMin;
@@ -347,12 +376,19 @@ export class ImpedanceBoundary {
         const base = ((gv - this.vMin) * uSpan + (gu - this.uMin)) * INTERFACE_DEPTH;
 
         for (let k = 0; k < INTERFACE_DEPTH; k++) {
-          if (k >= depth) {
+          if (k >= ghostDepth) {
             ghost[k] = 0;
             own[k] = 0;
             continue;
           }
-          const p = pressureAtDepth(partition, axis, high, k, gu, gv);
+          let p: number;
+          if (k < depth) {
+            p = pressureAtDepth(partition, axis, high, k, gu, gv);
+          } else {
+            origin[uAxis] = gu;
+            origin[vAxis] = gv;
+            p = reflectedAlongLine(field!, axis, origin, inward as 1 | -1, k) ?? 0;
+          }
           const b = beta[k];
           const g = ((1 - b) * p + b * history[base + k]) / (1 + b);
           history[base + k] = g + p;
