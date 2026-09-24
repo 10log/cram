@@ -246,6 +246,10 @@ export function createField2D(nx: number, ny: number): Field2D {
  * backward ghost at any gain, which is how the `γ = 1` bound that sets
  * {@link MAX_GHOST_GAIN} stays measured. {@link stepInteriorCell} takes the same
  * argument, and the tiling test pins the two together at both settings.
+ *
+ * `source`, if given, is added to each cell's velocity inside the update,
+ * before the centred divide: a soft source, and the forcing term `f` of the
+ * energy balance in `energy.ts` (#223). Absent is the unforced step, exactly.
  */
 export function stepField(
   field: Field2D,
@@ -253,6 +257,7 @@ export function stepField(
   damping: number,
   scratch: { pressure: Float64Array; velocity: Float64Array },
   maxGhostGain = MAX_GHOST_GAIN,
+  source?: Float64Array,
 ): void {
   const { nx, ny, pressure, velocity, channel, weightX, weightY } = field;
   const nextP = scratch.pressure;
@@ -291,7 +296,7 @@ export function stepField(
         }
       }
       const vel = applyCentredWallLoss(
-        courantSq * (sum - 4 * p) + v * damping,
+        courantSq * (sum - 4 * p) + v * damping + (source ? source[idx] : 0),
         v,
         courantSq,
         centredGain,
