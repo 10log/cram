@@ -142,7 +142,7 @@ function N(e, t) {
 		x: s - i * n,
 		y: c - i * n,
 		z: l - i * n
-	}, x = new Uint8Array(y), S = new Int32Array(y).fill(-1), C = g, w = g * _, T = n / 2;
+	}, x = new Uint8Array(y), S = new Int32Array(y).fill(-1), C = g, w = g * _, T = n / 2, E = T * (1 + 1e-7);
 	for (let t of e) {
 		let e = Math.min(t.ax, t.bx, t.cx), r = Math.min(t.ay, t.by, t.cy), i = Math.min(t.az, t.bz, t.cz), a = Math.max(t.ax, t.bx, t.cx), o = Math.max(t.ay, t.by, t.cy), s = Math.max(t.az, t.bz, t.cz), c = Math.max(0, Math.floor((e - T - b.x) / n)), l = Math.min(g - 1, Math.ceil((a + T - b.x) / n)), u = Math.max(0, Math.floor((r - T - b.y) / n)), d = Math.min(_ - 1, Math.ceil((o + T - b.y) / n)), f = Math.max(0, Math.floor((i - T - b.z) / n)), p = Math.min(v - 1, Math.ceil((s + T - b.z) / n));
 		for (let e = f; e <= p; e++) {
@@ -151,51 +151,51 @@ function N(e, t) {
 				let a = b.y + i * n, o = g * (i + _ * e);
 				for (let e = c; e <= l; e++) {
 					let i = b.x + e * n;
-					if (!M(t.ax - i, t.ay - a, t.az - r, t.bx - i, t.by - a, t.bz - r, t.cx - i, t.cy - a, t.cz - r, T, T, T)) continue;
+					if (!M(t.ax - i, t.ay - a, t.az - r, t.bx - i, t.by - a, t.bz - r, t.cx - i, t.cy - a, t.cz - r, E, E, E)) continue;
 					let s = o + e;
 					x[s] = 0, S[s] < 0 && (S[s] = t.surfaceIndex);
 				}
 			}
 		}
 	}
-	let E = e.length * 3, D = r ?? {
-		x: p / E,
-		y: m / E,
-		z: h / E
-	}, O = (e, t) => Math.min(t, Math.max(0, e)), k = O(Math.round((D.x - b.x) / n), g - 1), A = O(Math.round((D.y - b.y) / n), _ - 1), N = O(Math.round((D.z - b.z) / n), v - 1), F = k + g * (A + _ * N), L = new Int32Array(y), R = (e) => {
+	let D = e.length * 3, O = r ?? {
+		x: p / D,
+		y: m / D,
+		z: h / D
+	}, k = (e, t) => Math.min(t, Math.max(0, e)), A = k(Math.round((O.x - b.x) / n), g - 1), N = k(Math.round((O.y - b.y) / n), _ - 1), F = k(Math.round((O.z - b.z) / n), v - 1), L = A + g * (N + _ * F), R = new Int32Array(y), z = (e) => {
 		x.fill(0);
 		let t = 0;
-		L[t++] = e, x[e] = 1;
+		R[t++] = e, x[e] = 1;
 		let n = 1;
 		for (; t > 0;) {
-			let e = L[--t], n = e % g, i = (e - n) / g % _, a = Math.floor(e / w);
+			let e = R[--t], n = e % g, i = (e - n) / g % _, a = Math.floor(e / w);
 			n > 0 && r(e - 1), n < g - 1 && r(e + 1), i > 0 && r(e - C), i < _ - 1 && r(e + C), a > 0 && r(e - w), a < v - 1 && r(e + w);
 		}
 		function r(e) {
-			x[e] === 1 || S[e] >= 0 || (x[e] = 1, n++, L[t++] = e);
+			x[e] === 1 || S[e] >= 0 || (x[e] = 1, n++, R[t++] = e);
 		}
 		return {
 			airCount: n,
 			touchedRim: P(x, g, _, v)
 		};
-	}, z;
-	if (S[F] < 0) z = R(F);
+	}, B;
+	if (S[L] < 0) B = z(L);
 	else {
-		let e = I(S, g, _, v, k, A, N);
+		let e = I(S, g, _, v, A, N, F);
 		if (e.length === 0) throw Error("No free cell found near the seed point; the grid is entirely solid");
 		let t = null;
 		for (let n of e) {
-			let e = R(n);
+			let e = z(n);
 			if (!e.touchedRim) {
 				t = e;
 				break;
 			}
 			t === null && (t = e);
 		}
-		z = t, z.touchedRim && (z = R(e[0])), o.push("The seed point landed on a wall cell; the fill started from the nearest enclosed free cell instead.");
+		B = t, B.touchedRim && (B = z(e[0])), o.push("The seed point landed on a wall cell; the fill started from the nearest enclosed free cell instead.");
 	}
-	let B = z.airCount, V = z.touchedRim;
-	return V && o.push("The air fill reached the edge of the padded grid. The room surfaces do not close, or the seed point is outside them. The air region covers the whole bounding box and is not usable."), {
+	let V = B.airCount, H = B.touchedRim;
+	return H && o.push("The air fill reached the edge of the padded grid. The room surfaces do not close, or the seed point is outside them. The air region covers the whole bounding box and is not usable."), {
 		nx: g,
 		ny: _,
 		nz: v,
@@ -203,9 +203,9 @@ function N(e, t) {
 		origin: b,
 		cells: x,
 		surfaceOf: S,
-		airCount: B,
-		solidCount: y - B,
-		leaked: V,
+		airCount: V,
+		solidCount: y - V,
+		leaked: H,
 		warnings: o
 	};
 }
@@ -2455,4 +2455,4 @@ n("ADD_ARD", i(kt)), n("REMOVE_ARD", t), n("ARD_SET_PROPERTY", a), n("CALCULATE_
 //#endregion
 export { kt as ARD, kt as default };
 
-//# sourceMappingURL=ard-RZDf5D1t.mjs.map
+//# sourceMappingURL=ard-CUNdoKUq.mjs.map
