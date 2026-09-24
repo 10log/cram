@@ -142,6 +142,31 @@
  * ARD needed a *Courant* clamp for its version of this boundary, because its
  * residual forcing feeds back through a 6th-order stencil. This one needs
  * neither a Courant clamp nor, any longer, a coefficient clamp.
+ *
+ * ## Staircased walls (#220)
+ *
+ * A wall that is not axis-aligned is rasterized into a staircase, and every
+ * cell face of that staircase absorbs as though it were real surface. For a
+ * wall of unit normal `n`, the exposed face length per unit of wall is
+ * `|nₓ| + |n_y|` — √2 at 45° — so a slanted room absorbs over up to 41% more
+ * surface than it has, and its decay depends on how it is rotated.
+ *
+ * Following PFFDTD's voxelizer, each face's gain is weighted by `|n·e|`, the
+ * cosine between the wall and that face: `γ·|nₓ|` across an x-face, `γ·|n_y|`
+ * across a y-face ({@link wallFaceWeights}). The weighted length is then
+ * `nₓ² + n_y² = 1` per unit of wall, exactly. An axis-aligned wall has weights
+ * of 1 and 0: its faces into the room are unchanged, bit for bit, and only the
+ * end caps of a free-standing wall — which are not surface — become rigid.
+ *
+ * The weight is a diffuse-field argument, and it holds where the field is
+ * diffuse. On the irregular pentagon in `__tests__/staircase.spec.ts`, at 0°,
+ * 25° and 55°, uncorrected walls decay 9–15% faster than even the diffuse end
+ * of the 2D Eyring bracket allows; weighted, every rotation lands 7–14% above
+ * that end, inside the bracket. (An earlier probe on a larger grid, over 0–75°
+ * and a second irregular room, found the same: 8–22% below uncorrected, inside
+ * weighted, and the spread across rotations roughly halved.) A square room at exactly 45° is the exception: its decay
+ * is held by a handful of modes striking a perfectly periodic staircase at one
+ * angle, not by a diffuse field, and the weight over-corrects it.
  */
 
 import { impedanceForAbsorption } from '../acoustics/reflection-coefficient';
@@ -248,6 +273,62 @@ export function splitGhostGain(
     backward: Math.min(gamma, maxGhostGain),
     centred: Math.max(gamma - maxGhostGain, 0),
   };
+}
+
+/**
+ * Face weights `|n·e|` for a wall from `(x1, y1)` to `(x2, y2)` (#220).
+ *
+ * `x` weighs the wall's faces seen across the x axis (its left and right
+ * neighbours), `y` those seen across y. They are the components of the wall's
+ * unit normal: `|Δy|/L` and `|Δx|/L`. A wall of no length has no direction to
+ * correct for and keeps weights of 1, the uncorrected wall.
+ */
+export function wallFaceWeights(wall: {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+}): { x: number; y: number } {
+  const dx = wall.x2 - wall.x1;
+  const dy = wall.y2 - wall.y1;
+  const length = Math.hypot(dx, dy);
+  if (!(length > 0)) return { x: 1, y: 1 };
+  return { x: Math.abs(dy) / length, y: Math.abs(dx) / length };
+}
+
+/**
+ * Wallmap channel value for a face weight: `1 − w`.
+ *
+ * Stored as the complement so the texture's zero — what `createTexture`
+ * allocates, and what an air cell holds — means weight 1, the uncorrected
+ * wall. A wallmap that was never written, or never bound, degrades to the
+ * boundary as it was before #220 rather than to a room of rigid walls.
+ */
+export function faceWeightChannel(weight: number): number {
+  return 1 - weight;
+}
+
+/** Inverse of {@link faceWeightChannel}; the shader does the same `1.0 - c`. */
+export function faceWeightFromChannel(channel: number): number {
+  return 1 - channel;
+}
+
+/**
+ * Wallmap texel for one wall: its x-face weight in `r`, y-face in `g`, both
+ * as {@link faceWeightChannel}. A disabled wall is air and writes zeros, the
+ * texture's resting value. Factored out of `updateWalls` for the same reason
+ * as {@link wallChannelFor}: the solver itself needs a WebGL context.
+ */
+export function wallmapTexelFor(wall: {
+  enabled: boolean;
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+}): { r: number; g: number } {
+  if (!wall.enabled) return { r: 0, g: 0 };
+  const weights = wallFaceWeights(wall);
+  return { r: faceWeightChannel(weights.x), g: faceWeightChannel(weights.y) };
 }
 
 /**

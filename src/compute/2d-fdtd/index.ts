@@ -47,6 +47,7 @@ import {
   AIR_CHANNEL,
   FDTD_CELLS_PER_WAVELENGTH_FOR_IMPEDANCE,
   wallChannelFor,
+  wallmapTexelFor,
   withGhostGainDefine,
 } from "./impedance";
 import { DEFAULT_DAMPING, FDTD_REFERENCE_FREQUENCY } from "./index-constants";
@@ -116,6 +117,8 @@ class FDTD_2D extends Solver {
   heightmapVariable!: Variable;
   sourcemapVariable!: Variable;
   sourcemap!: DataTexture;
+  /** Staircase face weights per wall cell, as `1 − w` (#220). */
+  wallmap!: DataTexture;
   readLevelShader!: ShaderMaterial;
   readLevelImage!: Uint8Array;
   readLevelRenderTarget!: WebGLRenderTarget;
@@ -348,6 +351,8 @@ class FDTD_2D extends Solver {
 
     let heightmapInit = this.gpuCompute.createTexture();
     this.sourcemap = this.gpuCompute.createTexture();
+    // All zero, which is weight 1 everywhere until updateWalls writes a wall.
+    this.wallmap = this.gpuCompute.createTexture();
     this.fillSourceTexture();
     this.updateSourceTexture();
     this.fillTexture(heightmapInit);
@@ -359,6 +364,7 @@ class FDTD_2D extends Solver {
     this.gpuCompute.setVariableDependencies(this.heightmapVariable, [this.heightmapVariable]);
 
     (this.heightmapVariable.material as ShaderMaterial).uniforms["sourcemap"] = { value: this.sourcemap };
+    (this.heightmapVariable.material as ShaderMaterial).uniforms["wallmap"] = { value: this.wallmap };
 
     (this.heightmapVariable.material as ShaderMaterial).uniforms["mousePos"] = { value: new Vector2(5, 5) };
 
@@ -424,6 +430,7 @@ class FDTD_2D extends Solver {
     }
     this.readLevelRenderTarget?.dispose();
     this.sourcemap?.dispose();
+    this.wallmap?.dispose();
     this.clearShader?.dispose();
     this.readLevelShader?.dispose();
     disposeGpuCompute(this.gpuCompute);
@@ -620,22 +627,39 @@ class FDTD_2D extends Solver {
   updateWalls() {
     const data = this.sourcemap.image.data;
     if (!data) return;
+    // The staircase weights are a correction on top of the walls, so a
+    // missing wallmap must not stop absorption itself from updating: the
+    // sourcemap is still written, and the walls run uncorrected.
+    const weights = this.wallmap?.image?.data;
+    if (!weights) {
+      console.warn('FDTD 2D: wallmap missing; walls are written without staircase correction (#220).');
+    }
     for (let i = 0; i < this.walls.length; i++) {
       const wall = this.walls[i];
       if (wall.shouldClearPreviousCells) {
         for (let j = 0; j < wall.previousCells.length; j++) {
           const index = 4 * (wall.previousCells[j][1] * this.nx + wall.previousCells[j][0]);
           data[index + 2] = AIR_CHANNEL;
+          if (weights) {
+            weights[index + 0] = 0;
+            weights[index + 1] = 0;
+          }
         }
         wall.shouldClearPreviousCells = false;
       }
       const channel = wallChannelFor(wall, this.courant);
+      const texel = wallmapTexelFor(wall);
       for (let j = 0; j < wall.cells.length; j++) {
         const index = 4 * (wall.cells[j][1] * this.nx + wall.cells[j][0]);
         data[index + 2] = channel;
+        if (weights) {
+          weights[index + 0] = texel.r;
+          weights[index + 1] = texel.g;
+        }
       }
     }
     this.sourcemap.needsUpdate = true;
+    if (weights) this.wallmap.needsUpdate = true;
   }
 
   updateSourceTexture() {
@@ -727,6 +751,7 @@ class FDTD_2D extends Solver {
       this.updateSourceTexture();
 
       this.heightmapVariable.material["uniforms"]["sourcemap"].value = this.sourcemap;
+      this.heightmapVariable.material["uniforms"]["wallmap"].value = this.wallmap;
 
       // Do the gpu computation
       this.gpuCompute.compute();
