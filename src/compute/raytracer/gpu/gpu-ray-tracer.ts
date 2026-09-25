@@ -12,6 +12,9 @@ import shaderSource from './ray-trace.wgsl?raw';
 // ─── Constants matching WGSL ─────────────────────────────────────────
 
 const MAX_BOUNCES = 64;
+// Chain slots per ray: wall bounces and receiver crossings share them since
+// rays pass through receivers (#242), so twice the bounces.
+const CHAIN_SLOTS = 128;
 const MAX_BANDS = 7;
 const WORKGROUP_SIZE = 64;
 
@@ -32,6 +35,75 @@ const CHAIN_ENTRY_BYTES = CHAIN_ENTRY_FLOATS * 4;
 // 8 u32/f32 + rrThreshold + 3 pad + 2×vec4 airAttPacked = 20 floats (80 bytes)
 const PARAMS_FLOATS = 20;
 const PARAMS_BYTES = PARAMS_FLOATS * 4;
+
+/**
+ * One traced ray. `path` is its own path, wall bounces only, or null if it
+ * hit no wall; `arrivals` every receiver it crossed, in order (#242).
+ */
+export interface GpuRayResult {
+  path: RayPath | null;
+  arrivals: RayPath[];
+}
+
+/**
+ * Splits a kernel chain, where receiver crossings are interleaved with wall
+ * bounces (#242), into the ray's own path and one arrival per crossing, as
+ * the CPU's `traceRay` does with an arrivals collector (#234).
+ *
+ * Each arrival's chain is the walls before it plus the receiver entry, whose
+ * energy the kernel recorded as it reached the receiver. It arrives from the
+ * previous wall's point (or the ray's origin) along a straight segment.
+ */
+export function splitRayChain(
+  chain: Chain[],
+  isReceiver: boolean[],
+  origin: [number, number, number],
+  finalBandEnergy: BandEnergy,
+  initialPhi: number,
+  initialTheta: number,
+): GpuRayResult {
+  const mean = (e: BandEnergy) => (e.length > 0 ? e.reduce((a, b) => a + b, 0) / e.length : 0);
+  const walls: Chain[] = [];
+  const arrivals: RayPath[] = [];
+  for (let c = 0; c < chain.length; c++) {
+    const hop = chain[c];
+    if (!isReceiver[c]) {
+      walls.push(hop);
+      continue;
+    }
+    const from = walls.length > 0 ? walls[walls.length - 1].point : origin;
+    const dir = [from[0] - hop.point[0], from[1] - hop.point[1], from[2] - hop.point[2]];
+    const len = Math.hypot(dir[0], dir[1], dir[2]) || 1;
+    const arrivalChain = [...walls, hop];
+    const arrivalEnergy = hop.bandEnergy ?? [];
+    arrivals.push({
+      intersectedReceiver: true,
+      chain: arrivalChain,
+      chainLength: arrivalChain.length,
+      energy: mean(arrivalEnergy),
+      bandEnergy: [...arrivalEnergy],
+      time: 0, // Computed by caller
+      source: '', // Filled in by caller
+      initialPhi,
+      initialTheta,
+      totalLength: 0, // Computed by caller
+      arrivalDirection: [dir[0] / len, dir[1] / len, dir[2] / len],
+    });
+  }
+  const path: RayPath | null = walls.length === 0 ? null : {
+    intersectedReceiver: false,
+    chain: walls,
+    chainLength: walls.length,
+    energy: mean(finalBandEnergy),
+    bandEnergy: finalBandEnergy,
+    time: 0,
+    source: '',
+    initialPhi,
+    initialTheta,
+    totalLength: 0,
+  };
+  return { path, arrivals };
+}
 
 export interface GpuRayTracerConfig {
   reflectionOrder: number;
@@ -81,10 +153,10 @@ export class GpuRayTracer {
     this.config = config;
 
     // Clamp batchSize to fit within device storage buffer limits.
-    // The chain buffer is the largest: batchSize × MAX_BOUNCES × CHAIN_ENTRY_BYTES.
+    // The chain buffer is the largest: batchSize × CHAIN_SLOTS × CHAIN_ENTRY_BYTES.
     const maxStorageBinding = ctx.device.limits.maxStorageBufferBindingSize;
     const maxBufSize = ctx.device.limits.maxBufferSize;
-    const perRayChainBytes = MAX_BOUNCES * CHAIN_ENTRY_BYTES;
+    const perRayChainBytes = CHAIN_SLOTS * CHAIN_ENTRY_BYTES;
     const maxByLimits = Math.floor(Math.min(maxStorageBinding, maxBufSize) / perRayChainBytes);
     if (maxByLimits < 1) {
       console.error('[GPU RT] Device storage limits too small for even a single ray chain buffer');
@@ -124,7 +196,7 @@ export class GpuRayTracer {
     // Per-dispatch buffers
     const inputBytes = batchSize * RAY_INPUT_BYTES;
     const outputBytes = batchSize * RAY_OUTPUT_BYTES;
-    const chainBytes = batchSize * MAX_BOUNCES * CHAIN_ENTRY_BYTES;
+    const chainBytes = batchSize * CHAIN_SLOTS * CHAIN_ENTRY_BYTES;
 
     this.gpuRayInputs = this.device.createBuffer({
       size: inputBytes,
@@ -168,7 +240,7 @@ export class GpuRayTracer {
     rayInputs: Float32Array,
     rayCount: number,
     batchSeed: number,
-  ): Promise<(RayPath | null)[]> {
+  ): Promise<GpuRayResult[]> {
     if (!this.device || !this.pipeline || !this.sceneBuf || !this.config) {
       throw new Error('[GPU RT] Not initialized');
     }
@@ -236,7 +308,7 @@ export class GpuRayTracer {
 
     // Copy outputs to readback
     const outputBytes = rayCount * RAY_OUTPUT_BYTES;
-    const chainBytes = rayCount * MAX_BOUNCES * CHAIN_ENTRY_BYTES;
+    const chainBytes = rayCount * CHAIN_SLOTS * CHAIN_ENTRY_BYTES;
     encoder.copyBufferToBuffer(this.gpuRayOutputs!, 0, this.gpuReadbackOutput!, 0, outputBytes);
     encoder.copyBufferToBuffer(this.gpuChainBuffer!, 0, this.gpuReadbackChain!, 0, chainBytes);
 
@@ -252,7 +324,7 @@ export class GpuRayTracer {
     this.gpuReadbackOutput!.unmap();
     this.gpuReadbackChain!.unmap();
 
-    // Parse results into RayPath[]
+    // Split each ray's chain into its own path and its arrivals
     return this.parseResults(outputData, chainData, rayInputs, rayCount, numBands);
   }
 
@@ -262,38 +334,26 @@ export class GpuRayTracer {
     rayInputs: Float32Array,
     rayCount: number,
     numBands: number,
-  ): (RayPath | null)[] {
+  ): GpuRayResult[] {
     // Returns a fixed-length array (1:1 with input rays) so callers can
-    // map each result back to the correct source by index.  Entries are
-    // null for rays that produced no intersections (chainLength === 0).
-    const paths: (RayPath | null)[] = new Array(rayCount);
+    // map each result back to the correct source by index.
+    const results: GpuRayResult[] = new Array(rayCount);
     const scene = this.sceneBuf!;
 
     for (let r = 0; r < rayCount; r++) {
       const outOff = r * RAY_OUTPUT_FLOATS;
       const outU32 = new Uint32Array(outputData.buffer, outOff * 4, RAY_OUTPUT_FLOATS);
       const chainLength = outU32[0];
-      const intersectedReceiver = outU32[1] !== 0;
-
-      if (chainLength === 0) {
-        paths[r] = null;
-        continue;
-      }
-
-      const arrivalDir: [number, number, number] = [
-        outputData[outOff + 3],
-        outputData[outOff + 4],
-        outputData[outOff + 5],
-      ];
 
       const finalBandEnergy: BandEnergy = [];
       for (let b = 0; b < numBands; b++) {
         finalBandEnergy.push(outputData[outOff + 8 + b]);
       }
 
-      // Parse chain entries
+      // Parse chain entries: wall bounces and receiver crossings, in order.
       const chain: Chain[] = [];
-      const chainBase = r * MAX_BOUNCES;
+      const isReceiver: boolean[] = [];
+      const chainBase = r * CHAIN_SLOTS;
       for (let c = 0; c < chainLength; c++) {
         const cOff = (chainBase + c) * CHAIN_ENTRY_FLOATS;
         const cU32 = new Uint32Array(chainData.buffer, cOff * 4, CHAIN_ENTRY_FLOATS);
@@ -317,8 +377,10 @@ export class GpuRayTracer {
           // Receiver
           const recIdx = surfaceIndex - scene.surfaceCount;
           objectUuid = scene.receiverUuidMap[recIdx] ?? '';
+          isReceiver.push(true);
         } else {
           objectUuid = scene.surfaceUuidMap[surfaceIndex] ?? '';
+          isReceiver.push(false);
         }
 
         chain.push({
@@ -336,29 +398,14 @@ export class GpuRayTracer {
 
       // Read source data from ray input
       const inOff = r * RAY_INPUT_FLOATS;
+      const origin: [number, number, number] = [rayInputs[inOff], rayInputs[inOff + 1], rayInputs[inOff + 2]];
       const initialPhi = rayInputs[inOff + 6];
       const initialTheta = rayInputs[inOff + 7];
 
-      // Total energy (mean across bands)
-      const totalE = finalBandEnergy.reduce((a, b) => a + b, 0);
-      const meanE = numBands > 0 ? totalE / numBands : 0;
-
-      paths[r] = {
-        intersectedReceiver,
-        chain,
-        chainLength: chain.length,
-        energy: meanE,
-        bandEnergy: finalBandEnergy,
-        time: 0, // Computed by caller (stop())
-        source: '', // Filled in by caller
-        initialPhi,
-        initialTheta,
-        totalLength: 0, // Computed by caller
-        arrivalDirection: intersectedReceiver ? arrivalDir : undefined,
-      };
+      results[r] = splitRayChain(chain, isReceiver, origin, finalBandEnergy, initialPhi, initialTheta);
     }
 
-    return paths;
+    return results;
   }
 
   dispose(): void {
