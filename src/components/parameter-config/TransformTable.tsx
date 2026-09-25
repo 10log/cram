@@ -11,6 +11,7 @@ import { emit } from "../../messenger";
 import { useContainer } from "../../store";
 import Container from "../../objects/container";
 import useToggle from "../hooks/use-toggle";
+import useNumberDraft from "../hooks/use-number-draft";
 
 type SetPropertyEvent =
   | "ROOM_SET_PROPERTY"
@@ -129,6 +130,15 @@ const TransformInput = ({ uuid, property, event }: TransformInputProps) => {
   const propertyRef = useRef(property);
   const eventRef = useRef(event);
 
+  // Typed text is held as a draft so "-", "." and "" survive mid-typing (#90)
+  const draft = useNumberDraft(value, (displayValue) => {
+    const emitValue = isRot ? displayValue * DEG2RAD : displayValue;
+    // @ts-ignore - property is valid for all container types
+    emit(event, { uuid, property, value: emitValue });
+  });
+  const clearDraftRef = useRef(draft.clearDraft);
+  clearDraftRef.current = draft.clearDraft;
+
   // Keep refs in sync
   valueRef.current = value;
   uuidRef.current = uuid;
@@ -142,6 +152,7 @@ const TransformInput = ({ uuid, property, event }: TransformInputProps) => {
 
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
+      clearDraftRef.current();
       const delta = e.deltaY < 0 ? 1 : -1;
       const displayValue = valueRef.current + delta;
       const emitValue = isRot ? displayValue * DEG2RAD : displayValue;
@@ -155,23 +166,16 @@ const TransformInput = ({ uuid, property, event }: TransformInputProps) => {
     return () => input.removeEventListener("wheel", handleWheel);
   }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const displayValue = e.currentTarget.valueAsNumber;
-    const emitValue = isRot ? displayValue * DEG2RAD : displayValue;
-    if (!Number.isNaN(emitValue)) {
-      // @ts-ignore - property is valid for all container types
-      emit(event, { uuid, property, value: emitValue });
-    }
-  };
-
   return (
     <TextField
       inputRef={inputRef}
       type="number"
       size="small"
       variant="outlined"
-      value={value}
-      onChange={handleChange}
+      value={draft.text}
+      onChange={draft.onChange}
+      onBlur={draft.onBlur}
+      onKeyDown={draft.onKeyDown}
       slotProps={{
         htmlInput: {
           step: 1,
