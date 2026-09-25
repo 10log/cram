@@ -20,6 +20,7 @@ import { addSolver, callSolverMethod, removeSolver, setSolverProperty, useContai
 import { ResultKind, useResult } from "../../store/result-store";
 import {cramangle2threejsangle, worldDirToCramAngles} from "../../common/dir-angle-conversions";
 import { lookingBackArrivalDirection } from "../../common/arrival-direction";
+import { removeGlobalVarsByUuid } from "../../common/global-vars";
 import { audioEngine } from "../../audio-engine/audio-engine";
 import observe, { Observable } from "../../common/observable";
 import { encodeBufferFromDirection, getAmbisonicChannelCount } from "ambisonics";
@@ -438,11 +439,7 @@ class RayTracer extends Solver {
     }
     this._disposeGpu();
     this.removeMessageHandlers();
-    Object.keys(window.vars).forEach(key=>{
-      if(window.vars[key]['uuid']===this.uuid){
-        delete window.vars[key];
-      }
-    })
+    removeGlobalVarsByUuid(this.uuid);
     renderer.scene.remove(this.rays);
     renderer.scene.remove(this.hits);
   }
