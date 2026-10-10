@@ -20,7 +20,7 @@ import type { IJsonModel } from 'flexlayout-react';
 export const DEFAULT_LAYOUT: IJsonModel = {
   global: {
     // v0.9 removed the `splitterSize` global attribute; size is now the
-    // `--splitter-size` CSS var (see workbenchTheme.css).
+    // `--fl-splitter-size` CSS var (see workbenchTheme.css).
     tabEnablePopout: false,
     tabEnableRename: false,
     tabSetMinHeight: 100,
