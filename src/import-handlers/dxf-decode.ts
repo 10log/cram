@@ -116,7 +116,7 @@ export function decodeDxf(data: string): DecodedDxf {
     parsedData = new DxfParser().parseSync(data);
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);
-    throw new Error(`Could not parse DXF file: ${detail}`);
+    throw new Error(`Could not parse DXF file: ${detail}`, { cause: err });
   }
   if (!parsedData) {
     throw new Error("Could not parse DXF file: the parser returned no data.");

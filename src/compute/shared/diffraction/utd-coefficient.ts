@@ -179,8 +179,6 @@ export function utdDiffractionCoefficient(
   };
 
   // Sum the four terms: |D|²
-  let Dsq = 0;
-
   // Term 1: cot((pi + (phiR - phiS)) / (2n)) * F(kL a+(phiR - phiS))
   const a1 = aFunc(1, phiReceiver, -1, phiSource);
   const cot1 = cotTerm(n, 1, phiReceiver, -1, phiSource);
@@ -204,7 +202,7 @@ export function utdDiffractionCoefficient(
   // |D|² ∝ (1/(2n))² * (sum of |cot * F|)² / (2*pi*k)
   const prefactor = 1 / (2 * n * sqrt(2 * PI * k));
   const sumTerms = cot1 * F1 + cot2 * F2 + cot3 * F3 + cot4 * F4;
-  Dsq = prefactor * prefactor * sumTerms * sumTerms;
+  const Dsq = prefactor * prefactor * sumTerms * sumTerms;
 
   // Spreading factor A² = rho / (s * (s + rho))
   // where rho = s' for cylindrical spreading from edge

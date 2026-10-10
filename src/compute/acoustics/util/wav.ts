@@ -224,7 +224,7 @@ interface DecodeResult {
 
 export function decode(buffer: ArrayBuffer | { buffer: ArrayBuffer; byteOffset: number; length: number }): DecodeResult | undefined {
   let pos = 0,
-    end = 0;
+    end: number;
   let arrayBuffer: ArrayBuffer;
   if ('buffer' in buffer) {
     // If we are handed a typed array or a buffer, then we have to consider the

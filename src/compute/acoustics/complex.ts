@@ -6,8 +6,8 @@ export class Complex {
   public imag: number;
 
   constructor(params: any) {
-    let real = 0;
-    let imag = 0;
+    let real: number;
+    let imag: number;
 
     // Euclidean
     if ('real' in params && 'imag' in params) {

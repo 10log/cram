@@ -113,8 +113,7 @@ export class Node {
         continue;
       }
       if (!node.plane) {
-        let index = 0; // default
-        index = Math.floor(polygontreenodes.length / 2);
+        const index = Math.floor(polygontreenodes.length / 2);
         //index = polygontreenodes.length >> 1
         //index = Math.floor(Math.random()*polygontreenodes.length)
         let bestplane = polygontreenodes[index].getPolygon().plane;

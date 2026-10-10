@@ -57,7 +57,7 @@ function linearBufferToPathsV1(linearBuffer: Float32Array): KVP<RayPath[]> {
     const faceIndex = chainItem[o++];
     const faceMaterialIndex = chainItem[o++];
     const faceNormal = [chainItem[o++], chainItem[o++], chainItem[o++]];
-    const point = [chainItem[o++], chainItem[o++], chainItem[o++]];
+    const point = [chainItem[o++], chainItem[o++], chainItem[o]];
     return {
       object,
       angle,

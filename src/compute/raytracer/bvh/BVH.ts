@@ -15,7 +15,7 @@ export class BVH {
 			rayOrigin = BVHVector3.fromAny(rayOrigin);
 			rayDirection = BVHVector3.fromAny(rayDirection);
 		} catch(error) {
-			throw new TypeError("Origin or Direction couldn't be converted to a BVHVector3.");
+			throw new TypeError("Origin or Direction couldn't be converted to a BVHVector3.", { cause: error });
 		}
 		const nodesToIntersect:BVHNode[] = [this.rootNode];
 		const trianglesInIntersectingNodes:number[] = []; // a list of nodes that intersect the ray (according to their bounding box)

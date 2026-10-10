@@ -163,10 +163,9 @@ export class OBJLoader {
 				throw new Error(`Two many values (separated by /) for a single vertex`);
 			}
 
-			let vertexIndex = 0;
 			let textureCoordsIndex = 0;
 			let vertexNormalIndex = 0;
-			vertexIndex = parseInt(vertexValues[0], 10);
+			let vertexIndex = parseInt(vertexValues[0], 10);
 			if (vertexValues.length > 1 && vertexValues[1] !== "") {
 				textureCoordsIndex = parseInt(vertexValues[1], 10);
 			}
