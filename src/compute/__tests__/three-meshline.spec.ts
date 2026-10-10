@@ -2,18 +2,20 @@ import * as THREE from 'three';
 import { MeshLine } from 'three.meshline';
 
 /**
- * Why the setPoints declaration in src/types/modules.d.ts only accepts Float32Array.
+ * The three.meshline behaviour behind the setPoints declaration in src/types/modules.d.ts.
  *
- * three.meshline reaches three through require(), which resolves to three's CommonJS
- * build, while CRAM imports it and gets the ESM build. three's exports map makes those
- * two separate modules with two separate Vector3 classes, so the library's
- * `points[0] instanceof THREE.Vector3` guard can never match a Vector3 constructed here.
- * A Vector3 array therefore falls through to the flat-number branch and is read as
- * coordinates, yielding NaN positions rather than a line.
+ * three.meshline reaches three through require(). Up to r185 that resolved to three's
+ * separate CommonJS build, while CRAM imports the ESM build — two modules, two Vector3
+ * classes — so the library's `points[0] instanceof THREE.Vector3` guard never matched and
+ * a Vector3 array was read as flat numbers, yielding NaN positions.
  *
- * These tests deliberately exercise the real library against real three — no mocks. If
- * the Vector3 case ever starts producing sane geometry, the dependency has been fixed or
- * replaced and the type can be widened again.
+ * r186 deprecated the CommonJS build: build/three.cjs now re-exports the ES module via
+ * require(esm), so both paths share one instance and the Vector3 case works. The last
+ * two tests pin that. The declaration still only accepts Float32Array: every caller
+ * passes one, and three says the CommonJS entry will be removed, at which point the
+ * library's require('three') stops resolving in Node at all.
+ *
+ * These tests deliberately exercise the real library against real three — no mocks.
  */
 describe('three.meshline setPoints', () => {
   const path = [
@@ -52,23 +54,25 @@ describe('three.meshline setPoints', () => {
     expect((line as any).attributes.position.count).toBe(0);
   });
 
-  // The reason the declared type excludes Vector3[]. Not aspirational — this is what the
-  // installed version does today, and it fails silently.
-  it('silently corrupts a Vector3 array, which is why the type forbids one', () => {
+  // Up to r185 this silently produced NaN positions (see the header).
+  it('builds correct geometry from a Vector3 array since three r186', () => {
     const line = new MeshLine();
     const vectors = path.map(([x, y, z]) => new THREE.Vector3(x, y, z));
 
     // @ts-expect-error - passing the shape the declaration deliberately rejects
     line.setPoints(vectors);
 
-    const positions = positionsOf(line);
-    expect((line as any).attributes.position.count).not.toBe(vectors.length * 2);
-    expect(positions.every((n) => Number.isFinite(n))).toBe(false);
+    expect((line as any).attributes.position.count).toBe(vectors.length * 2);
+    expect(positionsOf(line)).toEqual([
+      0, 0, 0, 0, 0, 0,
+      1, 0, 0, 1, 0, 0,
+      1, 1, 0, 1, 1, 0,
+    ]);
   });
 
-  it('does not share a three instance with CRAM, which is the root cause', () => {
-    // MeshLine extends THREE.BufferGeometry in its own source, yet is not an instance of
-    // the BufferGeometry CRAM imports — two copies of three, two class identities.
-    expect(new MeshLine() instanceof THREE.BufferGeometry).toBe(false);
+  it('shares a three instance with CRAM since three r186', () => {
+    // MeshLine extends THREE.BufferGeometry in its own source. Up to r185 it was not an
+    // instance of the BufferGeometry CRAM imports — two copies of three.
+    expect(new MeshLine() instanceof THREE.BufferGeometry).toBe(true);
   });
 });

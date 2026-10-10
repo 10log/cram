@@ -112,6 +112,7 @@ export class Receiver extends Container {
 
   dispose(){
     renderer.remove(this);
+    super.dispose();
   }
   save() {
     const name = this.name;

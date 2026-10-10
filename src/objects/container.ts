@@ -69,7 +69,11 @@ export default class Container extends THREE.Group {
     this.uuid = state.uuid;
     return this;
   }
-  dispose() {}
+  // three r186 added Object3D.dispose(), which fires the 'dispose' event the
+  // renderers listen on to free per-object state. Overrides must call it.
+  dispose() {
+    super.dispose();
+  }
   onModeChange(_mode: EditorModes) {}
   select() {
     this.selectChildren();
