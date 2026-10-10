@@ -7,7 +7,7 @@ on:
       - 'src/**'
       - 'package.json'
       - 'package-lock.json'
-      - 'vite.config.ts'
+      - 'vite.config.mts'
       - 'tsconfig*.json'
 
 jobs:

@@ -253,7 +253,7 @@ Not one worker *per partition*, though. The reference parallelizes over
 partitions with `std::thread` and a per-step fork-join barrier, and the browser
 equivalent would want `SharedArrayBuffer` — which requires
 `Cross-Origin-Opener-Policy` and `Cross-Origin-Embedder-Policy` response headers.
-Setting those in `vite.config.ts` would be trivial, but **CRAM ships as a
+Setting those in `vite.config.mts` would be trivial, but **CRAM ships as a
 consumable library** (`package.json` `main`/`module`/`exports`,
 `files: ["dist", "src/lib"]`, `build:lib` with `src/lib/index.ts` as entry). That
 would impose cross-origin isolation on every host application embedding CRAM, and

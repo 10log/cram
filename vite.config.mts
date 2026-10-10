@@ -3,6 +3,10 @@ import react from '@vitejs/plugin-react';
 import dts from 'vite-plugin-dts';
 import path from 'path';
 import { copyFileSync, mkdirSync, existsSync, createReadStream } from 'fs';
+import { fileURLToPath } from 'url';
+
+// ESM has no __dirname; this config is loaded as an ES module (.mts).
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const JSCAD_MODELING_BUNDLE = path.resolve(__dirname, 'src/compute/modeling/jscad-modeling-bundle.js');
 // The URL modeling/v2.ts imports it from at runtime (window.location.origin + this).
