@@ -1,6 +1,6 @@
 import Solver from "../solver";
 import * as THREE from "three";
-import { MeshLine } from "three.meshline";
+import { MeshLineGeometry } from "meshline";
 import { v4 as uuidv4 } from "uuid";
 import { Source3D, Solver3D } from "beam-trace";
 import type {
@@ -725,7 +725,7 @@ export class BeamTraceSolver extends Solver {
     this.quickEstimateResults = [];
     this.estimatedT30 = null;
     this.clearLevelTimeProgressionData();
-    (this.selectedPath.geometry as MeshLine).setPoints(new Float32Array(0));
+    (this.selectedPath.geometry as MeshLineGeometry).setPoints(new Float32Array(0));
     this.clearSelectedBeams();
     renderer.needsToRender = true;
   }
@@ -842,7 +842,7 @@ export class BeamTraceSolver extends Solver {
   }
 
   clearPathHighlight() {
-    (this.selectedPath.geometry as MeshLine).setPoints(new Float32Array(0));
+    (this.selectedPath.geometry as MeshLineGeometry).setPoints(new Float32Array(0));
     this.clearSelectedBeams();
     renderer.needsToRender = true;
   }

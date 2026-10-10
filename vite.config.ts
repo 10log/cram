@@ -136,7 +136,7 @@ export default defineConfig(({ command, mode }) => {
             // Externalize three.js (consuming app provides it)
             'three',
             'three-mesh-bvh',
-            'three.meshline',
+            'meshline',
           ],
           output: {
             globals: {

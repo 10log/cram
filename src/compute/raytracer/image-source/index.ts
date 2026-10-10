@@ -2,7 +2,7 @@ import Solver from "../../solver";
 import { renderer } from "../../../render/renderer";
 import { v4 as uuid } from 'uuid';
 import * as THREE from "three";
-import { MeshLine, MeshLineMaterial } from 'three.meshline';
+import { MeshLineGeometry, MeshLineMaterial } from 'meshline';
 import * as ac from "../../acoustics";
 import Room, { getRooms } from "../../../objects/room";
 import { emit, messenger, on } from "../../../messenger";
@@ -30,12 +30,14 @@ import {
 import { SolverOverlay } from "./overlay";
 
 function createLine(){
-  const line = new MeshLine();
+  const line = new MeshLineGeometry();
   line.setPoints(new Float32Array(0));
   const material = new MeshLineMaterial({
     lineWidth: 0.1,
     color: 0xff0000,
-    sizeAttenuation: 1, 
+    sizeAttenuation: 1,
+    // three.meshline's default; meshline's types require it explicitly.
+    resolution: new THREE.Vector2(1, 1),
   });
   return new THREE.Mesh(line, material);
 }
@@ -412,7 +414,7 @@ export class ImageSourceSolver extends Solver {
     }
 
     updateSelectedImageSourcePath(imageSourcePath: ImageSourcePath){
-      (this.selectedImageSourcePath.geometry as unknown as MeshLine).setPoints(
+      (this.selectedImageSourcePath.geometry as unknown as MeshLineGeometry).setPoints(
         new Float32Array(imageSourcePath.path.map(x=>x.point.toArray()).flat())
       );
       // (this.selectedImageSourcePath.geometry as LineGeometry).setFromPoints(
@@ -608,7 +610,7 @@ export class ImageSourceSolver extends Solver {
       this.allRayPaths = null;  
       this.validRayPaths = null; 
       this.plotOrders = (this.possibleOrders).map((e)=>e.value); 
-      (this.selectedImageSourcePath.geometry as unknown as MeshLine).setPoints(new Float32Array(0));
+      (this.selectedImageSourcePath.geometry as unknown as MeshLineGeometry).setPoints(new Float32Array(0));
       this.clearImageSources(); 
       this.clearRayPaths(); 
       this.clearLevelTimeProgressionData();

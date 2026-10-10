@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { MeshLine, MeshLineMaterial } from "three.meshline";
+import { MeshLineGeometry, MeshLineMaterial } from "meshline";
 import chroma from "chroma-js";
 import type { BeamVisualizationData, Solver3D } from "beam-trace";
 import Receiver from "../../objects/receiver";
@@ -17,12 +17,14 @@ export function getOrderColor(order: number, maxOrder: number): number {
 }
 
 export function createHighlightLine(): THREE.Mesh {
-  const line = new MeshLine();
+  const line = new MeshLineGeometry();
   line.setPoints(new Float32Array(0));
   const material = new MeshLineMaterial({
     lineWidth: 0.1,
     color: 0xff0000,
     sizeAttenuation: 1,
+    // three.meshline's default; meshline's types require it explicitly.
+    resolution: new THREE.Vector2(1, 1),
   });
   return new THREE.Mesh(line, material);
 }
@@ -256,7 +258,7 @@ export function highlightVirtualSourcePath(params: {
 }) {
   const { beam, validPaths, maxReflectionOrder, receiver, selectedPath, selectedBeamsGroup } = params;
 
-  (selectedPath.geometry as MeshLine).setPoints(new Float32Array(0));
+  (selectedPath.geometry as MeshLineGeometry).setPoints(new Float32Array(0));
   clearGroup(selectedBeamsGroup);
 
   const colorHex = getOrderColor(beam.reflectionOrder, maxReflectionOrder);
@@ -365,7 +367,7 @@ export function highlightPathByIndex(params: {
   }
 
   const path = sortedPaths[pathIndex];
-  (selectedPath.geometry as MeshLine).setPoints(new Float32Array(0));
+  (selectedPath.geometry as MeshLineGeometry).setPoints(new Float32Array(0));
   clearGroup(selectedBeamsGroup);
 
   const pathColorHex = getOrderColor(path.order, maxReflectionOrder);
