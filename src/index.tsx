@@ -931,7 +931,24 @@ registerAllEvents();
 
 
 
-export async function finishedLoading() {
+// App's mount effect fires before the renderer exists: the canvas lives in a
+// flexlayout tab, which mounts only after the layout has measured itself, and
+// APP_MOUNTED -> renderer.init() comes from that tab. Restoring first threw in
+// Renderer.add (workspaceCursor undefined) and left an empty scene. Defer
+// until init has run; handlers run in registration order, so this one-shot
+// APP_MOUNTED handler runs after the renderer.init() handler above.
+export function finishedLoading() {
+  if (renderer.scene) {
+    loadInitialProject();
+    return;
+  }
+  const [message, id] = messenger.addMessageHandler("APP_MOUNTED", () => {
+    messenger.removeMessageHandler(message, id);
+    loadInitialProject();
+  });
+}
+
+function loadInitialProject() {
   // const filepath = "/res/saves/concord2.json";
   // const filename = filepath.slice(filepath.lastIndexOf("/") + 1);
   // const filedata = await(await fetch(filepath)).text();

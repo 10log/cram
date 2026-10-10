@@ -2,24 +2,42 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import dts from 'vite-plugin-dts';
 import path from 'path';
-import { copyFileSync, mkdirSync, existsSync } from 'fs';
+import { copyFileSync, mkdirSync, existsSync, createReadStream } from 'fs';
+
+const JSCAD_MODELING_BUNDLE = path.resolve(__dirname, 'src/compute/modeling/jscad-modeling-bundle.js');
+// The URL modeling/v2.ts imports it from at runtime (window.location.origin + this).
+const JSCAD_MODELING_BUNDLE_URL = '/compute/modeling/jscad-modeling-bundle.js';
 
 // Plugin to copy jscad-modeling-bundle.js as-is without processing
 // Preserves the directory structure so relative imports work
-function copyJscadModelingBundle() {
+function copyJscadModelingBundle(outDir: string) {
   return {
     name: 'copy-jscad-modeling-bundle',
     writeBundle() {
-      const src = path.resolve(__dirname, 'src/compute/modeling/jscad-modeling-bundle.js');
-      const destDir = path.resolve(__dirname, 'dist/compute/modeling');
+      const destDir = path.resolve(__dirname, outDir, 'compute/modeling');
       const dest = path.resolve(destDir, 'jscad-modeling-bundle.js');
-      if (existsSync(src)) {
+      if (existsSync(JSCAD_MODELING_BUNDLE)) {
         // Create directory structure
         mkdirSync(destDir, { recursive: true });
-        copyFileSync(src, dest);
-        console.log('Copied jscad-modeling-bundle.js to dist/compute/modeling/');
+        copyFileSync(JSCAD_MODELING_BUNDLE, dest);
+        console.log(`Copied jscad-modeling-bundle.js to ${outDir}/compute/modeling/`);
       }
     }
+  };
+}
+
+// The standalone dev server has no file at JSCAD_MODELING_BUNDLE_URL (a host
+// app serves dist/compute/modeling/ itself), so v2.ts's top-level import
+// failed and the app never started. Serve the source copy, unprocessed.
+function serveJscadModelingBundle() {
+  return {
+    name: 'serve-jscad-modeling-bundle',
+    configureServer(server) {
+      server.middlewares.use(JSCAD_MODELING_BUNDLE_URL, (_req, res) => {
+        res.setHeader('Content-Type', 'text/javascript');
+        createReadStream(JSCAD_MODELING_BUNDLE).pipe(res);
+      });
+    },
   };
 }
 
@@ -29,7 +47,7 @@ export default defineConfig(({ command, mode }) => {
     return {
       plugins: [
         react(),
-        copyJscadModelingBundle(),
+        copyJscadModelingBundle('dist'),
         // Emit type declarations so consumers resolve `cram`'s types to
         // dist/**/*.d.ts instead of type-checking cram's raw source tree.
         // Per-file emit (not rollupTypes): cram has declaration-blocking JS
@@ -154,7 +172,7 @@ export default defineConfig(({ command, mode }) => {
 
   // Default: standalone app build
   return {
-    plugins: [react()],
+    plugins: [react(), serveJscadModelingBundle(), copyJscadModelingBundle('build')],
     resolve: {
       alias: {
         'react-native': 'react-native-web',
