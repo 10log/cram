@@ -21,6 +21,8 @@ export declare const callSolverMethod: ({ uuid, method, args, isAsync }: {
     isAsync?: boolean;
 }) => void;
 export declare const getSolverKeys: () => string[];
+export declare const trackSolverRestore: (restore: Promise<void>) => void;
+export declare const whenSolversRestored: () => Promise<void>;
 /**
  * Reset the solver store to its initial state.
  * Disposes all solvers before clearing.

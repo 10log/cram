@@ -61,5 +61,5 @@ export interface Cram {
 export declare class Cram implements Cram {
     constructor();
 }
-export declare function finishedLoading(): Promise<void>;
+export declare function finishedLoading(): void;
 export {};

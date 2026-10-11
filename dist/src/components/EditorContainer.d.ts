@@ -1,3 +1,3 @@
 export default function EditorContainer({ children }: {
     children?: React.ReactNode;
-}): import("react").JSX.Element;
+}): import('react').JSX.Element;
