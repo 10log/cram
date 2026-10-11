@@ -142,7 +142,13 @@ describe('ImageSourceSolver temperature in airAttenuation', () => {
   });
 
   it('arrivalPressure passes temperature to ac.airAttenuation', () => {
-    expect(source).toContain('ac.airAttenuation(freqs, temperature)');
+    // The calculation lives in arrival-pressure.ts; the method delegates to it.
+    expect(source).toContain('imageSourceArrivalPressure(initialSPL, freqs, this.path, temperature)');
+    const helper = fs.readFileSync(
+      path.resolve(__dirname, '..', 'image-source', 'arrival-pressure.ts'),
+      'utf8'
+    );
+    expect(helper).toContain('ac.airAttenuation(freqs, temperature)');
   });
 
   it('callers pass this.temperature to arrivalPressure', () => {
@@ -162,10 +168,11 @@ describe('ImageSourceSolver temperature in airAttenuation', () => {
 });
 
 describe('BeamTraceSolver temperature support', () => {
-  const source = fs.readFileSync(
-    path.resolve(__dirname, '..', '..', 'beam-trace', 'index.ts'),
+  const read = (file: string) => fs.readFileSync(
+    path.resolve(__dirname, '..', '..', 'beam-trace', file),
     'utf8'
   );
+  const source = read('index.ts');
 
   it('has temperature getter that reads from room', () => {
     expect(source).toMatch(/get\s+temperature\(\):\s*number/);
@@ -180,11 +187,15 @@ describe('BeamTraceSolver temperature support', () => {
   it('calculateLTP called without hardcoded 343, and computeArrivalTime uses this.c', () => {
     expect(source).toContain('this.calculateLTP()');
     expect(source).not.toMatch(/this\.calculateLTP\(343\)/);
-    expect(source).toContain('computeArrivalTime(path, this.c)');
+    // Arrival time is computed in paths.ts from the speed of sound the solver passes in.
+    expect(source).toContain('convertPath(path, detailed, this.c)');
+    expect(read('paths.ts')).toContain('computeArrivalTime(path, speedOfSound)');
   });
 
   it('airAttenuation passes this.temperature', () => {
-    expect(source).toContain('ac.airAttenuation(this.frequencies, this.temperature)');
+    // The solver hands its temperature to calculateArrivalPressure (arrival-pressure.ts).
+    expect(source).toContain('temperature: this.temperature');
+    expect(read('arrival-pressure.ts')).toContain('ac.airAttenuation(frequencies, temperature)');
   });
 });
 

@@ -188,12 +188,17 @@ describe('Issue #101: acceptance — a rotated cardioid aims where it is pointed
 });
 
 describe('Issue #101: production call sites', () => {
-  test('beam-trace _directivityBandEnergy calls worldDirToCramAngles', () => {
-    const source = fs.readFileSync(path.resolve(__dirname, '../../compute/beam-trace/index.ts'), 'utf-8');
-    const match = source.match(/private _directivityBandEnergy\([\s\S]*?^\s{2}\}/m);
+  test('beam-trace directivityBandEnergy calls worldDirToCramAngles', () => {
+    // Was BeamTraceSolver's private _directivityBandEnergy; now a module function in
+    // arrival-pressure.ts shared by the specular and diffraction paths.
+    const read = (f: string) => fs.readFileSync(path.resolve(__dirname, '../../compute/beam-trace', f), 'utf-8');
+    const source = read('arrival-pressure.ts');
+    const match = source.match(/export function directivityBandEnergy\([\s\S]*?^\}/m);
     expect(match).not.toBeNull();
     expect(match![0]).toMatch(/worldDirToCramAngles\(\s*worldDir,\s*quaternion\s*\)/);
-    expect(source).toMatch(/this\._directivityBandEnergy\(/);
+    // Both production paths use it.
+    expect(source.slice(match!.index! + match![0].length)).toMatch(/directivityBandEnergy\(/);
+    expect(read('diffraction.ts')).toMatch(/directivityBandEnergy\(/);
   });
 
   test('raytracer diffraction uses worldDirToCramAngles, not Math.abs(phi)', () => {
