@@ -54,7 +54,7 @@ import expose from "./common/expose";
 import * as THREE from "three";
 import { produce, enableMapSet } from "immer";
 import {omit} from './common/helpers'
-import { useContainer, useSolver, useResult, useAppStore, useMaterial, SaveState } from "./store";
+import { useContainer, useSolver, useResult, useAppStore, useMaterial, SaveState, whenSolversRestored } from "./store";
 import { audioEngine } from './audio-engine/audio-engine';
 
 import examples from './examples';
@@ -965,10 +965,20 @@ function loadInitialProject() {
     ac,
     THREE,
   });
-  emit("ADD_IMAGESOURCE");
-  emit("ADD_RT60");
-  // Mark project as clean after initial load since solvers were added programmatically
-  emit("MARK_CLEAN", undefined);
+  // Same path as Add > Image Source / Statistical RT. createSolver() awaits the
+  // solver's lazily imported module, which is where ADD_IMAGESOURCE/ADD_RT60
+  // are registered; a bare emit("ADD_IMAGESOURCE") here ran before that and
+  // was silently dropped, so neither default solver was ever added.
+  const defaultSolvers = [
+    ...messenger.postMessage("SHOULD_ADD_IMAGE_SOURCE"),
+    ...messenger.postMessage("SHOULD_ADD_RT60"),
+    whenSolversRestored(),
+  ] as Promise<unknown>[];
+  Promise.all(defaultSolvers)
+    .catch((e) => console.error("Failed to add default solvers:", e))
+    // Mark project as clean after initial load since solvers were added
+    // programmatically (addSolver marks it dirty), so only once they are in.
+    .finally(() => emit("MARK_CLEAN", undefined));
   setTimeout(()=>{
     emit("TOGGLE_RESULTS_PANEL", false);
     emit("RENDER");
