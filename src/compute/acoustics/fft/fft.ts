@@ -28,10 +28,8 @@ export class FFT {
   public fft2d(data: Complex[][], width: number, height: number): Complex[][] {
     const [W, H] = [width, height];
 
-    let spectrum: Complex[][] = new Array(H);
-
     // Apply a 1D FFT to each row
-    spectrum = data.map(row => this.fft1d(row, W));
+    let spectrum = data.map(row => this.fft1d(row, W));
     spectrum = this.transpose(spectrum, W, H);
 
     // Apply a 1D FFT to each column
@@ -54,10 +52,8 @@ export class FFT {
   ): Complex[][] {
     const [W, H] = [width, height];
 
-    let data: Complex[][] = new Array(H);
-
     // Apply a 1D IFFT to each column
-    data = this.transpose(spectrum, W, H);
+    let data = this.transpose(spectrum, W, H);
     data = data.map(row => this.ifft1d(row, H));
 
     // Apply a 1D IFFT to each row
@@ -120,10 +116,9 @@ export class FFT {
     width: number,
     height: number
   ): [number[][], number] {
-    let powerSpectrum: number[][] = new Array(height);
     let max: number = 0;
 
-    powerSpectrum = spectrum.map(row => {
+    const powerSpectrum = spectrum.map(row => {
       let [rowSpectrum, rowMax] = this.power1d(row, width);
       max = Math.max(max, rowMax);
       return rowSpectrum;

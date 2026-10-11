@@ -76,6 +76,16 @@ export const callSolverMethod = ({uuid, method, args, isAsync}: {uuid: string, m
 
 export const getSolverKeys = () => Object.keys(useSolver.getState().solvers);
 
+// RESTORE_SOLVERS restores asynchronously (each solver's module is imported
+// lazily), and emit() discards the handler's promise. Code that must run after
+// a restore finishes -- marking a freshly opened project clean, say -- waits on
+// this instead. Set synchronously when RESTORE_SOLVERS starts.
+let solverRestore: Promise<void> = Promise.resolve();
+export const trackSolverRestore = (restore: Promise<void>) => {
+  solverRestore = restore;
+};
+export const whenSolversRestored = () => solverRestore;
+
 /**
  * Reset the solver store to its initial state.
  * Disposes all solvers before clearing.

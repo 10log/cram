@@ -1,5 +1,5 @@
 import FileSaver from 'file-saver';
-import { useContainer, useSolver, useAppStore } from '.';
+import { useContainer, useSolver, useAppStore, whenSolversRestored } from '.';
 
 
 import { on, emit } from '../messenger';
@@ -159,6 +159,9 @@ on("RESTORE", ({ json }) => {
     state.projectName = json.meta.name;
     state.hasUnsavedChanges = false;
   });
+  // Restored solvers are added asynchronously, and adding one marks the
+  // project dirty; mark it clean again once they are all in.
+  whenSolversRestored().then(() => emit("MARK_CLEAN", undefined));
 });
 
 

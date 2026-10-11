@@ -10,9 +10,8 @@
 // does not gate on it.
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
-import react from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
-import importPlugin from 'eslint-plugin-import';
+import importX from 'eslint-plugin-import-x';
 import unusedImports from 'eslint-plugin-unused-imports';
 import globals from 'globals';
 
@@ -66,34 +65,32 @@ export default tseslint.config(
         ecmaFeatures: { jsx: true },
       },
     },
-    settings: {
-      react: { version: 'detect' },
-    },
     plugins: {
-      react,
       'react-hooks': reactHooks,
-      import: importPlugin,
+      'import-x': importX,
       'unused-imports': unusedImports,
     },
     rules: {
       // Soften the recommended presets to warnings (react-app style).
       ...downgradeToWarn(js.configs.recommended, tseslint.configs.recommended),
 
-      // React: new JSX transform (Vite) — no React import needed in scope.
-      'react/react-in-jsx-scope': 'off',
-      'react/jsx-uses-react': 'off',
-      'react/jsx-uses-vars': 'warn',
+      // eslint-plugin-react is not used: it does not support ESLint 10, and
+      // its only active rule here was jsx-uses-vars, which feeds core
+      // no-unused-vars (off below). unused-imports/no-unused-vars delegates
+      // to @typescript-eslint/no-unused-vars, which counts JSX references.
       'react-hooks/exhaustive-deps': 'warn',
 
       // Genuinely bug-level — keep as errors.
       'react-hooks/rules-of-hooks': 'error',
-      'import/first': 'error',
+      // eslint-plugin-import-x: maintained fork of eslint-plugin-import,
+      // which does not support ESLint 10.
+      'import-x/first': 'error',
 
       // --- Project overrides (migrated verbatim from the old eslintConfig) ---
       'no-unused-expressions': 'off',
       'no-restricted-globals': 'off',
       '@typescript-eslint/no-unused-expressions': 'off',
-      'import/no-anonymous-default-export': 'off',
+      'import-x/no-anonymous-default-export': 'off',
       '@typescript-eslint/no-unused-vars': 'off',
       'no-unused-vars': 'off',
       'unused-imports/no-unused-imports': 'warn',

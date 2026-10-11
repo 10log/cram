@@ -171,6 +171,7 @@ export class Source extends Container {
 
   dispose(){
     renderer.remove(this);
+    super.dispose();
   }
 
   save() {

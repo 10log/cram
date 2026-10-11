@@ -54,7 +54,7 @@ import expose from "./common/expose";
 import * as THREE from "three";
 import { produce, enableMapSet } from "immer";
 import {omit} from './common/helpers'
-import { useContainer, useSolver, useResult, useAppStore, useMaterial, SaveState } from "./store";
+import { useContainer, useSolver, useResult, useAppStore, useMaterial, SaveState, whenSolversRestored } from "./store";
 import { audioEngine } from './audio-engine/audio-engine';
 
 import examples from './examples';
@@ -931,7 +931,24 @@ registerAllEvents();
 
 
 
-export async function finishedLoading() {
+// App's mount effect fires before the renderer exists: the canvas lives in a
+// flexlayout tab, which mounts only after the layout has measured itself, and
+// APP_MOUNTED -> renderer.init() comes from that tab. Restoring first threw in
+// Renderer.add (workspaceCursor undefined) and left an empty scene. Defer
+// until init has run; handlers run in registration order, so this one-shot
+// APP_MOUNTED handler runs after the renderer.init() handler above.
+export function finishedLoading() {
+  if (renderer.scene) {
+    loadInitialProject();
+    return;
+  }
+  const [message, id] = messenger.addMessageHandler("APP_MOUNTED", () => {
+    messenger.removeMessageHandler(message, id);
+    loadInitialProject();
+  });
+}
+
+function loadInitialProject() {
   // const filepath = "/res/saves/concord2.json";
   // const filename = filepath.slice(filepath.lastIndexOf("/") + 1);
   // const filedata = await(await fetch(filepath)).text();
@@ -948,10 +965,20 @@ export async function finishedLoading() {
     ac,
     THREE,
   });
-  emit("ADD_IMAGESOURCE");
-  emit("ADD_RT60");
-  // Mark project as clean after initial load since solvers were added programmatically
-  emit("MARK_CLEAN", undefined);
+  // Same path as Add > Image Source / Statistical RT. createSolver() awaits the
+  // solver's lazily imported module, which is where ADD_IMAGESOURCE/ADD_RT60
+  // are registered; a bare emit("ADD_IMAGESOURCE") here ran before that and
+  // was silently dropped, so neither default solver was ever added.
+  const defaultSolvers = [
+    ...messenger.postMessage("SHOULD_ADD_IMAGE_SOURCE"),
+    ...messenger.postMessage("SHOULD_ADD_RT60"),
+    whenSolversRestored(),
+  ] as Promise<unknown>[];
+  Promise.all(defaultSolvers)
+    .catch((e) => console.error("Failed to add default solvers:", e))
+    // Mark project as clean after initial load since solvers were added
+    // programmatically (addSolver marks it dirty), so only once they are in.
+    .finally(() => emit("MARK_CLEAN", undefined));
   setTimeout(()=>{
     emit("TOGGLE_RESULTS_PANEL", false);
     emit("RENDER");

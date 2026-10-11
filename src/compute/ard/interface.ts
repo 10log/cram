@@ -125,8 +125,8 @@ function highEdge(box: Box, axis: Axis): number {
  */
 export function findInterface(a: Partition, b: Partition): PartitionInterface | null {
   for (let axis = Axis.X; axis <= Axis.Z; axis++) {
-    let lower: Partition | null = null;
-    let upper: Partition | null = null;
+    let lower: Partition;
+    let upper: Partition;
 
     if (highEdge(a.box, axis) === lowEdge(b.box, axis)) {
       lower = a;

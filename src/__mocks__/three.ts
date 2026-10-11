@@ -451,6 +451,9 @@ export class Object3D {
   clone(recursive?: boolean) {
     return new Object3D();
   }
+
+  // r186: Object3D.dispose() fires a 'dispose' event; nothing listens in tests.
+  dispose() {}
 }
 
 // Group class

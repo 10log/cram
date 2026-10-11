@@ -1,6 +1,6 @@
 import { on, emit } from "../messenger";
 import { omit } from "../common/helpers";
-import { useSolver, getSolverKeys } from "../store";
+import { useSolver, getSolverKeys, trackSolverRestore } from "../store";
 import type Solver from "./solver";
 
 // Use dynamic imports for solver classes to enable code splitting
@@ -74,7 +74,11 @@ export default function registerSolverEvents(){
     });
   });
 
-  on("RESTORE_SOLVERS", async (solvers) => {
+  on("RESTORE_SOLVERS", (solvers) => {
+    trackSolverRestore(restoreSolvers(solvers));
+  });
+
+  const restoreSolvers = async (solvers: EventTypes["RESTORE_SOLVERS"]) => {
     emit("REMOVE_SOLVERS", getSolverKeys());
 
     for (const solver of solvers) {
@@ -106,5 +110,5 @@ export default function registerSolverEvents(){
         console.error(`Failed to restore solver ${solver.kind}:`, e);
       }
     }
-  });
+  };
 }
