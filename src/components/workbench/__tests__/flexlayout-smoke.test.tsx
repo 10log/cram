@@ -18,6 +18,9 @@ vi.mock('../panels/RendererPanel', () => ({ RendererPanel: () => <div>renderer-p
 vi.mock('../panels/ResultsPanelWrapper', () => ({
   ResultsPanelWrapper: () => <div>results-panel</div>,
 }));
+// Mocked like the rest — unmocked it reaches Surface and therefore compute/csg,
+// whose jscad bundle loads from an http: URL and cannot resolve under vitest.
+vi.mock('../panels/SketchPanel', () => ({ SketchPanel: () => <div>sketch-panel</div> }));
 
 describe('flexlayout 0.10.0 smoke', () => {
   beforeEach(() => localStorage.clear());

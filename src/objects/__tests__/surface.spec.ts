@@ -288,6 +288,100 @@ describe('Surface', () => {
     });
   });
 
+  describe('geometry disposal on re-init', () => {
+    // init() detaches the old objects but previously never freed their GPU
+    // buffers, so every restore or live geometry edit leaked a set per surface.
+    const build = () =>
+      new Surface('Test', {
+        geometry: createMockGeometry(),
+        acousticMaterial: mockAcousticMaterial,
+      });
+
+    it('disposes the replaced mesh geometry', () => {
+      const surface = build();
+      const old = surface.mesh.geometry;
+      const spy = vi.spyOn(old, 'dispose');
+
+      surface.init({ geometry: createMockGeometry(), acousticMaterial: mockAcousticMaterial });
+
+      expect(spy).toHaveBeenCalled();
+    });
+
+    it('disposes the shared mesh/wire geometry exactly once', () => {
+      const surface = build();
+      const old = surface.mesh.geometry;
+      expect(surface.wire.geometry).toBe(old);
+      const spy = vi.spyOn(old, 'dispose');
+
+      surface.init({ geometry: createMockGeometry(), acousticMaterial: mockAcousticMaterial });
+
+      expect(spy).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not dispose the incoming geometry', () => {
+      const surface = build();
+      const incoming = createMockGeometry();
+      const spy = vi.spyOn(incoming, 'dispose');
+
+      surface.init({ geometry: incoming, acousticMaterial: mockAcousticMaterial });
+
+      expect(spy).not.toHaveBeenCalled();
+    });
+
+    it('survives being handed back its own geometry', () => {
+      const surface = build();
+      const same = surface.mesh.geometry;
+      const spy = vi.spyOn(same, 'dispose');
+
+      surface.init({ geometry: same, acousticMaterial: mockAcousticMaterial });
+
+      expect(spy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('mesh face id', () => {
+    // Persisted so a reloaded project can still be reconciled against its
+    // RoomMesh; without it a restored room renders but cannot be edited.
+    const build = () =>
+      new Surface('Test', {
+        geometry: createMockGeometry(),
+        acousticMaterial: mockAcousticMaterial,
+      });
+
+    it('is omitted for a surface that has none', () => {
+      expect(build().save().faceId).toBeUndefined();
+    });
+
+    it('is dropped by JSON when absent, leaving old saves unchanged', () => {
+      const saved = JSON.parse(JSON.stringify(build().save()));
+      expect('faceId' in saved).toBe(false);
+    });
+
+    it('is saved when the surface carries one', () => {
+      const surface = build();
+      surface.userData.cramFaceId = 'wall-2';
+      expect(surface.save().faceId).toBe('wall-2');
+    });
+
+    it('is restored from a save object', () => {
+      const surface = build();
+      surface.userData.cramFaceId = 'ceiling';
+      const saved = JSON.parse(JSON.stringify(surface.save()));
+
+      const revived = new Surface('Revived');
+      revived.restore(saved);
+
+      expect(revived.userData.cramFaceId).toBe('ceiling');
+    });
+
+    it('leaves a restored surface untagged when the save has no faceId', () => {
+      const saved = JSON.parse(JSON.stringify(build().save()));
+      const revived = new Surface('Revived');
+      revived.restore(saved);
+      expect(revived.userData.cramFaceId).toBeUndefined();
+    });
+  });
+
   describe('save', () => {
     it('returns a serializable object', () => {
       const geometry = createMockGeometry();
