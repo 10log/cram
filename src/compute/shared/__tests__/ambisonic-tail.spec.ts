@@ -16,7 +16,6 @@ function rms(buf: Float32Array, start: number, end: number): number {
 }
 
 function correlation(a: Float32Array, b: Float32Array, start: number, end: number): number {
-  const n = end - start;
   let dot = 0, na = 0, nb = 0;
   for (let i = start; i < end; i++) {
     dot += a[i] * b[i];

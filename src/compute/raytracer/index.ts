@@ -30,7 +30,7 @@ import {ImageSourceSolver, ImageSourceSolverParams} from "./image-source/index";
 import {
   QuickEstimateStepResult, ResponseByIntensity, BandEnergy, Chain,
   RayPath, ChartData, ReceiverData, RayTracerParams,
-  ConvergenceMetrics, defaults, DRAWSTYLE, normalize,
+  ConvergenceMetrics, defaults, DRAWSTYLE,
   DEFAULT_INTENSITY_SAMPLE_RATE, DEFAULT_INITIAL_SPL,
   RESPONSE_TIME_PADDING, MAX_DISPLAY_POINTS,
   HISTOGRAM_BIN_WIDTH, HISTOGRAM_NUM_BINS, CONVERGENCE_CHECK_INTERVAL_MS,
@@ -74,8 +74,7 @@ export {
 // Webpack 5 native worker support
 const FilterWorker = () => new Worker(new URL('../../audio-engine/filter.worker.ts', import.meta.url));
 
-const {floor, random, abs, asin} = Math;
-const coinFlip = () => random() > 0.5;
+const {floor, abs} = Math;
 
 THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
 THREE.BufferGeometry.prototype.disposeBoundsTree = disposeBoundsTree;
@@ -557,7 +556,6 @@ class RayTracer extends Solver {
     this.sourceIDs.forEach((id) => {
       this.quickEstimateResults[id] = [] as QuickEstimateStepResult[];
     });
-    let done = false;
     this.intervals.push(
       window.setInterval(() => {
         for (let i = 0; i < this.passes; i++, count++) {
@@ -568,7 +566,6 @@ class RayTracer extends Solver {
           }
         }
         if (count >= numRays) {
-          done = true;
           this.intervals.forEach((interval) => window.clearInterval(interval));
           this.runningWithoutReceivers = tempRunningWithoutReceivers;
           console.log(this.quickEstimateResults);
@@ -578,7 +575,7 @@ class RayTracer extends Solver {
       }, this.updateInterval)
     );
   }
-  quickEstimateStep(source: Source, frequencies: number[], numRays: number) {
+  quickEstimateStep(source: Source, frequencies: number[], _numRays: number) {
     const result = sharedQuickEstimateStep(
       this.raycaster, this.intersectableObjects,
       source.position, source.initialIntensity,
@@ -677,7 +674,7 @@ class RayTracer extends Solver {
               if (typeof dirPressure === "number" && typeof refPressure === "number" && refPressure > 0) {
                 energy = (dirPressure / refPressure) ** 2;
               }
-            } catch (e) {
+            } catch {
               // Fallback to unity gain
             }
             initialBandEnergy[f] = energy;
@@ -826,7 +823,7 @@ class RayTracer extends Solver {
           if (typeof dirPressure === "number" && typeof refPressure === "number" && refPressure > 0) {
             energy = (dirPressure / refPressure) ** 2;
           }
-        } catch (e) {
+        } catch {
           // Fallback to unity gain if directivity data is missing or lookup fails
         }
         initialBandEnergy[f] = energy;
@@ -993,7 +990,7 @@ class RayTracer extends Solver {
             if (typeof dirP === "number" && typeof refP === "number" && refP > 0) {
               dp.bandEnergy[f] *= (dirP / refP) ** 2;
             }
-          } catch (e) {
+          } catch {
             // Fallback to unity gain
           }
         }
@@ -1845,7 +1842,7 @@ class RayTracer extends Solver {
                   if (typeof dirP === "number" && typeof refP === "number" && refP > 0) {
                     energy = (dirP / refP) ** 2;
                   }
-                } catch (e) { /* fallback to unity */ }
+                } catch { /* fallback to unity */ }
                 rayInputs[off + 8 + f] = energy;
               }
 

@@ -23,6 +23,7 @@ export const ARTTab = ({ uuid }: ARTTabProps) => {
   const version = useContainer((state) => state.version);
 
   const rooms = useMemo(() => {
+    void version;
     return Object.values(containers)
       .filter(c => c.kind === "room")
       .map(c => ({ value: c.uuid, label: c.name }));

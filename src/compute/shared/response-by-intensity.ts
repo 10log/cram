@@ -20,12 +20,12 @@ export function resampleResponseByIntensity(
         const numSamples = floor(sampleRate * maxTime);
         responseByIntensity[recKey][srcKey].resampledResponse = Array(freqs.length)
           .fill(0)
-          .map((x) => new Float32Array(numSamples)) as Array<Float32Array>;
+          .map((_x) => new Float32Array(numSamples)) as Array<Float32Array>;
 
         responseByIntensity[recKey][srcKey].sampleRate = sampleRate;
         let sampleArrayIndex = 0;
         let zeroIndices = [] as number[];
-        let lastNonZeroPoint = freqs.map((x) => 0);
+        let lastNonZeroPoint = freqs.map((_x) => 0);
         let seenFirstPointYet = false;
         for (let i = 0, j = 0; i < numSamples; i++) {
           let sampleTime = (i / numSamples) * maxTime;
@@ -42,7 +42,7 @@ export function resampleResponseByIntensity(
               continue;
             }
             if (actualTime <= sampleTime) {
-              let sums = response[j].level.map((x) => 0);
+              let sums = response[j].level.map((_x) => 0);
               while (actualTime <= sampleTime) {
                 actualTime = response[j].time;
                 for (let k = 0; k < freqs.length; k++) {

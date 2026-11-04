@@ -127,7 +127,7 @@ interface SolverItemProps {
   onDelete: () => void;
 }
 
-function SolverItem({ uuid, name, type, selected, onSelect, onRun, onDelete }: SolverItemProps) {
+function SolverItem({ uuid: _uuid, name, type, selected, onSelect, onRun, onDelete }: SolverItemProps) {
   return (
     <ListItem
       disablePadding

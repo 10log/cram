@@ -124,15 +124,12 @@ export interface State {
 
 type Version = `${number}.${number}.${number}`;
 
-export interface Cram {
+export class Cram {
   state: State;
   messenger: Messenger;
   meta: {
     version: Version;
   };
-}
-
-export class Cram implements Cram {
   constructor() {
     this.meta = {
       version: "0.2.1"

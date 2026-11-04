@@ -50,7 +50,7 @@ export default abstract class Solver {
   dispose() {
     console.log("disposed from abstract...");
   }
-  onModeChange(mode: EditorModes) {}
+  onModeChange(_mode: EditorModes) {}
   onParameterConfigFocus() {}
   onParameterConfigBlur() {}
 }

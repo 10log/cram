@@ -4,7 +4,7 @@ import { pickProps } from '../common/helpers';
 import { NavBarComponent } from './NavBarComponent';
 
 const ProjectName = () => {
-  const { set, projectName } = useAppStore(state=>pickProps(["projectName", "set"], state));
+  const { set, projectName } = useAppStore(state=>pickProps(["projectName", "set"], state));
   return (
     <input type="text" onChange={(e)=>{
       set((state)=>{

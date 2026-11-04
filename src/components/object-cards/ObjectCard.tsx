@@ -46,7 +46,7 @@ export interface ObjectCardProps {
   isChild?: boolean;
 }
 
-export default function ObjectCard({ uuid, defaultExpanded = false, isChild = false }: ObjectCardProps) {
+export default function ObjectCard({ uuid, defaultExpanded = false, isChild: _isChild = false }: ObjectCardProps) {
   const [expanded, setExpanded] = useState(defaultExpanded);
   const [selected, setSelected] = useState(false);
   const [name, setName] = useState("");
@@ -57,6 +57,7 @@ export default function ObjectCard({ uuid, defaultExpanded = false, isChild = fa
 
   // Get child surface UUIDs for rooms
   const childSurfaceUuids = useMemo(() => {
+    void version;
     if (container?.kind === "room") {
       const room = container as Room;
       return room.allSurfaces.map((s) => s.uuid);

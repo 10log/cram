@@ -2,21 +2,18 @@ import "./global-overlay.css";
 import { v4 as uuid } from 'uuid';
 
 
-export interface GlobalOverlayCell<T> {
-  id: string;
-  elt: HTMLElement,
-  value: T,
-  label: string;
-  formatter: (value: T) => string;
-}
-
 export type GlobalOverlayCellOpts<T> = {
   id?: string;
   hidden?: boolean;
   formatter?: (value: T) => string;
 }
 
-export class GlobalOverlayCell<T>{
+export class GlobalOverlayCell<T> {
+  id: string;
+  elt: HTMLElement;
+  value: T;
+  label: string;
+  formatter: (value: T) => string;
   constructor(label: string, value: T, opts: GlobalOverlayCellOpts<T>) {
     this.label = label;
     this.value = value;
@@ -33,7 +30,7 @@ export class GlobalOverlayCell<T>{
     valueElt.textContent = this.formatter(this.value);
     valueElt.setAttribute("class", "global_overlay-value");
     this.elt.appendChild(valueElt);
-    if (opts.hasOwnProperty('hidden')) {
+    if (Object.hasOwn(opts, 'hidden')) {
       if (opts.hidden) {
         this.hide();
       }

@@ -20,10 +20,6 @@ type WritableKeys<T> = {
   [P in keyof T]-?: IfEquals<{ [Q in P]: T[P] }, { -readonly [Q in P]: T[P] }, P>
 }[keyof T];
 
-type ReadonlyKeys<T> = {
-  [P in keyof T]-?: IfEquals<{ [Q in P]: T[P] }, { -readonly [Q in P]: T[P] }, never, P>
-}[keyof T];
-
 type WritableRendererProperties = WritableKeys<Renderer>
 
 function useRendererProperty<T extends WritableRendererProperties>(property: T, updateFn?: (renderer: Renderer) => void) {
@@ -32,7 +28,7 @@ function useRendererProperty<T extends WritableRendererProperties>(property: T, 
     renderer[property] = value;
     if(updateFn) updateFn(renderer);
     setState(value); 
-  }, [property]);
+  }, [property, updateFn]);
   return [state, changeHandler] as [Renderer[T], (value: Renderer[T]) => void];
 }
 

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import ImportDialog from "./ImportDialog";
 
 import "../css";
@@ -21,8 +21,10 @@ export interface AppProps {
 }
 
 export default function App({ showNavBar = true, onMount }: AppProps) {
+  // Called once, with the onMount from the first render.
+  const onMountRef = useRef(onMount);
   useEffect(() => {
-    onMount?.();
+    onMountRef.current?.();
   }, []);
 
   return (

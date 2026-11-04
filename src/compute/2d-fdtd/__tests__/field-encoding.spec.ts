@@ -60,7 +60,7 @@ describe("production wiring", () => {
   });
 
   test("removeSource vacates the cell (#110)", () => {
-    const section = index.match(/removeSource\([\s\S]*?\n  \}/);
+    const section = index.match(/removeSource\([\s\S]*?\n {2}\}/);
     expect(section).not.toBeNull();
     expect(section![0]).toMatch(/vacateSourceCell/);
   });
@@ -93,7 +93,7 @@ describe("production wiring", () => {
   });
 
   test("clear() restarts sources from rest, so the next forcing is not a jump", () => {
-    const section = index.match(/  clear\(\) \{[\s\S]*?\n  \}/);
+    const section = index.match(/ {2}clear\(\) \{[\s\S]*?\n {2}\}/);
     expect(section).not.toBeNull();
     expect(section![0]).toContain("source.previousValue = 0;");
     expect(section![0]).toContain("source.value = 0;");

@@ -35,7 +35,7 @@ export default function GenericObjectProperties(props: GenericObjectPropertiesPr
 	return (
 		<div>
 			<div style={GenericObjectPropertiesContainerStyle}>
-				{props.object.hasOwnProperty('name') && (
+				{Object.hasOwn(props.object, 'name') && (
 					<GridRow label={"name"}>
 						<TextInput name="name" value={props.object.name} onChange={props.onPropertyChange} />
 					</GridRow>

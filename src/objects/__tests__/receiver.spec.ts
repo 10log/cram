@@ -31,7 +31,7 @@ vi.mock('../../store', () => ({
 // Mock chroma-js
 vi.mock('chroma-js', () => ({
   __esModule: true,
-  default: vi.fn((color) => ({
+  default: vi.fn((_color) => ({
     brighten: vi.fn().mockReturnValue({
       num: vi.fn().mockReturnValue(0xffffff),
     }),

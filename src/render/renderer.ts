@@ -484,13 +484,13 @@ export default class Renderer {
     });
 
     this.addCleanupListener(window, "keydown", (e) => {
-      if (this.modifierKeyState.hasOwnProperty(e.key)) {
+      if (Object.hasOwn(this.modifierKeyState, e.key)) {
         this.modifierKeyState[e.key] += 1;
       }
     });
 
     this.addCleanupListener(window, "keyup", (e) => {
-      if (this.modifierKeyState.hasOwnProperty(e.key)) {
+      if (Object.hasOwn(this.modifierKeyState, e.key)) {
         this.modifierKeyState[e.key] -= 1;
       }
     });

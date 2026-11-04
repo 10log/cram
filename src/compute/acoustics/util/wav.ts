@@ -277,7 +277,7 @@ export function decode(buffer: ArrayBuffer | { buffer: ArrayBuffer; byteOffset: 
     let size = u32();
     let next = pos + size;
     switch (type) {
-      case 'fmt ':
+      case 'fmt ': {
         let formatId = u16();
         if (formatId !== 0x0001 && formatId !== 0x0003)
           throw new TypeError(
@@ -293,7 +293,8 @@ export function decode(buffer: ArrayBuffer | { buffer: ArrayBuffer; byteOffset: 
           bitDepth: u16(),
         };
         break;
-      case 'data':
+      }
+      case 'data': {
         if (!fmt) throw new TypeError('Missing "fmt " chunk.');
         const samples = Math.floor(size / fmt.blockSize);
         const channels = fmt.channels;
@@ -312,6 +313,7 @@ export function decode(buffer: ArrayBuffer | { buffer: ArrayBuffer; byteOffset: 
           sampleRate,
           channelData,
         };
+      }
     }
     pos = next;
   }

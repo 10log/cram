@@ -11,11 +11,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 describe('frequency-dependent scattering', () => {
-  const raytracerSource = fs.readFileSync(
-    path.resolve(__dirname, '..', 'index.ts'),
-    'utf8'
-  );
-
   const surfaceSource = fs.readFileSync(
     path.resolve(__dirname, '..', '..', '..', 'objects', 'surface.ts'),
     'utf8'

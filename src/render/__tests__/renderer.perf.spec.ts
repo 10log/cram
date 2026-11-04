@@ -34,7 +34,7 @@ vi.mock('../../messenger', () => ({
 describe('Renderer Performance', () => {
   describe('Frame Timing', () => {
     it('requestAnimationFrame callback pattern is performant', () => {
-      let frameCount = 0;
+      let _frameCount = 0;
       const frameTimes: number[] = [];
       let lastTime = performance.now();
 
@@ -43,7 +43,7 @@ describe('Renderer Performance', () => {
         const now = performance.now();
         frameTimes.push(now - lastTime);
         lastTime = now;
-        frameCount++;
+        _frameCount++;
       };
 
       const result = benchmark(
@@ -70,12 +70,12 @@ describe('Renderer Performance', () => {
           for (let i = 0; i < 1000; i++) {
             const frameStart = performance.now();
             // Simulate work
-            let sum = 0;
+            let _sum = 0;
             for (let j = 0; j < 100; j++) {
-              sum += Math.random();
+              _sum += Math.random();
             }
             const frameTime = performance.now() - frameStart;
-            const withinBudget = frameTime < frameBudget;
+            const _withinBudget = frameTime < frameBudget;
           }
         },
         { samples: 50, warmup: 5 }
@@ -121,9 +121,9 @@ describe('Renderer Performance', () => {
       const result = benchmark(
         'Scene graph traversal',
         () => {
-          let count = 0;
+          let _count = 0;
           traverse(scene, () => {
-            count++;
+            _count++;
           });
         },
         { samples: 100, warmup: 10 }
@@ -155,7 +155,7 @@ describe('Renderer Performance', () => {
       const result = benchmark(
         'Visible object filtering',
         () => {
-          const visible = objects.filter(obj => obj.visible);
+          const _visible = objects.filter(obj => obj.visible);
         },
         { samples: 100, warmup: 10 }
       );
@@ -332,7 +332,7 @@ describe('Renderer Performance', () => {
         'Draw call sorting',
         () => {
           // Sort by material first, then by geometry (for batching)
-          const sorted = [...drawCalls].sort((a, b) => {
+          const _sorted = [...drawCalls].sort((a, b) => {
             if (a.materialId !== b.materialId) {
               return a.materialId.localeCompare(b.materialId);
             }
@@ -359,7 +359,7 @@ describe('Renderer Performance', () => {
         'Distance sorting',
         () => {
           // Sort back to front for proper transparency
-          const sorted = [...objects].sort((a, b) => b.distance - a.distance);
+          const _sorted = [...objects].sort((a, b) => b.distance - a.distance);
         },
         { samples: 100, warmup: 10 }
       );

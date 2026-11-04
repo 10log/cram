@@ -76,7 +76,7 @@ export class Vector3 {
     this.z = arr[2] ?? 0;
     return this;
   }
-  applyMatrix4(m: Matrix4) {
+  applyMatrix4(_m: Matrix4) {
     return this;
   }
   normalize() {
@@ -304,14 +304,14 @@ export class Color {
       this._hex = 0xffffff;
     }
   }
-  set(color: number | string | Color) {
+  set(_color: number | string | Color) {
     return this;
   }
   setHex(hex: number) {
     this._hex = hex;
     return this;
   }
-  setStyle(style: string) {
+  setStyle(_style: string) {
     return this;
   }
   getHex() {
@@ -373,7 +373,7 @@ export class Box3 {
     this.min = min;
     this.max = max;
   }
-  setFromObject(object: Object3D) {
+  setFromObject(_object: Object3D) {
     return this;
   }
   getCenter(target: Vector3) {
@@ -448,7 +448,7 @@ export class Object3D {
     }
   }
 
-  clone(recursive?: boolean) {
+  clone(_recursive?: boolean) {
     return new Object3D();
   }
 
@@ -743,17 +743,17 @@ export class BufferAttribute {
   needsUpdate = false;
   usage = 0;
 
-  constructor(array: ArrayLike<number>, itemSize: number, normalized = false) {
+  constructor(array: ArrayLike<number>, itemSize: number, _normalized = false) {
     this.array = array;
     this.itemSize = itemSize;
     this.count = array.length / itemSize;
   }
 
-  setXYZ(index: number, x: number, y: number, z: number) {
+  setXYZ(_index: number, _x: number, _y: number, _z: number) {
     return this;
   }
 
-  setXY(index: number, x: number, y: number) {
+  setXY(_index: number, _x: number, _y: number) {
     return this;
   }
 
@@ -782,12 +782,12 @@ export class Raycaster {
   near = 0;
   far = Infinity;
 
-  set(origin: Vector3, direction: Vector3) {}
-  setFromCamera(coords: Vector2, camera: Camera) {}
-  intersectObject(object: Object3D, recursive?: boolean): any[] {
+  set(_origin: Vector3, _direction: Vector3) {}
+  setFromCamera(_coords: Vector2, _camera: Camera) {}
+  intersectObject(_object: Object3D, _recursive?: boolean): any[] {
     return [];
   }
-  intersectObjects(objects: Object3D[], recursive?: boolean): any[] {
+  intersectObjects(_objects: Object3D[], _recursive?: boolean): any[] {
     return [];
   }
 }
@@ -800,11 +800,11 @@ export class WebGLRenderer {
     render: { calls: 0, triangles: 0 },
   };
 
-  constructor(params?: any) {}
-  setSize(width: number, height: number) {}
-  setPixelRatio(ratio: number) {}
-  setClearColor(color: any, alpha?: number) {}
-  render(scene: Scene, camera: Camera) {}
+  constructor(_params?: any) {}
+  setSize(_width: number, _height: number) {}
+  setPixelRatio(_ratio: number) {}
+  setClearColor(_color: any, _alpha?: number) {}
+  render(_scene: Scene, _camera: Camera) {}
   dispose() {}
   getContext() {
     return {};
@@ -850,7 +850,7 @@ export class CanvasTexture extends Texture {}
 
 // Loaders
 export class Loader {
-  load(url: string, onLoad?: any, onProgress?: any, onError?: any) {}
+  load(_url: string, _onLoad?: any, _onProgress?: any, _onError?: any) {}
 }
 
 export class TextureLoader extends Loader {}

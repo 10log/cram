@@ -18,7 +18,7 @@ describe('airAttenuation', () => {
       const frequencies = [63, 125, 250, 500, 1000, 2000, 4000, 8000];
       const result = airAttenuation(frequencies);
 
-      result.forEach((value, index) => {
+      result.forEach((value, _index) => {
         expect(value).toBeGreaterThan(0);
       });
     });

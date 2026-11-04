@@ -69,7 +69,7 @@ export default function RT60Properties(props: RT60PropertiesProps) {
   return (
     <div>
       <div style={RT60PropertiesContainerStyle}>
-        {props.object.hasOwnProperty("name") && (
+        {Object.hasOwn(props.object, "name") && (
           <GridRow label={"name"}>
             <TextInput
               name="name"

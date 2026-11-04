@@ -26,7 +26,7 @@ vi.mock('@mui/material', () => ({
   DialogTitle: ({ children }: any) => <h2>{children}</h2>,
   DialogContent: ({ children }: any) => <div className="dialog-body">{children}</div>,
   DialogActions: ({ children }: any) => <div data-testid="dialog-actions">{children}</div>,
-  Button: ({ children, onClick, disabled, variant, color }: any) => (
+  Button: ({ children, onClick, disabled, variant: _variant, color: _color }: any) => (
     <button onClick={onClick} disabled={disabled}>
       {children}
     </button>
@@ -61,7 +61,7 @@ vi.mock('../../common/file-type', () => ({
 
 // Mock dayt
 vi.mock('../../common/dayt', () => ({
-  mmm_dd_yyyy: (timestamp: number) => 'Jan 01, 2024',
+  mmm_dd_yyyy: (_timestamp: number) => 'Jan 01, 2024',
 }));
 
 describe('ImportDialog', () => {

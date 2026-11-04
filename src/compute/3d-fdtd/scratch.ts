@@ -24,12 +24,8 @@ for (let i = 0; i < nx; i++) {
 Po; //?
 
 
-const getIndex = (nx: number, ny: number) => (x: number, y: number, z: number) => z * (nx * ny) + y * nx + x;
+const getXYZ = (nx: number, ny: number, _nz: number) => (index: number) => [(index % nx) % ny, index % nx];
 
-const getXYZ = (nx: number, ny: number, nz: number) => (index: number) => [(index % nx) % ny, index % nx];
-
-
-const to1d =  (nx: number, ny: number) => (x: number, y: number, z: number) => (z * nx * ny) + (y * nx) + x;
 
 const to3d =  (nx: number, ny: number) => (index: number) => {
   const z = (index % nx) % ny;

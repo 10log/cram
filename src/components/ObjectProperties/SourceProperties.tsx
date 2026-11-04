@@ -42,19 +42,19 @@ export default function SourceProperties(props: SourcePropertiesProps) {
   return (
     <div>
       <div style={SourcePropertiesContainerStyle}>
-        {props.object.hasOwnProperty("name") && (
+        {Object.hasOwn(props.object, "name") && (
           <GridRow label={"name"}>
             <TextInput name="name" value={props.object.name} onChange={props.onPropertyChange} />
           </GridRow>
         )}
 
-        {props.object.hasOwnProperty("visible") && (
+        {Object.hasOwn(props.object, "visible") && (
           <GridRow label={"visible"}>
             <CheckboxInput name="visible" checked={props.object.visible} onChange={props.onPropertyChange} />
           </GridRow>
         )}
 
-        {props.object.hasOwnProperty("position") && (
+        {Object.hasOwn(props.object, "position") && (
           <GridRow label={"position"}>
             <NumberInput name="x" value={props.object.position.x} {...XYZProps} />
             <NumberInput name="y" value={props.object.position.y} {...XYZProps} />
@@ -62,7 +62,7 @@ export default function SourceProperties(props: SourcePropertiesProps) {
           </GridRow>
         )} 
 
-        {props.object.hasOwnProperty("scale") && (
+        {Object.hasOwn(props.object, "scale") && (
           <GridRow label={"scale"}>
             <NumberInput name="scalex" value={props.object.scale.x} {...XYZProps} min={10e-10} />
             <NumberInput name="scaley" value={props.object.scale.y} {...XYZProps} min={10e-10} />
@@ -70,7 +70,7 @@ export default function SourceProperties(props: SourcePropertiesProps) {
           </GridRow>
         )}
 
-        {props.object.hasOwnProperty("rotation") && (
+        {Object.hasOwn(props.object, "rotation") && (
           <GridRow label={"rotation (degrees)"}>
             <NumberInput name="rotationx" value={props.object.rotation.x} {...XYZProps} />
             <NumberInput name="rotationy" value={props.object.rotation.y} {...XYZProps} />
@@ -78,19 +78,19 @@ export default function SourceProperties(props: SourcePropertiesProps) {
           </GridRow>
         )}
 
-        {props.object.hasOwnProperty("theta") && (
+        {Object.hasOwn(props.object, "theta") && (
           <GridRow label={"theta"}>
             <NumberInput name="theta" value={props.object.theta} {...XYZProps} />
           </GridRow>
         )}
 
-        {props.object.hasOwnProperty("phi") && (
+        {Object.hasOwn(props.object, "phi") && (
           <GridRow label={"phi"}>
             <NumberInput name="phi" value={props.object.phi} {...XYZProps} />
           </GridRow>
         )}
 
-        {props.object.hasOwnProperty("mesh") && (
+        {Object.hasOwn(props.object, "mesh") && (
           <GridRow label={"color"}>
             <ColorInput
               name="color"
@@ -201,7 +201,7 @@ export default function SourceProperties(props: SourcePropertiesProps) {
         <PropertyRowLabel label="Signal Data" tooltip="The signal sources signal data" />
         <div>
           <PropertyRowButton
-            onClick={(e) => {
+            onClick={(_e) => {
               if (props.object.fdtdSamples.length > 0) {
                 props.object.saveSamples();
               } else {
@@ -227,7 +227,7 @@ export default function SourceProperties(props: SourcePropertiesProps) {
               console.log(e.target.files);
               const reader = new FileReader();
               
-              reader.addEventListener('loadend', (loadEndEvent) => {
+              reader.addEventListener('loadend', (_loadEndEvent) => {
                   let filecontents:string = reader.result as string; 
                   let clf = new CLFParser(filecontents);
                   let clf_results = clf.parse();

@@ -24,7 +24,7 @@ const getWorkspace = (containers: KeyValuePair<Container>) => {
   const keys= Object.keys(containers);
   if(keys.length > 0){
     let parent = containers[keys[0]] as THREE.Object3D;
-    while(parent.parent && !parent.userData.hasOwnProperty("isWorkspace")){
+    while(parent.parent && !Object.hasOwn(parent.userData, "isWorkspace")){
       parent = parent.parent;
     }
     return parent;
@@ -96,7 +96,7 @@ export const setContainerProperty = ({uuid, property, value}: {uuid: string, pro
 export const setNestedContainerProperty = ({path, property, value}: {path: (string | number)[], property: string, value: unknown}) => {
   useContainer.getState().set(store => {
     const container = reach(store.containers, path) as Record<string, unknown> | undefined;
-    if(container && container.hasOwnProperty(property)){
+    if(container && Object.hasOwn(container, property)){
       container[property] = value;
     }
   });

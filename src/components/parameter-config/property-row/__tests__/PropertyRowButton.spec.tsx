@@ -33,7 +33,7 @@ describe('PropertyRowButton', () => {
     });
 
     it('renders inside a container', () => {
-      const { container } = render(<PropertyRowButton {...defaultProps} />);
+      render(<PropertyRowButton {...defaultProps} />);
       const button = screen.getByRole('button');
       expect(button.parentElement).toBeInTheDocument();
     });
@@ -127,7 +127,7 @@ describe('PropertyRowButton', () => {
       const handleClick = vi.fn();
       const user = userEvent.setup();
       render(<PropertyRowButton {...defaultProps} onClick={handleClick} />);
-      const button = screen.getByRole('button');
+      screen.getByRole('button');
 
       await user.tab();
       await user.keyboard('{Enter}');
@@ -139,7 +139,7 @@ describe('PropertyRowButton', () => {
       const handleClick = vi.fn();
       const user = userEvent.setup();
       render(<PropertyRowButton {...defaultProps} onClick={handleClick} />);
-      const button = screen.getByRole('button');
+      screen.getByRole('button');
 
       await user.tab();
       await user.keyboard(' ');

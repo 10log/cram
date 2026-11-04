@@ -11,7 +11,7 @@ export class Polygon {
   shape!: Shape;
   constructor(props?: PolygonProps) {
     this.vertices = [] as Vector2[];
-    this.close = props && props.hasOwnProperty('close') ? props.close! : true;
+    this.close = props && Object.hasOwn(props, 'close') ? props.close! : true;
     if (props && props.vertices) {
       for (let i = 0; i < props.vertices.length; i++) {
         if (props.vertices[i].length !== 2) {

@@ -51,10 +51,10 @@ export const maps = {
   joinWith: (str: string) => (x: string[] | number[]) => x.join(str)
 };
 
-export const toIndexed = <T>(x: T, i: number, a: T[]): [number, T] => [i, x];
+export const toIndexed = <T>(x: T, i: number, _a: T[]): [number, T] => [i, x];
 
 export const regularExpressions = {
-  hexColor: /\#[a-z0-9]{6}/gim,
+  hexColor: /#[a-z0-9]{6}/gim,
   comma: /,/g,
   digit: /\d/g,
   digits: /\d+/g
@@ -160,13 +160,10 @@ export const countIf = (condition: { (x: any): boolean; (arg0: any): any }) => (
 
 export const makeObject = (fields: [string, any][]) => fields.reduce((a, b) => Object.assign(a, { [b[0]]: b[1] }), {});
 
-export interface GraphNode<T> {
+export class GraphNode<T> {
   value: T;
   children: Set<GraphNode<T>>;
   parents: Set<GraphNode<T>>;
-}
-
-export class GraphNode<T> implements GraphNode<T> {
   constructor(value: T) {
     this.value = value;
     this.children = new Set<GraphNode<T>>();
@@ -189,12 +186,9 @@ export class GraphNode<T> implements GraphNode<T> {
   }
 }
 
-export interface Range {
+export class Range {
   [0]: number;
   [1]: number;
-}
-
-export class Range implements Range {
   constructor(min: number, max: number) {
     this[0] = Math.min(min, max);
     this[1] = Math.max(min, max);
@@ -240,10 +234,6 @@ export class ClosedRange extends Range {
   }
 }
 
-interface ReversedArray<T> {
-  [index: number]: T;
-}
-
 export function* getAdjacentIterator(n: number, range: [number, number]) {
   const m = range[1] - range[0] + 1;
   for (let i = 0; i < m ** n; i++) {
@@ -264,7 +254,7 @@ export function deepEqual(x: any, y: any) {
   else if (isNonNullObject(x) && isNonNullObject(y)) {
     if (Object.keys(x).length !== Object.keys(y).length) return false;
     for (var prop in x) {
-      if (y.hasOwnProperty(prop)) {
+      if (Object.hasOwn(y, prop)) {
         if (!deepEqual(x[prop], y[prop])) return false;
       } else return false;
     }

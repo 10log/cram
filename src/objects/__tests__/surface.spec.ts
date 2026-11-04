@@ -65,7 +65,7 @@ vi.mock('../../compute/raytracer/brdf', () => ({
 // Mock interpolateAlpha
 vi.mock('../../compute/acoustics/interpolate-alpha', () => ({
   __esModule: true,
-  default: vi.fn().mockReturnValue((freq: number) => 0.5),
+  default: vi.fn().mockReturnValue((_freq: number) => 0.5),
 }));
 
 // Mock reflectionCoefficient
@@ -76,7 +76,7 @@ vi.mock('../../compute/acoustics/reflection-coefficient', () => ({
 
 // Mock scatteringFunction — returns 0.42 to distinguish from old hardcoded 0.1
 vi.mock('../../compute/acoustics/scattering-function', () => ({
-  scatteringFunction: vi.fn().mockReturnValue((f: number) => 0.42),
+  scatteringFunction: vi.fn().mockReturnValue((_f: number) => 0.42),
 }));
 
 // Mock TessellateModifier
@@ -151,7 +151,6 @@ describe('Surface', () => {
     });
 
     it('creates surface with props when provided', () => {
-      const THREE = THREE_MOCK;
       const geometry = createMockGeometry();
 
       const surface = new Surface('WithProps', {

@@ -171,7 +171,7 @@ export class AudioEngine {
 
   async testFilters(frequencies: number[], sampleRate=44100) {
 
-    const samples = Array(frequencies.length).fill(0).map(x=>this.diracDelta());
+    const samples = Array(frequencies.length).fill(0).map(_x=>this.diracDelta());
     const offlineContext = this.createOfflineContext(1, samples[0].length, sampleRate);
     const sources = this.createFilteredSources(samples, frequencies, offlineContext);
     const merger = this.createMerger(sources.length, offlineContext);

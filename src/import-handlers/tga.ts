@@ -165,7 +165,7 @@ export class TGALoader extends THREE.Loader {
         }
       } else {
         // raw pixels
-        pixel_data = data.subarray(offset, (offset += use_pal ? header.width * header.height : pixel_total));
+        pixel_data = data.subarray(offset, offset + (use_pal ? header.width * header.height : pixel_total));
       }
 
       return {

@@ -5,7 +5,6 @@
  */
 
 import { math, geometry } from '../csg';
-import { equalWithinTolerenceFactory } from '../../common/equal-within-range';
 
 const { vec3, plane } = math;
 const { poly3 } = geometry;
@@ -13,8 +12,6 @@ const { poly3 } = geometry;
 // Epsilon for floating point comparisons
 const EPS = 1e-5;
 
-const vector3sAreEqual = equalWithinTolerenceFactory(["x", "y", "z"])(EPS);
-const planeWsAreEqual = equalWithinTolerenceFactory(["w"])(EPS);
 
 // V2 uses array format for planes [nx, ny, nz, w]
 const planesAreEqual = (plane1: number[], plane2: number[]) => {

@@ -20,11 +20,8 @@ import { useAppStore, resetAllStores } from '../store';
 // Renderer for cleanup
 import { renderer } from '../render/renderer';
 
-// Layout defaults
-import { layout as defaultLayout } from '../default-storage';
-
 // Storage utility for namespaced localStorage
-import storage, { setStoragePrefix } from './storage';
+import { setStoragePrefix } from './storage';
 
 // Import dialogs and progress indicators
 import ImportDialog from '../components/ImportDialog';
@@ -46,21 +43,6 @@ const canvasContainerSx: SxProps<Theme> = {
 };
 
 /**
- * Get layout from localStorage with the configured prefix
- */
-function getLayout() {
-  try {
-    const stored = storage.getItem('layout');
-    if (stored) {
-      return JSON.parse(stored);
-    }
-  } catch (e) {
-    console.warn('Failed to parse layout from localStorage:', e);
-  }
-  return JSON.parse(defaultLayout);
-}
-
-/**
  * CRAMCanvas component - the 3D canvas without any panels
  */
 export const CRAMCanvas = forwardRef<CRAMEditorRef, CRAMEditorProps>(
@@ -79,9 +61,25 @@ export const CRAMCanvas = forwardRef<CRAMEditorRef, CRAMEditorProps>(
     const responseOverlayRef = useRef<HTMLDivElement>(null);
     const initializedRef = useRef(false);
 
-    // Set storage prefix on mount (before reading layout)
+    // Set storage prefix on mount
     setStoragePrefix(storagePrefix);
-    const layoutRef = useRef(getLayout());
+
+    // Helper to get current save state
+    const getSaveState = useCallback((): SaveState => {
+      const containers = messenger.postMessage('SAVE_CONTAINERS')[0] || [];
+      const solvers = messenger.postMessage('SAVE_SOLVERS')[0] || [];
+      const { projectName, version } = useAppStore.getState();
+
+      return {
+        meta: {
+          version: version as `${number}.${number}.${number}`,
+          name: projectName,
+          timestamp: new Date().toISOString(),
+        },
+        containers,
+        solvers,
+      };
+    }, []);
 
     // Track dirty state changes for onProjectChange callback
     useEffect(() => {
@@ -99,7 +97,7 @@ export const CRAMCanvas = forwardRef<CRAMEditorRef, CRAMEditorProps>(
       });
 
       return unsubscribe;
-    }, [onProjectChange, onError]);
+    }, [onProjectChange, onError, getSaveState]);
 
     // Handle initial project load
     useEffect(() => {
@@ -157,23 +155,6 @@ export const CRAMCanvas = forwardRef<CRAMEditorRef, CRAMEditorProps>(
         }
 
         console.log('[CRAMCanvas] Cleanup complete');
-      };
-    }, []);
-
-    // Helper to get current save state
-    const getSaveState = useCallback((): SaveState => {
-      const containers = messenger.postMessage('SAVE_CONTAINERS')[0] || [];
-      const solvers = messenger.postMessage('SAVE_SOLVERS')[0] || [];
-      const { projectName, version } = useAppStore.getState();
-
-      return {
-        meta: {
-          version: version as `${number}.${number}.${number}`,
-          name: projectName,
-          timestamp: new Date().toISOString(),
-        },
-        containers,
-        solvers,
       };
     }, []);
 

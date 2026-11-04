@@ -40,14 +40,6 @@ function hashPointKeys(x: number, y: number, z: number, cellSize: number): strin
   return keys;
 }
 
-/** Primary spatial hash key for a 3D point */
-function hashPointPrimary(x: number, y: number, z: number, cellSize: number): string {
-  const ix = Math.floor(x / cellSize);
-  const iy = Math.floor(y / cellSize);
-  const iz = Math.floor(z / cellSize);
-  return `${ix},${iy},${iz}`;
-}
-
 /** Canonical key for an edge (order-independent) */
 function edgeKey(h1: string, h2: string): string {
   return h1 < h2 ? `${h1}|${h2}` : `${h2}|${h1}`;

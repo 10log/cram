@@ -181,7 +181,7 @@ describe('BVH Performance', () => {
             const v1 = [Math.random(), Math.random(), Math.random()];
             const v2 = [Math.random(), Math.random(), Math.random()];
 
-            const centroid = [
+            const _centroid = [
               (v0[0] + v1[0] + v2[0]) / 3,
               (v0[1] + v1[1] + v2[1]) / 3,
               (v0[2] + v1[2] + v2[2]) / 3,

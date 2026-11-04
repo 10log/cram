@@ -204,7 +204,7 @@ interface ObjectItemProps {
   onUnhover?: () => void;
 }
 
-function ObjectItem({ uuid, name, type, visible, selected, onSelect, onToggleVisibility, onDelete, onHover, onUnhover }: ObjectItemProps) {
+function ObjectItem({ uuid: _uuid, name, type, visible, selected, onSelect, onToggleVisibility, onDelete, onHover, onUnhover }: ObjectItemProps) {
   return (
     <ListItem
       disablePadding
@@ -249,7 +249,7 @@ interface SolverItemProps {
   onDelete: () => void;
 }
 
-function SolverItem({ uuid, name, type, selected, onSelect, onRun, onDelete }: SolverItemProps) {
+function SolverItem({ uuid: _uuid, name, type, selected, onSelect, onRun, onDelete }: SolverItemProps) {
   return (
     <ListItem
       disablePadding
@@ -348,6 +348,7 @@ export function PropertiesPanel() {
 
   // Group objects by type
   const objectsByKind = useMemo(() => {
+    void version;
     const result = {
       rooms: [] as { uuid: string; name: string; visible: boolean }[],
       sources: [] as { uuid: string; name: string; visible: boolean }[],
