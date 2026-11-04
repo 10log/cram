@@ -27,7 +27,7 @@ export default abstract class Solver {
         autoCalculate?: boolean;
     }): this;
     dispose(): void;
-    onModeChange(mode: EditorModes): void;
+    onModeChange(_mode: EditorModes): void;
     onParameterConfigFocus(): void;
     onParameterConfigBlur(): void;
 }

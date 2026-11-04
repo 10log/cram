@@ -142,7 +142,7 @@ declare class RayTracer extends Solver {
     inFrontOf(a: THREE.Triangle, b: THREE.Triangle): boolean;
     traceRay(ro: THREE.Vector3, rd: THREE.Vector3, order: number, bandEnergy: BandEnergy, source: string, initialPhi: number, initialTheta: number, iter?: number, chain?: Partial<Chain>[], arrivals?: RayPath[]): RayPath | undefined;
     startQuickEstimate(frequencies?: number[], numRays?: number): void;
-    quickEstimateStep(source: Source, frequencies: number[], numRays: number): QuickEstimateStepResult;
+    quickEstimateStep(source: Source, frequencies: number[], _numRays: number): QuickEstimateStepResult;
     startAllMonteCarlo(): void;
     stepStratified(numRays: number): void;
     /**

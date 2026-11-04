@@ -51,14 +51,12 @@ export interface State {
     browser: Report;
 }
 type Version = `${number}.${number}.${number}`;
-export interface Cram {
+export declare class Cram {
     state: State;
     messenger: Messenger;
     meta: {
         version: Version;
     };
-}
-export declare class Cram implements Cram {
     constructor();
 }
 export declare function finishedLoading(): void;

@@ -28,7 +28,7 @@ export declare const maps: {
     join: (x: any[]) => string;
     joinWith: (str: string) => (x: string[] | number[]) => string;
 };
-export declare const toIndexed: <T>(x: T, i: number, a: T[]) => [number, T];
+export declare const toIndexed: <T>(x: T, i: number, _a: T[]) => [number, T];
 export declare const regularExpressions: {
     hexColor: RegExp;
     comma: RegExp;
@@ -82,20 +82,16 @@ export declare const countIf: (condition: {
     (arg0: any): any;
 }) => (arr: string | any[]) => number;
 export declare const makeObject: (fields: [string, any][]) => {};
-export interface GraphNode<T> {
+export declare class GraphNode<T> {
     value: T;
     children: Set<GraphNode<T>>;
     parents: Set<GraphNode<T>>;
-}
-export declare class GraphNode<T> implements GraphNode<T> {
     constructor(value: T);
     addChild(child: T | GraphNode<T>): Set<GraphNode<T>>;
 }
-export interface Range {
+export declare class Range {
     [0]: number;
     [1]: number;
-}
-export declare class Range implements Range {
     constructor(min: number, max: number);
     get min(): number;
     set min(m: number);

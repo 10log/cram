@@ -32,9 +32,9 @@ declare class TreeViewComponent extends Component<Props, State> {
     handleCheckToggle(node: any, e: any): void;
     handleDelete(node: any): void;
     handleExpandToggle(node: any): void;
-    printCheckbox(node: any, ...args: any[]): React.JSX.Element | undefined;
-    printDeleteButton(node: any, ...args: any[]): React.JSX.Element | undefined;
-    printExpandButton(node: any, ...args: any[]): React.JSX.Element;
+    printCheckbox(node: any, ..._args: any[]): React.JSX.Element | undefined;
+    printDeleteButton(node: any, ..._args: any[]): React.JSX.Element | undefined;
+    printExpandButton(node: any, ..._args: any[]): React.JSX.Element;
     printNoChildrenMessage(): React.JSX.Element;
     printNodes(nodeArray: any): React.JSX.Element;
     printChildren(node: any): React.JSX.Element | null;

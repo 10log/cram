@@ -1,16 +1,14 @@
-export interface GlobalOverlayCell<T> {
-    id: string;
-    elt: HTMLElement;
-    value: T;
-    label: string;
-    formatter: (value: T) => string;
-}
 export type GlobalOverlayCellOpts<T> = {
     id?: string;
     hidden?: boolean;
     formatter?: (value: T) => string;
 };
 export declare class GlobalOverlayCell<T> {
+    id: string;
+    elt: HTMLElement;
+    value: T;
+    label: string;
+    formatter: (value: T) => string;
     constructor(label: string, value: T, opts: GlobalOverlayCellOpts<T>);
     setValue(value: T): void;
     show(): void;

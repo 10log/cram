@@ -36,7 +36,7 @@ export declare class FFT {
      * @param width
      * @param height
      */
-    power2d(spectrum: Complex[][], width: number, height: number): [number[][], number];
+    power2d(spectrum: Complex[][], width: number, _height: number): [number[][], number];
     /**
      * Calculates the power spectrum of the given 1D spectrum and finds the max value.
      * @param spectrum

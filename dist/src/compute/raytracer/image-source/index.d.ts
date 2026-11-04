@@ -116,7 +116,7 @@ export declare class ImageSourceSolver extends Solver {
     reset(): void;
     drawImageSources(): void;
     clearImageSources(): void;
-    drawRayPaths(orders?: number[]): void;
+    drawRayPaths(_orders?: number[]): void;
     clearRayPaths(): void;
     toggleRayPathHighlight(rayPathUUID: string): void;
     calculateImpulseResponse(): Promise<AudioBuffer | undefined>;

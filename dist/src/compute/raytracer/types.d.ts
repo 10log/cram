@@ -62,11 +62,9 @@ export type ChartData = {
     x?: number[];
     y?: number[];
 };
-export interface ReceiverData {
+export declare class ReceiverData {
     id: string;
     data: EnergyTime[];
-}
-export declare class ReceiverData {
     constructor(id: string);
 }
 export type RayTracerSaveObject = {
