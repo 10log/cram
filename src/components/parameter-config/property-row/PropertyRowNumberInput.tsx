@@ -1,6 +1,7 @@
-import React, { useCallback, useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import TextField from "@mui/material/TextField";
 import type { SxProps, Theme } from "@mui/material/styles";
+import useNumberDraft from "../../hooks/use-number-draft";
 
 const numberInputSx: SxProps<Theme> = {
   ml: 1,
@@ -53,6 +54,11 @@ export const PropertyRowNumberInput = ({ value, onChange, step = 1, min, max }: 
   maxRef.current = max;
   onChangeRef.current = onChange;
 
+  // Typed text is held as a draft so "-", "." and "" survive mid-typing (#90)
+  const draft = useNumberDraft(value, (newValue) => onChangeRef.current({ value: newValue }));
+  const clearDraftRef = useRef(draft.clearDraft);
+  clearDraftRef.current = draft.clearDraft;
+
   // Use non-passive wheel listener to allow preventDefault
   useEffect(() => {
     const input = inputRef.current;
@@ -60,6 +66,7 @@ export const PropertyRowNumberInput = ({ value, onChange, step = 1, min, max }: 
 
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
+      clearDraftRef.current();
       const delta = e.deltaY < 0 ? stepRef.current : -stepRef.current;
       let newValue = valueRef.current + delta;
       if (minRef.current !== undefined) newValue = Math.max(minRef.current, newValue);
@@ -73,24 +80,16 @@ export const PropertyRowNumberInput = ({ value, onChange, step = 1, min, max }: 
     return () => input.removeEventListener("wheel", handleWheel);
   }, []);
 
-  const handleChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const newValue = e.currentTarget.valueAsNumber;
-      if (!Number.isNaN(newValue)) {
-        onChange({ value: newValue });
-      }
-    },
-    [onChange]
-  );
-
   return (
     <TextField
       inputRef={inputRef}
       type="number"
       size="small"
       variant="outlined"
-      value={value}
-      onChange={handleChange}
+      value={draft.text}
+      onChange={draft.onChange}
+      onBlur={draft.onBlur}
+      onKeyDown={draft.onKeyDown}
       slotProps={{
         htmlInput: {
           step,
