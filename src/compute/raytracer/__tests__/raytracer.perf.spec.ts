@@ -48,12 +48,6 @@ vi.mock('../../../audio-engine/audio-engine', () => ({
 }));
 
 describe('RayTracer Performance', () => {
-  const BASELINE_THRESHOLDS = {
-    vectorOperations: 0.01, // ms per 1000 operations
-    rayGeneration: 0.1, // ms per 100 rays
-    normalCalculation: 0.05, // ms per 100 normals
-  };
-
   describe('Vector Operations', () => {
     it('Vector3 creation is performant', () => {
       const THREE = require('three');
@@ -94,7 +88,7 @@ describe('RayTracer Performance', () => {
 
   describe('Ray Generation', () => {
     it('random direction generation is performant', () => {
-      const { random, PI, cos, sin, sqrt } = Math;
+      const { random, PI, cos, sin } = Math;
 
       const result = benchmark(
         'Random direction generation',
@@ -103,9 +97,9 @@ describe('RayTracer Performance', () => {
             // Uniform sphere sampling
             const theta = 2 * PI * random();
             const phi = Math.acos(2 * random() - 1);
-            const x = sin(phi) * cos(theta);
-            const y = sin(phi) * sin(theta);
-            const z = cos(phi);
+            const _x = sin(phi) * cos(theta);
+            const _y = sin(phi) * sin(theta);
+            const _z = cos(phi);
           }
         },
         { samples: 50, warmup: 5 }
@@ -127,9 +121,9 @@ describe('RayTracer Performance', () => {
             const r2 = random();
             const theta = 2 * PI * r1;
             const r = sqrt(r2);
-            const x = r * cos(theta);
-            const y = r * sin(theta);
-            const z = sqrt(1 - r2);
+            const _x = r * cos(theta);
+            const _y = r * sin(theta);
+            const _z = sqrt(1 - r2);
           }
         },
         { samples: 50, warmup: 5 }
@@ -283,9 +277,9 @@ describe('RayTracer Performance', () => {
 
             // Reflection: r = i - 2(i·n)n
             const dot = inx * nnx + iny * nny + inz * nnz;
-            const rx = inx - 2 * dot * nnx;
-            const ry = iny - 2 * dot * nny;
-            const rz = inz - 2 * dot * nnz;
+            const _rx = inx - 2 * dot * nnx;
+            const _ry = iny - 2 * dot * nny;
+            const _rz = inz - 2 * dot * nnz;
           }
         },
         { samples: 50, warmup: 5 }
@@ -316,7 +310,7 @@ describe('RayTracer Performance', () => {
 
             // Dot product gives cos(angle)
             const dot = x1 * x2 + y1 * y2 + z1 * z2;
-            const angle = Math.acos(Math.max(-1, Math.min(1, dot)));
+            const _angle = Math.acos(Math.max(-1, Math.min(1, dot)));
           }
         },
         { samples: 50, warmup: 5 }

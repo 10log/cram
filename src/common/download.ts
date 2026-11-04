@@ -21,7 +21,6 @@ export function download(data: string|Blob|File|URL, strFileName: string, strMim
   let fn = strFileName || "download";
   let blob;
   let b;
-  let ua;
   let fr;
 
   //if(typeof B.bind === 'function' ){ B=B.bind(window); }
@@ -38,7 +37,7 @@ export function download(data: string|Blob|File|URL, strFileName: string, strMim
   }
 
   //go ahead and download dataURLs right away
-  if (String(x).match(/^data:[\w+\-]+\/[\w+\-]+[,;]/)) {
+  if (String(x).match(/^data:[\w+-]+\/[\w+-]+[,;]/)) {
     //@ts-ignore - IE10 legacy API
     return navigator.msSaveBlob // IE10 can't do a[download], only Blobs:
       //@ts-ignore - IE10 legacy API
@@ -50,7 +49,7 @@ export function download(data: string|Blob|File|URL, strFileName: string, strMim
   try {
         //@ts-ignore
         blob = x instanceof B ? x : new B([x], { type: m });
-      } catch (y) {
+      } catch {
     if (BB) {
       b = new BB();
       b.append([x]);
@@ -96,7 +95,7 @@ export function download(data: string|Blob|File|URL, strFileName: string, strMim
     document.body.appendChild(f);
     if (!winMode) {
       // force a mime that will download:
-      url = "data:" + url.replace(/^data:([\w\/\-\+]+)/, u);
+      url = "data:" + url.replace(/^data:([\w/\-+]+)/, u);
     }
 
     f.src = url;
@@ -121,7 +120,7 @@ export function download(data: string|Blob|File|URL, strFileName: string, strMim
       try {
             //@ts-ignore
             return saver("data:" + m + ";base64," + window.btoa(blob));
-      } catch (y) {
+      } catch {
                     //@ts-ignore
                     return saver("data:" + m + "," + encodeURIComponent(blob));
                   }
@@ -129,7 +128,7 @@ export function download(data: string|Blob|File|URL, strFileName: string, strMim
 
     // Blob but not URL:
     fr = new FileReader();
-    fr.onload = function (e) {
+    fr.onload = function (_e) {
                                //@ts-ignore
                                saver(this.result);
                              };

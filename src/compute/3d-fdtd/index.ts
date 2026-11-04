@@ -1,6 +1,5 @@
 //@ts-nocheck
 import { GPU } from "gpu.js";
-const { sin, cos, PI: pi } = Math;
 /**
  * 
  * Wave number is the magnitude of the wave vector

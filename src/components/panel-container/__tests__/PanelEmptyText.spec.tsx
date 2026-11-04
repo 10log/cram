@@ -41,7 +41,6 @@ describe('PanelEmptyText', () => {
     it('has flexbox centering styles', () => {
       render(<PanelEmptyText>Test</PanelEmptyText>);
       const element = screen.getByText('Test');
-      const styles = window.getComputedStyle(element);
 
       // styled-components applies these through classes
       expect(element).toBeInTheDocument();

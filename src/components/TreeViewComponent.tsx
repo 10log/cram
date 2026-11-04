@@ -192,7 +192,7 @@ class TreeViewComponent extends Component<Props, State> {
     this.handleUpdate(data);
   }
 
-  printCheckbox(node, ...args) {
+  printCheckbox(node, ..._args) {
     const { isCheckable, keywordLabel, depth } = this.props;
 
     if (isCheckable!(node, depth!)) {
@@ -213,7 +213,7 @@ class TreeViewComponent extends Component<Props, State> {
     }
   }
 
-  printDeleteButton(node, ...args) {
+  printDeleteButton(node, ..._args) {
     const { isDeletable, depth, deleteElement } = this.props;
 
     if (isDeletable!(node, depth!)) {
@@ -230,7 +230,7 @@ class TreeViewComponent extends Component<Props, State> {
     }
   }
 
-  printExpandButton(node, ...args) {
+  printExpandButton(node, ..._args) {
     const className = node.isExpanded ? "tree-view-triangle-btn-down" : "tree-view-triangle-btn-right";
     const { isExpandable, depth } = this.props;
 

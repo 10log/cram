@@ -37,7 +37,6 @@ const defaults = {
     name: "Energy Decay",
 };
 
-const AudioContext = (window.AudioContext);
 
 const filterFreqs = [125,250,500,1000,2000,4000,8000];
 

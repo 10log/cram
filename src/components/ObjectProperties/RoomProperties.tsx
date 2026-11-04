@@ -45,19 +45,19 @@ export default function RoomProperties(props: RoomPropertiesProps) {
 	return (
     <div>
       <div style={RoomPropertiesContainerStyle}>
-        {props.object.hasOwnProperty("name") && (
+        {Object.hasOwn(props.object, "name") && (
           <GridRow label={"name"}>
             <TextInput name="name" value={props.object.name} onChange={props.onPropertyChange} />
           </GridRow>
         )}
 
-        {props.object.hasOwnProperty("visible") && (
+        {Object.hasOwn(props.object, "visible") && (
           <GridRow label={"visible"}>
             <CheckboxInput name="visible" checked={props.object.visible} onChange={props.onPropertyChange} />
           </GridRow>
         )}
 
-        {props.object.hasOwnProperty("position") && (
+        {Object.hasOwn(props.object, "position") && (
           <GridRow label={"position"}>
             <NumberInput name="x" value={props.object.position.x} {...XYZProps} />
             <NumberInput name="y" value={props.object.position.y} {...XYZProps} />
@@ -65,7 +65,7 @@ export default function RoomProperties(props: RoomPropertiesProps) {
           </GridRow>
         )}
 
-        {props.object.hasOwnProperty("scale") && (
+        {Object.hasOwn(props.object, "scale") && (
           <GridRow label={"scale"}>
             <NumberInput name="scalex" value={props.object.scale.x} min={10e-10} {...XYZProps} />
             <NumberInput name="scaley" value={props.object.scale.y} min={10e-10} {...XYZProps} />
@@ -73,7 +73,7 @@ export default function RoomProperties(props: RoomPropertiesProps) {
           </GridRow>
         )}
 
-        {props.object.hasOwnProperty("rotation") && (
+        {Object.hasOwn(props.object, "rotation") && (
           <GridRow label={"rotation"}>
             <NumberInput name="rotationx" value={props.object.rotation.x} {...XYZProps} />
             <NumberInput name="rotationy" value={props.object.rotation.y} {...XYZProps} />

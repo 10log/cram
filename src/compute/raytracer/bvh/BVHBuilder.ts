@@ -56,7 +56,7 @@ export function BVHBuilder(triangles:unknown | Vector[][] | number[] | Float32Ar
 	let nodesToSplit:BVHNode[] = [rootNode];
 	let node:BVHNode | undefined;
 
-	while(node = nodesToSplit.pop()) {
+	while((node = nodesToSplit.pop())) {
 		let nodes = splitNode(node, maxTrianglesPerNode, bboxArray, bboxHelper);
 		nodesToSplit.push(...nodes);
 	}

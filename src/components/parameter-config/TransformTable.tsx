@@ -144,7 +144,7 @@ const TransformInput = ({ uuid, property, event }: TransformInputProps) => {
       e.preventDefault();
       const delta = e.deltaY < 0 ? 1 : -1;
       const displayValue = valueRef.current + delta;
-      const emitValue = isRot ? displayValue * DEG2RAD : displayValue;
+      const emitValue = isRotation(propertyRef.current) ? displayValue * DEG2RAD : displayValue;
       if (!Number.isNaN(emitValue)) {
         // @ts-ignore - property is valid for all container types
         emit(eventRef.current, { uuid: uuidRef.current, property: propertyRef.current, value: emitValue });

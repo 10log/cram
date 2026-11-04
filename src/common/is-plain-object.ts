@@ -10,7 +10,7 @@ export function isPlainObject(o: unknown): boolean {
   if (Object.prototype.toString.call(o) !== "[object Object]") return false;
 
   // If constructor does not have an Object-specific method
-  if (prot.hasOwnProperty("isPrototypeOf") === false) {
+  if (Object.hasOwn(prot, "isPrototypeOf") === false) {
     return false;
   }
 

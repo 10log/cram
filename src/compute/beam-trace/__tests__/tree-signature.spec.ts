@@ -59,7 +59,7 @@ describe('Issue #104: production wiring', () => {
   const source = fs.readFileSync(path.resolve(__dirname, '../index.ts'), 'utf-8');
 
   test('needsBeamTreeRebuild compares beamTreeSignature, not only source position', () => {
-    const match = source.match(/needsBeamTreeRebuild\(\)[\s\S]*?^  \}/m);
+    const match = source.match(/needsBeamTreeRebuild\(\)[\s\S]*?^ {2}\}/m);
     expect(match).not.toBeNull();
     expect(match![0]).toMatch(/currentTreeSignature/);
     expect(match![0]).not.toMatch(/_lastSourcePos/);

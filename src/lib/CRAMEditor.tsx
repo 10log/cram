@@ -46,6 +46,23 @@ export const CRAMEditor = forwardRef<CRAMEditorRef, CRAMEditorProps>(
     // This must happen synchronously before any localStorage reads
     setStoragePrefix(storagePrefix);
 
+    // Helper to get current save state
+    const getSaveState = useCallback((): SaveState => {
+      const containers = messenger.postMessage('SAVE_CONTAINERS')[0] || [];
+      const solvers = messenger.postMessage('SAVE_SOLVERS')[0] || [];
+      const { projectName, version } = useAppStore.getState();
+
+      return {
+        meta: {
+          version: version as `${number}.${number}.${number}`,
+          name: projectName,
+          timestamp: new Date().toISOString(),
+        },
+        containers,
+        solvers,
+      };
+    }, []);
+
     // Track dirty state changes for onProjectChange callback
     useEffect(() => {
       if (!onProjectChange) return;
@@ -63,7 +80,7 @@ export const CRAMEditor = forwardRef<CRAMEditorRef, CRAMEditorProps>(
       });
 
       return unsubscribe;
-    }, [onProjectChange, onError]);
+    }, [onProjectChange, onError, getSaveState]);
 
     // Handle initial project load
     useEffect(() => {
@@ -110,23 +127,6 @@ export const CRAMEditor = forwardRef<CRAMEditorRef, CRAMEditorProps>(
         }
 
         console.log('[CRAMEditor] Cleanup complete');
-      };
-    }, []);
-
-    // Helper to get current save state
-    const getSaveState = useCallback((): SaveState => {
-      const containers = messenger.postMessage('SAVE_CONTAINERS')[0] || [];
-      const solvers = messenger.postMessage('SAVE_SOLVERS')[0] || [];
-      const { projectName, version } = useAppStore.getState();
-
-      return {
-        meta: {
-          version: version as `${number}.${number}.${number}`,
-          name: projectName,
-          timestamp: new Date().toISOString(),
-        },
-        containers,
-        solvers,
       };
     }, []);
 

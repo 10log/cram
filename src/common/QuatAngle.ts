@@ -11,7 +11,6 @@ function quat2angle(quat: Quaternion) {
 }
 
 function angle2quat(quatAngle: QuatAngle) {
-  const angle = quatAngle.angle;
   const w = Math.cos(quatAngle.angle);
   const x = Math.sin(quatAngle.angle) * quatAngle.i;
   const y = Math.sin(quatAngle.angle) * quatAngle.j;

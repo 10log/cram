@@ -79,7 +79,7 @@ const useUpdate = () => {
   return [updateCount, () => setUpdateCount(updateCount + 1)] as  [number, () => void];
 }
 
-const Chart = ({ uuid, width = 400, height = 200, events = false, plotOrders, solverKind, chartMode = 'ltp', yRange = 'auto' }: LTPChartProps) => {
+const Chart = ({ uuid, width = 400, height = 200, events = false, plotOrders, solverKind: _solverKind, chartMode = 'ltp', yRange = 'auto' }: LTPChartProps) => {
     const {info, data: _data, from} = useResult(useShallow(state=>pickProps(["info", "data", "from"], state.results[uuid] as Result<ResultKind.LevelTimeProgression>)));
 
     const [_count, _update] = useUpdate();

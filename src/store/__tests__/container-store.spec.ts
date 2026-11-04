@@ -121,7 +121,7 @@ describe('container-store', () => {
       const container = new Container('Test');
       addContainer(Container)(container);
 
-      const { [container.uuid]: removed, ...rest } = useContainer.getState().containers;
+      const { [container.uuid]: _removed, ...rest } = useContainer.getState().containers;
       useContainer.setState(state => ({
         ...state,
         containers: rest,

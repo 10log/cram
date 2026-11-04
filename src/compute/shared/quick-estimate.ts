@@ -58,9 +58,6 @@ export function quickEstimateStep(
 
   let distance = 0;
 
-  // attenuation in dB/m
-  const airAttenuationdB = ac.airAttenuation(frequencies, temperature);
-
   let lastIntersection = {} as THREE.Intersection;
 
   while (!doneDecaying && iter < maxOrder) {

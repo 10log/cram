@@ -44,7 +44,7 @@ vi.mock('@visx/axis', () => ({
 
 vi.mock('@visx/scale', () => ({
   scaleBand: () => {
-    const scale = (value: any) => 0;
+    const scale = (_value: any) => 0;
     scale.domain = () => scale;
     scale.range = () => scale;
     scale.rangeRound = () => scale;
@@ -53,7 +53,7 @@ vi.mock('@visx/scale', () => ({
     return scale;
   },
   scaleLinear: () => {
-    const scale = (value: any) => 0;
+    const scale = (_value: any) => 0;
     scale.domain = () => scale;
     scale.range = () => scale;
     return scale;

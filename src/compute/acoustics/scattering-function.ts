@@ -15,11 +15,6 @@ export type InterpolationTableOptions = {
   yScale?: 'linear' | 'log'
 }
 
-const defaultOptions: InterpolationTableOptions = {
-  xScale: 'linear',
-  yScale: 'linear',
-}
-
 
 const betweenLimits = (arr: number[], value: number): [number, number] => {
   if(value <= arr[0]){

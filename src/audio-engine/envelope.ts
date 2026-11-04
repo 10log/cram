@@ -105,12 +105,6 @@ export function compute_hipass_magnitude(frequency: number,
 }
 
 
-function diracDelta(length: number = 8192, offset: number = 0){
-    const samples = new Float32Array(Array(length).fill(0)); 
-    samples[offset] = 1;
-    return samples;
-  }
-
 const range = (n: number) => [...Array(n)].map((_,i)=>i);
 
 
@@ -134,11 +128,6 @@ export function filterSignals(samples: Float32Array[]) {
     const filters = [] as any[];
     for(let i = 0; i<bands; i++){
         const filter = frequencies.map(f=>compute_bandpass_magnitude(f, [lower_edges[i], upper_edges[i]], wf, 0));
-        const reflectedFilter = [
-            ...filter.slice(0,filter.length>>1), 
-            ...filter.slice(0,Math.floor(filter.length/2)).reverse(),
-        ];
-        // filters.push(reflectedFilter)
         filters.push(filter)
     }
 

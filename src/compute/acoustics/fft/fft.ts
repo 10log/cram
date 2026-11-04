@@ -114,7 +114,7 @@ export class FFT {
   public power2d(
     spectrum: Complex[][],
     width: number,
-    height: number
+    _height: number
   ): [number[][], number] {
     let max: number = 0;
 

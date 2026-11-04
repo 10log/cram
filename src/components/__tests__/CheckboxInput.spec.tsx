@@ -177,7 +177,7 @@ describe('CheckboxInput', () => {
       const handleChange = vi.fn();
       const user = userEvent.setup();
       render(<CheckboxInput {...defaultProps} onChange={handleChange} />);
-      const checkbox = screen.getByRole('checkbox');
+      screen.getByRole('checkbox');
 
       await user.tab();
       await user.keyboard(' ');

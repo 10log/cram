@@ -192,7 +192,7 @@ export class DAELoader extends THREE.Loader {
 			var samplers = data.samplers;
 			var sources = data.sources;
 			for ( var target in channels ) {
-				if ( channels.hasOwnProperty( target ) ) {
+				if ( Object.hasOwn(channels, target) ) {
 					var channel = channels[ target ];
 					var sampler = samplers[ channel.sampler ];
 					var inputId = sampler.inputs.INPUT;
@@ -861,7 +861,7 @@ export class DAELoader extends THREE.Loader {
 			material.name = data.name || '';
 			function getTexture( textureObject ) {
 				var sampler = effect.profile.samplers[ textureObject.id ];
-				var image = null;
+				var image;
 				// get image
 				if ( sampler !== undefined ) {
 					var surface = effect.profile.surfaces[ sampler.source ];
@@ -2260,7 +2260,7 @@ export class DAELoader extends THREE.Loader {
 					result += node.textContent;
 				} else {
 					result += '\n';
-					stack.push.apply( stack, node.childNodes );
+					stack.push( ...node.childNodes );
 				}
 			}
 			return result.trim();

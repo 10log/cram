@@ -446,7 +446,7 @@ export class DirectivityHandler {
       case 0: // omni
         return ac.Lp2P(this.sensitivity[0]+gain); 
 
-      case 1: // CLF defined
+      case 1: { // CLF defined
         if (!this.clfData) return 0;
         let angularRes= this.clfData.angleres; 
         let nearestPhi = Math.round(phi / angularRes) * angularRes; 
@@ -513,6 +513,7 @@ export class DirectivityHandler {
 
         let interp_pressure = ac.Lp2P(dirinterp(phi,theta,p1,p2,p3,p4)+this.sensitivity[f_index]+gain)
         return interp_pressure;
+      }
 
       default: // behave as omni
         return ac.Lp2P(this.sensitivity[0]+gain);;

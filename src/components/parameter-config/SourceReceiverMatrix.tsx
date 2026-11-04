@@ -107,12 +107,14 @@ export const SourceReceiverMatrix = memo(({ uuid, disabled = false, eventType = 
   const [hoverCell, setHoverCell] = useState<{ row: number; col: number } | null>(null);
 
   const sources = useMemo(() => {
+    void version;
     return Object.values(containers)
       .filter(c => c.kind === "source")
       .map(c => ({ uuid: c.uuid, name: c.name }));
   }, [containers, version]);
 
   const receivers = useMemo(() => {
+    void version;
     return Object.values(containers)
       .filter(c => c.kind === "receiver")
       .map(c => ({ uuid: c.uuid, name: c.name }));
@@ -130,8 +132,8 @@ export const SourceReceiverMatrix = memo(({ uuid, disabled = false, eventType = 
     eventType
   );
 
-  const sourceIDs = sourceIDsRaw || [];
-  const receiverIDs = receiverIDsRaw || [];
+  const sourceIDs = useMemo(() => sourceIDsRaw || [], [sourceIDsRaw]);
+  const receiverIDs = useMemo(() => receiverIDsRaw || [], [receiverIDsRaw]);
   const noPairsSelected = sources.length > 0 && receivers.length > 0
     && (sourceIDs.length === 0 || receiverIDs.length === 0);
 

@@ -1,5 +1,5 @@
 export function makeVariableName(str: string) {
-  const seperatorCharacters = /[\s.,:\&]+/i;
+  const seperatorCharacters = /[\s.,:&]+/i;
   const nonWordCharacters = /[^\w]+/i;
   return str
     .toLowerCase()

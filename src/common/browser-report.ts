@@ -282,7 +282,7 @@ export default function browerReport(userAgent?: string) {
 	try {
 		Object.defineProperty({}, "x", {});
 		definePropertySupported = true;
-	} catch (e) {
+	} catch {
 		definePropertySupported = false;
 	}
 

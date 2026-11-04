@@ -25,10 +25,11 @@ export function ContextMenu(props: ContextMenuProps) {
         setContextMenu(null);
     }, []);
 
+    const { handleMenuItemClick } = props;
     const handleItemClick = useCallback((event: React.MouseEvent<HTMLElement, MouseEvent>) => {
-        props.handleMenuItemClick(event);
+        handleMenuItemClick(event);
         handleClose();
-    }, [props.handleMenuItemClick, handleClose]);
+    }, [handleMenuItemClick, handleClose]);
 
     return (
         <>

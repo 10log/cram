@@ -129,7 +129,7 @@ describe('PropertyRowCheckbox', () => {
       const handleChange = vi.fn();
       const user = userEvent.setup();
       render(<PropertyRowCheckbox {...defaultProps} onChange={handleChange} />);
-      const checkbox = screen.getByRole('checkbox');
+      screen.getByRole('checkbox');
 
       await user.tab();
       await user.keyboard(' ');

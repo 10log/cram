@@ -102,7 +102,7 @@ interface ObjectItemProps {
   onUnhover?: () => void;
 }
 
-function ObjectItem({ uuid, name, type, visible, selected, onSelect, onToggleVisibility, onDelete, onHover, onUnhover }: ObjectItemProps) {
+function ObjectItem({ uuid: _uuid, name, type, visible, selected, onSelect, onToggleVisibility, onDelete, onHover, onUnhover }: ObjectItemProps) {
   return (
     <ListItem
       disablePadding
@@ -147,6 +147,7 @@ export function ObjectsPanel() {
 
   // Group objects by type
   const objectsByKind = useMemo(() => {
+    void version;
     const result = {
       rooms: [] as { uuid: string; name: string; visible: boolean }[],
       sources: [] as { uuid: string; name: string; visible: boolean }[],

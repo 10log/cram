@@ -114,7 +114,6 @@ class ImageSource{
       renderer.markup.addPoint([pos.x,pos.y,pos.z], [0,0,0]);
       if (this.children[i].hasChildren){
         this.children[i].markupAllDescendents(); 
-      }else{
       }
     }
   }
@@ -580,7 +579,6 @@ export class ImageSourceSolver extends Solver {
         if(is_2 !== null){
           paths = is_2.constructPathsForAllDescendents(receiver);
 
-          let f = [125, 250, 500, 1000, 2000, 4000];
           let initialSPL = [100,100,100,100,100,100]; 
 
           let validCount = 0; 
@@ -632,7 +630,7 @@ export class ImageSourceSolver extends Solver {
       this.overlay.clearPoints();
     }
 
-    drawRayPaths(orders?:number[]){
+    drawRayPaths(_orders?:number[]){
       this.clearRayPaths(); 
       for(let i = 0; i<this.plotOrders.length; i++){
         let is_paths = this.getPathsOfOrder(this.plotOrders[i]) as ImageSourcePath[]; 

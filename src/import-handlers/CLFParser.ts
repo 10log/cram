@@ -274,7 +274,7 @@ export class CLFParser{
         switch (symmetryType.trim()){
             // see CLF Specification pdf for more info re: symmetry types
 
-            case "<full>":
+            case "<full>": {
                 //radial symmetry about front of speaker (Q1 given)
 
                 copyBlock = baseDirData.directivity.slice(0,(this.phi.length/4)+1);
@@ -291,6 +291,7 @@ export class CLFParser{
                 resultDir = horzAppliedDirData.directivity; 
 
                 break;
+            }
 
             case "<horizontal>":
                 //left/right symmetry (Q1 and Q2 given)
@@ -300,7 +301,7 @@ export class CLFParser{
 
                 break; 
 
-            case "<vertical>":
+            case "<vertical>": {
                 //top/bottom symmetry (Q4 and Q1 given)
 
                 let Q4: number[][] = baseDirData.directivity.slice(0,this.phi.length/4);
@@ -322,6 +323,7 @@ export class CLFParser{
                 resultDir = Q1Q2.concat(Q3Q4.reverse());
 
                 break;
+            }
 
             case "<rotational>": 
                 //copy first slice over entire balloon

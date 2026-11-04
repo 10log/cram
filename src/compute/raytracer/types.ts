@@ -94,11 +94,9 @@ export type ChartData = {
   y?: number[];
 };
 
-export interface ReceiverData {
+export class ReceiverData {
   id: string;
   data: EnergyTime[];
-}
-export class ReceiverData {
   constructor(id: string) {
     this.id = id;
     this.data = [] as EnergyTime[];

@@ -24,7 +24,7 @@ vi.mock('@mui/material', () => ({
   DialogTitle: ({ children }: any) => <h2>{children}</h2>,
   DialogContent: ({ children }: any) => <div className="dialog-body">{children}</div>,
   DialogActions: ({ children }: any) => <div className="dialog-footer">{children}</div>,
-  Button: ({ children, onClick, color, variant }: any) => (
+  Button: ({ children, onClick, color, variant: _variant }: any) => (
     <button onClick={onClick} data-intent={color}>
       {children}
     </button>

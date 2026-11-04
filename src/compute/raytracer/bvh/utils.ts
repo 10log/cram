@@ -23,7 +23,6 @@ export async function asyncWork(workCheck:Evaluator, work:Work, options:Asyncify
 	}
 	const worker: Generator = (options.steps !== undefined ? percentageAsyncify : timeAsyncify)(workCheck, work, options);
 	// let done: boolean = false;
-	let nodesSplit: number;
 	// !(, done)
 	let { value, done } = worker.next()
 	while (!done) {
