@@ -78,23 +78,30 @@ export function quickEstimateStep(
       const nWorld = worldHitNormal(intersections[0], normal, direction);
       angle = nWorld ? direction.clone().multiplyScalar(-1).angleTo(nWorld) : 0;
 
-      distance += intersections[0].distance;
+      const segment = intersections[0].distance;
+      distance += segment;
 
       const surface = intersections[0].object.parent as Surface;
 
-      // for each frequency
+      // Every band has to reach -60 dB before the ray stops. This stopped at
+      // the *first* band to get there, so the others kept `rt60s[f] = 0` and
+      // were dropped from the average — harmless while every band decayed in
+      // lockstep, but with air absorption the top band always finishes first.
+      doneDecaying = true;
       for (let f = 0; f < frequencies.length; f++) {
         const freq = frequencies[f];
         let coefficient = 1;
         if (surface.kind === 'surface') {
           coefficient = surface.reflectionFunction(freq, angle);
         }
-        intensities[f] *= coefficient;
-        const freqDoneDecaying = initialIntensity / intensities[f] > RT60_DECAY_RATIO;
-        if (freqDoneDecaying) {
+        // Air absorption over the segment just travelled, as the full solve
+        // applies it (`arrivalLp -= airAttenuationdB * distance`). The figure
+        // is dB/m of SPL, so the intensity factor is 10^(-α·r/10).
+        intensities[f] *= coefficient * ac.airAttenuationEnergy(airAttenuationdB[f], segment);
+        if (rt60s[f] === 0 && initialIntensity / intensities[f] > RT60_DECAY_RATIO) {
           rt60s[f] = distance / soundSpeed;
         }
-        doneDecaying = doneDecaying || freqDoneDecaying;
+        doneDecaying = doneDecaying && rt60s[f] > 0;
       }
 
       // Anything carrying a numeric `numHits` gets it bumped; in a real scene
