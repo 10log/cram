@@ -29,6 +29,10 @@ export function quickEstimateStep(
 ): QuickEstimateStepResult {
   const soundSpeed = ac.soundSpeed(temperature);
 
+  // Per-band air absorption in dB/m, computed exactly as the full solve does
+  // (`response-by-intensity.ts`, `impulse-response.ts`).
+  const airAttenuationdB = ac.airAttenuation(frequencies, temperature);
+
   const rt60s = Array(frequencies.length).fill(0) as number[];
 
   // source position
